@@ -17,6 +17,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
   Keyboard,
+  Pressable,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
@@ -272,7 +273,7 @@ export const ImportSeedPhraseScreen2024 = () => {
                 inputStyle={styles.textArea}
                 containerStyle={Object.assign(
                   {},
-                  !!error
+                  error
                     ? {}
                     : {
                         borderColor: 'transparent',
@@ -314,54 +315,51 @@ export const ImportSeedPhraseScreen2024 = () => {
             />
           </View>
 
-          <View style={styles.tipWrapper}>
+          <Pressable
+            style={styles.tipWrapper}
+            onPress={() => {
+              const modalId = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.DESCRIPTION,
+                title: "What is a 'Seed phrase'",
+                sections: [
+                  {
+                    description:
+                      'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
+                  },
+                  {
+                    title: 'Backup',
+                    description:
+                      'If you lose your seed phrase, you won’t be able to restore your wallet.',
+                  },
+                  {
+                    title: 'Never Share It',
+                    description:
+                      'Never share your seed phrase—anyone with access to it can control your funds.',
+                  },
+                  {
+                    title: 'Safety',
+                    description:
+                      'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
+                  },
+                ],
+                bottomSheetModalProps: {
+                  enableContentPanningGesture: true,
+                  enablePanDownToClose: true,
+                },
+                nextButtonProps: {
+                  title: (
+                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                  ),
+                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                  onPress: () => {
+                    removeGlobalBottomSheetModal2024(modalId);
+                  },
+                },
+              });
+            }}>
             <Text style={styles.tip}>What's a Seed Phrase</Text>
-            <HelpIcon
-              style={styles.tipIcon}
-              onPress={() => {
-                const modalId = createGlobalBottomSheetModal2024({
-                  name: MODAL_NAMES.DESCRIPTION,
-                  title: "What is a 'Seed phrase'",
-                  sections: [
-                    {
-                      description:
-                        'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
-                    },
-                    {
-                      title: 'Backup',
-                      description:
-                        'If you lose your seed phrase, you won’t be able to restore your wallet.',
-                    },
-                    {
-                      title: 'Never Share It',
-                      description:
-                        'Never share your seed phrase—anyone with access to it can control your funds.',
-                    },
-                    {
-                      title: 'Safety',
-                      description:
-                        'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
-                    },
-                  ],
-                  bottomSheetModalProps: {
-                    enableContentPanningGesture: true,
-                    enablePanDownToClose: true,
-                  },
-                  nextButtonProps: {
-                    title: (
-                      <Text style={styles.modalNextButtonText}>I Got It.</Text>
-                    ),
-                    titleStyle: StyleSheet.flatten([
-                      styles.modalNextButtonText,
-                    ]),
-                    onPress: () => {
-                      removeGlobalBottomSheetModal2024(modalId);
-                    },
-                  },
-                });
-              }}
-            />
-          </View>
+            <HelpIcon style={styles.tipIcon} />
+          </Pressable>
         </View>
       </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>

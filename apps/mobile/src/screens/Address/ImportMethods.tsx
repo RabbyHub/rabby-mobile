@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -142,39 +142,38 @@ function ImportMethods(): JSX.Element {
         </View>
       </View>
       {!state?.hasCurrentAddress && (
-        <View style={styles.tipWrapper}>
+        <Pressable
+          style={styles.tipWrapper}
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              title: 'Is it safe to import it in Rabby?',
+              sections: [
+                {
+                  description:
+                    'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
+                },
+              ],
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={styles.tip}>Is it safe to import into Rabby</Text>
-          <HelpIcon
-            style={styles.tipIcon}
-            onPress={() => {
-              const modalId = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.DESCRIPTION,
-                bottomSheetModalProps: {
-                  enableDismissOnClose: true,
-                  snapPoints: ['40%'],
-                  enableContentPanningGesture: true,
-                  enablePanDownToClose: true,
-                },
-                title: 'Is it safe to import it in Rabby?',
-                sections: [
-                  {
-                    description:
-                      'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
-                  },
-                ],
-                nextButtonProps: {
-                  title: (
-                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
-                  ),
-                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-                  onPress: () => {
-                    removeGlobalBottomSheetModal2024(modalId);
-                  },
-                },
-              });
-            }}
-          />
-        </View>
+          <HelpIcon style={styles.tipIcon} />
+        </Pressable>
       )}
     </NormalScreenContainer>
   );

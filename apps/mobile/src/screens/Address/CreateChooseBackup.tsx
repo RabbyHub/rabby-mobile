@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 
 import HelpIcon from '@/assets2024/icons/common/help.svg';
@@ -102,54 +103,53 @@ function MainListBlocks() {
           />
         </Card>
 
-        <View style={styles.bottomContainer}>
+        <Pressable
+          style={styles.bottomContainer}
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              title: "What is a 'Seed phrase'",
+              bottomSheetModalProps: {
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              sections: [
+                {
+                  description:
+                    'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
+                },
+                {
+                  title: 'Backup',
+                  description:
+                    'If you lose your seed phrase, you won’t be able to restore your wallet.',
+                },
+                {
+                  title: 'Never Share It',
+                  description:
+                    'Never share your seed phrase—anyone with access to it can control your funds.',
+                },
+                {
+                  title: 'Safety',
+                  description:
+                    'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
+                },
+              ],
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={[styles.tipText]}>
             {t('page.nextComponent.createNewAddress.whatIsSeedPhrase')}
           </Text>
-          <HelpIcon
-            style={styles.tipIcon}
-            onPress={() => {
-              const modalId = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.DESCRIPTION,
-                title: "What is a 'Seed phrase'",
-                bottomSheetModalProps: {
-                  enableContentPanningGesture: true,
-                  enablePanDownToClose: true,
-                },
-                sections: [
-                  {
-                    description:
-                      'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
-                  },
-                  {
-                    title: 'Backup',
-                    description:
-                      'If you lose your seed phrase, you won’t be able to restore your wallet.',
-                  },
-                  {
-                    title: 'Never Share It',
-                    description:
-                      'Never share your seed phrase—anyone with access to it can control your funds.',
-                  },
-                  {
-                    title: 'Safety',
-                    description:
-                      'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
-                  },
-                ],
-                nextButtonProps: {
-                  title: (
-                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
-                  ),
-                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-                  onPress: () => {
-                    removeGlobalBottomSheetModal2024(modalId);
-                  },
-                },
-              });
-            }}
-          />
-        </View>
+          <HelpIcon style={styles.tipIcon} />
+        </Pressable>
       </View>
     </TouchableWithoutFeedback>
   );
