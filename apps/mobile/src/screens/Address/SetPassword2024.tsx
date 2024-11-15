@@ -34,6 +34,7 @@ import { useLoadLockInfo } from '@/hooks/useLock';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { clearCustomPassword } from '@/core/apis/lock';
+import YesIcon from '@/assets2024/icons/common/check.svg';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -265,6 +266,10 @@ function MainListBlocks() {
                   formik.errors.password ||
                   t('page.nextComponent.createNewAddress.passwordMin')
                 }
+                tipIcon={
+                  !formik.errors.password &&
+                  formik.values.password && <YesIcon width={12} height={12} />
+                }
               />
 
               <NextInput.Password
@@ -292,7 +297,15 @@ function MainListBlocks() {
                 hasError={Boolean(formik.errors.confirmPassword)}
                 tipText={
                   formik.errors.confirmPassword ||
-                  t('page.nextComponent.createNewAddress.passwordMin')
+                  t('page.nextComponent.createNewAddress.confirmPasswordTips')
+                }
+                tipIcon={
+                  !formik.errors.password &&
+                  formik.values.password &&
+                  !formik.errors.confirmPassword &&
+                  formik.values.confirmPassword && (
+                    <YesIcon width={12} height={12} />
+                  )
                 }
               />
             </View>

@@ -105,6 +105,10 @@ const getFormInputStyles = createGetStyles2024(ctx => {
     formFieldTipTextContainer: {
       marginTop: 4,
       paddingLeft: 16,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     formFieldTipText: {
       fontSize: 14,
@@ -156,6 +160,7 @@ const NextInputComponent = React.forwardRef<
     onPressCustom?: React.ComponentProps<typeof TouchableOpacity>['onPress'];
     hasError?: boolean;
     tipText?: string;
+    tipIcon?: React.ReactNode;
     disableFocusingStyle?: boolean;
     fieldErrorContainerStyle?: StyleProp<ViewStyle>;
     fieldErrorTextStyle?: StyleProp<TextStyle>;
@@ -174,6 +179,7 @@ const NextInputComponent = React.forwardRef<
       customIcon,
       onPressCustom,
       tipText,
+      tipIcon,
       disableFocusingStyle = false,
       fieldErrorContainerStyle,
       fieldErrorTextStyle,
@@ -327,6 +333,7 @@ const NextInputComponent = React.forwardRef<
               ])}>
               {tipText}
             </Text>
+            {tipIcon}
           </View>
         )}
       </>

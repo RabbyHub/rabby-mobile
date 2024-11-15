@@ -1358,6 +1358,7 @@
         "passwordTopTips": "This password will be used to unlock your wallet and encrypt your local data.",
         "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost.",
         "passwordMin": "Must be at least 8 characters",
+        "confirmPasswordTips": "Passwords match",
         "whatIsSeedPhrase": "What's a Seed Phrase",
         "icloudBackup": "iCloud Backup",
         "UnderstandsecurityPrecautions": "I understand these security precautions.",
