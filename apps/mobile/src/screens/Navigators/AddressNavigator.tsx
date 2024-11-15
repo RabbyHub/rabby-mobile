@@ -151,6 +151,9 @@ export function AddressNavigator() {
           title: 'Connect Hardware Wallets',
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
         })}
       />
       <AddressStack.Screen

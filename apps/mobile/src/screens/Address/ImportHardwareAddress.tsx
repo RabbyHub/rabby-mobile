@@ -20,10 +20,15 @@ import {
 import { apiKeystone } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { trigger } from 'react-native-haptic-feedback';
+import LinearGradient from 'react-native-linear-gradient';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   root: {
     paddingHorizontal: 24,
+    marginTop: 34,
   },
   card: {
     alignItems: 'stretch',
@@ -37,7 +42,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 }));
 
 export function ImportHardwareAddressScreen(): JSX.Element {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const handleLedger = React.useCallback(() => {
     trigger('impactLight', {
@@ -121,38 +126,53 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   }, []);
 
   return (
-    <NormalScreenContainer>
-      <View style={styles.root}>
-        <Card style={styles.card}>
-          <ListItem
-            style={styles.item}
-            Icon={
-              <WalletIcon type={KEYRING_TYPE.LedgerKeyring} borderRadius={20} />
-            }
-            title="Ledger"
-            onPress={handleLedger}
-          />
-          <ListItem
-            style={styles.item}
-            Icon={
-              <WalletIcon
-                type={KEYRING_TYPE.KeystoneKeyring}
-                borderRadius={20}
-              />
-            }
-            title="Keystone"
-            onPress={handleKeystone}
-          />
-          <ListItem
-            style={styles.item}
-            Icon={
-              <WalletIcon type={KEYRING_TYPE.OneKeyKeyring} borderRadius={20} />
-            }
-            title="OneKey"
-            onPress={handleOneKey}
-          />
-        </Card>
-      </View>
+    <NormalScreenContainer overwriteStyle={styles.container}>
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}>
+        <View style={styles.root}>
+          <Card style={styles.card}>
+            <ListItem
+              style={styles.item}
+              Icon={
+                <WalletIcon
+                  type={KEYRING_TYPE.LedgerKeyring}
+                  borderRadius={20}
+                />
+              }
+              title="Ledger"
+              onPress={handleLedger}
+            />
+            <ListItem
+              style={styles.item}
+              Icon={
+                <WalletIcon
+                  type={KEYRING_TYPE.KeystoneKeyring}
+                  borderRadius={20}
+                />
+              }
+              title="Keystone"
+              onPress={handleKeystone}
+            />
+            <ListItem
+              style={styles.item}
+              Icon={
+                <WalletIcon
+                  type={KEYRING_TYPE.OneKeyKeyring}
+                  borderRadius={20}
+                />
+              }
+              title="OneKey"
+              onPress={handleOneKey}
+            />
+          </Card>
+        </View>
+      </LinearGradient>
     </NormalScreenContainer>
   );
 }

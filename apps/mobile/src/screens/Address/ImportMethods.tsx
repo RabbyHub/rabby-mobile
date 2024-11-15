@@ -26,9 +26,10 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { trigger } from 'react-native-haptic-feedback';
+import LinearGradient from 'react-native-linear-gradient';
 
 function ImportMethods(): JSX.Element {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const state = useNavigationState(
@@ -42,102 +43,47 @@ function ImportMethods(): JSX.Element {
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
-      <View
-        style={StyleSheet.flatten([
-          styles.blockView,
-          state?.hasCurrentAddress && styles.noMarginTop,
-        ])}>
-        <View style={styles.section}>
-          {state?.hasCurrentAddress && (
-            <Text style={styles.titleText}>Import Address</Text>
-          )}
-          <Card
-            style={styles.importItem}
-            hasArrow={state?.hasCurrentAddress}
-            onPress={() => {
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
-              if (
-                // only has address in this set password
-                state?.hasCurrentAddress &&
-                shouldRedirectToSetPasswordBefore2024({
-                  backScreen: RootNames.ImportMnemonic2024,
-                })
-              ) {
-                return;
-              }
-              navigate(RootNames.StackAddress, {
-                screen: RootNames.ImportMnemonic2024,
-              });
-            }}>
-            <SeedPhraseIcon style={styles.icon} />
-            <Text style={styles.importType}>Import Seed Phrase</Text>
-          </Card>
-          <Card
-            hasArrow={state?.hasCurrentAddress}
-            style={styles.importItem}
-            onPress={() => {
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
-              if (
-                state?.hasCurrentAddress &&
-                shouldRedirectToSetPasswordBefore2024({
-                  backScreen: RootNames.ImportPrivateKey2024,
-                })
-              ) {
-                return;
-              }
-              navigate(RootNames.StackAddress, {
-                screen: RootNames.ImportPrivateKey2024,
-              });
-            }}>
-            <PrivateKeyIcon style={styles.icon} />
-            <Text style={styles.importType}>Import Private Key</Text>
-          </Card>
-          {state?.hasCurrentAddress && (
-            <>
-              <Text style={styles.titleText}>Import Safe Address</Text>
-              <Card
-                hasArrow={state?.hasCurrentAddress}
-                style={styles.importItem}
-                onPress={() => {
-                  navigate(RootNames.StackAddress, {
-                    screen: RootNames.ImportSafeAddress2024,
-                  });
-                }}>
-                <WalletIcon
-                  type={KEYRING_TYPE.GnosisKeyring}
-                  width={40}
-                  height={40}
-                  style={styles.icon}
-                />
-                <Text style={styles.importType}>Safe</Text>
-              </Card>
-              <Text style={styles.titleText}>Import Watch-only Address</Text>
-              <Card
-                hasArrow={state?.hasCurrentAddress}
-                style={styles.importItem}
-                onPress={() => {
-                  navigate(RootNames.StackAddress, {
-                    screen: RootNames.ImportWatchAddress2024,
-                  });
-                }}>
-                <WalletIcon
-                  type={KEYRING_TYPE.WatchAddressKeyring}
-                  width={40}
-                  height={40}
-                  style={styles.icon}
-                />
-                <Text style={styles.importType}>Watch-only Address</Text>
-              </Card>
-            </>
-          )}
-
-          {!state?.hasCurrentAddress && (
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}>
+        <View
+          style={StyleSheet.flatten([
+            styles.blockView,
+            state?.hasCurrentAddress && styles.noMarginTop,
+          ])}>
+          <View style={styles.section}>
+            {state?.hasCurrentAddress && (
+              <Text style={styles.titleText}>Import Address</Text>
+            )}
+            <Card
+              style={styles.importItem}
+              hasArrow={state?.hasCurrentAddress}
+              onPress={() => {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+                if (
+                  // only has address in this set password
+                  state?.hasCurrentAddress &&
+                  shouldRedirectToSetPasswordBefore2024({
+                    backScreen: RootNames.ImportMnemonic2024,
+                  })
+                ) {
+                  return;
+                }
+                navigate(RootNames.StackAddress, {
+                  screen: RootNames.ImportMnemonic2024,
+                });
+              }}>
+              <SeedPhraseIcon style={styles.icon} />
+              <Text style={styles.importType}>Import Seed Phrase</Text>
+            </Card>
             <Card
               hasArrow={state?.hasCurrentAddress}
               style={styles.importItem}
@@ -146,50 +92,114 @@ function ImportMethods(): JSX.Element {
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
                 });
+                if (
+                  state?.hasCurrentAddress &&
+                  shouldRedirectToSetPasswordBefore2024({
+                    backScreen: RootNames.ImportPrivateKey2024,
+                  })
+                ) {
+                  return;
+                }
                 navigate(RootNames.StackAddress, {
-                  screen: RootNames.ImportHardwareAddress,
+                  screen: RootNames.ImportPrivateKey2024,
                 });
               }}>
-              <Image source={HardWareIcon} style={styles.icon} />
-              <Text style={styles.importType}>Connect Hardware Wallets</Text>
+              <PrivateKeyIcon style={styles.icon} />
+              <Text style={styles.importType}>Import Private Key</Text>
             </Card>
-          )}
+            {state?.hasCurrentAddress && (
+              <>
+                <Text style={styles.titleText}>Import Safe Address</Text>
+                <Card
+                  hasArrow={state?.hasCurrentAddress}
+                  style={styles.importItem}
+                  onPress={() => {
+                    navigate(RootNames.StackAddress, {
+                      screen: RootNames.ImportSafeAddress2024,
+                    });
+                  }}>
+                  <WalletIcon
+                    type={KEYRING_TYPE.GnosisKeyring}
+                    width={40}
+                    height={40}
+                    style={styles.icon}
+                  />
+                  <Text style={styles.importType}>Safe</Text>
+                </Card>
+                <Text style={styles.titleText}>Import Watch-only Address</Text>
+                <Card
+                  hasArrow={state?.hasCurrentAddress}
+                  style={styles.importItem}
+                  onPress={() => {
+                    navigate(RootNames.StackAddress, {
+                      screen: RootNames.ImportWatchAddress2024,
+                    });
+                  }}>
+                  <WalletIcon
+                    type={KEYRING_TYPE.WatchAddressKeyring}
+                    width={40}
+                    height={40}
+                    style={styles.icon}
+                  />
+                  <Text style={styles.importType}>Watch-only Address</Text>
+                </Card>
+              </>
+            )}
+
+            {!state?.hasCurrentAddress && (
+              <Card
+                hasArrow={state?.hasCurrentAddress}
+                style={styles.importItem}
+                onPress={() => {
+                  trigger('impactLight', {
+                    enableVibrateFallback: true,
+                    ignoreAndroidSystemSettings: false,
+                  });
+                  navigate(RootNames.StackAddress, {
+                    screen: RootNames.ImportHardwareAddress,
+                  });
+                }}>
+                <Image source={HardWareIcon} style={styles.icon} />
+                <Text style={styles.importType}>Connect Hardware Wallets</Text>
+              </Card>
+            )}
+          </View>
         </View>
-      </View>
-      {!state?.hasCurrentAddress && (
-        <Pressable
-          style={styles.tipWrapper}
-          onPress={() => {
-            const modalId = createGlobalBottomSheetModal2024({
-              name: MODAL_NAMES.DESCRIPTION,
-              bottomSheetModalProps: {
-                enableDismissOnClose: true,
-                snapPoints: ['40%'],
-                enableContentPanningGesture: true,
-                enablePanDownToClose: true,
-              },
-              title: 'Is it safe to import it in Rabby?',
-              sections: [
-                {
-                  description:
-                    'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
+        {!state?.hasCurrentAddress && (
+          <Pressable
+            style={styles.tipWrapper}
+            onPress={() => {
+              const modalId = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.DESCRIPTION,
+                bottomSheetModalProps: {
+                  enableDismissOnClose: true,
+                  snapPoints: ['40%'],
+                  enableContentPanningGesture: true,
+                  enablePanDownToClose: true,
                 },
-              ],
-              nextButtonProps: {
-                title: (
-                  <Text style={styles.modalNextButtonText}>I Got It.</Text>
-                ),
-                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-                onPress: () => {
-                  removeGlobalBottomSheetModal2024(modalId);
+                title: 'Is it safe to import it in Rabby?',
+                sections: [
+                  {
+                    description:
+                      'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
+                  },
+                ],
+                nextButtonProps: {
+                  title: (
+                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                  ),
+                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                  onPress: () => {
+                    removeGlobalBottomSheetModal2024(modalId);
+                  },
                 },
-              },
-            });
-          }}>
-          <Text style={styles.tip}>Is it safe to import into Rabby</Text>
-          <HelpIcon style={styles.tipIcon} />
-        </Pressable>
-      )}
+              });
+            }}>
+            <Text style={styles.tip}>Is it safe to import into Rabby</Text>
+            <HelpIcon style={styles.tipIcon} />
+          </Pressable>
+        )}
+      </LinearGradient>
     </NormalScreenContainer>
   );
 }
