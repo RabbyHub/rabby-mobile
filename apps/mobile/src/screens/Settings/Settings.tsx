@@ -83,7 +83,7 @@ import {
   useVerifyByBiometrics,
 } from '@/hooks/biometrics';
 import {
-  useIsAllowScreenshot,
+  useIsForceAllowScreenshot,
   useToggleShowAutoLockCountdown,
 } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
@@ -487,7 +487,7 @@ function DevSettingsBlocks() {
   const { startBiometricsVerification, abortBiometricsVerification } =
     useVerifyByBiometrics();
 
-  const { allowScreenshot } = useIsAllowScreenshot();
+  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
@@ -561,9 +561,9 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: allowScreenshot
-                ? `Allow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`
-                : `Disallow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`,
+              label: forceAllowScreenshot
+                ? `Force Allow Capture`
+                : `Disallow Capture Sensitive Scene`,
               icon: isIOS ? RcScreenRecord : RcScreenshot,
               rightNode: (
                 <SwitchAllowScreenshot ref={switchAllowScreenshotRef} />

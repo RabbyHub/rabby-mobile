@@ -30,6 +30,7 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RNTimeChanged from '@/core/native/RNTimeChanged';
 import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
 import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
+import { useIsForceAllowScreenshot } from './appSettings';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -322,10 +323,13 @@ export function useAtSensitiveScene() {
  * @description call this hook only once on the top level of your app
  */
 export function useAppPreventScreenshotOnScreen() {
-  const { atSensitiveScene, $protectedConf, anySensitiveModalOpened } =
-    useAtSensitiveScene();
+  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
 
-  usePreventScreenshot(atSensitiveScene);
+  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
+  const shouldPreventScreenCapturing =
+    atSensitiveScene && !forceAllowScreenshot;
+
+  usePreventScreenshot(shouldPreventScreenCapturing);
 
   const { isBeingCaptured } = useIOSScreenRecording({
     isTop: true,
@@ -337,12 +341,16 @@ export function useAppPreventScreenshotOnScreen() {
     if (!IS_IOS) return;
     if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
 
-    if (isBeingCaptured && atSensitiveScene) {
+    if (isBeingCaptured && shouldPreventScreenCapturing) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScene]);
+  }, [
+    $protectedConf.iosBlurType,
+    isBeingCaptured,
+    shouldPreventScreenCapturing,
+  ]);
 }
 
 if (__DEV__) {
