@@ -32,7 +32,7 @@ const getStyle = createGetStyles2024(colors => ({
     marginTop: 23,
   },
   container: {
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors.colors2024['neutral-bg-1'],
     paddingTop: 24,
     height: '100%',
     paddingHorizontal: 20,
@@ -120,6 +120,14 @@ export const BackupUnlockScreen: React.FC<Props> = ({
             // initialPasswordVisible
             as={'BottomSheetTextInput'}
             fieldName="Enter the Password to Confirm"
+            containerStyle={Object.assign(
+              {},
+              error
+                ? {}
+                : {
+                    borderColor: 'transparent',
+                  },
+            )}
             inputProps={{
               value: password,
               secureTextEntry: true,

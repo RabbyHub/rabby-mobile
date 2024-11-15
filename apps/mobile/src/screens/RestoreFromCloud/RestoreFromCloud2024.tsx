@@ -59,7 +59,7 @@ export const RestoreFromCloud2024: React.FC<{
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024,
       bottomSheetModalProps: {
-        snapPoints: [460],
+        snapPoints: [502],
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },

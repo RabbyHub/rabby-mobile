@@ -107,7 +107,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
             // initialPasswordVisible
             as={'BottomSheetTextInput'}
             containerStyle={styles.inputStyle}
-            fieldName="New password"
+            fieldName="Enter the Password to Confirm"
             inputProps={{
               value: password,
               secureTextEntry: true,
