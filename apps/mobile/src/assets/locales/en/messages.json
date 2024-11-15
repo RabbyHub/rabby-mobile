@@ -1370,6 +1370,10 @@
         "savedPhrase": "I've Saved the Phrase",
         "Verify": "Verify",
         "createdSuccessfully": "Created successfully!",
+        "createNewSeedPhrase": "Create New Seed Phrase",
+        "createNewDesc": "Create new seed phrase and an new address",
+        "createOnCurrent": "Create on Current Seed Phrase",
+        "createOnCurrentDesc": "Create address on one of your imported seed phrase",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
       },
       "addAddress": {

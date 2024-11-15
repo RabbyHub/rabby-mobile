@@ -78,6 +78,7 @@ function CreateSelectOnCurrentSeed(): JSX.Element {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   main: {
     // paddingHorizontal: 20,
+    // paddingBottom: 20,
     width: '100%',
     marginTop: 32,
   },
@@ -100,7 +101,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingBottom: 20,
+    // marginBottom: 20,
   },
 }));
 

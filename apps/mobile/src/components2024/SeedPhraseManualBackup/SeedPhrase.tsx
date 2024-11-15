@@ -305,6 +305,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
           passphrase,
           accountsToCreate,
           false,
+          true,
         );
         keyringService.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {

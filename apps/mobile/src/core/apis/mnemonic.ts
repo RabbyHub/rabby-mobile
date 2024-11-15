@@ -283,6 +283,7 @@ export const activeAndPersistAccountsByMnemonics = async (
   passphrase: string,
   accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
   addDefaultAlias = false,
+  needRemoveEmptyKeyrings?: boolean,
 ) => {
   const keyring = getKeyringByMnemonic(mnemonics, passphrase);
 
@@ -309,6 +310,8 @@ export const activeAndPersistAccountsByMnemonics = async (
   if (detail?.basePublicKey) {
     hdKeyringService.addUnixRecord(detail.basePublicKey);
   }
+
+  needRemoveEmptyKeyrings && (await keyringService.removeEmptyKeyrings());
 
   await keyringService.persistAllKeyrings();
 

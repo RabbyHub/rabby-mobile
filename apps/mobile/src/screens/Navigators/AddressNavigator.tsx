@@ -223,7 +223,6 @@ export function AddressNavigator() {
         name={RootNames.CreateSelectMethod}
         component={CreateSelectMethod}
         options={mergeScreenOptions({
-          headerLeft: () => null,
           headerTitle: '1. Select Creation Method',
           title: '1. Select Creation Method',
           headerTintColor: colors2024['neutral-title-1'],
@@ -237,7 +236,6 @@ export function AddressNavigator() {
         name={RootNames.CreateNewAddress}
         component={CreateNewAddress}
         options={mergeScreenOptions({
-          headerLeft: () => null,
           headerTitle: '1. Name Your Address',
           title: '1. Name Your Address',
           headerTintColor: colors2024['neutral-title-1'],
@@ -251,7 +249,6 @@ export function AddressNavigator() {
         name={RootNames.CreateSelectOnCurrentSeed}
         component={CreateSelectOnCurrentSeed}
         options={mergeScreenOptions({
-          headerLeft: () => null,
           headerTitle: '2. Add Address',
           title: '2. Add Address',
           headerTintColor: colors2024['neutral-title-1'],
@@ -265,7 +262,6 @@ export function AddressNavigator() {
         name={RootNames.SetPassword2024}
         component={SetPassword2024}
         options={mergeScreenOptions({
-          headerLeft: () => null,
           headerTitle: '2. Set password',
           title: '2. Set password',
           headerTintColor: colors2024['neutral-title-1'],
@@ -279,7 +275,6 @@ export function AddressNavigator() {
         name={RootNames.CreateChooseBackup}
         component={CreateChooseBackup}
         options={mergeScreenOptions({
-          headerLeft: () => null,
           headerTitle: '3. Choose a backup method',
           title: '3. Choose a backup method',
           headerStyle: {

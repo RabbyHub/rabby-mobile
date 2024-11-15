@@ -74,23 +74,25 @@ function MainListBlocks() {
           style={[styles.listItem, styles.marginTop]}
           onPress={handleCreateNewSeed}>
           <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>Create New Seed Phrase</Text>
+            <Text style={styles.titleText}>
+              {t('page.nextComponent.createNewAddress.createNewSeedPhrase')}
+            </Text>
             <IcRightArrow />
           </View>
           <Text style={styles.tipText}>
-            {'Create new seed phrase and an new address'}
+            {t('page.nextComponent.createNewAddress.createNewDesc')}
           </Text>
         </Card>
         {Boolean(seedPhraseList.length) && (
           <Card style={styles.listItem} onPress={handleCreateCurrentSeed}>
             <View style={styles.titleContainer}>
               <Text style={styles.titleText}>
-                Create on Current Seed Phrase{' '}
+                {t('page.nextComponent.createNewAddress.createOnCurrent')}
               </Text>
               <IcRightArrow />
             </View>
             <Text style={styles.tipText}>
-              {'Create address on one of your imported seed phrase'}
+              {t('page.nextComponent.createNewAddress.createOnCurrentDesc')}
             </Text>
           </Card>
         )}
