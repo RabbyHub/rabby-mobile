@@ -4,7 +4,11 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import _ from 'lodash';
@@ -138,13 +142,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rootContainer: {
     paddingHorizontal: 24,
-    paddingBottom: SIZES.btnContainerBottom,
+    paddingBottom: 0,
+    overflow: 'hidden',
     height: '100%',
-    position: 'relative',
+    // position: 'relative',
     display: 'flex',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
     // ...makeDebugBorder('red'),
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: 'green',
+    // }),
   },
   container: {
     flexShrink: 1,
@@ -153,18 +161,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'column',
     height: '100%',
     width: '100%',
-    // ...makeDebugBorder('yellow'),
   },
   btnWrapper: {
     flexShrink: 0,
-    height: 56,
-    marginTop: SIZES.btnContainerTopOffset,
-    // position: 'absolute',
-    // bottom: 35,
+    paddingTop: SIZES.btnContainerTopOffset,
+    paddingBottom: SIZES.btnContainerBottom, // original, will be overidden in `style`
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: 'red',
+    // }),
   },
   btnContainer: {
     width: '100%',
-    height: '100%',
+    height: 56,
   },
   content: {
     width: '100%',
@@ -233,7 +241,7 @@ interface Props {
 
 const SIZES = {
   btnContainerTopOffset: 28,
-  btnContainerBottom: 35,
+  btnContainerBottom: 56,
 };
 
 export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
@@ -339,11 +347,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const WordMatrixWrapper = isHidden ? View : BottomSheetScrollView;
 
   return (
-    <View
-      style={[
-        styles.rootContainer,
-        { paddingBottom: safeSizes.btnContainerBottom },
-      ]}>
+    <View style={[styles.rootContainer]}>
       <View style={[styles.container]}>
         <BottomSheetHandlableView>
           <AppBottomSheetModalTitle
@@ -406,7 +410,11 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
           />
         </WordMatrixWrapper>
       </View>
-      <View style={[styles.btnWrapper]}>
+      <View
+        style={[
+          styles.btnWrapper,
+          { paddingBottom: safeSizes.btnContainerBottom },
+        ]}>
         {!isHidden && (
           <Button
             containerStyle={styles.btnContainer}
