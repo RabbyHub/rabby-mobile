@@ -27,7 +27,7 @@ import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
+import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner2024';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useLoadLockInfo } from '@/hooks/useLock';
