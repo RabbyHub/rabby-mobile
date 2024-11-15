@@ -59,10 +59,9 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 1,
     borderStyle: 'solid',
     display: 'flex',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    width: '100%',
     position: 'relative',
   },
   arrow: {
