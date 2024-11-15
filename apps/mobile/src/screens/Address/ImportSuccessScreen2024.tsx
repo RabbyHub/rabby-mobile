@@ -7,7 +7,7 @@ import {
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import {
   Dimensions,
@@ -51,6 +51,7 @@ export const ImportSuccessScreen2024 = () => {
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
+  const [animationFinished, setAnimationFinished] = useState(false);
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess2024)?.params,
@@ -176,16 +177,21 @@ export const ImportSuccessScreen2024 = () => {
           <Lottie
             source={AnimationImportSuccess}
             style={[
-              styles.animationLottie /* animationFinished && styles.hideAnimation */,
+              styles.animationLottie,
+              animationFinished &&
+                importAddresses.length > 2 &&
+                styles.hideAnimation,
             ]}
             onAnimationFinish={() => {
               setTimeout(() => {
                 inputRef.current?.focus();
+                setAnimationFinished(true);
               }, 500);
             }}
             onAnimationFailure={() => {
               setTimeout(() => {
                 inputRef.current?.focus();
+                setAnimationFinished(true);
               }, 500);
             }}
             // duration={3000}
