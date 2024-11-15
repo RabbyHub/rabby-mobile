@@ -659,6 +659,11 @@ const Swap = () => {
       <MiniApproval
         visible={isShowSign}
         txs={txs}
+        ga={{
+          category: 'Swap',
+          source: 'swap',
+          // trigger: rbiSource,
+        }}
         onReject={() => {
           setIsShowSign(false);
           mutateTxs([]);

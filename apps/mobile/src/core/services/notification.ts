@@ -57,6 +57,7 @@ export type StatsData = {
   trigger: any;
   reported: boolean;
   signMethod?: string;
+  networkType?: string;
 };
 
 type RequestApprovalParamBase = {
