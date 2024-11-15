@@ -214,7 +214,6 @@ export const Button = ({
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     position: 'relative',
-    overflow: 'hidden',
     display: 'flex',
     gap: 8,
   },
@@ -231,19 +230,21 @@ const getStyle = createGetStyles2024(ctx => ({
   shadowButton: {
     position: 'absolute',
     top: 0,
+    borderRadius: 100,
+    backgroundColor: '#fff',
     left: 0,
     right: 0,
     bottom: 0,
     zIndex: -1,
     ...Platform.select({
       ios: {
-        shadowColor: ctx.colors2024['brand-default'], // 阴影颜色
-        shadowOffset: { width: 0, height: 8 }, // 阴影偏移
-        shadowOpacity: 0.1, // 阴影透明度
-        shadowRadius: 24, // 阴影模糊半径
+        shadowColor: ctx.colors2024['brand-default'],
+        shadowOffset: { width: 0, height: 8 },
+        shadowRadius: 24,
+        shadowOpacity: 0.1,
       },
       android: {
-        elevation: 10, // Android 中的阴影效果
+        elevation: 10,
       },
     }),
   },
