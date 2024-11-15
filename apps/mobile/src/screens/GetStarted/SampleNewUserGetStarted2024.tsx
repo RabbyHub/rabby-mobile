@@ -16,6 +16,7 @@ import {
 import { useAppUnlocked } from '@/hooks/useLock';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
+import { trigger } from 'react-native-haptic-feedback';
 
 function SampleGetStartedScreen2024(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -51,6 +52,10 @@ function SampleGetStartedScreen2024(): JSX.Element {
   }, [getStaretd.processedInit]);
 
   const handleGoToImport = useCallback(async () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     if (!getStaretd.processedInit) return;
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);

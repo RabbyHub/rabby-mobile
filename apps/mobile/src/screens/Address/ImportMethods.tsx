@@ -23,6 +23,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { trigger } from 'react-native-haptic-feedback';
 
 function ImportMethods(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -52,6 +53,10 @@ function ImportMethods(): JSX.Element {
             style={styles.importItem}
             hasArrow={state?.hasCurrentAddress}
             onPress={() => {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
               if (
                 // only has address in this set password
                 state?.hasCurrentAddress &&
@@ -72,6 +77,10 @@ function ImportMethods(): JSX.Element {
             hasArrow={state?.hasCurrentAddress}
             style={styles.importItem}
             onPress={() => {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
               if (
                 state?.hasCurrentAddress &&
                 shouldRedirectToSetPasswordBefore2024({
@@ -131,6 +140,10 @@ function ImportMethods(): JSX.Element {
               hasArrow={state?.hasCurrentAddress}
               style={styles.importItem}
               onPress={() => {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
                 navigate(RootNames.StackAddress, {
                   screen: RootNames.ImportHardwareAddress,
                 });

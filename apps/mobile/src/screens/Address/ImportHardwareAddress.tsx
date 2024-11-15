@@ -19,6 +19,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiKeystone } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { trigger } from 'react-native-haptic-feedback';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -39,6 +40,10 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
 
   const handleLedger = React.useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_LEDGER,
       bottomSheetModalProps: {
@@ -61,6 +66,10 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   const goImport = useImportKeystone();
 
   const handleKeystone = React.useCallback(async () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     matomoRequestEvent({
       category: 'Import Address',
       action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
@@ -88,6 +97,10 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   }, [goImport]);
 
   const handleOneKey = React.useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_ONEKEY,
       bottomSheetModalProps: {

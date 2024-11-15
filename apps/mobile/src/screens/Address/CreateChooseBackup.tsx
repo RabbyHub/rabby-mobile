@@ -15,6 +15,7 @@ import { RootNames } from '@/constant/layout';
 import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
 import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
 import { useNavigationState } from '@react-navigation/native';
+import { trigger } from 'react-native-haptic-feedback';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -45,6 +46,10 @@ function MainListBlocks() {
   console.log('state3', state);
 
   const handleBackupToCloud = React.useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD,
       bottomSheetModalProps: {
@@ -60,6 +65,10 @@ function MainListBlocks() {
   }, [state]);
 
   const handleBackupToPaper = React.useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP,
       bottomSheetModalProps: {
