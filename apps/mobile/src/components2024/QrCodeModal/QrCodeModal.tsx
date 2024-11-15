@@ -17,7 +17,7 @@ export const QrCodeModal: React.FC = () => {
       style={styles.root}
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={() => {
         setVisible(false);
       }}>

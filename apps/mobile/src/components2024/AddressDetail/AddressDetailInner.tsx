@@ -97,7 +97,7 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
         <Card
           style={styles.card}
           onPress={() => {
-            removeAccount({ account });
+            removeAccount({ account, onFinished: onCancel });
           }}>
           <Item
             label="Delete Address"

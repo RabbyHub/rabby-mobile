@@ -11,7 +11,7 @@ import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAliasNameEditModal } from '../AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '@/screens/Address/useAddressDetailModal';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -20,6 +20,11 @@ export interface Props {
 
 // eslint-disable-next-line react-native/no-inline-styles
 const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
+
+const ItemFooterComponent = () => {
+  // eslint-disable-next-line react-native/no-inline-styles
+  return <View style={{ height: 56 }} />;
+};
 
 export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const { accounts } = useAccounts({
@@ -48,14 +53,16 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
   const showAddressDetail = useAddressDetailModal();
+  const list = useSortAddressList(accountList);
 
   return (
-    <BottomSheetScrollView style={styles.root}>
+    <View style={styles.root}>
       <FlatList
         style={styles.list}
-        data={accountList}
+        data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         ItemSeparatorComponent={ItemSeparatorComponent}
+        ListFooterComponent={ItemFooterComponent}
         renderItem={({ item: account }) => (
           <View style={styles.addressItem} key={account.type + account.address}>
             <View style={styles.itemLeft}>
@@ -101,16 +108,16 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
           </View>
         )}
       />
-    </BottomSheetScrollView>
+    </View>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    paddingHorizontal: 16,
+    paddingLeft: 16,
   },
   list: {
-    marginBottom: 56,
+    paddingRight: 16,
   },
   addressItem: {
     borderRadius: 30,
@@ -120,7 +127,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-3'],
+    height: 94,
   },
   itemLeft: {
     flexDirection: 'row',

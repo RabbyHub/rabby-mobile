@@ -44,7 +44,7 @@ export const AddressItem = (props: AddressItemProps) => {
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'Edit',
+        title: 'Edit name',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
@@ -56,7 +56,7 @@ export const AddressItem = (props: AddressItemProps) => {
       },
 
       {
-        title: 'Address Detail',
+        title: 'Address Details',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
