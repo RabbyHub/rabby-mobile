@@ -3,8 +3,8 @@ apply from: file("../node_modules/@react-native-community/cli-platform-android/n
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
 
-include ':react-native-splash-screen'
-project(':react-native-splash-screen').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-splash-screen/android')
+// include ':react-native-splash-screen'
+// project(':react-native-splash-screen').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-splash-screen/android')
 
 // include ':isudaji_react-native-install-apk'
 // project(':isudaji_react-native-install-apk').projectDir = new File(rootProject.projectDir, 	'../node_modules/@isudaji/react-native-install-apk/android')

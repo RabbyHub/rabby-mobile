@@ -1,29 +1,24 @@
 import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 
-const EntryScriptWeb3 = {
-  entryScriptWeb3: null as string | null,
+class EntryScriptWeb3Cls {
+  #entryScriptWeb3Promise = null as Promise<string> | null;
+
   // Cache InpageBridgeWeb3 so that it is immediately available
   async init() {
-    this.entryScriptWeb3 =
+    this.#entryScriptWeb3Promise =
       Platform.OS === 'ios'
-        ? await RNFS.readFile(
-            `${RNFS.MainBundlePath}/InpageBridgeWeb3.js`,
-            'utf8',
-          )
-        : await RNFS.readFileAssets('custom/InpageBridgeWeb3.js');
+        ? RNFS.readFile(`${RNFS.MainBundlePath}/InpageBridgeWeb3.js`, 'utf8')
+        : RNFS.readFileAssets('custom/InpageBridgeWeb3.js');
 
-    return this.entryScriptWeb3;
-  },
-  async get() {
-    // Return from cache
-    if (this.entryScriptWeb3) {
-      return this.entryScriptWeb3;
-    }
-
+    return this.#entryScriptWeb3Promise;
+  }
+  getPromise() {
     // If for some reason it is not available, get it again
-    return await this.init();
-  },
-};
+    return this.#entryScriptWeb3Promise;
+  }
+}
+
+const EntryScriptWeb3 = new EntryScriptWeb3Cls();
 
 export default EntryScriptWeb3;

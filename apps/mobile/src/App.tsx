@@ -45,7 +45,7 @@ type AppProps = { rabbitCode: string };
 
 function MainScreen({ rabbitCode }: AppProps) {
   const { isAppUnlocked } = useInitializeAppOnTop();
-  const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
+  const { securityChainOnTop } = useBootstrapApp({ rabbitCode });
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useSetupServiceStub();
@@ -73,7 +73,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   return (
     <AppProvider value={{ securityChain: securityChainOnTop }}>
       <BottomSheetModalProvider>
-        {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+        <AppNavigation colorScheme={binaryTheme} />
       </BottomSheetModalProvider>
     </AppProvider>
   );

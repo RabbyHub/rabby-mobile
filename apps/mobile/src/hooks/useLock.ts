@@ -57,7 +57,10 @@ export function usePasswordStatus() {
 }
 
 const tryAutoUnlockPromiseRef = {
-  current: apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime(),
+  // current: apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime(),
+  current: null as ReturnType<
+    typeof apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime
+  > | null,
 };
 
 /**
@@ -67,6 +70,10 @@ export function useTryUnlockAppWithBuiltinOnTop() {
   const { setAppLock } = useAppUnlocked();
 
   const getTriedUnlock = React.useCallback(async () => {
+    if (!tryAutoUnlockPromiseRef.current) {
+      tryAutoUnlockPromiseRef.current =
+        apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime();
+    }
     return tryAutoUnlockPromiseRef.current.then(async result => {
       setAppLock({
         appUnlocked: keyringService.isUnlocked(),

@@ -112,7 +112,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
   const { isTop } = options || {};
 
   React.useEffect(() => {
-    if (!isTop || entryScripts.inPageWeb3) return;
+    if (!isTop || EntryScriptWeb3.getPromise()) return;
 
     Promise.allSettled([
       EntryScriptWeb3.init(),
@@ -142,6 +142,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
   }, [entryScripts.inPageWeb3, entryScripts.vConsole]);
 
   return {
+    couldRender,
     entryScriptWeb3Loaded: [
       couldRender,
       !!entryScripts.inPageWeb3,
@@ -159,12 +160,6 @@ const hideSplashScreen = () => {
   SplashScreen.hide();
   splashScreenVisibleRef.current = false;
 };
-
-// export function useHideSplash() {
-//   React.useEffect(() => {
-//     hideSplashScreen();
-//   }, []);
-// }
 
 /**
  * @description only call this hook on the top level component
@@ -186,25 +181,26 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
 
   React.useEffect(() => {
-    Promise.allSettled([
-      getTriedUnlock(),
-      loadSecurityChain({ rabbitCode }),
-      fetchBiometrics(),
-    ])
-      .then(async ([_unlockResult, _securityChain]) => {
+    Promise.allSettled([getTriedUnlock()])
+      .then(async ([_unlockResult]) => {
+        console.debug('useBootstrapApp::finish', _unlockResult);
         setBootstrap({ couldRender: true });
       })
       .catch(err => {
-        console.error('useBootstrapApp::', err);
+        console.error('useBootstrapApp::error', err);
         setBootstrap({ couldRender: true });
       })
       .finally(() => {
         setTimeout(hideSplashScreen, 1000);
       });
-  }, [getTriedUnlock, setBootstrap, fetchBiometrics, rabbitCode]);
+  }, [getTriedUnlock, setBootstrap]);
+
+  React.useEffect(() => {
+    fetchBiometrics();
+  }, [fetchBiometrics]);
 
   return {
     couldRender,
-    securityChainOnTop: couldRender ? loadSecurityChain({ rabbitCode }) : null,
+    securityChainOnTop: loadSecurityChain({ rabbitCode }),
   };
 }

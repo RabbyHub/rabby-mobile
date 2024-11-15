@@ -33,15 +33,6 @@ export const EntryScriptVConsole = {
     ].join('\n');
     return this.entryScriptVConsole;
   },
-  async get() {
-    // Return from cache
-    if (this.entryScriptVConsole) {
-      return this.entryScriptVConsole;
-    }
-
-    // If for some reason it is not available, get it again
-    return await this.init();
-  },
 };
 
 /**
