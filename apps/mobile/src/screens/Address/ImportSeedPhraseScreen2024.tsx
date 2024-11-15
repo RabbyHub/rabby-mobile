@@ -38,7 +38,6 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    // backgroundColor: 'rgba(255, 255, 255, 1)',
   },
   container: {
     display: 'flex',

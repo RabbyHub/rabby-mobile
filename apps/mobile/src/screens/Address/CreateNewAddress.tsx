@@ -118,7 +118,6 @@ function MainListBlocks() {
     const address = accountsToCreate?.[0].address;
     console.log('requestKeyring res ', accountsToCreate, address, seedPhrase);
     setNewAddress(address);
-    // TODO: default set alias Name
     return {
       seedPhrase,
       words,

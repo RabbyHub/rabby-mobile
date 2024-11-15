@@ -3,7 +3,7 @@ import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
-import { toastIndicator } from '../Toast';
+import { toastIndicator } from '@/components2024/Toast';
 import { SvgProps } from 'react-native-svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
@@ -81,9 +81,7 @@ export const CommonSelectDeviceScreen: React.FC<Props> = ({
 
   const handlePress = React.useCallback(
     async device => {
-      toastHiddenRef.current = toastIndicator('Connecting', {
-        isTop: true,
-      });
+      toastHiddenRef.current = toastIndicator('Connecting');
       setLocked(true);
       try {
         await onSelect(device);
