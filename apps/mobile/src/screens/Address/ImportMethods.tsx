@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,7 +12,9 @@ import { RootNames } from '@/constant/layout';
 
 import SeedPhraseIcon from '@/assets2024/icons/common/seed-phrase.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
-import HardWareIcon from '@/assets2024/icons/common/hardward.svg';
+import HardWareIcon from '@/assets2024/icons/common/IconHardWare.png';
+// TODO: replace to svg
+// import HardWareIcon from '@/assets2024/icons/common/IconHardWare.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import {
   createGlobalBottomSheetModal2024,
@@ -148,7 +150,7 @@ function ImportMethods(): JSX.Element {
                   screen: RootNames.ImportHardwareAddress,
                 });
               }}>
-              <HardWareIcon style={styles.icon} />
+              <Image source={HardWareIcon} style={styles.icon} />
               <Text style={styles.importType}>Connect Hardware Wallets</Text>
             </Card>
           )}
