@@ -16,7 +16,7 @@ import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface Props {
-  onDone: (isNoMnemonic?: boolean) => void;
+  onDone: (isNoMnemonic?: boolean) => void | Promise<any>;
   paramState: {
     address: string;
     alias: string;
@@ -47,7 +47,11 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         const files = await getBackupsFromCloud([filename]);
         await decryptFiles({ password, files });
         toast.success('Backup Successful');
-        onDone();
+        const doneRes = onDone();
+        if (doneRes instanceof Promise) {
+          await doneRes;
+        }
+
         const mnemonics = seedPhrase;
         const passphrase = '';
         await activeAndPersistAccountsByMnemonics(
@@ -93,7 +97,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
 
   return (
     <View>
-      <BackupUnlockScreen onConfirm={handleUpload} />
+      <BackupUnlockScreen ignoreValidation onConfirm={handleUpload} />
       {/* {step === 'backup_uploading' && <BackupUploadScreen />}
       {step === 'backup_success' && <BackupSuccessScreen />}
       {step === 'backup_error' && (

@@ -41,7 +41,7 @@ function MainListBlocks() {
     alias: string;
     seedPhrase: string;
     accountsToCreate: any;
-    onFinish?: () => {};
+    onFinish?: () => Promise<boolean>;
   };
   console.log('state3', state);
 
@@ -58,8 +58,8 @@ function MainListBlocks() {
       },
       paramState: state,
       onDone: () => {
-        state.onFinish?.();
         removeGlobalBottomSheetModal2024(id);
+        return state.onFinish?.();
       },
     });
   }, [state]);

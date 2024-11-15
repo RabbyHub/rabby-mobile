@@ -67,9 +67,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface Props {
   onConfirm: (password: string) => void;
+  ignoreValidation?: boolean;
 }
 
-export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
+export const BackupUnlockScreen: React.FC<Props> = ({
+  onConfirm,
+  ignoreValidation,
+}) => {
   const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [error, setError] = React.useState<string>();
@@ -83,14 +87,16 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
 
     setLoading(true);
     try {
-      await keyringService.verifyPassword(password);
+      if (!ignoreValidation) {
+        await keyringService.verifyPassword(password);
+      }
       await onConfirm(password);
     } catch (e) {
       setError(t('page.unlock.password.error'));
     } finally {
       setLoading(false);
     }
-  }, [onConfirm, password, t]);
+  }, [ignoreValidation, onConfirm, password, t]);
 
   return (
     <View style={styles.container}>
