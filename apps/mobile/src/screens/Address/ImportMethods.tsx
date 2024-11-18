@@ -27,10 +27,13 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
+import { ProcDataType, useImportAddressProc } from '@/hooks/address/useNewUser';
 
 function ImportMethods(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+
+  const { startImportAddressProc } = useImportAddressProc();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
@@ -77,6 +80,8 @@ function ImportMethods(): JSX.Element {
                 ) {
                   return;
                 }
+
+                startImportAddressProc(ProcDataType.Seed, '');
                 navigate(RootNames.StackAddress, {
                   screen: RootNames.ImportMnemonic2024,
                 });
@@ -100,6 +105,8 @@ function ImportMethods(): JSX.Element {
                 ) {
                   return;
                 }
+
+                startImportAddressProc(ProcDataType.PrivateKey, '');
                 navigate(RootNames.StackAddress, {
                   screen: RootNames.ImportPrivateKey2024,
                 });
@@ -155,6 +162,8 @@ function ImportMethods(): JSX.Element {
                     enableVibrateFallback: true,
                     ignoreAndroidSystemSettings: false,
                   });
+
+                  startImportAddressProc(ProcDataType.Hardware, '');
                   navigate(RootNames.StackAddress, {
                     screen: RootNames.ImportHardwareAddress,
                   });
