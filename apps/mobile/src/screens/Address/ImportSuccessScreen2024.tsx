@@ -291,6 +291,7 @@ export const ImportSuccessScreen2024 = () => {
           containerStyle={styles.btnContainer}
           type="primary"
           title="Done"
+          noShadow={true}
           onPress={handleDone}
         />
       </View>

@@ -37,6 +37,7 @@ export type ButtonProps = Omit<
       ViewComponent?: typeof React.Component;
       disabled?: boolean;
       disableTrigger?: boolean;
+      noShadow?: boolean;
       icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
     },
   'children'
@@ -52,6 +53,7 @@ export const Button = ({
   type = 'primary',
   loading = false,
   loadingStyle,
+  noShadow = false,
   disabled = false,
   icon,
   ViewComponent = View,
@@ -164,7 +166,7 @@ export const Button = ({
     <View
       style={StyleSheet.flatten([styles.container, containerStyle])}
       testID="RABBY_BUTTON_WRAPPER">
-      {type === 'primary' && <View style={styles.shadowButton} />}
+      {type === 'primary' && !noShadow && <View style={styles.shadowButton} />}
       <TouchableComponentInternal
         onPress={handleOnPress}
         delayPressIn={0}

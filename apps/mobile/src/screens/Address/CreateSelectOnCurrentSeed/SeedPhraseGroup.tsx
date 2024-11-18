@@ -57,6 +57,7 @@ export const SeedPhraseGroup: React.FC<Props> = ({
             onAddAddress(data.publicKey!, addressArr);
           }}
           buttonStyle={styles.button}
+          noShadow={true}
           titleStyle={styles.buttonText}
           title={t('page.manageAddress.add-address')}
           icon={

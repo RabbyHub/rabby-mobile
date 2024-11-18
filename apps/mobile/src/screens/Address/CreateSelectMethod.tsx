@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import {
   View,
@@ -14,7 +14,7 @@ import { RootNames } from '@/constant/layout';
 import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
 import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
-import { useNavigationState } from '@react-navigation/native';
+import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -30,6 +30,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { IS_IOS } from '@/core/native/utils';
 import { navigate } from '@/utils/navigation';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
+import { keyringService } from '@/core/services';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -62,6 +63,10 @@ function MainListBlocks() {
       screen: RootNames.CreateSelectOnCurrentSeed,
     });
   }, []);
+
+  useFocusEffect(() => {
+    keyringService.removeEmptyKeyrings();
+  });
 
   return (
     <TouchableWithoutFeedback

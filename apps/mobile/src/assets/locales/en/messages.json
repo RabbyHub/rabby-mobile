@@ -1372,9 +1372,9 @@
         "Verify": "Verify",
         "createdSuccessfully": "Created successfully!",
         "createNewSeedPhrase": "Create New Seed Phrase",
-        "createNewDesc": "Create new seed phrase and an new address",
-        "createOnCurrent": "Create on Current Seed Phrase",
-        "createOnCurrentDesc": "Create address on one of your imported seed phrase",
+        "createNewDesc": "Generate a new seed phrase for new addresses",
+        "createOnCurrent": "Use Current Seed Phrase",
+        "createOnCurrentDesc": "Create address with an existing imported seed phrase",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
       },
       "addAddress": {
