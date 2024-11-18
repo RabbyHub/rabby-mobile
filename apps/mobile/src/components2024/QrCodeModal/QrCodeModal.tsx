@@ -6,9 +6,10 @@ import React from 'react';
 import { Modal, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { visibleAtom, dataAtom } from './useQrCodeModal';
+import CloseSVG from '@/assets2024/icons/common/close-cc.svg';
 
 export const QrCodeModal: React.FC = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [visible, setVisible] = useAtom(visibleAtom);
   const [data] = useAtom(dataAtom);
 
@@ -25,7 +26,14 @@ export const QrCodeModal: React.FC = () => {
         onPress={() => setVisible(false)}
         style={styles.overlay}>
         <View style={styles.container}>
-          <QRCode value={data} size={DeviceUtils.getDeviceWidth() - 83} />
+          <QRCode value={data} size={DeviceUtils.getDeviceWidth() - 144} />
+        </View>
+        <View style={styles.closeButton}>
+          <CloseSVG
+            color={colors2024['neutral-InvertHighlight']}
+            width={24}
+            height={24}
+          />
         </View>
       </TouchableOpacity>
     </Modal>
@@ -42,10 +50,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   container: {
-    width: DeviceUtils.getDeviceWidth() - 63,
+    width: DeviceUtils.getDeviceWidth() - 124,
     backgroundColor: 'white',
     borderRadius: 20,
     alignItems: 'center',
     padding: 10,
+  },
+  closeButton: {
+    borderRadius: 40,
+    borderColor: colors2024['neutral-InvertHighlight'],
+    borderWidth: 2,
+    padding: 8,
+    marginTop: 15,
   },
 }));

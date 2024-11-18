@@ -9,7 +9,6 @@ import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
@@ -18,6 +17,10 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { Button } from '@/components2024/Button';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import LinearGradient from 'react-native-linear-gradient';
+import { colord } from 'colord';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -69,35 +72,41 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
   }, [accounts, navigation]);
 
   return (
-    <FooterButtonScreenContainer
-      footerContainerStyle={styles.footer}
-      buttonProps={{
-        title: (
-          <View style={styles.buttonTitle}>
-            <WalletSVG
-              width={20}
-              height={20}
-              color={colors2024['brand-default']}
-            />
-            <Text style={styles.buttonTitleText}>Add an Address</Text>
-          </View>
-        ),
-        type: 'ghost',
-        onPress: gotoAddAddress,
-        buttonStyle: {
-          marginTop: 20,
-          width: 200,
-          margin: 'auto',
-          backgroundColor: 'transparent',
-        },
-      }}
-      footerBottomOffset={76}>
+    <NormalScreenContainer2024 overwriteStyle={styles.root}>
       {children}
-    </FooterButtonScreenContainer>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[
+          colord(colors2024['neutral-bg-3']).alpha(0.3).toHex(),
+          colors2024['neutral-bg-1'],
+        ]}
+        style={styles.footerShadow}
+      />
+      <View style={styles.buttonWrapper}>
+        <Button
+          buttonStyle={styles.button}
+          type="ghost"
+          onPress={gotoAddAddress}
+          title={
+            <View style={styles.buttonTitle}>
+              <WalletSVG
+                width={20}
+                height={20}
+                color={colors2024['brand-default']}
+              />
+              <Text style={styles.buttonTitleText}>Add an Address</Text>
+            </View>
+          }
+        />
+      </View>
+    </NormalScreenContainer2024>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  root: {
+    position: 'relative',
+  },
   buttonTitle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -111,5 +120,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footer: {
     alignItems: 'center',
+  },
+  footerShadow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    height: 122,
+  },
+  button: {
+    width: 200,
+    margin: 'auto',
+    backgroundColor: colors2024['neutral-bg-3'],
+  },
+  buttonWrapper: {
+    position: 'absolute',
+    zIndex: 1,
+    bottom: 56,
+    width: 200,
+    left: '50%',
+    marginLeft: -100,
   },
 }));

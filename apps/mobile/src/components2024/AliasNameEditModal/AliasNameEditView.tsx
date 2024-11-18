@@ -20,11 +20,14 @@ export const AliasNameEditView: React.FC<Props> = ({
   onChange,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [aliasName, setAliasName] = React.useState(account.aliasName);
+  const [aliasName, setAliasName] = React.useState<string>();
+  const defaultAliasName =
+    account.aliasName || ellipsisAddress(account.address || '');
+  const [placeholder, setPlaceholder] = React.useState(defaultAliasName);
 
   React.useEffect(() => {
-    setAliasName(account.aliasName);
-  }, [account.aliasName]);
+    setPlaceholder(defaultAliasName);
+  }, [defaultAliasName]);
 
   return (
     <View style={styles.itemContainer}>
@@ -38,7 +41,7 @@ export const AliasNameEditView: React.FC<Props> = ({
         autoFocus
         style={styles.inputInner}
         value={aliasName}
-        placeholder={ellipsisAddress(account.address || '')}
+        placeholder={placeholder}
         placeholderTextColor={colors2024['neutral-info']}
         onChange={nativeEvent => {
           const _aliasName = nativeEvent.nativeEvent.text;

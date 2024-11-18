@@ -41,6 +41,7 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
                 color={colors2024['neutral-body']}
                 width={20}
                 height={20}
+                style={styles.editButton}
               />
             </TouchableOpacity>
             <TouchableOpacity style={styles.addressButton} onPress={onCopy}>
@@ -79,6 +80,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   addressName: {
     color: colors2024['neutral-body'],
     fontSize: 18,
+    paddingRight: 20,
   },
   addressButton: {
     flexDirection: 'row',
@@ -104,5 +106,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  editButton: {
+    marginLeft: -20,
   },
 }));

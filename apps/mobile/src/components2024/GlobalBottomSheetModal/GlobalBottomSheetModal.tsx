@@ -19,8 +19,8 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSensitiveGlobalModalsOpened } from './security';
+import { LinearGradientContainer } from '../ScreenContainer/LinearGradientContainer';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -210,14 +210,11 @@ export const GlobalBottomSheetModal2024 = () => {
                 // eslint-disable-next-line react-native/no-inline-styles
                 style={{ flex: 1 }}
                 {...panResponder.panHandlers}>
-                <LinearGradient
+                <LinearGradientContainer
                   // eslint-disable-next-line react-native/no-inline-styles
-                  style={{ flex: 1 }}
-                  colors={
-                    isDarkTheme ? ['#131416', '#131416'] : ['#fff', '#F9F9F9']
-                  }>
+                  style={{ flex: 1 }}>
                   <ModalView {...modalViewProps} />
-                </LinearGradient>
+                </LinearGradientContainer>
               </BottomSheetView>
             }
             stackBehavior="push"

@@ -71,9 +71,6 @@ export function AddressListScreen(): JSX.Element {
 
   return (
     <AddressListScreenContainer>
-      <View style={styles.headline}>
-        <Text style={styles.headlineText}>My Address ({list?.length})</Text>
-      </View>
       <FlatList
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
@@ -85,6 +82,11 @@ export function AddressListScreen(): JSX.Element {
             <AddressItem account={item} />
           </View>
         )}
+        ListHeaderComponent={
+          <View style={styles.headline}>
+            <Text style={styles.headlineText}>My Address ({list?.length})</Text>
+          </View>
+        }
         ListFooterComponent={
           <View style={styles.footer}>
             {hasSafeAddress && (
@@ -99,6 +101,7 @@ export function AddressListScreen(): JSX.Element {
                 text={'Imported Watch-only address'}
               />
             )}
+            <View style={styles.footerGap} />
           </View>
         }
       />
@@ -108,7 +111,7 @@ export function AddressListScreen(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headline: {
-    paddingHorizontal: 28,
+    paddingHorizontal: 8,
     paddingVertical: 16,
   },
   headlineText: {
@@ -138,5 +141,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   arrow: {
     marginTop: 2,
+  },
+  footerGap: {
+    height: 150,
   },
 }));

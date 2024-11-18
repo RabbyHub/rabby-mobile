@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
@@ -21,6 +21,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-3'],
+  },
+  rootPressing: {
+    borderColor: colors2024['brand-light-2'],
   },
 }));
 
@@ -34,6 +38,7 @@ export const AddressItem = (props: AddressItemProps) => {
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
   const showAddressDetail = useAddressDetailModal();
+  const [isPressing, setIsPressing] = React.useState(false);
 
   const onDetail = useCallback(() => {
     switchAccount(account);
@@ -44,7 +49,7 @@ export const AddressItem = (props: AddressItemProps) => {
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'Edit name',
+        title: 'Edit Name',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
@@ -82,13 +87,22 @@ export const AddressItem = (props: AddressItemProps) => {
   }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
 
   return (
-    <TouchableOpacity style={styles.root} onPress={onDetail} onLongPress={noop}>
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={() => setIsPressing(true)}
+      onPressOut={() => setIsPressing(false)}
+      style={StyleSheet.flatten([
+        styles.root,
+        isPressing && styles.rootPressing,
+      ])}
+      onPress={onDetail}
+      onLongPress={noop}>
       <ContextMenuView
         menuConfig={{
           menuTitle: account.aliasName,
           menuActions: menuActions,
         }}>
-        <AddressItemInner2024 account={account} />
+        <AddressItemInner2024 isPressing={isPressing} account={account} />
       </ContextMenuView>
     </TouchableOpacity>
   );

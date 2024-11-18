@@ -18,6 +18,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     flexGrow: 1,
     height: 96,
+    backgroundColor: colors2024['neutral-bg-3'],
   },
   rootItem: {
     flexDirection: 'row',
@@ -38,6 +39,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemNameText: {
     fontSize: 17,
     lineHeight: 22,
+    fontWeight: '700',
   },
   itemNameTextHasPinned: {
     paddingRight: 52,
@@ -49,6 +51,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 17,
     lineHeight: 22,
     color: colors2024['neutral-secondary'],
+    fontWeight: '400',
   },
   itemName: {
     gap: 8,
@@ -63,15 +66,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cardPressing: {
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  arrowPressing: {
+    backgroundColor: colors2024['brand-light-1'],
+  },
 }));
 
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   hiddenArrow?: boolean;
+  isPressing?: boolean;
 }
 export const AddressItemInner2024 = (props: AddressItemProps) => {
-  const { account, style, hiddenArrow } = props;
+  const { account, style, hiddenArrow, isPressing } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -85,7 +95,12 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
   );
 
   return (
-    <Card style={StyleSheet.flatten([styles.card, style])}>
+    <Card
+      style={StyleSheet.flatten([
+        styles.card,
+        style,
+        isPressing && styles.cardPressing,
+      ])}>
       <InnerAddressItem style={styles.rootItem} account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View style={styles.item}>
@@ -109,9 +124,17 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       </InnerAddressItem>
 
       {hiddenArrow ? null : (
-        <View style={styles.arrow}>
+        <View
+          style={StyleSheet.flatten([
+            styles.arrow,
+            isPressing && styles.arrowPressing,
+          ])}>
           <ArrowRightCC
-            color={colors2024['neutral-body']}
+            color={
+              isPressing
+                ? colors2024['brand-default']
+                : colors2024['neutral-body']
+            }
             width={20}
             height={20}
           />

@@ -1,9 +1,9 @@
 import React from 'react';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { CommonAddressList } from './CommonAddressList';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 export function SafeAddressListScreen(): JSX.Element {
   const handlePress = () => {
@@ -13,12 +13,12 @@ export function SafeAddressListScreen(): JSX.Element {
   };
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer2024>
       <CommonAddressList
         type={KEYRING_CLASS.GNOSIS}
         footerButtonText="Add Safe Addresses"
         footerButtonPress={handlePress}
       />
-    </NormalScreenContainer>
+    </NormalScreenContainer2024>
   );
 }
