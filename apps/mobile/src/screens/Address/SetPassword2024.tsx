@@ -20,7 +20,6 @@ import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
 import { apisLock } from '@/core/apis';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
-import { IS_IOS } from '@/core/native/utils';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
@@ -159,6 +158,7 @@ function MainListBlocks() {
     title: string;
     hideProgress: boolean;
     delaySetPassword?: boolean;
+    hideBackIcon?: boolean;
   };
   console.log('state2', state);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -186,15 +186,6 @@ function MainListBlocks() {
     }, [fetchBiometrics]),
   );
 
-  useEffect(() => {
-    if (!state.title) {
-      return;
-    }
-    setNavigationOptions({
-      title: state.title,
-    });
-  }, [setNavigationOptions, state.title]);
-
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText style={styles.headerTitleStyle}>
@@ -204,10 +195,19 @@ function MainListBlocks() {
   }, [state.title, styles.headerTitleStyle]);
 
   React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle, state.title]);
+    setNavigationOptions(
+      Object.assign(
+        {
+          headerTitle: getHeaderTitle,
+        },
+        state.hideBackIcon
+          ? {
+              headerLeft: () => null,
+            }
+          : {},
+      ),
+    );
+  }, [setNavigationOptions, getHeaderTitle, state.title, state.hideBackIcon]);
 
   const passwordInputRef = React.useRef<TextInput>(null);
   const confirmPasswordInputRef = React.useRef<TextInput>(null);

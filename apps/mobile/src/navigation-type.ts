@@ -36,8 +36,9 @@ export type RootStackParamsList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SetPassword2024]?: {
     onFinish: () => void;
-    title: string;
-    hideProgress: boolean;
+    title?: string;
+    hideProgress?: boolean;
+    hideBackIcon?: boolean;
   };
 };
 

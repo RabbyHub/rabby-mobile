@@ -9,7 +9,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { RootNames } from '@/constant/layout';
 
 const hitSlop = {
   top: 10,
@@ -29,7 +28,7 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },
-      onCheckPassword: () => asyncSetPassword(RootNames.ImportMnemonic2024),
+      onCheckPassword: () => asyncSetPassword(),
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);

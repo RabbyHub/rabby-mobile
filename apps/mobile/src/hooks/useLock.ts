@@ -353,6 +353,7 @@ export function useSetPasswordFirst() {
         params: {
           title: 'Set Password',
           hideProgress: true,
+          hideBackIcon: true,
           onFinish: () => {
             clearTimeout(timeout);
             resolve();

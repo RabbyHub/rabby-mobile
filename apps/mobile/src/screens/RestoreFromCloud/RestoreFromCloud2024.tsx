@@ -53,9 +53,6 @@ export const RestoreFromCloud2024: React.FC<{
 
   const handleRestore = React.useCallback(async () => {
     onDone();
-    if (onCheckPassword) {
-      await onCheckPassword();
-    }
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024,
       bottomSheetModalProps: {
@@ -63,6 +60,7 @@ export const RestoreFromCloud2024: React.FC<{
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },
+      onCheckPassword,
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);

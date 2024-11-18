@@ -9,11 +9,13 @@ import { BackupRestoreScreen } from './BackupRestoreScreen2024';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
+  onCheckPassword?: () => Promise<void>;
   files: BackupData[];
 }
 
 export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
   onDone,
+  onCheckPassword,
   files,
 }) => {
   const [step, setStep] = React.useState<
@@ -44,14 +46,17 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
 
         setStep('backup_downloading');
         await new Promise(resolve => setTimeout(resolve, 500));
-        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
         onDone();
+        if (onCheckPassword) {
+          await onCheckPassword();
+        }
+        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
       } catch (e) {
         console.log('backup error', e);
         setStep('backup_error');
       }
     },
-    [files, onDone],
+    [files, onCheckPassword, onDone],
   );
 
   return (
