@@ -9,11 +9,15 @@ import { navigate, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect } from 'react';
-import { Keyboard, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  TouchableOpacity,
+  View,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
