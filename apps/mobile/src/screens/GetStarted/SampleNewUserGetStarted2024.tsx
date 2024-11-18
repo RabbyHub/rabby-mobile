@@ -17,6 +17,7 @@ import { useAppUnlocked } from '@/hooks/useLock';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { trigger } from 'react-native-haptic-feedback';
+import { ProcDataType, useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 function SampleGetStartedScreen2024(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -39,6 +40,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
     navigate(RootNames.StackRoot, { screen: RootNames.Home });
   }, [getStaretd.processedInit]);
 
+  const { startCreateAddressProc } = useCreateAddressProc();
   const handleGoToCreate = useCallback(async () => {
     if (!getStaretd.processedInit) return;
     if (!keyringService.isUnlocked()) {
@@ -46,10 +48,11 @@ function SampleGetStartedScreen2024(): JSX.Element {
       return;
     }
 
+    startCreateAddressProc(ProcDataType.Seed, '');
     navigate(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
     });
-  }, [getStaretd.processedInit]);
+  }, [getStaretd.processedInit, startCreateAddressProc]);
 
   const handleGoToImport = useCallback(async () => {
     trigger('impactLight', {

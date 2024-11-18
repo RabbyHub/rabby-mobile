@@ -34,6 +34,7 @@ export const getMnemonics = async (password: string, address: string) => {
 
   return seedWords;
 };
+export const generateMnemonic = () => keyringService.generateMnemonic();
 export const getPreMnemonics = () => keyringService.getPreMnemonics();
 export const generatePreMnemonic = () => keyringService.generatePreMnemonic();
 export const removePreMnemonics = () => keyringService.removePreMnemonics();

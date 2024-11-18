@@ -34,6 +34,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { clearCustomPassword } from '@/core/apis/lock';
 import YesIcon from '@/assets2024/icons/common/check.svg';
+import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -47,10 +48,10 @@ const INIT_FORM_DATA = __DEV__
 const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
 function useSetupPasswordForm(
-  toggleBiometrics,
-  onFinish,
-  isBiometricsEnabled,
-  delaySetPassword,
+  toggleBiometrics: ReturnType<typeof useBiometrics>['toggleBiometrics'],
+  onFinish: (cb?: Function) => void,
+  isBiometricsEnabled: boolean,
+  delaySetPassword?: boolean,
 ) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
@@ -88,6 +89,7 @@ function useSetupPasswordForm(
 
   const { fetchLockInfo } = useLoadLockInfo();
 
+  const { storePassword } = useCreateAddressProc();
   const formik = useAppFormik({
     initialValues: yupSchema.getDefault(),
     validationSchema: yupSchema,
@@ -106,6 +108,12 @@ function useSetupPasswordForm(
         duration: 1e6,
         position: toast.positions.CENTER,
         hideOnPress: false,
+      });
+
+      storePassword({
+        password: values.password,
+        confirmPassword: values.confirmPassword,
+        enableBiometrics: isBiometricsEnabled,
       });
 
       const updatePassword = async () => {
@@ -173,6 +181,7 @@ function MainListBlocks() {
     fetchBiometrics,
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
+
   const { formik, shouldDisabled } = useSetupPasswordForm(
     toggleBiometrics,
     state.onFinish,

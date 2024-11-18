@@ -986,7 +986,10 @@ export class KeyringService extends RNEventEmitter {
     return bip39.generateMnemonic(wordlist);
   }
 
-  async generatePreMnemonic(): Promise<string> {
+  async generatePreMnemonic(options?: {
+    /** @default {true} */
+    persist?: boolean;
+  }): Promise<string> {
     if (!this.#password) {
       throw new Error('background.error.unlock');
     }

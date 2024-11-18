@@ -37,6 +37,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import LinearGradient from 'react-native-linear-gradient';
 import { replaceToFirst } from '@/utils/navigation';
+import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 const MAX_ACCOUNT_COUNT = 50;
 
@@ -86,7 +87,7 @@ function MainListBlocks() {
 
   const { value, loading, error } = useAsync(async () => {
     let seedPhrase = '';
-    let accountsToCreate;
+    let accountsToCreate: any[] | undefined = [];
     if (state?.mnemonics) {
       seedPhrase = state?.mnemonics;
       const currentAddressArr = state?.accounts;
@@ -136,6 +137,7 @@ function MainListBlocks() {
     [styles.addressText, newAddress],
   );
 
+  const { storeSeedPharse } = useCreateAddressProc();
   const handleContinue = useCallback(() => {
     contactService.setAlias({
       address: newAddress,
@@ -155,6 +157,9 @@ function MainListBlocks() {
         },
       });
     };
+
+    if (value?.seedPhrase) storeSeedPharse(value?.seedPhrase);
+
     if (state?.noSetupPassword) {
       onSetupPasswordDone();
     } else {
@@ -166,7 +171,7 @@ function MainListBlocks() {
         },
       });
     }
-  }, [newAddress, addressAlias, value, navigation, state]);
+  }, [newAddress, addressAlias, value, navigation, state, storeSeedPharse]);
 
   const handleDone = useCallback(async () => {
     contactService.setAlias({
@@ -178,7 +183,7 @@ function MainListBlocks() {
     await activeAndPersistAccountsByMnemonics(
       state?.mnemonics || '',
       '',
-      value?.accountsToCreate,
+      value?.accountsToCreate || [],
       false,
     );
     replaceToFirst(RootNames.StackAddress, {
