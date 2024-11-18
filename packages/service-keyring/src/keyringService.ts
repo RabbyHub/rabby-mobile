@@ -150,6 +150,23 @@ export class KeyringService extends RNEventEmitter {
     this.persistAllKeyrings();
   }
 
+  /**
+   * @description on no keyrings stored, force reset password
+   *
+   * @param password
+   */
+  async resetPassword(password: string) {
+    if (this.keyrings.length) {
+      throw new Error('Cannot overwrite password with existing keyrings.');
+    }
+
+    await this._setupBoot(password);
+
+    this.keyrings = [];
+    await this.persistAllKeyrings();
+    this.memStore.updateState({ keyrings: [] });
+  }
+
   isBooted() {
     return Boolean(this.store.getState().booted);
   }

@@ -131,6 +131,19 @@ export async function updateWalletPassword(
   return result;
 }
 
+export async function forceOverwritePassword(newPassword: string) {
+  const result = getInitError(newPassword);
+  if (result.error) return result;
+
+  try {
+    await keyringService.resetPassword(newPassword);
+  } catch (error) {
+    result.error = 'Failed to reset password';
+  }
+
+  return result;
+}
+
 /**
  * @warn ONLY used in test package, not used in production
  */
