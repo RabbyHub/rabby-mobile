@@ -21,7 +21,7 @@ export const LinearGradientContainer: React.FC<Props> = ({
       style={style}
       colors={
         isDarkTheme
-          ? [colors2024['neutral-bg-3'], colors2024['neutral-bg-3']]
+          ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
           : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
       }>
       {children}
