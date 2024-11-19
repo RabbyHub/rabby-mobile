@@ -1553,7 +1553,7 @@
           "firmwareOrAppUpdateRequired": "Please update the firmware and Ethereum App on your Ledger"
         },
         "openEthApp": {
-          "title": "Connect Ledger",
+          "title": "Connecting",
           "description": "Please open Ethereum app on Ledger"
         }
       },
