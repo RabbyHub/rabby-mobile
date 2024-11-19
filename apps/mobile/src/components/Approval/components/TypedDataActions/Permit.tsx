@@ -169,14 +169,9 @@ const Permit = ({
 
           <SecurityListItem
             tip={t('page.signTx.tokenApprove.contractTrustValueTip')}
-            id="1078"
-            engineResult={engineResultMap['1078']}
-            dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
-              value: '$10,000',
-            })}
-            warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
-              value: '$100,000',
-            })}
+            id="1148"
+            engineResult={engineResultMap['1148']}
+            warningText={'$0'}
             title={t('page.signTx.trustValueTitle')}
           />
 
