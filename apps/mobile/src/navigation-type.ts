@@ -35,9 +35,10 @@ export type RootStackParamsList = {
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SetPassword2024]?: {
-    onFinish: () => void;
+    finishGoToScreen: string;
     title?: string;
     hideProgress?: boolean;
+    delaySetPassword?: boolean;
     hideBackIcon?: boolean;
   };
 };

@@ -1,6 +1,9 @@
 import { useCallback, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
+import { useBiometrics } from '../biometrics';
+import { apisLock } from '@/core/apis';
+import { toast } from '@/components2024/Toast';
 
 export const enum ProcDataType {
   Seed = 1,
@@ -15,6 +18,7 @@ type CreateAdressProcess = {
   addressList: {
     address: string;
     aliasName: string;
+    index?: number;
   }[];
 
   passwordForm: {
@@ -70,6 +74,16 @@ export function useCreateAddressProc() {
     [setCreateAddressProc],
   );
 
+  const storeAddressList = useCallback(
+    (addressList: CreateAdressProcess['addressList']) => {
+      setCreateAddressProc(prev => ({
+        ...prev,
+        addressList: addressList,
+      }));
+    },
+    [setCreateAddressProc],
+  );
+
   const resetCreateAddressProc = useCallback(() => {
     setCreateAddressProc(getDefaultCreateAddressProc());
   }, [setCreateAddressProc]);
@@ -84,27 +98,58 @@ export function useCreateAddressProc() {
     [setCreateAddressProc],
   );
 
-  const { seedPharseData, privateKeyData } = useMemo(() => {
+  const { toggleBiometrics } = useBiometrics();
+
+  const confirmPassword = useCallback(async () => {
+    const { password, enableBiometrics } = createAddressProc.passwordForm;
+    const result = await apisLock.forceOverwritePassword(password);
+    if (result.error) {
+      toast.show(result.error);
+      return false;
+    } else {
+      try {
+        await toggleBiometrics?.(Boolean(enableBiometrics), {
+          validatedPassword: password,
+        });
+        return true;
+      } catch (e) {
+        console.log('toggleBiometrics error', e);
+        toast.show('Enable biometrics fail');
+      }
+    }
+  }, [createAddressProc.passwordForm, toggleBiometrics]);
+
+  const { seedPharseData, privateKeyData, addressList } = useMemo(() => {
     return {
+      addressList:
+        createAddressProc.type === ProcDataType.Seed
+          ? createAddressProc.addressList
+          : null,
       seedPharseData:
         createAddressProc.type === ProcDataType.Seed
           ? createAddressProc.typedData
-          : null,
+          : '',
       privateKeyData:
         createAddressProc.type === ProcDataType.PrivateKey
           ? createAddressProc.typedData
           : null,
     };
-  }, [createAddressProc.type, createAddressProc.typedData]);
+  }, [
+    createAddressProc.type,
+    createAddressProc.typedData,
+    createAddressProc.addressList,
+  ]);
 
   return {
     seedPharseData,
     storeSeedPharse,
-
+    addressList,
+    storeAddressList,
     privateKeyData,
     startCreateAddressProc,
     storePassword,
     resetCreateAddressProc,
+    confirmPassword,
   };
 }
 

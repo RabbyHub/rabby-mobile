@@ -316,11 +316,7 @@ export function useSetPasswordFirst() {
           params: {
             title: 'Set Password',
             hideProgress: true,
-            onFinish: () => {
-              navigation.replace(RootNames.StackAddress, {
-                screen: backScreen,
-              });
-            },
+            finishGoToScreen: backScreen,
           },
         });
         return true;
@@ -354,15 +350,16 @@ export function useSetPasswordFirst() {
           title: 'Set Password',
           hideProgress: true,
           hideBackIcon: true,
-          onFinish: () => {
-            clearTimeout(timeout);
-            resolve();
-            if (backScreen) {
-              navigation.replace(RootNames.StackAddress, {
-                screen: backScreen,
-              });
-            }
-          },
+          finishGoToScreen: backScreen,
+          // onFinish: () => {
+          //   clearTimeout(timeout);
+          //   resolve();
+          //   if (backScreen) {
+          //     navigation.replace(RootNames.StackAddress, {
+          //       screen: backScreen,
+          //     });
+          //   }
+          // },
         },
       });
     });

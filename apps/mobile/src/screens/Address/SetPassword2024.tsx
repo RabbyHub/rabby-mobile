@@ -18,7 +18,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
-import { apisLock } from '@/core/apis';
+import { apisKeychain, apisLock } from '@/core/apis';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
@@ -35,6 +35,7 @@ import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { clearCustomPassword } from '@/core/apis/lock';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -49,7 +50,7 @@ const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
 function useSetupPasswordForm(
   toggleBiometrics: ReturnType<typeof useBiometrics>['toggleBiometrics'],
-  onFinish: (cb?: Function) => void,
+  finishGoToScreen: string,
   isBiometricsEnabled: boolean,
   delaySetPassword?: boolean,
 ) {
@@ -80,14 +81,7 @@ function useSetupPasswordForm(
     });
   }, [t, isBiometricsEnabled]);
 
-  // const navigation = useRabbyAppNavigation();
-  // const navParams = useNavigationState(
-  //   s => s.routes.find(r => r.name === RootNames.SetPassword)?.params,
-  // ) as SettingNavigatorParamList['SetPassword'] | undefined;
-
-  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
-
-  const { fetchLockInfo } = useLoadLockInfo();
+  const navigation = useRabbyAppNavigation();
 
   const { storePassword } = useCreateAddressProc();
   const formik = useAppFormik({
@@ -113,31 +107,45 @@ function useSetupPasswordForm(
       storePassword({
         password: values.password,
         confirmPassword: values.confirmPassword,
-        enableBiometrics: isBiometricsEnabled,
+        enableBiometrics: values.switch,
       });
 
       const updatePassword = async () => {
-        await clearCustomPassword(values.password);
-        const result = await apisLock.setupWalletPassword(values.password);
+        const result = await apisLock.forceOverwritePassword(values.password);
+        // await clearCustomPassword(values.password);
+        // const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
           return false;
         } else {
-          await fetchLockInfo();
-          await toggleBiometrics?.(values.switch, {
-            validatedPassword: values.password,
-          });
-          return true;
+          try {
+            await toggleBiometrics?.(values.switch, {
+              validatedPassword: values.password,
+            });
+            return true;
+          } catch (e) {
+            console.log('toggleBiometrics error', e);
+            toast.show('Enable biometrics fail');
+          }
         }
       };
+
       try {
         if (delaySetPassword) {
           toastHide();
-          onFinish(updatePassword);
+          // onFinish(updatePassword);
+          navigation.replace(RootNames.StackAddress, {
+            screen: RootNames.CreateChooseBackup,
+            params: {
+              delaySetPassword: true,
+            },
+          });
         } else {
           const success = await updatePassword();
           if (success) {
-            onFinish();
+            navigation.replace(RootNames.StackAddress, {
+              screen: finishGoToScreen as any,
+            });
             toast.success('Setup Password Successfully');
           }
         }
@@ -158,33 +166,26 @@ function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
-
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
   ) as {
-    onFinish: (cb: any) => {};
+    finishGoToScreen: string;
     title: string;
     hideProgress: boolean;
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
   };
-  console.log('state2', state);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const {
-    computed: {
-      couldSetupBiometrics,
-      isBiometricsEnabled,
-      isFaceID,
-      defaultTypeLabel,
-    },
+    computed: { defaultTypeLabel, isBiometricsEnabled, couldSetupBiometrics },
     fetchBiometrics,
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
 
   const { formik, shouldDisabled } = useSetupPasswordForm(
     toggleBiometrics,
-    state.onFinish,
+    state.finishGoToScreen,
     isBiometricsEnabled,
     state.delaySetPassword,
   );
@@ -324,7 +325,7 @@ function MainListBlocks() {
               <View style={styles.valueView}>
                 <AppSwitch2024
                   value={formik.values.switch}
-                  onValueChange={value => {
+                  onValueChange={async value => {
                     if (!couldSetupBiometrics) {
                       toast.show(
                         `your phone can not support ${defaultTypeLabel}`,

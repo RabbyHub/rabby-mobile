@@ -29,7 +29,7 @@ import {
 import { requestKeyring } from '@/core/apis/keyring';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
-import { contactService } from '@/core/services';
+import { contactService, keyringService } from '@/core/services';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useNavigationState } from '@react-navigation/native';
@@ -106,14 +106,19 @@ function MainListBlocks() {
     } else {
       // first create
       seedPhrase = await apiMnemonic.generatePreMnemonic();
+      const Keyring = keyringService.getKeyringClassForType(
+        KEYRING_CLASS.MNEMONIC,
+      ) as any;
+      const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
+      accountsToCreate = keyring?.getAddresses(0, 1);
       const { keyringId } = await generateKeyringWithMnemonic(seedPhrase, '');
-      accountsToCreate = await requestKeyring(
-        KEYRING_TYPE.HdKeyring,
-        'getAddresses',
-        keyringId ?? null,
-        0,
-        1,
-      );
+      // accountsToCreate = await requestKeyring(
+      //   KEYRING_TYPE.HdKeyring,
+      //   'getAddresses',
+      //   keyringId ?? null,
+      //   0,
+      //   1,
+      // );
     }
     const words = seedPhrase.split(' ');
     const address = accountsToCreate?.[0].address;
@@ -123,6 +128,7 @@ function MainListBlocks() {
       seedPhrase,
       words,
       accountsToCreate,
+      addressIndex: accountsToCreate?.[0].index,
     };
   });
 
@@ -137,47 +143,60 @@ function MainListBlocks() {
     [styles.addressText, newAddress],
   );
 
-  const { storeSeedPharse } = useCreateAddressProc();
+  const { storeSeedPharse, storeAddressList } = useCreateAddressProc();
   const handleContinue = useCallback(() => {
-    contactService.setAlias({
-      address: newAddress,
-      alias: addressAlias,
-    });
+    storeAddressList([
+      {
+        address: newAddress,
+        aliasName: addressAlias,
+        index: value?.addressIndex,
+      },
+    ]);
+    // contactService.setAlias({
+    //   address: newAddress,
+    //   alias: addressAlias,
+    // });
     console.log('exe handleContinue');
 
-    const onSetupPasswordDone = (cb?: () => Promise<boolean>) => {
+    if (value?.seedPhrase) {
+      storeSeedPharse(value?.seedPhrase);
+    }
+
+    if (state?.noSetupPassword) {
       navigation.replace(RootNames.StackAddress, {
         screen: RootNames.CreateChooseBackup,
         params: {
-          address: newAddress,
-          alias: addressAlias || ellipsisAddress(newAddress),
-          seedPhrase: value?.seedPhrase,
-          accountsToCreate: value?.accountsToCreate,
-          onFinish: cb,
+          // onFinish: cb,
         },
       });
-    };
-
-    if (value?.seedPhrase) storeSeedPharse(value?.seedPhrase);
-
-    if (state?.noSetupPassword) {
-      onSetupPasswordDone();
     } else {
       navigation.replace(RootNames.StackAddress, {
         screen: RootNames.SetPassword2024,
         params: {
-          onFinish: onSetupPasswordDone,
+          finishGoToScreen: RootNames.CreateChooseBackup,
+          // onFinish: onSetupPasswordDone,
           delaySetPassword: true,
         },
       });
     }
-  }, [newAddress, addressAlias, value, navigation, state, storeSeedPharse]);
+  }, [
+    newAddress,
+    addressAlias,
+    value,
+    navigation,
+    state,
+    storeSeedPharse,
+    storeAddressList,
+  ]);
 
   const handleDone = useCallback(async () => {
-    contactService.setAlias({
-      address: newAddress,
-      alias: addressAlias,
-    });
+    storeAddressList([
+      {
+        address: newAddress,
+        aliasName: addressAlias,
+        index: value?.addressIndex,
+      },
+    ]);
     console.log('exe handleDone');
 
     await activeAndPersistAccountsByMnemonics(
@@ -199,7 +218,7 @@ function MainListBlocks() {
         alias: addressAlias || ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, state, value]);
+  }, [newAddress, addressAlias, state, value, storeAddressList]);
 
   const onSubmitEditing = React.useCallback(
     (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
@@ -268,6 +287,7 @@ function MainListBlocks() {
           </>
         )}
         <Button
+          loading={loading}
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}

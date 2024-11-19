@@ -4,32 +4,46 @@ import {
   getBackupsFromCloud,
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
-import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import {
+  activeAndPersistAccountsByMnemonics,
+  addKeyringAndactiveAndPersistAccounts,
+} from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
 import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 interface Props {
-  onDone: (isNoMnemonic?: boolean) => void | Promise<any>;
-  paramState: {
-    address: string;
-    alias: string;
-    seedPhrase: string;
-    accountsToCreate: any;
-  };
+  onDone: () => void;
+  delaySetPassword?: boolean;
 }
 
 export const SeedPhraseBackupToCloud: React.FC<Props> = ({
-  onDone,
-  paramState,
+  onDone, // close modal
+  delaySetPassword,
 }) => {
-  const { seedPhrase, alias, address, accountsToCreate } = paramState;
+  const { seedPharseData, addressList, confirmPassword } =
+    useCreateAddressProc();
+
+  const {
+    seedPhrase,
+    alias,
+    address,
+    accountsToCreate = [],
+  } = useMemo(() => {
+    return {
+      seedPhrase: seedPharseData,
+      alias: addressList?.[0].aliasName || '',
+      address: addressList?.[0].address || '',
+      accountsToCreate: addressList,
+    };
+  }, [seedPharseData, addressList]);
   const { t } = useTranslation();
   const handleUpload = React.useCallback(
     async password => {
@@ -47,18 +61,30 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         const files = await getBackupsFromCloud([filename]);
         await decryptFiles({ password, files });
         toast.success('Backup Successful');
-        const doneRes = onDone();
-        if (doneRes instanceof Promise) {
-          await doneRes;
+
+        onDone();
+        if (delaySetPassword) {
+          await confirmPassword;
         }
+
+        // const doneRes = onDone();
+        // if (doneRes instanceof Promise) {
+        //   await doneRes;
+        // }
 
         const mnemonics = seedPhrase;
         const passphrase = '';
-        await activeAndPersistAccountsByMnemonics(
+        // await activeAndPersistAccountsByMnemonics(
+        //   mnemonics,
+        //   passphrase,
+        //   accountsToCreate as any,
+        //   false,
+        // );
+        await addKeyringAndactiveAndPersistAccounts(
           mnemonics,
           passphrase,
           accountsToCreate as any,
-          false,
+          true,
         );
         keyringService.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {
@@ -80,7 +106,16 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         toast.show(t('page.newAddress.seedPhrase.backupFailedTitle'));
       }
     },
-    [onDone, t, seedPhrase, address, alias, accountsToCreate],
+    [
+      onDone,
+      t,
+      seedPhrase,
+      address,
+      alias,
+      accountsToCreate,
+      confirmPassword,
+      delaySetPassword,
+    ],
   );
 
   React.useEffect(() => {
