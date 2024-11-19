@@ -22,8 +22,8 @@ const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
    *
    * for iOS, change it need restart the app
    */
-  androidForceAllowScreenCapture: !__DEV__,
-  iosForceAllowScreenRecord: !__DEV__,
+  androidForceAllowScreenCapture: false,
+  iosForceAllowScreenRecord: false,
 });
 
 const KEY = isIOS
