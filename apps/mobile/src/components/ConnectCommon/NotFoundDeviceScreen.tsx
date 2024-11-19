@@ -51,6 +51,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
   },
   footerButton: {
     marginBottom: 56,

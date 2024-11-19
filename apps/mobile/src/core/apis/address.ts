@@ -51,7 +51,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
   );
 
   if (!(await keyringService.hasAddress(account.address))) {
-    contactService.removeAlias(account.address);
+    // contactService.removeAlias(account.address);
     whitelistService.removeWhitelist(account.address);
     transactionHistoryService.removeList(account.address);
     preferenceService.removePinAddress(account);
