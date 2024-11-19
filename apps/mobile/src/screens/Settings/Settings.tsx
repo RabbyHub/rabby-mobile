@@ -36,6 +36,7 @@ import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import {
   BUILD_CHANNEL,
+  isNonPublicProductionEnv,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
@@ -571,7 +572,7 @@ function DevSettingsBlocks() {
               onPress: () => {
                 switchAllowScreenshotRef.current?.toggle();
               },
-              visible: __DEV__,
+              visible: isNonPublicProductionEnv,
             },
             {
               label: (
