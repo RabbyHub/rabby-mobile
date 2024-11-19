@@ -8,7 +8,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { findChainByEnum } from '@/utils/chain';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useDebounce, useInfiniteScroll, useSetState } from 'ahooks';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParsePossibleURL } from './useParsePossibleURL';
 
 export const useSearchDapps = () => {
@@ -17,20 +17,20 @@ export const useSearchDapps = () => {
     chain?: CHAINS_ENUM;
     searchText: string;
     isFocus: boolean;
+    loading: boolean;
   }>({
     chain: undefined,
     searchText: '',
     isFocus: false,
+    loading: false,
   });
 
   const debouncedSearchValue = useDebounce(searchState.searchText, {
     wait: 500,
-    trailing: true,
-    leading: true,
   });
   const url = useParsePossibleURL(debouncedSearchValue);
 
-  const { data, loading, loadMore } = useInfiniteScroll(
+  const { data, loadMore } = useInfiniteScroll(
     async d => {
       if (!debouncedSearchValue) {
         return {
@@ -62,6 +62,11 @@ export const useSearchDapps = () => {
       reloadDeps: [debouncedSearchValue, searchState.chain],
       isNoMore(data) {
         return !!data && (data?.list?.length || 0) >= data?.page?.total;
+      },
+      onFinally() {
+        setSearchState({
+          loading: false,
+        });
       },
     },
   );
@@ -102,7 +107,6 @@ export const useSearchDapps = () => {
     currentDapp,
     state: searchState,
     setState: setSearchState,
-    loading,
     loadMore,
     currentURL: url,
     returnKeyType,

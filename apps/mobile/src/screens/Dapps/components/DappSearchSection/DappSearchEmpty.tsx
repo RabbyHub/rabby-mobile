@@ -12,6 +12,7 @@ export const DappSearchEmpty = () => {
     <View style={styles.empty}>
       {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
       <Text style={styles.emptyText}>No Results Found</Text>
+      <Text style={styles.emptyText}>Try entering the URL directly</Text>
     </View>
   );
 };

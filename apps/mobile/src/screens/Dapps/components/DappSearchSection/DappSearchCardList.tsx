@@ -62,7 +62,13 @@ export const DappSearchCardList = ({
           <Text style={styles.listHeaderTextStrong}>
             {total != null ? total : '-'}
           </Text>{' '}
-          {Platform.OS === 'ios' ? 'Website' : 'Dapps'}
+          {Platform.OS === 'ios'
+            ? (total || 0) > 1
+              ? 'Websites'
+              : 'Website'
+            : (total || 0) > 1
+            ? 'Dapps'
+            : 'Dapp'}
         </Text>
         <TouchableOpacity
           onPress={() => {

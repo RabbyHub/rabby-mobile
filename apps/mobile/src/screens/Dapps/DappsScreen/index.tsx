@@ -90,6 +90,7 @@ export function DappsScreen(): JSX.Element {
                 searchState.setState({
                   chain: undefined,
                   searchText: v,
+                  loading: true,
                 });
               }}
               onFocus={() => {
@@ -138,11 +139,12 @@ export function DappsScreen(): JSX.Element {
             <DappSearchSection
               list={searchState.list}
               loadMore={searchState.loadMore}
-              loading={searchState.loading}
+              loading={searchState.state.loading}
               total={searchState.total}
               onChainChange={c => {
                 searchState.setState({
                   chain: c,
+                  loading: true,
                 });
               }}
               chain={searchState.state.chain}
