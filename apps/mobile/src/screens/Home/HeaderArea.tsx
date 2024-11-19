@@ -149,8 +149,12 @@ export default function HomeHeaderArea() {
         <View style={styles.rightActionsBox}>
           <TouchableView
             onPress={() => {
-              navigation.push(RootNames.StackTransaction, {
-                screen: RootNames.GasAccount,
+              // navigation.push(RootNames.StackTransaction, {
+              //   screen: RootNames.GasAccount,
+              //   params: {},
+              // });
+              navigation.replace(RootNames.StackAddress, {
+                screen: RootNames.MultiAddressHome,
                 params: {},
               });
             }}>

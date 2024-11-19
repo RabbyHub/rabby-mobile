@@ -68,6 +68,7 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
+  [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {};
   [RootNames.SetPassword2024]?: {};
   [RootNames.ImportSafeAddress2024]?: {};
