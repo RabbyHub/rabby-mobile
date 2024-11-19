@@ -4,27 +4,22 @@
  *
  * @format
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { SafeAreaView, View, Text } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 
 import HeaderArea from './MultiAddressHeaderArea';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
-import { AssetContainer } from './AssetContainer';
-
-import { HomeTopArea } from './components/HomeTopArea';
 import { useMemoizedFn } from 'ahooks';
 import { keyringService } from '@/core/services';
 import { RootNames } from '@/constant/layout';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import {
   createGetStyles,
   createGetStyles2024,
   makeDebugBorder,
 } from '@/utils/styles';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
@@ -84,7 +79,6 @@ const MENU_ARR = [
 function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -101,32 +95,30 @@ function MultiAddressHome(): JSX.Element {
     disableAutoFetch: true,
   });
 
+  const HeaderTitle = useMemo(
+    () => (
+      <MultiAddressHome.HeaderArea
+        key={currentAccount?.address}
+        accountLen={filterAccounts.length}
+      />
+    ),
+    [filterAccounts.length, currentAccount?.address],
+  );
+
   React.useEffect(() => {
     setNavigationOptions({
-      headerTitle: () => (
-        <MultiAddressHome.HeaderArea
-          key={currentAccount?.address}
-          accountLen={filterAccounts.length}
-        />
-      ),
+      headerTitle: () => HeaderTitle,
       headerLeft: () => null,
       headerRight: () => null,
       headerStyle: {
         backgroundColor: colors2024['neutral-bg-1'],
       },
     });
-  }, [
-    colors,
-    currentAccount?.address,
-    navigation,
-    setNavigationOptions,
-    filterAccounts.length,
-    colors2024,
-  ]);
+  }, [colors, navigation, setNavigationOptions, HeaderTitle, colors2024]);
 
   const init = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (!accounts?.length) {
+    const resAccounts = await keyringService.getAllVisibleAccountsArray();
+    if (!resAccounts?.length) {
       navigation.dispatch(
         StackActions.replace(RootNames.StackGetStarted, {
           screen: RootNames.GetStartedScreen2024,
