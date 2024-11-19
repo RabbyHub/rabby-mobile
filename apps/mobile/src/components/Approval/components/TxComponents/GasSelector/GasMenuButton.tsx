@@ -4,14 +4,7 @@ import GasLevelFastSVG from '@/assets/icons/sign/gas-level-fast.svg';
 import GasLevelNormalSVG from '@/assets/icons/sign/gas-level-normal.svg';
 import GasLevelInstantSVG from '@/assets/icons/sign/gas-level-instant.svg';
 import ArrowSVG from '@/assets/icons/sign/arrow-cc.svg';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Touchable,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
 import {
   useGetBinaryMode,
   useThemeColors,
@@ -23,8 +16,8 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { Skeleton } from '@rneui/themed';
-import { MenuView, MenuAction } from '@react-native-menu/menu';
 import React from 'react';
+import * as DropdownMenu from 'zeego/dropdown-menu';
 
 interface Props {
   gasList: GasLevel[];
@@ -82,7 +75,7 @@ export const GasMenuButton: React.FC<Props> = ({
             ? `${gwei} Gwei`
             : undefined,
         state: gas.level === selectedGas?.level ? 'on' : 'off',
-      } as MenuAction;
+      };
     });
 
     if (Platform.OS === 'android') {
@@ -92,8 +85,10 @@ export const GasMenuButton: React.FC<Props> = ({
     return list;
   }, [colors, gasList, selectedGas?.level, showCustomGasPrice, t]);
   const onPressAction = React.useCallback(
-    ({ nativeEvent: { event } }) => {
-      const id = event;
+    ({ state, id }) => {
+      if (state !== 'on') {
+        return;
+      }
       const gas = gasList.find(g => g.level === id);
       if (gas) {
         onSelect(gas);
@@ -140,14 +135,39 @@ export const GasMenuButton: React.FC<Props> = ({
     return Content;
   }
   return (
-    <MenuView
-      title={t('page.sign.transactionSpeed')}
-      actions={actions}
-      shouldOpenOnLongPress={false}
-      themeVariant={mode ?? 'light'}
-      onPressAction={onPressAction}>
-      {Content}
-    </MenuView>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger action="press">{Content}</DropdownMenu.Trigger>
+      <DropdownMenu.Content
+        loop
+        alignOffset={5}
+        avoidCollisions
+        side
+        align
+        collisionPadding={0}
+        sideOffset={0}>
+        <DropdownMenu.Label>
+          {t('page.sign.transactionSpeed')}
+        </DropdownMenu.Label>
+        {actions.map(action => (
+          <DropdownMenu.CheckboxItem
+            onValueChange={state => onPressAction({ state, id: action.id })}
+            value={action.state as any}
+            key={action.id}>
+            <DropdownMenu.ItemTitle
+              style={{
+                color: action.titleColor,
+              }}>
+              {action.title}
+            </DropdownMenu.ItemTitle>
+            {action.subtitle ? (
+              <DropdownMenu.ItemSubtitle>
+                {action.subtitle}
+              </DropdownMenu.ItemSubtitle>
+            ) : null}
+          </DropdownMenu.CheckboxItem>
+        ))}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
   );
 };
 
