@@ -2,7 +2,13 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import {
   createGetStyles2024,
@@ -16,8 +22,11 @@ import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { toast } from '@/components2024/Toast';
-import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { toast, toastWithIcon } from '@/components2024/Toast';
+import {
+  activeAndPersistAccountsByMnemonics,
+  addKeyringAndactiveAndPersistAccounts,
+} from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
 import { type Account } from '@/core/services/preference';
 import { RootNames } from '@/constant/layout';
@@ -25,6 +34,8 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { apiMnemonic, apisLock } from '@/core/apis';
+import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
@@ -231,12 +242,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface Props {
   onConfirm: () => void;
-  paramState: {
-    address: string;
-    alias: string;
-    seedPhrase: string;
-    accountsToCreate?: Required<Pick<Account, 'address' | 'aliasName'>>[];
-  };
+  delaySetPassword?: boolean;
 }
 
 const SIZES = {
@@ -244,16 +250,33 @@ const SIZES = {
   btnContainerBottom: 56,
 };
 
-export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
+export const SeedPhrase: React.FC<Props> = ({
+  onConfirm, // close modal
+  delaySetPassword,
+}) => {
   const { styles } = useTheme2024({ getStyle });
+  const { seedPharseData, addressList, confirmPassword } =
+    useCreateAddressProc();
   const { t } = useTranslation();
   const [isHidden, setIsHidden] = React.useState(true);
   const [isSelect, setIsSelect] = React.useState(false);
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
   const appThemeMode = useGetBinaryMode();
-  const { seedPhrase, alias, address, accountsToCreate = [] } = paramState;
-
+  const {
+    seedPhrase,
+    alias,
+    address,
+    accountsToCreate = [],
+  } = useMemo(() => {
+    return {
+      seedPhrase: seedPharseData,
+      alias: addressList?.[0].aliasName || '',
+      address: addressList?.[0].address || '',
+      accountsToCreate: addressList,
+    };
+  }, [seedPharseData, addressList]);
+  const [loading, setLoading] = React.useState(false);
   const [shuffleCount, setShuffleCount] = React.useState(0);
   const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -262,6 +285,13 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
     () => _.sortBy(_.shuffle(_.range(1, words.length + 1)).slice(0, 3)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [words, shuffleCount],
+  );
+
+  console.log(
+    'verfiy word: ',
+    words[shuffledNumbers[0] - 1],
+    words[shuffledNumbers[1] - 1],
+    words[shuffledNumbers[2] - 1],
   );
   const onSelect = useCallback(
     (index: number) => {
@@ -299,14 +329,34 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
     if (validate()) {
       const mnemonics = seedPhrase;
       const passphrase = '';
+      setLoading(true);
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={{ marginRight: 6 }} />
+      ))('Setting up address', {
+        duration: 1e6,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
       try {
-        await activeAndPersistAccountsByMnemonics(
+        await new Promise(resolve => setTimeout(resolve, 1));
+        onConfirm?.();
+        if (delaySetPassword) {
+          await confirmPassword();
+        }
+        await addKeyringAndactiveAndPersistAccounts(
           mnemonics,
           passphrase,
-          accountsToCreate,
-          false,
+          accountsToCreate as any,
           true,
         );
+        // await apiMnemonic.generateKeyringWithMnemonic(mnemonics, '');
+        // await activeAndPersistAccountsByMnemonics(
+        //   mnemonics,
+        //   passphrase,
+        //   accountsToCreate as any,
+        //   false,
+        //   true,
+        // );
         keyringService.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
@@ -322,13 +372,16 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
             alias,
           },
         });
-        onConfirm?.();
       } catch (e) {
         console.log('addMnemonicKeyringAndGotoSuccessScreen error', e);
+      } finally {
+        setLoading(false);
+        toastHide();
       }
     } else {
       toast.show('Verification failed');
       setShuffleCount(val => val + 1);
+      setSelectArr([]);
     }
   });
 
@@ -419,6 +472,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         {!isHidden && (
           <Button
             containerStyle={styles.btnContainer}
+            loading={currentSelecting ? loading : false}
             type="primary"
             title={
               currentSelecting

@@ -5,16 +5,12 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  paramState: {
-    address: string;
-    alias: string;
-    seedPhrase: string;
-  };
+  delaySetPassword?: boolean;
 }
 
 export const SeedPhraseManualBackup: React.FC<Props> = ({
   onDone,
-  paramState,
+  delaySetPassword,
 }) => {
   const [step, setStep] = React.useState<'read_risk' | 'seed_phrase'>(
     'read_risk',
@@ -48,7 +44,10 @@ export const SeedPhraseManualBackup: React.FC<Props> = ({
 
   return (
     <BottomSheetView>
-      <Components onConfirm={handleNextTick} paramState={paramState} />
+      <Components
+        onConfirm={handleNextTick}
+        delaySetPassword={delaySetPassword}
+      />
     </BottomSheetView>
   );
 };

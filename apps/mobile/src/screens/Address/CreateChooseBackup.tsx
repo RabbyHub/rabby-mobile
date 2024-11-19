@@ -37,11 +37,7 @@ function MainListBlocks() {
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.CreateChooseBackup)?.params,
   ) as {
-    address: string;
-    alias: string;
-    seedPhrase: string;
-    accountsToCreate: any;
-    onFinish?: () => Promise<boolean>;
+    delaySetPassword?: boolean;
   };
   console.log('state3', state);
 
@@ -56,10 +52,9 @@ function MainListBlocks() {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },
-      paramState: state,
+      delaySetPassword: state?.delaySetPassword,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
-        return state.onFinish?.();
       },
     });
   }, [state]);
@@ -76,9 +71,8 @@ function MainListBlocks() {
         enablePanDownToClose: true,
       },
       preventScreenshotOnModalOpen: true,
-      paramState: state,
+      delaySetPassword: state?.delaySetPassword,
       onDone: () => {
-        state.onFinish?.();
         removeGlobalBottomSheetModal2024(id);
       },
     });

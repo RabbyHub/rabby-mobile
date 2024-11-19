@@ -279,6 +279,52 @@ export const requestHDKeyringByMnemonics = (
   }
 };
 
+export const addKeyringAndactiveAndPersistAccounts = async (
+  mnemonic: string,
+  passphrase: string,
+  accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  addAlias: boolean,
+) => {
+  try {
+    const Keyring = keyringService.getKeyringClassForType(
+      KEYRING_CLASS.MNEMONIC,
+    ) as any;
+
+    const keyring = new Keyring({ mnemonic, passphrase });
+
+    keyringService.updateHdKeyringIndex(keyring as any);
+    keyringService.addKeyring(keyring as any);
+
+    await keyring.activeAccounts(
+      accountsToImport.map(acc => (acc as any).index! - 1),
+    );
+
+    const detail = keyring.getInfoByAddress(accountsToImport[0].address);
+    if (detail?.basePublicKey) {
+      hdKeyringService.addUnixRecord(detail.basePublicKey);
+    }
+
+    await keyringService.persistAllKeyrings();
+
+    const _account = {
+      address: accountsToImport[0].address,
+      type: keyring.type,
+      brandName: keyring.type,
+    };
+    if (addAlias) {
+      accountsToImport.forEach(({ address, aliasName }) => {
+        contactService.setAlias({
+          address,
+          alias: aliasName,
+        });
+      });
+    }
+    preferenceService.setCurrentAccount(_account as any);
+  } catch (e) {
+    console.error('addKeyringAndactiveAndPersistAccounts error', e);
+  }
+};
+
 export const activeAndPersistAccountsByMnemonics = async (
   mnemonics: string,
   passphrase: string,
