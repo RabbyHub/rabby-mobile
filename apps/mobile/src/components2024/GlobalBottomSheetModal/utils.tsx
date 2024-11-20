@@ -1,4 +1,4 @@
-import { CreateParams, MODAL_NAMES } from './types';
+import { MODAL_NAMES } from './types';
 import { Approval } from '@/components//Approval';
 import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
 import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
@@ -10,7 +10,6 @@ import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
 import { SelectSortedChain } from '@/components/SelectSortedChain';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import type { ThemeColors2024 } from '@/constant/theme';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
 import { SettingLedger } from '@/components/HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '@/components/Upgrade/TipUpgrade';
@@ -42,6 +41,10 @@ import { SeedPhraseRestoreFromCloud2024 } from '@/components/SeedPhraseRestoreFr
 import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager';
 import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
+import { BackgroundComponent } from './BackgroundComponent';
+import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColors2024Variants } from '@/constant/theme';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -127,21 +130,27 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
 };
 
-export function makeBottomSheetProps(ctx: {
-  params: CreateParams;
-  colors: (typeof ThemeColors2024)['light'];
-  prevProps?: any;
-  isDarkTheme: boolean;
+export function makeBottomSheetProps({
+  linearGradientType,
+}: {
+  linearGradientType?: LinearGradientContainerProps['type'];
 }): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
   return {
+    style: {
+      overflow: 'hidden',
+      borderRadius: 32,
+    },
     handleStyle: {
-      backgroundColor: ctx.isDarkTheme ? '#131416' : '#ffff',
+      paddingVertical: 18,
     },
     handleIndicatorStyle: {
-      backgroundColor: '#d1d4db',
+      backgroundColor: '#D1D4DB',
+      height: 6,
+      width: 50,
     },
-    backgroundStyle: {
-      borderRadius: 16,
-    },
+
+    backgroundComponent: props => (
+      <BackgroundComponent {...props} type={linearGradientType} />
+    ),
   };
 }

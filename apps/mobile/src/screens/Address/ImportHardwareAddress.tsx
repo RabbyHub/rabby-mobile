@@ -1,4 +1,3 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React from 'react';
 import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,7 +19,7 @@ import {
 import { apiKeystone } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { trigger } from 'react-native-haptic-feedback';
-import LinearGradient from 'react-native-linear-gradient';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -126,53 +125,38 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   }, []);
 
   return (
-    <NormalScreenContainer overwriteStyle={styles.container}>
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-        style={{
-          width: '100%',
-          height: '100%',
-        }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}>
-        <View style={styles.root}>
-          <Card style={styles.card}>
-            <ListItem
-              style={styles.item}
-              Icon={
-                <WalletIcon
-                  type={KEYRING_TYPE.LedgerKeyring}
-                  borderRadius={20}
-                />
-              }
-              title="Ledger"
-              onPress={handleLedger}
-            />
-            <ListItem
-              style={styles.item}
-              Icon={
-                <WalletIcon
-                  type={KEYRING_TYPE.KeystoneKeyring}
-                  borderRadius={20}
-                />
-              }
-              title="Keystone"
-              onPress={handleKeystone}
-            />
-            <ListItem
-              style={styles.item}
-              Icon={
-                <WalletIcon
-                  type={KEYRING_TYPE.OneKeyKeyring}
-                  borderRadius={20}
-                />
-              }
-              title="OneKey"
-              onPress={handleOneKey}
-            />
-          </Card>
-        </View>
-      </LinearGradient>
-    </NormalScreenContainer>
+    <NormalScreenContainer2024>
+      <View style={styles.root}>
+        <Card style={styles.card}>
+          <ListItem
+            style={styles.item}
+            Icon={
+              <WalletIcon type={KEYRING_TYPE.LedgerKeyring} borderRadius={20} />
+            }
+            title="Ledger"
+            onPress={handleLedger}
+          />
+          <ListItem
+            style={styles.item}
+            Icon={
+              <WalletIcon
+                type={KEYRING_TYPE.KeystoneKeyring}
+                borderRadius={20}
+              />
+            }
+            title="Keystone"
+            onPress={handleKeystone}
+          />
+          <ListItem
+            style={styles.item}
+            Icon={
+              <WalletIcon type={KEYRING_TYPE.OneKeyKeyring} borderRadius={20} />
+            }
+            title="OneKey"
+            onPress={handleOneKey}
+          />
+        </Card>
+      </View>
+    </NormalScreenContainer2024>
   );
 }

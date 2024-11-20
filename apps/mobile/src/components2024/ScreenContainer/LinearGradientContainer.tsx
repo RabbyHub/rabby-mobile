@@ -1,30 +1,28 @@
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
+import LinearGradient, {
+  LinearGradientProps,
+} from 'react-native-linear-gradient';
 
-import { StyleProp, ViewStyle } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+export type LinearGradientContainerProps = {
+  type: 'linear' | 'bg1' | 'bg2';
+} & Omit<LinearGradientProps, 'colors'>;
 
-interface Props {
-  style?: StyleProp<ViewStyle>;
-  children: React.ReactNode;
-}
-
-export const LinearGradientContainer: React.FC<Props> = ({
-  style,
-  children,
-}) => {
+export const LinearGradientContainer: React.FC<
+  LinearGradientContainerProps
+> = ({ type, ...props }) => {
   const { colors2024 } = useTheme2024();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   return (
     <LinearGradient
-      style={style}
+      {...props}
       colors={
-        isDarkTheme
+        type === 'linear'
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-          : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-      }>
-      {children}
-    </LinearGradient>
+          : type === 'bg1'
+          ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
+          : [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']]
+      }
+    />
   );
 };
