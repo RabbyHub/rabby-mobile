@@ -153,14 +153,9 @@ export function useCreateAddressProc() {
   };
 }
 
+type AnyPromiseFn = () => Promise<any>;
 type ImportAdressProcess = {
-  type: ProcDataType;
-  typedData: string;
-  addressList: {
-    address: string;
-    aliasName: string;
-  }[];
-
+  confirmPasswordCB?: AnyPromiseFn;
   passwordForm: {
     password: string;
     confirmPassword: string;
@@ -170,14 +165,12 @@ type ImportAdressProcess = {
 
 function getDefaultImportAddressProc(): ImportAdressProcess {
   return {
-    type: ProcDataType.Seed,
-    typedData: '',
-    addressList: [],
     passwordForm: {
       password: '',
       confirmPassword: '',
       enableBiometrics: false,
     },
+    confirmPasswordCB: () => Promise.resolve(undefined),
   };
 }
 const importAddressAtom = atom<ImportAdressProcess>(
@@ -186,20 +179,6 @@ const importAddressAtom = atom<ImportAdressProcess>(
 
 export function useImportAddressProc() {
   const [importAddressProc, setImportAddressProc] = useAtom(importAddressAtom);
-
-  const startImportAddressProc = useCallback(
-    (
-      type: ImportAdressProcess['type'],
-      data: ImportAdressProcess['typedData'] = '',
-    ) => {
-      setImportAddressProc(prev => ({
-        ...prev,
-        type,
-        typedData: data,
-      }));
-    },
-    [setImportAddressProc],
-  );
 
   const storePassword = useCallback(
     (passwordForm: ImportAdressProcess['passwordForm']) => {
@@ -218,45 +197,16 @@ export function useImportAddressProc() {
     setImportAddressProc(getDefaultImportAddressProc());
   }, [setImportAddressProc]);
 
-  const storeSeedPharse = useCallback(
-    (seedPharse: string) => {
-      setImportAddressProc(prev => ({
-        ...prev,
-        typedData: seedPharse,
-      }));
-    },
-    [setImportAddressProc],
-  );
-  const storePrivateKey = useCallback(
-    (privateKey: string) => {
-      setImportAddressProc(prev => ({
-        ...prev,
-        typedData: privateKey,
-      }));
-    },
-    [setImportAddressProc],
-  );
-
-  const { seedPharseData, privateKeyData } = useMemo(() => {
-    return {
-      seedPharseData:
-        importAddressProc.type === ProcDataType.Seed
-          ? importAddressProc.typedData
-          : null,
-      privateKeyData:
-        importAddressProc.type === ProcDataType.PrivateKey
-          ? importAddressProc.typedData
-          : null,
-    };
-  }, [importAddressProc.type, importAddressProc.typedData]);
+  const setConfirmCB = (cb: AnyPromiseFn) => {
+    setImportAddressProc(prev => ({
+      ...prev,
+      confirmPasswordCB: cb,
+    }));
+  };
 
   return {
-    seedPharseData,
-    storeSeedPharse,
-
-    privateKeyData,
-    storePrivateKey,
-    startImportAddressProc,
+    confirmCB: importAddressProc.confirmPasswordCB,
+    setConfirmCB,
     storePassword,
     resetImportAddressProc,
   };

@@ -302,13 +302,19 @@ export function useSetPasswordFirst() {
   const shouldRedirectToSetPasswordBefore2024 = React.useCallback(
     ({
       backScreen,
+      isFirstImportPassword,
     }: {
       backScreen?: (SettingNavigatorParamList['SetPassword'] & {
         actionAfterSetup: 'backScreen';
       })['replaceScreen'];
+      isFirstImportPassword?: boolean;
     }) => {
-      if (!APP_FEATURE_SWITCH.customizePassword) return false;
-      if (lockInfo.pwdStatus === PasswordStatus.Custom) return false;
+      if (!APP_FEATURE_SWITCH.customizePassword) {
+        return false;
+      }
+      if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+        return false;
+      }
 
       if (backScreen) {
         navigation.push(RootNames.StackAddress, {
@@ -317,6 +323,8 @@ export function useSetPasswordFirst() {
             title: 'Set Password',
             hideProgress: true,
             finishGoToScreen: backScreen,
+            isFirstImportPassword,
+            hideBackIcon: isFirstImportPassword,
           },
         });
         return true;
@@ -326,48 +334,8 @@ export function useSetPasswordFirst() {
     [navigation, lockInfo],
   );
 
-  const asyncSetPassword = (
-    backScreen?: (SettingNavigatorParamList['SetPassword'] & {
-      actionAfterSetup: 'backScreen';
-    })['replaceScreen'],
-  ) => {
-    return new Promise<void>((resolve, reject) => {
-      if (!APP_FEATURE_SWITCH.customizePassword) {
-        return resolve();
-      }
-      if (lockInfo.pwdStatus === PasswordStatus.Custom) {
-        return resolve();
-      }
-      const timeout = setTimeout(
-        () => reject(new Error('Timeout')),
-        // 10 mins timeout
-        10 * 60 * 1000,
-      );
-
-      navigation.push(RootNames.StackAddress, {
-        screen: RootNames.SetPassword2024,
-        params: {
-          title: 'Set Password',
-          hideProgress: true,
-          hideBackIcon: true,
-          finishGoToScreen: backScreen,
-          // onFinish: () => {
-          //   clearTimeout(timeout);
-          //   resolve();
-          //   if (backScreen) {
-          //     navigation.replace(RootNames.StackAddress, {
-          //       screen: backScreen,
-          //     });
-          //   }
-          // },
-        },
-      });
-    });
-  };
-
   return {
     shouldRedirectToSetPasswordBefore,
     shouldRedirectToSetPasswordBefore2024,
-    asyncSetPassword,
   };
 }

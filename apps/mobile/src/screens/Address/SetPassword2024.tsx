@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   View,
@@ -18,7 +18,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
-import { apisKeychain, apisLock } from '@/core/apis';
+import { apisLock } from '@/core/apis';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
@@ -29,12 +29,13 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner2024';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
-import { useLoadLockInfo } from '@/hooks/useLock';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { clearCustomPassword } from '@/core/apis/lock';
 import YesIcon from '@/assets2024/icons/common/check.svg';
-import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+import {
+  useCreateAddressProc,
+  useImportAddressProc,
+} from '@/hooks/address/useNewUser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 const INIT_FORM_DATA = __DEV__
@@ -53,6 +54,7 @@ function useSetupPasswordForm(
   finishGoToScreen: string,
   isBiometricsEnabled: boolean,
   delaySetPassword?: boolean,
+  isFirstImportPassword?: boolean,
 ) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
@@ -84,6 +86,8 @@ function useSetupPasswordForm(
   const navigation = useRabbyAppNavigation();
 
   const { storePassword } = useCreateAddressProc();
+  const { confirmCB, resetImportAddressProc } = useImportAddressProc();
+
   const formik = useAppFormik({
     initialValues: yupSchema.getDefault(),
     validationSchema: yupSchema,
@@ -112,8 +116,6 @@ function useSetupPasswordForm(
 
       const updatePassword = async () => {
         const result = await apisLock.forceOverwritePassword(values.password);
-        // await clearCustomPassword(values.password);
-        // const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
           return false;
@@ -131,9 +133,8 @@ function useSetupPasswordForm(
       };
 
       try {
-        if (delaySetPassword) {
+        if (delaySetPassword && !isFirstImportPassword) {
           toastHide();
-          // onFinish(updatePassword);
           navigation.replace(RootNames.StackAddress, {
             screen: RootNames.CreateChooseBackup,
             params: {
@@ -143,10 +144,15 @@ function useSetupPasswordForm(
         } else {
           const success = await updatePassword();
           if (success) {
+            toast.success('Setup Password Successfully');
+          }
+          if (isFirstImportPassword) {
+            await confirmCB?.();
+            resetImportAddressProc();
+          } else {
             navigation.replace(RootNames.StackAddress, {
               screen: finishGoToScreen as any,
             });
-            toast.success('Setup Password Successfully');
           }
         }
       } finally {
@@ -174,6 +180,7 @@ function MainListBlocks() {
     hideProgress: boolean;
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
+    isFirstImportPassword?: boolean;
   };
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -188,6 +195,7 @@ function MainListBlocks() {
     state.finishGoToScreen,
     isBiometricsEnabled,
     state.delaySetPassword,
+    state.isFirstImportPassword,
   );
 
   useFocusEffect(

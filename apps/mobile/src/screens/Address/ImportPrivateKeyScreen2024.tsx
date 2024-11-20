@@ -29,6 +29,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { useImportAddressProc } from '@/hooks/address/useNewUser';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -38,10 +39,12 @@ export const ImportPrivateKeyScreen2024 = () => {
   const [error, setError] = React.useState<string>();
   const duplicateAddressModal = useDuplicateAddressModal();
   const scanner = useScanner();
-  const { asyncSetPassword } = useSetPasswordFirst();
+
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const { setConfirmCB } = useImportAddressProc();
 
   const importPrivateKey = React.useCallback(() => {
-    apiPrivateKey
+    return apiPrivateKey
       .importPrivateKey(privateKey)
       .then(([account]) => {
         replaceToFirst(RootNames.StackAddress, {
@@ -68,14 +71,17 @@ export const ImportPrivateKeyScreen2024 = () => {
   }, [duplicateAddressModal, privateKey]);
 
   const handleConfirm = React.useCallback(() => {
-    asyncSetPassword()
-      .then(() => {
-        importPrivateKey();
+    if (
+      shouldRedirectToSetPasswordBefore2024({
+        backScreen: RootNames.ImportSuccess2024,
+        isFirstImportPassword: true,
       })
-      .catch(err => {
-        console.log('Timeout Error', err);
-      });
-  }, [asyncSetPassword, importPrivateKey]);
+    ) {
+      setConfirmCB(importPrivateKey);
+      return;
+    }
+    importPrivateKey();
+  }, [importPrivateKey, setConfirmCB, shouldRedirectToSetPasswordBefore2024]);
 
   React.useEffect(() => {
     setError(undefined);

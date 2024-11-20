@@ -34,6 +34,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { useImportAddressProc } from '@/hooks/address/useNewUser';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -121,10 +122,11 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   const [importing, setImporting] = React.useState(false);
   const importToastHiddenRef = React.useRef<() => void>(() => {});
-  const { asyncSetPassword } = useSetPasswordFirst();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const { setConfirmCB } = useImportAddressProc();
 
   const importSeedPhrase = React.useCallback(() => {
-    apiMnemonic
+    return apiMnemonic
       .generateKeyringWithMnemonic(mnemonics, '', true)
       .then(async ({ keyringId, isExistedKR }) => {
         const firstAddress = await requestKeyring(
@@ -214,21 +216,25 @@ export const ImportSeedPhraseScreen2024 = () => {
   }, [duplicateAddressModal, mnemonics]);
 
   const handleConfirm = React.useCallback(() => {
-    asyncSetPassword()
-      .then(() => {
-        setImporting(true);
-        importToastHiddenRef.current = toast.show('Importing...', {
-          duration: 100000,
-        });
-
-        setTimeout(() => {
-          importSeedPhrase();
-        }, 10);
+    if (
+      shouldRedirectToSetPasswordBefore2024({
+        backScreen: RootNames.ImportSuccess2024,
+        isFirstImportPassword: true,
       })
-      .catch(err => {
-        console.log('Timeout Error', err);
-      });
-  }, [asyncSetPassword, importSeedPhrase]);
+    ) {
+      setConfirmCB(importSeedPhrase);
+      return;
+    }
+
+    setImporting(true);
+    importToastHiddenRef.current = toast.show('Importing...', {
+      duration: 100000,
+    });
+
+    setTimeout(() => {
+      importSeedPhrase();
+    }, 10);
+  }, [importSeedPhrase, setConfirmCB, shouldRedirectToSetPasswordBefore2024]);
 
   React.useEffect(() => {
     setError(undefined);

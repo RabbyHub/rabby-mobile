@@ -46,8 +46,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
 
   const { startCreateAddressProc, resetCreateAddressProc } =
     useCreateAddressProc();
-  const { startImportAddressProc, resetImportAddressProc } =
-    useImportAddressProc();
+  const { resetImportAddressProc } = useImportAddressProc();
 
   useFocusEffect(
     useCallback(() => {

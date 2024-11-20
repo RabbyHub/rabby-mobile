@@ -39,6 +39,7 @@ export type RootStackParamsList = {
     hideProgress?: boolean;
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
+    isFirstImportPassword?: boolean;
   };
 };
 
@@ -166,7 +167,8 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.ImportMnemonic
           | typeof RootNames.ImportMnemonic2024
           | typeof RootNames.CreateSelectMethod
-          | typeof RootNames.ImportPrivateKey2024;
+          | typeof RootNames.ImportPrivateKey2024
+          | typeof RootNames.ImportSuccess2024;
       }
     | {
         actionAfterSetup: 'onSettings';

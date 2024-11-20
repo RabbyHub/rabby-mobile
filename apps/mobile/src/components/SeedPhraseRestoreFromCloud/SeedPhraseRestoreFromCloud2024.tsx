@@ -6,16 +6,18 @@ import { View } from 'react-native';
 import { BackupErrorScreen } from '../SeedPhraseBackupToCloud/BackupErrorScreen2024';
 import { BackupUnlockScreen } from '../SeedPhraseBackupToCloud/BackupUnlockScreen2024';
 import { BackupRestoreScreen } from './BackupRestoreScreen2024';
+import { useImportAddressProc } from '@/hooks/address/useNewUser';
+import { RootNames } from '@/constant/layout';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  onCheckPassword?: () => Promise<void>;
+  shouldRedirect2SetPassword?: (any) => boolean;
   files: BackupData[];
 }
 
 export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
   onDone,
-  onCheckPassword,
+  shouldRedirect2SetPassword,
   files,
 }) => {
   const [step, setStep] = React.useState<
@@ -23,6 +25,7 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
   >('backup_unlock');
   const [inputPassword, setInputPassword] = React.useState('');
   const [isPasswordError, setIsPasswordError] = React.useState(false);
+  const { setConfirmCB } = useImportAddressProc();
 
   const { t } = useTranslation();
 
@@ -47,8 +50,16 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
         setStep('backup_downloading');
         await new Promise(resolve => setTimeout(resolve, 500));
         onDone();
-        if (onCheckPassword) {
-          await onCheckPassword();
+        if (
+          shouldRedirect2SetPassword?.({
+            backScreen: RootNames.ImportSuccess2024,
+            isFirstImportPassword: true,
+          })
+        ) {
+          setConfirmCB(() =>
+            apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr),
+          );
+          return;
         }
         await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
       } catch (e) {
@@ -56,7 +67,7 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
         setStep('backup_error');
       }
     },
-    [files, onCheckPassword, onDone],
+    [files, onDone, shouldRedirect2SetPassword, setConfirmCB],
   );
 
   return (

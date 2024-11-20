@@ -64,7 +64,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
 
         onDone();
         if (delaySetPassword) {
-          await confirmPassword;
+          await confirmPassword();
         }
 
         // const doneRes = onDone();

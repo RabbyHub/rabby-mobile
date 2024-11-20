@@ -18,7 +18,7 @@ const hitSlop = {
 };
 
 export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
-  const { asyncSetPassword } = useSetPasswordFirst();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const onPress = React.useCallback(() => {
     Keyboard.dismiss();
@@ -28,14 +28,14 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },
-      onCheckPassword: () => asyncSetPassword(),
+      shouldRedirect2SetPassword: shouldRedirectToSetPasswordBefore2024,
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
     });
-  }, [asyncSetPassword]);
+  }, [shouldRedirectToSetPasswordBefore2024]);
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
       return require('@/assets2024/icons/common/icloud2x.png');
