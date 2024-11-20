@@ -23,6 +23,7 @@ export const ScreenColors = {
 
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
+  GetStartedScreen2024: 'GetStartedScreen2024',
 
   StackRoot: 'StackRoot',
   NotFound: 'NotFound',
@@ -45,10 +46,19 @@ export const RootNames = {
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
   GetStarted: 'GetStarted',
-  SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
   /* warning: dev only ------ end */
+
+  /* warning: testkits only ------ start */
+  StackTestkits: 'StackTestkits',
+  TestKits: 'TestKits',
+  SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
+  DevUIFontShowCase: 'DevUIFontShowCase',
+  DevUIFormShowCase: 'DevUIFormShowCase',
+  DevUIAccountShowCase: 'DevUIAccountShowCase',
+  DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
+  /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',

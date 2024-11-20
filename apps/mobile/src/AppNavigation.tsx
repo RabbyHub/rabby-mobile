@@ -41,6 +41,7 @@ import {
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
+import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
 import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import UnlockScreen from './screens/Unlock/Unlock';
 import { useAppUnlocked } from './hooks/useLock';
@@ -214,6 +215,10 @@ export default function AppNavigation({
                 backgroundColor: colors['neutral-bg1'],
               },
             })}
+          />
+          <RootStack.Screen
+            name={RootNames.StackTestkits}
+            component={TestkitsNavigator}
           />
           <RootStack.Screen
             name={RootNames.AccountTransaction}

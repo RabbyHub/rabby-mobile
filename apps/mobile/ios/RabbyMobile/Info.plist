@@ -79,9 +79,10 @@
 	<string>Rabby needs microphone access to record audio</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>SF-Pro-Rounded-Regular.otf</string>
 		<string>SF-Pro-Rounded-Bold.otf</string>
-		<string>SF-Pro-Rounded-Light.otf</string>
+		<string>SF-Pro-Rounded-Heavy.otf</string>
+		<string>SF-Pro-Rounded-Medium.otf</string>
+		<string>SF-Pro-Rounded-Regular.otf</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen.storyboard</string>

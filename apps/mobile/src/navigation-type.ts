@@ -20,6 +20,7 @@ export type RootStackParamsList = {
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
+  [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.NftDetail]?: {};
@@ -47,6 +48,14 @@ export type BottomTabParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
+};
+
+type TestKitsNavigatorParamsList = {
+  [RootNames.SampleNewUserGetStarted2024]?: {};
+  [RootNames.DevUIFontShowCase]?: {};
+  [RootNames.DevUIFormShowCase]?: {};
+  [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIScreenContainerShowCase]?: {};
 };
 
 export type AddressNavigatorParamList = {
