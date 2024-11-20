@@ -105,10 +105,10 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
         if (!nextEnabled) {
           await reset();
         } else {
-          // await apisKeychain.setGenericPassword(
-          //   validatedPassword,
-          //   KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-          // );
+          await apisKeychain.setGenericPassword(
+            validatedPassword,
+            KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+          );
           const requestResult = await apisKeychain.requestGenericPassword({
             purpose: RequestGenericPurpose.VERIFY,
           });
