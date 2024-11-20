@@ -27,6 +27,18 @@ export const ScreenLayouts2 = {
   dappWebViewControlNavHeight: 68,
 };
 
+export const ScreenWithAccountSwitcherLayouts = {
+  /**
+   * @description for our app,
+   * - landscape layout is not supported
+   * - not for iPad/tvOS
+   *
+   * so the screen header height must be 56
+   * see details apps/mobile/node_modules/@react-navigation/elements/src/Header/getDefaultHeaderHeight.tsx
+   */
+  screenHeaderHeight: 56,
+};
+
 export const ScreenColors = {
   homeHeaderBlue: '#434EB9',
 };

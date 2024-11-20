@@ -70,3 +70,25 @@ export function useSafeAndroidBottomSizes<T extends Record<string, number>>(
 
   return { safeSizes, cutOffSizes, androidBottomOffset };
 }
+
+export function useSafeOffTop<T extends Record<string, number>>(values: T) {
+  const { top } = useSafeAreaInsets();
+
+  const result = useMemo(() => {
+    const fromWin = Dimensions.get('window');
+    const fromScr = Dimensions.get('screen');
+    // fromScr.height - ScreenWithAccountSwitcherLayouts.screenHeaderHeight - top
+
+    const offWindow = {} as Record<keyof T, number>;
+    const offScreen = {} as Record<keyof T, number>;
+
+    Object.keys(values).forEach((key: keyof T) => {
+      offWindow[key] = fromWin.height - top - values[key];
+      offScreen[key] = fromScr.height - top - values[key];
+    });
+
+    return { offWindow, offScreen };
+  }, [top, values]);
+
+  return result;
+}

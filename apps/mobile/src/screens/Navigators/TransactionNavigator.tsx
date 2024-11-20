@@ -7,6 +7,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import {
   DEFAULT_NAVBAR_FONT_SIZE,
   RootNames,
+  ScreenWithAccountSwitcherLayouts,
   makeHeadersPresets,
 } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
@@ -22,6 +23,7 @@ import ReceiveScreen from '../Receive/Receive';
 import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -49,6 +51,14 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Send',
           ...headerPresets.withBg2,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="Send"
+                titleText={ctx.children}
+              />
+            );
+          },
         })}
       />
       <TransactionStack.Screen
