@@ -43,6 +43,8 @@ import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { BackgroundComponent } from './BackgroundComponent';
 import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColors2024Variants } from '@/constant/theme';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -139,10 +141,12 @@ export function makeBottomSheetProps({
       borderRadius: 32,
     },
     handleStyle: {
-      backgroundColor: 'transparent',
+      paddingVertical: 18,
     },
     handleIndicatorStyle: {
-      backgroundColor: '#d1d4db',
+      backgroundColor: '#D1D4DB',
+      height: 6,
+      width: 50,
     },
 
     backgroundComponent: props => (
