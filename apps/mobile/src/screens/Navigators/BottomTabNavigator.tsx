@@ -18,8 +18,7 @@ import { RootNames, ScreenLayouts } from '@/constant/layout';
 
 import HomeScreen from '@/screens/Home/Home';
 
-import { DappsScreen } from '@/screens/Dapps/Dapps';
-import { OpenedDappWebViewStub } from '../Dapps/Dapps/components/WebViewsStub';
+import { DappsScreen } from '@/screens/Dapps/DappsScreen';
 import { BottomTabParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
@@ -31,6 +30,7 @@ import HistoryScreen from '../Transaction/History';
 import SettingsScreen from '../Settings/Settings';
 import { PendingTxCount } from '../Home/components/PendingTxCount';
 import { useUpgradeInfo } from '@/hooks/version';
+import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsStub';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -232,7 +232,7 @@ export default function BottomTabNavigator() {
             },
             headerTitle: 'Dapps',
             headerTransparent: true,
-            headerShown: true,
+            headerShown: false,
             tabBarLabel: ({ focused }) => (
               <BottomTabLabel
                 focused={focused}

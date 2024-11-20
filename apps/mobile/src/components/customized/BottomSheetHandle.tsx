@@ -20,7 +20,6 @@ export const AppBottomSheetHandle = (
     <BottomSheetHandle
       {...props}
       style={[
-        props.style,
         styles.handleStyles,
         {
           borderTopLeftRadius: 16,
@@ -32,6 +31,7 @@ export const AppBottomSheetHandle = (
           // borderWidth: 1,
           // borderColor: colors['neutral-line'],
         },
+        props.style,
       ]}
       indicatorStyle={[
         props.indicatorStyle,

@@ -1,0 +1,114 @@
+import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
+import { DappInfo } from '@/core/services/dappService';
+import { useTheme2024 } from '@/hooks/theme';
+import { findChain } from '@/utils/chain';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { DappIcon } from '../DappIcon';
+
+export const DappFavoriteItem = ({
+  data,
+  onPress,
+  style,
+}: {
+  data: DappInfo;
+  style?: StyleProp<ViewStyle>;
+  onPress?: (dapp: DappInfo) => void;
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+
+  const chain = findChain({ enum: data.chainId });
+
+  return (
+    <TouchableOpacity
+      style={[styles.dappCard, style]}
+      onPress={() => {
+        onPress?.(data);
+      }}>
+      <View style={styles.container}>
+        <View style={styles.dappIconWarper}>
+          <DappIcon
+            source={
+              data?.info?.logo_url
+                ? {
+                    uri: data.info?.logo_url,
+                  }
+                : undefined
+            }
+            origin={data.origin}
+            style={styles.dappIcon}
+          />
+          <>
+            {data?.isConnected && chain ? (
+              chain.isTestnet ? (
+                <TestnetChainLogo
+                  name={chain.name}
+                  style={styles.chainIcon}
+                  size={styles.chainIcon.width}
+                />
+              ) : (
+                <Image
+                  source={{
+                    uri: chain?.logo,
+                  }}
+                  style={styles.chainIcon}
+                />
+              )
+            ) : null}
+            {!data?.isConnected ? (
+              <RcIconDisconnect
+                width={styles.chainIcon.width}
+                height={styles.chainIcon.height}
+                style={styles.chainIcon}
+              />
+            ) : null}
+          </>
+        </View>
+        <Text style={styles.dappName} numberOfLines={1}>
+          {data?.info?.name}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  dappCard: {},
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  dappName: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  dappIconWarper: {
+    position: 'relative',
+  },
+  dappIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 1000,
+  },
+  chainIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 100,
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    borderWidth: 1.5,
+    borderColor: colors2024['neutral-bg-1'],
+  },
+}));

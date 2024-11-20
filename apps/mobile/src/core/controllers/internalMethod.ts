@@ -1,9 +1,10 @@
 import { CHAINS_ENUM } from '@/constant/chains';
 import { keyringService } from '../services';
-import { dappService } from '@/core/services/shared';
+import { dappService, sessionService } from '@/core/services/shared';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
+import { createDappBySession } from '../apis/dapp';
 
 const networkIdMap: {
   [key: string]: string;
@@ -13,10 +14,33 @@ const tabCheckin = ({
   data: {
     params: { name, icon },
   },
-  session,
-  origin,
+  session: { origin },
 }) => {
-  session.setProp({ origin, name, icon });
+  // session.setProp({ origin, name, icon });
+  // console.log('tabCheckin', origin, name, icon);
+  const dapp = dappService.getDapp(origin);
+  if (!dapp) {
+    dappService.addDapp(
+      createDappBySession({
+        origin,
+        name,
+        icon,
+      }),
+    );
+  } else {
+    const info = {
+      ...dapp.info,
+    };
+    // todo check this
+    info.name = info.name || name;
+    info.logo_url = info.logo_url || icon;
+    dappService.updateDapp({
+      ...dapp,
+      info: {
+        ...info,
+      },
+    });
+  }
 };
 
 const getProviderState = async (req: ProviderRequest) => {

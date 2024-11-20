@@ -34,6 +34,7 @@ export { customTestnetService } from './customTestnetService';
 export { customRPCService } from './customRPCService';
 import { BridgeService } from './bridge';
 import { GasAccountService } from './gasAccount';
+import { BrowserHistoryService } from './browserHistoryService';
 
 const keyringState = normalizeKeyringState().keyringData;
 
@@ -76,6 +77,10 @@ keyringService.store.subscribe(value => {
 });
 
 export const dappService = new DappService({
+  storageAdapter: appStorage,
+});
+
+export const browserHistoryService = new BrowserHistoryService({
   storageAdapter: appStorage,
 });
 

@@ -1,11 +1,13 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { AppColorsVariants, ThemeColors } from './theme';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
   titleTopOffset: 8,
 };
 
+// for DappWebViewControl
 export const ScreenLayouts = {
   headerAreaHeight: 56,
   bottomBarHeight: 60,
@@ -15,6 +17,14 @@ export const ScreenLayouts = {
   defaultWebViewNavBottomSheetHeight: 52 + 40,
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
+};
+
+// for DappWebViewControl2
+export const ScreenLayouts2 = {
+  headerAreaHeight: 56,
+
+  dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
+  dappWebViewControlNavHeight: 68,
 };
 
 export const ScreenColors = {
@@ -34,10 +44,8 @@ export const RootNames = {
   Points: 'Points',
 
   Dapps: 'Dapps',
-  StackFavoritePopularDapps: 'StackFavoritePopularDapps',
-  FavoritePopularDapps: 'FavoritePopularDapps',
-  StackSearchDapps: 'StackSearchDapps',
-  SearchDapps: 'SearchDapps',
+  StackFavoriteDapps: 'StackFavoriteDapps',
+  FavoriteDapps: 'FavoriteDapps',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -182,9 +190,9 @@ function makeScreenSpecConfig() {
       '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
-        barStyle: 'light-content',
+        barStyle: 'dark-content',
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: 'rgba(0, 0, 0, 1)',
+        androidStatusBarBg: 'rgba(255, 255, 255, 1)',
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,
