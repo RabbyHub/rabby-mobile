@@ -280,7 +280,6 @@ export function OpenedDappWebViewStub() {
   useFocusEffect(onHardwareBackHandler);
 
   const { currentAccount } = useCurrentAccount();
-  const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 
   const { handleChange } = useAutoLockBottomSheetModalOnChange(
     handleBottomSheetChanges,
@@ -294,6 +293,9 @@ export function OpenedDappWebViewStub() {
   } = useSafeSizes();
 
   const hasOpenedDapps = !!openedDappItems.length;
+
+  const lastUsedAccount = activeDapp?.currentAccount ?? currentAccount;
+  const { RcWalletIcon } = useWalletBrandLogo(lastUsedAccount?.brandName);
 
   return (
     <OpenedDappBottomSheetModal

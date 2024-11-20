@@ -15,6 +15,8 @@ import {
 } from '@/core/bridges/state';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { useDappLastUsedAccount } from '@/hooks/useDappLastUsedAccount';
+import React from 'react';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -258,6 +260,21 @@ export function useOpenDappView() {
 
   const openedDappItems = useDebounceValue(originalInfo.openedDappItems, 100);
   const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
+
+  const dappLastUsedAccount = useDappLastUsedAccount();
+
+  React.useEffect(() => {
+    if (activeDapp) {
+      dappLastUsedAccount.activate(activeDapp);
+    } else {
+      dappLastUsedAccount.inactivate();
+    }
+
+    return () => {
+      dappLastUsedAccount.inactivate();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDapp]);
 
   return {
     activeDapp,
