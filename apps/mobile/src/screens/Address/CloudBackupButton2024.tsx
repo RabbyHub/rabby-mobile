@@ -25,7 +25,7 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.RESTORE_FROM_CLOUD,
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
       shouldRedirect2SetPassword: shouldRedirectToSetPasswordBefore2024,

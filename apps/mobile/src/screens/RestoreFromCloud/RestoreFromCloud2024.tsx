@@ -22,6 +22,7 @@ import { Button } from '@/components2024/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { IS_IOS } from '@/core/native/utils';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const { isSameAddress } = addressUtils;
 
@@ -151,12 +152,14 @@ export const RestoreFromCloud2024: React.FC<{
   return (
     <BottomSheetView style={styles.screenContainer}>
       <View style={styles.body}>
-        <View>
-          <BackupIcon status={loading ? 'loading' : undefined} isGray />
-          <Text style={styles.restoreTitle}>
-            {`Restore From ${IS_IOS ? 'iCloud' : 'Google Drive'}`}
-          </Text>
-        </View>
+        <BottomSheetHandlableView>
+          <View>
+            <BackupIcon status={loading ? 'loading' : undefined} isGray />
+            <Text style={styles.restoreTitle}>
+              {`Restore From ${IS_IOS ? 'iCloud' : 'Google Drive'}`}
+            </Text>
+          </View>
+        </BottomSheetHandlableView>
         <ScrollView
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
