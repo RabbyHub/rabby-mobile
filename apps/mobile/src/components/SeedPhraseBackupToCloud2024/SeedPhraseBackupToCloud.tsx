@@ -132,7 +132,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
 
   return (
     <View>
-      <BackupUnlockScreen ignoreValidation onConfirm={handleUpload} />
+      <BackupUnlockScreen onConfirm={handleUpload} />
       {/* {step === 'backup_uploading' && <BackupUploadScreen />}
       {step === 'backup_success' && <BackupSuccessScreen />}
       {step === 'backup_error' && (

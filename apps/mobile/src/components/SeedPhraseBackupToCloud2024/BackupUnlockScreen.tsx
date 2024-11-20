@@ -9,6 +9,7 @@ import { Text, View } from 'react-native';
 import { BackupIcon } from './BackupIcon';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
+import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
@@ -79,6 +80,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
+  const { isCorrectPassword } = useCreateAddressProc();
 
   const handleConfirm = React.useCallback(async () => {
     if (!password) {
@@ -87,7 +89,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
 
     setLoading(true);
     try {
-      if (!ignoreValidation) {
+      if (!ignoreValidation && !isCorrectPassword(password)) {
         await keyringService.verifyPassword(password);
       }
       await onConfirm(password);
@@ -96,7 +98,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
     } finally {
       setLoading(false);
     }
-  }, [ignoreValidation, onConfirm, password, t]);
+  }, [ignoreValidation, isCorrectPassword, onConfirm, password, t]);
 
   return (
     <View style={styles.container}>
@@ -126,7 +128,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
             }}
             hasError={Boolean(error)}
             fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
-            tipText={t('page.createPassword.passwordMinTip') || error}
+            tipText={error || t('page.createPassword.passwordMinTip')}
           />
         </View>
       </View>

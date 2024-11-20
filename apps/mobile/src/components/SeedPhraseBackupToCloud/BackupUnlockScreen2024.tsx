@@ -142,7 +142,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
             style={styles.input}
             hasError={Boolean(error)}
             fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
-            tipText={t('page.newAddress.seedPhrase.passwordMinTip') || error}
+            tipText={error || t('page.newAddress.seedPhrase.passwordMinTip')}
           />
         </View>
       </View>

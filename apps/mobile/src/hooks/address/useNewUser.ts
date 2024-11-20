@@ -150,6 +150,9 @@ export function useCreateAddressProc() {
     storePassword,
     resetCreateAddressProc,
     confirmPassword,
+    isCorrectPassword: (password: string) => {
+      return createAddressProc.passwordForm.password === password;
+    },
   };
 }
 
