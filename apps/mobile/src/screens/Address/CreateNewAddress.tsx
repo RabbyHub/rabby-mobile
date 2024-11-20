@@ -111,7 +111,6 @@ function MainListBlocks() {
       ) as any;
       const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
       accountsToCreate = keyring?.getAddresses(0, 1);
-      const { keyringId } = await generateKeyringWithMnemonic(seedPhrase, '');
       // accountsToCreate = await requestKeyring(
       //   KEYRING_TYPE.HdKeyring,
       //   'getAddresses',
