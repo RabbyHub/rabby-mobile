@@ -18,9 +18,9 @@ import { Skeleton } from '@rneui/themed';
 import { useCurve } from '@/hooks/useCurve';
 import { splitNumberByStep } from '@/utils/number';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useCurrentAccount } from '@/hooks/account';
+import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
-import { Text, Tip } from '@/components';
+import { Button, Text, Tip } from '@/components';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
@@ -34,6 +34,8 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import usePrevious from 'ahooks/lib/usePrevious';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { GasAccountDashBoardHeader } from '../GasAccount/components/DashBoardHeader';
+import { MenuView } from '@react-native-menu/menu';
+import { preferenceService } from '@/core/services';
 
 export default function HomeHeaderArea() {
   const { t } = useTranslation();
@@ -111,11 +113,29 @@ export default function HomeHeaderArea() {
     refreshCurveData();
   }, [refreshCurveData]);
 
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+  const [currentIndex, setIndex] = React.useState<string>();
+
   return (
     <View
       style={StyleSheet.compose(styles.container, {
         // height: ScreenLayouts.headerAreaHeight + top,
       })}>
+      <MenuView
+        onPressAction={({ nativeEvent: { event } }) => {
+          preferenceService.setLastUsedAccount(accounts[Number(event)]);
+          setIndex(event);
+        }}
+        actions={accounts.map((a, index) => ({
+          title: a.aliasName || a.brandName,
+          subtitle: `${ellipsisAddress(a.address)}:${a.type}`,
+          id: index.toString(),
+          state: currentIndex === index.toString() ? 'on' : 'off',
+        }))}>
+        <Button height={20} title={'切换上次使用地址'} />
+      </MenuView>
       <View style={styles.innerBox}>
         <TouchableView
           style={styles.touchBox}
