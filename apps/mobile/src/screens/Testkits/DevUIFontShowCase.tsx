@@ -24,18 +24,23 @@ const FONTS_CONFIG = [
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
-    label: 'SF Pro Rounded Light',
-    fontFamily: FontNames.sf_pro_rounded_light,
+    label: 'SF Pro Rounded Regular',
+    fontFamily: FontNames.sf_pro_rounded_regular,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
-    label: 'SF Pro Rounded',
-    fontFamily: FontNames.sf_pro_rounded_regular,
+    label: 'SF Pro Rounded Medium',
+    fontFamily: FontNames.sf_pro_rounded_medium,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
   {
     label: 'SF Pro Rounded Bold',
     fontFamily: FontNames.sf_pro_rounded_bold,
+    fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
+  },
+  {
+    label: 'SF Pro Rounded Heavy',
+    fontFamily: FontNames.sf_pro_rounded_heavy,
     fontSizes: [24, 22, 20, 18, 16, 14].reverse(),
   },
 ];
@@ -192,6 +197,8 @@ const LOGO_SIZE = {
   height: 76,
 };
 
+const ROW_CELL_H = 120;
+
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
@@ -226,13 +233,16 @@ const getStyles = createGetStyles2024(ctx =>
     rowHeader: {
       width: 120,
       alignItems: 'flex-start',
+      justifyContent: 'center',
     },
     fontSizeShowCaseLabel: {
       fontSize: 20,
-      lineHeight: 28,
-      maxWidth: 120,
+      // lineHeight: 36,
+      maxWidth: 100,
       flexWrap: 'wrap',
-      height: 56,
+      height: ROW_CELL_H,
+
+      justifyContent: 'center',
     },
     logoWrapper: {
       marginTop: 12,
@@ -258,7 +268,7 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'flex-start',
       width: 150,
       maxWidth: 150,
-      height: 100,
+      height: ROW_CELL_H,
 
       borderBottomWidth: 1,
       borderBottomColor: ctx.colors['neutral-body'],

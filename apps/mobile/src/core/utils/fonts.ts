@@ -18,10 +18,13 @@ export const enum FontWeightEnum {
 export const FontNames = {
   sf_pro: IS_IOS ? 'SF Pro' : 'Roboto',
   sf_pro_rounded_bold: IS_IOS ? 'SFProRounded-Bold' : 'SF-Pro-Rounded-Bold',
-  sf_pro_rounded_light: IS_IOS ? 'SFProRounded-Light' : 'SF-Pro-Rounded-Light',
   sf_pro_rounded_regular: IS_IOS
     ? 'SFProRounded-Regular'
     : 'SF-Pro-Rounded-Regular',
+  sf_pro_rounded_medium: IS_IOS
+    ? 'SFProRounded-Medium'
+    : 'SF-Pro-Rounded-Medium',
+  sf_pro_rounded_heavy: IS_IOS ? 'SFProRounded-Heavy' : 'SF-Pro-Rounded-Heavy',
 };
 /**
  * @description mutate fontFamily based on the input's fontFamily & fontWeight
