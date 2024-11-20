@@ -6,7 +6,10 @@ import {
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import React, { useMemo } from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
-import { LinearGradientContainer } from './LinearGradientContainer';
+import {
+  LinearGradientContainer,
+  LinearGradientContainerProps,
+} from './LinearGradientContainer';
 
 export default function NormalScreenContainer2024<
   T extends ReactNativeViewAs = 'View',
@@ -17,6 +20,7 @@ export default function NormalScreenContainer2024<
   style,
   fitStatuBar,
   overwriteStyle,
+  type = 'linear',
 }: React.PropsWithChildren<
   {
     as?: T;
@@ -26,13 +30,14 @@ export default function NormalScreenContainer2024<
     style?: React.ComponentProps<typeof View>['style'];
     hideBottomBar?: boolean;
     overwriteStyle?: React.ComponentProps<typeof View>['style'];
+    type?: LinearGradientContainerProps['type'];
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeOffHeader, safeTop } = useSafeSizes();
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
 
   return (
-    <LinearGradientContainer>
+    <LinearGradientContainer type={type}>
       <ViewComp
         style={StyleSheet.flatten([
           style,

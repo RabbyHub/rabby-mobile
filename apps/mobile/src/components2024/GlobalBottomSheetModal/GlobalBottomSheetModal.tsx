@@ -1,5 +1,4 @@
 import React from 'react';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +11,6 @@ import {
   MODAL_ID,
   MODAL_NAMES,
 } from './types';
-
 import { makeBottomSheetProps, MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -20,7 +18,6 @@ import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
 import { useSensitiveGlobalModalsOpened } from './security';
-import { LinearGradientContainer } from '../ScreenContainer/LinearGradientContainer';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -32,8 +29,6 @@ type ModalData = {
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
-
-  const { colors2024 } = useTheme2024();
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -173,13 +168,12 @@ export const GlobalBottomSheetModal2024 = () => {
 
   const { panResponder } = useRefreshAutoLockPanResponder();
 
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-
   return (
     <View>
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
+        const linearGradientType = bottomSheetModalProps?.linearGradientType;
 
         const modalViewProps = {
           ...modal.params,
@@ -193,10 +187,6 @@ export const GlobalBottomSheetModal2024 = () => {
             enableDismissOnClose
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
-            style={{
-              borderRadius: 32,
-              overflow: 'hidden',
-            }}
             {...bottomSheetModalProps}
             onDismiss={() => {
               handleDismiss(modal.id);
@@ -210,18 +200,12 @@ export const GlobalBottomSheetModal2024 = () => {
                 // eslint-disable-next-line react-native/no-inline-styles
                 style={{ flex: 1 }}
                 {...panResponder.panHandlers}>
-                <LinearGradientContainer
-                  // eslint-disable-next-line react-native/no-inline-styles
-                  style={{ flex: 1 }}>
-                  <ModalView {...modalViewProps} />
-                </LinearGradientContainer>
+                <ModalView {...modalViewProps} />
               </BottomSheetView>
             }
             stackBehavior="push"
             {...makeBottomSheetProps({
-              params: modal.params,
-              colors: colors2024,
-              isDarkTheme,
+              linearGradientType,
             })}
           />
         );

@@ -2,9 +2,9 @@ import React from 'react';
 
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
-
 import type { AuthenticationModalProps } from '@/components/AuthenticationModal/AuthenticationModal';
 import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
+import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -94,7 +94,9 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
   onCancel?: () => void;
-  bottomSheetModalProps?: Partial<BottomSheetModalProps>;
+  bottomSheetModalProps?: Partial<BottomSheetModalProps> & {
+    linearGradientType?: LinearGradientContainerProps['type'];
+  };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
    * @default false
