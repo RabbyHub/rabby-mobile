@@ -51,7 +51,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 17,
     lineHeight: 22,
     color: colors2024['neutral-secondary'],
-    fontWeight: '400',
+    fontWeight: '500',
   },
   itemName: {
     gap: 8,
