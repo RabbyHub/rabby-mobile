@@ -5,6 +5,9 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
+import MultiAddressHome, {
+  MultiAddressHomeHeader,
+} from '@/screens/Home/MultiAddressHome';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
@@ -103,6 +106,18 @@ export function AddressNavigator() {
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
           headerRight: () => <AddressListScreenButton type="address" />,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.MultiAddressHome}
+        component={MultiAddressHome}
+        options={mergeScreenOptions({
+          headerTitle: MultiAddressHomeHeader,
+          headerLeft: () => null,
+          headerRight: () => null,
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
         })}
       />
       <AddressStack.Screen

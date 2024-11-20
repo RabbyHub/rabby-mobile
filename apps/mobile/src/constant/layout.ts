@@ -41,6 +41,7 @@ export const RootNames = {
 
   StackBottom: 'StackBottom',
   Home: 'Home',
+  MultiAddressHome: 'MultiAddressHome',
   Points: 'Points',
 
   Dapps: 'Dapps',

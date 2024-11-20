@@ -562,6 +562,18 @@ function DevSettingsBlocks() {
               },
             },
             {
+              label: '[Page] go to multi address home',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.replace(RootNames.StackAddress, {
+                    screen: RootNames.MultiAddressHome,
+                    params: {},
+                  }),
+                );
+              },
+            },
+            {
               label: forceAllowScreenshot
                 ? `Force Allow Capture`
                 : `Disallow Capture Sensitive Scene`,

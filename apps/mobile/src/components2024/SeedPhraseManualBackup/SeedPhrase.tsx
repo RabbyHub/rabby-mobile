@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
+  TouchableWithoutFeedback,
   Text,
   View,
 } from 'react-native';
@@ -21,7 +22,6 @@ import _ from 'lodash';
 import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import {
   activeAndPersistAccountsByMnemonics,

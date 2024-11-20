@@ -1382,6 +1382,10 @@
         "createAddress": "Create Address",
         "importAddress": "Import Address",
         "hardwareWallet": "Hardware Wallet"
+      },
+      "multiAddressHome": {
+        "services": "Services",
+        "totalBalance": "Total Balance"
       }
     },
     "newAddress": {

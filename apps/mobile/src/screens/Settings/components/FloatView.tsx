@@ -26,7 +26,7 @@ const VIEW_W = 240;
 const DRAGGER_SIZE = 60;
 const INIT_RIGHT = VIEW_W - DRAGGER_SIZE;
 const INIT_LAYOUT = {
-  top: 100,
+  top: 10,
 };
 const screenLayout = Dimensions.get('screen');
 export function FloatViewAutoLockCount() {
