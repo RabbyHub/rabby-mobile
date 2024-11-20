@@ -189,15 +189,11 @@ function MainListBlocks() {
   ]);
 
   const handleDone = useCallback(async () => {
-    storeAddressList([
-      {
-        address: newAddress,
-        aliasName: addressAlias,
-        index: value?.addressIndex,
-      },
-    ]);
     console.log('exe handleDone');
-
+    contactService.setAlias({
+      address: newAddress,
+      alias: addressAlias,
+    });
     await activeAndPersistAccountsByMnemonics(
       state?.mnemonics || '',
       '',
@@ -217,7 +213,7 @@ function MainListBlocks() {
         alias: addressAlias || ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, state, value, storeAddressList]);
+  }, [newAddress, addressAlias, state, value]);
 
   const onSubmitEditing = React.useCallback(
     (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
