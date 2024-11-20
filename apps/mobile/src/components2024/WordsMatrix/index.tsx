@@ -2,7 +2,7 @@ import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { FC } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   words?: string[];
   isSelectIng?: boolean;
   selectArr?: number[];
+  shuffledNumbers?: number[];
   onSelect?: (index: number) => void;
 }
 export const WordsMatrix: FC<Props> = ({
@@ -18,6 +19,7 @@ export const WordsMatrix: FC<Props> = ({
   isSelectIng = false,
   selectArr = [],
   onSelect,
+  shuffledNumbers = [],
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const [checkedWords, setCheckedWords] = React.useState<string[]>(
@@ -30,10 +32,23 @@ export const WordsMatrix: FC<Props> = ({
 
   const Component = isSelectIng ? SilentTouchableView : View;
 
+  const hasNumber = useCallback(
+    index => {
+      if (isSelectIng) {
+        return selectArr.includes(index);
+      } else {
+        return true;
+      }
+    },
+    [isSelectIng, selectArr],
+  );
+
   return (
     <View style={[styles.grid, style]}>
       {checkedWords.map((word, idx) => {
-        const number = idx + 1;
+        const number = isSelectIng
+          ? shuffledNumbers[selectArr.indexOf(idx)]
+          : idx + 1;
         return (
           <Component
             style={StyleSheet.flatten([
@@ -46,7 +61,7 @@ export const WordsMatrix: FC<Props> = ({
               selectArr.includes(idx) && styles.selectGridItem,
             ])}
             onPress={() => onSelect?.(idx)}>
-            {!isSelectIng && (
+            {hasNumber(idx) && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{number}.</Text>
               </View>

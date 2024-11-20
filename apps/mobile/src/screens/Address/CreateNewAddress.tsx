@@ -287,7 +287,7 @@ function MainListBlocks() {
           </>
         )}
         <Button
-          loading={loading}
+          disabled={loading}
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}

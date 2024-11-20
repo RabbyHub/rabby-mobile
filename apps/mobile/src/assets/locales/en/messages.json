@@ -1352,6 +1352,7 @@
     },
     "nextComponent": {
       "createNewAddress": {
+        "verificationFailed": "Verification failed",
         "addressTopTips": "Use it to send and receive \n crypto on blockchain",
         "Continue": "Continue",
         "Confirm": "Confirm",

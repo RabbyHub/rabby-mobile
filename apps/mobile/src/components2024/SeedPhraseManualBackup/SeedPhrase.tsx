@@ -250,6 +250,8 @@ const SIZES = {
   btnContainerBottom: 56,
 };
 
+const VALIDATE_COUNT = 3;
+
 export const SeedPhrase: React.FC<Props> = ({
   onConfirm, // close modal
   delaySetPassword,
@@ -282,7 +284,10 @@ export const SeedPhrase: React.FC<Props> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const shuffledWords = useMemo(() => _.shuffle(words), [words, shuffleCount]);
   const shuffledNumbers = useMemo(
-    () => _.sortBy(_.shuffle(_.range(1, words.length + 1)).slice(0, 3)),
+    () =>
+      _.sortBy(
+        _.shuffle(_.range(1, words.length + 1)).slice(0, VALIDATE_COUNT),
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [words, shuffleCount],
   );
@@ -304,7 +309,9 @@ export const SeedPhrase: React.FC<Props> = ({
       if (idx > -1) {
         newArr.splice(idx, 1);
       } else {
-        newArr.push(index);
+        if (selectArr.length < VALIDATE_COUNT) {
+          newArr.push(index);
+        }
       }
       setSelectArr(newArr);
     },
@@ -312,7 +319,7 @@ export const SeedPhrase: React.FC<Props> = ({
   );
 
   const validate = useMemoizedFn(() => {
-    if (selectArr.length !== 3) {
+    if (selectArr.length !== VALIDATE_COUNT) {
       return false;
     }
     return selectArr.every((n, index) => {
@@ -379,7 +386,7 @@ export const SeedPhrase: React.FC<Props> = ({
         toastHide();
       }
     } else {
-      toast.show('Verification failed');
+      toast.show(t('page.nextComponent.createNewAddress.verificationFailed'));
       setShuffleCount(val => val + 1);
       setSelectArr([]);
     }
@@ -456,6 +463,7 @@ export const SeedPhrase: React.FC<Props> = ({
             </BlurView>
           )}
           <WordsMatrix
+            shuffledNumbers={shuffledNumbers}
             words={!currentSelecting ? words : shuffledWords}
             selectArr={selectArr}
             isSelectIng={currentSelecting}
@@ -471,6 +479,7 @@ export const SeedPhrase: React.FC<Props> = ({
         ]}>
         {!isHidden && (
           <Button
+            disabled={currentSelecting && selectArr.length < 3}
             containerStyle={styles.btnContainer}
             loading={currentSelecting ? loading : false}
             type="primary"
