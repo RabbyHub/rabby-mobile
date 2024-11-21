@@ -87,23 +87,24 @@ export const AddressItem = (props: AddressItemProps) => {
   }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPressIn={() => setIsPressing(true)}
-      onPressOut={() => setIsPressing(false)}
-      style={StyleSheet.flatten([
-        styles.root,
-        isPressing && styles.rootPressing,
-      ])}
-      onPress={onDetail}
-      onLongPress={noop}>
-      <ContextMenuView
-        menuConfig={{
-          menuTitle: account.aliasName,
-          menuActions: menuActions,
-        }}>
+    <ContextMenuView
+      menuConfig={{
+        menuTitle: account.aliasName,
+        menuActions: menuActions,
+      }}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([
+          styles.root,
+          isPressing && styles.rootPressing,
+        ])}
+        delayLongPress={200} // long press delay
+        onPress={onDetail}
+        onLongPress={noop}>
         <AddressItemInner2024 isPressing={isPressing} account={account} />
-      </ContextMenuView>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </ContextMenuView>
   );
 };
