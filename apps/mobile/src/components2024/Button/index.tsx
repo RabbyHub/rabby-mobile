@@ -246,7 +246,7 @@ const getStyle = createGetStyles2024(ctx => ({
         shadowOpacity: 0.1,
       },
       android: {
-        elevation: 10,
+        elevation: 4,
       },
     }),
   },
