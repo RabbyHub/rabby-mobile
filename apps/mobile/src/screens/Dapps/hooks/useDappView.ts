@@ -108,6 +108,8 @@ export function useOpenDappView() {
     );
   }, [toggleShowSheetModal]);
 
+  const dappLastUsedAccount = useDappLastUsedAccount();
+
   const openUrlAsDapp = useCallback(
     (
       dappUrl: DappInfo['origin'] | OpenedDappItem,
@@ -174,8 +176,11 @@ export function useOpenDappView() {
         setActiveDappOrigin(item.origin);
       }
 
+      dappLastUsedAccount.activate(dapps[item.origin]);
+
       return true;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       showDappWebViewModal,
       dapps,
@@ -200,6 +205,8 @@ export function useOpenDappView() {
 
   const onHideActiveDapp = useCallback(() => {
     setActiveDappOrigin(null);
+    dappLastUsedAccount.inactivate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setActiveDappOrigin]);
 
   const closeActiveOpenedDapp = useCallback(() => {
@@ -260,21 +267,6 @@ export function useOpenDappView() {
 
   const openedDappItems = useDebounceValue(originalInfo.openedDappItems, 100);
   const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
-
-  const dappLastUsedAccount = useDappLastUsedAccount();
-
-  React.useEffect(() => {
-    if (activeDapp) {
-      dappLastUsedAccount.activate(activeDapp);
-    } else {
-      dappLastUsedAccount.inactivate();
-    }
-
-    return () => {
-      dappLastUsedAccount.inactivate();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDapp]);
 
   return {
     activeDapp,
