@@ -26,9 +26,9 @@ export function useAtomicRequest<
 
         if (fetchingAccounts) return;
         set(isRequestingAtom, true);
-
+        let result: any;
         try {
-          return doRequest(...args);
+          result = doRequest(...args);
         } catch (error) {
           __DEV__ &&
             console.debug(
@@ -39,6 +39,8 @@ export function useAtomicRequest<
         } finally {
           set(isRequestingAtom, false);
         }
+
+        return result;
       },
       [
         doRequest,

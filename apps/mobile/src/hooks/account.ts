@@ -140,6 +140,10 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
     doRequest: doFetchCurrentAccount,
   });
 
+  const fetchCurrentAccountAsync = useCallback(async () => {
+    return fetchCurrentAccount();
+  }, [fetchCurrentAccount]);
+
   const switchAccount = useCallback(
     (account: Account) => {
       preferenceService.setCurrentAccount(account);
@@ -152,13 +156,14 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
 
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchCurrentAccount();
+      fetchCurrentAccountAsync();
     }
-  }, [disableAutoFetch, fetchCurrentAccount]);
+  }, [disableAutoFetch, fetchCurrentAccountAsync]);
 
   return {
     switchAccount,
     fetchCurrentAccount,
+    fetchCurrentAccountAsync,
     currentAccount,
   };
 }
@@ -167,10 +172,17 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
 
-  const getPinAddressesAsync = useCallback(() => {
+  /**
+   * @deprecated
+   */
+  const getPinAddresses = useCallback(() => {
     const addresses = preferenceService.getPinAddresses();
     setPinAddresses(addresses);
   }, [setPinAddresses]);
+
+  const getPinAddressesAsync = useCallback(async () => {
+    return getPinAddresses();
+  }, [getPinAddresses]);
 
   const togglePinAddressAsync = useCallback(
     (payload: {
