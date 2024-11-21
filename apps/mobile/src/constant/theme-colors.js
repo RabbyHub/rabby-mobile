@@ -121,6 +121,8 @@ const themeColorsNext2024 = {
     'neutral-line': 'rgba(224, 229, 236, 1)',
     'neutral-title-1': 'rgba(25, 41, 69, 1)',
     'neutral-title-2': 'rgba(255, 255, 255, 1)',
+    // TODO: corresponding dark color
+    'netural-card-2': 'rgba(242, 244, 247, 1)',
     'neutral-body': 'rgba(62, 73, 94, 1)',
     'neutral-foot': 'rgba(106, 117, 135, 1)',
     'neutral-secondary': 'rgba(154, 156, 169, 1)',

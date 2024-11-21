@@ -86,6 +86,7 @@ export const AssetContainer: React.FC<Props> = ({
       containerStyle={styles.container}
       renderTabBar={renderTabBar}
       headerContainerStyle={styles.headerContainer}
+      minHeaderHeight={10}
       onTabChange={tab => {
         setActiveTab(tab.tabName);
       }}
@@ -105,6 +106,7 @@ export const AssetContainer: React.FC<Props> = ({
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
+    marginTop: -10,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     width: '100%',
     paddingBottom: 18,

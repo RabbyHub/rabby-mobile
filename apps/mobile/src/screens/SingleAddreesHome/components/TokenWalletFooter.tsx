@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { Text, View } from 'react-native';
 
 import { RcArrowRight2CC } from '@/assets/icons/common';
-import { AppColorsVariants } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -59,8 +58,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 100,
-    // TODO: card2
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    backgroundColor: ctx.colors2024['netural-card-2'],
     paddingHorizontal: 8,
     paddingVertical: 10,
     display: 'flex',

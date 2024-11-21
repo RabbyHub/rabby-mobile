@@ -1,7 +1,5 @@
 import React, { useCallback } from 'react';
 import { SafeAreaView } from 'react-native';
-import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-
 import HeaderArea from './HeaderArea';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { AssetContainer } from './AssetContainer';
@@ -16,6 +14,7 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -53,11 +52,7 @@ function HomeScreen(): JSX.Element {
   );
 
   return (
-    <RootScreenContainer
-      fitStatuBar
-      top={-56}
-      hideBottomBar
-      style={styles.rootScreenContainer}>
+    <NormalScreenContainer style={styles.rootScreenContainer}>
       {/* <ScreenSpecificStatusBar screenName={RootNames.Home} /> */}
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
@@ -65,7 +60,7 @@ function HomeScreen(): JSX.Element {
           onRefresh={triggerUpdate}
         />
       </SafeAreaView>
-    </RootScreenContainer>
+    </NormalScreenContainer>
   );
 }
 
@@ -77,7 +72,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   safeView: {
     flex: 1,
-    paddingHorizontal: 16,
     width: '100%',
     overflow: 'hidden',
   },
