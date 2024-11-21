@@ -43,8 +43,7 @@ import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { BackgroundComponent } from './BackgroundComponent';
 import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColors2024Variants } from '@/constant/theme';
+import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -86,6 +85,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: ['50%'],
   [MODAL_NAMES.ADDRESS_DETAIL]: ['85%'],
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ['85%'],
+  [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -128,6 +128,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: AddressQuickManager,
   [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
+  [MODAL_NAMES.NO_LONGER_SUPPORTS]: NoLongerSupports,
 };
 
 export function makeBottomSheetProps({
