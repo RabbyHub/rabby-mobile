@@ -4,7 +4,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { MEDIA_TYPE, Media } from '@/components/Media';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
 import { chunk } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { useQueryNft } from './hooks/nft';
 import FastImage from 'react-native-fast-image';
-import { AppColorsVariants } from '@/constant/theme';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -30,7 +29,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { NFTDetailPopupInner } from '../NftDetail/PopupInner';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 
@@ -50,7 +49,8 @@ const width = Dimensions.get('window').width;
 const detailWidth = (width - 90) / 5;
 
 const Item = ({ item, lastCountMark, collectionName }: ItemProps) => {
-  const { styles } = useThemeStyles(getStyle);
+  const { styles } = useTheme2024({ getStyle });
+
   const navigation = useRabbyAppNavigation();
 
   const handleNFTPress = useCallback(() => {
@@ -167,7 +167,7 @@ const NFT_COUNT_PER_LINE = 5;
 const NFT_LIMITED_DISPLAY_COUNT = 50;
 const NFT_LINES_LIMIT = NFT_LIMITED_DISPLAY_COUNT / NFT_COUNT_PER_LINE;
 export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
-  const { styles } = useThemeStyles(getStyle);
+  const { styles } = useTheme2024({ getStyle });
   const { currentAccount } = useCurrentAccount();
 
   const {
@@ -343,153 +343,151 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   );
 };
 
-const IMAGE_OFFSET_Y = 10;
-const getStyle = createGetStyles((colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      backgroundColor: colors['neutral-bg-1'],
-    },
-    tipContainer: {
-      position: 'relative',
-      marginVertical: 16,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    tip: {
-      textAlign: 'center',
-      color: colors['neutral-foot'],
-      fontSize: 11,
-      paddingHorizontal: 10,
-    },
-    tipLine: {
-      width: 'auto',
-      flex: 1,
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors['neutral-line'],
-    },
-    listContainer: {
-      paddingBottom: 90,
-    },
-    list: {
-      width: '100%',
-      paddingHorizontal: 20,
-    },
-    title: {
-      fontSize: 16,
-      color: colors['neutral-title-1'],
-      maxWidth: 260,
-      fontWeight: '600',
-      // lineHeight: 16,
-      lineHeight: 22,
-    },
-    length: {
-      fontSize: 13,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
-      marginLeft: 4,
-    },
-    headerContainer: {
-      paddingTop: 0,
-      paddingBottom: 0,
-      // ...makeDebugBorder('purple'),
-    },
-    titleContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    floorPriceContainer: {
-      marginTop: 6,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    floorPriceText: {
-      fontSize: 13,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
-    },
-    imageContainer: {
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      marginLeft: -5,
-      marginRight: -5,
-    },
-    footContainer: {
-      marginTop: IMAGE_OFFSET_Y + 5,
-      marginBottom: IMAGE_OFFSET_Y,
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors['neutral-line'],
-      // ...makeDebugBorder('blue'),
-    },
-    imagesView: {
-      borderRadius: 4,
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'relative',
-      marginTop: IMAGE_OFFSET_Y,
-      marginBottom: 0,
-      marginLeft: 5,
-      marginRight: 5,
-      // ...makeDebugBorder('blue'),
-    },
-    imageCountMarkView: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      borderRadius: 4,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    imageCountMarkText: {
-      color: '#fff',
-      fontSize: 16,
-      fontStyle: 'normal',
-      fontWeight: '600',
-    },
-    images: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 4,
-    },
-    empty: {
-      width: '100%',
-      paddingTop: '40%',
-      justifyContent: 'center',
-    },
-    chainIcon: {
-      marginRight: 4,
-      alignSelf: 'center',
-      marginTop: 2,
-      width: 16,
-      height: 16,
-      borderRadius: 16,
-    },
-    corner: {
-      backgroundColor: 'rgba(0, 0, 0, 0.30)',
-      position: 'absolute',
-      right: 4,
-      top: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-      borderRadius: 2,
-      alignItems: 'center',
-      opacity: 0.8,
-    },
-    cornerNumber: {
-      color: colors['neutral-title-2'],
-      fontSize: 12,
-      fontWeight: '400',
-      lineHeight: 14,
-    },
-    loadingWrap: {
-      width: '100%',
-      height: '100%',
-    },
-  }),
-);
+const IMAGE_OFFSET_Y = 13;
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  tipContainer: {
+    position: 'relative',
+    marginVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tip: {
+    textAlign: 'center',
+    color: colors2024['neutral-foot'],
+    fontSize: 11,
+    paddingHorizontal: 10,
+  },
+  tipLine: {
+    width: 'auto',
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors2024['neutral-line'],
+  },
+  listContainer: {
+    paddingBottom: 90,
+  },
+  list: {
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  title: {
+    fontSize: 16,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    maxWidth: 260,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  length: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
+  },
+  headerContainer: {
+    paddingTop: 0,
+    paddingBottom: 0,
+    // ...makeDebugBorder('purple'),
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  floorPriceContainer: {
+    marginTop: 6,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  floorPriceText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 8,
+  },
+  footContainer: {
+    marginTop: IMAGE_OFFSET_Y + 7,
+    marginBottom: IMAGE_OFFSET_Y,
+  },
+  imagesView: {
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginTop: IMAGE_OFFSET_Y,
+    marginBottom: 0,
+    // marginLeft: 5,
+    // marginRight: 5,
+    // ...makeDebugBorder('blue'),
+  },
+  imageCountMarkView: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageCountMarkText: {
+    color: '#fff',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '600',
+  },
+  images: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  empty: {
+    width: '100%',
+    paddingTop: '40%',
+    justifyContent: 'center',
+  },
+  chainIcon: {
+    marginRight: 4,
+    alignSelf: 'center',
+    marginTop: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 16,
+  },
+  corner: {
+    backgroundColor: 'rgba(0, 0, 0, 0.30)',
+    position: 'absolute',
+    right: 4,
+    top: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 2,
+    alignItems: 'center',
+    opacity: 0.8,
+  },
+  cornerNumber: {
+    color: colors2024['neutral-title-2'],
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 14,
+  },
+  loadingWrap: {
+    width: '100%',
+    height: '100%',
+  },
+}));
