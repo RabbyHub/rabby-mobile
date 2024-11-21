@@ -4,6 +4,7 @@ import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, isTestnet } from './chain';
 import {
   keyringService,
+  notificationService,
   preferenceService,
   transactionHistoryService,
   whitelistService,
@@ -27,6 +28,8 @@ import {
 } from '@rabby-wallet/rabby-action';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { calcGasLimit, getPendingTxs } from '@/core/apis/transactions';
+import { stats } from './stats';
+import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 
 // fail code
 export enum FailedCode {
@@ -64,6 +67,7 @@ export const sendTransaction = async ({
   waitCompleted = true,
   pushType = 'default',
   ignoreGasNotEnoughCheck,
+  ga,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -76,13 +80,15 @@ export const sendTransaction = async ({
   isGasAccount?: boolean;
   waitCompleted?: boolean;
   pushType?: TxPushType;
+  ga?: Record<string, any>;
 }) => {
   onProgress?.('building');
   const chain = findChain({
     serverId: chainServerId,
   })!;
   const support1559 = chain.eip['1559'];
-  const { address } = (await preferenceService.getCurrentAccount())!;
+  const { address, ...currentAccount } =
+    (await preferenceService.getCurrentAccount())!;
   const recommendNonce = await apiProvider.getRecommendNonce({
     from: tx.from,
     chainId: chain.id,
@@ -96,6 +102,16 @@ export const sendTransaction = async ({
   }
 
   const signingTxId = await transactionHistoryService.addSigningTx(tx);
+
+  stats.report('createTransaction', {
+    type: currentAccount.brandName,
+    category: KEYRING_CATEGORY_MAP[currentAccount.type],
+    chainId: chain.serverId,
+    createdBy: ga ? 'rabby' : 'dapp',
+    source: ga?.source || '',
+    trigger: ga?.trigger || '',
+    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+  });
 
   // pre exec tx
   const preExecResult = await openapi.preExecTx({
@@ -306,13 +322,60 @@ export const sendTransaction = async ({
 
   onProgress?.('builded');
 
+  const handleSendAfter = async () => {
+    const statsData = await notificationService.getStatsData();
+
+    if (statsData?.signed) {
+      const sData: any = {
+        type: statsData?.type,
+        chainId: statsData?.chainId,
+        category: statsData?.category,
+        success: statsData?.signedSuccess,
+        preExecSuccess: statsData?.preExecSuccess,
+        createdBy: statsData?.createdBy,
+        source: statsData?.source,
+        trigger: statsData?.trigger,
+        networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+      };
+      if (statsData.signMethod) {
+        sData.signMethod = statsData.signMethod;
+      }
+      stats.report('signedTransaction', sData);
+    }
+    if (statsData?.submit) {
+      stats.report('submitTransaction', {
+        type: statsData?.type,
+        chainId: statsData?.chainId,
+        category: statsData?.category,
+        success: statsData?.submitSuccess,
+        preExecSuccess: statsData?.preExecSuccess,
+        createdBy: statsData?.createdBy,
+        source: statsData?.source,
+        trigger: statsData?.trigger,
+        networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+      });
+    }
+  };
+
+  stats.report('signTransaction', {
+    type: currentAccount.brandName,
+    category: KEYRING_CATEGORY_MAP[currentAccount.type],
+    chainId: chain.serverId,
+    createdBy: ga ? 'rabby' : 'dapp',
+    source: ga?.source || '',
+    trigger: ga?.trigger || '',
+    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+  });
+
   // submit tx
   let hash = '';
   try {
     hash = await Promise.race([
       apiProvider.ethSendTransaction({
         data: {
-          $ctx: {},
+          $ctx: {
+            ga,
+          },
           params: [transaction],
         },
         session: INTERNAL_REQUEST_SESSION,
@@ -336,7 +399,9 @@ export const sendTransaction = async ({
         });
       }),
     ]);
+    await handleSendAfter();
   } catch (e) {
+    await handleSendAfter();
     const err = new Error((e as any).message);
     err.name =
       err.name === FailedCode.UserRejected

@@ -108,11 +108,13 @@ const MiniSignTx = ({
   onReject,
   onResolve,
   onSubmit,
+  ga,
 }: {
   txs: Tx[];
   onReject?: () => void;
   onResolve?: () => void;
   onSubmit?: () => void;
+  ga?: Record<string, any>;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -456,7 +458,9 @@ const MiniSignTx = ({
   );
   const { activeApprovalPopup } = useCommonPopupView();
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
-  const task = useBatchSignTxTask();
+  const task = useBatchSignTxTask({
+    ga,
+  });
 
   const handleInitTask = useMemoizedFn(() => {
     task.init(
@@ -1039,11 +1043,13 @@ export const MiniApproval = ({
   visible,
   onResolve,
   onReject,
+  ga,
 }: {
   txs?: Tx[];
   visible?: boolean;
   onReject?: () => void;
   onResolve?: () => void;
+  ga?: Record<string, any>;
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const colors = useThemeColors();
@@ -1078,6 +1084,7 @@ export const MiniApproval = ({
         {txs?.length ? (
           <MiniSignTx
             txs={txs}
+            ga={ga}
             onSubmit={() => {
               setIsSubmitting(true);
             }}

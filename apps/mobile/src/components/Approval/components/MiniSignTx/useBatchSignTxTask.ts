@@ -18,7 +18,7 @@ type ListItemType = {
   message?: string;
 };
 
-export const useBatchSignTxTask = () => {
+export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
   // const wallet = useWallet();
 
   const [list, setList] = useState<ListItemType[]>([]);
@@ -67,6 +67,7 @@ export const useBatchSignTxTask = () => {
         try {
           const result = await sendTransaction({
             ...options,
+            ga,
             tx,
             onProgress: status => {
               if (status === 'builded') {
