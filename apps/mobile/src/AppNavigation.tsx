@@ -55,6 +55,7 @@ import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import UnlockScreen from './screens/Unlock/Unlock';
+import { SingleAddressNavigator } from './screens/Navigators/SingleAddressNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -179,6 +180,10 @@ export default function AppNavigation({
           <RootStack.Screen
             name={RootNames.StackGetStarted}
             component={GetStartedNavigator}
+          />
+          <RootStack.Screen
+            name={RootNames.SingleAddressStack}
+            component={SingleAddressNavigator}
           />
           <RootStack.Screen
             name={RootNames.StackRoot}

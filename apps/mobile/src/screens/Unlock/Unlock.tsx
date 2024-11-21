@@ -90,6 +90,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const checkUnlocked = useCallback(() => {
     if (!apisLock.isUnlocked()) return;
 
+    // TODO: redirect to polymers page
     resetNavigationTo(navigation, 'Home');
     afterLeaveFromUnlock();
   }, [navigation, afterLeaveFromUnlock]);
