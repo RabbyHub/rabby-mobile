@@ -49,6 +49,7 @@ import {
 } from 'react-native';
 import { useApprovalAlert } from '../hooks/approvals';
 import { CurveBottomSheetModal } from './CurveBottomSheet';
+import { trigger } from 'react-native-haptic-feedback';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -57,6 +58,13 @@ const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
 ];
 
 const isAndroid = Platform.OS === 'android';
+
+const triggerLight = () => {
+  trigger('impactLight', {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  });
+};
 function BadgeText({
   count,
   style,
@@ -362,7 +370,14 @@ export const HomeTopArea = () => {
           {actions.map(item => (
             <TouchableView
               style={[styles.action, !!item?.disabled && styles.disabledAction]}
-              onPress={item.disabled ? toastDisabledAction : item.onPress}
+              onPress={
+                item.disabled
+                  ? toastDisabledAction
+                  : () => {
+                      triggerLight();
+                      item.onPress();
+                    }
+              }
               key={item.title}>
               <View style={styles.actionIconWrapper}>
                 <item.Icon style={styles.actionIcon} />
