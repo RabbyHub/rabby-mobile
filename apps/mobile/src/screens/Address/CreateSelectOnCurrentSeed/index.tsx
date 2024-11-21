@@ -56,7 +56,10 @@ function MainListBlocks() {
 function CreateSelectOnCurrentSeed(): JSX.Element {
   const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      overwriteStyle={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <LinearGradient
         colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]} // 渐变颜色
         start={{ x: 0, y: 0 }} // 渐变起始位置

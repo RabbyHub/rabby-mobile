@@ -254,7 +254,10 @@ function MultiAddressHome(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      overwriteStyle={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <LinearGradient
         colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]}
         locations={[0.2195, 0.3181]}
