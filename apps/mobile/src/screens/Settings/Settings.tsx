@@ -129,7 +129,9 @@ import WalletLockTestItemModal, {
 import DevUIPlaygroundModal, {
   useDevUIPlaygroundModalVisible,
 } from './sheetModals/DevUIPlayground';
-import { apisWalletConnect } from '@/core/apis';
+import DevUIWipModal, {
+  useUIDevWipModalVisiable,
+} from './sheetModals/DevUIWip';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -510,26 +512,8 @@ function DevSettingsBlocks() {
   const { setCloudDriveTestItemModalVisible } =
     useCloudDriveTestItemModalVisible();
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
+  const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
-
-  const handleAddWalletConnectAddresses = React.useCallback(() => {
-    apisWalletConnect.importAddress({
-      address: '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85',
-      brandName: 'MetaMask',
-    });
-    apisWalletConnect.importAddress({
-      address: '0x12F5DF67c01050482E182ed51F962b873F1AcDF4',
-      brandName: 'Bitget',
-    });
-    apisWalletConnect.importAddress({
-      address: '0x5eF0CfAe4e0a2f7BcC50e4A4e0a2f7BcC50e4A4e',
-      brandName: 'TP',
-    });
-    apisWalletConnect.importAddress({
-      address: '0xdc7b8245Cc165d7994646e063077F5F1a5D9d461',
-      brandName: 'Rainbow',
-    });
-  }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -578,29 +562,17 @@ function DevSettingsBlocks() {
               },
             },
             {
+              label: '[UI] Wip Helpers',
+              icon: RcCode,
+              onPress: () => {
+                setDevUIWipModalVisible(true);
+              },
+            },
+            {
               label: '[UI] Playground',
               icon: RcCode,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
-              },
-            },
-            {
-              label: '[Page] go to multi address home',
-              icon: RcCode,
-              onPress: () => {
-                navigation.dispatch(
-                  StackActions.replace(RootNames.StackAddress, {
-                    screen: RootNames.MultiAddressHome,
-                    params: {},
-                  }),
-                );
-              },
-            },
-            {
-              label: '[UI] add WalletConnect addresses',
-              icon: RcCode,
-              onPress: () => {
-                handleAddWalletConnectAddresses();
               },
             },
             {
@@ -743,6 +715,7 @@ function DevSettingsBlocks() {
 
       <CloudDriveTestItemModal />
       <WalletLockTestItemModal />
+      <DevUIWipModal />
       <DevUIPlaygroundModal />
     </>
   );
