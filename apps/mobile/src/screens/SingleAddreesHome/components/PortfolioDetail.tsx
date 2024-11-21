@@ -6,7 +6,7 @@ import groupBy from 'lodash/groupBy';
 import { RcIconInfoCC } from '@/assets/icons/common';
 
 import { AssetAvatar, Tip } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
 import {
@@ -15,8 +15,8 @@ import {
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolio } from '../types';
-import { AppColorsVariants } from '@/constant/theme';
 import { formatAmount } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const PortfolioHeader = ({
   data,
@@ -29,8 +29,7 @@ export const PortfolioHeader = ({
   showDescription?: boolean;
   showHistory?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const usdChangeStyle = useMemo(
     () =>
@@ -39,12 +38,12 @@ export const PortfolioHeader = ({
         {
           color: data.netWorthChange
             ? data.netWorthChange < 0
-              ? colors['red-default']
-              : colors['green-default']
-            : colors['blue-default'],
+              ? colors2024['red-default']
+              : colors2024['green-default']
+            : colors2024['blue-default'],
         },
       ]),
-    [data, colors, styles.tokenRowChange],
+    [styles.tokenRowChange, data.netWorthChange, colors2024],
   );
 
   return (
@@ -102,8 +101,7 @@ export const TokenList = ({
     shareToken: PortfolioItemToken;
   };
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const headers = [name, 'AMOUNT', 'USD VALUE'];
 
@@ -211,7 +209,7 @@ export const TokenList = ({
               <AssetAvatar
                 logo={l._logo}
                 logoStyle={l.isToken ? undefined : styles.nftIcon}
-                size={22}
+                size={24}
               />
               <Text style={styles.tokenListSymbolText} numberOfLines={1}>
                 {l._symbol}
@@ -253,8 +251,7 @@ type SupplementsProps = {
 };
 
 export const Supplements = ({ data }: SupplementsProps) => {
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const list = useMemo(
     () => data?.filter((x): x is SupplementType => !!x),
@@ -263,10 +260,10 @@ export const Supplements = ({ data }: SupplementsProps) => {
 
   const linearColors = useMemo(() => {
     return [
-      colord(colors['blue-default']).alpha(0.1).toRgbString(),
-      colord(colors['neutral-title-2']).alpha(0).toRgbString(),
+      colord(colors2024['blue-default']).alpha(0.1).toRgbString(),
+      colord(colors2024['neutral-title-2']).alpha(0).toRgbString(),
     ];
-  }, [colors]);
+  }, [colors2024]);
 
   return list?.length ? (
     <LinearGradient
@@ -284,140 +281,150 @@ export const Supplements = ({ data }: SupplementsProps) => {
   ) : null;
 };
 
-const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    portfolioHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    portfolioTypeDesc: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    portfolioType: {
-      borderRadius: 10,
-      paddingHorizontal: 8,
-      height: 20,
-      backgroundColor: colors['blue-light-1'],
-    },
-    portfolioTypeText: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors['blue-default'],
-      lineHeight: 20,
-    },
-    portfolioDesc: {
-      marginLeft: 8,
-      fontSize: 13,
-      fontWeight: '700',
-      color: colors['neutral-title-1'],
-      flexShrink: 1,
-    },
-    portfolioNetWorth: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      textAlign: 'right',
-    },
-    tokenRowChange: {
-      fontSize: 10,
-      fontWeight: '500',
-      textAlign: 'right',
-    },
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  portfolioHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  portfolioTypeDesc: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+  },
+  portfolioType: {
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    height: 20,
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  portfolioTypeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 20,
+  },
+  portfolioDesc: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+    flexShrink: 1,
+  },
+  portfolioNetWorth: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+    textAlign: 'right',
+  },
+  tokenRowChange: {
+    fontSize: 10,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'right',
+  },
 
-    // tokenlist
-    tokenList: {
-      marginTop: 8,
-    },
-    tokenRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    tokenRowToken: {
-      height: 40,
-    },
-    tokenRowHeader: {
-      marginBottom: 8,
-      marginTop: 18,
-    },
-    tokenListHeader: {
-      flexBasis: '35%',
-      flexGrow: 1,
-      fontSize: 12,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
-    },
-    tokenListCol: {
-      flexBasis: '35%',
-      flexGrow: 1,
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-    },
-    tokenListColText: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-    },
-    tokenListSymbol: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    tokenListSymbolText: {
-      paddingLeft: 8,
-      paddingRight: 4,
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      flexShrink: 1,
-    },
-    alignRight: {
-      flexBasis: '30%',
-      textAlign: 'right',
-    },
-    flexCenter: {
-      alignItems: 'center',
-      display: 'flex',
-      flexDirection: 'row',
-    },
-    flexRight: {
-      justifyContent: 'flex-end',
-    },
+  // tokenlist
+  tokenList: {
+    marginTop: 8,
+  },
+  tokenRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tokenRowToken: {
+    height: 40,
+  },
+  tokenRowHeader: {
+    marginBottom: 8,
+    marginTop: 18,
+  },
+  tokenListHeader: {
+    flexBasis: '35%',
+    flexGrow: 1,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenListCol: {
+    flexBasis: '35%',
+    flexGrow: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  tokenListColText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  tokenListSymbol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+  },
+  tokenListSymbolText: {
+    paddingLeft: 8,
+    paddingRight: 4,
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+    flexShrink: 1,
+  },
+  alignRight: {
+    flexBasis: '30%',
+    textAlign: 'right',
+  },
+  flexCenter: {
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  flexRight: {
+    justifyContent: 'flex-end',
+  },
 
-    // supplements
-    supplements: {
-      marginTop: 20,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-    },
-    supplementField: {
-      width: '50%',
-      height: 34,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    fieldLabel: {
-      paddingLeft: 10,
-      fontSize: 12,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
-    },
-    fieldContent: {
-      marginLeft: 8,
-      fontSize: 12,
-      fontWeight: '400',
-      color: colors['blue-default'],
-    },
-    nftIcon: {
-      borderRadius: 4,
-    },
-    nftIconInfo: {
-      marginLeft: 4,
-    },
-  });
+  // supplements
+  supplements: {
+    marginTop: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  supplementField: {
+    width: '50%',
+    height: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fieldLabel: {
+    paddingLeft: 10,
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
+  },
+  fieldContent: {
+    marginLeft: 8,
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['blue-default'],
+  },
+  nftIcon: {
+    borderRadius: 4,
+  },
+  nftIconInfo: {
+    marginLeft: 4,
+  },
+}));
 
 export const polyNfts = (nfts: PortfolioItemNft[]) => {
   const poly = groupBy(nfts, n => n.collection.id + n.collection.chain_id);

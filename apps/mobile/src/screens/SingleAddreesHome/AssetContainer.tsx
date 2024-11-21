@@ -36,13 +36,17 @@ export const AssetContainer: React.FC<Props> = ({
           pressColor: 'transparent',
         })}
         {...props}
+        labelStyle={StyleSheet.flatten([
+          props.labelStyle,
+          activeTab === props.name ? styles.activeLabelStyle : {},
+        ])}
         style={StyleSheet.flatten([
           props.style,
           activeTab === props.name ? styles.activeTab : {},
         ])}
       />
     ),
-    [activeTab, styles.activeTab],
+    [activeTab, styles.activeLabelStyle, styles.activeTab],
   );
 
   const renderTabBar = React.useCallback(
@@ -143,5 +147,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   activeTab: {
     backgroundColor: 'rgba(19, 20, 22, 1)',
+  },
+  activeLabelStyle: {
+    fontWeight: '700',
   },
 }));
