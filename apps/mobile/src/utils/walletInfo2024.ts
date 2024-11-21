@@ -9,6 +9,7 @@ import PrivateKeyPNG from '@/assets2024/icons/wallet/private-key.png';
 import SeedPNG from '@/assets2024/icons/wallet/seed.png';
 import WatchPNG from '@/assets2024/icons/wallet/watch.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
+import { WALLET_INFO } from './walletInfo';
 
 export const getWalletIcon2024 = (
   brandName: string | undefined,
@@ -44,5 +45,12 @@ export const getWalletIcon2024 = (
     return SeedPNG;
   }
 
-  return PrivateKeyPNG;
+  if (brandName === KEYRING_CLASS.PRIVATE_KEY) {
+    return PrivateKeyPNG;
+  }
+
+  return (
+    WALLET_INFO?.[brandName as keyof typeof WALLET_INFO]?.icon ||
+    WALLET_INFO.UnknownWallet.icon
+  );
 };

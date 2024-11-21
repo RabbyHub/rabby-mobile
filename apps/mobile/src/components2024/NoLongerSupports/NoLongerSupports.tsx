@@ -10,11 +10,13 @@ import { Card } from '../Card';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    paddingHorizontal: 20,
     alignItems: 'center',
     marginTop: 30,
     height: '100%',
     position: 'relative',
+  },
+  headline: {
+    paddingHorizontal: 20,
   },
   imageWrapper: {
     marginBottom: 14,
@@ -47,6 +49,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     flexGrow: 1,
     maxHeight: '80%',
+    paddingHorizontal: 20,
   },
   item: {
     width: '100%',
@@ -95,13 +98,15 @@ export const NoLongerSupports = ({ onDone }) => {
           style={styles.image}
         />
       </View>
-      <Text style={styles.headlineText}>
-        No longer support mobile wallet address
-      </Text>
-      <Text style={styles.descText}>
-        Please make sure you keep the following mobile wallet address
-        information handy
-      </Text>
+      <View style={styles.headline}>
+        <Text style={styles.headlineText}>
+          No longer support mobile wallet address
+        </Text>
+        <Text style={styles.descText}>
+          Please make sure you keep the following mobile wallet address
+          information handy
+        </Text>
+      </View>
       <FlatList
         style={styles.list}
         data={walletConnectAccounts}
