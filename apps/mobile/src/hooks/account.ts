@@ -103,7 +103,7 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   }, [disableAutoFetch, fetchAccounts]);
 
   return {
-    accounts,
+    accounts: [...accounts],
     fetchAccounts,
   };
 }

@@ -1,30 +1,28 @@
 import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
 
-type AccountSwitcherState = {
-  /**
-   * @default {true}
-   */
-  collapsed: boolean;
-};
+import {
+  AccountSwitcherScene,
+  AccountSwitcherState,
+} from '@/hooks/accountsSwitcher';
+
+export type AccountSwitcherAopProps<T extends void | object = void> = {
+  forScene: AccountSwitcherScene;
+} & (T extends void ? {} : T);
+
+export type { AccountSwitcherScene };
 
 function makeDefaultState(): AccountSwitcherState {
   return {
     collapsed: true,
   };
 }
-
-type AccountSwitchersStates = typeof DefaultStates;
-export type AccountSwitcherScene = keyof AccountSwitchersStates;
-export type AccountSwitcherAopProps<T extends void | object = void> = {
-  forScene: AccountSwitcherScene;
-} & (T extends void ? {} : T);
-
 const DefaultStates = {
   Send: makeDefaultState(),
   Swap: makeDefaultState(),
   Bridge: makeDefaultState(),
 };
+
 export const screenHeaderAccountSwitcherAtom = atom(DefaultStates);
 
 export function useAccountSwitcherScenes(forScene?: AccountSwitcherScene) {

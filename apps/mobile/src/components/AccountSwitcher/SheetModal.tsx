@@ -26,7 +26,9 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
   />
 );
 
-export function AccountsSwitcherModal({ forScene }: AccountSwitcherAopProps) {
+export function AccountsSwitcherSheetModal({
+  forScene,
+}: AccountSwitcherAopProps) {
   const { isVisible } = useAccountSwitcherScenes(forScene);
   const sheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -108,7 +110,7 @@ const getModalStyle = createGetStyles2024(ctx => {
 export function GlobalAccountSwitcherStub() {
   return (
     <>
-      <AccountsSwitcherModal forScene="Send" />
+      <AccountsSwitcherSheetModal forScene="Send" />
     </>
   );
 }

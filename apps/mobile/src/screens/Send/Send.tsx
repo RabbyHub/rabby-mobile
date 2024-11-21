@@ -45,7 +45,8 @@ import { toastLoading } from '@/components/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { AccountsSwitcherModal } from '@/components/AccountSwitcher/SheetModal';
+import { AccountsSwitcherSheetModal } from '@/components/AccountSwitcher/SheetModal';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 function SendScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -370,7 +371,8 @@ function SendScreen(): JSX.Element {
         },
       }}>
       <NormalScreenContainer style={styles.container}>
-        <AccountsSwitcherModal forScene="Send" />
+        {/* <AccountsSwitcherSheetModal forScene="Send" /> */}
+        <AccountSwitcherModal forScene="Send" />
         <TouchableWithoutFeedback
           onPress={() => {
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
