@@ -102,6 +102,14 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Swap',
           ...headerPresets.withBg2,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="Swap"
+                titleText={ctx.children}
+              />
+            );
+          },
         })}
       />
 
@@ -123,6 +131,14 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Bridge',
           ...headerPresets.withBgCard2,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="Bridge"
+                titleText={ctx.children}
+              />
+            );
+          },
         })}
       />
 

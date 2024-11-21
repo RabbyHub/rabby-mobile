@@ -1,16 +1,20 @@
-import { useRef } from 'react';
-
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSwitcherScenes } from './hooks';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeOffTop } from '@/hooks/useAppLayout';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 import { AccountsPanelInModal } from './AccountsPanel';
 import AutoLockView from '../AutoLockView';
+import { useLayoutEffect } from 'react';
 
-export function AccountSwitcherModal({ forScene }: AccountSwitcherAopProps) {
-  const { isVisible } = useAccountSwitcherScenes(forScene);
+export function AccountSwitcherModal({
+  forScene,
+  inScreen = false,
+}: AccountSwitcherAopProps<{
+  inScreen?: boolean;
+}>) {
+  const { isVisible, toggleSceneVisible } = useAccountSwitcherScenes(forScene);
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });
 
@@ -18,19 +22,38 @@ export function AccountSwitcherModal({ forScene }: AccountSwitcherAopProps) {
     modalBackgroundHeight: ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
   });
 
+  useLayoutEffect(() => {
+    return () => {
+      toggleSceneVisible(forScene, false);
+    };
+  }, [forScene, toggleSceneVisible]);
+
+  if (!isVisible) return null;
+
+  const absoluteStyle = {
+    top: topValue + ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+    maxHeight: Math.floor(offScreen.modalBackgroundHeight),
+  };
+
   return (
     <View
       style={[
         styles.container,
+        inScreen && { zIndex: 19 },
         !isVisible && { display: 'none' },
-        {
-          top: topValue + ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
-          maxHeight: Math.floor(offScreen.modalBackgroundHeight),
-        },
+        absoluteStyle,
       ]}>
-      <View style={styles.bgMask} />
-      <AutoLockView style={styles.panel}>
-        <AccountsPanelInModal />
+      <TouchableOpacity
+        onPress={() => {
+          setTimeout(() => {
+            toggleSceneVisible(forScene, false);
+          }, 50);
+        }}
+        style={[styles.bgMask, { height: absoluteStyle.maxHeight }]}
+      />
+      <AutoLockView
+        style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
+        <AccountsPanelInModal forScene={forScene} isVisible={isVisible} />
       </AutoLockView>
     </View>
   );
@@ -39,30 +62,48 @@ export function AccountSwitcherModal({ forScene }: AccountSwitcherAopProps) {
 const getModalStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      zIndex: 999,
       position: 'absolute',
       width: '100%',
+      // never write height here to avoid it cover to whole screen
       // height: '100%',
-      // backgroundColor: 'blue',
+      top: 76,
       left: 0,
       right: 0,
       bottom: 0,
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'red',
+      // }),
     },
-    panel: {
+    panelContainer: {
       position: 'relative',
-      backgroundColor: ctx.colors2024['neutral-bg-2'],
       width: '100%',
-      minHeight: '50%',
-      height: '50%',
-      maxHeight: '70%',
-      flexDirection: 'column',
+      maxHeight: '80%',
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'blue',
+      // }),
     },
     bgMask: {
       position: 'absolute',
       width: '100%',
       height: '100%',
-      minHeight: Dimensions.get('screen').height,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.60)',
     },
   };
 });
+
+/**
+ * @deprecated
+ */
+export function GlobalAccountSwitcherStub() {
+  return (
+    <>
+      <AccountSwitcherModal forScene="Send" />
+      <AccountSwitcherModal forScene="Swap" />
+      <AccountSwitcherModal forScene="Bridge" />
+    </>
+  );
+}

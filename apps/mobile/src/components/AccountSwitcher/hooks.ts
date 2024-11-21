@@ -1,10 +1,14 @@
 import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
 
-import {
-  AccountSwitcherScene,
-  AccountSwitcherState,
-} from '@/hooks/accountsSwitcher';
+import { AccountSwitcherScene } from '@/hooks/accountsSwitcher';
+
+type AccountSwitcherState = {
+  /**
+   * @default {true}
+   */
+  collapsed: boolean;
+};
 
 export type AccountSwitcherAopProps<T extends void | object = void> = {
   forScene: AccountSwitcherScene;
@@ -60,6 +64,8 @@ export function useAccountSwitcherScenes(forScene?: AccountSwitcherScene) {
     toggleSceneVisible,
     getSceneVisible,
     isVisible:
-      typeof forScene === 'undefined' ? undefined : getSceneVisible(forScene),
+      typeof forScene === 'undefined'
+        ? undefined
+        : !scenes[forScene]?.collapsed,
   };
 }

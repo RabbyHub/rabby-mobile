@@ -371,8 +371,7 @@ function SendScreen(): JSX.Element {
         },
       }}>
       <NormalScreenContainer style={styles.container}>
-        {/* <AccountsSwitcherSheetModal forScene="Send" /> */}
-        <AccountSwitcherModal forScene="Send" />
+        <AccountSwitcherModal forScene="Send" inScreen />
         <TouchableWithoutFeedback
           onPress={() => {
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);

@@ -1,23 +1,19 @@
 import { atomByMMKV } from '@/core/storage/mmkv';
 
-import type { Account } from '@/core/services/preference';
-import { useAccounts } from './account';
+import type { Account, IPinAddress } from '@/core/services/preference';
+import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useAtom } from 'jotai';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
-export type AccountSwitcherState = {
-  /**
-   * @default {true}
-   */
-  collapsed: boolean;
+const AccountSwitcherInfos = {
+  Send: makeSceneAccount(),
+  Swap: makeSceneAccount(),
+  Bridge: makeSceneAccount(),
 };
 
-type AccountSwitchersStates = {
-  Send: AccountSwitcherState;
-  Swap: AccountSwitcherState;
-  Bridge: AccountSwitcherState;
-};
-export type AccountSwitcherScene = keyof AccountSwitchersStates;
+export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 
 type SceneAccounts = Record<
   AccountSwitcherScene,
@@ -26,80 +22,167 @@ type SceneAccounts = Record<
   }
 >;
 
-function makeSceneAccount(): SceneAccounts[AccountSwitcherScene] {
+function makeSceneAccount() {
   return {
     currentAccount: null,
   };
 }
-export const sceneAccountsAtom = atomByMMKV<SceneAccounts>('@SceneAccounts', {
-  Send: makeSceneAccount(),
-  Swap: makeSceneAccount(),
-  Bridge: makeSceneAccount(),
-});
+export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
+  '@SceneAccounts',
+  AccountSwitcherInfos,
+);
 
-export function useSceneAccounts(
-  forScene: AccountSwitcherScene,
-  options?: {
-    disableAutoFetch?: boolean;
-  },
-) {
+export function useSwitchAccountBeforeEnterScene() {
+  const [sceneAccountInfo, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
+
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { fetchCurrentAccountAsync } = useCurrentAccount({
+    disableAutoFetch: true,
+  });
 
-  const [sceneAccounts, setSceneAccounts] = useAtom(sceneAccountsAtom);
+  const { pinAddresses, getPinAddressesAsync } = usePinAddresses({
+    disableAutoFetch: true,
+  });
 
-  const { disableAutoFetch } = options || {};
-  useEffect(() => {
-    if (!disableAutoFetch) {
-      fetchAccounts();
-    }
-  }, [disableAutoFetch, fetchAccounts]);
-
-  const setSceneCurrentAccount = useCallback(
-    (account: Account | null) => {
-      setSceneAccounts(prev => ({
+  const switchAccountBeforeEnterScene = useCallback(
+    (scene: AccountSwitcherScene, account: Account) => {
+      setSceneAccountInfo(prev => ({
         ...prev,
-        [forScene]: {
-          ...prev[forScene],
+        [scene]: {
+          ...prev[scene],
           currentAccount: account,
         },
       }));
     },
-    [forScene, setSceneAccounts],
+    [setSceneAccountInfo],
+  );
+
+  const preFetchData = useCallback(async () => {
+    setTimeout(() => {
+      Promise.allSettled([
+        fetchAccounts(),
+        fetchCurrentAccountAsync(),
+        getPinAddressesAsync(),
+      ]);
+    }, 50);
+  }, [fetchAccounts, fetchCurrentAccountAsync, getPinAddressesAsync]);
+
+  return {
+    switchAccountBeforeEnterScene,
+    preFetchData,
+  };
+}
+
+export function useSceneCurrentAccount(forScene: AccountSwitcherScene) {
+  const [sceneAccountInfo, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
+
+  // const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { currentAccount, fetchCurrentAccount } = useCurrentAccount({
+    disableAutoFetch: true,
+  });
+
+  const setSceneCurrentAccount = useCallback(
+    (scene: AccountSwitcherScene, account: Account | null) => {
+      setSceneAccountInfo(prev => ({
+        ...prev,
+        [scene]: {
+          ...prev[scene],
+          currentAccount: account,
+        },
+      }));
+    },
+    [setSceneAccountInfo],
+  );
+
+  const fetchSceneCurrentAccount = useCallback(async () => {
+    await Promise.allSettled([fetchCurrentAccount()]);
+  }, [fetchCurrentAccount]);
+
+  return {
+    // sceneCurrentAccount: sceneAccountInfo[forScene]?.currentAccount,
+    sceneCurrentAccount: currentAccount,
+    setSceneCurrentAccount,
+    fetchSceneCurrentAccount,
+  };
+}
+
+type SceneAccount = Account & {
+  isPinned?: boolean;
+};
+export function useSceneAccountInfo(options: {
+  forScene: AccountSwitcherScene;
+  disableAutoFetch?: boolean;
+}) {
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+
+  // const { fetchCurrentAccount } = useCurrentAccount({ disableAutoFetch: true });
+
+  const { forScene, disableAutoFetch } = options || {};
+  const { sceneCurrentAccount } = useSceneCurrentAccount(forScene);
+
+  const { pinAddresses, getPinAddressesAsync } = usePinAddresses({
+    disableAutoFetch: true,
+  });
+
+  const pinAddressesDict = useMemo(() => {
+    type MapKey = `${IPinAddress['brandName']}-${IPinAddress['address']}}`;
+    return pinAddresses.reduce((acc, pinAddress) => {
+      acc[pinAddress.brandName + '-' + pinAddress.address] = true;
+      return acc;
+    }, {} as Record<MapKey, boolean>);
+  }, [pinAddresses]);
+
+  const isPinnedAccount = useCallback(
+    (account: Account) => {
+      return !!pinAddressesDict[account.brandName + '-' + account.address];
+    },
+    [pinAddressesDict],
   );
 
   const computed = useMemo(() => {
-    const sceneAccount = sceneAccounts[forScene];
+    const result = {
+      sceneCurrentAccountIndexInMyAddresses: -1,
+      sceneCurrentAccount: null as null | SceneAccount,
+      myAddresses: [] as SceneAccount[],
+      myRestAddresses: [] as SceneAccount[],
+      watchAddresses: [] as SceneAccount[],
+      safeAddresses: [] as SceneAccount[],
+    };
 
-    let sceneCurrentAccount: Account | null = accounts[0] || null;
-    let sceneCurrentAccountIndex = -1;
-    const restSortedAccountsList: Account[] = [];
+    for (const [idx, origAccount] of accounts.entries()) {
+      const account: SceneAccount = { ...origAccount };
 
-    accounts.forEach((account, idx) => {
-      if (account.address === sceneAccount.currentAccount?.address) {
-        sceneCurrentAccount = account;
-        sceneCurrentAccountIndex = idx;
+      // const mapKey = account.brandName + '-' + account.address;
+      // if (pinAddressesDict[mapKey]) {
+      //   account.isPinned = true;
+      // }
+
+      if (account.type === KEYRING_CLASS.WATCH) {
+        result.watchAddresses.push(account);
+      } else if (account.type === KEYRING_CLASS.GNOSIS) {
+        result.safeAddresses.push(account);
+      } else {
+        result.myAddresses.push(account);
+
+        if (
+          sceneCurrentAccount &&
+          account.address === sceneCurrentAccount?.address
+        ) {
+          result.sceneCurrentAccountIndexInMyAddresses = idx;
+          result.sceneCurrentAccount = account;
+        } else {
+          result.myRestAddresses.push(account);
+        }
       }
-    });
-
-    if (sceneCurrentAccountIndex === -1) sceneCurrentAccountIndex = 0;
-
-    if (sceneCurrentAccountIndex > -1) {
-      restSortedAccountsList.push(
-        ...accounts.slice(0, sceneCurrentAccountIndex),
-      );
-      restSortedAccountsList.push(
-        ...accounts.slice(sceneCurrentAccountIndex + 1),
-      );
     }
 
-    return {
-      sceneCurrentAccount,
-      restSortedAccountsList,
-    };
-  }, [accounts, sceneAccounts, forScene]);
+    return result;
+  }, [accounts, sceneCurrentAccount]);
+
+  computed.myAddresses = useSortAddressList(computed.myAddresses);
 
   return {
     ...computed,
-    setSceneCurrentAccount,
+    isPinnedAccount,
   };
 }

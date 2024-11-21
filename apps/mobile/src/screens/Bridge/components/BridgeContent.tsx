@@ -48,6 +48,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 const getStyles = createGetStyles(colors => ({
   container: {
@@ -439,6 +440,7 @@ export const BridgeContent = () => {
 
   return (
     <NormalScreenContainer>
+      <AccountSwitcherModal forScene="Bridge" inScreen />
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.container}

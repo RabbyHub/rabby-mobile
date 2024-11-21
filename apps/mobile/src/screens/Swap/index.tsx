@@ -55,6 +55,7 @@ import { ReserveGasPopup } from '@/components/ReserveGasPopup';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 const Swap = () => {
   const { t } = useTranslation();
@@ -381,6 +382,7 @@ const Swap = () => {
 
   return (
     <NormalScreenContainer>
+      <AccountSwitcherModal forScene="Swap" inScreen />
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.container}

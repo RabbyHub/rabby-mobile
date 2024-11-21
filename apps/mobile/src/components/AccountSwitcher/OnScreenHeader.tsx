@@ -12,6 +12,11 @@ import {
   AccountSwitcherScene,
   useAccountSwitcherScenes,
 } from './hooks';
+import {
+  useSceneCurrentAccount,
+  useSwitchAccountBeforeEnterScene,
+} from '@/hooks/accountsSwitcher';
+import { ellipsisAddress } from '@/utils/address';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -22,7 +27,10 @@ export function ScreenHeaderAccountSwitcher({
   }>) {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
-  const { getSceneVisible, toggleSceneVisible } = useAccountSwitcherScenes();
+  const { isVisible: isOpen, toggleSceneVisible } =
+    useAccountSwitcherScenes(forScene);
+  const { sceneCurrentAccount } = useSceneCurrentAccount(forScene);
+  const { preFetchData } = useSwitchAccountBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
     return typeof titleText === 'string' ? (
@@ -32,25 +40,37 @@ export function ScreenHeaderAccountSwitcher({
     );
   }, [titleText, styles]);
 
-  const isOpen = getSceneVisible(forScene);
+  // const isOpen = getSceneVisible(forScene);
+
+  if (!sceneCurrentAccount?.address) {
+    return titleTextNode;
+  }
 
   return (
     <View style={styles.container}>
       {titleTextNode}
-      <TouchableView
-        style={styles.addressRow}
-        onPress={() => {
-          toggleSceneVisible(forScene, !isOpen);
-        }}>
-        <Text style={styles.address}>{'0x1234567890'}</Text>
+      {!!sceneCurrentAccount?.address && (
+        <TouchableView
+          style={styles.addressRow}
+          onPress={() => {
+            const nextOpen = !isOpen;
+            toggleSceneVisible(forScene, nextOpen);
+            if (nextOpen) {
+              preFetchData();
+            }
+          }}>
+          <Text style={styles.address}>
+            {ellipsisAddress(sceneCurrentAccount?.address)}
+          </Text>
 
-        <RcCaretDownCircleCC
-          style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
-          width={18}
-          height={18}
-          color={colors2024['neutral-bg-4']}
-        />
-      </TouchableView>
+          <RcCaretDownCircleCC
+            style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+            width={18}
+            height={18}
+            color={colors2024['neutral-bg-4']}
+          />
+        </TouchableView>
+      )}
     </View>
   );
 }
@@ -62,6 +82,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      zIndex: 199,
     },
     titleText: {
       fontFamily: 'SF Pro Rounded',

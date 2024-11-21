@@ -82,8 +82,8 @@ export function AccountsSwitcherSheetModal({
         duration: 0,
       }}
       backgroundStyle={styles.modalBg}>
-      <AutoLockView as="BottomSheetView" style={styles.panel}>
-        <AccountsPanelInModal />
+      <AutoLockView as="BottomSheetView" style={styles.panelContainer}>
+        <AccountsPanelInModal forScene={forScene} />
       </AutoLockView>
     </BottomSheetModal>
   );
@@ -96,21 +96,9 @@ const getModalStyle = createGetStyles2024(ctx => {
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
     },
-    panel: {
-      backgroundColor: ctx.colors2024['neutral-bg-2'],
-      minHeight: '50%',
-      height: '50%',
-      maxHeight: '70%',
-      flexDirection: 'column',
+    panelContainer: {
+      width: '100%',
+      height: '100%',
     },
   };
 });
-
-/** @deprecated */
-export function GlobalAccountSwitcherStub() {
-  return (
-    <>
-      <AccountsSwitcherSheetModal forScene="Send" />
-    </>
-  );
-}

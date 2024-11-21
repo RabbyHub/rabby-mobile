@@ -1,53 +1,396 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { AccountSwitcherAopProps } from './hooks';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
+import RcIconCorrectCC from './icons/correct-cc.svg';
 
-export function AccountsPanelInModal() {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+const MY_ADDRESS_LIMIT = 3;
+
+const SIZES = {
+  itemH: 96,
+  itemGap: 12,
+  get myAddressesAreaVisiableH() {
+    return (
+      SIZES.itemH * MY_ADDRESS_LIMIT + SIZES.itemGap * (MY_ADDRESS_LIMIT - 1)
+    );
+  },
+};
+
+type AddressItemProps = React.ComponentProps<typeof AddressItem>;
+function AddressItemInPanel({
+  style,
+  addressItemProps,
+  isCurrent,
+  isPinned,
+  onPressAddress,
+}: {
+  addressItemProps: AddressItemProps;
+  isCurrent?: boolean;
+  isPinned?: boolean;
+  onPressAddress?: () => void;
+} & RNViewProps) {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getAddressItemInPanelStyle,
+  });
+
+  const [isPressing, setIsPressing] = React.useState(false);
 
   return (
-    <>
-      <View style={styles.contentWrapper}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Address</Text>
-        </View>
-        <View style={[styles.section, { marginTop: 18 }]}>
-          <TouchableView
-            style={styles.sectionTitleContainer}
-            onPress={() => {
-              console.debug('Implement me');
-            }}>
-            <Text style={styles.sectionTitle}>Imported Watch-only address</Text>
-            <RcCaretDownCC
-              style={{ marginLeft: 4 }}
-              width={18}
-              height={18}
-              color={colors2024['neutral-secondary']}
-            />
-          </TouchableView>
-        </View>
+    <TouchableOpacity
+      style={StyleSheet.flatten([
+        styles.addressItemContainer,
+        style,
+        isCurrent && styles.addressItemContainerCurrent,
+        isPressing && styles.containerPressing,
+      ])}
+      activeOpacity={1}
+      onPressIn={() => setIsPressing(true)}
+      onPressOut={() => setIsPressing(false)}
+      onPress={onPressAddress}>
+      <AddressItem {...addressItemProps}>
+        {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
+          return (
+            <View style={styles.addressItemInner}>
+              <WalletIcon style={styles.walletIcon} />
+              <View style={styles.centerInfo}>
+                <View style={styles.nameAndAdderss}>
+                  <WalletName style={styles.addressAliasName} />
+                  {isPinned && (
+                    <View style={styles.pinnedWrapper}>
+                      <ICONS_COMMON_2024.RcPinCC
+                        color={styles.pinText.color}
+                        width={15}
+                        height={15}
+                      />
+                      <Text style={styles.pinText}>Pin</Text>
+                    </View>
+                  )}
+                </View>
+                <WalletBalance
+                  style={[
+                    styles.addressUsdValue,
+                    isCurrent && styles.addressUsdValueCurrent,
+                  ]}
+                />
+              </View>
+              <View style={styles.rightArea}>
+                {isCurrent && (
+                  <RcIconCorrectCC
+                    color={colors2024['green-default']}
+                    width={16}
+                    height={16}
+                  />
+                )}
+              </View>
+            </View>
+          );
+        }}
+      </AddressItem>
+    </TouchableOpacity>
+  );
+}
+
+const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
+  return {
+    containerPressing: {
+      borderColor: ctx.colors2024['brand-light-2'],
+      backgroundColor: ctx.colors2024['brand-light-1'],
+    },
+    addressItemContainer: {
+      borderRadius: 30,
+      borderWidth: 1,
+      borderStyle: 'solid',
+      borderColor: ctx.colors2024['neutral-line'],
+      backgroundColor: ctx.colors2024['neutral-bg-3'],
+      padding: 24,
+      height: SIZES.itemH,
+    },
+    addressItemContainerCurrent: {
+      backgroundColor: ctx.colors2024['brand-light-1'],
+    },
+    addressItemInner: {
+      flexDirection: 'row',
+      height: 52,
+      width: '100%',
+    },
+    walletIcon: { marginRight: 12 },
+    centerInfo: {
+      flexDirection: 'column',
+      flexShrink: 1,
+      width: '100%',
+      // ...makeDebugBorder('blue')
+    },
+    nameAndAdderss: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      // ...makeDebugBorder('yellow'),
+    },
+    addressAliasName: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 22,
+    },
+    addressUsdValue: {
+      marginTop: 6,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
+      fontStyle: 'normal',
+      fontWeight: '500',
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    addressUsdValueCurrent: {
+      color: ctx.colors2024['brand-default'],
+      fontWeight: '700',
+    },
+
+    pinnedWrapper: {
+      width: 52,
+      height: 26,
+      marginLeft: 4,
+      borderRadius: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: ctx.colors2024['brand-light-1'],
+    },
+    pinText: {
+      color: ctx.colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 18,
+    },
+    pinIcon: {
+      color: ctx.colors2024['brand-default'],
+    },
+
+    rightArea: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    },
+  };
+});
+
+const SectionCollapsableNav = function ({
+  isCollapsed = false,
+  title,
+  onCollapsedChange,
+}: {
+  isCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  title: React.ReactNode;
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+
+  const tilteNode = useMemo(() => {
+    return typeof title === 'string' ? (
+      <Text style={styles.sectionTitle}>{title}</Text>
+    ) : (
+      title
+    );
+  }, [styles, title]);
+
+  // React.useImperativeHandle(ref, () => ({
+  //   isCollapsed: () => {
+  //     return !collapsed;
+  //   },
+  // }));
+
+  return (
+    <TouchableView
+      style={styles.sectionTitleContainer}
+      onPress={() => {
+        onCollapsedChange?.(!isCollapsed);
+      }}>
+      {tilteNode}
+      <RcCaretDownCC
+        style={[
+          { marginLeft: 4 },
+          !isCollapsed && { transform: [{ rotate: '180deg' }] },
+        ]}
+        width={18}
+        height={18}
+        color={colors2024['neutral-secondary']}
+      />
+    </TouchableView>
+  );
+};
+
+export function AccountsPanelInModal({
+  forScene,
+  isVisible = false,
+}: AccountSwitcherAopProps<{
+  isVisible?: boolean;
+}>) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+
+  const {
+    isPinnedAccount,
+    sceneCurrentAccount,
+    myAddresses,
+    safeAddresses,
+    watchAddresses,
+  } = useSceneAccountInfo({
+    forScene,
+    disableAutoFetch: false,
+  });
+
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
+  const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] =
+    React.useState(true);
+  const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
+    React.useState(true);
+
+  return (
+    <View style={styles.panel}>
+      <View style={styles.scrollViewContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContentContainer}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>My Addresses</Text>
+            <View style={styles.addressListContainer}>
+              {myAddresses.map((account, index) => {
+                const key = `account-${account.address}-${account.brandName}-${index}`;
+                const isCurrent =
+                  sceneCurrentAccount?.address === account.address &&
+                  sceneCurrentAccount?.brandName === account.brandName &&
+                  sceneCurrentAccount?.type === account.type;
+
+                return (
+                  <AddressItemInPanel
+                    key={key}
+                    addressItemProps={{ account }}
+                    isCurrent={isCurrent}
+                    isPinned={isPinnedAccount(account)}
+                    style={[index > 0 && styles.addressItemTopGap]}
+                  />
+                );
+              })}
+            </View>
+          </View>
+          {!!safeAddresses.length && (
+            <View style={[styles.section, { marginTop: 18 }]}>
+              <SectionCollapsableNav
+                title="Imported Safe Addresses"
+                isCollapsed={safeAddressNavCollapsed}
+                onCollapsedChange={nextVal => {
+                  setSafeAddressNavCollapsed(nextVal);
+                  scrollToBottom();
+                }}
+              />
+              {!safeAddressNavCollapsed && (
+                <View style={styles.addressListContainer}>
+                  {safeAddresses.map((account, index) => {
+                    const key = `account-${account.address}-${account.brandName}-${index}`;
+                    const isCurrent =
+                      sceneCurrentAccount?.address === account.address &&
+                      sceneCurrentAccount?.brandName === account.brandName &&
+                      sceneCurrentAccount?.type === account.type;
+
+                    return (
+                      <AddressItemInPanel
+                        key={key}
+                        addressItemProps={{ account }}
+                        isCurrent={isCurrent}
+                        style={[index > 0 && styles.addressItemTopGap]}
+                      />
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+          {!!watchAddresses.length && (
+            <View style={[styles.section, { marginTop: 18 }]}>
+              <SectionCollapsableNav
+                title="Imported Watch-only Addresses"
+                isCollapsed={watchAddressNavCollapsed}
+                onCollapsedChange={nextVal => {
+                  setWatchAddressNavCollapsed(nextVal);
+                  scrollToBottom();
+                }}
+              />
+              {!watchAddressNavCollapsed && (
+                <View style={styles.addressListContainer}>
+                  {watchAddresses.map((account, index) => {
+                    const key = `account-${account.address}-${account.brandName}-${index}`;
+                    const isCurrent =
+                      sceneCurrentAccount?.address === account.address &&
+                      sceneCurrentAccount?.brandName === account.brandName &&
+                      sceneCurrentAccount?.type === account.type;
+
+                    return (
+                      <AddressItemInPanel
+                        key={key}
+                        addressItemProps={{ account }}
+                        isCurrent={isCurrent}
+                        style={[index > 0 && styles.addressItemTopGap]}
+                      />
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+        </ScrollView>
       </View>
       <View style={styles.bottomBarContainer}>
         <View style={styles.bottomBarStyle} />
       </View>
-    </>
+    </View>
   );
 }
 const getPanelStyle = createGetStyles2024(ctx => {
   return {
-    contentWrapper: {
+    panel: {
+      position: 'relative',
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+      width: '100%',
+      minHeight: 453,
+      maxHeight: '80%',
+      flexDirection: 'column',
+    },
+    scrollViewContainer: {
       height: '100%',
       flexShrink: 1,
-      // ...makeDebugBorder('blue'),
+    },
+    scrollView: {
+      padding: 16,
+    },
+    scrollViewContentContainer: {
       alignItems: 'flex-start',
       justifyContent: 'flex-start',
-      padding: 16,
+      paddingBottom: 20 + 40,
     },
     section: {
       flexDirection: 'column',
+      width: '100%',
+      // ...makeDebugBorder('red'),
     },
     sectionTitleContainer: {
       flexDirection: 'row',
@@ -60,6 +403,15 @@ const getPanelStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       color: ctx.colors2024['neutral-secondary'],
+    },
+    addressListContainer: {
+      flexDirection: 'column',
+      marginTop: 12,
+      // maxHeight: SIZES.myAddressesAreaVisiableH,
+      width: '100%',
+    },
+    addressItemTopGap: {
+      marginTop: SIZES.itemGap,
     },
     bottomBarContainer: {
       width: '100%',
