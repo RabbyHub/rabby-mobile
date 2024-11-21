@@ -2,6 +2,7 @@ import * as ContextMenu from 'zeego/context-menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
+import { MenuTriggerProps } from 'zeego/lib/typescript/menu';
 
 export interface MenuAction {
   title: string;
@@ -20,6 +21,7 @@ type Props = {
     menuActions: MenuAction[];
   };
   children: React.ReactElement;
+  triggerProps?: Omit<MenuTriggerProps, 'children'>;
 } & ContextMenuContentProps;
 
 export const ContextMenuView: React.FC<Props> = ({
@@ -28,6 +30,7 @@ export const ContextMenuView: React.FC<Props> = ({
   loop = true,
   alignOffset = 5,
   avoidCollisions = true,
+  triggerProps,
 }) => {
   return (
     <ContextMenu.Root
@@ -36,7 +39,9 @@ export const ContextMenuView: React.FC<Props> = ({
           borderRadius: 30,
         },
       }}>
-      <ContextMenu.Trigger isAnchoredToRight>{children}</ContextMenu.Trigger>
+      <ContextMenu.Trigger {...triggerProps} isAnchoredToRight>
+        {children}
+      </ContextMenu.Trigger>
 
       <ContextMenu.Content
         loop={loop}

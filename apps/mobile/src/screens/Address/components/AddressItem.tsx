@@ -91,7 +91,8 @@ export const AddressItem = (props: AddressItemProps) => {
       menuConfig={{
         menuTitle: account.aliasName,
         menuActions: menuActions,
-      }}>
+      }}
+      triggerProps={{ action: 'longPress' }}>
       <TouchableOpacity
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
