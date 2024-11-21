@@ -120,6 +120,9 @@ export const RootNames = {
   RestoreFromCloud: 'RestoreFromCloud',
   WatchAddressList: 'WatchAddressList',
   SafeAddressList: 'SafeAddressList',
+
+  SingleAddressStack: 'SingleAddressStack',
+  SingleAddressHome: 'SingleAddressHome',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

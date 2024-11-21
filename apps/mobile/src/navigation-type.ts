@@ -41,6 +41,7 @@ export type RootStackParamsList = {
     hideBackIcon?: boolean;
     isFirstImportPassword?: boolean;
   };
+  [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
 };
 
 export type BottomTabParamsList = {
@@ -139,6 +140,10 @@ export type AddressNavigatorParamList = {
 
 export type AccountNavigatorParamList = {
   [RootNames.MyBundle]?: {};
+};
+
+export type SingleAddressNavigatorParamList = {
+  [RootNames.SingleAddressHome]?: {};
 };
 
 export type TransactionNavigatorParamList = {

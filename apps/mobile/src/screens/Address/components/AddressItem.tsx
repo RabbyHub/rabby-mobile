@@ -42,7 +42,9 @@ export const AddressItem = (props: AddressItemProps) => {
 
   const onDetail = useCallback(() => {
     switchAccount(account);
-    navigate(RootNames.StackRoot, { screen: RootNames.Home });
+    navigate(RootNames.SingleAddressStack, {
+      screen: RootNames.SingleAddressHome,
+    });
   }, [account, switchAccount]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
