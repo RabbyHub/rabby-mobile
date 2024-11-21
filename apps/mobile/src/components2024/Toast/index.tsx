@@ -15,6 +15,7 @@ import {
   IconTick,
   IconToastSuccess,
 } from '@/assets/icons/common';
+import IconError from '@/assets2024/icons/common/cancel.svg';
 import React from 'react';
 import { ThemeColors2024 } from '@/constant/theme';
 
@@ -91,11 +92,13 @@ export const toastWithIcon =
 const info = toastWithIcon(IconCommonInfo);
 
 const success = toastWithIcon(IconTick);
+const error = toastWithIcon(IconError);
 
 export const toast = {
   show,
   info,
   success,
+  error,
   positions: Toast.positions,
 };
 

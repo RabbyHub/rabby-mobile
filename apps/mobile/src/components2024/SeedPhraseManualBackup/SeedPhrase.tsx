@@ -387,7 +387,7 @@ export const SeedPhrase: React.FC<Props> = ({
         toastHide();
       }
     } else {
-      toast.show(t('page.nextComponent.createNewAddress.verificationFailed'));
+      toast.error(t('page.nextComponent.createNewAddress.verificationFailed'));
       setShuffleCount(val => val + 1);
       setSelectArr([]);
     }
