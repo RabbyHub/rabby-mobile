@@ -105,7 +105,7 @@ export const useQuoteMethods = () => {
           slippage: new BigNumber(slippage).div(100).toNumber(),
         },
         // 0xAPI => 0x
-        dex_id: dexId.replace('API', ''),
+        dex_id: dexId,
         tx_id: txId,
         tx,
       }),

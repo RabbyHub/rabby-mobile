@@ -247,7 +247,7 @@ const Swap = () => {
                   .toNumber(),
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
-              dex_id: activeProvider?.name.replace('API', '') || 'WrapToken',
+              dex_id: activeProvider?.name || 'WrapToken',
             },
           },
           {
@@ -300,7 +300,7 @@ const Swap = () => {
                   .toNumber(),
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
-              dex_id: activeProvider?.name.replace('API', '') || 'WrapToken',
+              dex_id: activeProvider?.name || 'WrapToken',
             },
           },
           {
