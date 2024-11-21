@@ -175,6 +175,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnWrapper: {
     flexShrink: 0,
+    width: '100%',
     paddingTop: SIZES.btnContainerTopOffset,
     paddingBottom: SIZES.btnContainerBottom, // original, will be overidden in `style`
     // ...makeDevOnlyStyle({

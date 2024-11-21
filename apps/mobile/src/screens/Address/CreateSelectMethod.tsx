@@ -133,7 +133,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   marginTop: {
-    marginTop: 40,
+    marginTop: 28,
   },
   titleText: {
     fontFamily: 'SF Pro Rounded',
@@ -157,7 +157,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   listItem: {
     position: 'relative',
     width: '100%',
-    marginBottom: 12,
+    // marginBottom: 12,
     borderRadius: 30,
     display: 'flex',
     alignItems: 'flex-start',
@@ -179,7 +179,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     marginBottom: 20,
   },
   inputContainer: {
