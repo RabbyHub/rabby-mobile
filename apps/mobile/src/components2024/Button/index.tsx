@@ -246,6 +246,7 @@ const getStyle = createGetStyles2024(ctx => ({
         shadowOpacity: 0.1,
       },
       android: {
+        shadowColor: ctx.colors2024['brand-default'],
         elevation: 4,
       },
     }),
