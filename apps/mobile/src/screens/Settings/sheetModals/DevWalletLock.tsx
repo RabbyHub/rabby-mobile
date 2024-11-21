@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { RcArrowRightCC, RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -20,6 +20,8 @@ import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import { apisKeychain, apisLock } from '@/core/apis';
+import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -58,8 +60,11 @@ export default function WalletLockTestItemModal({
     onCancel?.();
   }, [setWalletTestItemModalVisible, onCancel]);
 
-  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
-    useManagePasswordOnSettings();
+  const {
+    hasSetupCustomPassword,
+    openManagePasswordSheetModal,
+    openResetPasswordAndKeyringSheetModal,
+  } = useManagePasswordOnSettings();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -78,6 +83,14 @@ export default function WalletLockTestItemModal({
           openManagePasswordSheetModal();
         },
         visible: APP_FEATURE_SWITCH.customizePassword || hasSetupCustomPassword,
+      },
+      {
+        label: 'Clear Password and Keyrings',
+        icon: <RcManagePassword style={styles.labelIcon} />,
+        disabled: !hasSetupCustomPassword,
+        onPress: () => {
+          openResetPasswordAndKeyringSheetModal();
+        },
       },
       {
         label: 'Time Since Last Unlock',

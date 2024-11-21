@@ -137,7 +137,7 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ isUnlocked: true });
   }
 
-  // TODO: add strict check for newPassowrd in logic layer too.
+  // TODO: add strict check for newPassword in logic layer too.
   async updatePassword(oldPassword: string, newPassword: string) {
     await this.verifyPassword(oldPassword);
 
@@ -147,7 +147,7 @@ export class KeyringService extends RNEventEmitter {
 
     // reboot it
     await this._setupBoot(newPassword);
-    this.persistAllKeyrings();
+    await this.persistAllKeyrings();
   }
 
   #filterAllKeyringsNeedPassword() {
@@ -162,19 +162,35 @@ export class KeyringService extends RNEventEmitter {
   /**
    * @description on no keyrings stored, force reset password
    *
-   * @param password
+   * @param newPassword
    */
-  async resetPassword(password: string) {
+  async resetPassword(newPassword: string) {
     const restSensitiveKeyrings = this.#filterAllKeyringsNeedPassword();
     if (restSensitiveKeyrings.length) {
       throw new Error('Cannot overwrite password with existing keyrings.');
     }
 
-    await this._setupBoot(password);
+    await this._setupBoot(newPassword);
 
     this.keyrings = [];
     await this.persistAllKeyrings();
     this.memStore.updateState({ keyrings: [] });
+  }
+
+  async dangerouslyResetPasswordAndKeyrings(oldPassword: string, newPassword?: string) {
+    if (newPassword) {
+      this.keyrings = [];
+      await this.updatePassword(oldPassword, newPassword);
+      await this.persistAllKeyrings();
+    } else {
+      await this.verifyPassword(oldPassword);
+
+      this.keyrings = [];
+      await this.persistAllKeyrings();
+      this.memStore.updateState({ keyrings: [] });
+      this.store.updateState({ vault: undefined, booted: undefined });
+    }
+
   }
 
   isBooted() {

@@ -145,6 +145,26 @@ export async function forceOverwritePassword(newPassword: string) {
   return result;
 }
 
+export async function dangerouslyResetPasswordAndKeyrings(
+  oldPassword: string,
+  newPassword?: string,
+) {
+  const result = { error: '' };
+  if (result.error) return result;
+
+  try {
+    await keyringService.dangerouslyResetPasswordAndKeyrings(
+      oldPassword,
+      newPassword,
+    );
+  } catch (error) {
+    console.error(error);
+    result.error = 'Failed to reset password an clear keyrings';
+  }
+
+  return result;
+}
+
 /**
  * @warn ONLY used in test package, not used in production
  */

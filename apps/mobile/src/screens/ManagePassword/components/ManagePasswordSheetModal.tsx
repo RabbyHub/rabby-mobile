@@ -30,6 +30,11 @@ import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useResetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
 import AutoLockView from '@/components/AutoLockView';
+import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
+import { useAccounts } from '@/hooks/account';
+import { redirectToAddAddressEntry } from '@/utils/navigation';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 type Props = {
   height?: number;
@@ -249,6 +254,167 @@ export function ManagePasswordSheetModal(props: Props) {
 
   return <ConfirmSetupPasswordSheetModal {...props} />;
 }
+
+function useResetPasswordAndKeyringsForm() {
+  const { t } = useTranslation();
+  const { toggleShowSheetModal } = useSheetModalsForManagingPassword();
+
+  const yupSchema = React.useMemo(() => {
+    return Yup.object({
+      currentPassword: Yup.string()
+        .required(t('page.createPassword.passwordRequired'))
+        .min(8, t('page.createPassword.passwordMin')),
+    });
+  }, [t]);
+
+  const { fetchLockInfo } = useWalletPasswordInfo();
+  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { fetchBiometrics } = useBiometrics();
+  const { resetHasTipedUserEnableBiometrics } =
+    useResetHasTipedUserEnableBiometrics();
+
+  const navitation = useRabbyAppNavigation();
+
+  const formik = useFormik({
+    initialValues: { currentPassword: '' },
+    validationSchema: yupSchema,
+    validateOnMount: false,
+    validateOnBlur: true,
+    onSubmit: async (values, helpers) => {
+      let errors = await helpers.validateForm();
+
+      if (getFormikErrorsCount(errors)) return;
+
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={{ marginRight: 6 }} />
+      ))(`Reseting password and keyrings`, {
+        duration: 1e6,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
+
+      try {
+        const [clearResult, _resetSuccess] = await Promise.all([
+          apisLock.dangerouslyResetPasswordAndKeyrings(
+            values.currentPassword,
+            RABBY_MOBILE_KR_PWD,
+          ),
+          apisKeychain.resetGenericPassword(),
+        ]);
+        if (clearResult.error) {
+          toast.show(clearResult.error);
+        } else {
+          toast.success('Reset Successfully');
+          resetHasTipedUserEnableBiometrics();
+          toggleShowSheetModal('resetPasswordAndKeyringModalRef', false);
+
+          setTimeout(() => {
+            redirectToAddAddressEntry({ action: 'resetTo' });
+          }, 250);
+        }
+      } finally {
+        Promise.allSettled([
+          fetchLockInfo(),
+          fetchAccounts(),
+          fetchBiometrics(),
+        ]);
+        toastHide();
+      }
+    },
+  });
+
+  const shouldDisabled = !!getFormikErrorsCount(formik.errors);
+
+  return { formik, shouldDisabled };
+}
+export const ResetPasswordAndKeyringsSheetModal = (props: Props) => {
+  const { height = 422 } = props;
+  const { formik, shouldDisabled } = useResetPasswordAndKeyringsForm();
+
+  const { sheetModalRefs, toggleShowSheetModal } =
+    useSheetModalsForManagingPassword();
+  const insets = useSafeAreaInsets();
+
+  const { colors, styles } = useThemeStyles(getStyles);
+  const cancel = useCallback(() => {
+    formik.resetForm();
+    toggleShowSheetModal('resetPasswordAndKeyringModalRef', false);
+  }, [formik, toggleShowSheetModal]);
+
+  const passwordInputRef = React.useRef<TextInput>(null);
+
+  // const { onTouchInputAway } = useInputBlurOnTouchaway([passwordInputRef]);
+
+  return (
+    <AppBottomSheetModal
+      backgroundStyle={styles.sheet}
+      index={0}
+      ref={sheetModalRefs.resetPasswordAndKeyringModalRef}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      snapPoints={[height + insets.bottom]}>
+      <AutoLockView
+        as="BottomSheetView"
+        style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
+        <Text style={styles.title}>{'⚠️ Clear Password and Keyrings'}</Text>
+        <View style={styles.bodyContainer}>
+          <View style={styles.descWrapper}>
+            <Text style={[styles.desc]}>
+              {'Will clear all keyrings and password, are you sure?'}
+            </Text>
+          </View>
+
+          <View style={styles.formWrapper}>
+            <View style={styles.inputHorizontalGroup}>
+              <Text style={styles.formFieldLabel}>Current Password</Text>
+              <FormInput
+                as="BottomSheetTextInput"
+                ref={passwordInputRef}
+                style={styles.inputContainer}
+                inputStyle={styles.input}
+                inputProps={{
+                  value: formik.values.currentPassword,
+                  secureTextEntry: true,
+                  inputMode: 'text',
+                  returnKeyType: 'none',
+                  placeholder: 'Confirm cancellation by entering your password',
+                  placeholderTextColor: colors['neutral-foot'],
+                  onChangeText(text) {
+                    formik.setFieldValue('currentPassword', text);
+                  },
+                }}
+                errorText={formik.errors.currentPassword}
+              />
+            </View>
+          </View>
+        </View>
+        <View style={styles.btnGroup}>
+          <View style={styles.border} />
+          <Button
+            onPress={cancel}
+            title={'Cancel'}
+            type="primary"
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnConfirmTitle}
+            containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}>
+            Cancel
+          </Button>
+          <View style={styles.btnGap} />
+          <Button
+            disabled={shouldDisabled}
+            onPress={formik.handleSubmit}
+            title={'Confirm'}
+            type="clear"
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnCancelTitle}
+            containerStyle={[styles.btnContainer, styles.btnCancelContainer]}>
+            Confirm
+          </Button>
+        </View>
+      </AutoLockView>
+    </AppBottomSheetModal>
+  );
+};
 
 const getStyles = createGetStyles(colors => ({
   sheet: {

@@ -76,7 +76,10 @@ import {
   useFocusEffect,
   useNavigationState,
 } from '@react-navigation/native';
-import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
+import {
+  ManagePasswordSheetModal,
+  ResetPasswordAndKeyringsSheetModal,
+} from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import {
   useBiometrics,
@@ -791,6 +794,7 @@ export default function SettingsScreen(): JSX.Element {
       <ThemeSelectorModal />
 
       <ManagePasswordSheetModal height={422} />
+      {NEED_DEVSETTINGBLOCKS && <ResetPasswordAndKeyringsSheetModal />}
 
       <SheetWebViewTester />
     </RootScreenContainer>

@@ -117,7 +117,7 @@ export function redirectToAddAddressEntry(options?: {
         index: 0,
         routes: [
           {
-            name: 'Root',
+            name: RootNames.StackGetStarted,
             state: {
               index: 0,
               routes: [{ name: RootNames.GetStartedScreen2024 }],

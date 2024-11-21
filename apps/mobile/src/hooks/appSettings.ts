@@ -140,7 +140,7 @@ export function useAutoLockTimeMs() {
 
 const showFloatingViewAtom = atom({
   collapsed: true,
-  ui_showAutoLockCountdown: __DEV__,
+  ui_showAutoLockCountdown: false,
 });
 
 export function useFloatingView() {
