@@ -150,13 +150,23 @@ export class KeyringService extends RNEventEmitter {
     this.persistAllKeyrings();
   }
 
+  #filterAllKeyringsNeedPassword() {
+    return this.keyrings.filter(
+      keyring => ![
+        KEYRING_TYPE.WatchAddressKeyring,
+        KEYRING_TYPE.WalletConnectKeyring
+      ].includes(keyring.type as any),
+    );
+  }
+
   /**
    * @description on no keyrings stored, force reset password
    *
    * @param password
    */
   async resetPassword(password: string) {
-    if (this.keyrings.length) {
+    const restSensitiveKeyrings = this.#filterAllKeyringsNeedPassword();
+    if (restSensitiveKeyrings.length) {
       throw new Error('Cannot overwrite password with existing keyrings.');
     }
 

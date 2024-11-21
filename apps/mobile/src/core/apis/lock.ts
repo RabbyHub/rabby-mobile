@@ -138,6 +138,7 @@ export async function forceOverwritePassword(newPassword: string) {
   try {
     await keyringService.resetPassword(newPassword);
   } catch (error) {
+    console.error(error);
     result.error = 'Failed to reset password';
   }
 
