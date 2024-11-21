@@ -22,9 +22,11 @@ import {
   useCreateAddressProc,
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
+import { isNonPublicProductionEnv } from '@/constant/env';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 function SampleGetStartedScreen2024(): JSX.Element {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const [getStaretd, setGetStaretd] = useState<{
     localHasAccounts: boolean;
@@ -82,7 +84,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
     navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
   }, [getStaretd.processedInit]);
 
-  const navigation = useNavigation();
+  const navigation = useRabbyAppNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
     setGetStaretd(prev => ({ ...prev, processedInit: false }));
@@ -126,6 +128,29 @@ function SampleGetStartedScreen2024(): JSX.Element {
           </View>
           <View style={styles.titleContainer}>
             <Text style={styles.appName}>Rabby Wallet</Text>
+
+            {isNonPublicProductionEnv && (
+              <View style={{ position: 'absolute', top: 2 }}>
+                <TouchableText
+                  style={[
+                    styles.touchableText,
+                    { color: colors2024['orange-default'] },
+                  ]}
+                  disabled={
+                    !getStaretd.processedInit || getStaretd.localHasAccounts
+                  }
+                  onPress={() => {
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackRoot, {
+                        screen: RootNames.Settings,
+                        params: {},
+                      }),
+                    );
+                  }}>
+                  {'(Test Only) Enter Settings >'}
+                </TouchableText>
+              </View>
+            )}
           </View>
         </View>
 
@@ -217,6 +242,7 @@ const getStyles = createGetStyles2024(ctx =>
       // ...makeDebugBorder('red'),
     },
     titleContainer: {
+      position: 'relative',
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'center',
