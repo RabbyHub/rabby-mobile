@@ -159,9 +159,9 @@ export function resetNavigationTo(
         index: 0,
         routes: [
           {
-            name: RootNames.StackRoot,
+            name: RootNames.StackAddress,
             params: {
-              screen: RootNames.Home,
+              screen: RootNames.MultiAddressHome,
             },
           },
         ],

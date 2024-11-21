@@ -43,7 +43,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
       return;
     }
 
-    navigate(RootNames.StackRoot, { screen: RootNames.Home });
+    navigate(RootNames.StackAddress, { screen: RootNames.MultiAddressHome });
   }, [getStaretd.processedInit]);
 
   const { startCreateAddressProc, resetCreateAddressProc } =
@@ -94,8 +94,8 @@ function SampleGetStartedScreen2024(): JSX.Element {
       setGetStaretd(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
       if (accounts?.length) {
         navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
+          StackActions.replace(RootNames.StackAddress, {
+            screen: RootNames.MultiAddressHome,
           }),
         );
       }
