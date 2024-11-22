@@ -1,8 +1,5 @@
-import { apiMnemonic } from '@/core/apis';
-import { detectCloudIsAvailable } from '@/core/utils/cloudBackup';
 import React from 'react';
-import { ActivityIndicator, View, Text, Image } from 'react-native';
-import { toast, toastWithIcon } from '../Toast';
+import { View, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import IconHardWare from '@/assets2024/icons/common/IconHardWare.png';
@@ -25,18 +22,6 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  React.useEffect(() => {
-    detectCloudIsAvailable().then(isAvailable => {
-      if (!isAvailable) {
-        // setStep('backup_not_available');
-        toast.show(
-          t('page.newAddress.seedPhrase.backupErrorCloudNotAvailable'),
-        );
-        onDone();
-      }
-    });
-  }, [onDone, t]);
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
