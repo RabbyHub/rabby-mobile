@@ -127,6 +127,7 @@ export const Button = ({
         borderWidth: 1,
       },
       buttonStyle,
+      type === 'primary' && !noShadow && styles.shadowButton,
       isDisabled &&
         (type === 'ghost'
           ? {
@@ -136,7 +137,16 @@ export const Button = ({
               backgroundColor: colors2024['brand-disable'],
             }),
     ]);
-  }, [disabled, bgColor, styles.button, buttonStyle, type, colors2024]);
+  }, [
+    disabled,
+    styles.button,
+    styles.shadowButton,
+    bgColor,
+    type,
+    colors2024,
+    buttonStyle,
+    noShadow,
+  ]);
 
   const loadingProps: ActivityIndicatorProps = {
     color: currentColor,
@@ -166,7 +176,6 @@ export const Button = ({
     <View
       style={StyleSheet.flatten([styles.container, containerStyle])}
       testID="RABBY_BUTTON_WRAPPER">
-      {type === 'primary' && !noShadow && <View style={styles.shadowButton} />}
       <TouchableComponentInternal
         onPress={handleOnPress}
         delayPressIn={0}
@@ -220,7 +229,6 @@ const getStyle = createGetStyles2024(ctx => ({
     gap: 8,
   },
   button: {
-    overflow: 'hidden',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -230,26 +238,11 @@ const getStyle = createGetStyles2024(ctx => ({
     height: 56,
   },
   shadowButton: {
-    position: 'absolute',
-    top: 0,
-    borderRadius: 100,
-    backgroundColor: '#fff',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: -1,
-    ...Platform.select({
-      ios: {
-        shadowColor: ctx.colors2024['brand-default'],
-        shadowOffset: { width: 0, height: 8 },
-        shadowRadius: 24,
-        shadowOpacity: 0.1,
-      },
-      android: {
-        shadowColor: ctx.colors2024['brand-default'],
-        elevation: 4,
-      },
-    }),
+    shadowColor: ctx.colors2024['brand-default'],
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    shadowOpacity: 0.1,
+    elevation: 4,
   },
   title: {
     fontSize: 20,
