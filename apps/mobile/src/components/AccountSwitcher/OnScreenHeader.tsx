@@ -1,7 +1,7 @@
 import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 
 // caret-down-cc.svg
@@ -10,10 +10,11 @@ import TouchableView from '../Touchable/TouchableView';
 import {
   AccountSwitcherAopProps,
   AccountSwitcherScene,
-  useAccountSwitcherScenes,
+  useAccountSceneVisible,
 } from './hooks';
 import {
-  useSceneCurrentAccount,
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
   useSwitchAccountBeforeEnterScene,
 } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
@@ -21,15 +22,21 @@ import { ellipsisAddress } from '@/utils/address';
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
   forScene,
+  showType = 'account',
 }: RNViewProps &
   AccountSwitcherAopProps<{
     titleText?: React.ReactNode;
+    showType?: 'addresses' | 'account';
   }>) {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { isVisible: isOpen, toggleSceneVisible } =
-    useAccountSwitcherScenes(forScene);
-  const { sceneCurrentAccount } = useSceneCurrentAccount(forScene);
+    useAccountSceneVisible(forScene);
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { finalSceneCurrentAccount, totalCountOfAccount, myAddresses } =
+    useSceneAccountInfo({
+      forScene,
+    });
   const { preFetchData } = useSwitchAccountBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
@@ -40,27 +47,113 @@ export function ScreenHeaderAccountSwitcher({
     );
   }, [titleText, styles]);
 
-  // const isOpen = getSceneVisible(forScene);
+  useEffect(() => {
+    switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
+  }, [finalSceneCurrentAccount, forScene, switchSceneCurrentAccount]);
 
-  if (!sceneCurrentAccount?.address) {
+  const needShowPicker = totalCountOfAccount > 1 && !!myAddresses.length;
+  if (showType === 'account' && !finalSceneCurrentAccount?.address) {
+    return titleTextNode;
+  } else if (showType === 'addresses' && !needShowPicker) {
     return titleTextNode;
   }
 
   return (
-    <View style={styles.container}>
+    <TouchableView
+      style={styles.container}
+      onPress={() => {
+        const nextOpen = !isOpen;
+        toggleSceneVisible(forScene, nextOpen);
+        if (nextOpen) {
+          preFetchData();
+        }
+      }}>
       {titleTextNode}
-      {!!sceneCurrentAccount?.address && (
-        <TouchableView
-          style={styles.addressRow}
-          onPress={() => {
-            const nextOpen = !isOpen;
-            toggleSceneVisible(forScene, nextOpen);
-            if (nextOpen) {
-              preFetchData();
-            }
-          }}>
+      {showType === 'account' && (
+        <>
+          {!!finalSceneCurrentAccount?.address && (
+            <View style={styles.addressRow}>
+              <Text style={styles.address}>
+                {ellipsisAddress(finalSceneCurrentAccount?.address)}
+              </Text>
+
+              <RcCaretDownCircleCC
+                style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+                width={18}
+                height={18}
+                color={colors2024['neutral-bg-4']}
+              />
+            </View>
+          )}
+        </>
+      )}
+      {showType === 'addresses' && (
+        <>
+          {needShowPicker && (
+            <View style={styles.addressRow}>
+              <Text style={styles.address}>
+                {Math.max(myAddresses.length, 0)} addresses
+              </Text>
+
+              <RcCaretDownCircleCC
+                style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+                width={18}
+                height={18}
+                color={colors2024['neutral-bg-4']}
+              />
+            </View>
+          )}
+        </>
+      )}
+    </TouchableView>
+  );
+}
+
+/** @deprecated */
+export function ScreenHeaderAccountPicker({
+  titleText = '',
+  forScene,
+}: RNViewProps &
+  AccountSwitcherAopProps<{
+    titleText?: React.ReactNode;
+  }>) {
+  const { colors2024, styles } = useTheme2024({ getStyle });
+
+  const { isVisible: isOpen, toggleSceneVisible } =
+    useAccountSceneVisible(forScene);
+  const { totalCountOfAccount, myAddresses } = useSceneAccountInfo({
+    forScene,
+  });
+  const { preFetchData } = useSwitchAccountBeforeEnterScene();
+
+  const titleTextNode = useMemo(() => {
+    return typeof titleText === 'string' ? (
+      <Text style={styles.titleText}>{titleText}</Text>
+    ) : (
+      titleText
+    );
+  }, [titleText, styles]);
+
+  const needShowPicker = totalCountOfAccount > 1 && !!myAddresses.length;
+  if (!needShowPicker) {
+    return titleTextNode;
+  }
+
+  return (
+    <TouchableView
+      style={styles.container}
+      onPress={() => {
+        const nextOpen = !isOpen;
+        toggleSceneVisible(forScene, nextOpen);
+        if (nextOpen) {
+          preFetchData();
+        }
+      }}>
+      {titleTextNode}
+      {needShowPicker && (
+        <View style={styles.addressRow}>
           <Text style={styles.address}>
-            {ellipsisAddress(sceneCurrentAccount?.address)}
+            {Math.max(myAddresses.length, 0)} addresses
           </Text>
 
           <RcCaretDownCircleCC
@@ -69,9 +162,9 @@ export function ScreenHeaderAccountSwitcher({
             height={18}
             color={colors2024['neutral-bg-4']}
           />
-        </TouchableView>
+        </View>
       )}
-    </View>
+    </TouchableView>
   );
 }
 

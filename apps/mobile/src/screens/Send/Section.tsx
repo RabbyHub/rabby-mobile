@@ -106,10 +106,10 @@ export function BalanceSection({ style }: RNViewProps) {
   // devLog('BalanceSection:: balanceError', balanceError);
   // devLog('BalanceSection:: formValues.amount', formValues.amount);
   // devLog('BalanceSection:: showGasReserved', showGasReserved);
-  devLog(
-    'BalanceSection:: screenState.selectedGasLevel',
-    screenState.selectedGasLevel,
-  );
+  // devLog(
+  //   'BalanceSection:: screenState.selectedGasLevel',
+  //   screenState.selectedGasLevel,
+  // );
 
   if (!chainItem || !currentToken) return null;
 

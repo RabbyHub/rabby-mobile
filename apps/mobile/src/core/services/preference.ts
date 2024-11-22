@@ -14,6 +14,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { appServiceEvents } from './_utils';
 
 const { isSameAddress } = addressUtils;
 
@@ -116,6 +117,7 @@ export class PreferenceService {
   store!: PreferenceStore;
   keyringService: KeyringService;
   sessionService: import('./session').SessionService;
+  // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
 
   constructor(
     options: StorageAdapaterOptions & {
@@ -271,7 +273,7 @@ export class PreferenceService {
       this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
         account.address.toLowerCase(),
       ]);
-      // syncStateToUI(BROADCAST_TO_UI_EVENTS.accountsChanged, account);
+      appServiceEvents.emit('currentAccountChanged', account);
     }
   };
 
@@ -299,14 +301,14 @@ export class PreferenceService {
     }
 
     const account = await this.getLastUsedAccount();
-    console.log('[LastUsedAccount] activate', account);
+    // console.debug('[LastUsedAccount] activate', account);
     this.setCurrentAccount(account);
   };
 
   inactivateLastUsedAccount = () => {
     const tempAccount = this.store.tempCurrentAccount;
 
-    console.log('[LastUsedAccount] restore', tempAccount);
+    // console.debug('[LastUsedAccount] restore', tempAccount);
     if (tempAccount) {
       this.setCurrentAccount(tempAccount);
     }

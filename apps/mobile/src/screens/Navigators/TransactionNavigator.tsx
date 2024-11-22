@@ -23,7 +23,11 @@ import ReceiveScreen from '../Receive/Receive';
 import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
-import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import {
+  ScreenHeaderAccountPicker,
+  ScreenHeaderAccountSwitcher,
+} from '@/components/AccountSwitcher/OnScreenHeader';
+import HistoryScreen from '../Transaction/History';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -80,10 +84,35 @@ export default function TransactionNavigator() {
         })}
       />
       <TransactionStack.Screen
+        name={RootNames.History}
+        component={HistoryScreen}
+        options={{
+          title: 'Transactions',
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="History"
+                titleText={ctx.children}
+                showType="addresses"
+              />
+            );
+          },
+        }}
+      />
+      <TransactionStack.Screen
         name={RootNames.HistoryFilterScam}
         component={HistoryFilterScamScreen}
         options={{
           title: 'Hide scam transactions',
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="History"
+                titleText={ctx.children}
+                showType="addresses"
+              />
+            );
+          },
         }}
       />
       <TransactionStack.Screen

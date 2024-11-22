@@ -210,7 +210,7 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.History:
           navigation.dispatch(
-            StackActions.push(RootNames.StackRoot, {
+            StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.History,
               params: {},
             }),

@@ -3,10 +3,18 @@ import React from 'react';
 import { useCurrentAccount } from './account';
 
 /**
- * auto activate and inactivate last used account in screen
+ *
+ * @description auto activate and inactivate last used account in screen
+ *
+ * @warning make sure only this hook can be ONLY called ONCE in nested components,
+ * or it will cause infinite loop. It's recommend to put it within the component
+ * holding <AccountSwitcherModal /> in it
  */
-export const useLastUsedAccountInScreen = () => {
-  const { switchAccount } = useCurrentAccount();
+export const useLastUsedAccountInScreen = (options?: {
+  disableAutoEffect?: boolean;
+}) => {
+  const { disableAutoEffect = false } = options || {};
+  const { currentAccount, switchAccount } = useCurrentAccount();
 
   const doSwitchAccount = React.useCallback(() => {
     const account = preferenceService.getCurrentAccount();
@@ -15,7 +23,7 @@ export const useLastUsedAccountInScreen = () => {
     }
   }, [switchAccount]);
 
-  const activate = React.useCallback(() => {
+  const activate = React.useCallback(async () => {
     preferenceService.activateLastUsedAccount().then(doSwitchAccount);
   }, [doSwitchAccount]);
 
@@ -25,11 +33,14 @@ export const useLastUsedAccountInScreen = () => {
   }, [doSwitchAccount]);
 
   React.useEffect(() => {
+    if (disableAutoEffect) return;
+
     activate();
     return inactivate;
-  }, [activate, inactivate]);
+  }, [disableAutoEffect, activate, inactivate]);
 
   return {
+    currentAccount,
     activate,
     inactivate,
   };

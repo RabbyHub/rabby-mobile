@@ -113,29 +113,11 @@ export default function HomeHeaderArea() {
     refreshCurveData();
   }, [refreshCurveData]);
 
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-  const [currentIndex, setIndex] = React.useState<string>();
-
   return (
     <View
       style={StyleSheet.compose(styles.container, {
         // height: ScreenLayouts.headerAreaHeight + top,
       })}>
-      <MenuView
-        onPressAction={({ nativeEvent: { event } }) => {
-          preferenceService.setLastUsedAccount(accounts[Number(event)]);
-          setIndex(event);
-        }}
-        actions={accounts.map((a, index) => ({
-          title: a.aliasName || a.brandName,
-          subtitle: `${ellipsisAddress(a.address)}:${a.type}`,
-          id: index.toString(),
-          state: currentIndex === index.toString() ? 'on' : 'off',
-        }))}>
-        <Button height={20} title={'切换上次使用地址'} />
-      </MenuView>
       <View style={styles.innerBox}>
         <TouchableView
           style={styles.touchBox}
