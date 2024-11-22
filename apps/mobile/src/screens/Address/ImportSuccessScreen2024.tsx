@@ -17,6 +17,7 @@ import {
   StyleSheet,
   TextInput,
   TextStyle,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -42,6 +43,8 @@ import {
 import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
 import Lottie from 'lottie-react-native';
 import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
+import RcIconRightCC from '@/assets2024/icons/common/right-2.svg';
+import { navigate } from '@/utils/navigation';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -165,6 +168,20 @@ export const ImportSuccessScreen2024 = () => {
     [styles.addressText],
   );
 
+  const handleImportMore = () => {
+    if (!state.isFirstImport) {
+      return;
+    }
+    // TODO: replace to Modal
+    navigate(RootNames.ImportMoreAddress, {
+      type: state.type,
+      brand: state.brandName,
+      mnemonics: state.mnemonics,
+      passphrase: state.passphrase,
+      keyringId: state.keyringId,
+    });
+  };
+
   // const [animationFinished, setAnimationFinished] = React.useState(false);
 
   return (
@@ -178,9 +195,7 @@ export const ImportSuccessScreen2024 = () => {
             source={AnimationImportSuccess}
             style={[
               styles.animationLottie,
-              animationFinished &&
-                importAddresses.length > 2 &&
-                styles.hideAnimation,
+              animationFinished && styles.hideAnimation,
             ]}
             onAnimationFinish={() => {
               setTimeout(() => {
@@ -287,6 +302,19 @@ export const ImportSuccessScreen2024 = () => {
             &nbsp;{state?.isFirstCreate ? 'Created' : 'Imported'} successfully!
           </Text>
         </View>
+
+        {state.isFirstImport && (
+          <TouchableOpacity
+            onPress={handleImportMore}
+            style={styles.ledgerButton}>
+            <Text style={styles.ledgerButtonText}>Import more addresses</Text>
+            <RcIconRightCC
+              width={16}
+              height={16}
+              color={colors2024['blue-default']}
+            />
+          </TouchableOpacity>
+        )}
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
@@ -423,6 +451,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       bottom: 149,
       left: '50%',
       transform: [{ translateX: -50 }],
+    },
+    ledgerButton: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: 25,
+    },
+    ledgerButtonText: {
+      color: colors2024['brand-default'],
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });
