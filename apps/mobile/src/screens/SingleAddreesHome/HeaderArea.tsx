@@ -9,21 +9,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useCurrentAccount } from '@/hooks/account';
 import { Text } from '@/components';
-import { getWalletIcon } from '@/utils/walletInfo';
-import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 
 export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { currentAccount } = useCurrentAccount();
-
-  const WalletIcon = useMemo(
-    () =>
-      currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
-    [currentAccount],
-  );
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,
@@ -51,17 +44,11 @@ export default function HomeHeaderArea() {
           <View style={styles.accountBox}>
             <View className="relative">
               <WalletIcon
+                type={currentAccount?.type as KEYRING_TYPE}
                 width={styles.walletIcon.width}
                 height={styles.walletIcon.height}
                 style={styles.walletIcon}
               />
-              {currentAccount && (
-                <CommonSignal
-                  address={currentAccount?.address}
-                  brandName={currentAccount?.brandName}
-                  type={currentAccount?.type as unknown as KEYRING_TYPE}
-                />
-              )}
             </View>
             <Text
               numberOfLines={1}
@@ -117,5 +104,6 @@ const getStyles = createGetStyles2024(ctx => ({
   walletIcon: {
     width: 28,
     height: 28,
+    borderRadius: 7,
   },
 }));
