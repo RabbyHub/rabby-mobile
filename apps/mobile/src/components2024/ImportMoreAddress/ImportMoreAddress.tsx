@@ -10,7 +10,7 @@ import {
   apiOneKey,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate, replaceToFirst } from '@/utils/navigation';
+import { replaceToFirst } from '@/utils/navigation';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_CLASS,
@@ -30,9 +30,9 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountListView, ViewAccount } from './AccountListView';
 import SettingSVG from '@/assets2024/icons/common/setting-cc.svg';
 import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
 
@@ -47,7 +47,7 @@ export interface Props {
     mnemonics?: string;
     passphrase?: string;
     keyringId?: number;
-    account: KeyringAccountWithAlias;
+    account?: KeyringAccountWithAlias;
     brand: string;
   };
   onCancel: () => void;
@@ -326,8 +326,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         await apiHD?.importAddress(acc.index - 1);
       }
 
-      navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportSuccess,
+      replaceToFirst(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess2024,
         params: {
           type: hdType,
           brandName: hdBrandName,
@@ -338,6 +338,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       console.error(err);
       toast.show(err.message);
     } finally {
+      onCancel();
       importToastHiddenRef.current?.();
     }
     setImporting(false);
@@ -374,11 +375,11 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   }, [params.type]);
 
   const handleSetting = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal({
+    const id = createGlobalBottomSheetModal2024({
       name: settingModalName!,
       brand: params.brand,
       onDone: () => {
-        removeGlobalBottomSheetModal(id);
+        removeGlobalBottomSheetModal2024(id);
       },
       ...(params.type ? { keyringId: params.keyringId } : {}),
     });
@@ -393,13 +394,19 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         <SettingSVG color={colors2024['neutral-secondary']} />
       </TouchableOpacity>
       <View style={styles.info}>
-        <WalletIcon
-          type={params.type}
-          width={91}
-          height={91}
-          borderRadius={25}
-        />
-        <Text style={styles.nameText}>{params.account.aliasName}</Text>
+        {params.account ? (
+          <>
+            <WalletIcon
+              type={params.type}
+              width={91}
+              height={91}
+              borderRadius={25}
+            />
+            <Text style={styles.nameText}>{params.account.aliasName}</Text>
+          </>
+        ) : (
+          <Text style={styles.title}>Import more address</Text>
+        )}
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
             {!accounts.length
@@ -446,6 +453,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
     marginTop: 25,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
+    marginTop: 5,
   },
   loading: {
     marginTop: 15,

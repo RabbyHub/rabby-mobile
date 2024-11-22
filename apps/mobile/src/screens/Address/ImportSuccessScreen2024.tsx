@@ -7,7 +7,7 @@ import {
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import {
   Dimensions,
@@ -45,7 +45,11 @@ import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
 import Lottie from 'lottie-react-native';
 import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
 import RcIconRightCC from '@/assets2024/icons/common/right-2.svg';
-import { navigate } from '@/utils/navigation';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -62,6 +66,8 @@ export const ImportSuccessScreen2024 = () => {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const [animationFinished, setAnimationFinished] = useState(false);
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess2024)?.params,
@@ -179,13 +185,21 @@ export const ImportSuccessScreen2024 = () => {
     if (!state.isFirstImport) {
       return;
     }
-    // TODO: replace to Modal
-    navigate(RootNames.ImportMoreAddress, {
-      type: state.type,
-      brand: state.brandName,
-      mnemonics: state.mnemonics,
-      passphrase: state.passphrase,
-      keyringId: state.keyringId,
+    Keyboard.dismiss();
+    modalRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
+      params: {
+        type: state.type,
+        mnemonics: state.mnemonics,
+        passphrase: state.passphrase,
+        keyringId: state.keyringId,
+        brand: state.brandName,
+      },
+      onCancel: () => {
+        if (modalRef.current) {
+          removeGlobalBottomSheetModal2024(modalRef.current);
+        }
+      },
     });
   };
 
@@ -204,13 +218,13 @@ export const ImportSuccessScreen2024 = () => {
             ]}
             onAnimationFinish={() => {
               setTimeout(() => {
-                inputRef.current?.focus();
+                !modalRef.current && inputRef.current?.focus();
                 setAnimationFinished(true);
               }, 500);
             }}
             onAnimationFailure={() => {
               setTimeout(() => {
-                inputRef.current?.focus();
+                !modalRef.current && inputRef.current?.focus();
                 setAnimationFinished(true);
               }, 500);
             }}
