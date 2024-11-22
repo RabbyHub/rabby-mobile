@@ -44,6 +44,9 @@ import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { BackgroundComponent } from './BackgroundComponent';
 import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
+import { Dimensions } from 'react-native';
+
+export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -82,8 +85,8 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [410],
   [MODAL_NAMES.DESCRIPTION]: [674],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
-  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: ['50%'],
-  [MODAL_NAMES.ADDRESS_DETAIL]: ['85%'],
+  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: undefined,
+  [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ['85%'],
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
 };

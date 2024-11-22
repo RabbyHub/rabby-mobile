@@ -18,7 +18,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     flexGrow: 1,
     height: 96,
-    backgroundColor: colors2024['neutral-bg-3'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   rootItem: {
     flexDirection: 'row',
@@ -72,6 +72,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   arrowPressing: {
     backgroundColor: colors2024['brand-light-1'],
   },
+  walletIcon: {
+    borderRadius: 12,
+  },
 }));
 
 interface AddressItemProps {
@@ -104,7 +107,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       <InnerAddressItem style={styles.rootItem} account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View style={styles.item}>
-            <WalletIcon width={40} height={40} />
+            <WalletIcon style={styles.walletIcon} width={40} height={40} />
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
                 <WalletName

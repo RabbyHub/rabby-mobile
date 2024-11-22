@@ -14,6 +14,10 @@ import { AddressItemInner2024 } from './AddressItemInner2024';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '../useAddressDetailModal';
 import { noop } from 'lodash';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { trigger } from 'react-native-haptic-feedback';
+
+const { isSameAddress } = addressUtils;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -33,7 +37,7 @@ interface AddressItemProps {
 }
 export const AddressItem = (props: AddressItemProps) => {
   const { account } = props;
-  const { switchAccount } = useCurrentAccount();
+  const { switchAccount, currentAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
@@ -41,6 +45,10 @@ export const AddressItem = (props: AddressItemProps) => {
   const [isPressing, setIsPressing] = React.useState(false);
 
   const onDetail = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     switchAccount(account);
     navigate(RootNames.SingleAddressStack, {
       screen: RootNames.SingleAddressHome,
@@ -88,6 +96,14 @@ export const AddressItem = (props: AddressItemProps) => {
     ] as MenuAction[];
   }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
 
+  const isCurrentAccount = React.useMemo(() => {
+    return (
+      currentAccount &&
+      isSameAddress(currentAccount.address, account.address) &&
+      currentAccount.type === account.type
+    );
+  }, [currentAccount, account]);
+
   return (
     <ContextMenuView
       menuConfig={{
@@ -105,8 +121,16 @@ export const AddressItem = (props: AddressItemProps) => {
         ])}
         delayLongPress={200} // long press delay
         onPress={onDetail}
-        onLongPress={noop}>
-        <AddressItemInner2024 isPressing={isPressing} account={account} />
+        onLongPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}>
+        <AddressItemInner2024
+          isPressing={isCurrentAccount || isPressing}
+          account={account}
+        />
       </TouchableOpacity>
     </ContextMenuView>
   );

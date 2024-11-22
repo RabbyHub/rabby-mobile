@@ -5,7 +5,14 @@ import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAtom } from 'jotai';
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { AliasNameEditView } from './AliasNameEditView';
 import { visibleAtom, accountAtom } from './useAliasNameEditModal';
 
@@ -41,7 +48,7 @@ export const AliasNameEditModal: React.FC = () => {
       visible={visible}
       transparent
       animationType="fade">
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView behavior="padding" style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.body}>
             {account && (
@@ -83,7 +90,7 @@ export const AliasNameEditModal: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

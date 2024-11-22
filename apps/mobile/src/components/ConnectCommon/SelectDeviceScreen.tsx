@@ -117,6 +117,7 @@ export const CommonSelectDeviceScreen: React.FC<Props> = ({
           <Card style={styles.listWrapper}>
             {devices.map(device => (
               <ListItem
+                key={device.id}
                 style={styles.item}
                 onPress={() => handlePress(device)}
                 title={device.name || ''}

@@ -6,7 +6,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { Dimensions, Text, TouchableOpacity } from 'react-native';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -39,6 +39,10 @@ export const AddressListScreenButton: React.FC<Props> = ({
   const onPress = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
+      bottomSheetModalProps: {
+        enableDynamicSizing: true,
+        maxDynamicContentSize: Dimensions.get('window').height - 104,
+      },
       type,
       onCancel: () => {
         removeGlobalBottomSheetModal2024(id);

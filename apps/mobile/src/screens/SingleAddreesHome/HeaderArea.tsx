@@ -50,7 +50,11 @@ export default function HomeHeaderArea() {
         <TouchableView style={styles.touchBox} onPress={handleCopyAddress}>
           <View style={styles.accountBox}>
             <View className="relative">
-              <WalletIcon style={styles.walletIcon} />
+              <WalletIcon
+                width={styles.walletIcon.width}
+                height={styles.walletIcon.height}
+                style={styles.walletIcon}
+              />
               {currentAccount && (
                 <CommonSignal
                   address={currentAccount?.address}

@@ -1,7 +1,7 @@
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
-import { ScrollView } from 'react-native';
 import { AddressDetailInner } from './AddressDetailInner';
 
 export interface Props {
@@ -28,8 +28,8 @@ export const AddressDetail: React.FC<Props> = ({ account, onCancel }) => {
   }
 
   return (
-    <ScrollView>
+    <BottomSheetScrollView>
       <AddressDetailInner account={currentAccount} onCancel={onCancel} />
-    </ScrollView>
+    </BottomSheetScrollView>
   );
 };

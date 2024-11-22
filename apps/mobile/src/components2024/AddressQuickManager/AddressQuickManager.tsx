@@ -1,6 +1,6 @@
 import { useAccounts } from '@/hooks/account';
 import React from 'react';
-import { FlatList, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
@@ -12,6 +12,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAliasNameEditModal } from '../AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '@/screens/Address/useAddressDetailModal';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -56,68 +57,65 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const list = useSortAddressList(accountList);
 
   return (
-    <View style={styles.root}>
-      <FlatList
-        style={styles.list}
-        data={list}
-        keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
-        ItemSeparatorComponent={ItemSeparatorComponent}
-        ListFooterComponent={ItemFooterComponent}
-        renderItem={({ item: account }) => (
-          <View style={styles.addressItem} key={account.type + account.address}>
-            <View style={styles.itemLeft}>
-              <TouchableOpacity
-                hitSlop={10}
-                onPress={() => {
-                  removeAccount({ account });
-                }}>
-                <DeleteSVG />
-              </TouchableOpacity>
-              <AddressItemInner2024
-                style={styles.card}
-                account={account}
-                hiddenArrow
-              />
-            </View>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity
-                onPress={() => {
-                  editAliasName.show(account);
-                }}
-                hitSlop={10}
-                style={styles.button}>
-                <EditSVG
-                  color={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  showAddressDetail({ account, onCancel });
-                }}
-                hitSlop={10}
-                style={styles.button}>
-                <MoreSVG
-                  color={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </TouchableOpacity>
-            </View>
+    <BottomSheetFlatList
+      style={styles.list}
+      data={list}
+      keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
+      ItemSeparatorComponent={ItemSeparatorComponent}
+      ListFooterComponent={ItemFooterComponent}
+      renderItem={({ item: account }) => (
+        <View style={styles.addressItem} key={account.type + account.address}>
+          <View style={styles.itemLeft}>
+            <TouchableOpacity
+              hitSlop={10}
+              onPress={() => {
+                removeAccount({ account });
+              }}>
+              <DeleteSVG />
+            </TouchableOpacity>
+            <AddressItemInner2024
+              style={styles.card}
+              account={account}
+              hiddenArrow
+            />
           </View>
-        )}
-      />
-    </View>
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              onPress={() => {
+                editAliasName.show(account);
+              }}
+              hitSlop={10}
+              style={styles.button}>
+              <EditSVG
+                color={colors2024['neutral-body']}
+                width={20}
+                height={20}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                showAddressDetail({ account, onCancel });
+              }}
+              hitSlop={10}
+              style={styles.button}>
+              <MoreSVG
+                color={colors2024['neutral-body']}
+                width={20}
+                height={20}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    />
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  root: {
-    paddingLeft: 16,
-  },
   list: {
-    paddingRight: 16,
+    padding: 16,
+    maxHeight: Dimensions.get('window').height,
+    marginBottom: 56,
   },
   addressItem: {
     borderRadius: 30,
@@ -127,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: colors2024['neutral-bg-3'],
+    backgroundColor: colors2024['neutral-bg-1'],
     height: 94,
   },
   itemLeft: {
