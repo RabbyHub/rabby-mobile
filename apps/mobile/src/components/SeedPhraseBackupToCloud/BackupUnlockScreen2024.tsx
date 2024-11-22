@@ -85,6 +85,10 @@ export const BackupUnlockScreen: React.FC<Props> = ({
     if (!password) {
       return;
     }
+    if (password.length < 8) {
+      setError(t('page.newAddress.seedPhrase.passwordMinTip'));
+      return;
+    }
 
     setLoading(true);
     try {
