@@ -29,6 +29,8 @@ import { HistoryList } from './components/HistoryList';
 import { useCurrentAccount } from '@/hooks/account';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 const PAGE_COUNT = 10;
 
 function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
@@ -188,8 +190,11 @@ const HistoryScreen = () => {
 
   const colors = useThemeColors();
   const styles = getStyles(colors);
+  useLastUsedAccountInScreen();
+
   return (
     <RootScreenContainer fitStatuBar style={styles.page}>
+      <AccountSwitcherModal forScene="History" inScreen />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <NetSwitchTabs
         value={selectedTab}

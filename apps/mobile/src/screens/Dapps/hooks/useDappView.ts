@@ -15,6 +15,8 @@ import {
 } from '@/core/bridges/state';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { useDappLastUsedAccount } from '@/hooks/useDappLastUsedAccount';
+import React from 'react';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -106,6 +108,8 @@ export function useOpenDappView() {
     );
   }, [toggleShowSheetModal]);
 
+  const dappLastUsedAccount = useDappLastUsedAccount();
+
   const openUrlAsDapp = useCallback(
     (
       dappUrl: DappInfo['origin'] | OpenedDappItem,
@@ -172,8 +176,11 @@ export function useOpenDappView() {
         setActiveDappOrigin(item.origin);
       }
 
+      dappLastUsedAccount.activate(dapps[item.origin]);
+
       return true;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       showDappWebViewModal,
       dapps,
@@ -198,6 +205,8 @@ export function useOpenDappView() {
 
   const onHideActiveDapp = useCallback(() => {
     setActiveDappOrigin(null);
+    dappLastUsedAccount.inactivate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setActiveDappOrigin]);
 
   const closeActiveOpenedDapp = useCallback(() => {

@@ -5,8 +5,11 @@ import {
   SettingVisibleProvider,
 } from './hooks';
 import { BridgeContent } from './components/BridgeContent';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 export const Bridge = () => {
+  useLastUsedAccountInScreen();
+
   return (
     <SettingVisibleProvider>
       <RefreshIdProvider>

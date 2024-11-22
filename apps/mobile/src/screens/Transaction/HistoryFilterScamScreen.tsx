@@ -11,11 +11,16 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { Empty } from './components/Empty';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 function HistoryFilterScamScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const { bottom } = useSafeAreaInsets();
+
+  const { currentAccount } = useLastUsedAccountInScreen();
+
   const fetchData = async (startTime = 0) => {
     const account = preferenceService.getCurrentAccount();
     const address = account?.address;
@@ -51,7 +56,9 @@ function HistoryFilterScamScreen(): JSX.Element {
     };
   };
 
-  const { data, loading } = useRequest(() => fetchData());
+  const { data, loading } = useRequest(() => fetchData(), {
+    refreshDeps: [currentAccount],
+  });
 
   if (!loading && !data?.list?.length) {
     return <Empty />;
@@ -62,6 +69,7 @@ function HistoryFilterScamScreen(): JSX.Element {
       style={{
         paddingBottom: bottom,
       }}>
+      <AccountSwitcherModal forScene="History" inScreen />
       {loading ? (
         <Text style={styles.loadingText}>
           Loading may take a moment, and data delays are possible
