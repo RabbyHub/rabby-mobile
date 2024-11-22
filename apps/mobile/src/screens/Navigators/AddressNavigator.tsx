@@ -184,7 +184,8 @@ export function AddressNavigator() {
         component={ImportSuccessScreen2024}
         options={{
           title: 'Added successfully',
-          headerTintColor: colors['neutral-title-2'],
+          headerTintColor: colors2024['neutral-bg-1'],
+          statusBarColor: colors2024['neutral-bg-1'],
         }}
       />
       <AddressStack.Screen

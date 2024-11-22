@@ -12,6 +12,7 @@ import React, { useCallback, useState } from 'react';
 import {
   Dimensions,
   Keyboard,
+  KeyboardAvoidingView,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -47,6 +48,12 @@ import RcIconRightCC from '@/assets2024/icons/common/right-2.svg';
 import { navigate } from '@/utils/navigation';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
+
+const DisMissKBWrapper = ({ children }) => (
+  <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    {children}
+  </TouchableWithoutFeedback>
+);
 
 export const ImportSuccessScreen2024 = () => {
   const inputRef = React.useRef<TextInput>(null);
@@ -182,13 +189,11 @@ export const ImportSuccessScreen2024 = () => {
     });
   };
 
-  // const [animationFinished, setAnimationFinished] = React.useState(false);
+  const Wrapper =
+    importAddresses.length > 1 ? KeyboardAvoidingView : DisMissKBWrapper;
 
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        Keyboard.dismiss();
-      }}>
+    <Wrapper>
       <View style={styles.container}>
         <View pointerEvents="none" style={styles.animationLayer}>
           <Lottie
@@ -265,10 +270,13 @@ export const ImportSuccessScreen2024 = () => {
           ) : (
             <View style={styles.scrollList}>
               <ScrollView
+                scrollEnabled
                 showsVerticalScrollIndicator={false}
+                onResponderRelease={() => Keyboard.dismiss()}
+                keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}>
                 {importAddresses.map((item, index) => (
-                  <Card key={index} style={styles.addressItem}>
+                  <Card key={item.address} style={styles.addressItem}>
                     <WalletIcon type={state?.type} width={50} height={50} />
                     <View>
                       <TextInput
@@ -323,7 +331,7 @@ export const ImportSuccessScreen2024 = () => {
           onPress={handleDone}
         />
       </View>
-    </TouchableWithoutFeedback>
+    </Wrapper>
   );
 };
 
@@ -368,7 +376,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     scrollList: {
       width: '100%',
       maxHeight: '60%',
-      display: 'flex',
     },
     itemContainer: {
       display: 'flex',
@@ -441,7 +448,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
+      textAlign: 'left',
       marginBottom: 4,
     },
     fire: {
