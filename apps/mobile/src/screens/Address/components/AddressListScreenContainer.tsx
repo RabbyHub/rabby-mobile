@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableNativeFeedback } from 'react-native';
 import { useNavigationState } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -84,6 +84,7 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
       />
       <View style={styles.buttonWrapper}>
         <Button
+          TouchableComponent={TouchableNativeFeedback}
           buttonStyle={styles.button}
           type="ghost"
           onPress={gotoAddAddress}
