@@ -11,7 +11,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Image, Keyboard, Platform, Text, View } from 'react-native';
+import {
+  FlatListProps,
+  Image,
+  Keyboard,
+  Platform,
+  Text,
+  View,
+} from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
@@ -20,6 +27,7 @@ import {
 import { DappCard } from '../../components/DappCard';
 
 export const DappSearchCardList = ({
+  keyword,
   data,
   onPress,
   onFavoritePress,
@@ -28,7 +36,9 @@ export const DappSearchCardList = ({
   chain,
   onChainChange,
   loading,
+  ListEmptyComponent,
 }: {
+  keyword?: string;
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
@@ -37,6 +47,7 @@ export const DappSearchCardList = ({
   chain?: CHAINS_ENUM;
   onChainChange?: (chain?: CHAINS_ENUM) => void;
   loading?: boolean;
+  ListEmptyComponent?: FlatListProps<any>['ListEmptyComponent'];
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const chainInfo = React.useMemo(() => {
@@ -77,20 +88,20 @@ export const DappSearchCardList = ({
           }}>
           {chainInfo ? (
             <View
-              className="flex-row items-center rounded-l-[4] rounded-r-[4] bg-r-neutral-card1"
+              style={styles.chainInfoContainer}
               onStartShouldSetResponder={() => true}>
-              <View className="flex-row items-center pl-[10] py-[6]">
+              <View style={styles.chainInfo}>
                 <Image
                   source={{
                     uri: chainInfo.logo,
                   }}
-                  className="w-[20] h-[20] rounded-full mr-[6]"
+                  style={styles.chainIcon}
                 />
-                <Text>{chainInfo.name}</Text>
+                <Text style={styles.chainName}>{chainInfo.name}</Text>
               </View>
               <TouchableWithoutFeedback
                 disallowInterruption={true}
-                className="px-[10] py-[6]"
+                style={styles.close}
                 onPress={() => {
                   onChainChange?.(undefined);
                 }}>
@@ -112,10 +123,13 @@ export const DappSearchCardList = ({
           keyExtractor={item => item.origin}
           onEndReached={onEndReached}
           onEndReachedThreshold={0.8}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={ListEmptyComponent}
           renderItem={({ item }) => {
             return (
               <View style={styles.listItem}>
                 <DappCard
+                  keyword={keyword}
                   data={item}
                   onFavoritePress={onFavoritePress}
                   onPress={onPress}
@@ -165,5 +179,32 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
+  },
+  chainInfoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
+  chainInfo: {
+    paddingLeft: 10,
+    paddingVertical: 6,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  chainIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 1000,
+  },
+  chainName: {
+    //todo
+  },
+  close: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
 }));

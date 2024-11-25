@@ -15,6 +15,7 @@ import {
 } from 'react-native-gesture-handler';
 import { DappIcon } from './DappIcon';
 import { noop } from 'lodash';
+import { HighlightText } from '@/components2024/HighlightText';
 
 export const DappCardListBy = ({
   data,
@@ -37,17 +38,20 @@ export const DappCardListBy = ({
   ) : null;
 };
 
-export const DappCard = ({
-  data,
-  onPress,
-  ...rest
-}: {
+interface DappCardProps {
   data: DappInfo;
   style?: StyleProp<ViewStyle>;
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   isActive?: boolean;
   isShowDesc?: boolean;
+  keyword?: string;
+}
+
+export const DappCard: React.FC<DappCardProps> = ({
+  data,
+  onPress,
+  ...rest
 }) => {
   // const { styles } = useTheme2024({ getStyle });
 
@@ -61,18 +65,13 @@ export const DappCard = ({
   );
 };
 
-export const DappCardInner = ({
+export const DappCardInner: React.FC<DappCardProps> = ({
   isActive,
   data,
   onFavoritePress,
   style,
   isShowDesc = false,
-}: {
-  data: DappInfo;
-  style?: StyleProp<ViewStyle>;
-  onFavoritePress?: (dapp: DappInfo) => void;
-  isActive?: boolean;
-  isShowDesc?: boolean;
+  keyword,
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -117,9 +116,19 @@ export const DappCardInner = ({
           </>
         </View>
         <View style={styles.dappContent}>
-          <Text style={styles.dappOrigin} numberOfLines={1}>
-            {stringUtils.unPrefix(data.origin, 'https://')}
-          </Text>
+          {keyword ? (
+            <HighlightText
+              style={styles.dappOrigin}
+              highlightStyle={styles.dappOriginHighlight}
+              numberOfLines={1}
+              searchWords={[keyword]}
+              textToHighlight={stringUtils.unPrefix(data.origin, 'https://')}
+            />
+          ) : (
+            <Text style={styles.dappOrigin} numberOfLines={1}>
+              {stringUtils.unPrefix(data.origin, 'https://')}
+            </Text>
+          )}
           <View style={styles.dappInfo}>
             {data.info?.name ? (
               <Text style={[styles.dappName]} numberOfLines={1}>
@@ -132,7 +141,7 @@ export const DappCardInner = ({
             <DappCardListBy data={data.info?.collected_list} />
           </View>
         </View>
-        <TouchableWithoutFeedback
+        <TouchableOpacity
           style={styles.dappAction}
           disallowInterruption={true}
           hitSlop={10}
@@ -142,7 +151,7 @@ export const DappCardInner = ({
             onFavoritePress?.(data);
           }}>
           {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
-        </TouchableWithoutFeedback>
+        </TouchableOpacity>
       </View>
       {data.info?.description && !isActive && isShowDesc ? (
         <View style={styles.footer}>
@@ -163,6 +172,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
+    padding: 24,
   },
 
   dappContent: {
@@ -176,8 +186,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontSize: 17,
     lineHeight: 22,
+    color: colors2024['neutral-title-1'],
+  },
+
+  dappOriginHighlight: {
     color: colors2024['brand-default'],
   },
+
   dappInfo: {
     flexDirection: 'row',
     gap: 6,
@@ -208,13 +223,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 12,
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
   },
   footer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    marginTop: 8,
   },
   dappDesc: {
     position: 'relative',

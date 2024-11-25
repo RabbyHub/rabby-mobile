@@ -71,6 +71,7 @@ export const DappFavoriteSection = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     marginBottom: 24,
+    paddingHorizontal: 4,
   },
   header: {
     display: 'flex',

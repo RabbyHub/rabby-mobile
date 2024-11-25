@@ -1,7 +1,6 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React from 'react';
-
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
@@ -10,19 +9,26 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { DappCardList } from '../components/DappCardList';
 import { useOpenDappView } from '../hooks/useDappView';
+import { Text } from 'react-native';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 
 export function FavoriteDappsScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { favoriteApps } = useDappsHome();
 
+  const title = `Favorites（${favoriteApps.length}）`;
+
+  const getHeaderTitle = useMemoizedFn(() => {
+    return <Text style={styles.title}>{title}</Text>;
+  });
+
   React.useEffect(() => {
-    const title = `Favorites（${favoriteApps.length}）`;
     setNavigationOptions({
-      headerTitle: title,
+      headerTitle: getHeaderTitle,
       title,
     });
-  }, [setNavigationOptions, favoriteApps.length]);
+  }, [setNavigationOptions, getHeaderTitle, title]);
 
   const { setBrowserHistory, setDapp } = useDappsHome();
   const { openUrlAsDapp } = useOpenDappView();
@@ -47,11 +53,7 @@ export function FavoriteDappsScreen(): JSX.Element {
 
   return (
     <LinearGradient
-      colors={
-        isLight
-          ? ['#fff', '#F9F9F9']
-          : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
-      }
+      colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
       start={{ x: 0, y: 0.0728 }}
       end={{ x: 0, y: 0.1614 }}>
       <NormalScreenContainer overwriteStyle={styles.page}>
@@ -67,8 +69,15 @@ export function FavoriteDappsScreen(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(() => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'red',
+  },
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
   },
 }));

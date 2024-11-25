@@ -1,14 +1,15 @@
 import { RcNextLeftCC } from '@/assets/icons/common';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { toast } from '@/components2024/Toast';
 import { ScreenLayouts } from '@/constant/layout';
+import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useNavigation } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
-import React from 'react';
+import React, { useRef } from 'react';
 import { Keyboard, View } from 'react-native';
 import {
   TouchableOpacity,
@@ -19,8 +20,8 @@ import { DappHistorySection } from '../components/DappHistorySection';
 import { DappSearchSection } from '../components/DappSearchSection';
 import { useOpenDappView } from '../hooks/useDappView';
 import { useSearchDapps } from '../hooks/useSearchDapps';
-import { DappInfo } from '@/core/services/dappService';
 import LinearGradient from 'react-native-linear-gradient';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 export function DappsScreen(): JSX.Element {
   const {
@@ -29,10 +30,11 @@ export function DappsScreen(): JSX.Element {
     setBrowserHistory,
     setDapp,
     removeBrowserHistory,
+    disconnectDapp,
   } = useDappsHome();
   const { openUrlAsDapp } = useOpenDappView();
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
@@ -56,6 +58,19 @@ export function DappsScreen(): JSX.Element {
 
   const handleDeleteHistory = useMemoizedFn((dapp: DappInfo) => {
     removeBrowserHistory(dapp.origin);
+    disconnectDapp(dapp.origin);
+    toast.success('Removed from History');
+  });
+
+  // todo fix any
+  const inputRef = useRef<any>(null);
+
+  const handleEmptyPress = useMemoizedFn(() => {
+    searchState.setState({
+      searchText: '',
+      isFocus: true,
+    });
+    inputRef.current?.focus();
   });
 
   return (
@@ -64,11 +79,7 @@ export function DappsScreen(): JSX.Element {
         Keyboard.dismiss();
       }}>
       <LinearGradient
-        colors={
-          isLight
-            ? ['#fff', '#F9F9F9']
-            : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
-        }
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
         start={{ x: 0, y: 0.1185 }}
         end={{ x: 0, y: 0.5235 }}>
         <NormalScreenContainer noHeader overwriteStyle={styles.page}>
@@ -103,15 +114,16 @@ export function DappsScreen(): JSX.Element {
                   isFocus: false,
                 });
               }}
-              returnKeyType={searchState.returnKeyType}
-              onSubmitEditing={() => {
-                const url =
-                  searchState.currentDapp?.origin || searchState.currentURL;
-                if (url) {
-                  handleOpenURL(url);
-                }
-                // console.log('keyPress', e.nativeEvent.key, url);
-              }}
+              ref={inputRef}
+              // returnKeyType={searchState.returnKeyType}
+              // onSubmitEditing={() => {
+              //   const url =
+              //     searchState.currentDapp?.origin || searchState.currentURL;
+              //   if (url) {
+              //     handleOpenURL(url);
+              //   }
+              //   // console.log('keyPress', e.nativeEvent.key, url);
+              // }}
               // enterKeyHint={searchState.returnKeyType ? 'go' : undefined}
             />
           </View>
@@ -153,6 +165,7 @@ export function DappsScreen(): JSX.Element {
               currentDapp={searchState.currentDapp}
               currentURL={searchState.currentURL}
               searchText={searchState.state.searchText}
+              onEmptyPress={handleEmptyPress}
             />
           )}
         </NormalScreenContainer>
@@ -167,6 +180,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     flex: 1,
+    marginTop: 20,
     paddingBottom: ScreenLayouts.bottomBarHeight + 12,
   },
 
@@ -177,8 +191,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 13,
-
-    marginBottom: 20,
   },
   searchBar: {
     flex: 1,

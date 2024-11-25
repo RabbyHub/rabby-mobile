@@ -41,6 +41,7 @@ export const DappHistoryCardList = ({
       data={data}
       style={styles.list}
       keyExtractor={item => item.origin}
+      showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
@@ -80,7 +81,7 @@ export const DappHistoryCardList = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   list: {
     marginBottom: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   listItem: {
     marginBottom: 12,

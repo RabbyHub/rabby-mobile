@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
 import {
   StyleProp,
   Text,
@@ -24,90 +24,114 @@ import {
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
   onCancel?(): void;
+  ref?: React.ForwardedRef<{
+    focus(): void;
+    blur(): void;
+    clear(): void;
+  }>;
 }
 
-export const NextSearchBar: React.FC<Props> = ({
-  style,
-  value,
-  onChangeText,
-  onChange,
-  onBlur,
-  onFocus,
-  onCancel,
-  ...rest
-}) => {
-  const { styles, colors2024, isLight } = useTheme2024({
-    getStyle,
-  });
+export const NextSearchBar: React.FC<Props> = React.forwardRef(
+  (
+    {
+      style,
+      value,
+      onChangeText,
+      onChange,
+      onBlur,
+      onFocus,
+      onCancel,
+      ...rest
+    },
+    ref,
+  ) => {
+    const { styles, colors2024, isLight } = useTheme2024({
+      getStyle,
+    });
 
-  const inputRef = useRef<TextInput>(null);
-  const isEmpty = !value;
-  const [isFocus, setIsFocus] = useState(false);
-  const handleBlur = useMemoizedFn(e => {
-    setIsFocus(false);
-    onBlur?.(e);
-  });
-  const handleFocus = useMemoizedFn(e => {
-    setIsFocus(true);
-    onFocus?.(e);
-  });
+    const inputRef = useRef<any>(null);
+    const isEmpty = !value;
+    const [isFocus, setIsFocus] = useState(false);
+    const handleBlur = useMemoizedFn(e => {
+      setIsFocus(false);
+      onBlur?.(e);
+    });
+    const handleFocus = useMemoizedFn(e => {
+      setIsFocus(true);
+      onFocus?.(e);
+    });
 
-  return (
-    <View style={[styles.container, style]}>
-      <View style={styles.inputContainer}>
-        <TouchableWithoutFeedback
-          hitSlop={8}
-          onPress={() => {
-            inputRef.current?.focus();
-          }}>
-          <RcNextSearchCC
-            style={styles.searchIcon}
-            color={colors2024['neutral-foot']}
-          />
-        </TouchableWithoutFeedback>
-        <TextInput
-          ref={inputRef}
-          style={[styles.input, isEmpty ? styles.placeholder : null]}
-          value={value}
-          onChangeText={onChangeText}
-          onChange={onChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          {...rest}
-        />
-        {!isEmpty ? (
+    useImperativeHandle(ref, () => {
+      return {
+        focus() {
+          return inputRef.current?.focus();
+        },
+        blur() {
+          return inputRef.current?.blur();
+        },
+        clear() {
+          return inputRef.current?.clear();
+        },
+      };
+    });
+
+    return (
+      <View style={[styles.container, style]}>
+        <View style={styles.inputContainer}>
           <TouchableWithoutFeedback
             hitSlop={8}
             onPress={() => {
-              onChangeText?.('');
-              console.log('xx');
+              inputRef.current?.focus();
             }}>
-            {isLight ? (
-              <RcNextCloseCircle
-                style={styles.closeIcon}
-                color={colors2024['neutral-secondary']}
-              />
-            ) : (
-              <RcNextCloseCircleDark
-                style={styles.closeIcon}
-                color={colors2024['neutral-secondary']}
-              />
-            )}
+            <RcNextSearchCC
+              style={styles.searchIcon}
+              color={colors2024['neutral-foot']}
+            />
           </TouchableWithoutFeedback>
+          <TextInput
+            ref={inputRef}
+            style={[styles.input, isEmpty ? styles.placeholder : null]}
+            value={value}
+            onChangeText={onChangeText}
+            onChange={onChange}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
+            {...rest}
+          />
+          {!isEmpty ? (
+            <TouchableWithoutFeedback
+              hitSlop={8}
+              onPress={() => {
+                onChangeText?.('');
+                console.log('xx');
+              }}>
+              {isLight ? (
+                <RcNextCloseCircle
+                  style={styles.closeIcon}
+                  color={colors2024['neutral-secondary']}
+                />
+              ) : (
+                <RcNextCloseCircleDark
+                  style={styles.closeIcon}
+                  color={colors2024['neutral-secondary']}
+                />
+              )}
+            </TouchableWithoutFeedback>
+          ) : null}
+        </View>
+        {isFocus ? (
+          <TouchableOpacity
+            onPress={() => {
+              onCancel?.();
+              inputRef?.current?.blur();
+            }}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
         ) : null}
       </View>
-      {isFocus ? (
-        <TouchableOpacity
-          onPress={() => {
-            onCancel?.();
-            inputRef?.current?.blur();
-          }}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  );
-};
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

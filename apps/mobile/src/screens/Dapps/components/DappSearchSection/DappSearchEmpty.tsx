@@ -4,15 +4,24 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Text, View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
-export const DappSearchEmpty = () => {
+interface Props {
+  onLinkPress?(): void;
+}
+
+export const DappSearchEmpty: React.FC<Props> = ({ onLinkPress }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
 
   return (
     <View style={styles.empty}>
       {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
-      <Text style={styles.emptyText}>No Results Found</Text>
-      <Text style={styles.emptyText}>Try entering the URL directly</Text>
+      <View style={styles.emptyContent}>
+        <Text style={styles.emptyText}>No Results Found</Text>
+        <TouchableOpacity onPress={onLinkPress}>
+          <Text style={styles.emptyLink}>Try Enter a url directly</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -26,11 +35,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     gap: 21,
   },
+  emptyContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
   emptyText: {
     fontSize: 16,
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-info'],
+    textAlign: 'center',
+  },
+  emptyLink: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
+    fontWeight: '700',
     textAlign: 'center',
   },
 }));

@@ -7,7 +7,7 @@ import {
 import React, { useCallback, useRef } from 'react';
 import { ColorSchemeName } from 'react-native';
 
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
 import { RootNames } from './constant/layout';
@@ -324,7 +324,7 @@ function AccountNavigator() {
 
 function FavoriteDappsNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
-  const colors = useThemeColors();
+  const { colors } = useTheme2024();
   // console.log('============== FavoritePopularNavigator Render =========');
 
   return (

@@ -23,6 +23,7 @@ interface Props {
   chain?: CHAINS_ENUM;
   onChainChange?(chain?: CHAINS_ENUM): void;
   searchText?: string;
+  onEmptyPress?(): void;
 }
 
 export const DappSearchSection: React.FC<Props> = ({
@@ -37,10 +38,13 @@ export const DappSearchSection: React.FC<Props> = ({
   onChainChange,
   total,
   searchText,
+  onEmptyPress,
 }) => {
   const { styles } = useTheme2024({
     getStyle,
   });
+
+  const isEmpty = !currentURL && !list?.length && !loading;
 
   return (
     <View style={styles.container}>
@@ -50,12 +54,14 @@ export const DappSearchSection: React.FC<Props> = ({
             currentDapp ? (
               <View style={styles.sectionTop}>
                 <DappCard
+                  keyword={searchText}
                   data={currentDapp}
                   isShowDesc
                   onFavoritePress={onFavoritePress}
                   onPress={dapp => {
                     onOpenURL?.(dapp.origin);
                   }}
+                  style={styles.currentDapp}
                 />
               </View>
             ) : (
@@ -64,8 +70,9 @@ export const DappSearchSection: React.FC<Props> = ({
               </View>
             )
           ) : null}
-          {list?.length ? (
+          {list?.length || isEmpty ? (
             <DappSearchCardList
+              keyword={searchText}
               chain={chain}
               onChainChange={onChainChange}
               onEndReached={loadMore}
@@ -76,10 +83,10 @@ export const DappSearchSection: React.FC<Props> = ({
                 onOpenURL?.(dapp.origin);
               }}
               onFavoritePress={onFavoritePress}
+              ListEmptyComponent={
+                <DappSearchEmpty onLinkPress={onEmptyPress} />
+              }
             />
-          ) : null}
-          {!currentURL && !list?.length && !loading ? (
-            <DappSearchEmpty />
           ) : null}
         </>
       ) : null}
@@ -89,6 +96,7 @@ export const DappSearchSection: React.FC<Props> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    marginTop: 12,
     flex: 1,
     // paddingBottom: ScreenLayouts.bottomBarHeight + 12,
     // paddingTop: 24,
@@ -97,5 +105,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sectionTop: {
     paddingHorizontal: 20,
     marginBottom: 24,
+  },
+
+  currentDapp: {
+    shadowColor: 'rgba(0, 0, 0, 0.06)',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowRadius: 60,
+    shadowOpacity: 1,
   },
 }));

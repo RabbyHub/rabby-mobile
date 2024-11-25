@@ -9518,6 +9518,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/highlight-words-core@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@types/highlight-words-core@npm:1.2.3"
+  checksum: c109d8b5414cc20fc0742a5103bf6af61f95cf51cff12eeb5f3892b3de64ae5474dad92dc7c850ecf118f8a6be321628b893913fef78fb1b5aded2e25fcc6798
+  languageName: node
+  linkType: hard
+
 "@types/hoist-non-react-statics@npm:^3.3.1":
   version: 3.3.5
   resolution: "@types/hoist-non-react-statics@npm:3.3.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fhoist-non-react-statics%2F-%2Fhoist-non-react-statics-3.3.5.tgz"
@@ -19942,6 +19949,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"highlight-words-core@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "highlight-words-core@npm:1.2.3"
+  checksum: 1cd522406c5875ba2fdd82d47c1211f5db8df0f78166d2a5d3b6cfb77797e636428d8d79993c77827825cc6d35bbc3252d390e7efaaff5b28b3e5022ee16fd2c
+  languageName: node
+  linkType: hard
+
 "hmac-drbg@npm:^1.0.1":
   version: 1.0.1
   resolution: "hmac-drbg@npm:1.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fhmac-drbg%2F-%2Fhmac-drbg-1.0.1.tgz"
@@ -28771,6 +28785,7 @@ __metadata:
     "@scure/bip39": ^1.3.0
     "@sentry/react-native": 5.31.0
     "@tsconfig/react-native": ^3.0.0
+    "@types/highlight-words-core": ^1.2.3
     "@types/koa-compose": ^3.2.8
     "@types/lodash": ^4.14.202
     "@types/lodash.debounce": ^4.0.9
@@ -28800,6 +28815,7 @@ __metadata:
     eth-rpc-errors: ^4.0.3
     ethers: 5.4.2
     formik: ^2.4.5
+    highlight-words-core: ^1.2.3
     i18next: ^23.7.14
     interval-promise: ^1.4.0
     intl-pluralrules: ^2.0.1
