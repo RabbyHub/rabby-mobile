@@ -13,23 +13,16 @@ import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
-import {
-  isSameAccount,
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
-import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
-import RcIconCorrectCC from './icons/correct-cc.svg';
 import RcIconCopy from '@/assets2024/icons/address/copy.svg';
 import RcIconQR from '@/assets2024/icons/address/qr.svg';
-import { apisAccountSwitch } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
-import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
+import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -57,13 +50,13 @@ function AddressItemInPanel({
   isCurrent,
   isPinned,
   showCopyAndQR,
-  onPressAddress: proponPressAddress,
+  onPressAccount: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   isPinned?: boolean;
   showCopyAndQR?: boolean;
-  onPressAddress?: (account: Account) => void;
+  onPressAccount?: (account: Account) => void;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
@@ -72,7 +65,7 @@ function AddressItemInPanel({
   const [isPressing, setIsPressing] = React.useState(false);
 
   const { account } = addressItemProps;
-  const onPressAddress = useCallback(() => {
+  const onPressAccount = useCallback(() => {
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
 
@@ -96,7 +89,7 @@ function AddressItemInPanel({
       activeOpacity={1}
       onPressIn={() => setIsPressing(true)}
       onPressOut={() => setIsPressing(false)}
-      onPress={onPressAddress}>
+      onPress={onPressAccount}>
       <AddressItem {...addressItemProps}>
         {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
           return (
@@ -124,7 +117,7 @@ function AddressItemInPanel({
                 />
               </View>
               <View style={styles.rightArea}>
-                {showCopyAndQR ? (
+                {showCopyAndQR && (
                   <View style={styles.iconList}>
                     <TouchableOpacity
                       onPress={handleCopyAddress}
@@ -134,20 +127,12 @@ function AddressItemInPanel({
                     <TouchableOpacity
                       onPress={() => {
                         triggerLight();
-                        onPressAddress();
+                        onPressAccount();
                       }}
                       style={styles.iconWrapper}>
                       <RcIconQR style={styles.icon} />
                     </TouchableOpacity>
                   </View>
-                ) : (
-                  isCurrent && (
-                    <RcIconCorrectCC
-                      color={colors2024['green-default']}
-                      width={16}
-                      height={16}
-                    />
-                  )
                 )}
               </View>
             </View>
@@ -195,12 +180,12 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       // ...makeDebugBorder('yellow'),
     },
     addressAliasName: {
-      flexShrink: 1,
       fontFamily: 'SF Pro Rounded',
       fontSize: 17,
       fontStyle: 'normal',
       fontWeight: '700',
       lineHeight: 22,
+      flexShrink: 1,
     },
     addressUsdValue: {
       marginTop: 6,
@@ -310,37 +295,17 @@ const SectionCollapsableNav = function ({
   );
 };
 
-export function AccountsPanelInModal({
-  forScene,
+export function AccountsPanelInSheetModal({
   containerStyle,
   onSelectAccount,
-  onSwitchSceneAccount,
-}: // isVisible = false,
-AccountSwitcherAopProps<{
-  // isVisible?: boolean;
+}: {
   containerStyle?: StyleProp<ViewStyle>;
-  onSelectAccount?: () => void;
-  onSwitchSceneAccount?: (ctx: {
-    switchAction: () => void;
-    sceneAccount: Account;
-  }) => void;
-}>) {
+  onSelectAccount?: (account: Account | null) => void;
+}) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
-  const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
-
-  const {
-    isPinnedAccount,
-    finalSceneCurrentAccount,
-    myAddresses,
-    safeAddresses,
-    watchAddresses,
-  } = useSceneAccountInfo({
-    forScene,
-    // disableAutoFetch: false,
-  });
-
-  const isReceive = forScene === 'Receive';
+  const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
+    useSortAccountOnSelector();
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
@@ -354,35 +319,8 @@ AccountSwitcherAopProps<{
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
     React.useState(true);
 
-  const switchSceneAction = useCallback(
-    (account: Account | null) => {
-      switchSceneCurrentAccount(forScene, account);
-      toggleSceneVisible(forScene, false);
-      onSelectAccount?.();
-    },
-    [forScene, onSelectAccount, switchSceneCurrentAccount, toggleSceneVisible],
-  );
-
-  const handlePressAccount = useCallback<
-    React.ComponentProps<typeof AddressItemInPanel>['onPressAddress'] & object
-  >(
-    async account => {
-      if (typeof onSwitchSceneAccount === 'function') {
-        const switchAction = () => {
-          switchSceneAction(account);
-        };
-        onSwitchSceneAccount({ sceneAccount: account, switchAction });
-      } else {
-        switchSceneAction(account);
-      }
-    },
-    [switchSceneAction, onSwitchSceneAccount],
-  );
-
   return (
-    <LinearGradientContainer
-      type="linear"
-      style={[styles.panel, containerStyle]}>
+    <View style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -393,19 +331,14 @@ AccountSwitcherAopProps<{
             <View style={styles.addressListContainer}>
               {myAddresses.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
-                const isCurrent = isSameAccount(
-                  account,
-                  finalSceneCurrentAccount,
-                );
 
                 return (
                   <AddressItemInPanel
                     key={key}
                     addressItemProps={{ account }}
-                    isCurrent={isCurrent}
                     isPinned={isPinnedAccount(account)}
-                    onPressAddress={handlePressAccount}
-                    showCopyAndQR={isReceive}
+                    onPressAccount={onSelectAccount}
+                    showCopyAndQR
                     style={[index > 0 && styles.addressItemTopGap]}
                   />
                 );
@@ -426,19 +359,14 @@ AccountSwitcherAopProps<{
                 <View style={styles.addressListContainer}>
                   {safeAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
-                    const isCurrent = isSameAccount(
-                      account,
-                      finalSceneCurrentAccount,
-                    );
 
                     return (
                       <AddressItemInPanel
                         key={key}
                         addressItemProps={{ account }}
-                        isCurrent={isCurrent}
                         isPinned={false}
-                        showCopyAndQR={isReceive}
-                        onPressAddress={handlePressAccount}
+                        showCopyAndQR
+                        onPressAccount={onSelectAccount}
                         style={[index > 0 && styles.addressItemTopGap]}
                       />
                     );
@@ -461,19 +389,14 @@ AccountSwitcherAopProps<{
                 <View style={styles.addressListContainer}>
                   {watchAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
-                    const isCurrent = isSameAccount(
-                      account,
-                      finalSceneCurrentAccount,
-                    );
 
                     return (
                       <AddressItemInPanel
                         key={key}
                         addressItemProps={{ account }}
-                        isCurrent={isCurrent}
                         isPinned={false}
-                        showCopyAndQR={isReceive}
-                        onPressAddress={handlePressAccount}
+                        showCopyAndQR
+                        onPressAccount={onSelectAccount}
                         style={[index > 0 && styles.addressItemTopGap]}
                       />
                     );
@@ -484,18 +407,14 @@ AccountSwitcherAopProps<{
           )}
         </ScrollView>
       </View>
-      {!isReceive && (
-        <View style={styles.bottomBarContainer}>
-          <View style={styles.bottomBarStyle} />
-        </View>
-      )}
-    </LinearGradientContainer>
+    </View>
   );
 }
 const getPanelStyle = createGetStyles2024(ctx => {
   return {
     panel: {
       position: 'relative',
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
       width: '100%',
       minHeight: 453,
       maxHeight: '80%',

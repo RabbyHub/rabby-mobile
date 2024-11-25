@@ -181,7 +181,8 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Receive:
           const selectAddressModalId = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.SELECT_RECEIVE_ADDRESS,
+            name: MODAL_NAMES.SELECT_ACCOUNT_THEN,
+            modalTitle: 'Select Receive Address',
             onDone: () => {
               removeGlobalBottomSheetModal2024(selectAddressModalId);
               const id = createGlobalBottomSheetModal2024({

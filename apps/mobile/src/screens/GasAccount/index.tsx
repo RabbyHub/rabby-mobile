@@ -29,10 +29,13 @@ import {
 import { GasAccountWrapperBg } from './components/WrapperBg';
 import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
 import { useCurrentAccount } from '@/hooks/account';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 const DEPOSIT_LIMIT = 1000;
 
 export const GasAccountScreen = () => {
+  useLastUsedAccountInScreen();
+
   const colors = useThemeColors();
   const { t } = useTranslation();
   const [showDesposit, setShowDesposit] = useState(false);

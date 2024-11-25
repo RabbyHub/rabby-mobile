@@ -1,20 +1,24 @@
 import { View, Text } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { AccountsPanelInModal } from '@/components/AccountSwitcher/AccountsPanel';
+import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-export const SelectReceiveAddress: React.FC<{
+export type SelectAccountThenProps = {
+  modalTitle?: string;
   onDone: () => void;
-}> = ({ onDone }) => {
+};
+export const SelectAccountThen: React.FC<SelectAccountThenProps> = ({
+  modalTitle,
+  onDone,
+}) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <AutoLockView as="BottomSheetView">
       <View style={styles.container}>
-        <Text style={styles.title}>Select Receive Address</Text>
-        <AccountsPanelInModal
+        {modalTitle && <Text style={styles.title}>{modalTitle}</Text>}
+        <AccountsPanelInSheetModal
           containerStyle={styles.accountRoot}
-          forScene="Receive"
           onSelectAccount={onDone}
         />
       </View>

@@ -21,6 +21,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { Linking, Platform } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
+import { Account } from '@/core/services/preference';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -83,13 +84,13 @@ export const useGasAccountMethods = () => {
   const setGasAccount = useSetGasAccount();
 
   const login = useCallback(
-    async selectAccount => {
+    async (selectAccount: Account | null) => {
       const account =
         selectAccount || (await preferenceService.getCurrentAccount());
       if (!account) {
         throw new Error('background.error.noCurrentAccount');
       }
-      console.log('selectAccount', account);
+      console.debug('selectAccount', account);
       const { text } = await openapi.getGasAccountSignText(account.address);
       const signature = await sendRequest<string>(
         {

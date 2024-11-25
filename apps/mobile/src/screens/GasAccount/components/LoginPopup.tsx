@@ -23,6 +23,10 @@ import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { Card } from '@/components2024/Card';
+import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
+import { Account } from '@/core/services/preference';
+import { apisAccountSwitch } from '@/core/apis';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
@@ -41,19 +45,24 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
     disableAutoFetch: true,
   });
 
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const confirmAddress = useCallback(
-    async account => {
+    async (account: Account | null) => {
       if (loading) {
         return;
       }
       setLoading(true);
       try {
+        switchSceneCurrentAccount('GasAccount', account);
         await login(account);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
 
       setLoading(false);
     },
-    [loading, login],
+    [loading, login, switchSceneCurrentAccount],
   );
 
   const filterAccounts = React.useMemo(
@@ -83,50 +92,9 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
             {t('component.gasAccount.loginConfirmModal.desc')}
           </Text>
 
-          <FlatList
-            data={list}
-            keyExtractor={item =>
-              `${item.address}-${item.type}-${item.brandName}`
-            }
-            style={styles.listContainer}
-            renderItem={({ item, index }) => (
-              <Card
-                style={styles.itemContainer}
-                onPress={e => confirmAddress(item)}
-                key={`${item.address}-${item.type}-${item.brandName}-${index}`}>
-                <AddressItem account={item} key={item.address}>
-                  {({ WalletIcon, WalletName, WalletBalance }) => (
-                    <View style={styles.item}>
-                      <WalletIcon width={40} height={40} />
-                      <View style={styles.itemInfo}>
-                        <View style={styles.itemName}>
-                          <WalletName style={styles.itemNameText} />
-                        </View>
-                        <WalletBalance style={styles.itemBalanceText} />
-                      </View>
-                    </View>
-                  )}
-                </AddressItem>
-              </Card>
-            )}
+          <AccountsPanelInSheetModal
+            onSelectAccount={account => confirmAddress(account)}
           />
-
-          {/* <View style={styles.buttonContainer}>
-          <Button
-            type="white"
-            ghost
-            title={t('global.Cancel')}
-            onPress={onClose}
-            containerStyle={[styles.twoBtnContainer]}
-          />
-          <Button
-            loading={loading}
-            type={'primary'}
-            onPress={confirmAddress}
-            containerStyle={[styles.twoBtnContainer]}
-            title={t('global.Confirm')}
-          />
-        </View> */}
         </View>
       </LinearGradient>
     );
@@ -282,9 +250,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   confirmTitle: {
     fontSize: 20,
-    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '800',
     color: colors['neutral-title1'],
-    marginTop: 30,
     marginBottom: 18,
   },
   confirmDescription: {

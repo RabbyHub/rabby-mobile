@@ -21,8 +21,9 @@ function makeDefaultState(): AccountSwitcherState {
     collapsed: true,
   };
 }
+type CustomModalScene = Exclude<AccountSwitcherScene, 'Receive' | 'GasAccount'>;
 const DefaultStates: {
-  [key in AccountSwitcherScene]: AccountSwitcherState;
+  [key in CustomModalScene]?: AccountSwitcherState;
 } = {
   Send: makeDefaultState(),
   SendNFT: makeDefaultState(),
@@ -31,6 +32,9 @@ const DefaultStates: {
 
   History: makeDefaultState(),
   // HistoryFilterScam: makeDefaultState(),
+
+  // Receive: makeDefaultState(),
+  // GasAccount: makeDefaultState(),
 
   '@ActiveDappWebViewModal': makeDefaultState(),
 };
