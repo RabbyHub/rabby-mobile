@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
+import {
+  View,
+  Text,
+  Animated,
+  Easing,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -92,7 +98,7 @@ export function MultiAddressHomeHeader(): JSX.Element {
       <Text style={styles.balanceTextBox}>
         {t('page.nextComponent.multiAddressHome.totalBalance')}
       </Text>
-      <TouchableView
+      <TouchableWithoutFeedback
         onPress={() => {
           navigation.dispatch(
             StackActions.push(RootNames.StackRoot, {
@@ -102,7 +108,7 @@ export function MultiAddressHomeHeader(): JSX.Element {
           );
         }}>
         <RcIconSetting />
-      </TouchableView>
+      </TouchableWithoutFeedback>
     </View>
   );
 }
@@ -343,6 +349,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     flex: 1,
+    // backgroundColor: colors2024['neutral-title-1'],
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],
