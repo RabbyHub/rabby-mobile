@@ -6,11 +6,9 @@ import {
   View,
 } from 'react-native';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { RcArrowDownCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { SelectSortedChainProps } from '@/components/SelectSortedChain';
 import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
@@ -22,39 +20,37 @@ import {
   MODAL_ID,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
+import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 
-const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
-
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
-      borderRadius: 4,
-      padding: 12,
-      backgroundColor: colors['neutral-card2'],
-
-      width: '100%',
-      height: 52,
-
+      borderRadius: 30,
+      paddingHorizontal: 22,
+      paddingVertical: 16,
+      backgroundColor: colors2024['neutral-bg-2'],
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
-
     left: {
       flexDirection: 'row',
       alignItems: 'center',
     },
     chainName: {
-      color: colors['neutral-title1'],
-      fontSize: 16,
-      fontWeight: '600',
-
-      marginLeft: 8,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
+      fontWeight: '700',
+      marginLeft: 9,
+    },
+    icon: {
+      transform: [{ rotate: '90deg' }],
     },
   };
 });
 
-export function ChainInfo({
+export function ChainInfo2024({
   chainEnum,
   style,
   onChange,
@@ -76,9 +72,7 @@ export function ChainInfo({
     titleStyle?: StyleProp<TextStyle>;
   }
 >) {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
-
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const chainItem = useFindChain({
     enum: chainEnum,
   });
@@ -129,7 +123,16 @@ export function ChainInfo({
           <Text style={[styles.chainName, titleStyle]}>{chainItem?.name}</Text>
         </View>
 
-        <View>{rightArrowIcon ? rightArrowIcon : <RcArrowDown />}</View>
+        <View>
+          {rightArrowIcon ? (
+            rightArrowIcon
+          ) : (
+            <ArrowRightSVG
+              style={styles.icon}
+              color={colors2024['neutral-title-1']}
+            />
+          )}
+        </View>
       </TouchableOpacity>
     </>
   );

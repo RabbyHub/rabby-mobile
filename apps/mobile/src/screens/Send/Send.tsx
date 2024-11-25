@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,7 +7,6 @@ import {
   Keyboard,
 } from 'react-native';
 
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useThemeColors } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { useNavigationState } from '@react-navigation/native';
@@ -23,7 +22,6 @@ import {
 } from './hooks/useSendToken';
 import BottomArea from './components/BottomArea';
 import {
-  findChain,
   findChainByEnum,
   findChainByID,
   findChainByServerID,
@@ -35,8 +33,6 @@ import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection, SendTokenSection } from './Section';
-import { ChainInfo } from './components/ChainInfo';
-import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
@@ -45,10 +41,10 @@ import { toastLoading } from '@/components/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { AccountsSwitcherSheetModal } from '@/components/AccountSwitcher/SheetModal';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { ChainInfo2024 } from './components/ChainInfo2024';
 
 function SendScreen(): JSX.Element {
   useLastUsedAccountInScreen();
@@ -387,17 +383,11 @@ function SendScreen(): JSX.Element {
                 {/* ChainInfo */}
                 <View style={{ marginTop: 0 }}>
                   <Text style={styles.sectionTitle}>Chain</Text>
-                  <ChainInfo
+                  <ChainInfo2024
                     style={{ marginTop: 8 }}
                     chainEnum={chainEnum}
                     onChange={handleChainChanged}
                   />
-                </View>
-
-                {/* From */}
-                <View style={{ marginTop: 20 }}>
-                  <Text style={styles.sectionTitle}>From</Text>
-                  <FromAddressInfo style={{ marginTop: 8 }} />
                 </View>
 
                 {/* To */}
