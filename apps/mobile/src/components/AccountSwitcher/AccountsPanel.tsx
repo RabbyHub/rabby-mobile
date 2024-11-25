@@ -2,10 +2,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
@@ -248,9 +250,13 @@ const SectionCollapsableNav = function ({
 
 export function AccountsPanelInModal({
   forScene,
+  containerStyle,
+  onSelectAccount,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
   // isVisible?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
+  onSelectAccount?: () => void;
 }>) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -285,12 +291,13 @@ AccountSwitcherAopProps<{
     async account => {
       switchSceneCurrentAccount(forScene, account);
       toggleSceneVisible(forScene, false);
+      onSelectAccount?.();
     },
-    [forScene, switchSceneCurrentAccount, toggleSceneVisible],
+    [forScene, onSelectAccount, switchSceneCurrentAccount, toggleSceneVisible],
   );
 
   return (
-    <View style={styles.panel}>
+    <View style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -389,9 +396,11 @@ AccountSwitcherAopProps<{
           )}
         </ScrollView>
       </View>
-      <View style={styles.bottomBarContainer}>
-        <View style={styles.bottomBarStyle} />
-      </View>
+      {forScene !== 'Receive' && (
+        <View style={styles.bottomBarContainer}>
+          <View style={styles.bottomBarStyle} />
+        </View>
+      )}
     </View>
   );
 }

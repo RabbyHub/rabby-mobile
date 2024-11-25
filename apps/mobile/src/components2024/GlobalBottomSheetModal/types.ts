@@ -48,6 +48,7 @@ export enum MODAL_NAMES {
   'ADDRESS_DETAIL' = 'ADDRESS_DETAIL',
   'IMPORT_MORE_ADDRESS' = 'IMPORT_MORE_ADDRESS',
   'NO_LONGER_SUPPORTS' = 'NO_LONGER_SUPPORTS',
+  'SELECT_RECEIVE_ADDRESS' = 'SELECT_RECEIVE_ADDRESS',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -87,6 +88,7 @@ export type MODAL_CREATE_PARAMS = {
     typeof import('../Descriptions').Descriptions
   >;
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
+  [MODAL_NAMES.SELECT_RECEIVE_ADDRESS]: {};
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;

@@ -45,6 +45,11 @@ import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES as MODAL_NAMES2024 } from '@/components2024/GlobalBottomSheetModal/types';
 
 const MENU_ARR = [
   {
@@ -186,24 +191,31 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Receive:
-          const id = createGlobalBottomSheetModal({
-            name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-            value: CHAINS_ENUM.ETH,
-            onChange: (v: CHAINS_ENUM) => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: RootNames.Receive,
-                  params: {
-                    chainEnum: v,
-                  },
-                }),
-              );
-              removeGlobalBottomSheetModal(id);
-            },
-            onCancel: () => {
-              removeGlobalBottomSheetModal(id);
+          const selectAddressModalId = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES2024.SELECT_RECEIVE_ADDRESS,
+            onDone: () => {
+              removeGlobalBottomSheetModal2024(selectAddressModalId);
+              const id = createGlobalBottomSheetModal({
+                name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+                value: CHAINS_ENUM.ETH,
+                onChange: (v: CHAINS_ENUM) => {
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackTransaction, {
+                      screen: RootNames.Receive,
+                      params: {
+                        chainEnum: v,
+                      },
+                    }),
+                  );
+                  removeGlobalBottomSheetModal(id);
+                },
+                onCancel: () => {
+                  removeGlobalBottomSheetModal(id);
+                },
+              });
             },
           });
+
           break;
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
