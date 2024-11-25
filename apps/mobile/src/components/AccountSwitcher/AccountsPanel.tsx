@@ -9,6 +9,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -22,8 +23,12 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import RcIconCorrectCC from './icons/correct-cc.svg';
+import RcIconCopy from '@/assets2024/icons/address/copy.svg';
+import RcIconQR from '@/assets2024/icons/address/qr.svg';
 import { apisAccountSwitch } from '@/core/apis';
 import { Account } from '@/core/services/preference';
+import { trigger } from 'react-native-haptic-feedback';
+import { toast } from '@/components2024/Toast';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -37,17 +42,26 @@ const SIZES = {
   },
 };
 
+const triggerLight = () => {
+  trigger('impactLight', {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  });
+};
+
 type AddressItemProps = React.ComponentProps<typeof AddressItem>;
 function AddressItemInPanel({
   style,
   addressItemProps,
   isCurrent,
   isPinned,
+  showCopyAndQR,
   onPressAddress: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   isPinned?: boolean;
+  showCopyAndQR?: boolean;
   onPressAddress?: (account: Account) => void;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
@@ -60,6 +74,15 @@ function AddressItemInPanel({
   const onPressAddress = useCallback(() => {
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
+
+  const handleCopyAddress = () => {
+    triggerLight();
+    if (!account?.address) {
+      return;
+    }
+    Clipboard.setString(account.address);
+    toast.success('Copied successfully');
+  };
 
   return (
     <TouchableOpacity
@@ -100,12 +123,30 @@ function AddressItemInPanel({
                 />
               </View>
               <View style={styles.rightArea}>
-                {isCurrent && (
-                  <RcIconCorrectCC
-                    color={colors2024['green-default']}
-                    width={16}
-                    height={16}
-                  />
+                {showCopyAndQR ? (
+                  <View style={styles.iconList}>
+                    <TouchableOpacity
+                      onPress={handleCopyAddress}
+                      style={styles.iconWrapper}>
+                      <RcIconCopy style={styles.icon} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        triggerLight();
+                        onPressAddress();
+                      }}
+                      style={styles.iconWrapper}>
+                      <RcIconQR style={styles.icon} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  isCurrent && (
+                    <RcIconCorrectCC
+                      color={colors2024['green-default']}
+                      width={16}
+                      height={16}
+                    />
+                  )
                 )}
               </View>
             </View>
@@ -200,6 +241,24 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       height: '100%',
     },
+    iconList: {
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 16,
+    },
+    iconWrapper: {
+      width: 30,
+      height: 30,
+      borderRadius: 100,
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    icon: {
+      width: 16,
+      height: 16,
+    },
   };
 });
 
@@ -273,6 +332,8 @@ AccountSwitcherAopProps<{
     // disableAutoFetch: false,
   });
 
+  const isReceive = forScene === 'Receive';
+
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const scrollViewRef = React.useRef<ScrollView>(null);
@@ -320,6 +381,7 @@ AccountSwitcherAopProps<{
                     isCurrent={isCurrent}
                     isPinned={isPinnedAccount(account)}
                     onPressAddress={handlePressAccount}
+                    showCopyAndQR={isReceive}
                     style={[index > 0 && styles.addressItemTopGap]}
                   />
                 );
@@ -351,6 +413,7 @@ AccountSwitcherAopProps<{
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
                         isPinned={false}
+                        showCopyAndQR={isReceive}
                         onPressAddress={handlePressAccount}
                         style={[index > 0 && styles.addressItemTopGap]}
                       />
@@ -385,6 +448,7 @@ AccountSwitcherAopProps<{
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
                         isPinned={false}
+                        showCopyAndQR={isReceive}
                         onPressAddress={handlePressAccount}
                         style={[index > 0 && styles.addressItemTopGap]}
                       />
@@ -396,7 +460,7 @@ AccountSwitcherAopProps<{
           )}
         </ScrollView>
       </View>
-      {forScene !== 'Receive' && (
+      {!isReceive && (
         <View style={styles.bottomBarContainer}>
           <View style={styles.bottomBarStyle} />
         </View>
