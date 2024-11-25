@@ -33,10 +33,14 @@ export function ScreenHeaderAccountSwitcher({
   const { isVisible: isOpen, toggleSceneVisible } =
     useAccountSceneVisible(forScene);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { finalSceneCurrentAccount, totalCountOfAccount, myAddresses } =
-    useSceneAccountInfo({
-      forScene,
-    });
+  const {
+    finalSceneCurrentAccount,
+    isSceneUsingAllAccounts,
+    totalCountOfAccount,
+    myAddresses,
+  } = useSceneAccountInfo({
+    forScene,
+  });
   const { preFetchData } = useSwitchAccountBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {

@@ -28,12 +28,19 @@ export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 type SceneAccounts = {
   [K in AccountSwitcherScene]?: {
     currentAccount: Account | null;
+    /**
+     * @description use all accounts in this scene, not only one "current" account
+     *
+     * in some scenes it means fetch all data from all accounts, such as transaction history
+     */
+    useAllAccounts?: boolean;
   };
 };
 
 function makeSceneAccount() {
   return {
     currentAccount: null,
+    useAllAccounts: false,
   };
 }
 export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
@@ -108,14 +115,28 @@ export function useLastUsedAccount(options?: { disableAutoFetch?: boolean }) {
 export function useSwitchSceneCurrentAccount() {
   const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
+  /**
+   * @description switch current account in scene, enable it if account is not null, or
+   * inactivate it if account is null
+   *
+   * this function is re-entrant, it will not set same account again
+   */
   const switchSceneCurrentAccount = useCallback(
     async (scene: AccountSwitcherScene, account: Account | null) => {
       setSceneAccountInfo(prev => {
+        const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
+
+        if (prev[scene]?.useAllAccounts) {
+          patches.useAllAccounts = false;
+        }
+
         if (account) {
           apisAccountSwitch.enableSceneAccount(account);
 
           // avoid duplicate set same account
-          if (isSameAccount(account, prev[scene]?.currentAccount)) return prev;
+          if (isSameAccount(account, prev[scene]?.currentAccount)) {
+            delete patches.currentAccount;
+          }
         } else {
           apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.currentAccount) {
@@ -123,11 +144,30 @@ export function useSwitchSceneCurrentAccount() {
           }
         }
 
+        if (Object.keys(patches).length === 0) {
+          return prev;
+        }
+
         return {
           ...prev,
           [scene]: {
             ...prev[scene],
-            currentAccount: account,
+            ...patches,
+          },
+        };
+      });
+    },
+    [setSceneAccountInfo],
+  );
+
+  const toggleUseAllAccountsOnScene = useCallback(
+    (scene: AccountSwitcherScene, useAll: boolean) => {
+      setSceneAccountInfo(prev => {
+        return {
+          ...prev,
+          [scene]: {
+            ...prev[scene],
+            useAllAccounts: useAll,
           },
         };
       });
@@ -137,6 +177,7 @@ export function useSwitchSceneCurrentAccount() {
 
   return {
     switchSceneCurrentAccount,
+    toggleUseAllAccountsOnScene,
   };
 }
 
@@ -153,6 +194,11 @@ export function isSameAccount(
   );
 }
 
+const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
+  // 'Swap',
+  // 'MultiHistory',
+];
+
 type SceneAccount = Account & {
   isPinned?: boolean;
 };
@@ -165,6 +211,7 @@ export function useSceneAccountInfo(options: {
   const [sceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
   const sceneCurrentAccount = sceneAccountInfo[forScene]?.currentAccount;
+  const isSceneUsingAllAccounts = sceneAccountInfo[forScene]?.useAllAccounts;
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -185,8 +232,13 @@ export function useSceneAccountInfo(options: {
     [pinAddressesDict],
   );
 
+  const isSceneSupportAllAccounts = ScenesSupportAllAccounts.includes(forScene);
+
   const computed = useMemo(() => {
     const result = {
+      isSceneSupportAllAccounts,
+      isSceneUsingAllAccounts:
+        isSceneSupportAllAccounts && isSceneUsingAllAccounts,
       totalCountOfAccount: accounts.length,
       // sceneCurrentAccountIndexInMyAddresses: -1,
       finalSceneCurrentAccount: null as null | SceneAccount,
@@ -196,7 +248,7 @@ export function useSceneAccountInfo(options: {
       safeAddresses: [] as SceneAccount[],
     };
 
-    for (const [idx, origAccount] of accounts.entries()) {
+    for (const origAccount of accounts.values()) {
       const account: SceneAccount = { ...origAccount };
 
       if (account.type === KEYRING_CLASS.WATCH) {
@@ -208,17 +260,25 @@ export function useSceneAccountInfo(options: {
       }
 
       if (isSameAccount(account, sceneCurrentAccount)) {
-        // result.sceneCurrentAccountIndexInMyAddresses = idx;
         result.finalSceneCurrentAccount = sceneCurrentAccount!;
       }
     }
 
-    if (!result.finalSceneCurrentAccount && accounts.length) {
+    if (
+      !result.isSceneUsingAllAccounts &&
+      !result.finalSceneCurrentAccount &&
+      accounts.length
+    ) {
       result.finalSceneCurrentAccount = accounts[0];
     }
 
     return result;
-  }, [accounts, sceneCurrentAccount]);
+  }, [
+    accounts,
+    isSceneSupportAllAccounts,
+    isSceneUsingAllAccounts,
+    sceneCurrentAccount,
+  ]);
 
   computed.myAddresses = useSortAddressList(computed.myAddresses);
 
