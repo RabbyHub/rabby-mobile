@@ -54,7 +54,6 @@ export default function TransactionNavigator() {
         component={SendScreen}
         options={mergeScreenOptions({
           title: 'Send',
-          ...headerPresets.withBg2,
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
@@ -130,7 +129,6 @@ export default function TransactionNavigator() {
         component={Swap}
         options={mergeScreenOptions({
           title: 'Swap',
-          ...headerPresets.withBg2,
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher

@@ -3,7 +3,6 @@ import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
 import { AppSwitch, Button, Tip } from '@/components';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { RootNames } from '@/constant/layout';
 import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -57,6 +56,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 const Swap = () => {
   useLastUsedAccountInScreen();
@@ -383,7 +383,7 @@ const Swap = () => {
   const navigation = useNavigation();
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer2024>
       <AccountSwitcherModal forScene="Swap" inScreen />
       <KeyboardAwareScrollView
         style={styles.container}
@@ -686,7 +686,7 @@ const Swap = () => {
         visible={lowCreditVisible}
         onCancel={() => setLowCreditVisible(false)}
       />
-    </NormalScreenContainer>
+    </NormalScreenContainer2024>
   );
 };
 

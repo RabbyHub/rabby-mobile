@@ -29,6 +29,7 @@ import { apisAccountSwitch } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
+import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -358,7 +359,9 @@ AccountSwitcherAopProps<{
   );
 
   return (
-    <View style={[styles.panel, containerStyle]}>
+    <LinearGradientContainer
+      type="linear"
+      style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -465,14 +468,13 @@ AccountSwitcherAopProps<{
           <View style={styles.bottomBarStyle} />
         </View>
       )}
-    </View>
+    </LinearGradientContainer>
   );
 }
 const getPanelStyle = createGetStyles2024(ctx => {
   return {
     panel: {
       position: 'relative',
-      backgroundColor: ctx.colors2024['neutral-bg-2'],
       width: '100%',
       minHeight: 453,
       maxHeight: '80%',
