@@ -181,7 +181,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     marginTop: 20,
-    paddingBottom: ScreenLayouts.bottomBarHeight + 12,
   },
 
   header: {
