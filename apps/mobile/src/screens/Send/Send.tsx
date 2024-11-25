@@ -394,12 +394,6 @@ function SendScreen(): JSX.Element {
                   />
                 </View>
 
-                {/* From */}
-                <View style={{ marginTop: 20 }}>
-                  <Text style={styles.sectionTitle}>From</Text>
-                  <FromAddressInfo style={{ marginTop: 8 }} />
-                </View>
-
                 {/* To */}
                 <ToAddressControl style={{ marginTop: 20 }} />
               </SendTokenSection>

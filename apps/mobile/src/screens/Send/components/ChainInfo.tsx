@@ -1,18 +1,27 @@
-import { useState, useMemo } from 'react';
-import { StyleProp, Text, TextStyle, View } from 'react-native';
-
+import {
+  StyleProp,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { CHAINS_ENUM } from '@/constant/chains';
-
 import { RcArrowDownCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { findChainByEnum } from '@/utils/chain';
-import SelectSortedChainModal from '@/components/SelectSortedChain/SheetModal';
 import { SelectSortedChainProps } from '@/components/SelectSortedChain';
 import { useFindChain } from '@/hooks/useFindChain';
+import React from 'react';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import {
+  MODAL_ID,
+  MODAL_NAMES,
+} from '@/components2024/GlobalBottomSheetModal/types';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
@@ -70,22 +79,47 @@ export function ChainInfo({
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const [showSelectorModal, setShowSelectorModal] = useState(false);
-  // const chainItem = useMemo(() => {
-  //   return findChainByEnum(chainEnum, { fallback: true })!;
-  // }, [chainEnum]);
-
   const chainItem = useFindChain({
     enum: chainEnum,
   });
 
+  const modalRef = React.useRef<MODAL_ID>();
+
+  const removeChainModal = React.useCallback(() => {
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+  }, []);
+
+  const createChainModal = React.useCallback(() => {
+    modalRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+      value: chainEnum,
+      onCancel: removeChainModal,
+      supportChains,
+      disabledTips,
+      hideMainnetTab,
+      hideTestnetTab,
+      onChange: chain => {
+        removeChainModal();
+        onChange?.(chain);
+      },
+    });
+  }, [
+    chainEnum,
+    disabledTips,
+    hideMainnetTab,
+    hideTestnetTab,
+    onChange,
+    removeChainModal,
+    supportChains,
+  ]);
+
   return (
     <>
-      <TouchableView
+      <TouchableOpacity
         style={[styles.container, style]}
-        onPress={() => {
-          setShowSelectorModal(true);
-        }}>
+        onPress={createChainModal}>
         <View style={styles.left}>
           <ChainIconImage
             size={24}
@@ -96,23 +130,7 @@ export function ChainInfo({
         </View>
 
         <View>{rightArrowIcon ? rightArrowIcon : <RcArrowDown />}</View>
-      </TouchableView>
-
-      <SelectSortedChainModal
-        visible={showSelectorModal}
-        value={chainEnum}
-        onCancel={() => {
-          setShowSelectorModal(false);
-        }}
-        supportChains={supportChains}
-        disabledTips={disabledTips}
-        hideMainnetTab={hideMainnetTab}
-        hideTestnetTab={hideTestnetTab}
-        onChange={chain => {
-          setShowSelectorModal(false);
-          onChange?.(chain);
-        }}
-      />
+      </TouchableOpacity>
     </>
   );
 }
