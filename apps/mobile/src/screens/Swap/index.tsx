@@ -31,7 +31,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useMount from 'react-use/lib/useMount';
 import { BestQuoteLoading } from '../Bridge/components/loading';
-import { ChainInfo } from '../Send/components/ChainInfo';
+import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { SwapHeader } from './components/Header';
 import { QuoteList } from './components/Quotes';
 import { ReceiveDetails } from './components/ReceiveDetail';
@@ -395,7 +395,7 @@ const Swap = () => {
           <Text style={[styles.label, { marginBottom: 8 }]}>
             {t('page.swap.chain')}
           </Text>
-          <ChainInfo
+          <ChainInfo2024
             chainEnum={chain}
             onChange={switchChain}
             supportChains={SWAP_SUPPORT_CHAINS}
