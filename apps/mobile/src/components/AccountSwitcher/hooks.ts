@@ -31,6 +31,8 @@ const DefaultStates: {
 
   History: makeDefaultState(),
   // HistoryFilterScam: makeDefaultState(),
+
+  '@ActiveDappWebViewModal': makeDefaultState(),
 };
 
 export const screenHeaderAccountSwitcherAtom = atom(DefaultStates);

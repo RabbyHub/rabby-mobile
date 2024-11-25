@@ -312,11 +312,16 @@ export function AccountsPanelInModal({
   forScene,
   containerStyle,
   onSelectAccount,
+  onSwitchSceneAccount,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
   // isVisible?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: () => void;
+  onSwitchSceneAccount?: (ctx: {
+    switchAction: () => void;
+    sceneAccount: Account;
+  }) => void;
 }>) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -347,15 +352,29 @@ AccountSwitcherAopProps<{
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
     React.useState(true);
 
-  const handlePressAccount = useCallback<
-    React.ComponentProps<typeof AddressItemInPanel>['onPressAddress'] & object
-  >(
-    async account => {
+  const switchSceneAction = useCallback(
+    (account: Account | null) => {
       switchSceneCurrentAccount(forScene, account);
       toggleSceneVisible(forScene, false);
       onSelectAccount?.();
     },
     [forScene, onSelectAccount, switchSceneCurrentAccount, toggleSceneVisible],
+  );
+
+  const handlePressAccount = useCallback<
+    React.ComponentProps<typeof AddressItemInPanel>['onPressAddress'] & object
+  >(
+    async account => {
+      if (typeof onSwitchSceneAccount === 'function') {
+        const switchAction = () => {
+          switchSceneAction(account);
+        };
+        onSwitchSceneAccount({ sceneAccount: account, switchAction });
+      } else {
+        switchSceneAction(account);
+      }
+    },
+    [switchSceneAction, onSwitchSceneAccount],
   );
 
   return (
