@@ -115,6 +115,7 @@ export class SessionService {
 
     sessions.forEach(session => {
       try {
+        // TODO: avoid push data to hidden tab
         session.data.pushMessage?.(ev, data);
       } catch (e) {
         __DEV__ && console.error(e);

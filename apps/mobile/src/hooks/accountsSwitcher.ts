@@ -16,6 +16,11 @@ const AccountSwitcherInfos = {
 
   History: makeSceneAccount(),
   // HistoryFilterScam: makeSceneAccount(), // treat HistoryFilterScam screen as History screen
+
+  Receive: makeSceneAccount(),
+  GasAccount: makeSceneAccount(),
+
+  '@ActiveDappWebViewModal': makeSceneAccount(),
 };
 
 export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
@@ -111,8 +116,11 @@ export function useSwitchSceneCurrentAccount() {
 
           // avoid duplicate set same account
           if (isSameAccount(account, prev[scene]?.currentAccount)) return prev;
-        } else if (!prev[scene]?.currentAccount) {
-          return prev;
+        } else {
+          apisAccountSwitch.inactivateSceneAccount();
+          if (!prev[scene]?.currentAccount) {
+            return prev;
+          }
         }
 
         return {

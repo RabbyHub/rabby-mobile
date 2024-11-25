@@ -51,6 +51,8 @@ import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widg
 import { IS_ANDROID } from '@/core/native/utils';
 import { toast } from '@/components/Toast';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
+import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 
 const renderBackdrop = (props: Omit<BottomSheetBackdropProps, 'style'>) => {
   // const { colors2024 } = useTheme2024();
@@ -210,6 +212,7 @@ export function OpenedDappWebViewStub() {
   });
   const {
     openedDappItems,
+    finalActiveDappId,
     activeDapp,
     expandDappWebViewModal,
     collapseDappWebViewModal,
@@ -279,8 +282,6 @@ export function OpenedDappWebViewStub() {
   );
   useFocusEffect(onHardwareBackHandler);
 
-  const { currentAccount } = useCurrentAccount();
-
   const { handleChange } = useAutoLockBottomSheetModalOnChange(
     handleBottomSheetChanges,
   );
@@ -293,9 +294,6 @@ export function OpenedDappWebViewStub() {
   } = useSafeSizes();
 
   const hasOpenedDapps = !!openedDappItems.length;
-
-  const lastUsedAccount = activeDapp?.currentAccount ?? currentAccount;
-  const { RcWalletIcon } = useWalletBrandLogo(lastUsedAccount?.brandName);
 
   return (
     <OpenedDappBottomSheetModal
@@ -393,35 +391,7 @@ export function OpenedDappWebViewStub() {
                 allowsInlineMediaPlayback: true,
                 disableJsPromptLike: !isActiveDapp,
               }}
-              headerRight={() => {
-                if (!RcWalletIcon) return null;
-
-                return (
-                  <TouchableView
-                    style={[
-                      {
-                        height: ScreenLayouts2.dappWebViewControlHeaderHeight,
-                        justifyContent: 'center',
-                      },
-                    ]}
-                    onPress={() => {
-                      navigate(RootNames.StackAddress, {
-                        screen: RootNames.AddressList,
-                        params: {
-                          backToDappOnClose: activeDapp?.origin,
-                        },
-                      });
-
-                      hideDappSheetModal();
-                    }}>
-                    <RcWalletIcon
-                      width={24}
-                      height={24}
-                      className="rounded-[24px]"
-                    />
-                  </TouchableView>
-                );
-              }}
+              headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
               onPressClose={ctx => {
                 activeDappWebViewControlRef.current?.closeWebViewNavModal();
 
@@ -460,6 +430,12 @@ export function OpenedDappWebViewStub() {
             />
           );
         })}
+        {openedDappItems.length > 0 && activeDapp && (
+          <AccountSwitcherModalInDappWebView
+            forScene="@ActiveDappWebViewModal"
+            activeDappId={finalActiveDappId}
+          />
+        )}
       </AutoLockView>
     </OpenedDappBottomSheetModal>
   );
@@ -474,6 +450,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-InvertHighlight'],
     },
     bsView: {
+      position: 'relative',
       paddingVertical: 0,
       alignItems: 'center',
       justifyContent: 'center',

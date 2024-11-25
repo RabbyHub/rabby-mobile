@@ -61,7 +61,9 @@ export default function NetSwitchTabs(props: SwitchTabProps) {
   return (
     <PillsSwitch
       {...props}
-      itemStyle={{ width: 148 }}
+      itemStyle={{
+        height: 36,
+      }}
       options={switchOptions}
     />
   );

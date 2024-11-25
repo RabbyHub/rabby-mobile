@@ -1,21 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
+import {
+  View,
+  Text,
+  Animated,
+  Easing,
+  TouchableWithoutFeedback,
+  ImageBackground,
+} from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useTheme2024, useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-} from '@/utils/styles';
+import { useAccounts } from '@/hooks/account';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
@@ -23,21 +26,19 @@ import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
 import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
-import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import RcIconEcosystem from '@/assets2024/icons/home/IconEcosystem.svg';
-import RcIconPoints from '@/assets2024/icons/home/IconPoints.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const MENU_ARR = [
   {
@@ -92,17 +93,17 @@ export function MultiAddressHomeHeader(): JSX.Element {
       <Text style={styles.balanceTextBox}>
         {t('page.nextComponent.multiAddressHome.totalBalance')}
       </Text>
-      <TouchableView
+      <TouchableWithoutFeedback
         onPress={() => {
           navigation.dispatch(
-            StackActions.push(RootNames.StackRoot, {
+            StackActions.push(RootNames.SingleAddressStack, {
               screen: RootNames.Settings,
               params: {},
             }),
           );
         }}>
         <RcIconSetting />
-      </TouchableView>
+      </TouchableWithoutFeedback>
     </View>
   );
 }
@@ -111,7 +112,7 @@ function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const { accounts } = useAccounts({
+  const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: false,
   });
   // todo  fetch pending tx list
@@ -121,6 +122,12 @@ function MultiAddressHome(): JSX.Element {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAccounts();
+    }, [fetchAccounts]),
+  );
 
   useEffect(() => {
     let animation;
@@ -173,24 +180,32 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Receive:
-          const id = createGlobalBottomSheetModal({
-            name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-            value: CHAINS_ENUM.ETH,
-            onChange: (v: CHAINS_ENUM) => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: RootNames.Receive,
-                  params: {
-                    chainEnum: v,
-                  },
-                }),
-              );
-              removeGlobalBottomSheetModal(id);
-            },
-            onCancel: () => {
-              removeGlobalBottomSheetModal(id);
+          const selectAddressModalId = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES.SELECT_ACCOUNT_THEN,
+            modalTitle: 'Select Receive Address',
+            onDone: () => {
+              removeGlobalBottomSheetModal2024(selectAddressModalId);
+              const id = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+                value: CHAINS_ENUM.ETH,
+                onChange: (v: CHAINS_ENUM) => {
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackTransaction, {
+                      screen: RootNames.Receive,
+                      params: {
+                        chainEnum: v,
+                      },
+                    }),
+                  );
+                  removeGlobalBottomSheetModal2024(id);
+                },
+                onClose: () => {
+                  removeGlobalBottomSheetModal2024(id);
+                },
+              });
             },
           });
+
           break;
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
@@ -231,7 +246,7 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Dapps:
           navigation.dispatch(
-            StackActions.push(RootNames.StackRoot, {
+            StackActions.push(RootNames.SingleAddressStack, {
               screen: RootNames.Dapps,
               params: {},
             }),
@@ -255,6 +270,7 @@ function MultiAddressHome(): JSX.Element {
 
   return (
     <NormalScreenContainer
+      noHeader
       overwriteStyle={{
         backgroundColor: colors2024['neutral-bg-1'],
       }}>
@@ -264,64 +280,71 @@ function MultiAddressHome(): JSX.Element {
         start={{ x: 0.5, y: -0.2 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.rootScreenContainer}>
-        <View style={styles.balanceBox}>
-          <Text style={styles.usdText}>
-            {/* {(balanceLoading && !balanceFromCache) ||
+        <ImageBackground
+          source={require('@/assets2024/icons/home/ImgBgHome.png')}
+          resizeMode="cover"
+          style={styles.bgImage}
+        />
+        <View style={styles.paddingContainer}>
+          <MultiAddressHomeHeader />
+          <View style={styles.balanceBox}>
+            <Text style={styles.usdText}>
+              {/* {(balanceLoading && !balanceFromCache) ||
           balance === null ||
           (balanceFromCache && balance === 0) ||
           balanceUpdating ? (
             <Skeleton width={140} height={38} />
           ) : ( */}
-            {totalBalanceUsd}
-            {/* )} */}
-          </Text>
-          <TouchableView
-            style={styles.accountBg}
-            onPress={() => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackAddress, {
-                  screen: RootNames.AddressList,
-                  params: {},
-                }),
+              {totalBalanceUsd}
+              {/* )} */}
+            </Text>
+            <TouchableView
+              style={styles.accountBg}
+              onPress={() => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackAddress, {
+                    screen: RootNames.AddressList,
+                    params: {},
+                  }),
+                );
+              }}>
+              <RcIconSmallWallet />
+              <Text style={styles.accountText}>{filterAccounts.length}</Text>
+              <RcIconSmallArrow />
+            </TouchableView>
+          </View>
+          <View style={styles.menuHeader}>
+            <Text style={styles.headerText}>
+              {t('page.nextComponent.multiAddressHome.services')}
+            </Text>
+            {Boolean(pendingTxCount) && (
+              <View style={styles.pendingContainer}>
+                <Animated.View
+                  style={{
+                    transform: [{ rotate: spin }],
+                  }}>
+                  <RcPending width={14} height={14} />
+                </Animated.View>
+                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
+                  'page.bridge.Pending',
+                )}`}</Text>
+                <RcIconOrangeArrow />
+              </View>
+            )}
+          </View>
+          <View style={[styles.grid]}>
+            {MENU_ARR.map((el, index) => {
+              return (
+                <TouchableView
+                  style={styles.gridItem}
+                  key={index}
+                  onPress={e => handleClickMenu(el.title)}>
+                  <el.icon />
+                  <Text style={styles.gridText}>{el.title}</Text>
+                </TouchableView>
               );
-            }}>
-            <RcIconSmallWallet />
-            <Text style={styles.accountText}>{filterAccounts.length}</Text>
-            <RcIconSmallArrow />
-          </TouchableView>
-        </View>
-
-        <View style={styles.menuHeader}>
-          <Text style={styles.headerText}>
-            {t('page.nextComponent.multiAddressHome.services')}
-          </Text>
-          {Boolean(pendingTxCount) && (
-            <View style={styles.pendingContainer}>
-              <Animated.View
-                style={{
-                  transform: [{ rotate: spin }],
-                }}>
-                <RcPending width={14} height={14} />
-              </Animated.View>
-              <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                'page.bridge.Pending',
-              )}`}</Text>
-              <RcIconOrangeArrow />
-            </View>
-          )}
-        </View>
-        <View style={[styles.grid]}>
-          {MENU_ARR.map((el, index) => {
-            return (
-              <TouchableView
-                style={styles.gridItem}
-                key={index}
-                onPress={e => handleClickMenu(el.title)}>
-                <el.icon />
-                <Text style={styles.gridText}>{el.title}</Text>
-              </TouchableView>
-            );
-          })}
+            })}
+          </View>
         </View>
       </LinearGradient>
     </NormalScreenContainer>
@@ -329,20 +352,32 @@ function MultiAddressHome(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  paddingContainer: {
+    paddingHorizontal: 20,
+  },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
   rootScreenContainer: {
     // ...makeDebugBorder(),
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     flex: 1,
+    position: 'relative',
     overflow: 'hidden',
   },
   headerBox: {
     height: ScreenLayouts.headerAreaHeight,
-    paddingLeft: 8,
-    paddingRight: 38,
+    // paddingLeft: 8,
+    // paddingRight: 38,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flex: 1,
+    // flex: 1,
+    // backgroundColor: colors2024['neutral-title-1'],
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],

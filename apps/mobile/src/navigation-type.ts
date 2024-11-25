@@ -12,7 +12,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
  */
 
 export type RootStackParamsList = {
-  [RootNames.StackRoot]?: NavigatorScreenParams<BottomTabParamsList>;
+  [RootNames.StackRoot]?: NavigatorScreenParams<RootNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -44,12 +44,12 @@ export type RootStackParamsList = {
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
 };
 
-export type BottomTabParamsList = {
+export type RootNavigatorParamsList = {
   [RootNames.Home]?: {};
-  [RootNames.Dapps]?: {};
   [RootNames.Points]?: {};
   /** @deprecated */
   [RootNames.History]?: {};
+  [RootNames.Dapps]?: {};
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
@@ -70,7 +70,7 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
-  [RootNames.MultiAddressHome]?: {};
+  // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {};
   [RootNames.SetPassword2024]?: {};
   [RootNames.ImportSafeAddress2024]?: {};

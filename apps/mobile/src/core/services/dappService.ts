@@ -15,7 +15,7 @@ export interface DappInfo {
   chainId: CHAINS_ENUM;
   lastPath?: string; // 待定
   lastPathTimeAt?: number; //
-  currentAccount?: Account;
+  currentAccount?: Account | null;
 }
 
 export type DappStore = {
@@ -111,6 +111,7 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
 
   disconnect(origin: string) {
     this.store.dapps[origin].isConnected = false;
+    this.store.dapps[origin].currentAccount = null;
     this.store.dapps = { ...this.store.dapps };
   }
 

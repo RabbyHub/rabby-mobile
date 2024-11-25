@@ -83,8 +83,8 @@ export default function DevUIWipModal({
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           navigation.dispatch(
-            StackActions.replace(RootNames.StackAddress, {
-              screen: RootNames.MultiAddressHome,
+            StackActions.replace(RootNames.StackRoot, {
+              screen: RootNames.Home,
               params: {},
             }),
           );

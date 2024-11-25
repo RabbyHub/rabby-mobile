@@ -15,8 +15,8 @@ import {
 } from '@/core/bridges/state';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { useDappLastUsedAccount } from '@/hooks/useDappLastUsedAccount';
-import React from 'react';
+import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -65,22 +65,66 @@ export function makeDappTabId() {
   return stringUtils.randString(8);
 }
 
+/**
+ * auto activate and inactivate last used account in dapp
+ */
+export const useDappLastUsedAccount = () => {
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  const activate = useCallback(
+    (dapp: DappInfo) => {
+      dapp.currentAccount &&
+        switchSceneCurrentAccount(
+          '@ActiveDappWebViewModal',
+          dapp.currentAccount,
+        );
+    },
+    [switchSceneCurrentAccount],
+  );
+
+  const inactivate = useCallback(() => {
+    switchSceneCurrentAccount('@ActiveDappWebViewModal', null);
+  }, [switchSceneCurrentAccount]);
+
+  return {
+    activate,
+    inactivate,
+  };
+};
+
 export const OPEN_DAPP_VIEW_INDEXES = {
   expanded: 1,
   collapsed: 0,
 };
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
-  // const { activeDappOrigin, setActiveDappState } = useOpenedActiveDappState();
   const [activeDappOrigin, _setActiveDappOrigin] =
     useAtom(activeDappOriginAtom);
+
+  const dappLastUsedAccount = useDappLastUsedAccount();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
       globalSetActiveDappState({ dappOrigin: origin });
       _setActiveDappOrigin(origin);
+
+      if (!origin) {
+        dappLastUsedAccount.inactivate();
+      } else {
+        const dappInfo = dapps[origin];
+        switchSceneCurrentAccount(
+          '@ActiveDappWebViewModal',
+          dappInfo.currentAccount || null,
+        );
+      }
     },
-    [_setActiveDappOrigin],
+    [
+      _setActiveDappOrigin,
+      dappLastUsedAccount,
+      dapps,
+      switchSceneCurrentAccount,
+    ],
   );
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
@@ -107,8 +151,6 @@ export function useOpenDappView() {
       OPEN_DAPP_VIEW_INDEXES.collapsed,
     );
   }, [toggleShowSheetModal]);
-
-  const dappLastUsedAccount = useDappLastUsedAccount();
 
   const openUrlAsDapp = useCallback(
     (
@@ -205,7 +247,6 @@ export function useOpenDappView() {
 
   const onHideActiveDapp = useCallback(() => {
     setActiveDappOrigin(null);
-    dappLastUsedAccount.inactivate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setActiveDappOrigin]);
 
@@ -270,8 +311,8 @@ export function useOpenDappView() {
 
   return {
     activeDapp,
+    finalActiveDappId: activeDapp?.origin,
     openedDappItems,
-    setActiveDappOrigin,
 
     expandDappWebViewModal,
     collapseDappWebViewModal,

@@ -8,6 +8,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
 import { apisDapp } from '@/core/apis';
 import { useMemoizedFn } from 'ahooks';
+import { type Account } from '@/core/services/preference';
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
@@ -77,4 +78,25 @@ export function useDapps() {
     disconnectDapp,
     isDappConnected,
   };
+}
+
+export function useDappCurrentAccount() {
+  const [dapps, setDapps] = useAtom(dappsAtom);
+
+  const setDappCurrentAccount = useCallback(
+    (id: DappInfo['origin'], currentAccount: Account) => {
+      if (!dappService.getDapp(id)) {
+        throw new Error('dapp not found');
+      }
+
+      dappService.patchDapps({
+        [id]: {
+          currentAccount,
+        },
+      });
+    },
+    [],
+  );
+
+  return { setDappCurrentAccount };
 }

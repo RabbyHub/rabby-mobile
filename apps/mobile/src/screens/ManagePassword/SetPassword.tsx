@@ -29,7 +29,7 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from './components/UserAgreementLikeModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
-import { useNavigationState } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import {
@@ -137,10 +137,12 @@ function useSetupPasswordForm() {
               } else if (navParams.actionType === 'setAutoLockTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
-              navigation.replace(RootNames.StackRoot, {
-                screen: RootNames.Settings,
-                params: {},
-              });
+              navigation.dispatch(
+                StackActions.push(RootNames.SingleAddressStack, {
+                  screen: RootNames.Settings,
+                  params: {},
+                }),
+              );
               break;
             }
           }

@@ -15,12 +15,8 @@ export async function enableSceneAccount(account?: Account) {
   }
 
   await preferenceService.activateLastUsedAccount();
+}
 
-  const dispose = () => {
-    return preferenceService.inactivateLastUsedAccount();
-  };
-
-  return {
-    dispose,
-  };
+export async function inactivateSceneAccount() {
+  return preferenceService.inactivateLastUsedAccount();
 }

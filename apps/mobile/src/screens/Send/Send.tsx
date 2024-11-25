@@ -48,6 +48,7 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountsSwitcherSheetModal } from '@/components/AccountSwitcher/SheetModal';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 function SendScreen(): JSX.Element {
   useLastUsedAccountInScreen();
@@ -372,7 +373,7 @@ function SendScreen(): JSX.Element {
           handleGasLevelChanged,
         },
       }}>
-      <NormalScreenContainer style={styles.container}>
+      <NormalScreenContainer2024>
         <AccountSwitcherModal forScene="Send" inScreen />
         <TouchableWithoutFeedback
           onPress={() => {
@@ -408,19 +409,13 @@ function SendScreen(): JSX.Element {
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
-      </NormalScreenContainer>
+      </NormalScreenContainer2024>
     </SendTokenInternalContextProvider>
   );
 }
 
 const getStyles = createGetStyles(colors =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      alignItems: 'center',
-      backgroundColor: colors['neutral-card2'],
-      position: 'relative',
-    },
     sendScreen: {
       width: '100%',
       height: '100%',
@@ -445,7 +440,7 @@ const getStyles = createGetStyles(colors =>
       bottom: 0,
       width: '100%',
       padding: 20,
-      backgroundColor: colors['neutral-bg1'],
+      // backgroundColor: colors['neutral-bg1'],
       borderTopWidth: 0.5,
       borderTopStyle: 'solid',
       borderTopColor: colors['neutral-line'],

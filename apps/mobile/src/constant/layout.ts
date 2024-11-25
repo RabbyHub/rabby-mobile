@@ -53,7 +53,7 @@ export const RootNames = {
 
   StackBottom: 'StackBottom',
   Home: 'Home',
-  MultiAddressHome: 'MultiAddressHome',
+  // MultiAddressHome: 'MultiAddressHome',
   Points: 'Points',
 
   Dapps: 'Dapps',
