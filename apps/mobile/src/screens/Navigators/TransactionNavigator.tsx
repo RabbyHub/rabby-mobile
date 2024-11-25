@@ -10,7 +10,7 @@ import {
   ScreenWithAccountSwitcherLayouts,
   makeHeadersPresets,
 } from '@/constant/layout';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
@@ -37,6 +37,7 @@ export default function TransactionNavigator() {
   // console.log('============== TransactionNavigator Render =========');
 
   const colors = useThemeColors();
+  const { colors2024 } = useTheme2024();
 
   const headerPresets = makeHeadersPresets({ colors });
 
@@ -76,10 +77,13 @@ export default function TransactionNavigator() {
         name={RootNames.Receive}
         component={ReceiveScreen}
         options={mergeScreenOptions({
-          title: '',
-          headerShadowVisible: false,
-          headerShown: true,
-          headerTransparent: true,
+          title: 'Receive',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
         })}
       />
       <TransactionStack.Screen
