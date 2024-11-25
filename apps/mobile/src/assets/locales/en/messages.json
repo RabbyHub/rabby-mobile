@@ -2291,8 +2291,8 @@
         "gotIt": "Got it"
       },
       "loginConfirmModal": {
-        "title": "Log in with Current Address",
-        "desc": "Once confirmed, you can only deposit it at this address"
+        "title": "Select An Address to Login",
+        "desc": "Once login, you can only deposit it at this address"
       },
       "logoutConfirmModal": {
         "title": "Log out current GasAccount",
@@ -2343,8 +2343,8 @@
         "gotIt": "Got it"
       },
       "loginConfirmModal": {
-        "title": "Log in with Current Address",
-        "desc": "Once confirmed, you can only deposit it at this address"
+        "title": "Select An Address to Login",
+        "desc": "Once login, you can only deposit it at this address"
       },
       "logoutConfirmModal": {
         "title": "Log out current GasAccount",

@@ -5,24 +5,28 @@ import React, {
   useRef,
   useEffect,
 } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useGasAccountMethods } from '../hooks';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { GasAccountCurrentAddress } from './LogoutPopup';
 import { GasAccountWrapperBg } from '../components/WrapperBg';
 import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { Card } from '@/components2024/Card';
 
-const GasAccountLoginContent = ({ onClose }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
-  const [toConfirm, setToConfirm] = useState(false);
+const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+  // const [toConfirm, setToConfirm] = useState(false);
   const { t } = useTranslation();
   const { login } = useGasAccountMethods();
   const { currentAccount } = useCurrentAccount();
@@ -33,29 +37,81 @@ const GasAccountLoginContent = ({ onClose }) => {
     setToConfirm(true);
   };
 
-  const confirmAddress = useCallback(async () => {
-    if (loading) {
-      return;
-    }
-    setLoading(true);
-    try {
-      await login();
-    } catch (error) {}
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
 
-    setLoading(false);
-  }, [loading, login]);
+  const confirmAddress = useCallback(
+    async account => {
+      if (loading) {
+        return;
+      }
+      setLoading(true);
+      try {
+        await login(account);
+      } catch (error) {}
+
+      setLoading(false);
+    },
+    [loading, login],
+  );
+
+  const filterAccounts = React.useMemo(
+    () =>
+      [...accounts].filter(
+        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+      ),
+    [accounts],
+  );
+
+  const list = useSortAddressList(filterAccounts);
 
   if (toConfirm && currentAccount) {
     return (
-      <View style={styles.loginConfirmContainer}>
-        <Text style={styles.confirmTitle}>
-          {t('component.gasAccount.loginConfirmModal.title')}
-        </Text>
-        <GasAccountCurrentAddress />
-        <Text style={styles.confirmDescription}>
-          {t('component.gasAccount.loginConfirmModal.desc')}
-        </Text>
-        <View style={styles.buttonContainer}>
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        locations={[0.0745, 0.2242]}
+        start={{ x: 0, y: 0 }}
+        style={{ width: '100%', height: '100%' }}
+        end={{ x: 0, y: 1 }}>
+        <View style={styles.loginConfirmContainer}>
+          <Text style={styles.confirmTitle}>
+            {t('component.gasAccount.loginConfirmModal.title')}
+          </Text>
+          {/* <GasAccountCurrentAddress /> */}
+          <Text style={styles.confirmDescription}>
+            {t('component.gasAccount.loginConfirmModal.desc')}
+          </Text>
+
+          <FlatList
+            data={list}
+            keyExtractor={item =>
+              `${item.address}-${item.type}-${item.brandName}`
+            }
+            style={styles.listContainer}
+            renderItem={({ item, index }) => (
+              <Card
+                style={styles.itemContainer}
+                onPress={e => confirmAddress(item)}
+                key={`${item.address}-${item.type}-${item.brandName}-${index}`}>
+                <AddressItem account={item} key={item.address}>
+                  {({ WalletIcon, WalletName, WalletBalance }) => (
+                    <View style={styles.item}>
+                      <WalletIcon width={40} height={40} />
+                      <View style={styles.itemInfo}>
+                        <View style={styles.itemName}>
+                          <WalletName style={styles.itemNameText} />
+                        </View>
+                        <WalletBalance style={styles.itemBalanceText} />
+                      </View>
+                    </View>
+                  )}
+                </AddressItem>
+              </Card>
+            )}
+          />
+
+          {/* <View style={styles.buttonContainer}>
           <Button
             type="white"
             ghost
@@ -70,8 +126,9 @@ const GasAccountLoginContent = ({ onClose }) => {
             containerStyle={[styles.twoBtnContainer]}
             title={t('global.Confirm')}
           />
+        </View> */}
         </View>
-      </View>
+      </LinearGradient>
     );
   }
 
@@ -103,9 +160,9 @@ const GasAccountLoginContent = ({ onClose }) => {
 };
 
 export const GasAccountLoginPopup = props => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const [toConfirm, setToConfirm] = useState(false);
 
   useEffect(() => {
     if (!props?.visible) {
@@ -117,21 +174,66 @@ export const GasAccountLoginPopup = props => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={[380]}
+      enableContentPanningGesture={false} // has scorll list
+      snapPoints={[toConfirm ? 694 : 380]}
       onDismiss={props.onCancel || props.onClose}
       ref={modalRef}>
       <BottomSheetView style={styles.popup}>
-        <GasAccountLoginContent onClose={props.onCancel || props.onClose} />
+        <GasAccountLoginContent
+          onClose={props.onCancel || props.onClose}
+          toConfirm={toConfirm}
+          setToConfirm={setToConfirm}
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
+  itemInfo: {
+    marginLeft: 8,
+    gap: 4,
+  },
+  item: {
+    flexDirection: 'row',
+  },
+  itemNameText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  itemName: {
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemBalanceText: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+  },
+  itemContainer: {
+    height: 96,
+    marginBottom: 12,
+    flex: 1,
+    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  listContainer: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 16,
+    gap: 12,
+  },
   container: {
     width: '100%',
     flex: 1,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -182,15 +284,19 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 20,
     fontWeight: '500',
     color: colors['neutral-title1'],
-    marginTop: 20,
-    marginBottom: 32,
+    marginTop: 30,
+    marginBottom: 18,
   },
   confirmDescription: {
-    marginTop: 28,
+    // marginTop: 28,
     marginBottom: 30,
-    fontSize: 14,
-    color: colors['neutral-body'],
     textAlign: 'center',
+    fontSize: 17,
+    fontWeight: '400',
+    lineHeight: 22,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    flexDirection: 'row',
   },
   twoBtnContainer: {
     // width: 170,

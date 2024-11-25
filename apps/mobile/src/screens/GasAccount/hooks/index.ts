@@ -82,36 +82,42 @@ export const useGasAccountMethods = () => {
 
   const setGasAccount = useSetGasAccount();
 
-  const login = useCallback(async () => {
-    const account = await preferenceService.getCurrentAccount();
-    if (!account) throw new Error('background.error.noCurrentAccount');
-    const { text } = await openapi.getGasAccountSignText(account.address);
-    const signature = await sendRequest<string>(
-      {
-        method: 'personal_sign',
-        params: [text, account.address],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
-
-    if (signature) {
-      const result = await pRetry(
-        async () =>
-          openapi.loginGasAccount({
-            sig: signature,
-            account_id: account.address,
-          }),
-        {
-          retries: 2,
-        },
-      );
-
-      if (result?.success) {
-        setGasAccount(signature, account);
-        setLoginVisible(false);
+  const login = useCallback(
+    async selectAccount => {
+      const account =
+        selectAccount || (await preferenceService.getCurrentAccount());
+      if (!account) {
+        throw new Error('background.error.noCurrentAccount');
       }
-    }
-  }, [setGasAccount, setLoginVisible]);
+      console.log('selectAccount', account);
+      const { text } = await openapi.getGasAccountSignText(account.address);
+      const signature = await sendRequest<string>(
+        {
+          method: 'personal_sign',
+          params: [text, account.address],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+      if (signature) {
+        const result = await pRetry(
+          async () =>
+            openapi.loginGasAccount({
+              sig: signature,
+              account_id: account.address,
+            }),
+          {
+            retries: 2,
+          },
+        );
+
+        if (result?.success) {
+          setGasAccount(signature, account);
+          setLoginVisible(false);
+        }
+      }
+    },
+    [setGasAccount, setLoginVisible],
+  );
 
   const logout = useCallback(async () => {
     if (sig && accountId) {
