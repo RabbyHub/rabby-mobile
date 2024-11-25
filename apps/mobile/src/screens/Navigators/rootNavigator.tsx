@@ -102,12 +102,7 @@ export default function RootScrennNavigator() {
           name={RootNames.Home}
           component={MultiAddressHome}
           options={mergeScreenOptions({
-            headerTitle: MultiAddressHomeHeader,
-            headerLeft: () => null,
-            headerRight: () => null,
-            headerStyle: {
-              backgroundColor: colors['neutral-bg-1'],
-            },
+            headerShown: false,
           })}
         />
         <RootStack.Screen

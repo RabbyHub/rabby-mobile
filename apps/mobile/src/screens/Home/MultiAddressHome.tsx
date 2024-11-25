@@ -5,6 +5,7 @@ import {
   Animated,
   Easing,
   TouchableWithoutFeedback,
+  ImageBackground,
 } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
@@ -117,7 +118,7 @@ function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const { accounts } = useAccounts({
+  const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: false,
   });
   // todo  fetch pending tx list
@@ -127,6 +128,12 @@ function MultiAddressHome(): JSX.Element {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAccounts();
+    }, [fetchAccounts]),
+  );
 
   useEffect(() => {
     let animation;
@@ -261,6 +268,7 @@ function MultiAddressHome(): JSX.Element {
 
   return (
     <NormalScreenContainer
+      noHeader
       overwriteStyle={{
         backgroundColor: colors2024['neutral-bg-1'],
       }}>
@@ -270,64 +278,71 @@ function MultiAddressHome(): JSX.Element {
         start={{ x: 0.5, y: -0.2 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.rootScreenContainer}>
-        <View style={styles.balanceBox}>
-          <Text style={styles.usdText}>
-            {/* {(balanceLoading && !balanceFromCache) ||
+        <ImageBackground
+          source={require('@/assets2024/icons/home/ImgBgHome.png')}
+          resizeMode="cover"
+          style={styles.bgImage}
+        />
+        <View style={styles.paddingContainer}>
+          <MultiAddressHomeHeader />
+          <View style={styles.balanceBox}>
+            <Text style={styles.usdText}>
+              {/* {(balanceLoading && !balanceFromCache) ||
           balance === null ||
           (balanceFromCache && balance === 0) ||
           balanceUpdating ? (
             <Skeleton width={140} height={38} />
           ) : ( */}
-            {totalBalanceUsd}
-            {/* )} */}
-          </Text>
-          <TouchableView
-            style={styles.accountBg}
-            onPress={() => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackAddress, {
-                  screen: RootNames.AddressList,
-                  params: {},
-                }),
+              {totalBalanceUsd}
+              {/* )} */}
+            </Text>
+            <TouchableView
+              style={styles.accountBg}
+              onPress={() => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackAddress, {
+                    screen: RootNames.AddressList,
+                    params: {},
+                  }),
+                );
+              }}>
+              <RcIconSmallWallet />
+              <Text style={styles.accountText}>{filterAccounts.length}</Text>
+              <RcIconSmallArrow />
+            </TouchableView>
+          </View>
+          <View style={styles.menuHeader}>
+            <Text style={styles.headerText}>
+              {t('page.nextComponent.multiAddressHome.services')}
+            </Text>
+            {Boolean(pendingTxCount) && (
+              <View style={styles.pendingContainer}>
+                <Animated.View
+                  style={{
+                    transform: [{ rotate: spin }],
+                  }}>
+                  <RcPending width={14} height={14} />
+                </Animated.View>
+                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
+                  'page.bridge.Pending',
+                )}`}</Text>
+                <RcIconOrangeArrow />
+              </View>
+            )}
+          </View>
+          <View style={[styles.grid]}>
+            {MENU_ARR.map((el, index) => {
+              return (
+                <TouchableView
+                  style={styles.gridItem}
+                  key={index}
+                  onPress={e => handleClickMenu(el.title)}>
+                  <el.icon />
+                  <Text style={styles.gridText}>{el.title}</Text>
+                </TouchableView>
               );
-            }}>
-            <RcIconSmallWallet />
-            <Text style={styles.accountText}>{filterAccounts.length}</Text>
-            <RcIconSmallArrow />
-          </TouchableView>
-        </View>
-
-        <View style={styles.menuHeader}>
-          <Text style={styles.headerText}>
-            {t('page.nextComponent.multiAddressHome.services')}
-          </Text>
-          {Boolean(pendingTxCount) && (
-            <View style={styles.pendingContainer}>
-              <Animated.View
-                style={{
-                  transform: [{ rotate: spin }],
-                }}>
-                <RcPending width={14} height={14} />
-              </Animated.View>
-              <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                'page.bridge.Pending',
-              )}`}</Text>
-              <RcIconOrangeArrow />
-            </View>
-          )}
-        </View>
-        <View style={[styles.grid]}>
-          {MENU_ARR.map((el, index) => {
-            return (
-              <TouchableView
-                style={styles.gridItem}
-                key={index}
-                onPress={e => handleClickMenu(el.title)}>
-                <el.icon />
-                <Text style={styles.gridText}>{el.title}</Text>
-              </TouchableView>
-            );
-          })}
+            })}
+          </View>
         </View>
       </LinearGradient>
     </NormalScreenContainer>
@@ -335,20 +350,31 @@ function MultiAddressHome(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  paddingContainer: {
+    paddingHorizontal: 20,
+  },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
   rootScreenContainer: {
     // ...makeDebugBorder(),
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     flex: 1,
+    position: 'relative',
     overflow: 'hidden',
   },
   headerBox: {
     height: ScreenLayouts.headerAreaHeight,
-    paddingLeft: 8,
-    paddingRight: 38,
+    // paddingLeft: 8,
+    // paddingRight: 38,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flex: 1,
+    // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
   },
   balanceTextBox: {
