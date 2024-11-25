@@ -47,8 +47,10 @@ import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountsSwitcherSheetModal } from '@/components/AccountSwitcher/SheetModal';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 function SendScreen(): JSX.Element {
+  useLastUsedAccountInScreen();
   const navigation = useNavigation();
 
   const colors = useThemeColors();

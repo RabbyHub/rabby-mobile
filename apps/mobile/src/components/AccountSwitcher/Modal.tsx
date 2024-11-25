@@ -1,6 +1,10 @@
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
-import { AccountSwitcherAopProps, useAccountSwitcherScenes } from './hooks';
-import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
+import { TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeOffTop } from '@/hooks/useAppLayout';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
@@ -14,7 +18,7 @@ export function AccountSwitcherModal({
 }: AccountSwitcherAopProps<{
   inScreen?: boolean;
 }>) {
-  const { isVisible, toggleSceneVisible } = useAccountSwitcherScenes(forScene);
+  const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });
 
@@ -36,7 +40,7 @@ export function AccountSwitcherModal({
   };
 
   return (
-    <View
+    <AutoLockView
       style={[
         styles.container,
         inScreen && { zIndex: 19 },
@@ -44,18 +48,21 @@ export function AccountSwitcherModal({
         absoluteStyle,
       ]}>
       <TouchableOpacity
-        onPress={() => {
-          setTimeout(() => {
-            toggleSceneVisible(forScene, false);
-          }, 50);
+        onPressIn={() => {
+          toggleSceneVisible(forScene, false);
         }}
         style={[styles.bgMask, { height: absoluteStyle.maxHeight }]}
+        delayLongPress={1000}
       />
-      <AutoLockView
-        style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
-        <AccountsPanelInModal forScene={forScene} isVisible={isVisible} />
-      </AutoLockView>
-    </View>
+      <View
+        style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}
+        // onPressIn={() => {
+        //   toggleSceneVisible(forScene, false);
+        // }}
+      >
+        <AccountsPanelInModal forScene={forScene} />
+      </View>
+    </AutoLockView>
   );
 }
 
@@ -77,7 +84,8 @@ const getModalStyle = createGetStyles2024(ctx => {
     panelContainer: {
       position: 'relative',
       width: '100%',
-      maxHeight: '80%',
+      // height: '50%',
+      maxHeight: '90%',
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'blue',
       // }),

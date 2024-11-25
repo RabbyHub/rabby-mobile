@@ -23,6 +23,8 @@ export interface Props {
 
 export type { ViewAccount } from './AccountListItem';
 
+const FooterComponent = () => <View style={{ height: 84 }} />;
+
 export const AccountListView: React.FC<Props> = ({
   accounts,
   currentAccounts,
@@ -64,7 +66,13 @@ export const AccountListView: React.FC<Props> = ({
             />
           );
         }}
-        ListFooterComponent={<>{loading && <PlaceholderView />}</>}
+        ListFooterComponent={
+          loading ? (
+            <PlaceholderView />
+          ) : selectedAccounts?.length ? (
+            <FooterComponent />
+          ) : null
+        }
       />
     </Card>
   );

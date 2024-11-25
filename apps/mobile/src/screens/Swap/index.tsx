@@ -56,8 +56,10 @@ import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSi
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 const Swap = () => {
+  useLastUsedAccountInScreen();
   const { t } = useTranslation();
   const { colors, styles } = useThemeStyles(getStyles);
 

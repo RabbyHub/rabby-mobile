@@ -48,6 +48,7 @@ export type RootNavigatorParamsList = {
   [RootNames.Home]?: {};
   [RootNames.Dapps]?: {};
   [RootNames.Points]?: {};
+  /** @deprecated */
   [RootNames.History]?: {};
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
@@ -147,6 +148,7 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
+  [RootNames.History]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.SendNFT]?: {

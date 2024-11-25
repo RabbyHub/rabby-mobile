@@ -10,12 +10,18 @@ import {
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { AccountSwitcherAopProps } from './hooks';
+import {
+  isSameAccount,
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
+import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import RcIconCorrectCC from './icons/correct-cc.svg';
+import { apisAccountSwitch } from '@/core/apis';
+import { Account } from '@/core/services/preference';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -35,18 +41,23 @@ function AddressItemInPanel({
   addressItemProps,
   isCurrent,
   isPinned,
-  onPressAddress,
+  onPressAddress: proponPressAddress,
 }: {
-  addressItemProps: AddressItemProps;
+  addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   isPinned?: boolean;
-  onPressAddress?: () => void;
+  onPressAddress?: (account: Account) => void;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
   });
 
   const [isPressing, setIsPressing] = React.useState(false);
+
+  const { account } = addressItemProps;
+  const onPressAddress = useCallback(() => {
+    proponPressAddress?.(account);
+  }, [account, proponPressAddress]);
 
   return (
     <TouchableOpacity
@@ -237,22 +248,26 @@ const SectionCollapsableNav = function ({
 
 export function AccountsPanelInModal({
   forScene,
-  isVisible = false,
-}: AccountSwitcherAopProps<{
-  isVisible?: boolean;
+}: // isVisible = false,
+AccountSwitcherAopProps<{
+  // isVisible?: boolean;
 }>) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+
+  const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
 
   const {
     isPinnedAccount,
-    sceneCurrentAccount,
+    finalSceneCurrentAccount,
     myAddresses,
     safeAddresses,
     watchAddresses,
   } = useSceneAccountInfo({
     forScene,
-    disableAutoFetch: false,
+    // disableAutoFetch: false,
   });
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const scrollViewRef = React.useRef<ScrollView>(null);
   const scrollToBottom = useCallback(() => {
@@ -263,6 +278,16 @@ export function AccountsPanelInModal({
     React.useState(true);
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
     React.useState(true);
+
+  const handlePressAccount = useCallback<
+    React.ComponentProps<typeof AddressItemInPanel>['onPressAddress'] & object
+  >(
+    async account => {
+      switchSceneCurrentAccount(forScene, account);
+      toggleSceneVisible(forScene, false);
+    },
+    [forScene, switchSceneCurrentAccount, toggleSceneVisible],
+  );
 
   return (
     <View style={styles.panel}>
@@ -276,10 +301,10 @@ export function AccountsPanelInModal({
             <View style={styles.addressListContainer}>
               {myAddresses.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
-                const isCurrent =
-                  sceneCurrentAccount?.address === account.address &&
-                  sceneCurrentAccount?.brandName === account.brandName &&
-                  sceneCurrentAccount?.type === account.type;
+                const isCurrent = isSameAccount(
+                  account,
+                  finalSceneCurrentAccount,
+                );
 
                 return (
                   <AddressItemInPanel
@@ -287,6 +312,7 @@ export function AccountsPanelInModal({
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
                     isPinned={isPinnedAccount(account)}
+                    onPressAddress={handlePressAccount}
                     style={[index > 0 && styles.addressItemTopGap]}
                   />
                 );
@@ -307,16 +333,18 @@ export function AccountsPanelInModal({
                 <View style={styles.addressListContainer}>
                   {safeAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
-                    const isCurrent =
-                      sceneCurrentAccount?.address === account.address &&
-                      sceneCurrentAccount?.brandName === account.brandName &&
-                      sceneCurrentAccount?.type === account.type;
+                    const isCurrent = isSameAccount(
+                      account,
+                      finalSceneCurrentAccount,
+                    );
 
                     return (
                       <AddressItemInPanel
                         key={key}
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
+                        isPinned={false}
+                        onPressAddress={handlePressAccount}
                         style={[index > 0 && styles.addressItemTopGap]}
                       />
                     );
@@ -339,16 +367,18 @@ export function AccountsPanelInModal({
                 <View style={styles.addressListContainer}>
                   {watchAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
-                    const isCurrent =
-                      sceneCurrentAccount?.address === account.address &&
-                      sceneCurrentAccount?.brandName === account.brandName &&
-                      sceneCurrentAccount?.type === account.type;
+                    const isCurrent = isSameAccount(
+                      account,
+                      finalSceneCurrentAccount,
+                    );
 
                     return (
                       <AddressItemInPanel
                         key={key}
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
+                        isPinned={false}
+                        onPressAddress={handlePressAccount}
                         style={[index > 0 && styles.addressItemTopGap]}
                       />
                     );

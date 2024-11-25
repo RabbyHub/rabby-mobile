@@ -11,21 +11,21 @@ import { CancelTxPopup } from '@/components/CancelTxPopup';
 import { SelectSortedChain } from '@/components/SelectSortedChain';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
-import { SettingLedger } from '@/components/HDSetting/SettingLedger';
+import { SettingLedger } from '@/components2024/HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '@/components/Upgrade/TipUpgrade';
 import { ConnectKeystone } from '@/components/ConnectKeystone/ConnectKeystone';
-import { SettingKeystone } from '@/components/HDSetting/SettingKeystone';
+import { SettingKeystone } from '@/components2024/HDSetting/SettingKeystone';
 import { ConnectOneKey } from '@/components/ConnectOneKey/ConnectOneKey';
 import { OneKeyInputPassphrase } from '@/components/OneKeyModal/OneKeyInputPassphrase';
 import { OneKeyInputPin } from '@/components/OneKeyModal/OneKeyInputPin';
-import { SettingOneKey } from '@/components/HDSetting/SettingOneKey';
+import { SettingOneKey } from '@/components2024/HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '@/components/OneKeyModal/OneKeyPinOrPassphrase';
 import {
   TipTermOfUseModalInner,
   TipPrivacyPolicyInner,
 } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
-import { SettingHDKeyring } from '@/components/HDSetting/SettingHDKeyring';
+import { SettingHDKeyring } from '@/components2024/HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 import { SeedPhraseBackupToCloud } from '@/components/SeedPhraseBackupToCloud2024/SeedPhraseBackupToCloud';
@@ -87,7 +87,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: undefined,
   [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
-  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ['85%'],
+  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
 };
 

@@ -1,7 +1,7 @@
 import { BroadcastEvent } from '@/constant/event';
 import { ServiceEvent } from '@rabby-wallet/biz-utils';
 
-export const enum AppServiceEvent {
+const enum AppServiceEvent {
   foo = 'foo',
 }
 

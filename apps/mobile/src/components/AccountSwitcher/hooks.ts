@@ -21,15 +21,21 @@ function makeDefaultState(): AccountSwitcherState {
     collapsed: true,
   };
 }
-const DefaultStates = {
+const DefaultStates: {
+  [key in AccountSwitcherScene]: AccountSwitcherState;
+} = {
   Send: makeDefaultState(),
+  SendNFT: makeDefaultState(),
   Swap: makeDefaultState(),
   Bridge: makeDefaultState(),
+
+  History: makeDefaultState(),
+  // HistoryFilterScam: makeDefaultState(),
 };
 
 export const screenHeaderAccountSwitcherAtom = atom(DefaultStates);
 
-export function useAccountSwitcherScenes(forScene?: AccountSwitcherScene) {
+export function useAccountSceneVisible(forScene?: AccountSwitcherScene) {
   const [scenes, setScenes] = useAtom(screenHeaderAccountSwitcherAtom);
 
   const toggleSceneVisible = useCallback(
@@ -51,7 +57,7 @@ export function useAccountSwitcherScenes(forScene?: AccountSwitcherScene) {
     (scene: AccountSwitcherScene) => {
       if (__DEV__ && !scenes.hasOwnProperty(scene)) {
         console.error(
-          `[useAccountSwitcherScenes] AccountSwitcher scene "${scene}" not found in state`,
+          `[useAccountSceneVisible] AccountSwitcher scene "${scene}" not found in state`,
         );
       }
 

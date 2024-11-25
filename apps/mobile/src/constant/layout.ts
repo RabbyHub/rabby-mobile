@@ -1,5 +1,5 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { AppColorsVariants, ThemeColors } from './theme';
+import { AppColorsVariants, ThemeColors, ThemeColors2024 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
 
 export const ModalLayouts = {
@@ -171,11 +171,18 @@ function makeScreenSpecConfig() {
       : ('dark' as const);
 
     const colors = ThemeColors[isDarkTheme ? 'dark' : 'light'];
+    const colors2024 = ThemeColors2024[isDarkTheme ? 'dark' : 'light'];
 
     const bg1DefaultConf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
       androidStatusBarBg: colors['neutral-bg1'],
+    };
+
+    const bg1Default2024Conf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors2024['neutral-bg1'],
     };
 
     const bg2DefaultConf = <ScreenStatusBarConf>{
@@ -215,6 +222,7 @@ function makeScreenSpecConfig() {
       SampleNewUserGetStarted2024: bg1DefaultConf,
 
       Home: bg1DefaultConf,
+      MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
 
       // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,

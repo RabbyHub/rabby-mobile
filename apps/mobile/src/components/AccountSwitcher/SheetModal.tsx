@@ -12,7 +12,7 @@ import AutoLockView from '../AutoLockView';
 import {
   AccountSwitcherAopProps,
   AccountSwitcherScene,
-  useAccountSwitcherScenes,
+  useAccountSceneVisible,
 } from './hooks';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import useMount from 'react-use/lib/useMount';
@@ -29,7 +29,7 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 export function AccountsSwitcherSheetModal({
   forScene,
 }: AccountSwitcherAopProps) {
-  const { isVisible } = useAccountSwitcherScenes(forScene);
+  const { isVisible } = useAccountSceneVisible(forScene);
   const sheetModalRef = useRef<BottomSheetModal>(null);
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });

@@ -25,6 +25,7 @@ import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
+import { appServiceEvents } from '@/core/services/_utils';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -114,7 +115,10 @@ const fetchingCurrentAccountAtom = atom(false);
  * @description this hooks GET CURRENT account and re-PICK it from accounts, so you need to
  * ensure the accounts is fetched/updated before using this hook
  */
-export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
+export function useCurrentAccount(options?: {
+  disableAutoFetch?: boolean;
+  isTop?: true;
+}) {
   const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
   const [accounts] = useAtom(accountsAtom);
 
@@ -152,7 +156,7 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
     [setCurrentAccount],
   );
 
-  const { disableAutoFetch = false } = options || {};
+  const { disableAutoFetch = false, isTop = false } = options || {};
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -166,6 +170,23 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
     fetchCurrentAccountAsync,
     currentAccount,
   };
+}
+
+/**
+ * @description this hooks will listen to the event of current account changed
+ */
+export function useCurrentAccountOnAppTop() {
+  const { fetchCurrentAccountAsync } = useCurrentAccount();
+  useEffect(() => {
+    const listener = () => {
+      fetchCurrentAccountAsync();
+    };
+    appServiceEvents.on('currentAccountChanged', listener);
+
+    return () => {
+      appServiceEvents.off('currentAccountChanged', listener);
+    };
+  }, [fetchCurrentAccountAsync]);
 }
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {

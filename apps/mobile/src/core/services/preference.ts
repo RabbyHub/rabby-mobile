@@ -14,6 +14,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { appServiceEvents } from './_utils';
 
 const { isSameAddress } = addressUtils;
 
@@ -88,6 +89,16 @@ export interface PreferenceStore {
    *  The unique visitor ID
    */
   extensionId?: string;
+
+  /**
+   * For Send, Swap, Bridge, etc， default is first account in the account list
+   */
+  lastUsedAccount?: Account;
+
+  /**
+   * For temporary account switch
+   */
+  tempCurrentAccount?: Account;
 }
 
 export interface AddressSortStore {
@@ -106,6 +117,7 @@ export class PreferenceService {
   store!: PreferenceStore;
   keyringService: KeyringService;
   sessionService: import('./session').SessionService;
+  // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
 
   constructor(
     options: StorageAdapaterOptions & {
@@ -144,12 +156,19 @@ export class PreferenceService {
             ...defaultAddressSortStore,
           },
           isInvited: false,
+          lastUsedAccount: undefined,
+          tempCurrentAccount: undefined,
         },
       },
       {
         storage: options?.storageAdapter,
       },
     );
+
+    // reset current account if app not closed properly
+    if (this.store.tempCurrentAccount) {
+      this.store.currentAccount = this.store.tempCurrentAccount;
+    }
   }
 
   /* eslint-disable no-dupe-class-members */
@@ -254,7 +273,44 @@ export class PreferenceService {
       this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
         account.address.toLowerCase(),
       ]);
-      // syncStateToUI(BROADCAST_TO_UI_EVENTS.accountsChanged, account);
+      appServiceEvents.emit('currentAccountChanged', account);
+    }
+  };
+
+  getLastUsedAccount = async (): Promise<Account> => {
+    const account = cloneDeep(this.store.lastUsedAccount);
+    if (account) {
+      return account;
+    }
+    // TODO: 排序
+    // return the first account in the account list
+    const [first] = await this.keyringService.getAllVisibleAccountsArray();
+
+    return first;
+  };
+
+  setLastUsedAccount = (account: Account) => {
+    this.store.lastUsedAccount = account;
+  };
+
+  activateLastUsedAccount = async () => {
+    const prevAccount = this.getCurrentAccount();
+
+    if (prevAccount) {
+      this.store.tempCurrentAccount = prevAccount;
+    }
+
+    const account = await this.getLastUsedAccount();
+    // console.debug('[LastUsedAccount] activate', account);
+    this.setCurrentAccount(account);
+  };
+
+  inactivateLastUsedAccount = () => {
+    const tempAccount = this.store.tempCurrentAccount;
+
+    // console.debug('[LastUsedAccount] restore', tempAccount);
+    if (tempAccount) {
+      this.setCurrentAccount(tempAccount);
     }
   };
 

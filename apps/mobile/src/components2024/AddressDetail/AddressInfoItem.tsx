@@ -46,7 +46,7 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
             </TouchableOpacity>
             <TouchableOpacity style={styles.addressButton} onPress={onCopy}>
               <Text style={styles.addressText}>
-                {account.address}
+                {account.address.toLowerCase()}
                 <View style={styles.textIconWrapper}>
                   <RcIconCopyCC
                     style={styles.textCopyIcon}
