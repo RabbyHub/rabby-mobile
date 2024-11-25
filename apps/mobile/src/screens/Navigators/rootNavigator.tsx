@@ -1,15 +1,5 @@
 import 'react-native-gesture-handler';
-import { isValidElementType } from 'react-is';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet, View } from 'react-native';
-import {
-  RcIconNavigationHomeLight,
-  RcIconNavigationHomeFocusLight,
-  RcIconNavigationDappsFocusLight,
-  RcIconNavigationDappsLight,
-  RcIconSettingLight,
-  RcIconSettingFocusLight,
-} from '@/assets/icons/bottom-bar';
+import { Platform } from 'react-native';
 
 import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 
@@ -20,13 +10,9 @@ import {
   ScreenLayouts,
 } from '@/constant/layout';
 
-import HomeScreen from '@/screens/Home/Home';
-
-import { DappsScreen } from '@/screens/Dapps/DappsScreen';
 import {
   BottomTabParamsList,
   RootNavigatorParamsList,
-  RootStackParamsList,
 } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
@@ -34,15 +20,9 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles } from '@/utils/styles';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
-import HistoryScreen from '../Transaction/History';
-import SettingsScreen from '../Settings/Settings';
-import { PendingTxCount } from '../Home/components/PendingTxCount';
-import { useUpgradeInfo } from '@/hooks/version';
 import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsStub';
 import createCustomNativeStackNavigator from '@/utils/CustomNativeStackNavigator';
-import MultiAddressHome, {
-  MultiAddressHomeHeader,
-} from '@/screens/Home/MultiAddressHome';
+import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { useStackScreenConfig } from '@/hooks/navigation';
 
 const RootStack = createCustomNativeStackNavigator<RootNavigatorParamsList>();
@@ -104,49 +84,6 @@ export default function RootScrennNavigator() {
           options={mergeScreenOptions({
             headerShown: false,
           })}
-        />
-        <RootStack.Screen
-          name={RootNames.Dapps}
-          component={DappsScreen}
-          options={{
-            title: isIOS ? 'Explore' : 'Dapps',
-            headerTitleStyle: {
-              fontWeight: '500',
-            },
-            headerTitle: 'Dapps',
-            headerTransparent: true,
-            headerShown: false,
-          }}
-        />
-        <RootStack.Screen
-          name={RootNames.History}
-          component={HistoryScreen}
-          options={useMemo(
-            () => ({
-              headerTitle: 'Transactions',
-              headerTitleStyle: {
-                fontWeight: '500',
-                fontSize: 20,
-                color: colors['neutral-title-1'],
-              },
-            }),
-            [colors],
-          )}
-        />
-        <RootStack.Screen
-          name={RootNames.Settings}
-          component={SettingsScreen}
-          options={useMemo(
-            () => ({
-              headerTitle: 'Settings',
-              headerTitleStyle: {
-                fontWeight: '500',
-                fontSize: 20,
-                color: colors['neutral-title-1'],
-              },
-            }),
-            [colors],
-          )}
         />
       </RootStack.Navigator>
 
