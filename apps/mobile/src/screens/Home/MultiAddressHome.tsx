@@ -12,17 +12,13 @@ import LinearGradient from 'react-native-linear-gradient';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useTheme2024, useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-} from '@/utils/styles';
+import { useAccounts } from '@/hooks/account';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
@@ -30,17 +26,10 @@ import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
 import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
-import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import RcIconEcosystem from '@/assets2024/icons/home/IconEcosystem.svg';
-import RcIconPoints from '@/assets2024/icons/home/IconPoints.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
@@ -49,7 +38,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES as MODAL_NAMES2024 } from '@/components2024/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const MENU_ARR = [
   {
@@ -192,10 +181,10 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Receive:
           const selectAddressModalId = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES2024.SELECT_RECEIVE_ADDRESS,
+            name: MODAL_NAMES.SELECT_RECEIVE_ADDRESS,
             onDone: () => {
               removeGlobalBottomSheetModal2024(selectAddressModalId);
-              const id = createGlobalBottomSheetModal({
+              const id = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.SELECT_SORTED_CHAIN,
                 value: CHAINS_ENUM.ETH,
                 onChange: (v: CHAINS_ENUM) => {
@@ -207,10 +196,10 @@ function MultiAddressHome(): JSX.Element {
                       },
                     }),
                   );
-                  removeGlobalBottomSheetModal(id);
+                  removeGlobalBottomSheetModal2024(id);
                 },
-                onCancel: () => {
-                  removeGlobalBottomSheetModal(id);
+                onClose: () => {
+                  removeGlobalBottomSheetModal2024(id);
                 },
               });
             },

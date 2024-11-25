@@ -8,7 +8,7 @@ import SimpleConfirmInner from '@/components/CommonPopup/SimpleConfirm';
 import { ViewRawDetail } from '@/components/Approval/components/TxComponents/ViewRawModal';
 import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
-import { SelectSortedChain } from '@/components/SelectSortedChain';
+import { SelectSortedChain } from '@/components2024/SelectSortedChain';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
 import { SettingLedger } from '@/components2024/HDSetting/SettingLedger';
