@@ -145,7 +145,8 @@ AccountSwitcherAopProps<{
   const handlePressUseAll = useCallback(() => {
     console.debug('handlePressUseAll');
     toggleUseAllAccountsOnScene(forScene, true);
-  }, [forScene, toggleUseAllAccountsOnScene]);
+    toggleSceneVisible(forScene, false);
+  }, [forScene, toggleUseAllAccountsOnScene, toggleSceneVisible]);
 
   return (
     <LinearGradientContainer
