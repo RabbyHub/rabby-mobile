@@ -29,7 +29,10 @@ import {
 import { preferenceService } from '@/core/services';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import {
+  useCurrentAccount,
+  useLoadMatteredChainBalances,
+} from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
 import ToAddressControl from './components/ToAddressControl';
@@ -270,6 +273,8 @@ function SendScreen(): JSX.Element {
     putScreenState({ inited: true });
   };
 
+  const { currentAccount } = useCurrentAccount();
+
   useEffect(() => {
     if (screenState.inited) {
       initByCache();
@@ -281,7 +286,12 @@ function SendScreen(): JSX.Element {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navParams, screenState.inited]);
+  }, [
+    navParams,
+    screenState.inited,
+    currentAccount?.address,
+    currentAccount?.type,
+  ]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
