@@ -46,6 +46,7 @@ import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientC
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
 import { SelectAccountThen } from '../SelectAccountThen/index';
 import { Dimensions } from 'react-native';
+import { AppColors2024Variants } from '@/constant/theme';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -139,15 +140,25 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 
 export function makeBottomSheetProps({
   linearGradientType,
+  colors,
 }: {
   linearGradientType?: LinearGradientContainerProps['type'];
+  colors: AppColors2024Variants;
 }): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
+  const handleBgColor =
+    linearGradientType === 'linear' || !linearGradientType
+      ? colors['neutral-bg-1']
+      : linearGradientType === 'bg1'
+      ? colors['neutral-bg-1']
+      : colors['neutral-bg-2'];
+
   return {
     style: {
       overflow: 'hidden',
       borderRadius: 32,
     },
     handleStyle: {
+      backgroundColor: handleBgColor,
       paddingVertical: 18,
     },
     handleIndicatorStyle: {
