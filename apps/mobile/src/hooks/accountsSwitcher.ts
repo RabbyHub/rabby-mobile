@@ -197,7 +197,7 @@ export function isSameAccount(
 
 const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
   // 'Swap',
-  // 'MultiHistory',
+  'MultiHistory',
 ];
 
 type SceneAccount = Account & {

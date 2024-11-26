@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
@@ -33,6 +33,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const PAGE_COUNT = 10;
 
@@ -60,11 +61,22 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
+  const { isSceneUsingAllAccounts, finalSceneCurrentAccount } =
+    useSceneAccountInfo({
+      forScene: 'MultiHistory',
+    });
 
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
-    for (let i = 0; i < unionAccounts.length; i++) {
-      const addr = unionAccounts[i].address.toLowerCase();
+    const accountList = isSceneUsingAllAccounts
+      ? unionAccounts
+      : [finalSceneCurrentAccount];
+    for (let i = 0; i < accountList.length; i++) {
+      const account = accountList[i];
+      if (!account) {
+        continue;
+      }
+      const addr = account.address.toLowerCase();
       if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
         continue;
       }
@@ -190,6 +202,9 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
   const refresh = useMemoizedFn(() => {
+    lastMap.current = {};
+    hasMoreMap.current = {};
+    setCurrentPage(0);
     runFetchLocalTx();
     reloadAsync();
   });
@@ -208,6 +223,10 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
       eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
     };
   });
+
+  useEffect(() => {
+    refresh();
+  }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, refresh]);
 
   const isFirstLoading = loading && !allTxHistory.length;
 
@@ -264,7 +283,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   link: {
     marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 20,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 6,
     paddingHorizontal: 12,
