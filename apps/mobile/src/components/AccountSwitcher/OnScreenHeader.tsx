@@ -184,6 +184,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '800',
       lineHeight: 24,
       fontSize: 20,
+      color: ctx.colors2024['neutral-title-1'],
     },
     addressRow: {
       flexDirection: 'row',
