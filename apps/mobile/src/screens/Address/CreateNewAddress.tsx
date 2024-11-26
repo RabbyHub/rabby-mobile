@@ -22,11 +22,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
 import { apiMnemonic } from '@/core/apis';
-import {
-  activeAndPersistAccountsByMnemonics,
-  generateKeyringWithMnemonic,
-} from '@/core/apis/mnemonic';
-import { requestKeyring } from '@/core/apis/keyring';
+import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
 import { contactService, keyringService } from '@/core/services';
@@ -40,6 +36,11 @@ import { replaceToFirst } from '@/utils/navigation';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 const MAX_ACCOUNT_COUNT = 50;
+const PROGRESS_BAR_STEP = {
+  ONE: 1,
+  TWO: 2,
+  THREE: 3,
+};
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -81,7 +82,6 @@ function MainListBlocks() {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      // headerLeft: () => null,
     });
   }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
@@ -111,13 +111,6 @@ function MainListBlocks() {
       ) as any;
       const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
       accountsToCreate = keyring?.getAddresses(0, 1);
-      // accountsToCreate = await requestKeyring(
-      //   KEYRING_TYPE.HdKeyring,
-      //   'getAddresses',
-      //   keyringId ?? null,
-      //   0,
-      //   1,
-      // );
     }
     const words = seedPhrase.split(' ');
     const address = accountsToCreate?.[0].address;
@@ -151,10 +144,6 @@ function MainListBlocks() {
         index: value?.addressIndex,
       },
     ]);
-    // contactService.setAlias({
-    //   address: newAddress,
-    //   alias: addressAlias,
-    // });
     console.log('exe handleContinue');
 
     if (value?.seedPhrase) {
@@ -164,16 +153,13 @@ function MainListBlocks() {
     if (state?.noSetupPassword) {
       navigation.replace(RootNames.StackAddress, {
         screen: RootNames.CreateChooseBackup,
-        params: {
-          // onFinish: cb,
-        },
+        params: {},
       });
     } else {
       navigation.replace(RootNames.StackAddress, {
         screen: RootNames.SetPassword2024,
         params: {
           finishGoToScreen: RootNames.CreateChooseBackup,
-          // onFinish: onSetupPasswordDone,
           delaySetPassword: true,
         },
       });
@@ -224,6 +210,14 @@ function MainListBlocks() {
     [newAddress],
   );
 
+  const currentProgressCount = React.useMemo(() => {
+    return state?.useCurrentSeed
+      ? PROGRESS_BAR_STEP.THREE
+      : state?.noSetupPassword
+      ? PROGRESS_BAR_STEP.TWO
+      : PROGRESS_BAR_STEP.ONE;
+  }, [state]);
+
   return (
     <TouchableWithoutFeedback
       onPress={() => {
@@ -231,10 +225,8 @@ function MainListBlocks() {
       }}>
       <View style={[styles.container]}>
         <ProgressBar
-          amount={3}
-          currentCount={
-            state?.useCurrentSeed ? 3 : state?.noSetupPassword ? 2 : 1
-          }
+          amount={PROGRESS_BAR_STEP.THREE}
+          currentCount={currentProgressCount}
         />
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.addressTopTips')}
@@ -351,10 +343,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     margin: 0,
     borderWidth: 0,
     backgroundColor: 'transparent',
-    // display: 'flex',
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    // lineHeight: 42,
   },
   walletAddress: {
     marginTop: -18,

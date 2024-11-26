@@ -11,7 +11,7 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy, uniqBy, result } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -22,7 +22,6 @@ import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
-import { id } from 'ethers/lib/utils';
 
 export interface TransactionHistoryItem {
   address: string;

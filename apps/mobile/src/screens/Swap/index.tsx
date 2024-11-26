@@ -1,5 +1,4 @@
-import { RcIconMaxButton, RcIconSwapArrow } from '@/assets/icons/swap';
-import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
+import { RcIconSwapArrow } from '@/assets/icons/swap';
 import { AppSwitch, Tip } from '@/components';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
@@ -17,7 +16,6 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -68,7 +66,7 @@ const Swap = () => {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   useEffect(() => {
     setNavigationOptions({
-      headerRight: () => <SwapHeader />,
+      headerRight: SwapHeader,
     });
   }, [setNavigationOptions]);
 
@@ -460,11 +458,7 @@ const Swap = () => {
             </View>
           </View>
           <View style={styles.amountInContainer}>
-            <Text style={styles.label}>
-              {t('page.swap.amount-in', {
-                symbol: payToken ? getTokenSymbol(payToken) : '',
-              })}
-            </Text>
+            <Text style={styles.label}>Amount:</Text>
             <TouchableOpacity
               style={{ flexDirection: 'row', alignItems: 'center' }}
               onPress={() => {
@@ -472,14 +466,18 @@ const Swap = () => {
                   handleBalance();
                 }
               }}>
-              <Text style={[styles.label]}>
-                {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
+              <Text
+                style={[styles.balanceText, inSufficient && styles.errorTip]}>
+                {inSufficient
+                  ? t('page.swap.insufficient-balance')
+                  : t('global.Balance')}
+                : {formatAmount(payToken?.amount || 0)}
               </Text>
               {payTokenAmountAvailable && (
                 <TouchableOpacity
                   style={[styles.maxBtn]}
                   onPress={handleBalance}>
-                  <RcIconMaxButton width={34} height={16} />
+                  <Text style={styles.maxButtonText}>MAX</Text>
                 </TouchableOpacity>
               )}
             </TouchableOpacity>
@@ -511,7 +509,9 @@ const Swap = () => {
           Number(payAmount) > 0 &&
           !inSufficient &&
           !activeProvider?.manualClick ? (
-            <BestQuoteLoading />
+            <View style={styles.loadingQuoteContainer}>
+              <BestQuoteLoading />
+            </View>
           ) : null}
           {Number(payAmount) > 0 &&
           !inSufficient &&
@@ -576,16 +576,6 @@ const Swap = () => {
             </>
           ) : null}
         </View>
-
-        {inSufficient ? (
-          <View style={styles.inSufficient}>
-            <RcDangerIcon width={16} height={16} style={{ marginRight: 2 }} />
-
-            <Text style={styles.inSufficientText}>
-              {t('page.swap.insufficient-balance')}
-            </Text>
-          </View>
-        ) : null}
       </KeyboardAwareScrollView>
       <View
         style={[
@@ -712,6 +702,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
+  balanceText: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+  },
+  errorTip: {
+    color: colors2024['red-default'],
+  },
   rowView: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -758,41 +758,52 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   inputContainer: {
-    flexDirection: 'row',
-    height: 52,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    paddingHorizontal: 12,
-    alignItems: 'center',
+    flexDirection: 'column',
+    height: 98,
+    borderRadius: 30,
+    paddingHorizontal: 13,
+    paddingVertical: 16,
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   input: {
     paddingRight: 10,
     fontSize: 20,
     fontWeight: '600',
     position: 'relative',
+    height: 36,
     flex: 1,
     color: colors2024['neutral-title-1'],
     backgroundColor: 'transparent',
   },
   inputUsdValue: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
-    color: colors2024['neutral-foot'],
+    marginTop: 12,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-info'],
+  },
+  loadingQuoteContainer: {
+    borderWidth: 1,
+    paddingBottom: 16,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 24,
+    marginTop: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
 
   afterWrapper: {
-    marginTop: 12,
-    gap: 12,
-    paddingHorizontal: 12,
+    marginTop: 20,
+    gap: 20,
   },
   afterLabel: {
-    fontSize: 13,
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
   },
   afterValue: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   inSufficient: {
@@ -840,7 +851,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-2'],
   },
   maxBtn: {
-    marginLeft: 6,
+    marginLeft: 12,
+    padding: 4,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 8,
+  },
+  maxButtonText: {
+    color: colors2024['brand-default'],
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

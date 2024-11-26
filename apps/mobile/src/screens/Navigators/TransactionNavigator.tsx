@@ -23,11 +23,9 @@ import ReceiveScreen from '../Receive/Receive';
 import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
-import {
-  ScreenHeaderAccountPicker,
-  ScreenHeaderAccountSwitcher,
-} from '@/components/AccountSwitcher/OnScreenHeader';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import HistoryScreen from '../Transaction/History';
+import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -87,20 +85,31 @@ export default function TransactionNavigator() {
         })}
       />
       <TransactionStack.Screen
-        name={RootNames.History}
-        component={HistoryScreen}
+        name={RootNames.MultiAddressHistory}
+        component={MultiAddressHistory}
         options={{
-          title: 'Transactions',
+          title: 'Multi Transactions',
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
-                forScene="History"
+                forScene="MultiHistory"
                 titleText={ctx.children}
                 showType="addresses"
               />
             );
           },
         }}
+      />
+      <TransactionStack.Screen
+        name={RootNames.History}
+        component={HistoryScreen}
+        options={mergeScreenOptions({
+          title: 'Transactions',
+          ...headerPresets.withBgCard2,
+          headerStyle: {
+            backgroundColor: colors?.['neutral-bg-2'],
+          },
+        })}
       />
       <TransactionStack.Screen
         name={RootNames.HistoryFilterScam}

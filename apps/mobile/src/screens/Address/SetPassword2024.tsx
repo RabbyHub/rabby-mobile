@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React, { useCallback } from 'react';
 
@@ -93,7 +94,7 @@ function useSetupPasswordForm(
     validationSchema: yupSchema,
     validateOnMount: false,
     validateOnChange: false,
-    onSubmit: async (values, helpers) => {
+    onSubmit: async values => {
       const errors = formik.validateFormValues();
 
       if (getFormikErrorsCount(errors)) {

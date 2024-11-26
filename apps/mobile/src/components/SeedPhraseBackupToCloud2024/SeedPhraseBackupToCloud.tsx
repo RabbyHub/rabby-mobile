@@ -9,10 +9,7 @@ import { View } from 'react-native';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
-import {
-  activeAndPersistAccountsByMnemonics,
-  addKeyringAndactiveAndPersistAccounts,
-} from '@/core/apis/mnemonic';
+import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
 import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -67,19 +64,8 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
           await confirmPassword();
         }
 
-        // const doneRes = onDone();
-        // if (doneRes instanceof Promise) {
-        //   await doneRes;
-        // }
-
         const mnemonics = seedPhrase;
         const passphrase = '';
-        // await activeAndPersistAccountsByMnemonics(
-        //   mnemonics,
-        //   passphrase,
-        //   accountsToCreate as any,
-        //   false,
-        // );
         await addKeyringAndactiveAndPersistAccounts(
           mnemonics,
           passphrase,
@@ -122,7 +108,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
     detectCloudIsAvailable().then(isAvailable => {
       if (!isAvailable) {
         // setStep('backup_not_available');
-        toast.show(
+        toast.error(
           t('page.newAddress.seedPhrase.backupErrorCloudNotAvailable'),
         );
         onDone();
@@ -133,14 +119,6 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
   return (
     <View>
       <BackupUnlockScreen onConfirm={handleUpload} />
-      {/* {step === 'backup_uploading' && <BackupUploadScreen />}
-      {step === 'backup_success' && <BackupSuccessScreen />}
-      {step === 'backup_error' && (
-        <BackupErrorScreen onConfirm={() => handleUpload(inputPassword)} />
-      )}
-      {step === 'backup_not_available' && (
-        <BackupNotAvailableScreen onConfirm={onDone} />
-      )} */}
     </View>
   );
 };

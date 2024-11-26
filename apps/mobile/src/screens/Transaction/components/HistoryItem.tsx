@@ -1,17 +1,18 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
 import { getChain } from '@/utils/chain';
 import { numberWithCommasIsLtOne } from '@/utils/number';
 import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import { StyleSheet, Text, View } from 'react-native';
+import { HistoryDisplayItem } from '../MultiAddressHistory';
+import { Text, View } from 'react-native';
 import { TxChange } from './TokenChange';
 import { TxId } from './TxId';
 import { TxInterAddressExplain } from './TxInterAddressExplain';
 import React from 'react';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 type HistoryItemProps = {
-  data: TxDisplayItem;
+  data: TxDisplayItem | HistoryDisplayItem;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export const HistoryItem = React.memo(
@@ -19,8 +20,7 @@ export const HistoryItem = React.memo(
     const isFailed = data.tx?.status === 0;
     const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
-    const colors = useThemeColors();
-    const styles = getStyles(colors);
+    const { styles } = useTheme2024({ getStyle });
 
     return (
       <View style={[styles.card, isFailed || isScam ? styles.cardGray : null]}>
@@ -78,81 +78,87 @@ export const HistoryItem = React.memo(
   },
 );
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    card: {
-      borderRadius: 6,
-      backgroundColor: colors['neutral-card1'],
-      marginBottom: 12,
-    },
-    cardGray: {
-      opacity: 0.5,
-    },
-    cardHeader: {
-      paddingHorizontal: 12,
-      paddingTop: 12,
-      paddingBottom: 0,
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: 8,
-    },
-    scamContainer: {
-      borderRadius: 2,
-      backgroundColor: colors['neutral-line'],
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-    },
-    scam: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-    },
-    cardHeaderInner: {
-      flexGrow: 1,
-      flexShrink: 0,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: 6,
-    },
-    cardBody: {
-      paddingHorizontal: 12,
-      paddingVertical: 20,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: 12,
-    },
-    cardFooter: {
-      padding: 12,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    gas: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-    },
-    failed: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['red-default'],
-    },
-    time: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-      minWidth: 0,
-    },
-    txInterAddressExplain: { flexShrink: 1, width: '60%' },
-    txInterAddressExplainApprove: { width: '100%' },
-    txChange: { flexShrink: 0, maxWidth: '70%' },
-    divider: {
-      height: 0.5,
-      backgroundColor: colors['neutral-line'],
-      opacity: 0.5,
-      marginHorizontal: 12,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  card: {
+    borderRadius: 30,
+    backgroundColor: colors2024['neutral-bg-1'],
+    marginBottom: 12,
+    borderColor: colors2024['neutral-line'],
+    borderWidth: 1,
+  },
+  cardGray: {
+    opacity: 0.5,
+  },
+  cardHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  scamContainer: {
+    borderRadius: 2,
+    backgroundColor: colors2024['neutral-line'],
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  scam: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 14,
+    color: colors2024['neutral-foot'],
+  },
+  cardHeaderInner: {
+    flexGrow: 1,
+    flexShrink: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 6,
+  },
+  cardBody: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cardFooter: {
+    padding: 16,
+    paddingTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  gas: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
+  },
+  failed: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['red-default'],
+  },
+  time: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 14,
+    color: colors2024['neutral-foot'],
+    minWidth: 0,
+  },
+  txInterAddressExplain: { flexShrink: 1, width: '60%' },
+  txInterAddressExplainApprove: { width: '100%' },
+  txChange: { flexShrink: 0, maxWidth: '70%' },
+  divider: {
+    height: 0.5,
+    backgroundColor: colors2024['neutral-line'],
+    opacity: 0.5,
+    marginHorizontal: 12,
+  },
+}));

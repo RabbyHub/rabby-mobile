@@ -4,18 +4,12 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  ScrollView,
-  StyleSheet,
   TouchableWithoutFeedback,
   Text,
   View,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import _ from 'lodash';
@@ -23,18 +17,13 @@ import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast, toastWithIcon } from '@/components2024/Toast';
-import {
-  activeAndPersistAccountsByMnemonics,
-  addKeyringAndactiveAndPersistAccounts,
-} from '@/core/apis/mnemonic';
+import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
-import { type Account } from '@/core/services/preference';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { apiMnemonic, apisLock } from '@/core/apis';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -339,6 +328,7 @@ export const SeedPhrase: React.FC<Props> = ({
       const passphrase = '';
       setLoading(true);
       const toastHide = toastWithIcon(() => (
+        // eslint-disable-next-line react-native/no-inline-styles
         <ActivityIndicator style={{ marginRight: 6 }} />
       ))('Setting up address', {
         duration: 1e6,
@@ -357,14 +347,6 @@ export const SeedPhrase: React.FC<Props> = ({
           accountsToCreate as any,
           true,
         );
-        // await apiMnemonic.generateKeyringWithMnemonic(mnemonics, '');
-        // await activeAndPersistAccountsByMnemonics(
-        //   mnemonics,
-        //   passphrase,
-        //   accountsToCreate as any,
-        //   false,
-        //   true,
-        // );
         keyringService.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,

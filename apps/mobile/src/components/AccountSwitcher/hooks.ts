@@ -31,6 +31,7 @@ const DefaultStates: {
   Bridge: makeDefaultState(),
 
   History: makeDefaultState(),
+  MultiHistory: makeDefaultState(),
   // HistoryFilterScam: makeDefaultState(),
 
   // Receive: makeDefaultState(),

@@ -91,6 +91,7 @@ export const RootNames = {
   Approvals: 'Approvals',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
+  MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
   GasAccount: 'GasAccount',
 
@@ -182,7 +183,7 @@ function makeScreenSpecConfig() {
     const bg1Default2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg1'],
+      androidStatusBarBg: colors2024['neutral-bg-1'],
     };
 
     const bg2DefaultConf = <ScreenStatusBarConf>{

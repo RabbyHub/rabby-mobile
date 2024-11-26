@@ -7,6 +7,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 type TxInterAddressExplainProps = RNViewProps & {
   data: TxDisplayItem;
@@ -25,8 +27,7 @@ export const TxInterAddressExplain = ({
   const isApprove = data.cate_id === 'approve';
   const project = data.project_id ? projectDict[data.project_id] : null;
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
 
   const projectNameNode = (
     <>
@@ -38,7 +39,11 @@ export const TxInterAddressExplain = ({
           {project.name}
         </Text>
       ) : data.other_addr ? (
-        <NameAndAddress address={data.other_addr} hideCopy={isScam} />
+        <NameAndAddress
+          address={data.other_addr}
+          hideCopy={isScam}
+          addressStyle={styles.projectNameText}
+        />
       ) : null}
     </>
   );
@@ -97,49 +102,50 @@ export const TxInterAddressExplain = ({
   );
 };
 
-const actionFont = {
-  fontSize: 15,
-  lineHeight: 18,
-};
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      gap: 8,
-      alignItems: 'center',
-      marginRight: 'auto',
-    },
-    explain: {
-      flexShrink: 1,
-      maxWidth: '100%',
-      // ...makeDebugBorder('red'),
-    },
-    explainForApprove: {
-      width: '100%',
-      flexShrink: 0,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-    },
-    actionTitle: {
-      ...actionFont,
-      color: colors['neutral-title1'],
-      marginBottom: 4,
-      maxWidth: '100%',
-    },
-    actionDesc: {
-      maxWidth: '100%',
-      // ...makeDebugBorder('blue'),
-    },
-    projectNameText: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-    },
-    approveProjectText: {
-      position: 'relative',
-      top: -2,
-      ...actionFont,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    marginRight: 'auto',
+  },
+  explain: {
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
+  explainForApprove: {
+    width: '100%',
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  actionTitle: {
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 22,
+    marginBottom: 4,
+    maxWidth: '100%',
+  },
+  actionDesc: {
+    maxWidth: '100%',
+  },
+  projectNameText: {
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+  approveProjectText: {
+    position: 'relative',
+    top: -2,
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+}));

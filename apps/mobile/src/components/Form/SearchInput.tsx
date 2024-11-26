@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { View, TextInput, TextInputProps } from 'react-native';
+import { View, TextInput, TextInputProps, StyleSheet } from 'react-native';
 
 import { RcSearchCC, RcIconCloseCC } from '@/assets/icons/common';
 import { useThemeColors } from '@/hooks/theme';
@@ -68,6 +68,7 @@ export function SearchInput({
   inputProps,
   searchIconStyle,
   searchIcon: _searchIcon,
+  searchIconWrapperStyle,
   clearable,
   ...viewProps
 }: React.PropsWithoutRef<
@@ -76,6 +77,7 @@ export function SearchInput({
     containerStyle?: React.ComponentProps<typeof View>['style'];
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
     searchIconStyle?: React.ComponentProps<typeof View>['style'];
+    searchIconWrapperStyle?: React.ComponentProps<typeof View>['style'];
     inputProps?: TextInputProps;
     searchIcon?: React.ReactNode;
     clearable?: boolean;
@@ -94,7 +96,7 @@ export function SearchInput({
       );
     }
 
-    return searchIcon || null;
+    return _searchIcon || null;
   }, [_searchIcon, styles.searchIcon, searchIconStyle, colors]);
 
   const closeIcon = useMemo(() => {
@@ -118,7 +120,13 @@ export function SearchInput({
         viewProps?.style,
         isActive && styles.activeInputContainer,
       ]}>
-      <View style={styles.searchIconWrapper}>{searchIcon}</View>
+      <View
+        style={StyleSheet.flatten([
+          styles.searchIconWrapper,
+          searchIconWrapperStyle,
+        ])}>
+        {searchIcon}
+      </View>
       <TextInput {...inputProps} style={[styles.input, inputStyle]} />
       {inputProps?.value && clearable && (
         <TouchableView

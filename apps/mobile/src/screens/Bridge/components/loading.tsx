@@ -1,14 +1,13 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Skeleton } from '@rneui/themed';
 import { View, Text, Image, Animated, Easing, StyleSheet } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { Svg, Rect, Circle } from 'react-native-svg';
-import { createGetStyles } from '@/utils/styles';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 
 const Dots = () => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
+
   const [dot1] = React.useState(new Animated.Value(0));
   const [dot2] = React.useState(new Animated.Value(0));
   const [dot3] = React.useState(new Animated.Value(0));
@@ -115,8 +114,7 @@ const SvgComponent = ({ ...props }) => {
 };
 export const BestQuoteLoading = () => {
   const [animation] = React.useState(new Animated.Value(0));
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   React.useEffect(() => {
     Animated.loop(
@@ -179,11 +177,7 @@ export const BestQuoteLoading = () => {
   });
 
   return (
-    <View
-      // style={styles.container}
-      style={{
-        alignItems: 'center',
-      }}>
+    <View style={styles.rootContainer}>
       <View style={styles.svgContainer}>
         {[0, 1, 2].map(index => (
           <Animated.View
@@ -206,8 +200,8 @@ export const BestQuoteLoading = () => {
 };
 
 export const TokenPairLoading = () => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
+
   return (
     <View style={styles.container}>
       <View style={styles.tokenInfo}>
@@ -218,8 +212,10 @@ export const TokenPairLoading = () => {
     </View>
   );
 };
-
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  rootContainer: {
+    alignItems: 'center',
+  },
   container: {
     paddingHorizontal: 20,
     paddingVertical: 14,
@@ -271,9 +267,10 @@ const getStyles = createGetStyles(colors => ({
     height: 14,
   },
   footerText: {
-    fontSize: 13,
-    color: colors['neutral-foot'],
-    marginLeft: 6,
+    fontSize: 14,
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -284,7 +281,7 @@ const getStyles = createGetStyles(colors => ({
   },
   dot: {
     fontSize: 24,
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
 
   dexLoading: {
@@ -296,7 +293,7 @@ const getStyles = createGetStyles(colors => ({
     gap: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 6,
-    borderColor: colors['neutral-line'],
+    borderColor: colors2024['neutral-line'],
   },
   column: {
     flexDirection: 'row',
@@ -321,8 +318,7 @@ const getStyles = createGetStyles(colors => ({
 }));
 
 export const QuoteLoading = ({}: {}) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View style={styles.dexLoading}>

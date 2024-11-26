@@ -106,7 +106,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   });
 
   useEffect(() => {
-    let animation;
+    let animation: ReturnType<typeof Animated.loop>;
 
     if (loading) {
       animation = Animated.loop(
@@ -119,7 +119,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       );
       animation.start();
     } else {
-      spinValue.setValue(0);
+      spinValue.resetAnimation();
       animation?.stop();
     }
 
@@ -170,26 +170,18 @@ function MultiAddressHome(): JSX.Element {
   });
 
   useEffect(() => {
-    let animation;
-
     if (pendingTxCount) {
-      animation = Animated.loop(
+      Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
           duration: 2000,
           easing: Easing.linear,
           useNativeDriver: true,
         }),
-      );
-      animation.start();
+      ).start();
     } else {
-      spinValue.setValue(0);
-      animation?.stop();
+      spinValue.resetAnimation();
     }
-
-    return () => {
-      animation?.stop();
-    };
   }, [pendingTxCount, spinValue]);
 
   const { balanceAccounts, triggerUpdate, balanceLoading, accountsLength } =
@@ -203,9 +195,9 @@ function MultiAddressHome(): JSX.Element {
     }, [triggerUpdate]),
   );
 
-  const onRefresh = () => {
-    triggerUpdate(true);
-  };
+  const onRefresh = useCallback(() => {
+    triggerUpdate(true); // force update balance from server api
+  }, [triggerUpdate]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -224,7 +216,7 @@ function MultiAddressHome(): JSX.Element {
   }, [balanceAccounts]);
 
   const handleClickMenu = useCallback(
-    title => {
+    (title: MultiHomeFeatTitle) => {
       switch (title) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
@@ -281,7 +273,7 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.History:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.History,
+              screen: RootNames.MultiAddressHistory,
               params: {},
             }),
           );
