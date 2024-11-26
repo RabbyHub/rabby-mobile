@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { View, Text, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
 import { TokenAmountInput } from '@/components/Token';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import {
-  createGetStyles,
-  makeDebugBorder,
-  makeTriangleStyle,
-} from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
   useInputBlurOnEvents,
   useSendTokenInternalContext,
@@ -16,8 +18,6 @@ import {
 import { useCurrentAccount } from '@/hooks/account';
 import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import TouchableView from '@/components/Touchable/TouchableView';
-import { default as RcMaxButton } from './icons/max-button.svg';
 import { useTranslation } from 'react-i18next';
 import { useFindChain } from '@/hooks/useFindChain';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
@@ -25,31 +25,9 @@ import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
-import { devLog } from '@/utils/logger';
-
-const getSectionStyles = createGetStyles(colors => {
-  return {
-    sectionPanel: {
-      borderRadius: 8,
-      padding: 12,
-      backgroundColor: colors['neutral-card1'],
-      width: '100%',
-    },
-  };
-});
-
-export function SendTokenSection({
-  children,
-  style,
-}: React.PropsWithChildren<RNViewProps>) {
-  const colors = useThemeColors();
-  const styles = getSectionStyles(colors);
-
-  return <View style={[styles.sectionPanel, style]}>{children}</View>;
-}
 
 export function BalanceSection({ style }: RNViewProps) {
-  const { styles } = useThemeStyles(getBalanceStyles);
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const { currentAccount } = useCurrentAccount();
@@ -114,49 +92,51 @@ export function BalanceSection({ style }: RNViewProps) {
   if (!chainItem || !currentToken) return null;
 
   return (
-    <SendTokenSection style={style}>
+    <View style={style}>
       <View className="mt-[0]" style={styles.titleSection}>
-        <TouchableView
-          style={styles.balanceArea}
-          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
-          {screenState.isLoading ? (
-            <Skeleton style={{ width: 100, height: 16 }} />
-          ) : (
-            <>
-              <Text style={styles.balanceText}>
-                {t('page.sendToken.sectionBalance.title')}:{' '}
-                {currentTokenBalance}
-              </Text>
-              {/* max button */}
-              {currentToken.amount > 0 &&
-                (screenState.isEstimatingGas ? (
-                  <Skeleton
-                    style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
-                  />
-                ) : (
-                  <TouchableView
-                    disabled={screenState.isEstimatingGas}
-                    className="h-[100%] ml-[4]"
-                    style={styles.maxButtonWrapper}
-                    onPress={handleClickMaxButton}>
-                    <RcMaxButton />
-                  </TouchableView>
-                ))}
-            </>
-          )}
-        </TouchableView>
+        <Text style={styles.sectionTitle}>Amount:</Text>
 
-        {/* right area */}
-        <View style={styles.issueBlock}>
-          {screenState.showGasReserved && !screenState.selectedGasLevel && (
-            <Skeleton style={styles.issueBlockSkeleton} />
-          )}
-          {!screenState.showGasReserved &&
-          (screenState.balanceError || screenState.balanceWarn) ? (
-            <Text style={[styles.issueText]}>
-              {screenState.balanceError || screenState.balanceWarn}
-            </Text>
-          ) : null}
+        <View style={styles.titleRight}>
+          <View style={styles.issueBlock}>
+            {screenState.showGasReserved && !screenState.selectedGasLevel && (
+              <Skeleton style={styles.issueBlockSkeleton} />
+            )}
+            {!screenState.showGasReserved &&
+            (screenState.balanceError || screenState.balanceWarn) ? (
+              <Text style={[styles.issueText]}>
+                {screenState.balanceError || screenState.balanceWarn}
+              </Text>
+            ) : null}
+          </View>
+
+          <TouchableOpacity
+            style={styles.balanceArea}
+            onPress={screenState.isLoading ? noop : handleClickMaxButton}>
+            {screenState.isLoading ? (
+              <Skeleton style={{ width: 100, height: 16 }} />
+            ) : (
+              <>
+                <Text style={styles.balanceText}>
+                  {t('page.sendToken.sectionBalance.title')}:{' '}
+                  {currentTokenBalance}
+                </Text>
+                {/* max button */}
+                {currentToken.amount > 0 &&
+                  (screenState.isEstimatingGas ? (
+                    <Skeleton
+                      style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      disabled={screenState.isEstimatingGas}
+                      style={styles.maxButtonWrapper}
+                      onPress={handleClickMaxButton}>
+                      <Text style={styles.maxButtonText}>MAX</Text>
+                    </TouchableOpacity>
+                  ))}
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -218,44 +198,61 @@ export function BalanceSection({ style }: RNViewProps) {
         rawHexBalance={currentToken.raw_amount_hex_str}
         onClose={gasLevel => handleGasLevelChanged(gasLevel)}
       />
-    </SendTokenSection>
+    </View>
   );
 }
 
-const getBalanceStyles = createGetStyles((colors, ctx) => {
-  const tipWrapperBg = colors['neutral-card2'];
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const tipWrapperBg = colors2024['neutral-card-2'];
 
   return {
+    sectionTitle: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+
     balanceText: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: 'normal',
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
 
     titleSection: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      fontSize: 13,
     },
     maxButtonWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
+      marginLeft: 12,
+      padding: 4,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 8,
+    },
+    maxButtonText: {
+      color: colors2024['brand-default'],
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
     maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
 
     balanceArea: {
       flexDirection: 'row',
-      height: 16,
-      flexShrink: 0,
+      alignItems: 'center',
+    },
+
+    titleRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
 
     issueBlock: {
       flexDirection: 'row',
-      height: 16,
-      flexShrink: 1,
-      width: '100%',
       justifyContent: 'flex-end',
     },
 
@@ -270,7 +267,11 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
     },
 
     issueText: {
-      color: colors['red-default'],
+      color: colors2024['red-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
     },
 
     tokenDetailBlock: {
@@ -302,7 +303,7 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
       alignItems: 'flex-start',
     },
     tokenDetailText: {
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-foot'],
       fontSize: 12,
       fontWeight: '400',
     },

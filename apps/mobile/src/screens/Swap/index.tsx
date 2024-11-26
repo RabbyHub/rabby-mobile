@@ -383,7 +383,7 @@ const Swap = () => {
   const navigation = useNavigation();
 
   return (
-    <NormalScreenContainer2024>
+    <NormalScreenContainer2024 type="bg1">
       <AccountSwitcherModal forScene="Swap" inScreen />
       <KeyboardAwareScrollView
         style={styles.container}

@@ -6,8 +6,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -32,9 +31,9 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
-import { BalanceSection, SendTokenSection } from './Section';
+import { BalanceSection } from './Section';
 import ToAddressControl from './components/ToAddressControl';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components/Toast';
@@ -49,9 +48,7 @@ import { ChainInfo2024 } from './components/ChainInfo2024';
 function SendScreen(): JSX.Element {
   useLastUsedAccountInScreen();
   const navigation = useNavigation();
-
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
 
   const navParams = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Send)?.params,
@@ -369,7 +366,7 @@ function SendScreen(): JSX.Element {
           handleGasLevelChanged,
         },
       }}>
-      <NormalScreenContainer2024>
+      <NormalScreenContainer2024 type="bg1">
         <AccountSwitcherModal forScene="Send" inScreen />
         <TouchableWithoutFeedback
           onPress={() => {
@@ -379,22 +376,21 @@ function SendScreen(): JSX.Element {
           <View style={styles.sendScreen}>
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
-              <SendTokenSection>
+              <View>
+                {/* To */}
+                <ToAddressControl />
+
                 {/* ChainInfo */}
-                <View style={{ marginTop: 0 }}>
+                <View style={styles.chainSection}>
                   <Text style={styles.sectionTitle}>Chain</Text>
                   <ChainInfo2024
-                    style={{ marginTop: 8 }}
                     chainEnum={chainEnum}
                     onChange={handleChainChanged}
                   />
                 </View>
-
-                {/* To */}
-                <ToAddressControl style={{ marginTop: 20 }} />
-              </SendTokenSection>
-              {/* balance info */}
-              <BalanceSection style={{ marginTop: 20 }} />
+                {/* balance info */}
+                <BalanceSection />
+              </View>
             </KeyboardAwareScrollView>
             <BottomArea />
           </View>
@@ -404,45 +400,42 @@ function SendScreen(): JSX.Element {
   );
 }
 
-const getStyles = createGetStyles(colors =>
+const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
+    chainSection: {
+      marginBottom: 24,
+    },
     sendScreen: {
-      width: '100%',
-      height: '100%',
       flexDirection: 'column',
       justifyContent: 'space-between',
+      flex: 1,
+      paddingTop: 16,
     },
     mainContent: {
-      width: '100%',
-      // height: '100%',
-      alignItems: 'center',
-      padding: 20,
-      paddingTop: 0,
+      paddingHorizontal: 24,
     },
-
     sectionTitle: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: 'normal',
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      marginBottom: 8,
     },
-
     bottomDockArea: {
       bottom: 0,
       width: '100%',
       padding: 20,
-      // backgroundColor: colors['neutral-bg1'],
       borderTopWidth: 0.5,
       borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
+      borderTopColor: colors2024['neutral-line'],
       position: 'absolute',
     },
-
     buttonContainer: {
       width: '100%',
       height: 52,
     },
     button: {
-      backgroundColor: colors['blue-default'],
+      backgroundColor: colors2024['blue-default'],
     },
   }),
 );

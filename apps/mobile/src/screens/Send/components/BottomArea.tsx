@@ -9,7 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 
 import { RcIconCheckedCC, RcIconUnCheckCC } from '@/assets/icons/send';
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
@@ -77,21 +77,6 @@ export default function BottomArea() {
       success: false,
       content: t('page.sendToken.whitelistAlert__notWhitelisted'),
       inlineIconColor: colors['red-dark'],
-      ...(!isAndroid && {
-        content: (
-          <>
-            <Text>
-              <RcIconUnCheckCC
-                color={colors['red-dark']}
-                style={{ marginRight: 6 }}
-              />
-              The address is not whitelisted. {'\n'}
-            </Text>
-            <Text>I agree to grant temporary permission to transfer.</Text>
-          </>
-        ),
-        inlineIconColor: '',
-      }),
     };
   }, [temporaryGrant, toAddressInWhitelist, whitelistEnabled, t, colors]);
 
@@ -198,10 +183,6 @@ const getStyles = createGetStyles(colors => {
       bottom: 0,
       width: '100%',
       padding: 20,
-      backgroundColor: colors['neutral-bg1'],
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
       position: 'absolute',
     },
 
