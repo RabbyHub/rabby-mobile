@@ -149,6 +149,7 @@ export type SingleAddressNavigatorParamList = {
 
 export type TransactionNavigatorParamList = {
   [RootNames.History]?: {};
+  [RootNames.MultiAddressHistory]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.SendNFT]?: {

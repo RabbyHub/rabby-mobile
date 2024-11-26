@@ -15,9 +15,10 @@ const AccountSwitcherInfos = {
   Bridge: makeSceneAccount(),
 
   History: makeSceneAccount(),
+  MultiHistory: makeSceneAccount(),
+  Receive: makeSceneAccount(),
   // HistoryFilterScam: makeSceneAccount(), // treat HistoryFilterScam screen as History screen
 
-  Receive: makeSceneAccount(),
   GasAccount: makeSceneAccount(),
 
   '@ActiveDappWebViewModal': makeSceneAccount(),

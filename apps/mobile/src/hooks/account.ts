@@ -109,6 +109,37 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
+export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
+  const [accounts, setAccounts] = useAtom(accountsAtom);
+
+  const { disableAutoFetch = false } = opts || {};
+
+  const doFetchAccounts = useCallback(async () => {
+    const nextAccounts = await fetchAllAccounts();
+    setAccounts(nextAccounts);
+  }, [setAccounts]);
+
+  const { fetchAction: fetchAccounts } = useAtomicRequest({
+    isRequestingAtom: fetchingAccountsAtom,
+    doRequest: doFetchAccounts,
+  });
+
+  useEffect(() => {
+    if (!disableAutoFetch) {
+      fetchAccounts();
+    }
+  }, [disableAutoFetch, fetchAccounts]);
+
+  return {
+    accounts: [
+      ...accounts.filter(
+        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+      ),
+    ],
+    fetchAccounts,
+  };
+}
+
 const fetchingCurrentAccountAtom = atom(false);
 
 /**

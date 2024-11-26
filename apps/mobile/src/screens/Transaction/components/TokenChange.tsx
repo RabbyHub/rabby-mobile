@@ -16,8 +16,8 @@ import {
 } from 'react-native';
 import RcIconUnknown from '@/assets/icons/token/default.svg';
 import { numberWithCommasIsLtOne } from '@/utils/number';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
 
 const TxChangeItem = ({
@@ -36,8 +36,7 @@ const TxChangeItem = ({
   isSend?: boolean;
   canClickToken?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
   const tokenId = item.token_id;
   const tokenUUID = `${data.chain}_token:${tokenId}`;
   const token = tokenDict[tokenId] || tokenDict[tokenUUID];
@@ -98,8 +97,7 @@ export const TxChange = ({
   tokenDict: TxDisplayItem['tokenDict'];
   canClickToken?: boolean;
 } & RNViewProps) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.container, style]}>
       {data?.sends?.map(item => (
@@ -128,46 +126,46 @@ export const TxChange = ({
 const ChangeSizes = {
   gap: 2,
 };
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      flexDirection: 'column',
-      // alignItems: 'flex-end',
-      gap: 3,
-      minWidth: 0,
-      // maxWidth: '50%',
-      flexShrink: 1,
-    },
-    item: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      gap: ChangeSizes.gap,
-      // ...makeDebugBorder()
-    },
-    media: {
-      width: 14,
-      height: 14,
-      borderRadius: 2,
-      // ...makeDebugBorder('red')
-    },
-    text: {
-      fontSize: 13,
-      lineHeight: 15,
-      color: colors['green-default'],
-      minWidth: 0,
-      // flexGrow: 1,
-      flexShrink: 1,
-      textAlign: 'right',
-    },
-    tokenChangeDelta: {
-      justifyContent: 'flex-end',
-    },
-    textNegative: {
-      color: colors['neutral-body'],
-    },
-    tokenLabel: {
-      position: 'relative',
-      top: 0,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors }) => ({
+  container: {
+    flexDirection: 'column',
+    gap: 3,
+    minWidth: 0,
+    flexShrink: 1,
+  },
+  item: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: ChangeSizes.gap,
+  },
+  media: {
+    width: 14,
+    height: 14,
+    borderRadius: 2,
+  },
+  text: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors['green-default'],
+    minWidth: 0,
+    flexShrink: 1,
+    textAlign: 'right',
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenChangeDelta: {
+    justifyContent: 'flex-end',
+  },
+  textNegative: {
+    color: colors['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  tokenLabel: {
+    position: 'relative',
+    top: 0,
+  },
+}));

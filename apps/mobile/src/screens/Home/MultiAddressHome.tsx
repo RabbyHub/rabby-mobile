@@ -226,7 +226,7 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.History:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.History,
+              screen: RootNames.MultiAddressHistory,
               params: {},
             }),
           );
