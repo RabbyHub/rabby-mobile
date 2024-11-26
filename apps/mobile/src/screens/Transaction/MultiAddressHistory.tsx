@@ -224,10 +224,6 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     };
   });
 
-  useEffect(() => {
-    refresh();
-  }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, refresh]);
-
   const isFirstLoading = loading && !allTxHistory.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
