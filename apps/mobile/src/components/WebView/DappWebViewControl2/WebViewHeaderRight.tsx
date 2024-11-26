@@ -11,6 +11,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { useEffect } from 'react';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 
 export function WebViewHeaderRight({
   activeDapp,
@@ -39,15 +40,12 @@ export function WebViewHeaderRight({
     };
   }, [switchSceneCurrentAccount]);
 
-  const { RcWalletIcon } = useWalletBrandLogo(lastUsedAccount?.brandName);
-
   const { toggleSceneVisible } = useAccountSceneVisible(
     '@ActiveDappWebViewModal',
   );
 
   // TODO: check if openedDapp is active dapp;
-
-  if (!RcWalletIcon) return null;
+  if (!lastUsedAccount) return null;
 
   return (
     <TouchableView
@@ -60,7 +58,12 @@ export function WebViewHeaderRight({
       onPress={() => {
         toggleSceneVisible('@ActiveDappWebViewModal', true);
       }}>
-      <RcWalletIcon width={24} height={24} className="rounded-[24px]" />
+      <WalletIcon
+        type={lastUsedAccount?.type}
+        width={24}
+        height={24}
+        style={{ borderRadius: 6 }}
+      />
     </TouchableView>
   );
 }
