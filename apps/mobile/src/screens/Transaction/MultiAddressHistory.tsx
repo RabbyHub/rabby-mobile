@@ -31,6 +31,8 @@ import RootScreenContainer from '@/components/ScreenContainer/RootScreenContaine
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -290,6 +292,11 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
 
 const HistoryScreen = () => {
   const { styles } = useTheme2024({ getStyle });
+  const {
+    sheetModalRef: tokenDetailModalRef,
+    cleanFocusingToken,
+    focusingToken,
+  } = useGeneralTokenDetailSheetModal();
   useLastUsedAccountInScreen();
 
   return (
@@ -297,6 +304,17 @@ const HistoryScreen = () => {
       <AccountSwitcherModal forScene="MultiHistory" inScreen />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} />
+      <BottomSheetModalTokenDetail
+        ref={tokenDetailModalRef}
+        token={focusingToken}
+        onDismiss={() => {
+          cleanFocusingToken({ noNeedCloseModal: true });
+        }}
+        onTriggerDismissFromInternal={ctx => {
+          // toggleShowSheetModal('tokenDetailModalRef', false);
+          cleanFocusingToken();
+        }}
+      />
     </RootScreenContainer>
   );
 };
