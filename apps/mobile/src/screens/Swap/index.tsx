@@ -1,6 +1,6 @@
 import { RcIconMaxButton, RcIconSwapArrow } from '@/assets/icons/swap';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
-import { AppSwitch, Button, Tip } from '@/components';
+import { AppSwitch, Tip } from '@/components';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -32,7 +32,7 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,6 +57,7 @@ import {
   useRabbyFeeVisible,
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
+import { Button } from '@/components2024/Button';
 
 const Swap = () => {
   useLastUsedAccountInScreen();
@@ -393,7 +394,7 @@ const Swap = () => {
         extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.content}>
-          <Text style={[styles.label, { marginBottom: 8 }]}>
+          <Text style={[styles.label, { marginBottom: 12 }]}>
             {t('page.swap.chain')}
           </Text>
           <ChainInfo2024
@@ -403,7 +404,7 @@ const Swap = () => {
           />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
-              <Text style={styles.label}>{t('page.swap.swap-from')}</Text>
+              <Text style={styles.label}>{t('page.swap.from')}</Text>
             </View>
             <View style={styles.arrow} />
 
@@ -431,8 +432,8 @@ const Swap = () => {
                 }
               />
             </View>
-            <TouchableItem onPress={exchangeToken}>
-              <RcIconSwapArrow width={20} height={20} style={styles.arrow} />
+            <TouchableItem style={styles.arrowWrapper} onPress={exchangeToken}>
+              <RcIconSwapArrow width={22} height={22} style={styles.arrow} />
             </TouchableItem>
             <View style={styles.flex1}>
               <TokenSelect
@@ -699,15 +700,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   content: {
     minHeight: 300,
-    padding: 12,
-    marginHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
     backgroundColor: colors2024['neutral-card-1'],
   },
   label: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors2024['neutral-body'],
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   rowView: {
     flexDirection: 'row',
@@ -723,11 +726,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginTop: 20,
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 12,
   },
   flex1: {
     flex: 1,
+  },
+  arrowWrapper: {
+    width: 45,
+    height: 45,
+    borderWidth: 0.7,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 100,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 12,
   },
   arrow: {
     marginHorizontal: 8,
@@ -797,8 +811,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
-    borderTopColor: colors2024['neutral-line'],
-    borderTopWidth: StyleSheet.hairlineWidth * 2,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     padding: 20,
