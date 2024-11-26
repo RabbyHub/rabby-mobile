@@ -460,11 +460,7 @@ const Swap = () => {
             </View>
           </View>
           <View style={styles.amountInContainer}>
-            <Text style={styles.label}>
-              {t('page.swap.amount-in', {
-                symbol: payToken ? getTokenSymbol(payToken) : '',
-              })}
-            </Text>
+            <Text style={styles.label}>Amount:</Text>
             <TouchableOpacity
               style={{ flexDirection: 'row', alignItems: 'center' }}
               onPress={() => {
@@ -472,14 +468,14 @@ const Swap = () => {
                   handleBalance();
                 }
               }}>
-              <Text style={[styles.label]}>
+              <Text style={[styles.balanceText]}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
               {payTokenAmountAvailable && (
                 <TouchableOpacity
                   style={[styles.maxBtn]}
                   onPress={handleBalance}>
-                  <RcIconMaxButton width={34} height={16} />
+                  <Text style={styles.maxButtonText}>MAX</Text>
                 </TouchableOpacity>
               )}
             </TouchableOpacity>
@@ -712,6 +708,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
+  balanceText: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+  },
   rowView: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -760,10 +763,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputContainer: {
     flexDirection: 'row',
     height: 52,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+    borderRadius: 10,
     paddingHorizontal: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
     alignItems: 'center',
   },
   input: {
@@ -778,6 +780,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputUsdValue: {
     fontSize: 12,
     fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-foot'],
   },
 
@@ -840,7 +843,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-2'],
   },
   maxBtn: {
-    marginLeft: 6,
+    marginLeft: 12,
+    padding: 4,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 8,
+  },
+  maxButtonText: {
+    color: colors2024['brand-default'],
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 
