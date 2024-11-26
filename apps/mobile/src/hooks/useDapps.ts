@@ -41,6 +41,7 @@ export function useDapps() {
           icon: '',
         }),
         isFavorite: v,
+        favoriteAt: v ? Date.now() : null,
       });
     }
   }, []);

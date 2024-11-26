@@ -1,3 +1,4 @@
+import { sortBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
@@ -25,7 +26,12 @@ export const useDappsHome = () => {
   } = useBrowserHistory();
 
   const favoriteApps = useMemo(() => {
-    return Object.values(dapps || {}).filter(item => item.isFavorite);
+    return sortBy(
+      Object.values(dapps || {}).filter(item => item.isFavorite),
+      dapp => {
+        return -(dapp.favoriteAt || 0);
+      },
+    );
   }, [dapps]);
 
   useFocusEffect(
