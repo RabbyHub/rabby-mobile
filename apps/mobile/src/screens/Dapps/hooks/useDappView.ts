@@ -17,6 +17,7 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -49,8 +50,39 @@ export type OpenedDappItem = {
     initialUrl?: string;
   };
   maybeDappInfo?: DappInfo;
+  /**
+   * @description timestamp on opening
+   *
+   * // TODO: clear it if time changed
+   *
+   **/
+  openTime: number;
 };
+const DAPPS_VIEW_LIMIT = {
+  maxCount: 3,
+  expireDuration: 86400 * 1e3 * 3,
+};
+const DAPPS_VIEW_LIMIT_SHORT = {
+  maxCount: 3,
+  expireDuration: 600 * 1e3,
+};
+const dappsViewConfigAtom = atom({
+  maxCount: DAPPS_VIEW_LIMIT.maxCount,
+  expireDuration: isNonPublicProductionEnv
+    ? DAPPS_VIEW_LIMIT_SHORT.expireDuration
+    : DAPPS_VIEW_LIMIT.expireDuration,
+});
 const openedDappRecordsAtom = atom<OpenedDappItem[]>([]);
+/**
+ * @deprecated
+ */
+export function useOpenedDappsRecordsOnDEV() {
+  const openedDappRecords = useAtomValue(openedDappRecordsAtom);
+
+  return {
+    openedDappRecords,
+  };
+}
 
 const activeWebViewSheetModalRefs = atom({
   openedDappWebviewSheetModalRef: createRef<BottomSheetModal>(),
@@ -63,6 +95,41 @@ export function useActiveViewSheetModalRefs() {
 
 export function makeDappTabId() {
   return stringUtils.randString(8);
+}
+
+export function useDappsViewConfig() {
+  const [config, setConfig] = useAtom(dappsViewConfigAtom);
+
+  const { isUsingShort, dappsViewConfig } = useMemo(() => {
+    const result = {
+      isUsingShort: false,
+      dappsViewConfig: { ...config },
+    };
+    if (!isNonPublicProductionEnv)
+      result.dappsViewConfig.expireDuration = DAPPS_VIEW_LIMIT.expireDuration;
+
+    result.isUsingShort =
+      result.dappsViewConfig.expireDuration ===
+      DAPPS_VIEW_LIMIT_SHORT.expireDuration;
+
+    return result;
+  }, [config]);
+
+  const toggleUseShortConfig = useCallback(
+    (nextUseShort: boolean = !isUsingShort) => {
+      if (nextUseShort) {
+        setConfig({ ...DAPPS_VIEW_LIMIT_SHORT });
+      } else {
+        setConfig({ ...DAPPS_VIEW_LIMIT });
+      }
+    },
+    [isUsingShort, setConfig],
+  );
+
+  return {
+    toggleUseShortConfig,
+    dappsViewConfig,
+  };
 }
 
 /**
@@ -130,8 +197,27 @@ export function useOpenDappView() {
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 
   // TODO: how about opened non-dapp urls?
-  const [openedDappRecords, setOpenedOriginsDapps] = useAtom(
+  const [openedDappRecords, _setOpenedOriginsDapps] = useAtom(
     openedDappRecordsAtom,
+  );
+  const setOpenedOriginsDapps = useCallback<typeof _setOpenedOriginsDapps>(
+    valueOrFunc => {
+      let nextVal =
+        typeof valueOrFunc === 'function'
+          ? valueOrFunc(openedDappRecords)
+          : valueOrFunc;
+      if (nextVal.length > DAPPS_VIEW_LIMIT.maxCount) {
+        // sort desc by openTime
+        nextVal.sort((a, b) => b.openTime - a.openTime);
+      }
+      // trim all dapps expired
+      nextVal = nextVal.filter(
+        item => Date.now() - item.openTime < DAPPS_VIEW_LIMIT.expireDuration,
+      );
+
+      _setOpenedOriginsDapps(nextVal.slice(0, DAPPS_VIEW_LIMIT.maxCount));
+    },
+    [openedDappRecords, _setOpenedOriginsDapps],
   );
 
   const showDappWebViewModal = useCallback(() => {
@@ -167,7 +253,11 @@ export function useOpenDappView() {
 
       const item =
         typeof dappUrl === 'string'
-          ? { origin: dappUrl, dappTabId: makeDappTabId() }
+          ? {
+              origin: dappUrl,
+              dappTabId: makeDappTabId(),
+              openTime: Date.now(),
+            }
           : dappUrl;
 
       const itemUrl = item.origin;
@@ -209,6 +299,7 @@ export function useOpenDappView() {
             ...prev[itemIdx].$openParams,
             ...item.$openParams,
           },
+          openTime: Date.now(),
         };
 
         return [...prev];
@@ -263,6 +354,11 @@ export function useOpenDappView() {
     removeOpenedDapp,
     activeDappOrigin,
   ]);
+
+  const collapseActiveOpenedDapp = useCallback(() => {
+    collapseDappWebViewModal();
+    onHideActiveDapp();
+  }, [onHideActiveDapp, collapseDappWebViewModal]);
 
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
@@ -323,6 +419,7 @@ export function useOpenDappView() {
 
     onHideActiveDapp,
     closeActiveOpenedDapp,
+    collapseActiveOpenedDapp,
   };
 }
 

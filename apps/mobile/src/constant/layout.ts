@@ -80,6 +80,7 @@ export const RootNames = {
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
+  DevUIDapps: 'DevUIDapps',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -183,7 +184,7 @@ function makeScreenSpecConfig() {
     const bg1Default2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg1'],
+      androidStatusBarBg: colors2024['neutral-bg-1'],
     };
 
     const bg2DefaultConf = <ScreenStatusBarConf>{

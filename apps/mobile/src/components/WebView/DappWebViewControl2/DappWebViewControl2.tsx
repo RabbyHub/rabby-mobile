@@ -88,7 +88,7 @@ type DappWebViewControlProps = {
    */
   embedHtml?: string;
   initialUrl?: string;
-  onPressClose?: (ctx: { defaultAction: () => void }) => void;
+  onPressHeaderLeftClose?: (ctx: { defaultAction: () => void }) => void;
 
   headerRight?: React.ReactNode | (() => React.ReactNode);
   headerNode?:
@@ -163,7 +163,6 @@ function useDefaultNodes({
 }
 
 export type DappWebViewControl2Type = {
-  closeWebViewNavModal: () => void;
   getWebViewId: () => string;
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
@@ -178,7 +177,7 @@ const DappWebViewControl2 = React.forwardRef<
       dappTabId,
       embedHtml,
       initialUrl: _initialUrl,
-      onPressClose,
+      onPressHeaderLeftClose,
 
       headerRight,
       headerNode,
@@ -222,29 +221,26 @@ const DappWebViewControl2 = React.forwardRef<
     React.useImperativeHandle(
       ref,
       () => ({
-        closeWebViewNavModal: () => {
-          webviewNavRef?.current?.close();
-        },
         getWebViewId: () => webviewIdRef.current || '',
         getWebViewState: () => webviewState,
         getWebViewActions: () => webviewActions,
       }),
-      [webviewNavRef, webviewIdRef, webviewState, webviewActions],
+      [webviewIdRef, webviewState, webviewActions],
     );
 
     const handlePressCloseDefault = useCallback(() => {
       toggleShowSheetModal(true);
     }, [toggleShowSheetModal]);
 
-    const handlePressClose = useCallback(() => {
-      if (typeof onPressClose === 'function') {
-        return onPressClose({
+    const handlePressHeaderLeftClose = useCallback(() => {
+      if (typeof onPressHeaderLeftClose === 'function') {
+        return onPressHeaderLeftClose({
           defaultAction: handlePressCloseDefault,
         });
       }
 
       return handlePressCloseDefault();
-    }, [handlePressCloseDefault, onPressClose]);
+    }, [handlePressCloseDefault, onPressHeaderLeftClose]);
 
     const { headerRightNode, finalNavControlNode } = useDefaultNodes({
       headerRight,
@@ -258,7 +254,7 @@ const DappWebViewControl2 = React.forwardRef<
         <View style={[styles.dappWebViewHeadContainer]}>
           <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
             <TouchableView
-              onPress={handlePressClose}
+              onPress={handlePressHeaderLeftClose}
               style={[styles.touchableHeadWrapper]}>
               <RcIconCloseDapp
                 color={styles.closeDappIcon.color}
@@ -296,7 +292,7 @@ const DappWebViewControl2 = React.forwardRef<
       headerRightNode,
       headerNode,
       dappOrigin,
-      handlePressClose,
+      handlePressHeaderLeftClose,
       formattedCurrentUrl,
       styles,
     ]);
