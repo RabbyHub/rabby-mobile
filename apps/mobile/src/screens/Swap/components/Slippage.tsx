@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { Trans, useTranslation } from 'react-i18next';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { Input } from '@rneui/base';
 import { RcIconArrowUp } from '@/assets/icons/swap';
 import { useSlippageStore } from '../hooks';
@@ -25,8 +25,7 @@ interface SlippageProps {
 }
 
 const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <TouchableOpacity
@@ -40,8 +39,7 @@ const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
 export const Slippage = (props: SlippageProps) => {
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const {
     autoSlippage,
@@ -165,7 +163,7 @@ export const Slippage = (props: SlippageProps) => {
             <SlippageItem
               style={[
                 styles.inputItem,
-                isCustomSlippage && { borderColor: colors['blue-default'] },
+                isCustomSlippage && { borderColor: colors2024['blue-default'] },
               ]}
               active={isCustomSlippage}>
               <Input
@@ -195,15 +193,17 @@ export const Slippage = (props: SlippageProps) => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   text: {
-    fontSize: 13,
-    color: colors['neutral-body'],
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
   },
   valueContainer: {
     flexDirection: 'row',
@@ -211,12 +211,13 @@ const getStyles = createGetStyles(colors => ({
     gap: 4,
   },
   value: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   warning: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
   },
   selectContainer: {
     marginTop: 8,
@@ -224,7 +225,8 @@ const getStyles = createGetStyles(colors => ({
   input: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   inputContainerStyle: {
     borderWidth: 0,
@@ -239,18 +241,19 @@ const getStyles = createGetStyles(colors => ({
   warningTipContainer: {
     marginTop: 8,
     borderRadius: 4,
-    backgroundColor: colors['red-light'],
-    padding: 10,
+    backgroundColor: colors2024['red-light-1'],
+    padding: 8,
   },
   warningTip: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
     fontWeight: '400',
-    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
     lineHeight: 17,
   },
   item: {
     flexDirection: 'row',
-    backgroundColor: colors['neutral-card-2'],
+    backgroundColor: colors2024['neutral-card-2'],
     justifyContent: 'center',
     alignItems: 'center',
     height: 36,
@@ -258,8 +261,8 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 4,
   },
   itemActive: {
-    backgroundColor: colors['blue-light-1'],
-    borderColor: colors['blue-default'],
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-default'],
     borderWidth: StyleSheet.hairlineWidth,
   },
   listContainer: {
@@ -270,7 +273,7 @@ const getStyles = createGetStyles(colors => ({
   },
   inputItem: {
     flex: 1,
-    borderColor: colors['neutral-line'],
+    borderColor: colors2024['neutral-line'],
     borderWidth: StyleSheet.hairlineWidth,
   },
 }));

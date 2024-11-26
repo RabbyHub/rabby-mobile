@@ -1,5 +1,4 @@
-import { RcIconMaxButton, RcIconSwapArrow } from '@/assets/icons/swap';
-import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
+import { RcIconSwapArrow } from '@/assets/icons/swap';
 import { AppSwitch, Tip } from '@/components';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
@@ -17,7 +16,6 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -68,7 +66,7 @@ const Swap = () => {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   useEffect(() => {
     setNavigationOptions({
-      headerRight: () => <SwapHeader />,
+      headerRight: SwapHeader,
     });
   }, [setNavigationOptions]);
 
@@ -468,8 +466,12 @@ const Swap = () => {
                   handleBalance();
                 }
               }}>
-              <Text style={[styles.balanceText]}>
-                {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
+              <Text
+                style={[styles.balanceText, inSufficient && styles.errorTip]}>
+                {inSufficient
+                  ? t('page.swap.insufficient-balance')
+                  : t('global.Balance')}
+                : {formatAmount(payToken?.amount || 0)}
               </Text>
               {payTokenAmountAvailable && (
                 <TouchableOpacity
@@ -507,7 +509,9 @@ const Swap = () => {
           Number(payAmount) > 0 &&
           !inSufficient &&
           !activeProvider?.manualClick ? (
-            <BestQuoteLoading />
+            <View style={styles.loadingQuoteContainer}>
+              <BestQuoteLoading />
+            </View>
           ) : null}
           {Number(payAmount) > 0 &&
           !inSufficient &&
@@ -572,16 +576,6 @@ const Swap = () => {
             </>
           ) : null}
         </View>
-
-        {inSufficient ? (
-          <View style={styles.inSufficient}>
-            <RcDangerIcon width={16} height={16} style={{ marginRight: 2 }} />
-
-            <Text style={styles.inSufficientText}>
-              {t('page.swap.insufficient-balance')}
-            </Text>
-          </View>
-        ) : null}
       </KeyboardAwareScrollView>
       <View
         style={[
@@ -715,6 +709,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
+  errorTip: {
+    color: colors2024['red-default'],
+  },
   rowView: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -761,41 +758,52 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   inputContainer: {
-    flexDirection: 'row',
-    height: 52,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    flexDirection: 'column',
+    height: 98,
+    borderRadius: 30,
+    paddingHorizontal: 13,
+    paddingVertical: 16,
     backgroundColor: colors2024['neutral-bg-2'],
-    alignItems: 'center',
   },
   input: {
     paddingRight: 10,
     fontSize: 20,
     fontWeight: '600',
     position: 'relative',
+    height: 36,
     flex: 1,
     color: colors2024['neutral-title-1'],
     backgroundColor: 'transparent',
   },
   inputUsdValue: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
+    marginTop: 12,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-info'],
+  },
+  loadingQuoteContainer: {
+    borderWidth: 1,
+    paddingBottom: 16,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 24,
+    marginTop: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
 
   afterWrapper: {
-    marginTop: 12,
-    gap: 12,
-    paddingHorizontal: 12,
+    marginTop: 20,
+    gap: 20,
   },
   afterLabel: {
-    fontSize: 13,
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
   },
   afterValue: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   inSufficient: {
