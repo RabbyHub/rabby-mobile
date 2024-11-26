@@ -34,7 +34,7 @@ import { keyringService } from '@/core/services';
 
 function MainListBlocks() {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { seedPhraseList } = useSeedPhrase();
 
   const state = useNavigationState(
@@ -82,7 +82,7 @@ function MainListBlocks() {
             <Text style={styles.titleText}>
               {t('page.nextComponent.createNewAddress.createNewSeedPhrase')}
             </Text>
-            <IcRightArrow />
+            <IcRightArrow color={colors2024['neutral-title-1']} />
           </View>
           <Text style={styles.tipText}>
             {t('page.nextComponent.createNewAddress.createNewDesc')}
@@ -94,7 +94,7 @@ function MainListBlocks() {
               <Text style={styles.titleText}>
                 {t('page.nextComponent.createNewAddress.createOnCurrent')}
               </Text>
-              <IcRightArrow />
+              <IcRightArrow color={colors2024['neutral-title-1']} />
             </View>
             <Text style={styles.tipText}>
               {t('page.nextComponent.createNewAddress.createOnCurrentDesc')}

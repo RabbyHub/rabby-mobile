@@ -45,6 +45,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
   },
   title: {
+    color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 24,

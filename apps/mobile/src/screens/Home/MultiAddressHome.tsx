@@ -119,7 +119,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       );
       animation.start();
     } else {
-      spinValue.setValue(0);
+      spinValue.resetAnimation();
       animation?.stop();
     }
 
@@ -203,9 +203,9 @@ function MultiAddressHome(): JSX.Element {
     }, [triggerUpdate]),
   );
 
-  const onRefresh = () => {
-    triggerUpdate(true);
-  };
+  const onRefresh = useCallback(() => {
+    triggerUpdate(true); // force update balance from server api
+  }, [triggerUpdate]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
