@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { useAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItem } from './components/AddressItem';
 import { RootNames } from '@/constant/layout';
@@ -76,6 +76,9 @@ export function AddressListScreen(): JSX.Element {
     }, [fetchAccounts]),
   );
 
+  const [lastSelectedAccount, setLastSelectedAccount] =
+    React.useState<KeyringAccountWithAlias>();
+
   return (
     <AddressListScreenContainer>
       <FlatList
@@ -86,7 +89,11 @@ export function AddressListScreen(): JSX.Element {
           <View
             key={`${item.address}-${item.type}-${item.brandName}-${index}`}
             style={index < list.length - 1 ? styles.itemGap : undefined}>
-            <AddressItem account={item} />
+            <AddressItem
+              onSelect={() => setLastSelectedAccount(item)}
+              lastSelectedAccount={lastSelectedAccount}
+              account={item}
+            />
           </View>
         )}
         ListHeaderComponent={

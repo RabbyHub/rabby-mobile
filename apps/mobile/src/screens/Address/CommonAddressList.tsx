@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, FlatList, Text } from 'react-native';
-import { useAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItem } from './components/AddressItem';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
@@ -31,6 +31,9 @@ export const CommonAddressList: React.FC<Props> = ({
   );
   const list = useSortAddressList(filterAccounts);
 
+  const [lastSelectedAccount, setLastSelectedAccount] =
+    React.useState<KeyringAccountWithAlias>();
+
   return (
     <FlatList
       data={list}
@@ -40,7 +43,11 @@ export const CommonAddressList: React.FC<Props> = ({
         <View
           key={`${item.address}-${item.type}-${item.brandName}-${index}`}
           style={styles.itemGap}>
-          <AddressItem account={item} />
+          <AddressItem
+            onSelect={() => setLastSelectedAccount(item)}
+            lastSelectedAccount={lastSelectedAccount}
+            account={item}
+          />
         </View>
       )}
       ListFooterComponent={
