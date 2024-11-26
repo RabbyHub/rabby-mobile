@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-
 import { Skeleton } from '@rneui/themed';
-import { TokenAmountInput } from '@/components/Token';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
@@ -25,6 +23,7 @@ import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
+import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
 
 export function BalanceSection({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
@@ -93,7 +92,7 @@ export function BalanceSection({ style }: RNViewProps) {
 
   return (
     <View style={style}>
-      <View className="mt-[0]" style={styles.titleSection}>
+      <View style={styles.titleSection}>
         <Text style={styles.sectionTitle}>Amount:</Text>
 
         <View style={styles.titleRight}>
@@ -116,10 +115,12 @@ export function BalanceSection({ style }: RNViewProps) {
               <Skeleton style={{ width: 100, height: 16 }} />
             ) : (
               <>
-                <Text style={styles.balanceText}>
-                  {t('page.sendToken.sectionBalance.title')}:{' '}
-                  {currentTokenBalance}
-                </Text>
+                {!(screenState.balanceError || screenState.balanceWarn) ? (
+                  <Text style={styles.balanceText}>
+                    {t('page.sendToken.sectionBalance.title')}:{' '}
+                    {currentTokenBalance}
+                  </Text>
+                ) : null}
                 {/* max button */}
                 {currentToken.amount > 0 &&
                   (screenState.isEstimatingGas ? (
@@ -140,7 +141,7 @@ export function BalanceSection({ style }: RNViewProps) {
         </View>
       </View>
 
-      <View style={{ marginTop: 10 }}>
+      <View>
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
@@ -157,14 +158,18 @@ export function BalanceSection({ style }: RNViewProps) {
           />
         )}
       </View>
-      <View style={{ marginTop: 16 }}>
+      <View style={styles.tokenDetail}>
         <View style={styles.tokenDetailBlock}>
           <View style={styles.tokenDetailTriangle} />
           {!isNativeToken && (
             <View style={styles.tokenDetailLine}>
               <Text style={styles.tokenDetailText}>Contract Address</Text>
               <View style={styles.tokenDetailCopy}>
-                <AddressViewer address={currentToken.id} showArrow={false} />
+                <AddressViewer
+                  addressStyle={styles.tokenDetailValue}
+                  address={currentToken.id}
+                  showArrow={false}
+                />
                 <CopyAddressIcon address={currentToken.id} />
               </View>
             </View>
@@ -177,7 +182,7 @@ export function BalanceSection({ style }: RNViewProps) {
               </Text>
             )}
           </View>
-          <View style={[styles.tokenDetailLine, { marginTop: 8 }]}>
+          <View style={[styles.tokenDetailLine]}>
             <Text style={styles.tokenDetailText}>Price</Text>
             <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
               {currentTokenPrice}
@@ -203,8 +208,6 @@ export function BalanceSection({ style }: RNViewProps) {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
-  const tipWrapperBg = colors2024['neutral-card-2'];
-
   return {
     sectionTitle: {
       color: colors2024['neutral-title-1'],
@@ -225,6 +228,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      height: 26,
+      marginBottom: 12,
     },
     maxButtonWrapper: {
       marginLeft: 12,
@@ -274,27 +279,35 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 18,
     },
 
-    tokenDetailBlock: {
-      width: '100%',
-      backgroundColor: tipWrapperBg,
-      padding: 12,
-      borderRadius: 4,
-      position: 'relative',
-      justifyContent: 'center',
+    tokenDetail: {
+      marginTop: 13,
     },
 
     tokenDetailTriangle: {
       position: 'absolute',
-      left: 16,
-      top: -8 * 2,
-      ...makeTriangleStyle({
-        dir: 'up',
-        size: 8,
-        color: tipWrapperBg,
-      }),
-      borderTopWidth: 8,
-      borderLeftWidth: 8,
-      borderRightWidth: 8,
+      right: 36,
+      top: -5,
+      width: 8,
+      height: 8,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      transform: [{ rotate: '45deg' }],
+      borderBottomWidth: 0,
+      borderRightWidth: 0,
+      backgroundColor: colors2024['neutral-bg-1'],
+      borderRadius: 0,
+    },
+    tokenDetailBlock: {
+      width: '100%',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      paddingTop: 16,
+      borderRadius: 4,
+      position: 'relative',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      gap: 6,
     },
 
     tokenDetailLine: {
@@ -303,12 +316,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'flex-start',
     },
     tokenDetailText: {
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontSize: 12,
       fontWeight: '400',
+      lineHeight: 16,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenDetailValue: {
       textAlign: 'right',
+      color: colors2024['neutral-body'],
+      fontSize: 12,
+      fontWeight: '400',
+      lineHeight: 16,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenDetailCopy: {
       display: 'flex',

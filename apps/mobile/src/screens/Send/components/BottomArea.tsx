@@ -1,29 +1,24 @@
 import React, { useMemo, useCallback } from 'react';
-import { Platform, View, Text } from 'react-native';
-import { useThemeColors } from '@/hooks/theme';
-import { Button } from '@/components';
+import { Platform, View, Text, TouchableOpacity } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   useSendTokenFormik,
   useSendTokenInternalContext,
 } from '../hooks/useSendToken';
 import { useTranslation } from 'react-i18next';
-import TouchableView from '@/components/Touchable/TouchableView';
-import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
-import { createGetStyles } from '@/utils/styles';
-
-import { RcIconCheckedCC, RcIconUnCheckCC } from '@/assets/icons/send';
+import { createGetStyles2024 } from '@/utils/styles';
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import CheckboxSVG from '@/assets2024/icons/common/checkbox-cc.svg';
+import { Button } from '@/components2024/Button';
 
 const isAndroid = Platform.OS === 'android';
 
 export default function BottomArea() {
   const { t } = useTranslation();
-
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { handleSubmit } = useSendTokenFormik();
 
@@ -49,36 +44,14 @@ export default function BottomArea() {
   const shouldShowWhitelistAlert = formValues.to && showWhitelistAlert;
 
   const whitelistAlertContent = useMemo(() => {
-    if (!whitelistEnabled) {
+    if (whitelistEnabled && !toAddressInWhitelist && !temporaryGrant) {
       return {
-        content: t('page.sendToken.whitelistAlert__disabled'),
-        inlineIconColor: '',
-        success: true,
+        success: false,
+        content: t('page.sendToken.whitelistAlert__notWhitelisted'),
+        inlineIconColor: '#DDDFE4',
       };
     }
-    if (toAddressInWhitelist) {
-      return {
-        content: t('page.sendToken.whitelistAlert__whitelisted'),
-        success: true,
-        prevIconColor: colors['neutral-foot'],
-        inlineIconColor: null,
-      };
-    }
-    if (temporaryGrant) {
-      return {
-        content: t('page.sendToken.whitelistAlert__temporaryGranted'),
-        success: true,
-        prevIconColor: colors['neutral-foot'],
-        inlineIconColor: null,
-      };
-    }
-
-    return {
-      success: false,
-      content: t('page.sendToken.whitelistAlert__notWhitelisted'),
-      inlineIconColor: colors['red-dark'],
-    };
-  }, [temporaryGrant, toAddressInWhitelist, whitelistEnabled, t, colors]);
+  }, [whitelistEnabled, toAddressInWhitelist, temporaryGrant, t]);
 
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
@@ -100,45 +73,26 @@ export default function BottomArea() {
         styles.bottomDockArea,
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
-      {shouldShowWhitelistAlert && (
-        <TouchableView
+      {shouldShowWhitelistAlert && whitelistAlertContent && (
+        <TouchableOpacity
           disabled={canSendNow}
           onPress={handleClickAllowTransferTo}>
           <View style={styles.whitelistAlertContentContainer}>
-            {whitelistAlertContent.prevIconColor && (
-              <ThemeIcon
-                src={
-                  whitelistAlertContent.success
-                    ? RcIconCheckedCC
-                    : RcIconUnCheckCC
-                }
-                color={whitelistAlertContent.prevIconColor}
+            {whitelistAlertContent.inlineIconColor && (
+              <CheckboxSVG
+                color={whitelistAlertContent.inlineIconColor}
+                width={24}
+                height={24}
               />
             )}
-            <Text
-              style={[
-                styles.whitelistAlertContentText,
-                !whitelistAlertContent.success && styles.errorText,
-              ]}>
-              {whitelistAlertContent.inlineIconColor && (
-                <ThemeIcon
-                  src={
-                    whitelistAlertContent.success
-                      ? RcIconCheckedCC
-                      : RcIconUnCheckCC
-                  }
-                  color={whitelistAlertContent.inlineIconColor}
-                />
-              )}{' '}
+            <Text style={[styles.whitelistAlertContentText]}>
               {whitelistAlertContent.content}
             </Text>
           </View>
-        </TouchableView>
+        </TouchableOpacity>
       )}
       <Button
         disabled={!canSubmit}
-        containerStyle={styles.buttonContainer}
-        titleStyle={styles.buttonText}
         type="primary"
         title={'Send'}
         loading={isSubmitLoading}
@@ -177,44 +131,34 @@ export default function BottomArea() {
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     bottomDockArea: {
       bottom: 0,
       width: '100%',
-      padding: 20,
+      paddingHorizontal: 24,
       position: 'absolute',
+      marginBottom: 56,
     },
 
-    buttonContainer: {
-      width: '100%',
-      height: 52,
-      borderRadius: 6,
-      ...(!isAndroid && {
-        marginBottom: 16,
-      }),
-    },
+    buttonContainer: {},
 
     buttonText: {
-      color: colors['neutral-title-2'],
+      color: colors2024['neutral-title-2'],
     },
 
     whitelistAlertContentContainer: {
       flexDirection: 'row',
-      // flexWrap: 'wrap',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: 0,
-      marginBottom: 16,
+      marginBottom: 20,
+      gap: 8,
     },
     whitelistAlertContentText: {
-      textAlign: 'center',
-      justifyContent: 'center',
-      lineHeight: 18,
-      color: colors['neutral-foot'],
-    },
-    errorText: {
-      color: colors['red-dark'],
+      lineHeight: 24,
+      fontSize: 16,
+      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      flex: 1,
     },
   };
 });

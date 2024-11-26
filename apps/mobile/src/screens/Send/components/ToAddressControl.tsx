@@ -127,6 +127,7 @@ export default function ToAddressControl({
                 styles.aliasLabelContainer,
                 styles.disabledAliasEditButton,
               ]}
+              hitSlop={10}
               disabled={editBtnDisabled}
               onPress={() => {
                 putScreenState({ addressToEditAlias: formValues.to });
