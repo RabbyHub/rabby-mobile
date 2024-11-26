@@ -16,6 +16,7 @@ import AutoLockView from '../AutoLockView';
 import { useLayoutEffect } from 'react';
 import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export function AccountSwitcherModal({
   forScene,
@@ -60,11 +61,7 @@ export function AccountSwitcherModal({
         delayLongPress={1000}
       />
       <View
-        style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}
-        // onPressIn={() => {
-        //   toggleSceneVisible(forScene, false);
-        // }}
-      >
+        style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
         <AccountsPanelInModal forScene={forScene} />
       </View>
     </AutoLockView>
@@ -118,7 +115,7 @@ export function AccountSwitcherModalInDappWebView({
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
 
-  const { styles } = useTheme2024({ getStyle: getModalStyle });
+  const { styles } = useTheme2024({ getStyle: getModalInDappWebViewStyle });
 
   const { topValue, offScreen } = useSafeOffTop({
     modalBackgroundHeight: ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
@@ -134,13 +131,18 @@ export function AccountSwitcherModalInDappWebView({
 
   if (!isVisible) return null;
 
-  const absoluteStyle = {
-    top:
-      ScreenLayouts2.dappWebViewControlHeaderHeight -
-      /* I don't know how it make sense but it's proper */
-      8,
-    maxHeight: Math.floor(offScreen.modalBackgroundHeight),
-  };
+  const absoluteStyle = IS_ANDROID
+    ? {
+        top:
+          ScreenLayouts2.dappWebViewControlHeaderHeight -
+          /* I don't know how it make sense but it's proper */
+          8,
+        maxHeight: Math.floor(offScreen.modalBackgroundHeight),
+      }
+    : {
+        top: topValue + ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+        maxHeight: Math.floor(offScreen.modalBackgroundHeight),
+      };
 
   return (
     <AutoLockView
@@ -171,3 +173,46 @@ export function AccountSwitcherModalInDappWebView({
     </AutoLockView>
   );
 }
+
+const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
+  return {
+    container: {
+      position: 'absolute',
+      width: '100%',
+      // never write height here to avoid it cover to whole screen
+      // height: '100%',
+      top: 76,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'red',
+      // }),
+    },
+    panelContainer: {
+      position: 'relative',
+      width: '100%',
+      height: '50%',
+      ...(IS_ANDROID
+        ? {
+            maxHeight: '90%',
+          }
+        : {
+            height: '50%',
+          }),
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'blue',
+      // }),
+    },
+    bgMask: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.60)',
+    },
+  };
+});
