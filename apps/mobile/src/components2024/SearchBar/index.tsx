@@ -91,6 +91,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
           <TextInput
             ref={inputRef}
             style={[styles.input, isEmpty ? styles.placeholder : null]}
+            placeholderTextColor={styles.placeholder.color}
             value={value}
             onChangeText={onChangeText}
             onChange={onChange}
@@ -133,7 +134,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
   },
 );
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     display: 'flex',
     flexDirection: 'row',
@@ -168,7 +169,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   placeholder: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
-    color: colors2024['neutral-secondary'],
+    color: isLight
+      ? colors2024['neutral-secondary']
+      : colors2024['neutral-foot'],
   },
   cancelText: {
     fontFamily: 'SF Pro Rounded',

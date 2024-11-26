@@ -445,7 +445,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
       paddingTop: 0,
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
-      backgroundColor: ctx.colors2024['neutral-InvertHighlight'],
+      backgroundColor: ctx.colors['neutral-bg-1'],
     },
     bsView: {
       position: 'relative',
@@ -458,7 +458,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
         ? Dimensions.get('window').height
         : '100%',
       minHeight: 20,
-      backgroundColor: 'transparent',
+      backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder('black'),
     },
     bsViewOpened: {

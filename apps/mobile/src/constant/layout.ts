@@ -215,9 +215,9 @@ function makeScreenSpecConfig() {
       '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
-        barStyle: 'dark-content',
+        barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: 'rgba(255, 255, 255, 1)',
+        androidStatusBarBg: colors['neutral-bg-1'],
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,
