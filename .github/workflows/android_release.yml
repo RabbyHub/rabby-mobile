@@ -85,8 +85,8 @@ jobs:
           yarn install;
           yarn postinstall;
           cd apps/mobile;
+          yarn postinstall;
           bundle install;
-          yarn prepare-archive;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
           REALLY_UPLOAD=true ./scripts/deploy-android.sh

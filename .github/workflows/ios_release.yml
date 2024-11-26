@@ -68,7 +68,6 @@ jobs:
           cd apps/mobile;
           yarn install;
           yarn postinstall;
-          yarn prepare-archive;
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain

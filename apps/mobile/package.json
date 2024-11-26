@@ -21,7 +21,6 @@
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
-    "prepare-archive": "yarn build:deps && yarn build-inpage && yarn link-assets",
     "restart": "yarn start --reset-cache",
     "start": "yarn ensure-git-hooks && yarn build:deps && yarn build-inpage && react-native start",
     "sync:data": "node ./scripts/sync.js",

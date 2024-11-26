@@ -85,8 +85,8 @@ jobs:
           yarn install;
           yarn postinstall;
           cd apps/mobile;
+          yarn postinstall;
           bundle install;
-          yarn prepare-archive;
 
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
