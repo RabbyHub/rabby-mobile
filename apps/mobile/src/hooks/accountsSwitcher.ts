@@ -5,7 +5,7 @@ import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
 import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 
 const AccountSwitcherInfos = {
@@ -28,7 +28,7 @@ export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 
 type SceneAccounts = {
   [K in AccountSwitcherScene]?: {
-    currentAccount: Account | null;
+    currentAccount: KeyringAccount | null;
     /**
      * @description use all accounts in this scene, not only one "current" account
      *
@@ -37,6 +37,30 @@ type SceneAccounts = {
     useAllAccounts?: boolean;
   };
 };
+
+export function normalizeSceneKeyringAccount(
+  input: Account | KeyringAccount,
+): KeyringAccount {
+  return {
+    address: input.address,
+    brandName: input.brandName,
+    type: input.type,
+  };
+}
+
+export function sceneKeyringAccountToAccount(
+  input: KeyringAccount,
+  partials: {
+    aliasName?: string;
+    balance?: number;
+  },
+): Account {
+  return {
+    ...input,
+    aliasName: partials.aliasName,
+    balance: partials.balance,
+  };
+}
 
 function makeSceneAccount() {
   return {
@@ -137,6 +161,8 @@ export function useSwitchSceneCurrentAccount() {
           // avoid duplicate set same account
           if (isSameAccount(account, prev[scene]?.currentAccount)) {
             delete patches.currentAccount;
+          } else {
+            patches.currentAccount = normalizeSceneKeyringAccount(account);
           }
         } else {
           apisAccountSwitch.inactivateSceneAccount();
@@ -261,7 +287,10 @@ export function useSceneAccountInfo(options: {
       }
 
       if (isSameAccount(account, sceneCurrentAccount)) {
-        result.finalSceneCurrentAccount = sceneCurrentAccount!;
+        result.finalSceneCurrentAccount = sceneKeyringAccountToAccount(
+          sceneCurrentAccount!,
+          account,
+        );
       }
     }
 
