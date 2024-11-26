@@ -494,6 +494,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 24,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     overflow: 'hidden',
+    height: 185,
     width: '100%',
   },
   header: {
