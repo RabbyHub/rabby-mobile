@@ -147,11 +147,16 @@ export function useSwitchSceneCurrentAccount() {
    * this function is re-entrant, it will not set same account again
    */
   const switchSceneCurrentAccount = useCallback(
-    async (scene: AccountSwitcherScene, account: Account | null) => {
+    async (
+      scene: AccountSwitcherScene,
+      account: Account | null,
+      options?: { maybeReEntrant?: boolean },
+    ) => {
+      const { maybeReEntrant } = options || {};
       setSceneAccountInfo(prev => {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
 
-        if (prev[scene]?.useAllAccounts) {
+        if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
           patches.useAllAccounts = false;
         }
 
@@ -190,11 +195,15 @@ export function useSwitchSceneCurrentAccount() {
   const toggleUseAllAccountsOnScene = useCallback(
     (scene: AccountSwitcherScene, useAll: boolean) => {
       setSceneAccountInfo(prev => {
+        const nextVal = ScenesSupportAllAccounts.includes(scene)
+          ? useAll
+          : false;
+
         return {
           ...prev,
           [scene]: {
             ...prev[scene],
-            useAllAccounts: useAll,
+            useAllAccounts: nextVal,
           },
         };
       });
@@ -238,7 +247,7 @@ export function useSceneAccountInfo(options: {
   const [sceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
   const sceneCurrentAccount = sceneAccountInfo[forScene]?.currentAccount;
-  const isSceneUsingAllAccounts = sceneAccountInfo[forScene]?.useAllAccounts;
+  const isSceneUsingAllAccounts = !!sceneAccountInfo[forScene]?.useAllAccounts;
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,

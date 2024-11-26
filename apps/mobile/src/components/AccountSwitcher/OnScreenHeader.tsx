@@ -33,14 +33,10 @@ export function ScreenHeaderAccountSwitcher({
   const { isVisible: isOpen, toggleSceneVisible } =
     useAccountSceneVisible(forScene);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const {
-    finalSceneCurrentAccount,
-    isSceneUsingAllAccounts,
-    totalCountOfAccount,
-    myAddresses,
-  } = useSceneAccountInfo({
-    forScene,
-  });
+  const { finalSceneCurrentAccount, totalCountOfAccount, myAddresses } =
+    useSceneAccountInfo({
+      forScene,
+    });
   const { preFetchData } = useSwitchAccountBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
@@ -52,7 +48,9 @@ export function ScreenHeaderAccountSwitcher({
   }, [titleText, styles]);
 
   useEffect(() => {
-    switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
+    switchSceneCurrentAccount(forScene, finalSceneCurrentAccount, {
+      maybeReEntrant: true,
+    });
   }, [finalSceneCurrentAccount, forScene, switchSceneCurrentAccount]);
 
   const needShowPicker = totalCountOfAccount > 1 && !!myAddresses.length;
