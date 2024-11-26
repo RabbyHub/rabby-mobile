@@ -20,8 +20,8 @@ import { openapi } from '@/core/request';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 
@@ -183,8 +183,7 @@ const TokenSelect = ({
   }, [chainId]);
 
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <>
@@ -194,7 +193,7 @@ const TokenSelect = ({
             <>
               <View style={styles.token}>
                 <AssetAvatar
-                  size={24}
+                  size={26}
                   chain={token.chain}
                   logo={token.logo_url}
                   chainSize={0}
@@ -232,16 +231,16 @@ const TokenSelect = ({
     </>
   );
 };
-
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
-    borderRadius: 4,
-    backgroundColor: colors['neutral-card-2'],
-    paddingVertical: 14,
-    paddingLeft: 12,
-    paddingRight: 8,
+    borderRadius: 100,
+    backgroundColor: colors2024['neutral-card-2'],
+    paddingLeft: 16,
+    paddingRight: 12,
+    height: 60,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   token: {
     flex: 1,
@@ -252,14 +251,16 @@ const getStyles = createGetStyles(colors => ({
   },
   tokenSymbol: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors['neutral-title1'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title1'],
     flex: 1,
   },
   selectText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors['neutral-title1'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title1'],
   },
 }));
 
