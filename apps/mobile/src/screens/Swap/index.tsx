@@ -1,19 +1,25 @@
 import { RcIconMaxButton, RcIconSwapArrow } from '@/assets/icons/swap';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
 import { AppSwitch, Button, Tip } from '@/components';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
+import { ReserveGasPopup } from '@/components/ReserveGasPopup';
 import TouchableItem from '@/components/Touchable/TouchableItem';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
@@ -27,12 +33,14 @@ import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useMount from 'react-use/lib/useMount';
 import { BestQuoteLoading } from '../Bridge/components/loading';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { SwapHeader } from './components/Header';
+import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { ReceiveDetails } from './components/ReceiveDetail';
 import { Slippage } from './components/Slippage';
@@ -49,19 +57,12 @@ import {
   useRabbyFeeVisible,
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { ReserveGasPopup } from '@/components/ReserveGasPopup';
-import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
-import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 const Swap = () => {
   useLastUsedAccountInScreen();
   const { t } = useTranslation();
-  const { colors, styles } = useThemeStyles(getStyles);
+
+  const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   useEffect(() => {
@@ -491,7 +492,7 @@ const Swap = () => {
               placeholder="0"
               numberOfLines={1}
               style={styles.input}
-              placeholderTextColor={colors['neutral-foot']}
+              placeholderTextColor={colors2024['neutral-foot']}
             />
             <Text style={styles.inputUsdValue}>
               {payAmount
@@ -692,7 +693,7 @@ const Swap = () => {
 
 Swap.SwapHeader = SwapHeader;
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
   },
@@ -701,12 +702,12 @@ const getStyles = createGetStyles(colors => ({
     padding: 12,
     marginHorizontal: 20,
     borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
+    backgroundColor: colors2024['neutral-card-1'],
   },
   label: {
     fontSize: 13,
     fontWeight: '400',
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   rowView: {
     flexDirection: 'row',
@@ -747,7 +748,7 @@ const getStyles = createGetStyles(colors => ({
     height: 52,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: colors['neutral-line'],
+    borderColor: colors2024['neutral-line'],
     paddingHorizontal: 12,
     alignItems: 'center',
   },
@@ -757,13 +758,13 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '600',
     position: 'relative',
     flex: 1,
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     backgroundColor: 'transparent',
   },
   inputUsdValue: {
     fontSize: 12,
     fontWeight: '400',
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
 
   afterWrapper: {
@@ -773,12 +774,12 @@ const getStyles = createGetStyles(colors => ({
   },
   afterLabel: {
     fontSize: 13,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   afterValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   inSufficient: {
     flexDirection: 'row',
@@ -787,7 +788,7 @@ const getStyles = createGetStyles(colors => ({
     marginHorizontal: 20,
   },
   inSufficientText: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
     fontSize: 15,
     fontWeight: '500',
   },
@@ -796,9 +797,9 @@ const getStyles = createGetStyles(colors => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
-    borderTopColor: colors['neutral-line'],
+    borderTopColor: colors2024['neutral-line'],
     borderTopWidth: StyleSheet.hairlineWidth * 2,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     padding: 20,
   },
@@ -816,15 +817,15 @@ const getStyles = createGetStyles(colors => ({
   approveText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   unlimitedText: {
     fontSize: 13,
     fontWeight: '500',
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
   btnTitle: {
-    color: colors['neutral-title-2'],
+    color: colors2024['neutral-title-2'],
   },
   maxBtn: {
     marginLeft: 6,
