@@ -94,6 +94,8 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
 
           <AccountsPanelInSheetModal
             onSelectAccount={account => confirmAddress(account)}
+            scene="GasAccount"
+            containerStyle={styles.accountsContainer}
           />
         </View>
       </LinearGradient>
@@ -164,6 +166,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   item: {
     flexDirection: 'row',
+  },
+  accountsContainer: {
+    backgroundColor: 'transparent',
   },
   itemNameText: {
     fontSize: 16,
@@ -257,7 +262,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   confirmDescription: {
     // marginTop: 28,
-    marginBottom: 30,
+    marginBottom: 10,
     textAlign: 'center',
     fontSize: 17,
     fontWeight: '400',

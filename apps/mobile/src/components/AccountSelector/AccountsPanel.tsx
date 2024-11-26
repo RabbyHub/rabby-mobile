@@ -298,12 +298,15 @@ const SectionCollapsableNav = function ({
 export function AccountsPanelInSheetModal({
   containerStyle,
   onSelectAccount,
+  scene,
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
+  scene?: 'GasAccount' | 'Swap' | 'Send' | 'Receive' | undefined;
 }) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
+  const isGasAccount = scene === 'GasAccount';
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
 
@@ -327,7 +330,9 @@ export function AccountsPanelInSheetModal({
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContentContainer}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>My Addresses</Text>
+            {!isGasAccount && (
+              <Text style={styles.sectionTitle}>My Addresses</Text>
+            )}
             <View style={styles.addressListContainer}>
               {myAddresses.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
@@ -338,7 +343,7 @@ export function AccountsPanelInSheetModal({
                     addressItemProps={{ account }}
                     isPinned={isPinnedAccount(account)}
                     onPressAccount={onSelectAccount}
-                    showCopyAndQR
+                    showCopyAndQR={!isGasAccount}
                     style={[index > 0 && styles.addressItemTopGap]}
                   />
                 );

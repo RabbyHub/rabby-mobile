@@ -3,7 +3,7 @@ export enum MultiHomeFeatTitle {
   Receive = 'Receive',
   Swap = 'Swap',
   Bridge = 'Bridge',
-  History = 'History',
+  History = 'Transaction',
   Approvals = 'Approvals',
   GasAccount = 'GasAccount',
   Dapps = 'Dapps',
