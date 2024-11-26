@@ -101,22 +101,19 @@ export default function TransactionNavigator() {
         }}
       />
       <TransactionStack.Screen
-        name={RootNames.History}
-        component={HistoryScreen}
-        options={mergeScreenOptions({
-          title: 'Transactions',
-          ...headerPresets.withBgCard2,
-          headerStyle: {
-            backgroundColor: colors?.['neutral-bg-2'],
-          },
-        })}
-      />
-      <TransactionStack.Screen
         name={RootNames.HistoryFilterScam}
         component={HistoryFilterScamScreen}
         options={mergeScreenOptions({
+          headerTitle: 'Hide scam transactions',
           title: 'Hide scam transactions',
           ...headerPresets.withBgCard2,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
           headerStyle: {
             backgroundColor: colors?.['neutral-bg-2'],
           },

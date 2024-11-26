@@ -142,10 +142,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   approveProjectText: {
     position: 'relative',
     top: -2,
-    fontSize: 17,
-    lineHeight: 22,
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 22,
   },
 }));

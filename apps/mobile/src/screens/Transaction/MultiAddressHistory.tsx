@@ -15,6 +15,7 @@ import {
   useMount,
   useRequest,
 } from 'ahooks';
+import PQueue from 'p-queue';
 import { last, unionBy, orderBy } from 'lodash';
 import { Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -25,7 +26,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
@@ -50,45 +51,61 @@ interface IFetchHistory {
   list: HistoryDisplayItem[];
 }
 
+const waitQueueFinished = (q: PQueue) => {
+  return new Promise(resolve => {
+    q.on('empty', () => {
+      if (q.pending <= 0) resolve(null);
+    });
+  });
+};
+
 function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   const { accounts } = useMyAccounts();
   const unionAccounts = useMemo(() => {
     return unionBy(accounts, account => account.address.toLowerCase());
   }, [accounts]);
+  const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
-  const { isSceneUsingAllAccounts, finalSceneCurrentAccount } =
-    useSceneAccountInfo({
-      forScene: 'MultiHistory',
-    });
+  const {
+    isSceneUsingAllAccounts,
+    finalSceneCurrentAccount,
+    sceneCurrentAccountDepKey,
+  } = useSceneAccountInfo({
+    forScene: 'MultiHistory',
+  });
 
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
       : [finalSceneCurrentAccount];
+    const queue = new PQueue();
     for (let i = 0; i < accountList.length; i++) {
-      const account = accountList[i];
-      if (!account) {
-        continue;
-      }
-      const addr = account.address.toLowerCase();
-      if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
-        continue;
-      }
-      const result = await fetchData(addr, lastMap.current[addr] || 0);
-      if (result.list.length < PAGE_COUNT) {
-        hasMoreMap.current[addr] = false;
-      } else {
-        hasMoreMap.current[addr] = true;
-      }
-      lastMap.current[addr] = result.last || 0;
-      list.push(...result.list);
+      queue.add(async () => {
+        const account = accountList[i];
+        if (!account) {
+          return;
+        }
+        const addr = account.address.toLowerCase();
+        if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+          return;
+        }
+        const result = await fetchData(addr, lastMap.current[addr] || 0);
+        if (result.list.length < PAGE_COUNT) {
+          hasMoreMap.current[addr] = false;
+        } else {
+          hasMoreMap.current[addr] = true;
+        }
+        lastMap.current[addr] = result.last || 0;
+        list.push(...result.list);
+      });
     }
+    await waitQueueFinished(queue);
     return { list };
   };
 
@@ -139,6 +156,9 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
       onSuccess() {
         setCurrentPage(currentPage + 1);
         runFetchLocalTx();
+        if (!isReady.current) {
+          isReady.current = true;
+        }
       },
     });
 
@@ -209,6 +229,12 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     reloadAsync();
   });
 
+  useEffect(() => {
+    if (isReady.current) {
+      refresh();
+    }
+  }, [refresh, sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
+
   const allTxHistory = useMemo(() => {
     return orderBy(data?.list || [], 'time_at', 'desc');
   }, [data]);
@@ -231,13 +257,17 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   }
 
   return (
-    <View style={{ flex: 1, paddingBottom: bottom }}>
+    <View style={{ flex: 1, paddingBottom: bottom, paddingTop: 24 }}>
       {isTestnet ? null : (
         <TouchableOpacity
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.HistoryFilterScam,
-              params: {},
+              params: {
+                addresses: isSceneUsingAllAccounts
+                  ? unionAccounts
+                  : [finalSceneCurrentAccount],
+              },
             });
           }}
           style={styles.link}>
@@ -259,8 +289,6 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
 }
 
 const HistoryScreen = () => {
-  const { currentAccount } = useCurrentAccount();
-
   const { styles } = useTheme2024({ getStyle });
   useLastUsedAccountInScreen();
 
@@ -268,7 +296,7 @@ const HistoryScreen = () => {
     <RootScreenContainer fitStatuBar style={styles.page}>
       <AccountSwitcherModal forScene="MultiHistory" inScreen />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
-      <History isTestnet={false} key={'mainnet' + currentAccount?.address} />
+      <History isTestnet={false} />
     </RootScreenContainer>
   );
 };
