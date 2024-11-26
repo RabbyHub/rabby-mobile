@@ -134,6 +134,17 @@ export default function DevUIPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Dapps',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIDapps,
+            }),
+          );
+        },
+      },
     ];
 
     return list.filter(item => item.visible !== false);

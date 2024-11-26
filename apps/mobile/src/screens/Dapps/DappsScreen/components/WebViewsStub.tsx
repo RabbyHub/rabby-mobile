@@ -218,7 +218,7 @@ export function OpenedDappWebViewStub() {
     collapseDappWebViewModal,
     closeOpenedDapp,
     onHideActiveDapp,
-    closeActiveOpenedDapp,
+    collapseActiveOpenedDapp,
   } = useOpenDappView();
 
   const {
@@ -392,11 +392,9 @@ export function OpenedDappWebViewStub() {
                 disableJsPromptLike: !isActiveDapp,
               }}
               headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
-              onPressClose={ctx => {
-                activeDappWebViewControlRef.current?.closeWebViewNavModal();
-
+              onPressHeaderLeftClose={ctx => {
                 hideDappSheetModal();
-                closeActiveOpenedDapp();
+                collapseActiveOpenedDapp();
               }}
               // headerNode={({ header }) => {
               //   return <WebViewControlHeader headerNode={header} />;
