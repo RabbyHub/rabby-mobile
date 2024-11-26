@@ -89,7 +89,6 @@ function SampleGetStartedScreen2024(): JSX.Element {
   const initAccounts = useMemoizedFn(async () => {
     setGetStaretd(prev => ({ ...prev, processedInit: false }));
     try {
-      await keyringService.removeEmptyKeyrings();
       const accounts = await keyringService.getAllVisibleAccountsArray();
       setGetStaretd(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
       if (accounts?.length) {

@@ -28,7 +28,7 @@ import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
 
-import RootScrennNavigator from './screens/Navigators/rootNavigator';
+import RootScreenNavigator from './screens/Navigators/rootNavigator';
 
 import usePrevious from 'ahooks/lib/usePrevious';
 import {
@@ -190,7 +190,7 @@ export default function AppNavigation({
           />
           <RootStack.Screen
             name={RootNames.StackRoot}
-            component={RootScrennNavigator}
+            component={RootScreenNavigator}
             options={RootOptions}
           />
           <RootStack.Screen

@@ -29,8 +29,8 @@ export default function useAccountsBalance(opts?: { cacheTime?: number }) {
   });
   const fetchTotalBalance = useMemoizedFn(
     async (fetchType: 'from_cache' | 'from_api') => {
-      console.log('fetchTotalBalance  exec');
       if (balanceLoading) {
+        console.log('fetchTotalBalance  loading return');
         return;
       }
       setBalanceLoading(true);
@@ -48,7 +48,7 @@ export default function useAccountsBalance(opts?: { cacheTime?: number }) {
 
       const accountPromises = formatList.map(async account => {
         if (fetchType === 'from_cache') {
-          const cacheData = await preferenceService.getAddressBalance(account);
+          const cacheData = preferenceService.getAddressBalance(account);
           balancesArr.push({
             address: account,
             balance: cacheData?.total_usd_value || 0,
@@ -67,8 +67,8 @@ export default function useAccountsBalance(opts?: { cacheTime?: number }) {
           });
         } catch (e) {
           console.log('accountPromises  error', e);
-          // api fetch error so get from cache store
-          const cacheData = await preferenceService.getAddressBalance(account);
+          // api fetch error fallback get from cache store
+          const cacheData = preferenceService.getAddressBalance(account);
           balancesArr.push({
             address: account,
             balance: cacheData?.total_usd_value || 0,

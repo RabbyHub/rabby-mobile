@@ -48,7 +48,7 @@ const getStyles = createGetStyles(colors => ({
   },
 }));
 
-export default function RootScrennNavigator() {
+export default function RootScreenNavigator() {
   const colors = useThemeColors();
   const { mergeScreenOptions } = useStackScreenConfig();
   const isDark = useGetBinaryMode() === 'dark';

@@ -33,8 +33,6 @@ export const SeedPhraseManualBackup: React.FC<Props> = ({
     switch (step) {
       case 'read_risk':
         return ReadRisk;
-      // case 'hidden_seed_phrase':
-      //   return WriteSeedPhrase;
       case 'seed_phrase':
         return SeedPhrase;
       default:

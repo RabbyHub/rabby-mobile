@@ -106,7 +106,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   });
 
   useEffect(() => {
-    let animation;
+    let animation: ReturnType<typeof Animated.loop>;
 
     if (loading) {
       animation = Animated.loop(
@@ -170,26 +170,18 @@ function MultiAddressHome(): JSX.Element {
   });
 
   useEffect(() => {
-    let animation;
-
     if (pendingTxCount) {
-      animation = Animated.loop(
+      Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
           duration: 2000,
           easing: Easing.linear,
           useNativeDriver: true,
         }),
-      );
-      animation.start();
+      ).start();
     } else {
-      spinValue.setValue(0);
-      animation?.stop();
+      spinValue.resetAnimation();
     }
-
-    return () => {
-      animation?.stop();
-    };
   }, [pendingTxCount, spinValue]);
 
   const { balanceAccounts, triggerUpdate, balanceLoading, accountsLength } =
@@ -224,7 +216,7 @@ function MultiAddressHome(): JSX.Element {
   }, [balanceAccounts]);
 
   const handleClickMenu = useCallback(
-    title => {
+    (title: MultiHomeFeatTitle) => {
       switch (title) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(

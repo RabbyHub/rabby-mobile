@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { Image, Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { Spin } from '../TransactionRecord/components/Spin';
 import { Chain } from '@/constant/chains';
-import { ViewStyle } from 'react-native-size-matters';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
