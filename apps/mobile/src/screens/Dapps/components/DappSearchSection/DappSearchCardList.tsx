@@ -25,6 +25,10 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 
 export const DappSearchCardList = ({
   keyword,
@@ -55,12 +59,13 @@ export const DappSearchCardList = ({
   }, [chain]);
 
   const activeSelectChainPopup = () => {
-    const id = createGlobalBottomSheetModal({
+    const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_SORTED_CHAIN,
       value: chain,
+      hideTestnetTab: true,
       onChange: (v: CHAINS_ENUM) => {
         onChainChange?.(v);
-        removeGlobalBottomSheetModal(id);
+        removeGlobalBottomSheetModal2024(id);
       },
     });
   };
