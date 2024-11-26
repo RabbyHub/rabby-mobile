@@ -6,18 +6,20 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-
 import RcArrowDownCC from './icons/token-selector-trigger-down-cc.svg';
-import TouchableView, {
-  SilentTouchableView,
-} from '@/components/Touchable/TouchableView';
+import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { uniqBy } from 'lodash';
@@ -31,8 +33,6 @@ import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useFindChain } from '@/hooks/useFindChain';
-
-const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
 const isIOS = Platform.OS === 'ios';
 
@@ -222,8 +222,7 @@ export const TokenAmountInput = React.forwardRef<
     },
     ref,
   ) => {
-    const colors = useThemeColors();
-    const styles = getStyles(colors);
+    const { styles, colors2024 } = useTheme2024({ getStyle });
 
     // devLog('Render TokenAmountInput');
 
@@ -260,7 +259,7 @@ export const TokenAmountInput = React.forwardRef<
 
       const valueText = num
         ? `≈$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
-        : '';
+        : '≈$0';
 
       return {
         valueNum: num,
@@ -271,33 +270,9 @@ export const TokenAmountInput = React.forwardRef<
     return (
       <>
         <View style={[styles.container, style]}>
-          <TouchableView
-            style={styles.leftToken}
-            onPress={() => {
-              setTokenSelectorVisible(true);
-            }}>
-            <View style={styles.leftInner}>
-              <View style={styles.leftTokenInfo}>
-                <AssetAvatar
-                  logo={token.logo_url}
-                  logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-                  size={24}
-                />
-                <Text
-                  style={[styles.leftTokenSymbol]}
-                  ellipsizeMode="tail"
-                  numberOfLines={1}>
-                  {getTokenSymbol(token)}
-                </Text>
-              </View>
-              <View style={styles.rightArrow}>
-                <RcArrowDown />
-              </View>
-            </View>
-          </TouchableView>
           <SilentTouchableView
             viewStyle={[
-              styles.rightInputContainer,
+              styles.leftInputContainer,
               inlinePrize && !!valueText && styles.containerHasInlinePrize,
             ]}
             onPress={evt => {
@@ -315,21 +290,45 @@ export const TokenAmountInput = React.forwardRef<
               }}
               ref={tokenInputRef}
               placeholder="0"
-              placeholderTextColor={colors['neutral-foot']}
+              placeholderTextColor={colors2024['neutral-info']}
               inputMode="decimal"
               keyboardType="numeric"
             />
-            {inlinePrize && (
-              <View style={styles.inlinePrizeContainer}>
+            <View style={styles.inlinePrizeContainer}>
+              <Text
+                style={styles.inlinePrizeText}
+                ellipsizeMode="tail"
+                numberOfLines={1}>
+                {valueText}
+              </Text>
+            </View>
+          </SilentTouchableView>
+
+          <View style={styles.placeholder} />
+          <TouchableOpacity
+            style={styles.rightToken}
+            onPress={() => {
+              setTokenSelectorVisible(true);
+            }}>
+            <View style={styles.rightInner}>
+              <View style={styles.rightTokenInfo}>
+                <AssetAvatar
+                  logo={token.logo_url}
+                  logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
+                  size={24}
+                />
                 <Text
-                  style={styles.inlinePrizeText}
+                  style={[styles.rightTokenSymbol]}
                   ellipsizeMode="tail"
                   numberOfLines={1}>
-                  {valueText}
+                  {getTokenSymbol(token)}
                 </Text>
               </View>
-            )}
-          </SilentTouchableView>
+              <View style={styles.rightArrow}>
+                <RcArrowDownCC color={colors2024['neutral-foot']} />
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <TokenSelectorSheetModal
@@ -350,93 +349,74 @@ export const TokenAmountInput = React.forwardRef<
 
 const PADDING = 12;
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
-      borderRadius: 4,
-      padding: PADDING,
-      paddingRight: 0,
-      backgroundColor: colors['neutral-card2'],
-
-      width: '100%',
-      height: 52,
-      paddingVertical: 0,
-
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-
-    leftToken: {
-      position: 'relative',
-      flexShrink: 0,
-      paddingVertical: 10,
-    },
-    leftInner: {
+      borderRadius: 30,
+      backgroundColor: colors2024['neutral-bg-2'],
+      height: 98,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingRight: 8,
-      borderRightColor: colors['neutral-line'],
-      borderRightWidth: StyleSheet.hairlineWidth,
-      borderRightStyle: 'solid',
+      paddingRight: 20,
     },
-    leftTokenInfo: {
+
+    placeholder: {
+      height: 28,
+      width: 1,
+      backgroundColor: colors2024['neutral-line'],
+      marginHorizontal: 12,
+    },
+
+    rightToken: {},
+    rightInner: {
       flexDirection: 'row',
       alignItems: 'center',
+      padding: 4,
+      backgroundColor: colors2024['neutral-line'],
+      borderRadius: 12,
+    },
+    rightTokenInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     rightArrow: {
-      marginLeft: 24,
+      marginLeft: 2,
     },
-    leftTokenSymbol: {
-      color: colors['neutral-title1'],
+    rightTokenSymbol: {
+      color: colors2024['neutral-title-1'],
       fontSize: 16,
-      fontWeight: 'bold',
-      maxWidth: 110,
-      paddingHorizontal: 8,
+      fontWeight: '700',
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
     },
 
-    rightInputContainer: {
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      alignItems: 'flex-end',
-      flexShrink: 1,
-      width: '100%',
-      height: '100%',
-      paddingRight: PADDING,
-      // ...makeDebugBorder('red')
+    leftInputContainer: {
+      flex: 1,
+      paddingLeft: PADDING,
+      gap: 12,
+      // ...makeDebugBorder('red'),
     },
-    containerHasInlinePrize: {
-      position: 'relative',
-    },
+    containerHasInlinePrize: {},
     input: {
-      fontSize: 18,
-      height: '100%',
+      fontSize: 28,
+      fontWeight: '700',
+      lineHeight: 36,
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
+      marginLeft: 7,
     },
     inputHasInlinePrize: {
-      position: 'absolute',
-      top: -6,
-      right: PADDING / 2,
-      fontWeight: '500',
-      height: '50%',
       // ...makeDebugBorder()
     },
-    inlinePrizeContainer: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'row',
-
-      position: 'absolute',
-      bottom: 2,
-      right: PADDING / 2,
-    },
+    inlinePrizeContainer: {},
     // 'text-r-neutral-foot text-12 text-right max-w-full truncate'
     inlinePrizeText: {
-      color: colors['neutral-foot'],
-      fontSize: 13,
-      textAlign: 'right',
-      fontWeight: '500',
-      maxWidth: '100%',
+      color: colors2024['neutral-info'],
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

@@ -1,51 +1,24 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useEffect } from 'react';
+import React from 'react';
 
-import {
-  View,
-  Text,
-  TouchableWithoutFeedback,
-  Keyboard,
-  StyleSheet,
-} from 'react-native';
-
-import HelpIcon from '@/assets2024/icons/common/help.svg';
+import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { RootNames } from '@/constant/layout';
-import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
-import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
 import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ListItem } from '@/components2024/ListItem/ListItem';
 import { ProgressBar } from '@/components2024/progressBar';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
-import { IS_IOS } from '@/core/native/utils';
 import { navigate } from '@/utils/navigation';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { keyringService } from '@/core/services';
 
 function MainListBlocks() {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { seedPhraseList } = useSeedPhrase();
-
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.CreateChooseBackup)?.params,
-  ) as {
-    address: string;
-    alias: string;
-    seedPhrase: string;
-    firstAddress: any;
-  };
-  console.log('state3', state);
 
   const handleCreateNewSeed = React.useCallback(() => {
     navigate(RootNames.StackAddress, {
@@ -64,10 +37,6 @@ function MainListBlocks() {
     });
   }, []);
 
-  useFocusEffect(() => {
-    keyringService.removeEmptyKeyrings();
-  });
-
   return (
     <TouchableWithoutFeedback
       onPress={() => {
@@ -82,7 +51,7 @@ function MainListBlocks() {
             <Text style={styles.titleText}>
               {t('page.nextComponent.createNewAddress.createNewSeedPhrase')}
             </Text>
-            <IcRightArrow />
+            <IcRightArrow color={colors2024['neutral-title-1']} />
           </View>
           <Text style={styles.tipText}>
             {t('page.nextComponent.createNewAddress.createNewDesc')}
@@ -94,7 +63,7 @@ function MainListBlocks() {
               <Text style={styles.titleText}>
                 {t('page.nextComponent.createNewAddress.createOnCurrent')}
               </Text>
-              <IcRightArrow />
+              <IcRightArrow color={colors2024['neutral-title-1']} />
             </View>
             <Text style={styles.tipText}>
               {t('page.nextComponent.createNewAddress.createOnCurrentDesc')}

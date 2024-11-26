@@ -30,7 +30,7 @@ export function FavoriteDappsScreen(): JSX.Element {
     });
   }, [setNavigationOptions, getHeaderTitle, title]);
 
-  const { setBrowserHistory, setDapp } = useDappsHome();
+  const { setBrowserHistory, updateFavorite } = useDappsHome();
   const { openUrlAsDapp } = useOpenDappView();
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -45,10 +45,7 @@ export function FavoriteDappsScreen(): JSX.Element {
   });
 
   const handleFavoriteDapp = useMemoizedFn((dapp: DappInfo) => {
-    setDapp({
-      ...dapp,
-      isFavorite: !dapp.isFavorite,
-    });
+    updateFavorite(dapp.origin, !dapp.isFavorite);
   });
 
   return (

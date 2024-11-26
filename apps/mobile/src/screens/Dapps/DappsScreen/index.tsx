@@ -22,13 +22,14 @@ import { useOpenDappView } from '../hooks/useDappView';
 import { useSearchDapps } from '../hooks/useSearchDapps';
 import LinearGradient from 'react-native-linear-gradient';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import { IS_IOS } from '@/core/native/utils';
 
 export function DappsScreen(): JSX.Element {
   const {
     browserHistoryList,
     favoriteApps,
     setBrowserHistory,
-    setDapp,
+    updateFavorite,
     removeBrowserHistory,
     disconnectDapp,
   } = useDappsHome();
@@ -49,11 +50,8 @@ export function DappsScreen(): JSX.Element {
     Keyboard.dismiss();
   });
 
-  const handleFavoriteDapp = dapp => {
-    setDapp({
-      ...dapp,
-      isFavorite: !dapp.isFavorite,
-    });
+  const handleFavoriteDapp = (dapp: DappInfo) => {
+    updateFavorite(dapp.origin, !dapp.isFavorite);
   };
 
   const handleDeleteHistory = useMemoizedFn((dapp: DappInfo) => {
@@ -86,7 +84,13 @@ export function DappsScreen(): JSX.Element {
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => {
-                if (navigation.canGoBack()) {
+                if (searchState.state.isFocus || searchState.state.searchText) {
+                  searchState.setState({
+                    chain: undefined,
+                    searchText: '',
+                    loading: false,
+                  });
+                } else if (navigation.canGoBack()) {
                   navigation.goBack();
                 }
                 Keyboard.dismiss();
@@ -95,7 +99,11 @@ export function DappsScreen(): JSX.Element {
             </TouchableOpacity>
             <NextSearchBar
               style={styles.searchBar}
-              placeholder="Search Dapp name or URL"
+              placeholder={
+                IS_IOS
+                  ? 'Search website name or URL'
+                  : 'Search Dapp name or URL'
+              }
               value={searchState.state.searchText}
               onChangeText={v => {
                 searchState.setState({
@@ -112,6 +120,13 @@ export function DappsScreen(): JSX.Element {
               onBlur={() => {
                 searchState.setState({
                   isFocus: false,
+                });
+              }}
+              onCancel={() => {
+                searchState.setState({
+                  isFocus: false,
+                  searchText: '',
+                  chain: undefined,
                 });
               }}
               ref={inputRef}

@@ -173,6 +173,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     padding: 24,
+    minHeight: 96,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
 
   dappContent: {

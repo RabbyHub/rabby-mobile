@@ -1,11 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
   Animated,
+  TouchableOpacity,
   Easing,
   TouchableWithoutFeedback,
   ImageBackground,
+  RefreshControl,
+  ScrollView,
 } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
@@ -16,7 +25,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { useAccounts } from '@/hooks/account';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -26,6 +34,7 @@ import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
 import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
+import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import RcIconEcosystem from '@/assets2024/icons/home/IconEcosystem.svg';
@@ -39,8 +48,14 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import useAccountsBalance from '@/hooks/useAccountsBalance';
+import { Skeleton } from '@rneui/base';
 
 const MENU_ARR = [
+  {
+    title: MultiHomeFeatTitle.Swap,
+    icon: RcIconSwap,
+  },
   {
     title: MultiHomeFeatTitle.Send,
     icon: RcIconSend,
@@ -48,10 +63,6 @@ const MENU_ARR = [
   {
     title: MultiHomeFeatTitle.Receive,
     icon: RcIconReceive,
-  },
-  {
-    title: MultiHomeFeatTitle.Swap,
-    icon: RcIconSwap,
   },
   {
     title: MultiHomeFeatTitle.Bridge,
@@ -73,26 +84,63 @@ const MENU_ARR = [
     title: MultiHomeFeatTitle.Dapps,
     icon: RcIconDapps,
   },
-  {
-    title: MultiHomeFeatTitle.Ecosystem,
-    icon: RcIconEcosystem,
-  },
+  // {
+  //   title: MultiHomeFeatTitle.Ecosystem,
+  //   icon: RcIconEcosystem,
+  // },
   // {
   //   title: MultiHomeFeatTitle.Points,
   //   icon: RcIconPoints,
   // },
 ];
 
-export function MultiAddressHomeHeader(): JSX.Element {
+export function MultiAddressHomeHeader(prop): JSX.Element {
+  const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  useEffect(() => {
+    let animation: ReturnType<typeof Animated.loop>;
+
+    if (loading) {
+      animation = Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      );
+      animation.start();
+    } else {
+      spinValue.resetAnimation();
+      animation?.stop();
+    }
+
+    return () => {
+      animation?.stop();
+    };
+  }, [loading, spinValue]);
 
   return (
     <View style={styles.headerBox}>
-      <Text style={styles.balanceTextBox}>
-        {t('page.nextComponent.multiAddressHome.totalBalance')}
-      </Text>
+      <View style={styles.headerBox}>
+        <Text style={styles.balanceTextBox}>
+          {t('page.nextComponent.multiAddressHome.totalBalance')}
+        </Text>
+        <Animated.View
+          style={{
+            transform: [{ rotate: spin }],
+          }}>
+          {loading && <RcIconloading />}
+        </Animated.View>
+      </View>
       <TouchableWithoutFeedback
         onPress={() => {
           navigation.dispatch(
@@ -112,9 +160,7 @@ function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const { accounts, fetchAccounts } = useAccounts({
-    disableAutoFetch: false,
-  });
+
   // todo  fetch pending tx list
   const pendingTxCount = 0;
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -123,53 +169,54 @@ function MultiAddressHome(): JSX.Element {
     outputRange: ['0deg', '360deg'],
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchAccounts();
-    }, [fetchAccounts]),
-  );
-
   useEffect(() => {
-    let animation;
-
     if (pendingTxCount) {
-      animation = Animated.loop(
+      Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
           duration: 2000,
           easing: Easing.linear,
           useNativeDriver: true,
         }),
-      );
-      animation.start();
+      ).start();
     } else {
-      spinValue.setValue(0);
-      animation?.stop();
+      spinValue.resetAnimation();
     }
-
-    return () => {
-      animation?.stop();
-    };
   }, [pendingTxCount, spinValue]);
 
-  const filterAccounts = React.useMemo(
-    () =>
-      [...accounts].filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
-    [accounts],
+  const { balanceAccounts, triggerUpdate, balanceLoading, accountsLength } =
+    useAccountsBalance({
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+    });
+
+  useFocusEffect(
+    useCallback(() => {
+      triggerUpdate();
+    }, [triggerUpdate]),
   );
 
+  const onRefresh = useCallback(() => {
+    triggerUpdate(true); // force update balance from server api
+  }, [triggerUpdate]);
+
+  const needSmallNum = useMemo(() => {
+    const num = balanceAccounts.reduce(
+      (sum, item) => sum + (Number(item.balance) || 0),
+      0,
+    );
+    return num >= 1000000000;
+  }, [balanceAccounts]);
+
   const totalBalanceUsd = useMemo(() => {
-    const num = filterAccounts.reduce(
-      (sum, item) => sum + (item.balance || 0),
+    const num = balanceAccounts.reduce(
+      (sum, item) => sum + (Number(item.balance) || 0),
       0,
     );
     return '$' + splitNumberByStep((num || 0).toFixed(2));
-  }, [filterAccounts]);
+  }, [balanceAccounts]);
 
   const handleClickMenu = useCallback(
-    title => {
+    (title: MultiHomeFeatTitle) => {
       switch (title) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
@@ -286,65 +333,70 @@ function MultiAddressHome(): JSX.Element {
           style={styles.bgImage}
         />
         <View style={styles.paddingContainer}>
-          <MultiAddressHomeHeader />
-          <View style={styles.balanceBox}>
-            <Text style={styles.usdText}>
-              {/* {(balanceLoading && !balanceFromCache) ||
-          balance === null ||
-          (balanceFromCache && balance === 0) ||
-          balanceUpdating ? (
-            <Skeleton width={140} height={38} />
-          ) : ( */}
-              {totalBalanceUsd}
-              {/* )} */}
-            </Text>
-            <TouchableView
-              style={styles.accountBg}
-              onPress={() => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackAddress, {
-                    screen: RootNames.AddressList,
-                    params: {},
-                  }),
+          <MultiAddressHomeHeader loading={balanceLoading} />
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            }>
+            <View style={styles.balanceBox}>
+              <Text
+                style={[
+                  styles.usdText,
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  {
+                    fontSize: needSmallNum ? 28 : 36,
+                  },
+                ]}>
+                {totalBalanceUsd}
+              </Text>
+              <TouchableOpacity
+                style={styles.accountBg}
+                onPress={() => {
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackAddress, {
+                      screen: RootNames.AddressList,
+                      params: {},
+                    }),
+                  );
+                }}>
+                <RcIconSmallWallet />
+                <Text style={styles.accountText}>{accountsLength}</Text>
+                <RcIconSmallArrow />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.menuHeader}>
+              <Text style={styles.headerText}>
+                {t('page.nextComponent.multiAddressHome.services')}
+              </Text>
+              {Boolean(pendingTxCount) && (
+                <View style={styles.pendingContainer}>
+                  <Animated.View
+                    style={{
+                      transform: [{ rotate: spin }],
+                    }}>
+                    <RcPending width={14} height={14} />
+                  </Animated.View>
+                  <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
+                    'page.bridge.Pending',
+                  )}`}</Text>
+                  <RcIconOrangeArrow />
+                </View>
+              )}
+            </View>
+            <View style={[styles.grid]}>
+              {MENU_ARR.map((el, index) => {
+                return (
+                  <TouchableOpacity
+                    style={styles.gridItem}
+                    key={index}
+                    onPress={e => handleClickMenu(el.title)}>
+                    <el.icon />
+                    <Text style={styles.gridText}>{el.title}</Text>
+                  </TouchableOpacity>
                 );
-              }}>
-              <RcIconSmallWallet />
-              <Text style={styles.accountText}>{filterAccounts.length}</Text>
-              <RcIconSmallArrow />
-            </TouchableView>
-          </View>
-          <View style={styles.menuHeader}>
-            <Text style={styles.headerText}>
-              {t('page.nextComponent.multiAddressHome.services')}
-            </Text>
-            {Boolean(pendingTxCount) && (
-              <View style={styles.pendingContainer}>
-                <Animated.View
-                  style={{
-                    transform: [{ rotate: spin }],
-                  }}>
-                  <RcPending width={14} height={14} />
-                </Animated.View>
-                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                  'page.bridge.Pending',
-                )}`}</Text>
-                <RcIconOrangeArrow />
-              </View>
-            )}
-          </View>
-          <View style={[styles.grid]}>
-            {MENU_ARR.map((el, index) => {
-              return (
-                <TouchableView
-                  style={styles.gridItem}
-                  key={index}
-                  onPress={e => handleClickMenu(el.title)}>
-                  <el.icon />
-                  <Text style={styles.gridText}>{el.title}</Text>
-                </TouchableView>
-              );
-            })}
-          </View>
+              })}
+            </View>
+          </ScrollView>
         </View>
       </LinearGradient>
     </NormalScreenContainer>
@@ -354,6 +406,8 @@ function MultiAddressHome(): JSX.Element {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   paddingContainer: {
     paddingHorizontal: 20,
+    flex: 1,
+    flexGrow: 1,
   },
   bgImage: {
     position: 'absolute',
@@ -380,6 +434,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // backgroundColor: colors2024['neutral-title-1'],
   },
   balanceTextBox: {
+    marginRight: 12,
     color: colors2024['neutral-title-1'],
     fontWeight: '800',
     fontSize: 20,
@@ -403,6 +458,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   accountBg: {
+    minWidth: 72,
     padding: 8,
     paddingLeft: 14,
     borderRadius: 94,

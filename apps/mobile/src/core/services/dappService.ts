@@ -16,6 +16,7 @@ export interface DappInfo {
   lastPath?: string; // 待定
   lastPathTimeAt?: number; //
   currentAccount?: Account | null;
+  favoriteAt?: number | null;
 }
 
 export type DappStore = {
@@ -99,6 +100,7 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
     this.store.dapps[origin] = {
       ...this.store.dapps[origin],
       isFavorite,
+      favoriteAt: isFavorite ? Date.now() : null,
     };
 
     this.store.dapps = { ...this.store.dapps };

@@ -10,6 +10,7 @@ import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
+import { trigger } from 'react-native-haptic-feedback';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -28,6 +29,11 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
       <View style={styles.section}>
         <ListItem
           onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+
             if (
               shouldRedirectToSetPasswordBefore2024({
                 backScreen: RootNames.CreateSelectMethod,
@@ -48,6 +54,11 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+
             navigate(RootNames.StackAddress, {
               screen: RootNames.ImportMethods,
               params: {
@@ -62,6 +73,11 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+
             navigate(RootNames.StackAddress, {
               screen: RootNames.ImportHardwareAddress,
             });

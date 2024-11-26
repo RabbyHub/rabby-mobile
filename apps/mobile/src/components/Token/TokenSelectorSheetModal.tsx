@@ -1,19 +1,16 @@
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { View, Text } from 'react-native';
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetFlatList,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount, formatUsdValue } from '@/utils/number';
@@ -21,7 +18,6 @@ import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import TouchableView from '../Touchable/TouchableView';
 import { findChainByServerID } from '@/utils/chain';
-
 import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
@@ -30,11 +26,13 @@ import { Skeleton } from '@rneui/themed';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
 
-const ITEM_HEIGHT = 68;
+const ITEM_HEIGHT = 72;
 
 interface SearchCallbackCtx {
   chainServerId?: Chain['serverId'] | null;
@@ -92,8 +90,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       }
     }, [visible, toggleShowSheetModal]);
 
-    const colors = useThemeColors();
-    const styles = useMemo(() => getStyles(colors), [colors]);
+    const { styles, colors2024 } = useTheme2024({ getStyle });
 
     const [query, setQuery] = useState('');
     const [isInputActive, setIsInputActive] = useState(false);
@@ -209,14 +206,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
         ref={tokenSelectorModal}
         snapPoints={[ModalLayouts.defaultHeightPercentText]}
         enableContentPanningGesture={false}
-        backgroundStyle={styles.sheet}
         enableDismissOnClose={true}
         onChange={idx => {
           if (idx < 0) {
             onCancel();
           }
         }}
-        bottomInset={1}
+        {...makeBottomSheetProps({
+          linearGradientType: 'linear',
+          colors: colors2024,
+        })}
         backdropComponent={renderBackdrop}>
         <AutoLockView as="BottomSheetView" style={styles.container}>
           <View style={[styles.titleArea, styles.internalBlock]}>
@@ -229,13 +228,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
             <SearchInput
               isActive={isInputActive}
               containerStyle={styles.searchInputContainer}
+              searchIconWrapperStyle={styles.searchIconWrapperStyle}
+              inputStyle={styles.inputStyle}
+              searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
               inputProps={{
                 value: query,
                 onChange: e => handleQueryChange(e.nativeEvent.text),
                 onFocus: handleInputFocus,
                 onBlur: handleInputBlur,
-                placeholder: 'Search by Name / Address',
-                placeholderTextColor: colors['neutral-foot'],
+                placeholder: 'Search Token',
+                placeholderTextColor: colors2024['neutral-info'],
               }}
             />
           </View>
@@ -259,7 +261,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
           <BottomSheetFlatList
             keyboardShouldPersistTaps="handled"
-            style={[styles.scrollView, styles.internalBlock]}
+            style={[styles.scrollView]}
             data={tokens}
             windowSize={5}
             keyExtractor={token =>
@@ -324,7 +326,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     <View style={styles.tokenLeft}>
                       <AssetAvatar
                         logo={token?._logo}
-                        size={36}
+                        size={40}
                         chain={token?._chain}
                         chainSize={16}
                       />
@@ -376,41 +378,51 @@ export const TokenSelectorSheetModal = React.forwardRef<
   },
 );
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       paddingTop: ModalLayouts.titleTopOffset,
-      paddingBottom: 20,
       flex: 1,
     },
     internalBlock: {
-      paddingHorizontal: 20,
+      paddingHorizontal: 24,
     },
     titleArea: {
       justifyContent: 'center',
     },
     modalTitle: {
-      color: colors['neutral-title1'],
+      color: colors2024['neutral-title-1'],
+      marginBottom: 24,
     },
     modalMainTitle: {
       fontSize: 20,
-      fontWeight: '500',
+      fontWeight: '700',
+      lineHeight: 24,
       textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
     },
 
     searchInputContainer: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card1'],
-      marginVertical: 16,
+      borderRadius: 30,
+      backgroundColor: colors2024['neutral-bg-2'],
+      paddingHorizontal: 12,
+      borderColor: 'transparent',
+      alignItems: 'center',
+      marginBottom: 16,
     },
 
     chainFiltersContainer: {
       flexDirection: 'row',
-      marginBottom: 2,
+      marginBottom: 16,
     },
 
     scrollView: {
       flexShrink: 1,
+      borderColor: colors2024['neutral-line'],
+      borderWidth: 1,
+      marginHorizontal: 24,
+      borderRadius: 24,
+      paddingHorizontal: 16,
     },
 
     tokenItem: {
@@ -421,7 +433,7 @@ const getStyles = createGetStyles(colors => {
 
       // // leave here for debug
       // borderWidth: 1,
-      // borderColor: 'blue'
+      // borderColor: 'blue',
     },
     tokenItemDisabled: { opacity: 0.5 },
     tokenLeft: {
@@ -435,40 +447,54 @@ const getStyles = createGetStyles(colors => {
       marginLeft: 12,
     },
     tokenName: {
-      color: colors['neutral-title-1'],
-      fontSize: 15,
-      fontWeight: '600',
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenPrice: {
-      color: colors['neutral-foot'],
-      fontSize: 13,
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
       fontWeight: '400',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenInfoColRight: {
       alignItems: 'flex-end',
       textAlign: 'right',
     },
     tokenHeaderAmount: {
-      color: colors['neutral-title-1'],
+      color: colors2024['neutral-title-1'],
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '700',
+      lineHeight: 20,
       textAlign: 'right',
+      fontFamily: 'SF Pro Rounded',
     },
     tokenHeaderNetworth: {
-      color: colors['neutral-foot'],
-      fontSize: 13,
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
       fontWeight: '400',
+      lineHeight: 18,
       textAlign: 'right',
+      fontFamily: 'SF Pro Rounded',
     },
-    sheet: {
-      backgroundColor: colors['neutral-bg-1'],
+
+    searchIconWrapperStyle: {
+      paddingLeft: 0,
+    },
+    inputStyle: {
+      fontFamily: 'SF Pro Rounded',
+      lineHeight: 22,
+      fontSize: 17,
+      color: colors2024['neutral-title-1'],
     },
   };
 });
 
 function LoadingItem() {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.tokenItem]}>
       <View style={styles.tokenLeft}>

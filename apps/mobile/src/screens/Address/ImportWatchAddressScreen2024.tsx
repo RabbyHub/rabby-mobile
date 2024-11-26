@@ -1,6 +1,5 @@
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
 import { openapi } from '@/core/request';
@@ -93,7 +92,7 @@ export const ImportWatchAddressScreen2024 = () => {
     }
   };
 
-  const handleSubmit = React.useCallback(text => {
+  const handleSubmit = React.useCallback((text: string) => {
     setInput(text);
   }, []);
 
@@ -182,7 +181,7 @@ export const ImportWatchAddressScreen2024 = () => {
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (
-                  <TouchableView
+                  <TouchableOpacity
                     style={ctx.wrapperStyle}
                     onPress={() => {
                       navigate(RootNames.Scanner);
@@ -191,7 +190,7 @@ export const ImportWatchAddressScreen2024 = () => {
                       style={ctx.iconStyle}
                       color={colors2024['neutral-title-1']}
                     />
-                  </TouchableView>
+                  </TouchableOpacity>
                 )}
               />
 
@@ -258,9 +257,6 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     marginTop: 12,
     backgroundColor: ctx.colors2024['brand-light-1'],
-    // position: 'absolute',
-    // top: 24 + 64 + 6,
-    // left: 10,
   },
 
   ensResult: {

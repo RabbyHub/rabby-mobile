@@ -4,7 +4,7 @@ import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItem } from './components/AddressItem';
 import { RootNames } from '@/constant/layout';
-import { useNavigation } from '@react-navigation/core';
+import { useFocusEffect, useNavigation } from '@react-navigation/core';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -35,7 +35,7 @@ const OtherAddressNav = ({ onPress, text }) => {
 };
 
 export function AddressListScreen(): JSX.Element {
-  const { accounts } = useAccounts({
+  const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
   const { styles } = useTheme2024({ getStyle });
@@ -68,6 +68,13 @@ export function AddressListScreen(): JSX.Element {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
+
+  useFocusEffect(
+    // keep same with multi address home
+    React.useCallback(() => {
+      fetchAccounts();
+    }, [fetchAccounts]),
+  );
 
   return (
     <AddressListScreenContainer>

@@ -4,6 +4,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
+import { IS_IOS } from '@/core/native/utils';
 
 export const DappFavoriteSectionEmpty = () => {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -11,7 +12,9 @@ export const DappFavoriteSectionEmpty = () => {
   return (
     <View style={styles.empty}>
       {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
-      <Text style={styles.emptyText}>No Dapps added yet</Text>
+      <Text style={styles.emptyText}>
+        {IS_IOS ? 'No website added yet' : 'No Dapps added yet'}
+      </Text>
     </View>
   );
 };

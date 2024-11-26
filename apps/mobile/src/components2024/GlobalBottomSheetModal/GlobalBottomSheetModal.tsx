@@ -18,6 +18,7 @@ import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
 import { useSensitiveGlobalModalsOpened } from './security';
+import { useTheme2024 } from '@/hooks/theme';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -167,6 +168,7 @@ export const GlobalBottomSheetModal2024 = () => {
   React.useEffect(onHardwareBackHandler);
 
   const { panResponder } = useRefreshAutoLockPanResponder();
+  const { colors2024 } = useTheme2024();
 
   return (
     <View>
@@ -206,6 +208,7 @@ export const GlobalBottomSheetModal2024 = () => {
             stackBehavior="push"
             {...makeBottomSheetProps({
               linearGradientType,
+              colors: colors2024,
             })}
           />
         );

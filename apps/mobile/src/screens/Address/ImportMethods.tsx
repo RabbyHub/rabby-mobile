@@ -116,6 +116,11 @@ function ImportMethods(): JSX.Element {
                   hasArrow={state?.hasCurrentAddress}
                   style={styles.importItem}
                   onPress={() => {
+                    trigger('impactLight', {
+                      enableVibrateFallback: true,
+                      ignoreAndroidSystemSettings: false,
+                    });
+
                     navigate(RootNames.StackAddress, {
                       screen: RootNames.ImportSafeAddress2024,
                     });
@@ -133,6 +138,11 @@ function ImportMethods(): JSX.Element {
                   hasArrow={state?.hasCurrentAddress}
                   style={styles.importItem}
                   onPress={() => {
+                    trigger('impactLight', {
+                      enableVibrateFallback: true,
+                      ignoreAndroidSystemSettings: false,
+                    });
+
                     navigate(RootNames.StackAddress, {
                       screen: RootNames.ImportWatchAddress2024,
                     });

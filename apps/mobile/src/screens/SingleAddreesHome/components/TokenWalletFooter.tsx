@@ -58,7 +58,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 100,
-    backgroundColor: ctx.colors2024['netural-card-2'],
+    backgroundColor: ctx.colors2024['neutral-card-2'],
     paddingHorizontal: 8,
     paddingVertical: 10,
     display: 'flex',

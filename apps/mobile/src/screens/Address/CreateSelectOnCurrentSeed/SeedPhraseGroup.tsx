@@ -37,7 +37,7 @@ export const SeedPhraseGroup: React.FC<Props> = ({
           <AddressItem account={item} key={item.address}>
             {({ WalletIcon, WalletName, WalletBalance }) => (
               <View style={styles.item}>
-                <WalletIcon width={40} height={40} />
+                <WalletIcon width={40} height={40} style={styles.walletLogo} />
                 <View style={styles.itemInfo}>
                   <View style={styles.itemName}>
                     <WalletName style={styles.itemNameText} />
@@ -76,6 +76,9 @@ export const SeedPhraseGroup: React.FC<Props> = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   main: {
     borderRadius: 6,
+  },
+  walletLogo: {
+    borderRadius: 12,
   },
   itemInfo: {
     marginLeft: 8,
