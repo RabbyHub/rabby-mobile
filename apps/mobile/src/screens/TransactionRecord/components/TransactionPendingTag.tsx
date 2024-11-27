@@ -1,11 +1,12 @@
-import { AppColorsVariants } from '@/constant/theme';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Spin } from './Spin';
 import RcIconInfoCC from '@/assets/icons/transaction-record/icon-info-cc.svg';
 import { TxRequest } from '@rabby-wallet/rabby-api/dist/types';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 export const TransactionPendingTag = ({
   data,
@@ -16,10 +17,9 @@ export const TransactionPendingTag = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
   const maxGasTx = data?.maxGasTx;
   const pushAt = txRequest?.push_at;
-  const deadline = Math.round((txRequest?.low_gas_deadline || 0) / 60 / 60);
 
   if (!data?.isPending) {
     return null;
@@ -73,24 +73,25 @@ export const TransactionPendingTag = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    tag: {
-      position: 'absolute',
-      left: 12,
-      top: 0,
-      backgroundColor: colors['orange-light'],
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      paddingVertical: 4,
-      paddingHorizontal: 6,
-      borderBottomStartRadius: 4,
-      borderBottomEndRadius: 4,
-    },
-    tagText: {
-      color: colors['orange-default'],
-      fontSize: 12,
-      lineHeight: 14,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  tag: {
+    position: 'absolute',
+    left: 12,
+    top: 0,
+    backgroundColor: colors2024['orange-light-1'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderBottomStartRadius: 8,
+    borderBottomEndRadius: 8,
+  },
+  tagText: {
+    color: colors2024['orange-default'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 14,
+  },
+}));

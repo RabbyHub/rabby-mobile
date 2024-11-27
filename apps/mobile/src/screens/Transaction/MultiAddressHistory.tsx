@@ -27,7 +27,6 @@ import {
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
 import { useMyAccounts } from '@/hooks/account';
-import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -37,6 +36,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 const PAGE_COUNT = 10;
 
@@ -259,7 +259,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   }
 
   return (
-    <View style={{ flex: 1, paddingBottom: bottom, paddingTop: 24 }}>
+    <View style={{ paddingBottom: bottom, paddingTop: 24 }}>
       {isTestnet ? null : (
         <TouchableOpacity
           onPress={() => {
@@ -291,7 +291,6 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
 }
 
 const HistoryScreen = () => {
-  const { styles } = useTheme2024({ getStyle });
   const {
     sheetModalRef: tokenDetailModalRef,
     cleanFocusingToken,
@@ -300,7 +299,7 @@ const HistoryScreen = () => {
   useLastUsedAccountInScreen();
 
   return (
-    <RootScreenContainer fitStatuBar style={styles.page}>
+    <NormalScreenContainer2024 type="bg1">
       <AccountSwitcherModal forScene="MultiHistory" inScreen />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} />
@@ -315,14 +314,11 @@ const HistoryScreen = () => {
           cleanFocusingToken();
         }}
       />
-    </RootScreenContainer>
+    </NormalScreenContainer2024>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  page: {
-    backgroundColor: colors2024['neutral-bg-2'],
-  },
   link: {
     marginHorizontal: 20,
     marginBottom: 20,

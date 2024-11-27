@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { StyleSheet, Text, View } from 'react-native';
 import { HistoryList } from './components/HistoryGroupList';
 import { openapi } from '@/core/request';
@@ -12,6 +11,7 @@ import { Empty } from './components/Empty';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { HistoryDisplayItem } from './MultiAddressHistory';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -95,7 +95,8 @@ function HistoryFilterScamScreen({
   }
 
   return (
-    <NormalScreenContainer
+    <NormalScreenContainer2024
+      type="bg1"
       style={{
         paddingBottom: bottom,
         paddingTop: 24,
@@ -108,7 +109,7 @@ function HistoryFilterScamScreen({
         ) : null}
         <HistoryList loading={loading} list={data?.list} />
       </View>
-    </NormalScreenContainer>
+    </NormalScreenContainer2024>
   );
 }
 
