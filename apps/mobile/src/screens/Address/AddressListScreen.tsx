@@ -76,9 +76,6 @@ export function AddressListScreen(): JSX.Element {
     }, [fetchAccounts]),
   );
 
-  const [lastSelectedAccount, setLastSelectedAccount] =
-    React.useState<KeyringAccountWithAlias>();
-
   return (
     <AddressListScreenContainer>
       <FlatList
@@ -89,13 +86,7 @@ export function AddressListScreen(): JSX.Element {
           <View
             key={`${item.address}-${item.type}-${item.brandName}-${index}`}
             style={index < list.length - 1 ? styles.itemGap : undefined}>
-            <AddressItemEntry
-              onSelect={() => {
-                setLastSelectedAccount(item);
-              }}
-              lastSelectedAccount={lastSelectedAccount}
-              account={item}
-            />
+            <AddressItemEntry account={item} />
           </View>
         )}
         ListHeaderComponent={

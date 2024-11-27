@@ -31,9 +31,6 @@ export const CommonAddressList: React.FC<Props> = ({
   );
   const list = useSortAddressList(filterAccounts);
 
-  const [lastSelectedAccount, setLastSelectedAccount] =
-    React.useState<KeyringAccountWithAlias>();
-
   return (
     <FlatList
       data={list}
@@ -43,11 +40,7 @@ export const CommonAddressList: React.FC<Props> = ({
         <View
           key={`${item.address}-${item.type}-${item.brandName}-${index}`}
           style={styles.itemGap}>
-          <AddressItemEntry
-            onSelect={() => setLastSelectedAccount(item)}
-            lastSelectedAccount={lastSelectedAccount}
-            account={item}
-          />
+          <AddressItemEntry account={item} />
         </View>
       )}
       ListFooterComponent={
