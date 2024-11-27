@@ -56,6 +56,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useMount } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const MENU_ARR = [
   {
@@ -246,6 +247,8 @@ function MultiAddressHome(): JSX.Element {
     return '$' + splitNumberByStep((num || 0).toFixed(2));
   }, [balanceAccounts]);
 
+  const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
+
   const handleClickMenu = useCallback(
     (title: MultiHomeFeatTitle) => {
       trigger('impactLight', {
@@ -307,6 +310,7 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.History:
+          toggleUseAllAccountsOnScene('MultiHistory', true);
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiAddressHistory,
@@ -348,7 +352,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [navigation],
+    [navigation, toggleUseAllAccountsOnScene],
   );
 
   return (

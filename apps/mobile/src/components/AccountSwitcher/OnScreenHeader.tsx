@@ -32,9 +32,10 @@ export function ScreenHeaderAccountSwitcher({
 
   const { isVisible: isOpen, toggleSceneVisible } =
     useAccountSceneVisible(forScene);
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
+    useSwitchSceneCurrentAccount();
   const {
-    sceneSigingAccount,
+    isSceneSupportAllAccounts,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
     myAddresses,
@@ -57,6 +58,10 @@ export function ScreenHeaderAccountSwitcher({
       switchSceneCurrentAccount(forScene, finalSceneCurrentAccount, {
         maybeReEntrant: true,
       });
+    }
+
+    if (isSceneSupportAllAccounts) {
+      toggleUseAllAccountsOnScene(forScene, true);
     }
   });
 
