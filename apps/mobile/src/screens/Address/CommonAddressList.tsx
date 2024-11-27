@@ -2,7 +2,7 @@ import React from 'react';
 import { View, FlatList, Text } from 'react-native';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { AddressItem } from './components/AddressItem';
+import { AddressItemEntry } from './components/AddressItem';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSortAddressList } from './useSortAddressList';
@@ -43,7 +43,7 @@ export const CommonAddressList: React.FC<Props> = ({
         <View
           key={`${item.address}-${item.type}-${item.brandName}-${index}`}
           style={styles.itemGap}>
-          <AddressItem
+          <AddressItemEntry
             onSelect={() => setLastSelectedAccount(item)}
             lastSelectedAccount={lastSelectedAccount}
             account={item}
