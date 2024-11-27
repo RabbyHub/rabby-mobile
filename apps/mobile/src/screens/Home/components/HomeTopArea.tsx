@@ -1,37 +1,56 @@
-import { RcIconRightCC } from '@/assets/icons/common';
+import { RcArrowRightCC, RcIconRightCC } from '@/assets/icons/common';
 import {
-  RcIconSend,
-  RcIconReceive,
-  RcIconSwap,
-  RcIconMore,
   RcIconApproval,
-  RcIconQueue,
   RcIconBridge,
-} from '@/assets/icons/home';
-import { BSheetModal } from '@/components';
-import TouchableView from '@/components/Touchable/TouchableView';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useMemo } from 'react';
-import { Platform, StyleProp, Text, TextStyle, View } from 'react-native';
-import { toast } from '@/components/Toast';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+  RcIconMore,
+  RcIconQueue,
+  RcIconReceive,
+  RcIconSend,
+  RcIconSwap,
+} from '@/assets2024/singleHome';
+import RcInfoCC from '@/assets/icons/home/info-cc.svg';
+import { BSheetModal, Tip } from '@/components';
+import AutoLockView from '@/components/AutoLockView';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { toast } from '@/components/Toast';
+import TouchableView from '@/components/Touchable/TouchableView';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { RootStackParamsList } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useApprovalAlert } from '../hooks/approvals';
+import { RootNames } from '@/constant/layout';
 import { useCurrentAccount } from '@/hooks/account';
+import useCachedValue from '@/hooks/common/useCachedValue';
 import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
+import { useTheme2024 } from '@/hooks/theme';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { useCurve } from '@/hooks/useCurve';
+import { RootStackParamsList } from '@/navigation-type';
+import { splitNumberByStep } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
-import AutoLockView from '@/components/AutoLockView';
+import usePrevious from 'ahooks/lib/usePrevious';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Platform,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useApprovalAlert } from '../hooks/approvals';
+import { CurveBottomSheetModal } from './CurveBottomSheet';
+import { trigger } from 'react-native-haptic-feedback';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -40,6 +59,13 @@ const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
 ];
 
 const isAndroid = Platform.OS === 'android';
+
+const triggerLight = () => {
+  trigger('impactLight', {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  });
+};
 function BadgeText({
   count,
   style,
@@ -47,9 +73,11 @@ function BadgeText({
   count?: number;
   style?: StyleProp<TextStyle>;
 }) {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
-  if (!count) return null;
+  if (!count) {
+    return null;
+  }
 
   if (isAndroid) {
     return (
@@ -79,8 +107,9 @@ function BadgeText({
 }
 
 export const HomeTopArea = () => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
   const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert();
@@ -92,6 +121,24 @@ export const HomeTopArea = () => {
   const { data: gnosisPendingTxs, refreshAsync } = useGnosisPendingTxs({
     address: isGnosisKeyring ? currentAccount?.address : undefined,
   });
+  const {
+    balance,
+    balanceLoading,
+    balanceFromCache,
+    balanceUpdating,
+    missingList,
+  } = useCurrentBalance(currentAccount?.address, {
+    update: true,
+    noNeedBalance: false,
+  });
+
+  const {
+    result: curveData,
+    isLoading,
+    refresh: refreshCurveData,
+  } = useCurve(currentAccount?.address, 0, balance);
+
+  const curveBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   useFocusEffect(
     useMemoizedFn(() => {
@@ -99,10 +146,31 @@ export const HomeTopArea = () => {
     }),
   );
 
+  const usd = useMemo(
+    () => '$' + splitNumberByStep((balance || 0).toFixed(2)),
+    [balance],
+  );
+
+  const latestPercent = useMemo(
+    () =>
+      !curveData?.changePercent
+        ? ''
+        : (curveData?.isLoss ? '-' : '+') + curveData?.changePercent,
+    [curveData?.changePercent, curveData?.isLoss],
+  );
+  const previousAddr = usePrevious(currentAccount?.address);
+  const previousPercent = usePrevious(
+    latestPercent,
+    () => previousAddr !== currentAccount?.address,
+  );
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const bridgeItemAction = {
     title: 'Bridge',
     Icon: RcIconBridge,
     onPress: () => {
+      switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.Bridge,
       });
@@ -121,6 +189,7 @@ export const HomeTopArea = () => {
       title: 'Send',
       Icon: RcIconSend,
       onPress: () => {
+        switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Send,
           params: {
@@ -155,6 +224,7 @@ export const HomeTopArea = () => {
       title: 'Swap',
       Icon: RcIconSwap,
       onPress: () => {
+        switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Swap,
         });
@@ -172,7 +242,7 @@ export const HomeTopArea = () => {
               });
             },
             badgeStyle: {
-              backgroundColor: colors['blue-default'],
+              backgroundColor: colors2024['blue-default'],
             },
           },
           {
@@ -228,18 +298,92 @@ export const HomeTopArea = () => {
     ...(isGnosisKeyring ? [bridgeItemAction] : []),
   ];
 
+  const isDecrease = useCachedValue(curveData, 'isLoss');
+
+  const percent = useMemo(() => {
+    return latestPercent || previousPercent;
+  }, [latestPercent, previousPercent]);
+
+  const handlePressBalanceSection = React.useCallback(() => {
+    curveBottomSheetModalRef.current?.dismiss();
+    curveBottomSheetModalRef.current?.present();
+
+    refreshCurveData();
+  }, [refreshCurveData]);
+
   return (
     <>
-      {/* <ImageBackground
-        source={require('@/assets/icons/home/bg.png')}
-        resizeMode="contain"
-        style={styles.image}> */}
       <View style={styles.container}>
+        <View style={styles.opacityWrapper}>
+          <TouchableOpacity
+            style={styles.textBox}
+            onPress={handlePressBalanceSection}>
+            <View style={styles.header}>
+              <Text style={styles.usdText}>
+                {(balanceLoading && !balanceFromCache) ||
+                balance === null ||
+                (balanceFromCache && balance === 0) ||
+                balanceUpdating ? (
+                  <Skeleton width={140} height={38} />
+                ) : (
+                  usd
+                )}
+              </Text>
+
+              {balanceLoading ? (
+                <Skeleton style={{ marginLeft: 1 }} width={50} height={16} />
+              ) : (
+                !!percent && (
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                    <Text
+                      style={StyleSheet.compose(
+                        styles.percent,
+                        isDecrease && styles.decrease,
+                      )}>
+                      {'  '}
+                      {percent}
+                    </Text>
+                    <RcArrowRightCC
+                      width={16}
+                      height={16}
+                      color={
+                        isDecrease
+                          ? colors2024['red-default']
+                          : colors2024['green-default']
+                      }
+                    />
+                    {!isLoading && missingList?.length ? (
+                      <Tip
+                        content={t('page.dashboard.home.missingDataTooltip', {
+                          text:
+                            missingList.join(t('page.dashboard.home.chain')) +
+                            t('page.dashboard.home.chainEnd'),
+                        })}>
+                        <RcInfoCC
+                          style={{ marginLeft: 4 }}
+                          color={colors2024['neutral-foot']}
+                        />
+                      </Tip>
+                    ) : null}
+                  </View>
+                )
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
         <View style={styles.group}>
           {actions.map(item => (
             <TouchableView
               style={[styles.action, !!item?.disabled && styles.disabledAction]}
-              onPress={item.disabled ? toastDisabledAction : item.onPress}
+              onPress={
+                item.disabled
+                  ? toastDisabledAction
+                  : () => {
+                      triggerLight();
+                      item.onPress();
+                    }
+              }
               key={item.title}>
               <View style={styles.actionIconWrapper}>
                 <item.Icon style={styles.actionIcon} />
@@ -333,26 +477,49 @@ export const HomeTopArea = () => {
           ))}
         </AutoLockView>
       </BSheetModal>
+
+      {currentAccount?.address && (
+        <CurveBottomSheetModal
+          key={currentAccount?.address}
+          ref={curveBottomSheetModalRef}
+        />
+      )}
     </>
   );
 };
 
 const BADGE_SIZE = 18;
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(ctx => ({
   container: {
-    padding: 20,
+    paddingTop: 24,
+    paddingBottom: 26,
+    paddingRight: 16,
+    paddingLeft: 18,
+    marginTop: 12,
+    marginBottom: 12,
+    borderRadius: 24,
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    overflow: 'hidden',
+    height: 185,
+    width: '100%',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
   image: {
     flex: 1,
     justifyContent: 'center',
   },
   group: {
-    marginTop: 98,
+    marginTop: 18,
     justifyContent: 'space-between',
+    // width: '100%',
     flexDirection: 'row',
   },
   action: {
-    gap: 10,
+    gap: 9,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -361,10 +528,10 @@ const getStyles = createGetStyles(colors => ({
     opacity: 0.6,
   },
   actionIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 44,
-    backgroundColor: colors['neutral-card-2'],
+    width: 54,
+    height: 54,
+    borderRadius: 21,
+    backgroundColor: ctx.colors2024['brand-light-1'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -379,10 +546,12 @@ const getStyles = createGetStyles(colors => ({
     height: 24,
   },
   actionText: {
-    color: colors['neutral-title-1'],
+    color: ctx.colors2024['neutral-foot'],
     textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
 
   list: {
@@ -394,7 +563,7 @@ const getStyles = createGetStyles(colors => ({
   item: {
     height: 60,
     paddingHorizontal: 16,
-    backgroundColor: colors['neutral-card-2'],
+    backgroundColor: ctx.colors2024['neutral-card-2'],
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
@@ -411,7 +580,7 @@ const getStyles = createGetStyles(colors => ({
   },
   itemText: {
     marginLeft: 12,
-    color: colors['neutral-title-1'],
+    color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
     fontWeight: '500',
   },
@@ -424,7 +593,7 @@ const getStyles = createGetStyles(colors => ({
     // ...makeDebugBorder(),
   },
   badgeBg: {
-    backgroundColor: colors['red-default'],
+    backgroundColor: ctx.colors2024['red-default'],
     borderRadius: BADGE_SIZE,
     paddingVertical: 1,
     minWidth: BADGE_SIZE,
@@ -443,7 +612,7 @@ const getStyles = createGetStyles(colors => ({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: colors['neutral-title2'],
+    color: ctx.colors2024['neutral-title-2'],
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 17,
@@ -452,6 +621,32 @@ const getStyles = createGetStyles(colors => ({
     marginLeft: 'auto',
     width: 16,
     height: 16,
-    color: colors['neutral-foot'],
+    color: ctx.colors2024['neutral-foot'],
+  },
+  opacityWrapper: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  textBox: {
+    marginTop: 0,
+    // paddingTop: Platform.OS === 'android' ? 0 : 8,
+  },
+  usdText: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'left',
+  },
+  percent: {
+    color: ctx.colors2024['green-default'],
+    fontSize: 17,
+    fontWeight: '400',
+    lineHeight: 22,
+    fontStyle: 'normal',
+    fontFamily: 'SF Pro Rounded',
+  },
+  decrease: {
+    color: ctx.colors2024['red-default'],
   },
 }));

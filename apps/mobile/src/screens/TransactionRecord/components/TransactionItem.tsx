@@ -68,7 +68,7 @@ export const TransactionItem = ({
   const isCanceled =
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
 
   const { accounts } = useAccounts();
 
@@ -99,8 +99,7 @@ export const TransactionItem = ({
       throw Error('No account find');
     }
 
-    // TODO: FIXME
-    switchSceneCurrentAccount('MultiHistory', account);
+    await switchSceneSigningAccount('MultiHistory', account);
     const gasLevels: GasLevel[] = chain?.isTestnet
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chain?.id!,
@@ -108,27 +107,33 @@ export const TransactionItem = ({
       : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
-    await sendRequest(
-      {
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: originTx.rawTx.from,
-            value: originTx.rawTx.value,
-            data: originTx.rawTx.data,
-            nonce: originTx.rawTx.nonce,
-            chainId: originTx.rawTx.chainId,
-            to: originTx.rawTx.to,
-            gasPrice: intToHex(
-              Math.round(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-            ),
-            isSpeedUp: true,
-            reqId: maxGasTx.reqId,
-          },
-        ],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
+    try {
+      await sendRequest(
+        {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: originTx.rawTx.from,
+              value: originTx.rawTx.value,
+              data: originTx.rawTx.data,
+              nonce: originTx.rawTx.nonce,
+              chainId: originTx.rawTx.chainId,
+              to: originTx.rawTx.to,
+              gasPrice: intToHex(
+                Math.round(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
+              ),
+              isSpeedUp: true,
+              reqId: maxGasTx.reqId,
+            },
+          ],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await switchSceneSigningAccount('MultiHistory', null);
+    }
     onRefresh?.();
   });
 
@@ -188,8 +193,8 @@ export const TransactionItem = ({
     if (!account) {
       throw Error('No account find');
     }
-    // TODO: FIXME
-    switchSceneCurrentAccount('MultiHistory', account);
+
+    await switchSceneSigningAccount('MultiHistory', account);
     const maxGasTx = data.maxGasTx;
     const maxGasPrice = Number(
       maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
@@ -200,24 +205,30 @@ export const TransactionItem = ({
         })
       : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
-    await sendRequest(
-      {
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: maxGasTx.rawTx.from,
-            to: maxGasTx.rawTx.from,
-            gasPrice: intToHex(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-            value: '0x0',
-            chainId: data.chainId,
-            nonce: intToHex(data.nonce),
-            isCancel: true,
-            reqId: maxGasTx.reqId,
-          },
-        ],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
+    try {
+      await sendRequest(
+        {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: maxGasTx.rawTx.from,
+              to: maxGasTx.rawTx.from,
+              gasPrice: intToHex(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
+              value: '0x0',
+              chainId: data.chainId,
+              nonce: intToHex(data.nonce),
+              isCancel: true,
+              reqId: maxGasTx.reqId,
+            },
+          ],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await switchSceneSigningAccount('MultiHistory', null);
+    }
     onRefresh?.();
   };
 

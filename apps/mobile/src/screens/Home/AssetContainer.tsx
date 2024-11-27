@@ -1,7 +1,7 @@
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeStyles } from '@/hooks/theme';
-import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import {
   Tabs,
   CollapsibleProps,
@@ -11,7 +11,7 @@ import {
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -25,7 +25,9 @@ export const AssetContainer: React.FC<Props> = ({
   onRefresh,
 }) => {
   const { currentAccount } = useCurrentAccount();
-  const { colors, styles } = useThemeStyles(getSyles);
+  const [activeTab, setActiveTab] = useState('token');
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { width } = useWindowDimensions();
 
   const renderTabItem = React.useCallback(
     (props: any) => (
@@ -34,10 +36,17 @@ export const AssetContainer: React.FC<Props> = ({
           pressColor: 'transparent',
         })}
         {...props}
-        inactiveOpacity={1}
+        labelStyle={StyleSheet.flatten([
+          props.labelStyle,
+          activeTab === props.name ? styles.activeLabelStyle : {},
+        ])}
+        style={StyleSheet.flatten([
+          props.style,
+          activeTab === props.name ? styles.activeTab : {},
+        ])}
       />
     ),
-    [],
+    [activeTab, styles.activeLabelStyle, styles.activeTab],
   );
 
   const renderTabBar = React.useCallback(
@@ -45,22 +54,24 @@ export const AssetContainer: React.FC<Props> = ({
       <MaterialTabBar
         {...props}
         scrollEnabled={false}
-        indicatorStyle={styles.indicator}
+        style={styles.tabBarWrap}
+        contentContainerStyle={styles.tabList}
         tabStyle={styles.tabBar}
+        indicatorStyle={styles.indicator}
         TabItemComponent={renderTabItem}
-        activeColor={colors['blue-default']}
-        inactiveColor={colors['neutral-body']}
+        activeColor="white"
+        inactiveColor={colors2024['neutral-foot']}
         labelStyle={styles.label}
-        indicatorContainerStyle={styles.tabBarIndicator}
       />
     ),
     [
-      colors,
+      colors2024,
       renderTabItem,
       styles.indicator,
       styles.label,
       styles.tabBar,
-      styles.tabBarIndicator,
+      styles.tabBarWrap,
+      styles.tabList,
     ],
   );
 
@@ -71,10 +82,14 @@ export const AssetContainer: React.FC<Props> = ({
   return (
     <Tabs.Container
       lazy
+      width={width - 32}
       containerStyle={styles.container}
-      minHeaderHeight={100}
       renderTabBar={renderTabBar}
-      headerContainerStyle={styles.tabBarWrap}
+      headerContainerStyle={styles.headerContainer}
+      minHeaderHeight={10}
+      onTabChange={tab => {
+        setActiveTab(tab.tabName);
+      }}
       renderHeader={renderHeader}>
       <Tabs.Tab label="Token" name="token">
         <TokenScreen onRefresh={onRefresh} />
@@ -89,33 +104,53 @@ export const AssetContainer: React.FC<Props> = ({
   );
 };
 
-const getSyles = createGetStyles(colors => {
-  return {
-    container: {
-      backgroundColor: colors['neutral-bg-1'],
-    },
-    tabBarWrap: {
-      backgroundColor: colors['neutral-bg-1'],
-      shadowColor: 'transparent',
-      borderColor: colors['neutral-line'],
-      borderWidth: StyleSheet.hairlineWidth,
-    },
-    tabBar: {
-      height: 36,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: '500',
-      textTransform: 'none',
-    },
-    indicator: {
-      backgroundColor: colors['blue-default'],
-      height: 2,
-    },
-    tabBarIndicator: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      backgroundColor: 'transparent',
-    },
-  };
-});
+const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    marginTop: -10,
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    width: '100%',
+    paddingBottom: 18,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: 'hidden',
+  },
+  headerContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    shadowColor: 'transparent',
+  },
+  tabBarWrap: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    paddingTop: 18,
+    paddingHorizontal: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  tabList: {
+    display: 'flex',
+    width: '100%',
+    gap: 12,
+  },
+  tabBar: {
+    borderRadius: 120,
+    height: 36,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  label: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    textTransform: 'none',
+  },
+  indicator: {
+    display: 'none',
+  },
+  activeTab: {
+    backgroundColor: 'rgba(19, 20, 22, 1)',
+  },
+  activeLabelStyle: {
+    fontWeight: '700',
+  },
+}));

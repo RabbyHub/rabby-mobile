@@ -2,7 +2,7 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
-import { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import {
   sortAccountList,
@@ -12,6 +12,27 @@ import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 
+type SceneAccountInfo = {
+  currentAccount: KeyringAccount | null;
+  /**
+   * @description account used to sign for current scene
+   */
+  signingAccount: KeyringAccount | null;
+  /**
+   * @description use all accounts in this scene, not only one "current" account
+   *
+   * in some scenes it means fetch all data from all accounts, such as transaction history
+   */
+  useAllAccounts?: boolean;
+};
+
+function makeSceneAccount(): SceneAccountInfo {
+  return {
+    currentAccount: null,
+    signingAccount: null,
+    useAllAccounts: false,
+  };
+}
 const AccountSwitcherInfos = {
   MakeTransactionAbout: makeSceneAccount(),
   // Send: makeSceneAccount(),
@@ -36,15 +57,7 @@ export type PropsForAccountSwitchScreen<T extends void | object = void> = {
 export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 
 type SceneAccounts = {
-  [K in AccountSwitcherScene]?: {
-    currentAccount: KeyringAccount | null;
-    /**
-     * @description use all accounts in this scene, not only one "current" account
-     *
-     * in some scenes it means fetch all data from all accounts, such as transaction history
-     */
-    useAllAccounts?: boolean;
-  };
+  [K in AccountSwitcherScene]?: SceneAccountInfo;
 };
 
 export function normalizeSceneKeyringAccount(
@@ -71,12 +84,11 @@ export function sceneKeyringAccountToAccount(
   };
 }
 
-function makeSceneAccount() {
-  return {
-    currentAccount: null,
-    useAllAccounts: false,
-  };
-}
+export const AccountSwitcherContext = React.createContext<SceneAccountInfo>(
+  makeSceneAccount(),
+);
+
+// TODO: maybe we should trim all siginingAccount on bootstrap?
 export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
   '@SceneAccounts',
   AccountSwitcherInfos,
@@ -112,7 +124,7 @@ export function useSwitchAccountBeforeEnterScene() {
         ...prev,
         [scene]: {
           ...prev[scene],
-          currentAccount: account,
+          currentAccount: normalizeSceneKeyringAccount(account),
         },
       }));
     },
@@ -135,31 +147,8 @@ export function useSwitchAccountBeforeEnterScene() {
   };
 }
 
-const lastUsedAccountAtom = atom<Account | null>(null);
-export function useLastUsedAccount(options?: { disableAutoFetch?: boolean }) {
-  const [lastUsedAccount, setLastUsedAccount] = useAtom(lastUsedAccountAtom);
-
-  const { disableAutoFetch } = options || {};
-
-  const fetchLastUsedAccount = useCallback(async () => {
-    const lastUsedAccount = await apisAccountSwitch.getLastUsedAccount();
-    setLastUsedAccount(lastUsedAccount);
-  }, [setLastUsedAccount]);
-
-  useEffect(() => {
-    if (!disableAutoFetch) {
-      fetchLastUsedAccount();
-    }
-  }, [disableAutoFetch, fetchLastUsedAccount]);
-
-  return {
-    lastUsedAccount,
-    fetchLastUsedAccount,
-  };
-}
-
 export function useSwitchSceneCurrentAccount() {
-  const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
+  const [sceneAccountInfo, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
   /**
    * @description switch current account in scene, enable it if account is not null, or
@@ -191,6 +180,7 @@ export function useSwitchSceneCurrentAccount() {
             patches.currentAccount = normalizeSceneKeyringAccount(account);
           }
         } else {
+          patches.currentAccount = null;
           apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.currentAccount) {
             return prev;
@@ -211,6 +201,59 @@ export function useSwitchSceneCurrentAccount() {
       });
     },
     [setSceneAccountInfo],
+  );
+
+  /**
+   * @description
+   * @warn you must wait this function end, then the `currentAccount` will be updated really
+   */
+  const switchSceneSigningAccount = useCallback(
+    async (scene: AccountSwitcherScene, account: Account | null) => {
+      const prev = sceneAccountInfo;
+
+      try {
+        const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
+
+        const doReturn = <T extends typeof prev>(val: T) => {
+          setSceneAccountInfo(val);
+          return val;
+        };
+
+        if (account) {
+          const result = await apisAccountSwitch.enableSceneAccount(account);
+          // // leave here for debug
+          // if (__DEV__) console.warn('result', result);
+
+          // avoid duplicate set same account
+          if (isSameAccount(account, prev[scene]?.signingAccount)) {
+            delete patches.signingAccount;
+          } else {
+            patches.signingAccount = normalizeSceneKeyringAccount(account);
+          }
+        } else {
+          patches.signingAccount = null;
+          await apisAccountSwitch.inactivateSceneAccount();
+          if (!prev[scene]?.signingAccount) {
+            return doReturn(prev);
+          }
+        }
+
+        if (Object.keys(patches).length === 0) {
+          return doReturn(prev);
+        }
+
+        return doReturn({
+          ...prev,
+          [scene]: { ...prev[scene], ...patches },
+        });
+      } catch (error) {
+        if (__DEV__) {
+          console.error('switchSceneSigningAccount error', error);
+        }
+        return prev;
+      }
+    },
+    [sceneAccountInfo, setSceneAccountInfo],
   );
 
   const toggleUseAllAccountsOnScene = useCallback(
@@ -234,6 +277,7 @@ export function useSwitchSceneCurrentAccount() {
 
   return {
     switchSceneCurrentAccount,
+    switchSceneSigningAccount,
     toggleUseAllAccountsOnScene,
   };
 }
@@ -357,6 +401,7 @@ export function useSceneAccountInfo(options: {
 
   return {
     ...computed,
+    sceneSigingAccount: sceneAccountInfo[forScene]?.signingAccount,
     sceneCurrentAccountDepKey: computed.isSceneUsingAllAccounts
       ? 'all'
       : [
