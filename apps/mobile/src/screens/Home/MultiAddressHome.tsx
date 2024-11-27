@@ -136,7 +136,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       <TouchableWithoutFeedback
         onPress={() => {
           navigation.dispatch(
-            StackActions.push(RootNames.SingleAddressStack, {
+            StackActions.push(RootNames.StackRoot, {
               screen: RootNames.Settings,
               params: {},
             }),
@@ -285,7 +285,7 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Dapps:
           navigation.dispatch(
-            StackActions.push(RootNames.SingleAddressStack, {
+            StackActions.push(RootNames.StackRoot, {
               screen: RootNames.Dapps,
               params: {},
             }),

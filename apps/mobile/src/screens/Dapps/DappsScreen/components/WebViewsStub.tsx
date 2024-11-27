@@ -269,7 +269,7 @@ export function OpenedDappWebViewStub() {
     }
   }, [openedDappItems.length, activeDapp]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
+  useHandleBackPressClosable(
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
       if (control?.getWebViewState().canGoBack) {
@@ -279,8 +279,8 @@ export function OpenedDappWebViewStub() {
       }
       return !activeDapp;
     }, [activeDapp, hideDappSheetModal]),
+    { autoEffectEnabled: !!activeDapp },
   );
-  useFocusEffect(onHardwareBackHandler);
 
   const { handleChange } = useAutoLockBottomSheetModalOnChange(
     handleBottomSheetChanges,

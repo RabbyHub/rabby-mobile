@@ -90,6 +90,7 @@ export const RootNames = {
   Swap: 'Swap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
+  /** @deprecated */
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   MultiAddressHistory: 'MultiAddressHistory',

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { AddressItem } from './components/AddressItem';
+import { AddressItemEntry } from './components/AddressItem';
 import { RootNames } from '@/constant/layout';
 import { useFocusEffect, useNavigation } from '@react-navigation/core';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -89,8 +89,10 @@ export function AddressListScreen(): JSX.Element {
           <View
             key={`${item.address}-${item.type}-${item.brandName}-${index}`}
             style={index < list.length - 1 ? styles.itemGap : undefined}>
-            <AddressItem
-              onSelect={() => setLastSelectedAccount(item)}
+            <AddressItemEntry
+              onSelect={() => {
+                setLastSelectedAccount(item);
+              }}
               lastSelectedAccount={lastSelectedAccount}
               account={item}
             />

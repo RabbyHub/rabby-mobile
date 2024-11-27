@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { BackHandler } from 'react-native';
 
 /**
@@ -6,15 +6,23 @@ import { BackHandler } from 'react-native';
  * @platform android
  */
 export function useHandleBackPressClosable(
-  shouldClose: (() => boolean) | React.RefObject<boolean>,
+  shouldBack: (() => boolean) | React.RefObject<boolean>,
+  {
+    autoEffectEnabled = false,
+  }: {
+    /**
+     * @description whether handle hardware back press automatically by `useEffect`
+     */
+    autoEffectEnabled?: boolean;
+  } = {},
 ) {
   const shouldPreventFn = useCallback(() => {
-    if (typeof shouldClose === 'function') {
-      return !shouldClose();
+    if (typeof shouldBack === 'function') {
+      return !shouldBack();
     }
 
-    return !shouldClose.current;
-  }, [shouldClose]);
+    return !shouldBack.current;
+  }, [shouldBack]);
 
   const onHardwareBackHandler = useCallback(() => {
     const subscription = BackHandler.addEventListener(
@@ -35,6 +43,20 @@ export function useHandleBackPressClosable(
 
     return () => subscription.remove();
   }, [shouldPreventFn]);
+
+  const disposeRef = useRef<null | (() => void)>(null);
+  useEffect(() => {
+    const clearDispose = () => {
+      disposeRef.current?.();
+      disposeRef.current = null;
+    };
+    if (autoEffectEnabled) {
+      disposeRef.current = onHardwareBackHandler();
+      return () => clearDispose();
+    } else {
+      clearDispose();
+    }
+  }, [autoEffectEnabled, onHardwareBackHandler]);
 
   return {
     onHardwareBackHandler,

@@ -10,9 +10,12 @@ import {
   ScreenLayouts,
 } from '@/constant/layout';
 
+import { DappsScreen } from '@/screens/Dapps/DappsScreen';
+import SettingsScreen from '../Settings/Settings';
+
 import {
-  BottomTabParamsList,
   RootNavigatorParamsList,
+  RootStackParamsList,
 } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
@@ -84,6 +87,38 @@ export default function RootScreenNavigator() {
           options={mergeScreenOptions({
             headerShown: false,
           })}
+        />
+        <RootStack.Screen
+          name={RootNames.Dapps}
+          component={DappsScreen}
+          options={{
+            title: isIOS ? 'Explore' : 'Dapps',
+            headerTitleStyle: {
+              fontWeight: '500',
+            },
+            headerTitle: 'Dapps',
+            headerTransparent: true,
+            headerShown: false,
+          }}
+        />
+        <RootStack.Screen
+          name={RootNames.Settings}
+          component={SettingsScreen}
+          options={useMemo(
+            () =>
+              mergeScreenOptions({
+                headerTitle: 'Settings',
+                headerTitleStyle: {
+                  fontWeight: '500',
+                  fontSize: 20,
+                  color: colors['neutral-title-1'],
+                },
+                gestureEnabled: false,
+                headerTitleAlign: 'center',
+                headerTintColor: colors['neutral-title-1'],
+              }),
+            [colors, mergeScreenOptions],
+          )}
         />
       </RootStack.Navigator>
 

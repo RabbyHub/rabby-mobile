@@ -16,6 +16,7 @@ import { RcIconCopyRegularCC, RcIconJumpCC } from '@/assets/icons/common';
 import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
+  BottomSheetProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
@@ -886,13 +887,20 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       );
     }, [t, styles.emptyHolderContainer, shouldRenderLoadingOnEmpty]);
 
-    const { onHardwareBackHandler } = useHandleBackPressClosable(
+    const [isShowing, setIsShowing] = React.useState(false);
+    const onSnapshotChange = useCallback<BottomSheetProps['onChange'] & object>(
+      index => {
+        setIsShowing(index > 0);
+      },
+      [],
+    );
+    useHandleBackPressClosable(
       useCallback(() => {
         onTriggerDismissFromInternal?.();
         return false;
       }, [onTriggerDismissFromInternal]),
+      { autoEffectEnabled: isShowing },
     );
-    useFocusEffect(onHardwareBackHandler);
 
     return (
       <AppBottomSheetModal
@@ -904,7 +912,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         enableContentPanningGesture={false}
         enablePanDownToClose={true}
         snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
-        onChange={useCallback(() => {}, [])}
+        onChange={onSnapshotChange}
         onDismiss={onDismiss}>
         <AutoLockView
           as="BottomSheetView"

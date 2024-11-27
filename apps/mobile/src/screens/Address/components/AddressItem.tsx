@@ -36,7 +36,7 @@ interface AddressItemProps {
   lastSelectedAccount?: KeyringAccountWithAlias;
   onSelect?: () => void;
 }
-export const AddressItem = (props: AddressItemProps) => {
+export const AddressItemEntry = (props: AddressItemProps) => {
   const { account, lastSelectedAccount, onSelect } = props;
   const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });

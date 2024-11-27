@@ -153,13 +153,12 @@ export const GlobalBottomSheetModal = () => {
     return modals.map(modal => !modal.params.allowAndroidHarewareBack);
   }, [modals]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
+  useHandleBackPressClosable(
     React.useCallback(() => {
       return !modalsToPreventBack.length;
     }, [modalsToPreventBack]),
+    { autoEffectEnabled: !!modalsToPreventBack.length },
   );
-
-  React.useEffect(onHardwareBackHandler);
 
   const { panResponder } = useRefreshAutoLockPanResponder();
 
