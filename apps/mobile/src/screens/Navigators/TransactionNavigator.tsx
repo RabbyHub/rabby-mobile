@@ -94,7 +94,6 @@ export default function TransactionNavigator() {
               <ScreenHeaderAccountSwitcher
                 forScene="MultiHistory"
                 titleText={ctx.children}
-                showType="addresses"
               />
             );
           },

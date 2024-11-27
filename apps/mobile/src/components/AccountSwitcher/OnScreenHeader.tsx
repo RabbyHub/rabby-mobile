@@ -6,34 +6,31 @@ import { Text, View } from 'react-native';
 
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle-cc.svg';
+import { default as RcCaretDownCircleDarkCC } from './icons/caret-down-circle-dark-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
-import {
-  AccountSwitcherAopProps,
-  AccountSwitcherScene,
-  useAccountSceneVisible,
-} from './hooks';
+import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
   useSwitchAccountBeforeEnterScene,
 } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
+import { useTranslation } from 'react-i18next';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
   forScene,
-  showType = 'account',
 }: RNViewProps &
   AccountSwitcherAopProps<{
     titleText?: React.ReactNode;
-    showType?: 'addresses' | 'account';
   }>) {
-  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { colors2024, styles, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const { isVisible: isOpen, toggleSceneVisible } =
     useAccountSceneVisible(forScene);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { finalSceneCurrentAccount, totalCountOfAccount, myAddresses } =
+  const { isSceneUsingAllAccounts, finalSceneCurrentAccount, myAddresses } =
     useSceneAccountInfo({
       forScene,
     });
@@ -53,12 +50,14 @@ export function ScreenHeaderAccountSwitcher({
     });
   }, [finalSceneCurrentAccount, forScene, switchSceneCurrentAccount]);
 
-  const needShowPicker = totalCountOfAccount > 1 && !!myAddresses.length;
-  if (showType === 'account' && !finalSceneCurrentAccount?.address) {
+  const needShowPicker = !!myAddresses.length;
+  if (!isSceneUsingAllAccounts && !finalSceneCurrentAccount?.address) {
     return titleTextNode;
-  } else if (showType === 'addresses' && !needShowPicker) {
+  } else if (isSceneUsingAllAccounts && !needShowPicker) {
     return titleTextNode;
   }
+
+  const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   return (
     <TouchableView
@@ -71,42 +70,27 @@ export function ScreenHeaderAccountSwitcher({
         }
       }}>
       {titleTextNode}
-      {showType === 'account' && (
-        <>
-          {!!finalSceneCurrentAccount?.address && (
-            <View style={styles.addressRow}>
+      <View style={styles.addressRow}>
+        {!isSceneUsingAllAccounts
+          ? !!finalSceneCurrentAccount?.address && (
               <Text style={styles.address}>
                 {ellipsisAddress(finalSceneCurrentAccount?.address)}
               </Text>
-
-              <RcCaretDownCircleCC
-                style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
-                width={18}
-                height={18}
-                color={colors2024['neutral-bg-4']}
-              />
-            </View>
-          )}
-        </>
-      )}
-      {showType === 'addresses' && (
-        <>
-          {needShowPicker && (
-            <View style={styles.addressRow}>
+            )
+          : needShowPicker && (
               <Text style={styles.address}>
-                {Math.max(myAddresses.length, 0)} addresses
+                {t('component.accountSwitcher.screenHeaderSubTitle', {
+                  count: myAddresses.length,
+                })}
               </Text>
-
-              <RcCaretDownCircleCC
-                style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
-                width={18}
-                height={18}
-                color={colors2024['neutral-bg-4']}
-              />
-            </View>
-          )}
-        </>
-      )}
+            )}
+        <IconCom
+          style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+          width={18}
+          height={18}
+          color={colors2024['neutral-bg-4']}
+        />
+      </View>
     </TouchableView>
   );
 }
@@ -196,7 +180,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '700',
       lineHeight: 22,
       fontSize: 17,
-      color: ctx.colors2024['neutral-secondary'],
+      color: ctx.colors2024['brand-default'],
     },
     addressCaretIcon: {
       marginLeft: 4,

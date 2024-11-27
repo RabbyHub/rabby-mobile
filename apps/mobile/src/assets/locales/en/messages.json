@@ -2379,6 +2379,10 @@
         "desc": "Please switch to your login address."
       }
     },
+    "accountSwitcher": {
+      "screenHeaderSubTitle": "1 address",
+      "screenHeaderSubTitle_plural": "{{count}} addresses"
+    },
     "AccountSearchInput": {
       "noMatchAddress": "No match address",
       "AddressItem": {

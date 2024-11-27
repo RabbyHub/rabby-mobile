@@ -323,13 +323,15 @@ export function useSceneAccountInfo(options: {
 
   return {
     ...computed,
-    sceneCurrentAccountDepKey: [
-      computed.finalSceneCurrentAccount?.address,
-      computed.finalSceneCurrentAccount?.brandName,
-      computed.finalSceneCurrentAccount?.type,
-    ]
-      .filter(Boolean)
-      .join('-'),
+    sceneCurrentAccountDepKey: computed.isSceneUsingAllAccounts
+      ? 'all'
+      : [
+          computed.finalSceneCurrentAccount?.address,
+          computed.finalSceneCurrentAccount?.brandName,
+          computed.finalSceneCurrentAccount?.type,
+        ]
+          .filter(Boolean)
+          .join('-'),
     isPinnedAccount,
   };
 }
