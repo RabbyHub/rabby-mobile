@@ -56,6 +56,9 @@ function markFirstItems(
           newItem.isDateStart = true;
         }
       }
+      if (newItem.isDateStart && !newItem.isFirst) {
+        newItem.isFirst = true;
+      }
     }
     newArr.push(newItem);
   }
