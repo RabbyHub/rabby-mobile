@@ -34,8 +34,6 @@ import { NumericInput } from '../Form/NumbericInput';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useFindChain } from '@/hooks/useFindChain';
 
-const isIOS = Platform.OS === 'ios';
-
 function useLoadTokenList({
   externalChainServerId,
   excludeTokens = [],
@@ -293,6 +291,7 @@ export const TokenAmountInput = React.forwardRef<
               placeholderTextColor={colors2024['neutral-info']}
               inputMode="decimal"
               keyboardType="numeric"
+              numberOfLines={1}
             />
             <View style={styles.inlinePrizeContainer}>
               <Text
@@ -394,22 +393,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     leftInputContainer: {
       flex: 1,
       paddingLeft: PADDING,
-      gap: 12,
+      paddingBottom: 16,
       // ...makeDebugBorder('red'),
     },
     containerHasInlinePrize: {},
     input: {
       fontSize: 28,
       fontWeight: '700',
-      lineHeight: 36,
+      position: 'relative',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
       marginLeft: 7,
+      flex: 1,
+      paddingTop: 0,
+      paddingBottom: 0,
     },
     inputHasInlinePrize: {
-      // ...makeDebugBorder()
+      // ...makeDebugBorder(),
     },
-    inlinePrizeContainer: {},
+    inlinePrizeContainer: {
+      height: 18,
+      // ...makeDebugBorder(),
+    },
     // 'text-r-neutral-foot text-12 text-right max-w-full truncate'
     inlinePrizeText: {
       color: colors2024['neutral-info'],
