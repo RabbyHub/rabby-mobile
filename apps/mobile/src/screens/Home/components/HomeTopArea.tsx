@@ -334,8 +334,7 @@ export const HomeTopArea = () => {
                 <Skeleton style={{ marginLeft: 1 }} width={50} height={16} />
               ) : (
                 !!percent && (
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text
                       style={StyleSheet.compose(
                         styles.percent,
@@ -505,7 +504,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   image: {
@@ -634,14 +633,14 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'left',
   },
   percent: {
     color: ctx.colors2024['green-default'],
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: '700',
     lineHeight: 22,
     fontStyle: 'normal',
     fontFamily: 'SF Pro Rounded',

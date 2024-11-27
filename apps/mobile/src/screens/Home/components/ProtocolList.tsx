@@ -189,12 +189,13 @@ const _ProtocolList = ({
       renderSectionHeader={renderSectionHeader}
       keyExtractor={item => item.id}
       ListEmptyComponent={ListEmptyComponent}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={styles.bgContainer}
       ListFooterComponent={ListFooterComponent}
       stickySectionHeadersEnabled={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
+          style={styles.bgContainer}
           onRefresh={() => {
             refreshPositions();
             onRefresh();
@@ -252,7 +253,6 @@ const ProjectTitle = ({
 };
 
 const getStyles = createGetStyles2024(ctx => ({
-  list: {},
   emptyList: {
     marginTop: 160,
     alignItems: 'center',
@@ -318,5 +318,8 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-line'],
     marginRight: 20,
     marginLeft: 68,
+  },
+  bgContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
 }));

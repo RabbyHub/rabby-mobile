@@ -324,8 +324,10 @@ export const TokenWallet = ({
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
+        contentContainerStyle={styles.bgContainer}
         refreshControl={
           <RefreshControl
+            style={styles.bgContainer}
             onRefresh={() => {
               refreshPositions();
               onRefresh();
@@ -448,6 +450,9 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
     fontWeight: '600',
+  },
+  bgContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   tokenRowWrap: {
     height: 72,

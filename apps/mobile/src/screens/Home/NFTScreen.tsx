@@ -311,41 +311,40 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   }, [isLoading]);
 
   return (
-    <View style={styles.container}>
-      <Tabs.SectionList<NFTItem[]>
-        initialNumToRender={4}
-        maxToRenderPerBatch={20}
-        // updateCellsBatchingPeriod={200}
-        ListHeaderComponent={renderHeaderComponent}
-        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator /> : null}
-        style={styles.list}
-        contentContainerStyle={styles.listContainer}
-        renderItem={renderItem}
-        renderSectionHeader={renderSectionHeader}
-        renderSectionFooter={() => <View style={styles.footContainer} />}
-        sections={sectionList}
-        keyExtractor={keyExtractor}
-        ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={false}
-        onEndReached={onEndReached}
-        onEndReachedThreshold={0.3}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              reload();
-              onRefresh();
-            }}
-          />
-        }
-      />
-    </View>
+    <Tabs.SectionList<NFTItem[]>
+      initialNumToRender={4}
+      maxToRenderPerBatch={20}
+      // updateCellsBatchingPeriod={200}
+      ListHeaderComponent={renderHeaderComponent}
+      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator /> : null}
+      style={styles.list}
+      contentContainerStyle={styles.listContainer}
+      renderItem={renderItem}
+      renderSectionHeader={renderSectionHeader}
+      renderSectionFooter={() => <View style={styles.footContainer} />}
+      sections={sectionList}
+      keyExtractor={keyExtractor}
+      ListEmptyComponent={ListEmptyComponent}
+      stickySectionHeadersEnabled={false}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.3}
+      refreshControl={
+        <RefreshControl
+          style={styles.bgContainer}
+          refreshing={refreshing}
+          onRefresh={() => {
+            reload();
+            onRefresh();
+          }}
+        />
+      }
+    />
   );
 };
 
 const IMAGE_OFFSET_Y = 13;
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: {
+  bgContainer: {
     backgroundColor: colors2024['neutral-bg-1'],
   },
   tipContainer: {
@@ -369,10 +368,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   listContainer: {
     paddingBottom: 90,
+    paddingHorizontal: 16,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   list: {
     width: '100%',
-    paddingHorizontal: 16,
   },
   title: {
     fontSize: 16,

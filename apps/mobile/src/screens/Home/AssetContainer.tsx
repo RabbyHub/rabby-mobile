@@ -11,7 +11,7 @@ import {
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -107,7 +107,6 @@ export const AssetContainer: React.FC<Props> = ({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     marginTop: -10,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
     width: '100%',
     paddingBottom: 18,
     borderBottomLeftRadius: 24,
@@ -115,7 +114,7 @@ const getStyles = createGetStyles2024(ctx => ({
     overflow: 'hidden',
   },
   headerContainer: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    backgroundColor: 'transparent',
     shadowColor: 'transparent',
   },
   tabBarWrap: {

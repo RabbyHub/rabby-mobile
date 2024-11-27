@@ -14,11 +14,11 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { currentAccount } = useCurrentAccount({
@@ -52,8 +52,14 @@ function HomeScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer
-      overwriteStyle={styles.overwriteContainer}
+    <NormalScreenContainer2024
+      type="linear"
+      linearProp={{
+        colors: [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']],
+        locations: [0.2072, 0.3181],
+        start: { x: 0.5, y: 0 },
+        end: { x: 0.5, y: 1 },
+      }}
       style={styles.rootScreenContainer}>
       {/* <ScreenSpecificStatusBar screenName={RootNames.Home} /> */}
       <SafeAreaView style={styles.safeView}>
@@ -62,16 +68,13 @@ function HomeScreen(): JSX.Element {
           onRefresh={triggerUpdate}
         />
       </SafeAreaView>
-    </NormalScreenContainer>
+    </NormalScreenContainer2024>
   );
 }
 
 HomeScreen.HeaderArea = HeaderArea;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  overwriteContainer: {
-    backgroundColor: colors2024['neutral-bg-2'],
-  },
+const getStyles = createGetStyles2024(() => ({
   rootScreenContainer: {
     paddingHorizontal: 16,
   },
