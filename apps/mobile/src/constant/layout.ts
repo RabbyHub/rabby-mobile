@@ -80,6 +80,7 @@ export const RootNames = {
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
+  DevUIDapps: 'DevUIDapps',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -89,6 +90,7 @@ export const RootNames = {
   Swap: 'Swap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
+  /** @deprecated */
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   MultiAddressHistory: 'MultiAddressHistory',
@@ -214,9 +216,9 @@ function makeScreenSpecConfig() {
       '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
-        barStyle: 'dark-content',
+        barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: 'rgba(255, 255, 255, 1)',
+        androidStatusBarBg: colors['neutral-bg-1'],
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,

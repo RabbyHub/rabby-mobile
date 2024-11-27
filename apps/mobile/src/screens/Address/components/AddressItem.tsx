@@ -13,7 +13,6 @@ import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '../useAddressDetailModal';
-import { noop } from 'lodash';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { trigger } from 'react-native-haptic-feedback';
 
@@ -34,10 +33,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
+  lastSelectedAccount?: KeyringAccountWithAlias;
+  onSelect?: () => void;
 }
-export const AddressItem = (props: AddressItemProps) => {
-  const { account } = props;
-  const { switchAccount, currentAccount } = useCurrentAccount();
+export const AddressItemEntry = (props: AddressItemProps) => {
+  const { account, lastSelectedAccount, onSelect } = props;
+  const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
@@ -50,10 +51,11 @@ export const AddressItem = (props: AddressItemProps) => {
       ignoreAndroidSystemSettings: false,
     });
     switchAccount(account);
+    onSelect?.();
     navigate(RootNames.SingleAddressStack, {
       screen: RootNames.SingleAddressHome,
     });
-  }, [account, switchAccount]);
+  }, [account, onSelect, switchAccount]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActions = React.useMemo(() => {
@@ -98,11 +100,11 @@ export const AddressItem = (props: AddressItemProps) => {
 
   const isCurrentAccount = React.useMemo(() => {
     return (
-      currentAccount &&
-      isSameAddress(currentAccount.address, account.address) &&
-      currentAccount.type === account.type
+      lastSelectedAccount &&
+      isSameAddress(lastSelectedAccount.address, account.address) &&
+      lastSelectedAccount.type === account.type
     );
-  }, [currentAccount, account]);
+  }, [lastSelectedAccount, account]);
 
   return (
     <ContextMenuView

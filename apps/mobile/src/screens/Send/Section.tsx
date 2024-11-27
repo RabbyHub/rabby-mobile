@@ -285,7 +285,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     tokenDetailTriangle: {
       position: 'absolute',
-      right: 36,
+      right: 56,
       top: -5,
       width: 8,
       height: 8,

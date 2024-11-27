@@ -46,9 +46,8 @@ export type RootStackParamsList = {
 
 export type RootNavigatorParamsList = {
   [RootNames.Home]?: {};
-  [RootNames.Points]?: {};
   /** @deprecated */
-  [RootNames.History]?: {};
+  [RootNames.Points]?: {};
   [RootNames.Dapps]?: {};
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
@@ -66,6 +65,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
+  [RootNames.DevUIDapps]?: {};
 };
 
 export type AddressNavigatorParamList = {

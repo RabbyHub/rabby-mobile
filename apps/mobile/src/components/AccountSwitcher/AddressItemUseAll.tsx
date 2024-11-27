@@ -178,6 +178,7 @@ const getUseAllAccountsItemInPanelStyle = createGetStyles2024(ctx => {
       fontStyle: 'normal',
       fontWeight: '700',
       lineHeight: 22,
+      color: ctx.colors2024['neutral-title-1'],
     },
     rightArea: {
       flexShrink: 0,

@@ -218,7 +218,7 @@ export function OpenedDappWebViewStub() {
     collapseDappWebViewModal,
     closeOpenedDapp,
     onHideActiveDapp,
-    closeActiveOpenedDapp,
+    collapseActiveOpenedDapp,
   } = useOpenDappView();
 
   const {
@@ -269,7 +269,7 @@ export function OpenedDappWebViewStub() {
     }
   }, [openedDappItems.length, activeDapp]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
+  useHandleBackPressClosable(
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
       if (control?.getWebViewState().canGoBack) {
@@ -279,8 +279,8 @@ export function OpenedDappWebViewStub() {
       }
       return !activeDapp;
     }, [activeDapp, hideDappSheetModal]),
+    { autoEffectEnabled: !!activeDapp },
   );
-  useFocusEffect(onHardwareBackHandler);
 
   const { handleChange } = useAutoLockBottomSheetModalOnChange(
     handleBottomSheetChanges,
@@ -392,11 +392,9 @@ export function OpenedDappWebViewStub() {
                 disableJsPromptLike: !isActiveDapp,
               }}
               headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
-              onPressClose={ctx => {
-                activeDappWebViewControlRef.current?.closeWebViewNavModal();
-
+              onPressHeaderLeftClose={ctx => {
                 hideDappSheetModal();
-                closeActiveOpenedDapp();
+                collapseActiveOpenedDapp();
               }}
               // headerNode={({ header }) => {
               //   return <WebViewControlHeader headerNode={header} />;
@@ -447,7 +445,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
       paddingTop: 0,
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
-      backgroundColor: ctx.colors2024['neutral-InvertHighlight'],
+      backgroundColor: ctx.colors['neutral-bg-1'],
     },
     bsView: {
       position: 'relative',
@@ -460,7 +458,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
         ? Dimensions.get('window').height
         : '100%',
       minHeight: 20,
-      backgroundColor: 'transparent',
+      backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder('black'),
     },
     bsViewOpened: {

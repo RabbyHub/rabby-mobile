@@ -3,6 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Image, Text, View } from 'react-native';
 import { AddressItem } from '../AddressItem/AddressItem';
 import { Button } from '../Button';
@@ -89,6 +90,7 @@ export const NoLongerSupports = ({ onDone }) => {
   const onConfirm = React.useCallback(() => {
     onDone();
   }, [onDone]);
+  const { t } = useTranslation();
 
   return (
     <View style={styles.root}>
@@ -100,11 +102,10 @@ export const NoLongerSupports = ({ onDone }) => {
       </View>
       <View style={styles.headline}>
         <Text style={styles.headlineText}>
-          No longer support mobile wallet address
+          {t('component.NoLongerSupports.title')}
         </Text>
         <Text style={styles.descText}>
-          Please make sure you keep the following mobile wallet address
-          information handy
+          {t('component.NoLongerSupports.desc')}
         </Text>
       </View>
       <FlatList
@@ -131,7 +132,7 @@ export const NoLongerSupports = ({ onDone }) => {
       <View style={styles.footer}>
         <Button
           onPress={onConfirm}
-          title="I Got it and delete all"
+          title={t('component.NoLongerSupports.button')}
           type="primary"
         />
       </View>

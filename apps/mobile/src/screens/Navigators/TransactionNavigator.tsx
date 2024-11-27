@@ -88,44 +88,35 @@ export default function TransactionNavigator() {
         name={RootNames.MultiAddressHistory}
         component={MultiAddressHistory}
         options={{
-          title: 'Multi Transactions',
+          title: 'Transactions',
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
                 forScene="MultiHistory"
                 titleText={ctx.children}
-                showType="addresses"
               />
             );
           },
         }}
-      />
-      <TransactionStack.Screen
-        name={RootNames.History}
-        component={HistoryScreen}
-        options={mergeScreenOptions({
-          title: 'Transactions',
-          ...headerPresets.withBgCard2,
-          headerStyle: {
-            backgroundColor: colors?.['neutral-bg-2'],
-          },
-        })}
       />
       <TransactionStack.Screen
         name={RootNames.HistoryFilterScam}
         component={HistoryFilterScamScreen}
-        options={{
+        options={mergeScreenOptions({
+          headerTitle: 'Hide scam transactions',
           title: 'Hide scam transactions',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="History"
-                titleText={ctx.children}
-                showType="addresses"
-              />
-            );
+          ...headerPresets.withBgCard2,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
           },
-        }}
+          headerStyle: {
+            backgroundColor: colors?.['neutral-bg-2'],
+          },
+        })}
       />
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}

@@ -178,13 +178,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    width: '100%',
   },
   qrCard: {
     alignItems: 'center',
     borderRadius: 30,
+    width: '100%',
     paddingVertical: 35,
-    paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 16,
   },
   qrCardHeader: {
     fontSize: 17,
@@ -207,6 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 190,
   },
   qrCardAddress: {
+    width: '100%',
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '400',
@@ -238,7 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    color: colors2024['neutral-title1'],
+    color: colors2024['neutral-title-1'],
   },
   accountBox: {
     flexDirection: 'row',

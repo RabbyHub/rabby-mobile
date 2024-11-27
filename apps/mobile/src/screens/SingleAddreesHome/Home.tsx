@@ -66,7 +66,7 @@ function HomeScreen(): JSX.Element {
 
 HomeScreen.HeaderArea = HeaderArea;
 
-const getStyles = createGetStyles2024(ctx => ({
+const getStyles = createGetStyles2024(() => ({
   rootScreenContainer: {
     paddingHorizontal: 16,
   },

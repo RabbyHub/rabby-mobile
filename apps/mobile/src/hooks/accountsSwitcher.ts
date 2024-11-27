@@ -5,7 +5,7 @@ import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
 import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 
 const AccountSwitcherInfos = {
@@ -28,7 +28,7 @@ export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 
 type SceneAccounts = {
   [K in AccountSwitcherScene]?: {
-    currentAccount: Account | null;
+    currentAccount: KeyringAccount | null;
     /**
      * @description use all accounts in this scene, not only one "current" account
      *
@@ -37,6 +37,30 @@ type SceneAccounts = {
     useAllAccounts?: boolean;
   };
 };
+
+export function normalizeSceneKeyringAccount(
+  input: Account | KeyringAccount,
+): KeyringAccount {
+  return {
+    address: input.address,
+    brandName: input.brandName,
+    type: input.type,
+  };
+}
+
+export function sceneKeyringAccountToAccount(
+  input: KeyringAccount,
+  partials: {
+    aliasName?: string;
+    balance?: number;
+  },
+): Account {
+  return {
+    ...input,
+    aliasName: partials.aliasName,
+    balance: partials.balance,
+  };
+}
 
 function makeSceneAccount() {
   return {
@@ -123,11 +147,16 @@ export function useSwitchSceneCurrentAccount() {
    * this function is re-entrant, it will not set same account again
    */
   const switchSceneCurrentAccount = useCallback(
-    async (scene: AccountSwitcherScene, account: Account | null) => {
+    async (
+      scene: AccountSwitcherScene,
+      account: Account | null,
+      options?: { maybeReEntrant?: boolean },
+    ) => {
+      const { maybeReEntrant } = options || {};
       setSceneAccountInfo(prev => {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
 
-        if (prev[scene]?.useAllAccounts) {
+        if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
           patches.useAllAccounts = false;
         }
 
@@ -137,6 +166,8 @@ export function useSwitchSceneCurrentAccount() {
           // avoid duplicate set same account
           if (isSameAccount(account, prev[scene]?.currentAccount)) {
             delete patches.currentAccount;
+          } else {
+            patches.currentAccount = normalizeSceneKeyringAccount(account);
           }
         } else {
           apisAccountSwitch.inactivateSceneAccount();
@@ -164,11 +195,15 @@ export function useSwitchSceneCurrentAccount() {
   const toggleUseAllAccountsOnScene = useCallback(
     (scene: AccountSwitcherScene, useAll: boolean) => {
       setSceneAccountInfo(prev => {
+        const nextVal = ScenesSupportAllAccounts.includes(scene)
+          ? useAll
+          : false;
+
         return {
           ...prev,
           [scene]: {
             ...prev[scene],
-            useAllAccounts: useAll,
+            useAllAccounts: nextVal,
           },
         };
       });
@@ -197,7 +232,7 @@ export function isSameAccount(
 
 const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
   // 'Swap',
-  // 'MultiHistory',
+  'MultiHistory',
 ];
 
 type SceneAccount = Account & {
@@ -212,7 +247,7 @@ export function useSceneAccountInfo(options: {
   const [sceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
   const sceneCurrentAccount = sceneAccountInfo[forScene]?.currentAccount;
-  const isSceneUsingAllAccounts = sceneAccountInfo[forScene]?.useAllAccounts;
+  const isSceneUsingAllAccounts = !!sceneAccountInfo[forScene]?.useAllAccounts;
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -261,7 +296,10 @@ export function useSceneAccountInfo(options: {
       }
 
       if (isSameAccount(account, sceneCurrentAccount)) {
-        result.finalSceneCurrentAccount = sceneCurrentAccount!;
+        result.finalSceneCurrentAccount = sceneKeyringAccountToAccount(
+          sceneCurrentAccount!,
+          account,
+        );
       }
     }
 
@@ -285,6 +323,15 @@ export function useSceneAccountInfo(options: {
 
   return {
     ...computed,
+    sceneCurrentAccountDepKey: computed.isSceneUsingAllAccounts
+      ? 'all'
+      : [
+          computed.finalSceneCurrentAccount?.address,
+          computed.finalSceneCurrentAccount?.brandName,
+          computed.finalSceneCurrentAccount?.type,
+        ]
+          .filter(Boolean)
+          .join('-'),
     isPinnedAccount,
   };
 }

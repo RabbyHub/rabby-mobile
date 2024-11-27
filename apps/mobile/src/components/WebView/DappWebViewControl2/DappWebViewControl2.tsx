@@ -18,7 +18,6 @@ import { ScreenLayouts2 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { RcIconCloseDapp } from './icons';
-import { devLog } from '@/utils/logger';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { WebViewActions, WebViewState, useWebViewControl } from '../hooks';
@@ -29,18 +28,12 @@ import {
 } from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl2, BottomNavControlCbCtx } from './Widgets';
-import { formatDappOriginToShow } from '@/utils/url';
 import { APP_UA_PARIALS } from '@/constant';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { IS_ANDROID } from '@/core/native/utils';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '../utils';
 import { FontNames } from '@/core/utils/fonts';
 
@@ -88,7 +81,7 @@ type DappWebViewControlProps = {
    */
   embedHtml?: string;
   initialUrl?: string;
-  onPressClose?: (ctx: { defaultAction: () => void }) => void;
+  onPressHeaderLeftClose?: (ctx: { defaultAction: () => void }) => void;
 
   headerRight?: React.ReactNode | (() => React.ReactNode);
   headerNode?:
@@ -121,7 +114,7 @@ function useDefaultNodes({
   webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 }) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const defaultHeaderLeft = useMemo(() => {
+  const defaultHeaderRight = useMemo(() => {
     return (
       <View style={[styles.touchableHeadWrapper]}>
         <Text> </Text>
@@ -132,11 +125,11 @@ function useDefaultNodes({
 
   const headerRightNode = useMemo(() => {
     if (typeof headerRight === 'function') {
-      return headerRight() || defaultHeaderLeft;
+      return headerRight() || defaultHeaderRight;
     }
 
-    return headerRight || defaultHeaderLeft;
-  }, [headerRight, defaultHeaderLeft]);
+    return headerRight || defaultHeaderRight;
+  }, [headerRight, defaultHeaderRight]);
 
   const finalNavControlNode = useMemo(() => {
     const bottomNavBar = (
@@ -163,7 +156,6 @@ function useDefaultNodes({
 }
 
 export type DappWebViewControl2Type = {
-  closeWebViewNavModal: () => void;
   getWebViewId: () => string;
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
@@ -178,7 +170,7 @@ const DappWebViewControl2 = React.forwardRef<
       dappTabId,
       embedHtml,
       initialUrl: _initialUrl,
-      onPressClose,
+      onPressHeaderLeftClose,
 
       headerRight,
       headerNode,
@@ -210,9 +202,16 @@ const DappWebViewControl2 = React.forwardRef<
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
 
-    const { formattedCurrentUrl } = useMemo(() => {
+    const { formattedCurrentUrl, stillInDappOrigin } = useMemo(() => {
+      const urlString = latestUrl || convertToWebviewUrl(dappOrigin);
+      const urlInfo = canoicalizeDappUrl(urlString);
+
+      const hasSameOrigin =
+        false && canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
+
       return {
-        formattedCurrentUrl: latestUrl || convertToWebviewUrl(dappOrigin),
+        stillInDappOrigin: hasSameOrigin,
+        formattedCurrentUrl: hasSameOrigin ? urlInfo.hostname : urlString,
       };
     }, [dappOrigin, latestUrl]);
 
@@ -222,29 +221,26 @@ const DappWebViewControl2 = React.forwardRef<
     React.useImperativeHandle(
       ref,
       () => ({
-        closeWebViewNavModal: () => {
-          webviewNavRef?.current?.close();
-        },
         getWebViewId: () => webviewIdRef.current || '',
         getWebViewState: () => webviewState,
         getWebViewActions: () => webviewActions,
       }),
-      [webviewNavRef, webviewIdRef, webviewState, webviewActions],
+      [webviewIdRef, webviewState, webviewActions],
     );
 
     const handlePressCloseDefault = useCallback(() => {
       toggleShowSheetModal(true);
     }, [toggleShowSheetModal]);
 
-    const handlePressClose = useCallback(() => {
-      if (typeof onPressClose === 'function') {
-        return onPressClose({
+    const handlePressHeaderLeftClose = useCallback(() => {
+      if (typeof onPressHeaderLeftClose === 'function') {
+        return onPressHeaderLeftClose({
           defaultAction: handlePressCloseDefault,
         });
       }
 
       return handlePressCloseDefault();
-    }, [handlePressCloseDefault, onPressClose]);
+    }, [handlePressCloseDefault, onPressHeaderLeftClose]);
 
     const { headerRightNode, finalNavControlNode } = useDefaultNodes({
       headerRight,
@@ -258,7 +254,7 @@ const DappWebViewControl2 = React.forwardRef<
         <View style={[styles.dappWebViewHeadContainer]}>
           <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
             <TouchableView
-              onPress={handlePressClose}
+              onPress={handlePressHeaderLeftClose}
               style={[styles.touchableHeadWrapper]}>
               <RcIconCloseDapp
                 color={styles.closeDappIcon.color}
@@ -268,19 +264,21 @@ const DappWebViewControl2 = React.forwardRef<
             </TouchableView>
           </View>
           <View style={styles.DappWebViewHeadTitleWrapper}>
-            <Text
-              style={styles.HeadTitleOrigin}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {formatDappOriginToShow(dappOrigin)}
-            </Text>
-
-            <Text
-              style={styles.HeadTitleMainDomain}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {formattedCurrentUrl}
-            </Text>
+            {stillInDappOrigin ? (
+              <Text
+                style={styles.HeadTitleOrigin}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {formattedCurrentUrl}
+              </Text>
+            ) : (
+              <Text
+                style={styles.HeadTitleFull}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {formattedCurrentUrl}
+              </Text>
+            )}
           </View>
           <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
             {headerRightNode}
@@ -293,10 +291,10 @@ const DappWebViewControl2 = React.forwardRef<
 
       return headerNode || node;
     }, [
+      stillInDappOrigin,
       headerRightNode,
       headerNode,
-      dappOrigin,
-      handlePressClose,
+      handlePressHeaderLeftClose,
       formattedCurrentUrl,
       styles,
     ]);
@@ -489,12 +487,15 @@ const getStyles = createGetStyles2024(ctx =>
       color: ctx.colors['neutral-title-1'],
       lineHeight: 24,
     },
-    HeadTitleMainDomain: {
-      fontSize: 14,
-      fontWeight: '400',
+    HeadTitleFull: {
       textAlign: 'center',
       maxWidth: '90%',
       color: ctx.colors['neutral-foot'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontStyle: 'normal',
+      fontWeight: '500',
+      lineHeight: 24,
     },
 
     dappWebViewContainer: {

@@ -69,7 +69,6 @@ export function BottomNavControl2({
   isFavorited,
   isConnected,
   afterNode,
-  // onPressMore,
   onPressButton,
 }: BottomNavControlCbCtx & {
   isFavorited?: boolean;
@@ -81,7 +80,6 @@ export function BottomNavControl2({
           TouchableItem: typeof TouchableItem;
         },
       ) => React.ReactNode);
-  // onPressMore?: (ctx: BottomNavControlCbCtx) => void;
   /**
    * @description customize all button press event
    */
@@ -93,12 +91,6 @@ export function BottomNavControl2({
   ) => void;
 }) {
   const { colors2024 } = useTheme2024();
-  // const onPressNavMore = useCallback(() => {
-  //   onPressMore?.({
-  //     webviewState,
-  //     webviewActions,
-  //   });
-  // }, [onPressMore, webviewState, webviewActions]);
 
   const renderedAfterNode = useMemo(() => {
     if (typeof afterNode === 'function') {

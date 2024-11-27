@@ -494,6 +494,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 24,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     overflow: 'hidden',
+    height: 185,
     width: '100%',
   },
   header: {
@@ -605,7 +606,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: ctx.colors2024['neutral-title2'],
+    color: ctx.colors2024['neutral-title-2'],
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 17,

@@ -170,7 +170,7 @@ export default function ToAddressControl({
         inputStyle={[styles.input, !formValues.to && styles.inputWithoutValue]}
         hasError={!!errors.to}
         clearable={false}
-        customIcon={CustomIcon}
+        // customIcon={CustomIcon}
         inputProps={{
           ...inputProps,
           multiline: true,
@@ -179,7 +179,7 @@ export default function ToAddressControl({
             handleFieldChange('to', value);
           },
           onBlur: formik.handleBlur('to'),
-          placeholder: 'Enter an address or search',
+          placeholder: 'Enter an address',
           placeholderTextColor: colors2024['neutral-info'],
           style: {
             paddingTop: 0,
@@ -345,7 +345,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
 
     tipNoContact: {
-      color: colors2024['neutral-title1'],
+      color: colors2024['neutral-title-1'],
       fontSize: 12,
       fontWeight: 'normal',
       paddingTop: 12,

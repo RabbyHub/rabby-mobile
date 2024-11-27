@@ -2379,6 +2379,10 @@
         "desc": "Please switch to your login address."
       }
     },
+    "accountSwitcher": {
+      "screenHeaderSubTitle": "1 address",
+      "screenHeaderSubTitle_plural": "{{count}} addresses"
+    },
     "AccountSearchInput": {
       "noMatchAddress": "No match address",
       "AddressItem": {
@@ -2537,6 +2541,11 @@
       "fast": "Fast",
       "normal": "Normal",
       "doNotReserve": "Don't reserve Gas"
+    },
+    "NoLongerSupports": {
+      "title": "Mobile wallet addresses are no longer supported",
+      "desc": "The following addresses will be removed. You can still find them in the original wallet app. Import the seed phrase or private key to use them here.",
+      "button": "Got it"
     }
   },
   "native": {

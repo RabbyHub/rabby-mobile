@@ -18,6 +18,8 @@ import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { apisWalletConnect } from '@/core/apis';
+import { useDappsViewConfig } from '@/screens/Dapps/hooks/useDappView';
+import { formatTimeReadable } from '@/utils/time';
 
 const devUIPreviewScreenModalVisibleAtom = atom(false);
 export function useUIDevWipModalVisiable() {
@@ -76,6 +78,8 @@ export default function DevUIWipModal({
     });
   }, []);
 
+  const { dappsViewConfig, toggleUseShortConfig } = useDappsViewConfig();
+
   const Items = (() => {
     const list: DevTestItem[] = [
       {
@@ -95,6 +99,18 @@ export default function DevUIWipModal({
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           handleAddWalletConnectAddresses();
+        },
+      },
+      {
+        label: [
+          `[Switch] Dapp WebView Expire`,
+          formatTimeReadable(dappsViewConfig.expireDuration / 1000),
+        ]
+          .filter(Boolean)
+          .join(' '),
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          toggleUseShortConfig();
         },
       },
     ];

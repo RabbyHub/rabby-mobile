@@ -97,7 +97,6 @@ AccountSwitcherAopProps<{
     isSceneSupportAllAccounts,
     isSceneUsingAllAccounts,
 
-    totalCountOfAccount,
     myAddresses,
     safeAddresses,
     watchAddresses,
@@ -146,7 +145,8 @@ AccountSwitcherAopProps<{
   const handlePressUseAll = useCallback(() => {
     console.debug('handlePressUseAll');
     toggleUseAllAccountsOnScene(forScene, true);
-  }, [forScene, toggleUseAllAccountsOnScene]);
+    toggleSceneVisible(forScene, false);
+  }, [forScene, toggleUseAllAccountsOnScene, toggleSceneVisible]);
 
   return (
     <LinearGradientContainer
@@ -166,7 +166,7 @@ AccountSwitcherAopProps<{
                     marginBottom: AddressItemSizes.itemGap,
                     height: AddressItemSizes.useAllItemH,
                   }}
-                  addressCount={totalCountOfAccount}
+                  addressCount={myAddresses.length}
                   onPress={handlePressUseAll}
                   isSelected={isSceneUsingAllAccounts}
                 />

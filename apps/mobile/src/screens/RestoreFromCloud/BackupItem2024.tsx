@@ -16,7 +16,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import { RcIconCheckedFilledCC, RcIconUncheckCC } from '@/assets/icons/common';
+import { RcIconCheckedFilledCC } from '@/assets/icons/common';
 import { BackupData } from '@/core/utils/cloudBackup';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Card } from '@/components2024/Card';
@@ -25,15 +25,15 @@ import { getAccountBalance } from '@/components/HDSetting/util';
 import { ellipsisAddress } from '@/utils/address';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 
-const getStyle = createGetStyles2024(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     borderWidth: 1,
     borderColor: 'transparent',
     borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
+    backgroundColor: colors2024['neutral-card-1'],
   },
   rootSelected: {
-    borderColor: colors['blue-default'],
+    borderColor: colors2024['blue-default'],
   },
   rootImported: {
     opacity: 0.5,
@@ -52,20 +52,20 @@ const getStyle = createGetStyles2024(colors => ({
     alignItems: 'center',
   },
   time: {
-    color: colors.colors2024['neutral-secondary'],
+    color: colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
   bodyTitle: {
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     fontSize: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
   },
   bodyDesc: {
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
     fontSize: 12,
     marginTop: 6,
     lineHeight: 14,
@@ -73,12 +73,12 @@ const getStyle = createGetStyles2024(colors => ({
   footer: {
     padding: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors['neutral-line'],
+    borderTopColor: colors2024['neutral-line'],
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   itemBalance: {
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
     fontSize: 14,
   },
   itemAddress: {
@@ -93,7 +93,7 @@ const getStyle = createGetStyles2024(colors => ({
     width: '100%',
   },
   importedText: {
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
     fontSize: 14,
     marginLeft: 6,
   },
@@ -102,6 +102,42 @@ const getStyle = createGetStyles2024(colors => ({
   },
   addressItemWrapper: {
     flex: 1,
+  },
+  rootItem: {
+    flexDirection: 'row',
+    flex: 1,
+    flexGrow: 1,
+    marginRight: 20,
+  },
+  walletIcon: {
+    borderRadius: 12,
+  },
+  item: {
+    flexDirection: 'row',
+    gap: 11,
+    alignItems: 'center',
+    width: '100%',
+  },
+  itemInfo: {
+    gap: 6,
+    flexGrow: 1,
+    flex: 1,
+  },
+  itemNameText: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+  itemBalanceText: {
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
+    fontWeight: '500',
+  },
+  itemName: {
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 }));
 
@@ -163,14 +199,30 @@ export const BackupItem: React.FC<BackupItemProps> = ({
           )}
           <View style={styles.addressItemWrapper}>
             <AddressItem
+              style={styles.rootItem}
               account={{
                 brandName: KEYRING_CLASS.MNEMONIC,
                 aliasName: ellipsisAddress(item.address),
                 address: item.address,
                 balance,
                 type: KEYRING_CLASS.MNEMONIC,
-              }}
-            />
+              }}>
+              {({ WalletIcon, WalletName, WalletBalance }) => (
+                <View style={styles.item}>
+                  <WalletIcon
+                    style={styles.walletIcon}
+                    width={40}
+                    height={40}
+                  />
+                  <View style={styles.itemInfo}>
+                    <View style={styles.itemName}>
+                      <WalletName style={styles.itemNameText} />
+                    </View>
+                    <WalletBalance style={styles.itemBalanceText} />
+                  </View>
+                </View>
+              )}
+            </AddressItem>
           </View>
         </View>
       </Card>

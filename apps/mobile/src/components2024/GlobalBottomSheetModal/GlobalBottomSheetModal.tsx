@@ -159,13 +159,12 @@ export const GlobalBottomSheetModal2024 = () => {
     return modals.map(modal => !modal.params.allowAndroidHarewareBack);
   }, [modals]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
+  useHandleBackPressClosable(
     React.useCallback(() => {
       return !modalsToPreventBack.length;
     }, [modalsToPreventBack]),
+    { autoEffectEnabled: !!modalsToPreventBack.length },
   );
-
-  React.useEffect(onHardwareBackHandler);
 
   const { panResponder } = useRefreshAutoLockPanResponder();
   const { colors2024 } = useTheme2024();
