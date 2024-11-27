@@ -35,17 +35,20 @@ export const useNoLongerSupports = () => {
       return;
     }
 
-    modalIdRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.NO_LONGER_SUPPORTS,
-      bottomSheetModalProps: {
-        onDismiss: () => {
-          removeWalletConnect();
+    setTimeout(() => {
+      modalIdRef.current = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.NO_LONGER_SUPPORTS,
+        bottomSheetModalProps: {
+          onDismiss: () => {
+            removeWalletConnect();
+          },
         },
-      },
-      onDone() {
-        removeWalletConnect();
-        removeGlobalBottomSheetModal2024(modalIdRef.current);
-      },
-    });
+        onDone() {
+          removeWalletConnect();
+          removeGlobalBottomSheetModal2024(modalIdRef.current);
+          modalIdRef.current = undefined;
+        },
+      });
+    }, 0);
   }, [accounts, removeWalletConnect]);
 };

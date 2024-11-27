@@ -34,7 +34,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     marginBottom: 19,
     textAlign: 'center',
-    paddingHorizontal: 70,
+    paddingHorizontal: 50,
   },
   descText: {
     fontSize: 17,
