@@ -54,6 +54,8 @@ import { Skeleton } from '@rneui/base';
 import { transactionHistoryService } from '@/core/services';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useMount } from 'ahooks';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 const MENU_ARR = [
   {
@@ -158,6 +160,7 @@ function MultiAddressHome(): JSX.Element {
   const { t } = useTranslation();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
+  const timeRef = useRef<null | NodeJS.Timer>(null);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
@@ -192,26 +195,40 @@ function MultiAddressHome(): JSX.Element {
       transactionHistoryService.getPendingsAddresses(addresses);
     console.log('fetchHistory :', balanceAccounts, pendingsLength, pendings);
     setPendingTxCount(pendingsLength);
+    if (pendingsLength) {
+      if (!timeRef.current) {
+        timeRef.current = setInterval(fetchHistory, 5000);
+      }
+    } else {
+      timeRef.current && clearInterval(timeRef.current);
+      timeRef.current = null;
+    }
   }, [balanceAccounts]);
 
-  useEffect(() => {
-    eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
-    return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
-    };
-  }, [fetchHistory]);
+  // useMount(() => {  no use ?
+  //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
+  //   return () => {
+  //     eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
+  //   };
+  // });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!timeRef.current) {
+        fetchHistory();
+      }
+    }, [fetchHistory]),
+  );
 
   useFocusEffect(
     useCallback(() => {
       triggerUpdate();
-      fetchHistory();
-    }, [triggerUpdate, fetchHistory]),
+    }, [triggerUpdate]),
   );
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
-    fetchHistory();
-  }, [triggerUpdate, fetchHistory]);
+  }, [triggerUpdate]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -335,96 +352,106 @@ function MultiAddressHome(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer
+    <NormalScreenContainer2024
+      type="linear"
       noHeader
-      overwriteStyle={{
-        backgroundColor: colors2024['neutral-bg-1'],
-      }}>
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]}
+      bgImageSource={require('@/assets2024/icons/home/ImgBgHome.png')}
+      linearProp={{
+        colors: [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']],
+        locations: [0.2072, 0.3181],
+        start: { x: 0.5, y: 0 },
+        end: { x: 0.5, y: 1 },
+      }}
+      overwriteStyle={
+        {
+          // paddingTop: 0,
+        }
+      }>
+      {/* <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]}
         locations={[0.2195, 0.3181]}
         start={{ x: 0.5, y: -0.2 }}
         end={{ x: 0.5, y: 1 }}
-        style={styles.rootScreenContainer}>
-        <ImageBackground
-          source={require('@/assets2024/icons/home/ImgBgHome.png')}
-          resizeMode="cover"
-          style={styles.bgImage}
-        />
-        <View style={styles.paddingContainer}>
-          <MultiAddressHomeHeader loading={balanceLoading} />
-          <ScrollView
-            refreshControl={
-              <RefreshControl refreshing={false} onRefresh={onRefresh} />
-            }>
-            <View style={styles.balanceBox}>
-              <Text
-                style={[
-                  styles.usdText,
-                  // eslint-disable-next-line react-native/no-inline-styles
-                  {
-                    fontSize: needSmallNum ? 28 : 36,
-                  },
-                ]}>
-                {totalBalanceUsd}
-              </Text>
-              <TouchableOpacity
-                style={styles.accountBg}
-                onPress={() => {
-                  trigger('impactLight', {
-                    enableVibrateFallback: true,
-                    ignoreAndroidSystemSettings: false,
-                  });
-                  navigation.dispatch(
-                    StackActions.push(RootNames.StackAddress, {
-                      screen: RootNames.AddressList,
-                      params: {},
-                    }),
-                  );
-                }}>
-                <RcIconSmallWallet />
-                <Text style={styles.accountText}>{accountsLength}</Text>
-                <RcIconSmallArrow />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.menuHeader}>
-              <Text style={styles.headerText}>
-                {t('page.nextComponent.multiAddressHome.services')}
-              </Text>
-              {Boolean(pendingTxCount) && (
-                <TouchableOpacity
-                  style={styles.pendingContainer}
-                  onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
-                  <Animated.View
-                    style={{
-                      transform: [{ rotate: spin }],
-                    }}>
-                    <RcPending width={14} height={14} />
-                  </Animated.View>
-                  <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                    'page.bridge.Pending',
-                  )}`}</Text>
-                  <RcIconOrangeArrow />
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={[styles.grid]}>
-              {MENU_ARR.map((el, index) => {
-                return (
-                  <TouchableOpacity
-                    style={styles.gridItem}
-                    key={index}
-                    onPress={e => handleClickMenu(el.title)}>
-                    <el.icon />
-                    <Text style={styles.gridText}>{el.title}</Text>
-                  </TouchableOpacity>
+        style={styles.rootScreenContainer}> */}
+      {/* <ImageBackground
+        source={require('@/assets2024/icons/home/ImgBgHome.png')}
+        resizeMode="cover"
+        style={styles.bgImage}
+      /> */}
+      <View style={styles.paddingContainer}>
+        <MultiAddressHomeHeader loading={balanceLoading} />
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={false} onRefresh={onRefresh} />
+          }>
+          <View style={styles.balanceBox}>
+            <Text
+              style={[
+                styles.usdText,
+                // eslint-disable-next-line react-native/no-inline-styles
+                {
+                  fontSize: needSmallNum ? 28 : 36,
+                },
+              ]}>
+              {totalBalanceUsd}
+            </Text>
+            <TouchableOpacity
+              style={styles.accountBg}
+              onPress={() => {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackAddress, {
+                    screen: RootNames.AddressList,
+                    params: {},
+                  }),
                 );
-              })}
-            </View>
-          </ScrollView>
-        </View>
-      </LinearGradient>
-    </NormalScreenContainer>
+              }}>
+              <RcIconSmallWallet />
+              <Text style={styles.accountText}>{accountsLength}</Text>
+              <RcIconSmallArrow />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.menuHeader}>
+            <Text style={styles.headerText}>
+              {t('page.nextComponent.multiAddressHome.services')}
+            </Text>
+            {Boolean(pendingTxCount) && (
+              <TouchableOpacity
+                style={styles.pendingContainer}
+                onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
+                <Animated.View
+                  style={{
+                    transform: [{ rotate: spin }],
+                  }}>
+                  <RcPending width={14} height={14} />
+                </Animated.View>
+                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
+                  'page.bridge.Pending',
+                )}`}</Text>
+                <RcIconOrangeArrow />
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={[styles.grid]}>
+            {MENU_ARR.map((el, index) => {
+              return (
+                <TouchableOpacity
+                  style={styles.gridItem}
+                  key={index}
+                  onPress={e => handleClickMenu(el.title)}>
+                  <el.icon />
+                  <Text style={styles.gridText}>{el.title}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
+      {/* </LinearGradient> */}
+    </NormalScreenContainer2024>
   );
 }
 

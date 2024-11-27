@@ -15,7 +15,6 @@ export const LinearGradientContainer: React.FC<
 
   return (
     <LinearGradient
-      {...props}
       colors={
         type === 'linear'
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
@@ -23,6 +22,7 @@ export const LinearGradientContainer: React.FC<
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
           : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
       }
+      {...props}
     />
   );
 };

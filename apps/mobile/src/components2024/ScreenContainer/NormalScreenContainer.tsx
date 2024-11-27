@@ -5,11 +5,18 @@ import {
 } from '@/hooks/common/useReactNativeViews';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
+import {
+  ImageBackground,
+  StyleSheet,
+  View,
+  ViewProps,
+  ImageSourcePropType,
+} from 'react-native';
 import {
   LinearGradientContainer,
   LinearGradientContainerProps,
 } from './LinearGradientContainer';
+import { LinearGradientProps } from 'react-native-linear-gradient';
 
 export default function NormalScreenContainer2024<
   T extends ReactNativeViewAs = 'View',
@@ -21,6 +28,8 @@ export default function NormalScreenContainer2024<
   fitStatuBar,
   overwriteStyle,
   type = 'linear',
+  linearProp,
+  bgImageSource,
 }: React.PropsWithChildren<
   {
     as?: T;
@@ -31,13 +40,30 @@ export default function NormalScreenContainer2024<
     hideBottomBar?: boolean;
     overwriteStyle?: React.ComponentProps<typeof View>['style'];
     type?: LinearGradientContainerProps['type'];
+    linearProp?: LinearGradientProps;
+    bgImageSource?: ImageSourcePropType;
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeOffHeader, safeTop } = useSafeSizes();
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
 
   return (
-    <LinearGradientContainer type={type}>
+    <LinearGradientContainer type={type} {...linearProp}>
+      {bgImageSource && (
+        <ImageBackground
+          source={bgImageSource}
+          resizeMode="cover"
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      )}
+
       <ViewComp
         style={StyleSheet.flatten([
           style,
