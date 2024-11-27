@@ -100,6 +100,7 @@ export const ImportPrivateKeyScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
+        disabled: !privateKey || !!error,
       }}
       style={styles.screen}
       footerBottomOffset={56}

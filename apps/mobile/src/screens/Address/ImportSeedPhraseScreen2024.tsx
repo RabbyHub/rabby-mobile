@@ -259,6 +259,7 @@ export const ImportSeedPhraseScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
+        disabled: !mnemonics || !!error,
         loading: importing,
       }}
       style={styles.screen}

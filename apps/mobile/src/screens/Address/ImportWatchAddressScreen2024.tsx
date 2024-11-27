@@ -142,6 +142,7 @@ export const ImportWatchAddressScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
+        disabled: !input || !!error,
       }}
       style={styles.screen}
       footerBottomOffset={56}
