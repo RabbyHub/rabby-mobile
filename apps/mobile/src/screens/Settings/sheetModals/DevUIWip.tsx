@@ -20,6 +20,7 @@ import { useAccounts } from '@/hooks/account';
 import { apisWalletConnect } from '@/core/apis';
 import { useDappsViewConfig } from '@/screens/Dapps/hooks/useDappView';
 import { formatTimeReadable } from '@/utils/time';
+import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const devUIPreviewScreenModalVisibleAtom = atom(false);
 export function useUIDevWipModalVisiable() {
@@ -80,6 +81,8 @@ export default function DevUIWipModal({
 
   const { dappsViewConfig, toggleUseShortConfig } = useDappsViewConfig();
 
+  const { resetSceneAccountInfo } = useResetSceneAccountInfo();
+
   const Items = (() => {
     const list: DevTestItem[] = [
       {
@@ -99,6 +102,13 @@ export default function DevUIWipModal({
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           handleAddWalletConnectAddresses();
+        },
+      },
+      {
+        label: '[Data] Reset Scene Account',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          resetSceneAccountInfo();
         },
       },
       {

@@ -99,10 +99,11 @@ AccountSwitcherAopProps<{
 
     myAddresses,
     safeAddresses,
+    shouldSafeAddressesExpanded,
     watchAddresses,
+    shouldWatchAddressesExpanded,
   } = useSceneAccountInfo({
     forScene,
-    // disableAutoFetch: false,
   });
 
   const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
@@ -113,10 +114,29 @@ AccountSwitcherAopProps<{
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, []);
 
-  const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] =
-    React.useState(true);
-  const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
-    React.useState(true);
+  const [navsCollapsed, setNavsCollapsed] = React.useState({
+    safe: !shouldSafeAddressesExpanded,
+    watch: !shouldWatchAddressesExpanded,
+  });
+
+  const changeCollapsed = useCallback(
+    (type: keyof typeof navsCollapsed, nextCollapsed: boolean) => {
+      if (type === 'safe') {
+        setNavsCollapsed(prev => ({ ...prev, safe: nextCollapsed }));
+      } else {
+        setNavsCollapsed(prev => ({ ...prev, watch: nextCollapsed }));
+      }
+      scrollToBottom();
+    },
+    [scrollToBottom],
+  );
+
+  useEffect(() => {
+    if (shouldSafeAddressesExpanded) changeCollapsed('safe', false);
+  }, [changeCollapsed, shouldSafeAddressesExpanded]);
+  useEffect(() => {
+    if (shouldWatchAddressesExpanded) changeCollapsed('watch', false);
+  }, [changeCollapsed, shouldWatchAddressesExpanded]);
 
   const switchSceneAction = useCallback(
     (account: Account | null) => {
@@ -194,13 +214,12 @@ AccountSwitcherAopProps<{
             <View style={[styles.section, { marginTop: 18 }]}>
               <SectionCollapsableNav
                 title="Imported Safe Addresses"
-                isCollapsed={safeAddressNavCollapsed}
+                isCollapsed={navsCollapsed.safe}
                 onCollapsedChange={nextVal => {
-                  setSafeAddressNavCollapsed(nextVal);
-                  scrollToBottom();
+                  changeCollapsed('safe', nextVal);
                 }}
               />
-              {!safeAddressNavCollapsed && (
+              {!navsCollapsed.safe && (
                 <View style={styles.addressListContainer}>
                   {safeAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
@@ -227,13 +246,12 @@ AccountSwitcherAopProps<{
             <View style={[styles.section, { marginTop: 18 }]}>
               <SectionCollapsableNav
                 title="Imported Watch-only Addresses"
-                isCollapsed={watchAddressNavCollapsed}
+                isCollapsed={navsCollapsed.watch}
                 onCollapsedChange={nextVal => {
-                  setWatchAddressNavCollapsed(nextVal);
-                  scrollToBottom();
+                  changeCollapsed('watch', nextVal);
                 }}
               />
-              {!watchAddressNavCollapsed && (
+              {!navsCollapsed.watch && (
                 <View style={styles.addressListContainer}>
                   {watchAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
