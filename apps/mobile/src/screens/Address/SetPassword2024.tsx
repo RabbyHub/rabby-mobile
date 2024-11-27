@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import {
   View,
@@ -146,6 +146,8 @@ function useSetupPasswordForm(
           const success = await updatePassword();
           if (success) {
             toast.success('Setup Password Successfully');
+          } else {
+            return; // error to reset password
           }
           if (isFirstImportPassword) {
             await confirmCB?.();

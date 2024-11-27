@@ -50,6 +50,13 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
       }
 
       try {
+        if (delaySetPassword) {
+          const res = await confirmPassword();
+          if (!res) {
+            return; // error set password
+          }
+        }
+
         const filename = await saveMnemonicToCloud({
           mnemonic: seedPhrase,
           password,
@@ -60,10 +67,6 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         toast.success('Backup Successful');
 
         onDone();
-        if (delaySetPassword) {
-          await confirmPassword();
-        }
-
         const mnemonics = seedPhrase;
         const passphrase = '';
         await addKeyringAndactiveAndPersistAccounts(

@@ -337,10 +337,16 @@ export const SeedPhrase: React.FC<Props> = ({
       });
       try {
         await new Promise(resolve => setTimeout(resolve, 1));
-        onConfirm?.();
         if (delaySetPassword) {
-          await confirmPassword();
+          const res = await confirmPassword();
+          if (!res) {
+            // error set password
+            toastHide();
+            setLoading(false);
+            return;
+          }
         }
+        onConfirm?.();
         await addKeyringAndactiveAndPersistAccounts(
           mnemonics,
           passphrase,

@@ -234,6 +234,26 @@ export class TransactionHistoryService {
     };
   }
 
+  getPendingsAddresses(addresses: string[]): {
+    pendings: TransactionGroup[];
+    pendingsLength: number;
+  } {
+    let pendings: TransactionGroup[] = [];
+
+    for (let i = 0; i < addresses.length; i++) {
+      const addr = addresses[i].toLowerCase();
+      const groups = this.getTransactionGroups({
+        address: addr,
+      });
+
+      pendings = pendings.concat(groups.filter(item => item.isPending));
+    }
+    return {
+      pendings,
+      pendingsLength: pendings.length,
+    };
+  }
+
   addTx(tx: TransactionHistoryItem) {
     if (
       this.store.transactions.find(

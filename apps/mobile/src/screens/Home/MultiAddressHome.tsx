@@ -16,6 +16,7 @@ import {
   RefreshControl,
   ScrollView,
 } from 'react-native';
+import { trigger } from 'react-native-haptic-feedback';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -50,6 +51,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Skeleton } from '@rneui/base';
+import { transactionHistoryService } from '@/core/services';
+import { eventBus, EVENTS } from '@/utils/events';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const MENU_ARR = [
   {
@@ -97,6 +101,7 @@ const MENU_ARR = [
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
+  const { safeOffHeader, safeTop } = useSafeSizes();
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -152,9 +157,8 @@ function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const [pendingTxCount, setPendingTxCount] = useState(0);
 
-  // todo  fetch pending tx list
-  const pendingTxCount = 0;
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -182,15 +186,32 @@ function MultiAddressHome(): JSX.Element {
       accountsNoUnique: true, // balanceAccounts has filter same address accounts
     });
 
+  const fetchHistory = useCallback(() => {
+    const addresses = balanceAccounts.map(i => i.address);
+    const { pendingsLength, pendings } =
+      transactionHistoryService.getPendingsAddresses(addresses);
+    console.log('fetchHistory :', balanceAccounts, pendingsLength, pendings);
+    setPendingTxCount(pendingsLength);
+  }, [balanceAccounts]);
+
+  useEffect(() => {
+    eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
+    };
+  }, [fetchHistory]);
+
   useFocusEffect(
     useCallback(() => {
       triggerUpdate();
-    }, [triggerUpdate]),
+      fetchHistory();
+    }, [triggerUpdate, fetchHistory]),
   );
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
-  }, [triggerUpdate]);
+    fetchHistory();
+  }, [triggerUpdate, fetchHistory]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -210,6 +231,11 @@ function MultiAddressHome(): JSX.Element {
 
   const handleClickMenu = useCallback(
     (title: MultiHomeFeatTitle) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+
       switch (title) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
@@ -345,6 +371,10 @@ function MultiAddressHome(): JSX.Element {
               <TouchableOpacity
                 style={styles.accountBg}
                 onPress={() => {
+                  trigger('impactLight', {
+                    enableVibrateFallback: true,
+                    ignoreAndroidSystemSettings: false,
+                  });
                   navigation.dispatch(
                     StackActions.push(RootNames.StackAddress, {
                       screen: RootNames.AddressList,
@@ -362,7 +392,9 @@ function MultiAddressHome(): JSX.Element {
                 {t('page.nextComponent.multiAddressHome.services')}
               </Text>
               {Boolean(pendingTxCount) && (
-                <View style={styles.pendingContainer}>
+                <TouchableOpacity
+                  style={styles.pendingContainer}
+                  onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
                   <Animated.View
                     style={{
                       transform: [{ rotate: spin }],
@@ -373,7 +405,7 @@ function MultiAddressHome(): JSX.Element {
                     'page.bridge.Pending',
                   )}`}</Text>
                   <RcIconOrangeArrow />
-                </View>
+                </TouchableOpacity>
               )}
             </View>
             <View style={[styles.grid]}>
@@ -398,7 +430,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   paddingContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     flex: 1,
     flexGrow: 1,
   },
@@ -423,6 +455,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 4,
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
   },
@@ -436,6 +469,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   balanceBox: {
+    paddingHorizontal: 4,
     marginTop: 10,
     marginBottom: 40,
     flexDirection: 'row',
@@ -476,6 +510,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 4,
     marginHorizontal: 4,
     marginVertical: 12,
   },
@@ -499,7 +534,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderRadius: 8,
-    gap: 8,
+    gap: 12,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
@@ -510,7 +545,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     width: '48%',
     minWidth: 0,
-    borderRadius: 12,
+    borderRadius: 18,
     flexShrink: 0,
     padding: 20,
     display: 'flex',
