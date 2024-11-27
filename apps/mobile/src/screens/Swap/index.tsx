@@ -483,16 +483,18 @@ const Swap = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.inputContainer}>
-            <TextInput
-              value={payAmount}
-              onChangeText={handleAmountChange}
-              keyboardType="numeric"
-              inputMode="decimal"
-              placeholder="0"
-              numberOfLines={1}
-              style={styles.input}
-              placeholderTextColor={colors2024['neutral-foot']}
-            />
+            <View style={styles.inputWrapper}>
+              <TextInput
+                value={payAmount}
+                onChangeText={handleAmountChange}
+                keyboardType="numeric"
+                inputMode="decimal"
+                placeholder="0"
+                numberOfLines={1}
+                style={styles.input}
+                placeholderTextColor={colors2024['neutral-foot']}
+              />
+            </View>
             <Text style={styles.inputUsdValue}>
               {payAmount
                 ? `≈ ${formatUsdValue(
@@ -500,7 +502,7 @@ const Swap = () => {
                       .times(payToken?.price || 0)
                       .toString(10),
                   )}`
-                : ''}
+                : '≈$0'}
             </Text>
           </View>
           {quoteLoading &&
@@ -760,25 +762,36 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputContainer: {
     flexDirection: 'column',
     height: 98,
+    paddingLeft: 13,
+    paddingTop: 4,
+    paddingBottom: 16,
     borderRadius: 30,
-    paddingHorizontal: 13,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
     backgroundColor: colors2024['neutral-bg-2'],
   },
+  inputWrapper: {
+    height: 60,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 0,
+  },
   input: {
-    paddingRight: 10,
-    fontSize: 20,
-    fontWeight: '600',
-    position: 'relative',
-    height: 36,
     flex: 1,
+    fontSize: 28,
+    lineHeight: 36,
+    paddingVertical: 0,
+    paddingBottom: 0,
+    textAlignVertical: 'center',
+    justifyContent: 'center',
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-    backgroundColor: 'transparent',
   },
   inputUsdValue: {
     fontSize: 14,
+    lineHeight: 18,
+    height: 18,
     fontWeight: '400',
-    marginTop: 12,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-info'],
   },
