@@ -106,26 +106,18 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   });
 
   useEffect(() => {
-    let animation: ReturnType<typeof Animated.loop>;
-
     if (loading) {
-      animation = Animated.loop(
+      Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
           duration: 2000,
           easing: Easing.linear,
           useNativeDriver: true,
         }),
-      );
-      animation.start();
+      ).start();
     } else {
       spinValue.resetAnimation();
-      animation?.stop();
     }
-
-    return () => {
-      animation?.stop();
-    };
   }, [loading, spinValue]);
 
   return (
