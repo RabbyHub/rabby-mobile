@@ -60,11 +60,13 @@ export type OpenedDappItem = {
 };
 const DAPPS_VIEW_LIMIT = {
   maxCount: 3,
-  expireDuration: 86400 * 1e3 * 3,
+  // 30days
+  expireDuration: 3 * 86400 * 1e3,
 };
 const DAPPS_VIEW_LIMIT_SHORT = {
   maxCount: 3,
-  expireDuration: 600 * 1e3,
+  // 20mins
+  expireDuration: 20 * 60 * 1e3,
 };
 const dappsViewConfigAtom = atom({
   maxCount: DAPPS_VIEW_LIMIT.maxCount,
