@@ -52,7 +52,9 @@ function HomeScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer style={styles.rootScreenContainer}>
+    <NormalScreenContainer
+      overwriteStyle={styles.overwriteContainer}
+      style={styles.rootScreenContainer}>
       {/* <ScreenSpecificStatusBar screenName={RootNames.Home} /> */}
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
@@ -66,7 +68,10 @@ function HomeScreen(): JSX.Element {
 
 HomeScreen.HeaderArea = HeaderArea;
 
-const getStyles = createGetStyles2024(() => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  overwriteContainer: {
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
   rootScreenContainer: {
     paddingHorizontal: 16,
   },
