@@ -179,6 +179,7 @@ function MultiAddressHome(): JSX.Element {
   const { balanceAccounts, triggerUpdate, balanceLoading, accountsLength } =
     useAccountsBalance({
       cacheTime: 5 * 60 * 1000, // 5 minutes
+      accountsNoUnique: true, // balanceAccounts has filter same address accounts
     });
 
   useFocusEffect(

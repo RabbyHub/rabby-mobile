@@ -11,10 +11,15 @@ interface balanceAccountType {
 }
 
 const balanceAtom = atom<balanceAccountType[]>([]);
+const lengthAtom = atom<number>(0);
 
-export default function useAccountsBalance(opts?: { cacheTime?: number }) {
-  const { cacheTime = 10 * 60 * 1000 } = opts || {};
+export default function useAccountsBalance(opts?: {
+  cacheTime?: number;
+  accountsNoUnique?: boolean;
+}) {
+  const { cacheTime = 10 * 60 * 1000, accountsNoUnique = true } = opts || {};
   const [balanceAccounts, setBalanceAccounts] = useAtom(balanceAtom);
+  const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const lastTimeStamps = useRef<number>(0);
 
@@ -46,7 +51,15 @@ export default function useAccountsBalance(opts?: { cacheTime?: number }) {
         )
         .map(a => a.address.toLowerCase());
 
-      const accountPromises = formatList.map(async account => {
+      setAccountsLength(formatList.length);
+
+      const uniqueList = accountsNoUnique
+        ? formatList.filter(
+            (value, index, self) => self.indexOf(value) === index,
+          )
+        : formatList;
+
+      const accountPromises = uniqueList.map(async account => {
         if (fetchType === 'from_cache') {
           const cacheData = preferenceService.getAddressBalance(account);
           balancesArr.push({
@@ -97,7 +110,7 @@ export default function useAccountsBalance(opts?: { cacheTime?: number }) {
 
   return {
     balanceAccounts,
-    accountsLength: balanceAccounts.length,
+    accountsLength, // maybe has some same address with other type
     triggerUpdate,
     balanceLoading,
   };
