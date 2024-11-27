@@ -99,7 +99,7 @@ export const ImportSuccessScreen2024 = () => {
     importAddresses.forEach(item => {
       contactService.setAlias({
         address: item.address,
-        alias: item.aliasName,
+        alias: item.aliasName || ellipsisAddress(item.address), // for empty inputText
       });
     });
     Keyboard.dismiss();
