@@ -47,14 +47,22 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { ChainInfo2024 } from './components/ChainInfo2024';
+import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 
-function SendScreen(): JSX.Element {
-  useLastUsedAccountInScreen();
+function SendScreen({
+  isForMultipleAdderss = false,
+}: PropsForAccountSwitchScreen): JSX.Element {
+  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
   const navigation = useNavigation();
   const { styles } = useTheme2024({ getStyle });
 
   const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Send)?.params,
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiSend : RootNames.Send),
+      )?.params,
   ) as
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
     | { safeInfo: { nonce: number; chainId: number } }
@@ -377,7 +385,9 @@ function SendScreen(): JSX.Element {
         },
       }}>
       <NormalScreenContainer2024 type="bg1">
-        <AccountSwitcherModal forScene="Send" inScreen />
+        {isForMultipleAdderss && (
+          <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+        )}
         <TouchableWithoutFeedback
           onPress={() => {
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
@@ -409,6 +419,15 @@ function SendScreen(): JSX.Element {
     </SendTokenInternalContextProvider>
   );
 }
+
+SendScreen.ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof SendScreen>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  return <SendScreen {...props} isForMultipleAdderss />;
+};
 
 const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({

@@ -13,10 +13,11 @@ import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 
 const AccountSwitcherInfos = {
-  Send: makeSceneAccount(),
+  MakeTransactionAbout: makeSceneAccount(),
+  // Send: makeSceneAccount(),
   SendNFT: makeSceneAccount(),
-  Swap: makeSceneAccount(),
-  Bridge: makeSceneAccount(),
+  // Swap: makeSceneAccount(),
+  // Bridge: makeSceneAccount(),
 
   History: makeSceneAccount(),
   MultiHistory: makeSceneAccount(),
@@ -27,6 +28,10 @@ const AccountSwitcherInfos = {
 
   '@ActiveDappWebViewModal': makeSceneAccount(),
 };
+
+export type PropsForAccountSwitchScreen<T extends void | object = void> = {
+  isForMultipleAdderss?: boolean;
+} & (T extends void ? {} : T);
 
 export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 

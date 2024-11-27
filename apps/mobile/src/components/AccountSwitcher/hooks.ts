@@ -25,10 +25,11 @@ type CustomModalScene = Exclude<AccountSwitcherScene, 'Receive' | 'GasAccount'>;
 const DefaultStates: {
   [key in CustomModalScene]?: AccountSwitcherState;
 } = {
-  Send: makeDefaultState(),
+  MakeTransactionAbout: makeDefaultState(),
+  // Send: makeDefaultState(),
   SendNFT: makeDefaultState(),
-  Swap: makeDefaultState(),
-  Bridge: makeDefaultState(),
+  // Swap: makeDefaultState(),
+  // Bridge: makeDefaultState(),
 
   History: makeDefaultState(),
   MultiHistory: makeDefaultState(),

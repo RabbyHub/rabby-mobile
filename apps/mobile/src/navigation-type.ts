@@ -152,15 +152,18 @@ export type TransactionNavigatorParamList = {
   [RootNames.MultiAddressHistory]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
+  [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;
     collectionName?: string;
   };
   [RootNames.Swap]?: {};
+  [RootNames.MultiSwap]?: {};
   [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.Bridge]?: {};
+  // [RootNames.MultiBridge]?: {};
   [RootNames.GasAccount]?: {};
 };
 

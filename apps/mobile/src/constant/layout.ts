@@ -85,9 +85,12 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
+  MultiSendNFT: 'MultiSendNFT',
   Receive: 'Receive',
   Swap: 'Swap',
+  MultiSwap: 'MultiSwap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
   /** @deprecated */
@@ -95,6 +98,7 @@ export const RootNames = {
   HistoryFilterScam: 'HistoryFilterScam',
   MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
+  // MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',

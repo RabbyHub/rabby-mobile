@@ -20,9 +20,11 @@ import { useTranslation } from 'react-i18next';
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
   forScene,
+  disableSwitch = false,
 }: RNViewProps &
   AccountSwitcherAopProps<{
     titleText?: React.ReactNode;
+    disableSwitch?: boolean;
   }>) {
   const { colors2024, styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -50,10 +52,10 @@ export function ScreenHeaderAccountSwitcher({
     });
   }, [finalSceneCurrentAccount, forScene, switchSceneCurrentAccount]);
 
-  const needShowPicker = !!myAddresses.length;
+  const needShowAllAccounts = !!myAddresses.length;
   if (!isSceneUsingAllAccounts && !finalSceneCurrentAccount?.address) {
     return titleTextNode;
-  } else if (isSceneUsingAllAccounts && !needShowPicker) {
+  } else if (isSceneUsingAllAccounts && !needShowAllAccounts) {
     return titleTextNode;
   }
 
@@ -62,6 +64,7 @@ export function ScreenHeaderAccountSwitcher({
   return (
     <TouchableView
       style={styles.container}
+      disabled={disableSwitch}
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
@@ -72,84 +75,28 @@ export function ScreenHeaderAccountSwitcher({
       {titleTextNode}
       <View style={styles.addressRow}>
         {!isSceneUsingAllAccounts
-          ? !!finalSceneCurrentAccount?.address && (
+          ? !!finalSceneCurrentAccount && (
               <Text style={styles.address}>
-                {ellipsisAddress(finalSceneCurrentAccount?.address)}
+                {finalSceneCurrentAccount.aliasName ||
+                  ellipsisAddress(finalSceneCurrentAccount?.address)}
               </Text>
             )
-          : needShowPicker && (
+          : needShowAllAccounts && (
               <Text style={styles.address}>
                 {t('component.accountSwitcher.screenHeaderSubTitle', {
                   count: myAddresses.length,
                 })}
               </Text>
             )}
-        <IconCom
-          style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
-          width={18}
-          height={18}
-          color={colors2024['neutral-bg-4']}
-        />
-      </View>
-    </TouchableView>
-  );
-}
-
-/** @deprecated */
-export function ScreenHeaderAccountPicker({
-  titleText = '',
-  forScene,
-}: RNViewProps &
-  AccountSwitcherAopProps<{
-    titleText?: React.ReactNode;
-  }>) {
-  const { colors2024, styles } = useTheme2024({ getStyle });
-
-  const { isVisible: isOpen, toggleSceneVisible } =
-    useAccountSceneVisible(forScene);
-  const { totalCountOfAccount, myAddresses } = useSceneAccountInfo({
-    forScene,
-  });
-  const { preFetchData } = useSwitchAccountBeforeEnterScene();
-
-  const titleTextNode = useMemo(() => {
-    return typeof titleText === 'string' ? (
-      <Text style={styles.titleText}>{titleText}</Text>
-    ) : (
-      titleText
-    );
-  }, [titleText, styles]);
-
-  const needShowPicker = totalCountOfAccount > 1 && !!myAddresses.length;
-  if (!needShowPicker) {
-    return titleTextNode;
-  }
-
-  return (
-    <TouchableView
-      style={styles.container}
-      onPress={() => {
-        const nextOpen = !isOpen;
-        toggleSceneVisible(forScene, nextOpen);
-        if (nextOpen) {
-          preFetchData();
-        }
-      }}>
-      {titleTextNode}
-      {needShowPicker && (
-        <View style={styles.addressRow}>
-          <Text style={styles.address}>
-            {Math.max(myAddresses.length, 0)} addresses
-          </Text>
-
-          <RcCaretDownCircleCC
+        {!disableSwitch && (
+          <IconCom
             style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
             width={18}
             height={18}
             color={colors2024['neutral-bg-4']}
           />
-        </View>
-      )}
+        )}
+      </View>
     </TouchableView>
   );
 }

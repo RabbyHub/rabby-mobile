@@ -56,9 +56,10 @@ import {
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
+import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 
-const Swap = () => {
-  useLastUsedAccountInScreen();
+const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
+  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { t } = useTranslation();
 
   const { colors2024, styles } = useTheme2024({ getStyle });
@@ -160,7 +161,12 @@ const Swap = () => {
   );
 
   const navState = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Swap)?.params,
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
+      )?.params,
   ) as
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
     | undefined;
@@ -384,7 +390,9 @@ const Swap = () => {
 
   return (
     <NormalScreenContainer2024 type="bg1">
-      <AccountSwitcherModal forScene="Swap" inScreen />
+      {isForMultipleAdderss && (
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      )}
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.container}
@@ -682,6 +690,15 @@ const Swap = () => {
       />
     </NormalScreenContainer2024>
   );
+};
+
+Swap.ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof Swap>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  return <Swap {...props} isForMultipleAdderss />;
 };
 
 Swap.SwapHeader = SwapHeader;

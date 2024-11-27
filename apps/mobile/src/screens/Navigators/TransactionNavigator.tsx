@@ -56,7 +56,23 @@ export default function TransactionNavigator() {
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
-                forScene="Send"
+                forScene="MakeTransactionAbout"
+                titleText={ctx.children}
+                disableSwitch
+              />
+            );
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.MultiSend}
+        component={SendScreen.ForMultipleAddress}
+        options={mergeScreenOptions({
+          title: 'Send',
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MakeTransactionAbout"
                 titleText={ctx.children}
               />
             );
@@ -139,7 +155,24 @@ export default function TransactionNavigator() {
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
-                forScene="Swap"
+                forScene="MakeTransactionAbout"
+                titleText={ctx.children}
+                disableSwitch
+              />
+            );
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.MultiSwap}
+        component={Swap.ForMultipleAddress}
+        options={mergeScreenOptions({
+          title: 'Swap',
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MakeTransactionAbout"
                 titleText={ctx.children}
               />
             );
@@ -168,13 +201,31 @@ export default function TransactionNavigator() {
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
-                forScene="Bridge"
+                forScene="MakeTransactionAbout"
                 titleText={ctx.children}
+                disableSwitch
               />
             );
           },
         })}
       />
+
+      {/* <TransactionStack.Screen
+        name={RootNames.MultiBridge}
+        component={Bridge.ForMultipleAddress}
+        options={mergeScreenOptions({
+          title: 'Bridge',
+          ...headerPresets.withBgCard2,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MakeTransactionAbout"
+                titleText={ctx.children}
+              />
+            );
+          },
+        })}
+      /> */}
 
       <TransactionStack.Screen
         name={RootNames.GasAccount}

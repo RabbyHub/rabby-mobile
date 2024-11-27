@@ -50,6 +50,7 @@ import {
 import { useApprovalAlert } from '../hooks/approvals';
 import { CurveBottomSheetModal } from './CurveBottomSheet';
 import { trigger } from 'react-native-haptic-feedback';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -163,10 +164,13 @@ export const HomeTopArea = () => {
     () => previousAddr !== currentAccount?.address,
   );
 
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const bridgeItemAction = {
     title: 'Bridge',
     Icon: RcIconBridge,
     onPress: () => {
+      switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.Bridge,
       });
@@ -185,6 +189,7 @@ export const HomeTopArea = () => {
       title: 'Send',
       Icon: RcIconSend,
       onPress: () => {
+        switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Send,
           params: {
@@ -219,6 +224,7 @@ export const HomeTopArea = () => {
       title: 'Swap',
       Icon: RcIconSwap,
       onPress: () => {
+        switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Swap,
         });

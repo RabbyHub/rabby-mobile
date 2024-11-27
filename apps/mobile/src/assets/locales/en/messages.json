@@ -2380,8 +2380,8 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle": "1 address",
-      "screenHeaderSubTitle_plural": "{{count}} addresses"
+      "screenHeaderSubTitle_one": "1 address",
+      "screenHeaderSubTitle_other": "{{count}} addresses"
     },
     "AccountSearchInput": {
       "noMatchAddress": "No match address",

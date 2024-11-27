@@ -240,7 +240,7 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
+              screen: RootNames.MultiSend,
               params: {},
             }),
           );
@@ -276,7 +276,7 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Swap,
+              screen: RootNames.MultiSwap,
               params: {},
             }),
           );

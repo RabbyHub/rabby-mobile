@@ -150,7 +150,7 @@ const getStyles = createGetStyles(colors => ({
   },
 }));
 
-export const BridgeContent = () => {
+export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
@@ -440,7 +440,9 @@ export const BridgeContent = () => {
 
   return (
     <NormalScreenContainer>
-      <AccountSwitcherModal forScene="Bridge" inScreen />
+      {isForMultipleAdderss && (
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      )}
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.container}
