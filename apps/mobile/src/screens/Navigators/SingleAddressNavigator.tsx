@@ -3,13 +3,13 @@ import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { RootNames } from '@/constant/layout';
-import SingleAddressHome from '../SingleAddreesHome/Home';
+import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RightMore } from '../SingleAddreesHome/RightMore';
+import { RightMore } from '../Home/RightMore';
 const SingleAddressStack = createCustomNativeStackNavigator();
 
 export function SingleAddressNavigator() {
-  const { colors2024, colors } = useTheme2024();
+  const { colors2024 } = useTheme2024();
   const { mergeScreenOptions } = useStackScreenConfig();
 
   if (__DEV__) {
