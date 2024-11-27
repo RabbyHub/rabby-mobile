@@ -608,6 +608,7 @@ class ProviderController extends BaseController {
             : dappService.getDapp(origin),
           isPending: true,
           $ctx: options?.data?.$ctx,
+          keyringType: currentAccount.type,
         });
         transactionHistoryService.removeSigningTx(signingTxId!);
         if (hash) {

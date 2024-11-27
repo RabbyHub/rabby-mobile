@@ -97,6 +97,9 @@ export default function TransactionNavigator() {
               />
             );
           },
+          headerStyle: {
+            backgroundColor: colors2024?.['neutral-bg-1'],
+          },
         }}
       />
       <TransactionStack.Screen
@@ -114,7 +117,7 @@ export default function TransactionNavigator() {
             color: colors['neutral-title-1'],
           },
           headerStyle: {
-            backgroundColor: colors?.['neutral-bg-2'],
+            backgroundColor: colors2024?.['neutral-bg-1'],
           },
         })}
       />

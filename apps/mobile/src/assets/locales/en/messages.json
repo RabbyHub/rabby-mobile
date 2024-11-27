@@ -664,7 +664,7 @@
       "tokenInfoPrice": "Price",
       "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
       "whitelistAlert__notWhitelisted_tip": "The address is not whitelisted.",
-      "whitelistAlert__notWhitelisted": "The address is not whitelisted. I have read and agree to the The address is not whitelisted.",
+      "whitelistAlert__notWhitelisted": "The address is not whitelisted. I agree to grant temporary permission to transfer.",
       "whitelistAlert__temporaryGranted": "Temporary permission granted",
       "whitelistAlert__whitelisted": "The address is whitelisted",
       "balanceWarn": {

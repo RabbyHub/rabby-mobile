@@ -22,6 +22,7 @@ import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
+import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -56,6 +57,7 @@ export interface TransactionHistoryItem {
   };
 
   $ctx?: any;
+  keyringType?: KeyringTypeName;
 }
 
 export interface TransactionSigningItem {
@@ -664,5 +666,9 @@ export class TransactionGroup {
 
   get createdAt() {
     return minBy(this.txs, 'createdAt')?.createdAt || 0;
+  }
+
+  get keyringType() {
+    return this.maxGasTx.keyringType;
   }
 }

@@ -350,14 +350,14 @@ const getStyles = createGetStyles(colors => {
       // }),
     },
     confirmModalButtonTitleViewStyle: {
-      flex: undefined,
+      flex: 0,
       width: '100%',
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'row',
     },
     confirmModalButtonTextStyle: {
-      flex: undefined,
+      flex: 0,
     },
   };
 });
