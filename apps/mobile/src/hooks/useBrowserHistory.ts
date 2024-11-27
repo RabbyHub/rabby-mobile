@@ -9,8 +9,11 @@ import { atom, useAtom } from 'jotai';
 
 const browserHistoryAtom = atom<BrowserHistoryItem[]>([]);
 
-export function useBrowserHistory() {
-  const [dapps] = useAtom(dappsAtom);
+export function useBrowserHistory({
+  dapps,
+}: {
+  dapps: Record<string, DappInfo>;
+}) {
   const [historyStore, setHistoryStore] = useAtom(browserHistoryAtom);
 
   const getBrowserHistoryList = useMemoizedFn(() => {

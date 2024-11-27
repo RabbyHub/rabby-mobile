@@ -23,7 +23,7 @@ export const useDappsHome = () => {
     getBrowserHistoryList,
     removeBrowserHistory,
     setBrowserHistory,
-  } = useBrowserHistory();
+  } = useBrowserHistory({ dapps });
 
   const favoriteApps = useMemo(() => {
     return sortBy(

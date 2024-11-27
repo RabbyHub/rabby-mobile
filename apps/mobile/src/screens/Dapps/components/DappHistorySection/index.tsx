@@ -86,6 +86,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
   },
 }));

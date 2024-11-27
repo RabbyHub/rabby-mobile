@@ -36,7 +36,8 @@ export function useSetupServiceStub() {
   const [, setCurrentAccount] = useAtom(currentAccountAtom);
   const [, setChainList] = useAtom(chainListAtom);
   const { getAllRPC } = useCustomRPC();
-  const { getBrowserHistoryList } = useBrowserHistory();
+  const [dapps] = useAtom(dappsAtom);
+  const { getBrowserHistoryList } = useBrowserHistory({ dapps });
 
   useEffect(() => {
     const disposes: Function[] = [];
