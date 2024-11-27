@@ -4,9 +4,13 @@ import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
 import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import {
+  sortAccountList,
+  useSortAddressList,
+} from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
+import cloneDeep from 'lodash/cloneDeep';
 
 const AccountSwitcherInfos = {
   Send: makeSceneAccount(),
@@ -72,6 +76,18 @@ export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
   '@SceneAccounts',
   AccountSwitcherInfos,
 );
+
+export function useResetSceneAccountInfo() {
+  const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
+
+  const resetSceneAccountInfo = useCallback(() => {
+    setSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
+  }, [setSceneAccountInfo]);
+
+  return {
+    resetSceneAccountInfo,
+  };
+}
 
 export function useSwitchAccountBeforeEnterScene() {
   const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
@@ -279,9 +295,10 @@ export function useSceneAccountInfo(options: {
       // sceneCurrentAccountIndexInMyAddresses: -1,
       finalSceneCurrentAccount: null as null | SceneAccount,
       myAddresses: [] as SceneAccount[],
-      // myRestAddresses: [] as SceneAccount[],
       watchAddresses: [] as SceneAccount[],
+      shouldWatchAddressesExpanded: false,
       safeAddresses: [] as SceneAccount[],
+      shouldSafeAddressesExpanded: false,
     };
 
     for (const origAccount of accounts.values()) {
@@ -303,23 +320,35 @@ export function useSceneAccountInfo(options: {
       }
     }
 
+    result.myAddresses = sortAccountList(result.myAddresses, {
+      highlightedAddresses: pinAddresses,
+    });
     if (
       !result.isSceneUsingAllAccounts &&
       !result.finalSceneCurrentAccount &&
       accounts.length
     ) {
-      result.finalSceneCurrentAccount = accounts[0];
+      result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
+    }
+    if (result.finalSceneCurrentAccount) {
+      result.shouldSafeAddressesExpanded = !!result.safeAddresses.find(
+        account => isSameAccount(account, result.finalSceneCurrentAccount),
+      );
+      if (!result.shouldSafeAddressesExpanded) {
+        result.shouldWatchAddressesExpanded = !!result.watchAddresses.find(
+          account => isSameAccount(account, result.finalSceneCurrentAccount),
+        );
+      }
     }
 
     return result;
   }, [
     accounts,
+    pinAddresses,
     isSceneSupportAllAccounts,
     isSceneUsingAllAccounts,
     sceneCurrentAccount,
   ]);
-
-  computed.myAddresses = useSortAddressList(computed.myAddresses);
 
   return {
     ...computed,
