@@ -242,7 +242,7 @@ const getStyle = createGetStyles2024(ctx => ({
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,
     shadowOpacity: 0.1,
-    elevation: 4,
+    // elevation: 4,
   },
   title: {
     fontSize: 20,
