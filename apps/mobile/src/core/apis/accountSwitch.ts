@@ -1,10 +1,6 @@
 import { preferenceService } from '../services';
 import { Account } from '../services/preference';
 
-export function setLastUsedAccount(account: Account) {
-  preferenceService.setLastUsedAccount(account);
-}
-
 export async function getLastUsedAccount() {
   return preferenceService.getLastUsedAccount();
 }
@@ -15,6 +11,10 @@ export async function enableSceneAccount(account?: Account) {
   }
 
   await preferenceService.activateLastUsedAccount();
+
+  return {
+    currentAccount: preferenceService.getCurrentAccount(),
+  };
 }
 
 export async function inactivateSceneAccount() {

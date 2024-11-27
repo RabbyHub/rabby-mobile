@@ -16,6 +16,7 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
+import useMount from 'react-use/lib/useMount';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -32,10 +33,15 @@ export function ScreenHeaderAccountSwitcher({
   const { isVisible: isOpen, toggleSceneVisible } =
     useAccountSceneVisible(forScene);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { isSceneUsingAllAccounts, finalSceneCurrentAccount, myAddresses } =
-    useSceneAccountInfo({
-      forScene,
-    });
+  const {
+    sceneSigingAccount,
+    isSceneUsingAllAccounts,
+    finalSceneCurrentAccount,
+    myAddresses,
+  } = useSceneAccountInfo({
+    forScene,
+  });
+
   const { preFetchData } = useSwitchAccountBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
@@ -46,11 +52,13 @@ export function ScreenHeaderAccountSwitcher({
     );
   }, [titleText, styles]);
 
-  useEffect(() => {
-    switchSceneCurrentAccount(forScene, finalSceneCurrentAccount, {
-      maybeReEntrant: true,
-    });
-  }, [finalSceneCurrentAccount, forScene, switchSceneCurrentAccount]);
+  useMount(() => {
+    if (!isSceneUsingAllAccounts) {
+      switchSceneCurrentAccount(forScene, finalSceneCurrentAccount, {
+        maybeReEntrant: true,
+      });
+    }
+  });
 
   const needShowAllAccounts = !!myAddresses.length;
   if (!isSceneUsingAllAccounts && !finalSceneCurrentAccount?.address) {
