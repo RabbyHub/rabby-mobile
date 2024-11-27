@@ -10,3 +10,9 @@ export enum MultiHomeFeatTitle {
   Ecosystem = 'Ecosystem',
   Points = 'Rabby Points',
 }
+
+export enum AccountPannelSectionTitle {
+  MyAddresses = 'My Addresses',
+  SafeAddresses = 'Safe Addresses',
+  WatchAddresses = 'Watch Addresses',
+}

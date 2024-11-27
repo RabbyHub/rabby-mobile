@@ -1,7 +1,9 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
   ScrollView,
+  FlatList,
   StyleProp,
   StyleSheet,
   Text,
@@ -23,6 +25,16 @@ import { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
+import { AccountPannelSectionTitle } from '@/constant/newStyle';
+
+interface CombineDataInterface {
+  title: AccountPannelSectionTitle;
+  data: ReturnType<typeof useSortAccountOnSelector>[
+    | 'myAddresses'
+    | 'safeAddresses'
+    | 'watchAddresses'];
+  type: string;
+}
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -276,7 +288,7 @@ const SectionCollapsableNav = function ({
   // }));
 
   return (
-    <TouchableView
+    <TouchableOpacity
       style={styles.sectionTitleContainer}
       onPress={() => {
         onCollapsedChange?.(!isCollapsed);
@@ -291,7 +303,7 @@ const SectionCollapsableNav = function ({
         height={18}
         color={colors2024['neutral-secondary']}
       />
-    </TouchableView>
+    </TouchableOpacity>
   );
 };
 
@@ -312,105 +324,155 @@ export function AccountsPanelInSheetModal({
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
-  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollViewRef = React.useRef<FlatList>(null);
   const scrollToBottom = useCallback(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, []);
 
-  const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] =
-    React.useState(true);
+  const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] = React.useState(
+    !isGasAccount,
+  );
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
-    React.useState(true);
+    React.useState(!isGasAccount);
+
+  // combine data for a entire Flatlist
+  const combinedData = [
+    {
+      title: AccountPannelSectionTitle.MyAddresses,
+      data: myAddresses,
+      type: 'myAddresses',
+    },
+    {
+      title: AccountPannelSectionTitle.SafeAddresses,
+      data: safeAddresses,
+      type: 'safeAddresses',
+    },
+    {
+      title: AccountPannelSectionTitle.WatchAddresses,
+      data: watchAddresses,
+      type: 'watchAddresses',
+    },
+  ] as CombineDataInterface[];
+
+  const ListHeaderComponent = useCallback(
+    (title: AccountPannelSectionTitle) => {
+      switch (title) {
+        case AccountPannelSectionTitle.MyAddresses:
+          return (
+            <>
+              {!isGasAccount && (
+                <Text style={styles.sectionTitle}>My Addresses</Text>
+              )}
+            </>
+          );
+        case AccountPannelSectionTitle.SafeAddresses:
+          return (
+            !!safeAddresses.length &&
+            !isGasAccount && (
+              <>
+                <View style={{ height: 18 }} />
+                <SectionCollapsableNav
+                  title="Imported Safe Addresses"
+                  isCollapsed={safeAddressNavCollapsed}
+                  onCollapsedChange={nextVal => {
+                    setSafeAddressNavCollapsed(nextVal);
+                    scrollToBottom();
+                  }}
+                />
+              </>
+            )
+          );
+
+        case AccountPannelSectionTitle.WatchAddresses:
+          return (
+            !!watchAddresses.length &&
+            !isGasAccount && (
+              <>
+                <View style={{ height: 18 }} />
+                <SectionCollapsableNav
+                  title="Imported Watch-only Addresses"
+                  isCollapsed={watchAddressNavCollapsed}
+                  onCollapsedChange={nextVal => {
+                    setWatchAddressNavCollapsed(nextVal);
+                    scrollToBottom();
+                  }}
+                />
+              </>
+            )
+          );
+
+        default:
+          break;
+      }
+    },
+    [
+      isGasAccount,
+      safeAddressNavCollapsed,
+      scrollToBottom,
+      styles.sectionTitle,
+      watchAddresses,
+      safeAddresses,
+      watchAddressNavCollapsed,
+    ],
+  );
+
+  const shouldShowDatalist = useCallback(
+    (title: AccountPannelSectionTitle) => {
+      switch (title) {
+        case AccountPannelSectionTitle.MyAddresses:
+          return true;
+        case AccountPannelSectionTitle.SafeAddresses:
+          return safeAddressNavCollapsed && !isGasAccount;
+        case AccountPannelSectionTitle.WatchAddresses:
+          return watchAddressNavCollapsed && !isGasAccount;
+        default:
+          return true;
+      }
+    },
+    [safeAddressNavCollapsed, watchAddressNavCollapsed, isGasAccount],
+  );
 
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
-        <ScrollView
-          ref={scrollViewRef}
+        <FlatList
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContentContainer}>
-          <View style={styles.section}>
-            {!isGasAccount && (
-              <Text style={styles.sectionTitle}>My Addresses</Text>
-            )}
-            <View style={styles.addressListContainer}>
-              {myAddresses.map((account, index) => {
-                const key = `account-${account.address}-${account.brandName}-${index}`;
-
-                return (
-                  <AddressItemInPanel
-                    key={key}
-                    addressItemProps={{ account }}
-                    isPinned={isPinnedAccount(account)}
-                    onPressAccount={onSelectAccount}
-                    showCopyAndQR={!isGasAccount}
-                    style={[index > 0 && styles.addressItemTopGap]}
-                  />
-                );
-              })}
-            </View>
-          </View>
-          {!!safeAddresses.length && (
-            <View style={[styles.section, { marginTop: 18 }]}>
-              <SectionCollapsableNav
-                title="Imported Safe Addresses"
-                isCollapsed={safeAddressNavCollapsed}
-                onCollapsedChange={nextVal => {
-                  setSafeAddressNavCollapsed(nextVal);
-                  scrollToBottom();
-                }}
-              />
-              {!safeAddressNavCollapsed && (
-                <View style={styles.addressListContainer}>
-                  {safeAddresses.map((account, index) => {
-                    const key = `account-${account.address}-${account.brandName}-${index}`;
-
-                    return (
-                      <AddressItemInPanel
-                        key={key}
-                        addressItemProps={{ account }}
-                        isPinned={false}
-                        showCopyAndQR
-                        onPressAccount={onSelectAccount}
-                        style={[index > 0 && styles.addressItemTopGap]}
-                      />
-                    );
-                  })}
-                </View>
+          data={combinedData}
+          ref={scrollViewRef}
+          // contentContainerStyle={styles.scrollViewContentContainer}
+          ListHeaderComponent={null}
+          renderItem={({
+            item: combinedItem,
+          }: {
+            item: CombineDataInterface;
+          }) => (
+            <View style={styles.section}>
+              {ListHeaderComponent(combinedItem.title)}
+              {shouldShowDatalist(combinedItem.title) && (
+                <FlatList
+                  data={combinedItem.data}
+                  style={styles.addressListContainer}
+                  renderItem={({ item, index }) => (
+                    <AddressItemInPanel
+                      key={`${item.address}-${item.type}-${item.brandName}-${index}`}
+                      addressItemProps={{ account: item }}
+                      isPinned={isPinnedAccount(item)}
+                      onPressAccount={onSelectAccount}
+                      showCopyAndQR={!isGasAccount}
+                      style={[index > 0 && styles.addressItemTopGap]}
+                    />
+                  )}
+                  keyExtractor={(account, index) =>
+                    `account-${account.address}-${account.brandName}-${index}`
+                  }
+                  ListFooterComponent={null}
+                />
               )}
             </View>
           )}
-          {!!watchAddresses.length && (
-            <View style={[styles.section, { marginTop: 18 }]}>
-              <SectionCollapsableNav
-                title="Imported Watch-only Addresses"
-                isCollapsed={watchAddressNavCollapsed}
-                onCollapsedChange={nextVal => {
-                  setWatchAddressNavCollapsed(nextVal);
-                  scrollToBottom();
-                }}
-              />
-              {!watchAddressNavCollapsed && (
-                <View style={styles.addressListContainer}>
-                  {watchAddresses.map((account, index) => {
-                    const key = `account-${account.address}-${account.brandName}-${index}`;
-
-                    return (
-                      <AddressItemInPanel
-                        key={key}
-                        addressItemProps={{ account }}
-                        isPinned={false}
-                        showCopyAndQR
-                        onPressAccount={onSelectAccount}
-                        style={[index > 0 && styles.addressItemTopGap]}
-                      />
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-          )}
-        </ScrollView>
+          keyExtractor={(item, index) => `${item.type}-${index}`}
+          ListFooterComponent={<View style={{ height: 20 + 40 }} />}
+        />
       </View>
     </View>
   );
@@ -428,8 +490,10 @@ const getPanelStyle = createGetStyles2024(ctx => {
     scrollViewContainer: {
       height: '100%',
       flexShrink: 1,
+      // ...makeDebugBorder('red'),
     },
     scrollView: {
+      // width: '100%',
       padding: 16,
     },
     scrollViewContentContainer: {
@@ -439,19 +503,22 @@ const getPanelStyle = createGetStyles2024(ctx => {
     },
     section: {
       flexDirection: 'column',
-      width: '100%',
+      // width: '100%',
+      // padding: 16,
       // ...makeDebugBorder('red'),
     },
     sectionTitleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      // paddingLeft: 4,
     },
     sectionTitle: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '500',
       lineHeight: 20,
+      paddingLeft: 4,
       color: ctx.colors2024['neutral-secondary'],
     },
     addressListContainer: {

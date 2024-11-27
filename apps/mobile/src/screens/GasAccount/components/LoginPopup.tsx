@@ -27,6 +27,7 @@ import { AccountsPanelInSheetModal } from '@/components/AccountSelector/Accounts
 import { Account } from '@/core/services/preference';
 import { apisAccountSwitch } from '@/core/apis';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
@@ -84,13 +85,17 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
         style={{ width: '100%', height: '100%' }}
         end={{ x: 0, y: 1 }}>
         <View style={styles.loginConfirmContainer}>
-          <Text style={styles.confirmTitle}>
-            {t('component.gasAccount.loginConfirmModal.title')}
-          </Text>
-          {/* <GasAccountCurrentAddress /> */}
-          <Text style={styles.confirmDescription}>
-            {t('component.gasAccount.loginConfirmModal.desc')}
-          </Text>
+          <BottomSheetHandlableView>
+            <View style={styles.handleView}>
+              <Text style={styles.confirmTitle}>
+                {t('component.gasAccount.loginConfirmModal.title')}
+              </Text>
+              {/* <GasAccountCurrentAddress /> */}
+              <Text style={styles.confirmDescription}>
+                {t('component.gasAccount.loginConfirmModal.desc')}
+              </Text>
+            </View>
+          </BottomSheetHandlableView>
 
           <AccountsPanelInSheetModal
             onSelectAccount={account => confirmAddress(account)}
@@ -245,6 +250,10 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 14,
     cursor: 'pointer',
     marginTop: 1,
+  },
+  handleView: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginConfirmContainer: {
     flex: 1,
