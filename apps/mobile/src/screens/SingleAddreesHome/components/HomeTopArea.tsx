@@ -606,7 +606,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: ctx.colors2024['neutral-title2'],
+    color: ctx.colors2024['neutral-title-2'],
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 17,

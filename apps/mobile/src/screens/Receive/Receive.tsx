@@ -241,7 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    color: colors2024['neutral-title1'],
+    color: colors2024['neutral-title-1'],
   },
   accountBox: {
     flexDirection: 'row',
