@@ -1,4 +1,4 @@
-import { findChain, isTestnet } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { useCallback, useMemo } from 'react';
@@ -12,6 +12,10 @@ const popups = {
     atom: atom(null as AbstractPortfolioToken | null),
     ref: React.createRef<BottomSheetModalMethods>(),
   },
+  tokenDetailPopupUseAccount: {
+    atom: atom(undefined as string | undefined),
+    ref: React.createRef<BottomSheetModalMethods>(),
+  },
   tokenDetailPopupOnSendToken: {
     atom: atom(null as AbstractPortfolioToken | null),
     ref: React.createRef<BottomSheetModalMethods>(),
@@ -21,6 +25,9 @@ const popups = {
 export function useGeneralTokenDetailSheetModal() {
   const [focusingToken, onFocusToken] = useAtom(
     popups.generalTokenDetailPopup.atom,
+  );
+  const [tokenDetailAddress, setTokenDetailAddress] = useAtom(
+    popups.tokenDetailPopupUseAccount.atom,
   );
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(
     popups.generalTokenDetailPopup.ref,
@@ -60,6 +67,8 @@ export function useGeneralTokenDetailSheetModal() {
     openTokenDetailPopup,
     cleanFocusingToken,
     isTestnetToken,
+    setTokenDetailAddress,
+    tokenDetailAddress,
   };
 }
 

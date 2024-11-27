@@ -295,6 +295,8 @@ const HistoryScreen = () => {
     sheetModalRef: tokenDetailModalRef,
     cleanFocusingToken,
     focusingToken,
+    tokenDetailAddress,
+    setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
   useLastUsedAccountInScreen();
 
@@ -308,11 +310,14 @@ const HistoryScreen = () => {
         token={focusingToken}
         onDismiss={() => {
           cleanFocusingToken({ noNeedCloseModal: true });
+          setTokenDetailAddress(undefined);
         }}
         onTriggerDismissFromInternal={ctx => {
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
+          setTokenDetailAddress(undefined);
         }}
+        address={tokenDetailAddress}
       />
     </NormalScreenContainer2024>
   );

@@ -12,7 +12,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
 type HistoryItemProps = {
-  data: TxDisplayItem | HistoryDisplayItem;
+  data: HistoryDisplayItem;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export const HistoryItem = React.memo(

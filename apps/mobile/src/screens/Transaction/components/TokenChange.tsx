@@ -19,6 +19,7 @@ import { numberWithCommasIsLtOne } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
+import { HistoryDisplayItem } from '../MultiAddressHistory';
 
 const TxChangeItem = ({
   item,
@@ -27,7 +28,7 @@ const TxChangeItem = ({
   isSend,
   canClickToken = true,
 }: {
-  data: TxHistoryItem;
+  data: HistoryDisplayItem;
   item: TxHistoryItem['sends'][0] | TxDisplayItem['receives'][0];
   tokenDict: /* TxDisplayItem['tokenDict'] */ Record<
     string,
@@ -83,6 +84,7 @@ const TxChangeItem = ({
           ? { token: token as NFTItem, isNft }
           : { token: token as TokenItem })}
         isMyOwn={!isSend}
+        address={data.address}
       />
     </View>
   );
@@ -93,7 +95,7 @@ export const TxChange = ({
   canClickToken,
   style,
 }: {
-  data: TxDisplayItem;
+  data: HistoryDisplayItem;
   tokenDict: TxDisplayItem['tokenDict'];
   canClickToken?: boolean;
 } & RNViewProps) => {

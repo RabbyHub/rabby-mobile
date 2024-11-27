@@ -25,7 +25,7 @@ import {
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { AbstractPortfolioToken } from '@/screens/home/types';
 import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
@@ -469,6 +469,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       data?: RedirectToType;
     }) => void;
     hideOperationButtons?: boolean;
+    address?: string;
   }
 >(
   (
@@ -479,12 +480,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       onTriggerDismissFromInternal,
       hideOperationButtons = false,
       isTestnet,
+      address,
     },
     ref,
   ) => {
     const { styles, colors } = useThemeStyles(getStyles);
     const { t } = useTranslation();
     const { currentAccount } = useCurrentAccount();
+    const finalAddress = address || currentAccount?.address;
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;
@@ -501,7 +504,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
     const getTokenAmount = React.useCallback(async () => {
       if (
-        !currentAccount?.address ||
+        !finalAddress ||
         !token ||
         /* token.amount !== undefined */ token.amount
       )
@@ -510,7 +513,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       setTokenLoad({ isLoading: true, token: null });
       try {
         const res = await openapi.getToken(
-          currentAccount.address,
+          finalAddress,
           token.chain,
           token._tokenId,
         );
@@ -520,7 +523,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       } finally {
         setTokenLoad(prev => ({ ...prev, isLoading: false }));
       }
-    }, [currentAccount?.address, token]);
+    }, [finalAddress, token]);
     const tokenWithAmount = useMemo(() => {
       if (!token) return null;
       const { token: tokenInfo } = tokenLoad;
@@ -612,7 +615,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
         try {
           const res: TxHistoryResult = await openapi.listTxHisotry({
-            id: currentAccount?.address,
+            id: finalAddress,
             chain_id: token?.chain,
             start_time: lastEarliestTime ?? undefined,
             page_count: PAGE_COUNT,

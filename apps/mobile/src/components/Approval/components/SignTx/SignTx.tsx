@@ -1036,7 +1036,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           : undefined,
       );
     } catch (error) {
-      console.error('gasLessTxCheck error', error);
       setCanUseGasLess(false);
       setGasLessConfig(undefined);
       setGasLessLoading(false);

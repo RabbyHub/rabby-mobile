@@ -137,11 +137,14 @@ export const HistoryList = ({
           i => i.nonce,
         )?.nonce === item.data.nonce;
       return (
-        <TransactionItem
-          data={item.data}
-          canCancel={canCancel}
-          onRefresh={onRefresh}
-        />
+        <>
+          {item.isFirst ? <AddressInfo address={item.data.address} /> : null}
+          <TransactionItem
+            data={item.data}
+            canCancel={canCancel}
+            onRefresh={onRefresh}
+          />
+        </>
       );
     }
   };
