@@ -1,4 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
+import * as ethUtil from 'ethereumjs-util';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
@@ -70,7 +71,27 @@ export const ImportPrivateKeyScreen2024 = () => {
       });
   }, [duplicateAddressModal, privateKey]);
 
+  const verfiyPrivateKey = React.useCallback(() => {
+    const privateKeyPrefix = ethUtil.stripHexPrefix(privateKey);
+    const buffer = Buffer.from(privateKeyPrefix, 'hex');
+    try {
+      if (!ethUtil.isValidPrivate(buffer)) {
+        setError(t('background.error.invalidPrivateKey'));
+        return false;
+      }
+      return true;
+    } catch {
+      setError(t('background.error.invalidPrivateKey'));
+      return false;
+    }
+  }, [privateKey, t]);
+
   const handleConfirm = React.useCallback(() => {
+    // verify private key for setPassword
+    if (!verfiyPrivateKey()) {
+      return;
+    }
+
     if (
       shouldRedirectToSetPasswordBefore2024({
         backScreen: RootNames.ImportSuccess2024,
@@ -81,7 +102,12 @@ export const ImportPrivateKeyScreen2024 = () => {
       return;
     }
     importPrivateKey();
-  }, [importPrivateKey, setConfirmCB, shouldRedirectToSetPasswordBefore2024]);
+  }, [
+    importPrivateKey,
+    setConfirmCB,
+    shouldRedirectToSetPasswordBefore2024,
+    verfiyPrivateKey,
+  ]);
 
   React.useEffect(() => {
     setError(undefined);
@@ -120,7 +146,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                 fieldErrorTextStyle={styles.error}
                 containerStyle={Object.assign(
                   {},
-                  !!error
+                  error
                     ? {}
                     : {
                         borderColor: 'transparent',

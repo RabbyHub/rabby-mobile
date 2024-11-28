@@ -1,6 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import { apiMnemonic } from '@/core/apis';
 import { navigate, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -215,7 +216,25 @@ export const ImportSeedPhraseScreen2024 = () => {
       });
   }, [duplicateAddressModal, mnemonics]);
 
+  const verfiyMnemonics = React.useCallback(() => {
+    try {
+      if (!HdKeyring.validateMnemonic(mnemonics)) {
+        setError(t('background.error.invalidMnemonic'));
+        return false;
+      }
+      return true;
+    } catch {
+      setError(t('background.error.invalidMnemonic'));
+      return false;
+    }
+  }, [mnemonics, t]);
+
   const handleConfirm = React.useCallback(() => {
+    // verify mnemonics for setPassword
+    if (!verfiyMnemonics()) {
+      return;
+    }
+
     if (
       shouldRedirectToSetPasswordBefore2024({
         backScreen: RootNames.ImportSuccess2024,
@@ -234,7 +253,12 @@ export const ImportSeedPhraseScreen2024 = () => {
     setTimeout(() => {
       importSeedPhrase();
     }, 10);
-  }, [importSeedPhrase, setConfirmCB, shouldRedirectToSetPasswordBefore2024]);
+  }, [
+    importSeedPhrase,
+    setConfirmCB,
+    shouldRedirectToSetPasswordBefore2024,
+    verfiyMnemonics,
+  ]);
 
   React.useEffect(() => {
     setError(undefined);
