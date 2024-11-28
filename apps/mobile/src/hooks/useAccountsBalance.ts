@@ -47,7 +47,9 @@ export default function useAccountsBalance(opts?: {
       const formatList = list
         .filter(
           a =>
-            a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+            a.type !== KEYRING_CLASS.WATCH &&
+            a.type !== KEYRING_CLASS.GNOSIS &&
+            a.type !== KEYRING_CLASS.WALLETCONNECT,
         )
         .map(a => a.address.toLowerCase());
 
@@ -59,13 +61,25 @@ export default function useAccountsBalance(opts?: {
           )
         : formatList;
 
-      const accountPromises = uniqueList.map(async account => {
+      let allList = list
+        .filter(a => a.type !== KEYRING_CLASS.WALLETCONNECT)
+        .map(a => a.address.toLowerCase());
+
+      if (accountsNoUnique) {
+        allList = allList.filter(
+          (value, index, self) => self.indexOf(value) === index,
+        );
+      }
+
+      const accountPromises = allList.map(async account => {
         if (fetchType === 'from_cache') {
           const cacheData = preferenceService.getAddressBalance(account);
-          balancesArr.push({
-            address: account,
-            balance: cacheData?.total_usd_value || 0,
-          });
+          if (uniqueList.includes(account)) {
+            balancesArr.push({
+              address: account,
+              balance: cacheData?.total_usd_value || 0,
+            });
+          }
           return;
         }
 
@@ -74,18 +88,22 @@ export default function useAccountsBalance(opts?: {
           const resData = await apiBalance.getAddressBalance(account, {
             force: true,
           });
-          balancesArr.push({
-            address: account,
-            balance: resData?.total_usd_value || 0,
-          });
+          if (uniqueList.includes(account)) {
+            balancesArr.push({
+              address: account,
+              balance: resData?.total_usd_value || 0,
+            });
+          }
         } catch (e) {
           console.log('accountPromises  error', e);
           // api fetch error fallback get from cache store
           const cacheData = preferenceService.getAddressBalance(account);
-          balancesArr.push({
-            address: account,
-            balance: cacheData?.total_usd_value || 0,
-          });
+          if (uniqueList.includes(account)) {
+            balancesArr.push({
+              address: account,
+              balance: cacheData?.total_usd_value || 0,
+            });
+          }
         }
       });
 
