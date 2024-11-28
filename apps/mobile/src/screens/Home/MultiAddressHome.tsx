@@ -159,7 +159,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
 
@@ -168,7 +168,6 @@ function MultiAddressHome(): JSX.Element {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-
   useEffect(() => {
     if (pendingTxCount) {
       Animated.loop(
@@ -361,7 +360,9 @@ function MultiAddressHome(): JSX.Element {
       noHeader
       bgImageSource={require('@/assets2024/icons/home/ImgBgHome.png')}
       linearProp={{
-        colors: [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']],
+        colors: isLight
+          ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
+          : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']],
         locations: [0.2072, 0.3181],
         start: { x: 0.5, y: 0 },
         end: { x: 0.5, y: 1 },
@@ -459,7 +460,7 @@ function MultiAddressHome(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   paddingContainer: {
     paddingHorizontal: 16,
     flex: 1,
@@ -521,9 +522,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 14,
     borderRadius: 94,
     backgroundColor: colors2024['brand-default'],
+    shadowColor: colors2024['brand-light-1'],
+    shadowOffset: { width: 0, height: 9.411 },
+    shadowOpacity: 0.1,
+    shadowRadius: 22.587,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    // elevation: 500,
   },
   button: {
     height: 38,
@@ -573,7 +579,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   gridItem: {
     borderWidth: 1,
     borderColor: 'transparent',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     width: '48%',
     minWidth: 0,
     borderRadius: 18,
