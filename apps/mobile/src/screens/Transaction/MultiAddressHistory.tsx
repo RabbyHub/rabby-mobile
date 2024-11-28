@@ -86,7 +86,9 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
       : [finalSceneCurrentAccount];
-    const queue = new PQueue();
+    const queue = new PQueue({
+      concurrency: 10,
+    });
     for (let i = 0; i < accountList.length; i++) {
       queue.add(async () => {
         const account = accountList[i];

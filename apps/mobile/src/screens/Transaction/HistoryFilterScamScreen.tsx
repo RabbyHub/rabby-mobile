@@ -39,7 +39,9 @@ function HistoryFilterScamScreen({
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
     const accountList = route?.params.addresses || unionAccounts;
-    const queue = new PQueue();
+    const queue = new PQueue({
+      concurrency: 10,
+    });
     for (let i = 0; i < accountList.length; i++) {
       queue.add(async () => {
         const account = accountList[i];
