@@ -79,6 +79,7 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 16,
   },
   safeView: {
+    borderRadius: 24,
     flex: 1,
     width: '100%',
     overflow: 'hidden',

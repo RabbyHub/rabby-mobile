@@ -605,6 +605,7 @@ const getStyles = createGetStyles2024(ctx => ({
     height: BADGE_SIZE,
     textAlign: 'center',
     marginRight: 4,
+    lineHeight: BADGE_SIZE + 2,
     ...Platform.select({
       ios: {
         flexDirection: 'row',
@@ -621,7 +622,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 12,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    lineHeight: 16,
+    textAlign: 'center',
   },
   chevron: {
     marginLeft: 'auto',
