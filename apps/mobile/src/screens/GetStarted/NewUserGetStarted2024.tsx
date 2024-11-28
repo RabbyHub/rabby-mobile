@@ -25,7 +25,7 @@ import {
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 
-function SampleGetStartedScreen2024(): JSX.Element {
+function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const [getStaretd, setGetStaretd] = useState<{
@@ -314,4 +314,4 @@ const getStyles = createGetStyles2024(ctx =>
   }),
 );
 
-export default SampleGetStartedScreen2024;
+export default GetStartedScreen2024;

@@ -5,7 +5,11 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
-import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
+import {
+  DEFAULT_NAVBAR_FONT_SIZE,
+  makeHeadersPresets,
+  RootNames,
+} from '@/constant/layout';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
@@ -43,6 +47,7 @@ import CreateChooseBackup from '../Address/CreateChooseBackup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
+import { StyleSheet } from 'react-native';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -73,9 +78,8 @@ const hitSlop = {
 };
 
 export function AddressNavigator() {
-  const { mergeScreenOptions } = useStackScreenConfig();
-  const colors = useThemeColors();
-  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
+  const { colors, colors2024, styles } = useTheme2024({ getStyle });
 
   return (
     <AddressStack.Navigator
@@ -96,14 +100,16 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.AddressList}
         component={AddressListScreen}
-        options={mergeScreenOptions({
-          headerTitle: 'Address',
-          title: 'Address',
-          headerTintColor: colors2024['neutral-title-1'],
-          headerTitleStyle: styles.headerTitleText,
-          // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: () => <AddressListScreenButton type="address" />,
-        })}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: 'Address',
+            title: 'Address',
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+            // eslint-disable-next-line react/no-unstable-nested-components
+            headerRight: () => <AddressListScreenButton type="address" />,
+          },
+        ])}
       />
       <AddressStack.Screen
         name={RootNames.WatchAddressList}

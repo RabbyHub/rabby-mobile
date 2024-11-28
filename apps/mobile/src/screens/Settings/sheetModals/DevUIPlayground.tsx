@@ -85,7 +85,7 @@ export default function DevUIPlaygroundModal({
           );
           // navigation.dispatch(
           //   StackActions.push(RootNames.StackTestkits, {
-          //     screen: RootNames.SampleNewUserGetStarted2024,
+          //     screen: RootNames.NewUserGetStarted2024,
           //   }),
           // );
         },

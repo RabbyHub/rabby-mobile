@@ -7,7 +7,7 @@ import {
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
@@ -77,7 +77,7 @@ type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
 export const useStackScreenConfig = () => {
-  const colors = useThemeColors();
+  const { colors, colors2024 } = useTheme2024();
 
   const navBack = useCallback(() => {
     const navigation = navigationRef.current;
@@ -91,8 +91,9 @@ export const useStackScreenConfig = () => {
     }
   }, []);
 
-  const headerPresets = makeHeadersPresets({ colors });
+  const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
+  /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
       const screenOptions: ScreenOptions = {
@@ -128,7 +129,43 @@ export const useStackScreenConfig = () => {
     [headerPresets, colors, navBack],
   );
 
-  return { mergeScreenOptions };
+  const mergeScreenOptions2024 = useCallback(
+    (optsList: Partial<ScreenOptions>[], options?: any) => {
+      const screenOptions: ScreenOptions = {
+        animation: 'slide_from_right',
+        ...headerPresets.onlyTitle,
+        headerTitleStyle: {
+          ...(headerPresets.onlyTitle.headerTitleStyle as object),
+          color: colors2024['neutral-title-1'],
+          fontWeight: '800',
+          fontFamily: 'SF Pro Rounded',
+          fontSize: 20,
+        },
+        headerTintColor: colors2024['neutral-title-1'],
+        headerLeft: ({ tintColor }) => (
+          <CustomTouchableOpacity
+            style={styles.backButtonStyle}
+            hitSlop={hitSlop}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={tintColor || colors2024['neutral-body']}
+            />
+          </CustomTouchableOpacity>
+        ),
+      };
+
+      return merge(
+        {},
+        screenOptions,
+        ...optsList.map(x => ({ ...x })),
+      ) as ScreenOptions;
+    },
+    [headerPresets, colors2024, navBack],
+  );
+
+  return { mergeScreenOptions, mergeScreenOptions2024 };
 };
 
 const styles = StyleSheet.create({

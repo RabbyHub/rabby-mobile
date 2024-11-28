@@ -4,7 +4,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import GetStartedScreen from '../GetStarted/GetStarted';
-import SampleGetStartedScreen2024 from '../GetStarted/SampleNewUserGetStarted2024';
+import GetStartedScreen2024 from '../GetStarted/NewUserGetStarted2024';
 import DevUIFontShowCase from '../Testkits/DevUIFontShowCase';
 import DevUIFormShowCase from '../Testkits/DevUIFormShowCase';
 import DevUIAccountShowCase from '../Testkits/DevUIAccountShowCase';
@@ -32,8 +32,8 @@ export function TestkitsNavigator() {
         // }}
       />
       <Stack.Screen
-        name={RootNames.SampleNewUserGetStarted2024}
-        component={SampleGetStartedScreen2024}
+        name={RootNames.NewUserGetStarted2024}
+        component={GetStartedScreen2024}
         // options={{
         //   navigationBarHidden: true,
         // }}

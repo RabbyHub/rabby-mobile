@@ -31,12 +31,10 @@ const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 export default function TransactionNavigator() {
-  const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
 
-  const colors = useThemeColors();
-  const { colors2024 } = useTheme2024();
-
+  const { colors, colors2024 } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors });
 
   return (
@@ -185,7 +183,7 @@ export default function TransactionNavigator() {
         component={ApprovalsScreen}
         options={mergeScreenOptions({
           title: 'Approvals',
-          ...headerPresets.withBgCard2,
+          ...headerPresets.withBgCard2_2024,
           headerStyle: {
             backgroundColor: colors?.['neutral-bg-2'],
           },
@@ -232,7 +230,7 @@ export default function TransactionNavigator() {
         component={GasAccountScreen}
         options={mergeScreenOptions({
           title: 'GasAccount',
-          ...headerPresets.withBgCard2,
+          ...headerPresets.withBgCard2_2024,
         })}
       />
     </TransactionStack.Navigator>

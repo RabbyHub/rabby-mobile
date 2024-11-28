@@ -1,5 +1,6 @@
 /// <reference types="nativewind/types" />
 /// <reference path="./assets/assets.d.ts" />
+/// <reference path="./types/token.d.ts" />
 
 // keey sync with .env* files at the package's root
 declare module '@env' {

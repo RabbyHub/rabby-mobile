@@ -60,7 +60,7 @@ type GetStartedNavigatorParamsList = {
 };
 
 type TestKitsNavigatorParamsList = {
-  [RootNames.SampleNewUserGetStarted2024]?: {};
+  [RootNames.NewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};

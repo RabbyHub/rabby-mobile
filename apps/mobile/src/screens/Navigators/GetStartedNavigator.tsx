@@ -4,7 +4,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import GetStartedScreen from '../GetStarted/GetStarted';
-import GetStartedScreen2024 from '../GetStarted/SampleNewUserGetStarted2024';
+import GetStartedScreen2024 from '../GetStarted/NewUserGetStarted2024';
 
 const Stack = createCustomNativeStackNavigator();
 

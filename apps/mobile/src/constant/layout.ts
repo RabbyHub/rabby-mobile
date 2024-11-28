@@ -1,5 +1,10 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { AppColorsVariants, ThemeColors, ThemeColors2024 } from './theme';
+import {
+  AppColors2024Variants,
+  AppColorsVariants,
+  ThemeColors,
+  ThemeColors2024,
+} from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
 
 export const ModalLayouts = {
@@ -75,7 +80,7 @@ export const RootNames = {
   /* warning: testkits only ------ start */
   StackTestkits: 'StackTestkits',
   TestKits: 'TestKits',
-  SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
+  NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
@@ -226,7 +231,7 @@ function makeScreenSpecConfig() {
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,
-      SampleNewUserGetStarted2024: bg1DefaultConf,
+      NewUserGetStarted2024: bg1DefaultConf,
 
       Home: bg1DefaultConf,
       MultiAddressHome: bg1Default2024Conf,
@@ -293,7 +298,8 @@ export const DEFAULT_NAVBAR_FONT_SIZE = 18;
 
 export function makeHeadersPresets({
   colors,
-}: { colors?: AppColorsVariants } = {}) {
+  colors2024,
+}: { colors?: AppColorsVariants; colors2024?: AppColors2024Variants } = {}) {
   const navigationBarHeaderTitle = {
     fontWeight: '500' as const,
     fontSize: DEFAULT_NAVBAR_FONT_SIZE,
@@ -309,6 +315,7 @@ export function makeHeadersPresets({
       headerBackVisible: false,
       headerTitleStyle: { ...navigationBarHeaderTitle },
     } as NativeStackNavigationOptions,
+    /** @deprecated */
     withBgCard2: {
       headerStyle: {
         backgroundColor: colors?.['neutral-card2'],
@@ -319,15 +326,36 @@ export function makeHeadersPresets({
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
+    /** @deprecated */
     withBg2: {
       headerStyle: {
         backgroundColor: colors?.['neutral-bg2'],
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        ...navigationBarHeaderTitle,
+        fontWeight: '700' as const,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
+    },
+    withBgCard2_2024: {
+      headerStyle: {
+        backgroundColor: colors?.['neutral-card2'],
+      },
+      headerTitleStyle: {
+        color: colors?.['neutral-title-1'],
+        fontWeight: '700' as const,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+      },
+      headerTintColor: colors?.['neutral-title-1'],
+    },
+    titleFont_2024: {
+      color: colors2024?.['neutral-title-1'],
+      fontWeight: '700' as const,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
     },
   };
 }
