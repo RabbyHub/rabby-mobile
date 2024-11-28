@@ -32,9 +32,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 8,
     backgroundColor: colors2024['neutral-card-1'],
   },
-  rootSelected: {
-    borderColor: colors2024['blue-default'],
-  },
   rootImported: {
     opacity: 0.5,
     borderColor: 'transparent',
@@ -180,7 +177,6 @@ export const BackupItem: React.FC<BackupItemProps> = ({
       onPress={imported ? noop : onPress}
       style={StyleSheet.flatten([
         styles.root,
-        selected && styles.rootSelected,
         imported && styles.rootImported,
         style,
       ])}>

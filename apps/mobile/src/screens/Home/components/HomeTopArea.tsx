@@ -11,11 +11,7 @@ import {
 import RcInfoCC from '@/assets/icons/home/info-cc.svg';
 import { BSheetModal, Tip } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { toast } from '@/components/Toast';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -31,7 +27,11 @@ import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
@@ -51,6 +51,10 @@ import { useApprovalAlert } from '../hooks/approvals';
 import { CurveBottomSheetModal } from './CurveBottomSheet';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -202,20 +206,22 @@ export const HomeTopArea = () => {
       title: 'Receive',
       Icon: RcIconReceive,
       onPress: () => {
-        const id = createGlobalBottomSheetModal({
+        const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
           value: CHAINS_ENUM.ETH,
           onChange: (v: CHAINS_ENUM) => {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Receive,
-              params: {
-                chainEnum: v,
-              },
-            });
-            removeGlobalBottomSheetModal(id);
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.Receive,
+                params: {
+                  chainEnum: v,
+                },
+              }),
+            );
+            removeGlobalBottomSheetModal2024(id);
           },
-          onCancel: () => {
-            removeGlobalBottomSheetModal(id);
+          onClose: () => {
+            removeGlobalBottomSheetModal2024(id);
           },
         });
       },

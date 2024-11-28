@@ -89,7 +89,7 @@ export function ChainInfo2024({
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_SORTED_CHAIN,
       value: chainEnum,
-      onCancel: removeChainModal,
+      onClose: removeChainModal,
       supportChains,
       disabledTips,
       hideMainnetTab,
