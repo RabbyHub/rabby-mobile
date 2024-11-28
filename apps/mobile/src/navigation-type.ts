@@ -163,7 +163,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.Bridge]?: {};
-  // [RootNames.MultiBridge]?: {};
+  [RootNames.MultiBridge]?: {};
   [RootNames.GasAccount]?: {};
 };
 

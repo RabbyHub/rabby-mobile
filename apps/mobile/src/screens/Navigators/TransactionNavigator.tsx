@@ -210,7 +210,7 @@ export default function TransactionNavigator() {
         })}
       />
 
-      {/* <TransactionStack.Screen
+      <TransactionStack.Screen
         name={RootNames.MultiBridge}
         component={Bridge.ForMultipleAddress}
         options={mergeScreenOptions({
@@ -225,7 +225,7 @@ export default function TransactionNavigator() {
             );
           },
         })}
-      /> */}
+      />
 
       <TransactionStack.Screen
         name={RootNames.GasAccount}
