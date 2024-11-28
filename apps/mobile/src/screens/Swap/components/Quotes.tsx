@@ -31,14 +31,17 @@ import {
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
-import { DexQuoteItem, QuoteItemProps } from './QuoteItem';
+import {
+  DexQuoteItem as DexQuoteItemOld,
+  QuoteItemProps as QuoteItemPropsOld,
+} from './QuoteItemOld';
 import { SwapRefreshBtn } from './SwapRefreshBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface QuotesProps
   extends Omit<
-    QuoteItemProps,
+    QuoteItemPropsOld,
     | 'bestQuoteAmount'
     | 'bestQuoteGasUsd'
     | 'name'
@@ -133,7 +136,7 @@ export const Quotes = ({
     return (
       <View style={{ paddingHorizontal: 20 }}>
         {dex ? (
-          <DexQuoteItem
+          <DexQuoteItemOld
             inSufficient={inSufficient}
             preExecResult={dex?.preExecResult}
             quote={dex?.data}
@@ -181,7 +184,7 @@ export const Quotes = ({
             return null;
           }
           return (
-            <DexQuoteItem
+            <DexQuoteItemOld
               onErrQuote={setErrorQuoteDEXs}
               key={name}
               inSufficient={inSufficient}
@@ -266,7 +269,7 @@ export const Quotes = ({
             return null;
           }
           return (
-            <DexQuoteItem
+            <DexQuoteItemOld
               key={name}
               onErrQuote={setErrorQuoteDEXs}
               onlyShowErrorQuote
