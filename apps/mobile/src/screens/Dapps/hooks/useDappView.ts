@@ -65,8 +65,8 @@ const DAPPS_VIEW_LIMIT = {
 };
 const DAPPS_VIEW_LIMIT_SHORT = {
   maxCount: 3,
-  // 20mins
-  expireDuration: 20 * 60 * 1e3,
+  // 5 mins
+  expireDuration: 5 * 60 * 1e3,
 };
 const dappsViewConfigAtom = atom({
   maxCount: DAPPS_VIEW_LIMIT.maxCount,
