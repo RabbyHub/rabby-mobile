@@ -23,18 +23,19 @@ export const useNoLongerSupports = () => {
   }, [accounts, removeAccount]);
 
   React.useEffect(() => {
-    if (
-      !accounts?.some(
-        account => account.type === KEYRING_TYPE.WalletConnectKeyring,
-      )
-    ) {
-      return;
-    }
-
     setTimeout(() => {
       if (modalIdRef.current) {
         return;
       }
+
+      if (
+        !accounts?.some(
+          account => account.type === KEYRING_TYPE.WalletConnectKeyring,
+        )
+      ) {
+        return;
+      }
+
       modalIdRef.current = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.NO_LONGER_SUPPORTS,
         bottomSheetModalProps: {
