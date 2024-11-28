@@ -118,7 +118,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
-          duration: 2000,
+          duration: 1600,
           easing: Easing.linear,
           useNativeDriver: true,
         }),
@@ -173,7 +173,7 @@ function MultiAddressHome(): JSX.Element {
       Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
-          duration: 2000,
+          duration: 1600,
           easing: Easing.linear,
           useNativeDriver: true,
         }),
