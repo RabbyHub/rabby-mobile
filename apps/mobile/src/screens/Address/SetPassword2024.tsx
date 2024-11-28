@@ -315,9 +315,13 @@ function MainListBlocks() {
                     formik.setFieldValue('confirmPassword', text, true);
                   },
                 }}
-                hasError={Boolean(formik.errors.confirmPassword)}
+                hasError={Boolean(
+                  formik.values.confirmPassword &&
+                    formik.errors.confirmPassword,
+                )}
                 tipText={
-                  formik.errors.confirmPassword ||
+                  (formik.values.confirmPassword &&
+                    formik.errors.confirmPassword) ||
                   t('page.nextComponent.createNewAddress.confirmPasswordTips')
                 }
                 tipIcon={
