@@ -56,15 +56,15 @@ export const GasAccountScreen = () => {
 
   const gotoDashboard = useGasAccountGoBack();
 
-  const { accountId } = useGasAccountSign();
+  // const { accountId } = useGasAccountSign();
 
-  const { currentAccount } = useCurrentAccount();
+  // const { currentAccount } = useCurrentAccount();
 
   const gotoDesposit = () => {
-    if (accountId && currentAccount?.address !== accountId) {
-      setSwitchAddrVisible(true);
-      return;
-    }
+    // if (accountId && currentAccount?.address !== accountId) {
+    //   setSwitchAddrVisible(true);
+    //   return;
+    // }
     setShowDesposit(true);
   };
 
