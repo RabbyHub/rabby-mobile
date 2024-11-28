@@ -17,13 +17,11 @@ echo "1. Build Inpage Bridge..."
 cd $repo_dir/packages/rn-webview-bridge
 ./scripts/build-inpage-bridge.sh
 
-echo "2. Copy Assets..."
+echo "2. Link & Copy Assets..."
 cd $repo_dir/apps/mobile;
-cleanup_fonts_assets;
+yarn link-assets
 
 cd $repo_dir/apps/mobile;
 echo "3. Patch npm packages"
 yarn apply-patch
 
-echo "4. Link Assets"
-yarn link-assets
