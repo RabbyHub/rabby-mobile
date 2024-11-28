@@ -57,6 +57,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useMount } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const MENU_ARR = [
   {
@@ -149,6 +150,11 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
               params: {},
             }),
           );
+
+          matomoRequestEvent({
+            category: 'Click_Header',
+            action: 'Click_Setting',
+          });
         }}>
         <RcIconSetting />
       </TouchableWithoutFeedback>
@@ -255,7 +261,6 @@ function MultiAddressHome(): JSX.Element {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-
       switch (title) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
@@ -415,6 +420,10 @@ function MultiAddressHome(): JSX.Element {
                     params: {},
                   }),
                 );
+                matomoRequestEvent({
+                  category: 'Click_Header',
+                  action: 'Click_Address',
+                });
               }}>
               <RcIconSmallWallet />
               <Text style={styles.accountText}>{accountsLength}</Text>
@@ -448,7 +457,13 @@ function MultiAddressHome(): JSX.Element {
                 <TouchableOpacity
                   style={styles.gridItem}
                   key={index}
-                  onPress={e => handleClickMenu(el.title)}>
+                  onPress={e => {
+                    handleClickMenu(el.title);
+                    matomoRequestEvent({
+                      category: 'Click_Services',
+                      action: `Click_${el.title}`,
+                    });
+                  }}>
                   <el.icon />
                   <Text style={styles.gridText}>{el.title}</Text>
                 </TouchableOpacity>
