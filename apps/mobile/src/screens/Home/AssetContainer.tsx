@@ -1,5 +1,5 @@
 import { useCurrentAccount } from '@/hooks/account';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import React, { useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import {
@@ -27,6 +27,7 @@ export const AssetContainer: React.FC<Props> = ({
   const { currentAccount } = useCurrentAccount();
   const [activeTab, setActiveTab] = useState('token');
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const isDark = useGetBinaryMode() === 'dark';
   const { width } = useWindowDimensions();
 
   const renderTabItem = React.useCallback(
@@ -42,11 +43,13 @@ export const AssetContainer: React.FC<Props> = ({
         ])}
         style={StyleSheet.flatten([
           props.style,
-          activeTab === props.name ? styles.activeTab : {},
+          activeTab === props.name && {
+            backgroundColor: isDark ? '#FFF' : '#192945',
+          },
         ])}
       />
     ),
-    [activeTab, styles.activeLabelStyle, styles.activeTab],
+    [activeTab, isDark, styles.activeLabelStyle],
   );
 
   const renderTabBar = React.useCallback(
@@ -59,13 +62,14 @@ export const AssetContainer: React.FC<Props> = ({
         tabStyle={styles.tabBar}
         indicatorStyle={styles.indicator}
         TabItemComponent={renderTabItem}
-        activeColor="white"
+        activeColor={isDark ? '#192945' : '#FFF'}
         inactiveColor={colors2024['neutral-foot']}
         labelStyle={styles.label}
       />
     ),
     [
       colors2024,
+      isDark,
       renderTabItem,
       styles.indicator,
       styles.label,
