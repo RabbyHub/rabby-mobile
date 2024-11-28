@@ -152,13 +152,14 @@ export class KeyringService extends RNEventEmitter {
 
   #filterAllKeyringsNeedPassword() {
     return this.keyrings.filter(
-      keyring => ![
-        KEYRING_TYPE.WatchAddressKeyring,
-        KEYRING_TYPE.WalletConnectKeyring,
-        // some hardware keyrings which will create keyrings right away on bootstrap
-        KEYRING_TYPE.OneKeyKeyring,
-        KEYRING_TYPE.LedgerKeyring,
-      ].includes(keyring.type as any),
+      keyring =>
+        ![
+          KEYRING_TYPE.WatchAddressKeyring,
+          KEYRING_TYPE.WalletConnectKeyring,
+          // some hardware keyrings which will create keyrings right away on bootstrap
+          KEYRING_TYPE.OneKeyKeyring,
+          KEYRING_TYPE.LedgerKeyring,
+        ].includes(keyring.type as any),
     );
   }
 
@@ -170,7 +171,7 @@ export class KeyringService extends RNEventEmitter {
   async resetPassword(newPassword: string) {
     const restSensitiveKeyrings = this.#filterAllKeyringsNeedPassword();
     if (restSensitiveKeyrings.length) {
-      console.warn('You\'re trying to overwrite password on existing keyrings.')
+      console.warn("You're trying to overwrite password on existing keyrings.");
     }
 
     await this._setupBoot(newPassword);
@@ -184,7 +185,10 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ keyrings: [] });
   }
 
-  async dangerouslyResetPasswordAndKeyrings(oldPassword: string, newPassword?: string) {
+  async dangerouslyResetPasswordAndKeyrings(
+    oldPassword: string,
+    newPassword?: string,
+  ) {
     if (newPassword) {
       this.keyrings = [];
       await this.updatePassword(oldPassword, newPassword);
@@ -197,7 +201,6 @@ export class KeyringService extends RNEventEmitter {
       this.memStore.updateState({ keyrings: [] });
       this.store.updateState({ vault: undefined, booted: undefined });
     }
-
   }
 
   isBooted() {
@@ -338,6 +341,8 @@ export class KeyringService extends RNEventEmitter {
     this.emit('unlock');
   }
 
+  _isSubmittingPassword = false;
+
   /**
    * Submit Password
    *
@@ -352,6 +357,11 @@ export class KeyringService extends RNEventEmitter {
    * @returns A Promise that resolves to the state.
    */
   async submitPassword(password: string): Promise<MemStoreState> {
+    if (this._isSubmittingPassword) {
+      return this.memStore.getState();
+    }
+
+    this._isSubmittingPassword = true;
     await this.verifyPassword(password);
     this.#password = password;
     try {
@@ -360,6 +370,7 @@ export class KeyringService extends RNEventEmitter {
       //
     } finally {
       this.setUnlocked();
+      this._isSubmittingPassword = false;
     }
 
     return this.fullUpdate();
