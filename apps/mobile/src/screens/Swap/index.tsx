@@ -30,10 +30,9 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, View } from 'react-native';
+import { Platform, Text, TextInput, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useMount from 'react-use/lib/useMount';
 import { BestQuoteLoading } from '../Bridge/components/loading';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
@@ -57,6 +56,9 @@ import {
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+
+const isAndroid = Platform.OS === 'android';
 
 const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
@@ -217,7 +219,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     isWrapToken,
   ]);
 
-  const { bottom } = useSafeAreaInsets();
+  const { safeOffBottom } = useSafeSizes();
 
   const [isShowSign, setIsShowSign] = useState(false);
   const gotoSwap = useMemoizedFn(async () => {
@@ -590,9 +592,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       <View
         style={[
           styles.buttonContainer,
-          {
-            paddingBottom: Math.max(bottom, 20),
-          },
+          isAndroid && { paddingBottom: 20 + safeOffBottom },
         ]}>
         <Button
           onPress={() => {
@@ -852,9 +852,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
+    paddingHorizontal: 24,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    padding: 20,
+    marginBottom: 56,
   },
   approveContainer: {
     flexDirection: 'row',
