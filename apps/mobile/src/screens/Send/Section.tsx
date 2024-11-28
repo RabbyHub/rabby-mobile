@@ -100,18 +100,6 @@ export function BalanceSection({ style }: RNViewProps) {
             {screenState.showGasReserved && !screenState.selectedGasLevel && (
               <Skeleton style={styles.issueBlockSkeleton} />
             )}
-            {!screenState.showGasReserved &&
-            (screenState.balanceError || screenState.balanceWarn) ? (
-              <Text style={[styles.issueText]}>
-                {screenState.balanceError ? (
-                  <>
-                    {screenState.balanceError}: {currentTokenBalance}
-                  </>
-                ) : screenState.balanceWarn ? (
-                  <>{screenState.balanceWarn}</>
-                ) : null}
-              </Text>
-            ) : null}
           </View>
 
           <TouchableOpacity
@@ -121,12 +109,23 @@ export function BalanceSection({ style }: RNViewProps) {
               <Skeleton style={{ width: 100, height: 16 }} />
             ) : (
               <>
-                {!(screenState.balanceError || screenState.balanceWarn) ? (
+                {!screenState.showGasReserved &&
+                (screenState.balanceError || screenState.balanceWarn) ? (
+                  <Text style={[styles.issueText]}>
+                    {screenState.balanceError ? (
+                      <>
+                        {screenState.balanceError}: {currentTokenBalance}
+                      </>
+                    ) : screenState.balanceWarn ? (
+                      <>{screenState.balanceWarn}</>
+                    ) : null}
+                  </Text>
+                ) : (
                   <Text style={styles.balanceText}>
                     {t('page.sendToken.sectionBalance.title')}:{' '}
                     {currentTokenBalance}
                   </Text>
-                ) : null}
+                )}
                 {/* max button */}
                 {currentToken.amount > 0 &&
                   (screenState.isEstimatingGas ? (
