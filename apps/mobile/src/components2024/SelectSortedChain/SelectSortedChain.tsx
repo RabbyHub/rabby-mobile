@@ -134,20 +134,18 @@ export default function SelectSortedChain({
           style={styles.netSwitchTabs}
         />
       ) : null}
-      {matteredList.length !== 0 || unmatteredList.length !== 0 ? (
-        <Input
-          leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
-          containerStyle={[styles.containerOfInput, styles.innerBlock]}
-          inputContainerStyle={styles.inputContainerStyle}
-          style={styles.inputText}
-          placeholderTextColor={colors2024['neutral-info']}
-          placeholder="Search chain"
-          value={search}
-          onChangeText={text => {
-            setSearch(text);
-          }}
-        />
-      ) : null}
+      <Input
+        leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
+        containerStyle={[styles.containerOfInput, styles.innerBlock]}
+        inputContainerStyle={styles.inputContainerStyle}
+        style={styles.inputText}
+        placeholderTextColor={colors2024['neutral-info']}
+        placeholder="Search chain"
+        value={search}
+        onChangeText={text => {
+          setSearch(text);
+        }}
+      />
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (
         <View style={[styles.chainListWrapper, styles.emptyDataWrapper]}>
