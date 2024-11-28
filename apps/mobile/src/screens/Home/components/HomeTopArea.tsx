@@ -267,6 +267,7 @@ export const HomeTopArea = () => {
             title: 'Approvals',
             Icon: RcIconApproval,
             onPress: () => {
+              switchSceneCurrentAccount('Approvals', currentAccount);
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.Approvals,
               });
