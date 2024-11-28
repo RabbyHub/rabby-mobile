@@ -327,7 +327,7 @@ export const HomeTopArea = () => {
             onPress={handlePressBalanceSection}>
             <View style={styles.header}>
               <Text style={styles.usdText}>
-                {(balanceLoading && !balanceFromCache) ||
+                {balanceLoading ||
                 balance === null ||
                 (balanceFromCache && balance === 0) ||
                 balanceUpdating ? (
