@@ -242,11 +242,11 @@ function makeScreenSpecConfig() {
       ImportWatchAddress: blueLightConf,
       ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,
-      ImportSuccess2024: blueLightConf,
+      // ImportSuccess2024: blueLightConf,
 
       // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      Receive: blueLightConf,
+      // Receive: blueLightConf,
 
       GnosisTransactionQueue: card2DefaultConf,
 
