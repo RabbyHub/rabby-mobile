@@ -87,7 +87,13 @@ const getModalStyle = createGetStyles2024(ctx => {
       position: 'relative',
       width: '100%',
       // height: '50%',
-      maxHeight: '90%',
+      ...(IS_ANDROID
+        ? {
+            maxHeight: '90%',
+          }
+        : {
+            height: '50%',
+          }),
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'blue',
       // }),

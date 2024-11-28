@@ -5,8 +5,8 @@ import { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 
 // caret-down-cc.svg
-import { default as RcCaretDownCircleCC } from './icons/caret-down-circle-cc.svg';
-import { default as RcCaretDownCircleDarkCC } from './icons/caret-down-circle-dark-cc.svg';
+import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
+import { default as RcCaretDownCircleDarkCC } from './icons/caret-down-circle-dark.svg';
 import TouchableView from '../Touchable/TouchableView';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
