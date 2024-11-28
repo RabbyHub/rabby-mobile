@@ -242,7 +242,7 @@ export const HomeTopArea = () => {
               });
             },
             badgeStyle: {
-              backgroundColor: colors2024['blue-default'],
+              backgroundColor: colors2024['brand-default'],
             },
           },
           {
@@ -611,10 +611,11 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: ctx.colors2024['neutral-title-2'],
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 17,
+    color: ctx.colors2024['neutral-InvertHighlight'],
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 16,
   },
   chevron: {
     marginLeft: 'auto',
