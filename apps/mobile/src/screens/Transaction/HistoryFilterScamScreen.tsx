@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { toast } from '@/components2024/Toast';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -45,9 +46,13 @@ function HistoryFilterScamScreen({
         if (!account) {
           return;
         }
-        const addr = account.address.toLowerCase();
-        const result = await fetchData(addr);
-        list.push(...result.list);
+        try {
+          const addr = account.address.toLowerCase();
+          const result = await fetchData(addr);
+          list.push(...result.list);
+        } catch (e) {
+          toast.error(`${account.address} load failed, ${JSON.stringify(e)}`);
+        }
       });
     }
     await waitQueueFinished(queue);
