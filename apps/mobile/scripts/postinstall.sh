@@ -23,7 +23,7 @@ cleanup_fonts_assets;
 
 cd $repo_dir/apps/mobile;
 echo "3. Patch npm packages"
-yarn patch-package
+yarn apply-patch
 
-echo "3. Link Assets"
+echo "4. Link Assets"
 yarn link-assets

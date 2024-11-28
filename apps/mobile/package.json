@@ -15,7 +15,7 @@
     "devtools": "react-devtools",
     "doctor": "react-native doctor",
     "ensure-git-hooks": "yarn ../../ install-husky",
-    "postinstall": "yarn build:deps && yarn build-inpage && patch-package",
+    "postinstall": "yarn build:deps && yarn build-inpage",
     "ios": "react-native run-ios",
     "link-assets": "react-native-asset && sh ./scripts/fns.sh cleanup_fonts_assets",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
