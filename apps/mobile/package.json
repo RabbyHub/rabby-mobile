@@ -8,7 +8,7 @@
   },
   "scripts": {
     "android": "react-native run-android",
-    "apply-patch": "patch-package",
+    "apply-patch": "./node_modules/.bin/patch-package",
     "build-inpage": "sh ./scripts/postinstall.sh",
     "build:deps": "yarn ../../ build",
     "create-patch": "sh ./scripts/create-patch.sh",
