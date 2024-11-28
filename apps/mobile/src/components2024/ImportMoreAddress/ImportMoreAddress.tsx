@@ -1,5 +1,15 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useAtom } from 'jotai';
+import { useTranslation } from 'react-i18next';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
+
 import { WalletIcon } from '../WalletIcon/WalletIcon';
 import { RootNames } from '@/constant/layout';
 import {
@@ -11,20 +21,13 @@ import {
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
 import { replaceToFirst } from '@/utils/navigation';
-import {
-  HARDWARE_KEYRING_TYPES,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+
 import { toast } from '@/components2024/Toast';
-import { useAtom } from 'jotai';
-import { settingAtom } from '@/components/HDSetting/MainContainer';
-import { getAccountBalance } from '@/components/HDSetting/util';
-import { useTranslation } from 'react-i18next';
+import { settingAtom } from '@/components2024/HDSetting/MainContainer';
+import { getAccountBalance } from '@/components2024/HDSetting/util';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
-import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import { addressUtils } from '@rabby-wallet/base-utils';
+
 import { createGetStyles2024 } from '@/utils/styles';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountListView, ViewAccount } from './AccountListView';
@@ -33,7 +36,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
 
 const { isSameAddress } = addressUtils;
