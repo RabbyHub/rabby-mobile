@@ -304,7 +304,7 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Bridge,
+              screen: RootNames.MultiBridge,
               params: {},
             }),
           );

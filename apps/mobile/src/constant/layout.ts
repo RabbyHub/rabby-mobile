@@ -98,7 +98,7 @@ export const RootNames = {
   HistoryFilterScam: 'HistoryFilterScam',
   MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
-  // MultiBridge: 'MultiBridge',
+  MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',
