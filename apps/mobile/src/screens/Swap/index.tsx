@@ -733,6 +733,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rowView: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
   },
@@ -749,7 +750,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
   flex1: {
-    flex: 1,
+    width: 128,
   },
   arrowWrapper: {
     width: 45,
@@ -760,7 +761,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 12,
   },
   arrow: {
     marginHorizontal: 8,

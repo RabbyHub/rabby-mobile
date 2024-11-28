@@ -126,7 +126,7 @@ function ReceiveScreen(): JSX.Element {
             <TouchableWithoutFeedback onPress={handleCopy}>
               <Text style={styles.qrCardAddress}>
                 {account?.address}
-                <IconMCopy width={17} height={17} />
+                <IconMCopy style={{ marginLeft: 1 }} width={17} height={17} />
               </Text>
             </TouchableWithoutFeedback>
           </View>

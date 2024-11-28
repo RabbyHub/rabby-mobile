@@ -67,6 +67,9 @@ export const DappSearchCardList = ({
         onChainChange?.(v);
         removeGlobalBottomSheetModal2024(id);
       },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
     });
   };
 
