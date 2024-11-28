@@ -103,7 +103,13 @@ export function BalanceSection({ style }: RNViewProps) {
             {!screenState.showGasReserved &&
             (screenState.balanceError || screenState.balanceWarn) ? (
               <Text style={[styles.issueText]}>
-                {screenState.balanceError || screenState.balanceWarn}
+                {screenState.balanceError ? (
+                  <>
+                    {screenState.balanceError}: {currentTokenBalance}
+                  </>
+                ) : screenState.balanceWarn ? (
+                  <>{screenState.balanceWarn}</>
+                ) : null}
               </Text>
             ) : null}
           </View>
