@@ -246,7 +246,8 @@ function MultiAddressHome(): JSX.Element {
     return '$' + splitNumberByStep((num || 0).toFixed(2));
   }, [balanceAccounts]);
 
-  const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
+  const { toggleUseAllAccountsOnScene, switchSceneCurrentAccount } =
+    useSwitchSceneCurrentAccount();
 
   const handleClickMenu = useCallback(
     (title: MultiHomeFeatTitle) => {
@@ -268,12 +269,13 @@ function MultiAddressHome(): JSX.Element {
           const selectAddressModalId = createGlobalBottomSheetModal2024({
             name: MODAL_NAMES.SELECT_ACCOUNT_THEN,
             modalTitle: 'Select Receive Address',
-            onDone: () => {
+            onDone: selectedAccount => {
               removeGlobalBottomSheetModal2024(selectAddressModalId);
               const id = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.SELECT_SORTED_CHAIN,
                 value: CHAINS_ENUM.ETH,
                 onChange: (v: CHAINS_ENUM) => {
+                  switchSceneCurrentAccount('Receive', selectedAccount);
                   navigation.dispatch(
                     StackActions.push(RootNames.StackTransaction, {
                       screen: RootNames.Receive,
@@ -351,7 +353,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene],
+    [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
   );
 
   return (

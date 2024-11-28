@@ -6,7 +6,9 @@ import { useTheme2024 } from '@/hooks/theme';
 
 export type SelectAccountThenProps = {
   modalTitle?: string;
-  onDone: () => void;
+  onDone: React.ComponentProps<
+    typeof AccountsPanelInSheetModal
+  >['onSelectAccount'];
 };
 export const SelectAccountThen: React.FC<SelectAccountThenProps> = ({
   modalTitle,

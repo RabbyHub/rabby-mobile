@@ -18,6 +18,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import IconMCopy from '@/assets2024/icons/address/mcopy.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 function ReceiveScreen(): JSX.Element {
   const [chainTokenInfo, setChainTokenInfo] = useState({
@@ -28,6 +29,7 @@ function ReceiveScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
 
   const { currentAccount: account } = useCurrentAccount();
+  useLastUsedAccountInScreen({ disableAutoEffect: false });
 
   const name = useMemo(
     () => account?.aliasName || account?.brandName,
