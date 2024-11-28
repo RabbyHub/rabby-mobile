@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/AddressItem';
 import { RootNames } from '@/constant/layout';
@@ -12,6 +12,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { useSortAddressList } from './useSortAddressList';
+import { AddressEmptyContainer } from './components/AddressEmptyContainer';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -89,6 +90,7 @@ export function AddressListScreen(): JSX.Element {
             <AddressItemEntry account={item} />
           </View>
         )}
+        ListEmptyComponent={AddressEmptyContainer}
         ListHeaderComponent={
           <View style={styles.headline}>
             <Text style={styles.headlineText}>My Address ({list?.length})</Text>
