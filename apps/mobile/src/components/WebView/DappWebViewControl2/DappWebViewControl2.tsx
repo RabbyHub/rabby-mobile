@@ -207,7 +207,7 @@ const DappWebViewControl2 = React.forwardRef<
       const urlInfo = canoicalizeDappUrl(urlString);
 
       const hasSameOrigin =
-        false && canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
+        canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
 
       return {
         stillInDappOrigin: hasSameOrigin,
