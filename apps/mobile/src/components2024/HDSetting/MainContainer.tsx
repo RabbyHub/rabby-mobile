@@ -122,6 +122,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     padding: 16,
     fontSize: 16,
     backgroundColor: colors2024['neutral-bg-2'],
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   dot: {

@@ -147,6 +147,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   listItemContent: {},
   listItemLabel: {
     color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 8,
@@ -184,6 +185,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   listItemDescStrong: {
     color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
 }));

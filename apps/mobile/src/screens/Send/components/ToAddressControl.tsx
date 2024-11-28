@@ -344,15 +344,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
     },
 
-    tipNoContact: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 12,
-      fontWeight: 'normal',
-      paddingTop: 12,
-      flexDirection: 'row',
-      alignItems: 'baseline',
-    },
-
     textAddToContact: {
       color: colors2024['blue-default'],
       textDecorationLine: 'underline',

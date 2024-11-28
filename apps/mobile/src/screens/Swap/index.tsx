@@ -863,11 +863,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 6,
   },
-  approveText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors2024['neutral-title-1'],
-  },
   unlimitedText: {
     fontSize: 13,
     fontWeight: '500',

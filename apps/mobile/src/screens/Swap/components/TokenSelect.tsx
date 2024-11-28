@@ -234,7 +234,8 @@ const TokenSelect = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
     borderRadius: 100,
-    backgroundColor: colors2024['neutral-card-2'],
+    // TODO: backgroundColor: colors2024['neutral-card-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
     paddingLeft: 16,
     paddingRight: 12,
     height: 60,

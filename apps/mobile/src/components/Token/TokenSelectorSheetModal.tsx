@@ -392,6 +392,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     modalTitle: {
       color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
       marginBottom: 24,
     },
     modalMainTitle: {

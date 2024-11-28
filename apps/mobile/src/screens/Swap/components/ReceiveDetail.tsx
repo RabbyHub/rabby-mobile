@@ -279,6 +279,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: 'normal',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-info'],
   },
   column: {
@@ -308,21 +309,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   gasImage: {
     width: 14,
     height: 14,
-  },
-  titleText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors2024['neutral-title-1'],
-    marginRight: 2,
-  },
-  amountText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors2024['neutral-title-1'],
-    maxWidth: 170,
-    overflow: 'hidden',
-    marginLeft: 8,
-    marginRight: 4,
   },
   diffText: {
     fontSize: 13,
@@ -382,6 +368,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   quoteProviderBestText: {
     fontSize: 13,
     lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-InvertHighlight'],
   },
   switchImage: {
@@ -417,6 +404,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   afterLabel: {
     fontSize: 13,
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
   },
   afterValueContainer: {
@@ -426,6 +414,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   afterValue: {
     fontSize: 14,
+    lineHeight: 17,
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
@@ -434,23 +424,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    backgroundColor: 'black',
   },
   impactTooltipText: {
     fontSize: 12,
     lineHeight: 14,
-    color: colors2024['neutral-title-2'],
+    fontFamily: 'SF Pro Rounded',
+    color: 'white',
   },
   warningTipContainer: {
-    marginTop: 8,
+    marginTop: 11,
     marginHorizontal: 12,
     borderRadius: 4,
-    backgroundColor: colors2024['red-light'],
-    padding: 10,
+    backgroundColor: colors2024['red-light-1'],
+    padding: 8,
   },
   warningTip: {
     color: colors2024['red-default'],
     fontWeight: '400',
-    fontSize: 14,
-    lineHeight: 17,
+    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 14.3,
   },
 }));
