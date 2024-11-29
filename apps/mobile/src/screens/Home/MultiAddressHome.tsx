@@ -280,11 +280,12 @@ function MultiAddressHome(): JSX.Element {
             modalTitle: 'Select Receive Address',
             onDone: selectedAccount => {
               removeGlobalBottomSheetModal2024(selectAddressModalId);
+              switchSceneCurrentAccount('Receive', selectedAccount);
               const id = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.SELECT_SORTED_CHAIN,
                 value: CHAINS_ENUM.ETH,
                 onChange: (v: CHAINS_ENUM) => {
-                  switchSceneCurrentAccount('Receive', selectedAccount);
+                  removeGlobalBottomSheetModal2024(id);
                   navigation.dispatch(
                     StackActions.push(RootNames.StackTransaction, {
                       screen: RootNames.Receive,
@@ -293,7 +294,6 @@ function MultiAddressHome(): JSX.Element {
                       },
                     }),
                   );
-                  removeGlobalBottomSheetModal2024(id);
                 },
                 onClose: () => {
                   removeGlobalBottomSheetModal2024(id);
