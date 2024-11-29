@@ -11,21 +11,21 @@ import { CancelTxPopup } from '@/components/CancelTxPopup';
 import { SelectSortedChain } from '@/components2024/SelectSortedChain';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
-import { SettingLedger } from '@/components2024/HDSetting/SettingLedger';
+import { SettingLedger } from '@/components/HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '@/components/Upgrade/TipUpgrade';
 import { ConnectKeystone } from '@/components/ConnectKeystone/ConnectKeystone';
-import { SettingKeystone } from '@/components2024/HDSetting/SettingKeystone';
+import { SettingKeystone } from '@/components/HDSetting/SettingKeystone';
 import { ConnectOneKey } from '@/components/ConnectOneKey/ConnectOneKey';
 import { OneKeyInputPassphrase } from '@/components/OneKeyModal/OneKeyInputPassphrase';
 import { OneKeyInputPin } from '@/components/OneKeyModal/OneKeyInputPin';
-import { SettingOneKey } from '@/components2024/HDSetting/SettingOneKey';
+import { SettingOneKey } from '@/components/HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '@/components/OneKeyModal/OneKeyPinOrPassphrase';
 import {
   TipTermOfUseModalInner,
   TipPrivacyPolicyInner,
 } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
-import { SettingHDKeyring } from '@/components2024/HDSetting/SettingHDKeyring';
+import { SettingHDKeyring } from '@/components/HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 import { SeedPhraseBackupToCloud } from '@/components/SeedPhraseBackupToCloud2024/SeedPhraseBackupToCloud';

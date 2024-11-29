@@ -23,8 +23,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { replaceToFirst } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
-import { settingAtom } from '@/components2024/HDSetting/MainContainer';
-import { getAccountBalance } from '@/components2024/HDSetting/util';
+import { settingAtom } from '@/components/HDSetting/MainContainer';
+import { getAccountBalance } from '@/components/HDSetting/util';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 
