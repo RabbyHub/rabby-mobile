@@ -4,11 +4,22 @@ import { apiBalance } from '@/core/apis';
 import { keyringService, preferenceService } from '@/core/services';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
+import PQueue from 'p-queue';
 
 interface balanceAccountType {
   address: string;
   balance: number;
 }
+
+const waitQueueFinished = (q: PQueue) => {
+  return new Promise(resolve => {
+    q.on('empty', () => {
+      if (q.pending <= 0) {
+        resolve(null);
+      }
+    });
+  });
+};
 
 const balanceAtom = atom<balanceAccountType[]>([]);
 const lengthAtom = atom<number>(0);
@@ -22,6 +33,10 @@ export default function useAccountsBalance(opts?: {
   const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const lastTimeStamps = useRef<number>(0);
+
+  const queue = new PQueue({
+    concurrency: 10,
+  });
 
   const isNeedFetchData = useMemoizedFn(() => {
     const currentTime = Date.now();
@@ -71,43 +86,46 @@ export default function useAccountsBalance(opts?: {
         );
       }
 
-      const accountPromises = allList.map(async account => {
-        if (fetchType === 'from_cache') {
-          const cacheData = preferenceService.getAddressBalance(account);
-          if (uniqueList.includes(account)) {
-            balancesArr.push({
-              address: account,
-              balance: cacheData?.total_usd_value || 0,
-            });
+      for (let i = 0; i < allList.length; i++) {
+        const account = allList[i];
+        queue.add(async () => {
+          if (fetchType === 'from_cache') {
+            const cacheData = preferenceService.getAddressBalance(account);
+            if (uniqueList.includes(account)) {
+              balancesArr.push({
+                address: account,
+                balance: cacheData?.total_usd_value || 0,
+              });
+            }
+            return;
           }
-          return;
-        }
 
-        try {
-          // get from server api
-          const resData = await apiBalance.getAddressBalance(account, {
-            force: true,
-          });
-          if (uniqueList.includes(account)) {
-            balancesArr.push({
-              address: account,
-              balance: resData?.total_usd_value || 0,
+          try {
+            // get from server api
+            const resData = await apiBalance.getAddressBalance(account, {
+              force: true,
             });
+            if (uniqueList.includes(account)) {
+              balancesArr.push({
+                address: account,
+                balance: resData?.total_usd_value || 0,
+              });
+            }
+          } catch (e) {
+            console.log('fetchTotalBalance  error', e);
+            // api fetch error fallback get from cache store
+            const cacheData = preferenceService.getAddressBalance(account);
+            if (uniqueList.includes(account)) {
+              balancesArr.push({
+                address: account,
+                balance: cacheData?.total_usd_value || 0,
+              });
+            }
           }
-        } catch (e) {
-          console.log('accountPromises  error', e);
-          // api fetch error fallback get from cache store
-          const cacheData = preferenceService.getAddressBalance(account);
-          if (uniqueList.includes(account)) {
-            balancesArr.push({
-              address: account,
-              balance: cacheData?.total_usd_value || 0,
-            });
-          }
-        }
-      });
+        });
+      }
 
-      await Promise.all(accountPromises);
+      await waitQueueFinished(queue);
 
       setBalanceAccounts(balancesArr);
       setBalanceLoading(false);
