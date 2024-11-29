@@ -6,7 +6,7 @@ import IconHardWare from '@/assets2024/icons/common/IconHardWare.png';
 import IconImport from '@/assets2024/icons/common/IconImport.svg';
 import IconCreate from '@/assets2024/icons/common/IconCreate.svg';
 import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
+import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
@@ -15,7 +15,7 @@ import { trigger } from 'react-native-haptic-feedback';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: any;
-  navigateTo: (screen: string, params?: object) => void;
+  navigateTo: (screen: AppRootName, params?: object) => void;
 }
 
 export const AddAddressSelectMethod: React.FC<Props> = ({

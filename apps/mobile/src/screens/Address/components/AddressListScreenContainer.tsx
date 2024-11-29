@@ -3,12 +3,9 @@ import { View, Text, TouchableNativeFeedback } from 'react-native';
 import { useNavigationState } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { RootNames } from '@/constant/layout';
+import { AppRootName, RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/core';
-import {
-  AddressNavigatorParamList,
-  RootStackParamsList,
-} from '@/navigation-type';
+import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -65,7 +62,7 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
         removeGlobalBottomSheetModal2024(id);
       },
       shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen, params) => {
+      navigateTo: (screen: AppRootName, params?: object) => {
         navigation.dispatch(
           StackActions.push(RootNames.StackAddress, {
             screen,
