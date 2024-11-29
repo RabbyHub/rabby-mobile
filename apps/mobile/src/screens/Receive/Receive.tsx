@@ -5,6 +5,7 @@ import { RootNames } from '@/constant/layout';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
+import { navigationRef } from '@/utils/navigation';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -39,7 +40,14 @@ function ReceiveScreen(): JSX.Element {
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
   );
-  const [isShowWatchModeModal, setIsShowWatchModeModal] = useState(false);
+  const [isShowWatchModeModal, setIsShowWatchModeModal] = useState(isWatchMode);
+
+  useEffect(() => {
+    // force disapper when not watch address
+    if (!isWatchMode) {
+      setIsShowWatchModeModal(false);
+    }
+  }, [isWatchMode]);
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Receive)?.params,
@@ -75,12 +83,24 @@ function ReceiveScreen(): JSX.Element {
       ignoreAndroidSystemSettings: false,
     });
   };
+
+  const navBack = useCallback(() => {
+    const navigation = navigationRef.current;
+    if (navigation?.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigationRef.resetRoot({
+        index: 0,
+        routes: [{ name: 'Root' }],
+      });
+    }
+  }, []);
+
   const handleCopy = () => {
-    triggerLight();
-    if (isWatchMode) {
-      setIsShowWatchModeModal(true);
+    if (isShowWatchModeModal) {
       return;
     }
+    triggerLight();
     toast.success('Copied successfully');
     copyAddress();
   };
@@ -91,6 +111,7 @@ function ReceiveScreen(): JSX.Element {
       buttonProps={{
         title: 'Copy address',
         onPress: handleCopy,
+        disabled: isShowWatchModeModal,
       }}
       style={styles.screen}
       footerBottomOffset={56}
@@ -150,13 +171,9 @@ function ReceiveScreen(): JSX.Element {
               </Text>
               <FooterButtonGroup
                 style={styles.btns}
-                onCancel={() => {
-                  setIsShowWatchModeModal(false);
-                }}
+                onCancel={navBack}
                 onConfirm={() => {
                   setIsShowWatchModeModal(false);
-                  toast.success('Copied successfully');
-                  copyAddress();
                 }}
               />
             </View>
