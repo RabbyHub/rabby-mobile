@@ -186,6 +186,9 @@ export const ImportSuccessScreen2024 = () => {
       return;
     }
     Keyboard.dismiss();
+    if (modalRef.current) {
+      return;
+    }
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
       params: {
@@ -194,6 +197,11 @@ export const ImportSuccessScreen2024 = () => {
         passphrase: state.passphrase,
         keyringId: state.keyringId,
         brand: state.brandName,
+      },
+      bottomSheetModalProps: {
+        onDismiss: () => {
+          modalRef.current = undefined;
+        },
       },
       onCancel: () => {
         if (modalRef.current) {
