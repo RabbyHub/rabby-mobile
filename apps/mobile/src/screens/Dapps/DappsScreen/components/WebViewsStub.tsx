@@ -18,12 +18,9 @@ import DappWebViewControl2, {
   DappWebViewControl2Type,
 } from '@/components/WebView/DappWebViewControl2/DappWebViewControl2';
 import { useDapps } from '@/hooks/useDapps';
-import TouchableView from '@/components/Touchable/TouchableView';
-import { RootNames, ScreenLayouts2 } from '@/constant/layout';
+import { ScreenLayouts2 } from '@/constant/layout';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS } from 'react-native-reanimated';
-import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
-import { navigate } from '@/utils/navigation';
 import {
   AppBottomSheetHandle,
   BottomSheetHandlableView,
@@ -33,13 +30,7 @@ import {
   useAutoLockBottomSheetModalOnChange,
 } from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { useFocusEffect } from '@react-navigation/native';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
@@ -53,6 +44,7 @@ import { toast } from '@/components/Toast';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
 
 const renderBackdrop = (props: Omit<BottomSheetBackdropProps, 'style'>) => {
   // const { colors2024 } = useTheme2024();
@@ -213,6 +205,7 @@ export function OpenedDappWebViewStub() {
   const {
     openedDappItems,
     finalActiveDappId,
+    // activeDapp: origActiveDapp,
     activeDapp,
     expandDappWebViewModal,
     collapseDappWebViewModal,
@@ -257,17 +250,15 @@ export function OpenedDappWebViewStub() {
     [onHideActiveDapp],
   );
 
-  useEffect(() => {
-    if (activeDapp) {
-      expandDappWebViewModal();
-    }
-  }, [expandDappWebViewModal, activeDapp]);
+  // const activeDapp = useDebounceValue(origActiveDapp, 100);
 
-  React.useEffect(() => {
-    if (!openedDappItems.length || !activeDapp) {
+  useEffect(() => {
+    if (openedDappItems.length && activeDapp) {
+      expandDappWebViewModal();
+    } else if (!openedDappItems.length || !activeDapp) {
       globalSetActiveDappState({ dappOrigin: null, tabId: null });
     }
-  }, [openedDappItems.length, activeDapp]);
+  }, [expandDappWebViewModal, activeDapp, openedDappItems.length]);
 
   useHandleBackPressClosable(
     useCallback(() => {
