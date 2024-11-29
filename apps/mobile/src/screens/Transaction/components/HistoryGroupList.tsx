@@ -8,7 +8,7 @@ import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { useMyAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { formatTimestamp } from '@/utils/time';
@@ -67,7 +67,7 @@ function markFirstItems(
 }
 
 const AddressInfo = ({ address }: { address: string }) => {
-  const { accounts } = useMyAccounts();
+  const { accounts } = useAccounts();
   const { styles } = useTheme2024({ getStyle });
   const account = accounts.find(item => isSameAddress(item.address, address));
   if (account) {

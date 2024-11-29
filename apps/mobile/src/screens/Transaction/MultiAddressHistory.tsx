@@ -336,13 +336,11 @@ const HistoryScreen = () => {
     tokenDetailAddress,
     setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
-  console.log('tokenDetailAddress', tokenDetailAddress);
   useLastUsedAccountInScreen();
 
-  const { isSceneUsingAllAccounts, finalSceneCurrentAccount } =
-    useSceneAccountInfo({
-      forScene: 'MultiHistory',
-    });
+  const { isSceneUsingAllAccounts } = useSceneAccountInfo({
+    forScene: 'MultiHistory',
+  });
 
   return (
     <NormalScreenContainer2024 type="bg1">
