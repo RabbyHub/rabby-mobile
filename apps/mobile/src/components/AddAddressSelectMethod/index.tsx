@@ -15,11 +15,13 @@ import { trigger } from 'react-native-haptic-feedback';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: any;
+  navigateTo: (screen: string, params?: object) => void;
 }
 
 export const AddAddressSelectMethod: React.FC<Props> = ({
   onDone,
   shouldRedirectToSetPasswordBefore2024,
+  navigateTo,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -43,9 +45,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               return;
             }
 
-            navigate(RootNames.StackAddress, {
-              screen: RootNames.CreateSelectMethod,
-            });
+            navigateTo(RootNames.CreateSelectMethod);
             onDone();
           }}
           style={styles.importItem}
@@ -59,11 +59,8 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               ignoreAndroidSystemSettings: false,
             });
 
-            navigate(RootNames.StackAddress, {
-              screen: RootNames.ImportMethods,
-              params: {
-                hasCurrentAddress: true,
-              },
+            navigateTo(RootNames.ImportMethods, {
+              hasCurrentAddress: true,
             });
             onDone();
           }}
@@ -78,9 +75,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               ignoreAndroidSystemSettings: false,
             });
 
-            navigate(RootNames.StackAddress, {
-              screen: RootNames.ImportHardwareAddress,
-            });
+            navigateTo(RootNames.ImportHardwareAddress);
             onDone();
           }}
           style={styles.importItem}
