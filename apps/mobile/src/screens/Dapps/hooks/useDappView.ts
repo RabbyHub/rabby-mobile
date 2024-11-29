@@ -1,4 +1,4 @@
-import { createRef, useCallback, useMemo } from 'react';
+import { createRef, useCallback, useMemo, useRef } from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { useSheetModals } from '@/hooks/useSheetModal';
@@ -198,6 +198,8 @@ export function useOpenDappView() {
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 
+  const { dappsViewConfig } = useDappsViewConfig();
+
   // TODO: how about opened non-dapp urls?
   const [openedDappRecords, _setOpenedOriginsDapps] = useAtom(
     openedDappRecordsAtom,
@@ -208,18 +210,18 @@ export function useOpenDappView() {
         typeof valueOrFunc === 'function'
           ? valueOrFunc(openedDappRecords)
           : valueOrFunc;
-      if (nextVal.length > DAPPS_VIEW_LIMIT.maxCount) {
+      if (nextVal.length > dappsViewConfig.maxCount) {
         // sort desc by openTime
         nextVal.sort((a, b) => b.openTime - a.openTime);
       }
       // trim all dapps expired
       nextVal = nextVal.filter(
-        item => Date.now() - item.openTime < DAPPS_VIEW_LIMIT.expireDuration,
+        item => Date.now() - item.openTime <= dappsViewConfig.expireDuration,
       );
 
-      _setOpenedOriginsDapps(nextVal.slice(0, DAPPS_VIEW_LIMIT.maxCount));
+      _setOpenedOriginsDapps(nextVal.slice(0, dappsViewConfig.maxCount));
     },
-    [openedDappRecords, _setOpenedOriginsDapps],
+    [openedDappRecords, _setOpenedOriginsDapps, dappsViewConfig],
   );
 
   const showDappWebViewModal = useCallback(() => {
@@ -338,7 +340,7 @@ export function useOpenDappView() {
     [setOpenedOriginsDapps, activeDappOrigin, setActiveDappOrigin],
   );
 
-  const onHideActiveDapp = useCallback(() => {
+  const clearActiveDappOrigin = useCallback(() => {
     setActiveDappOrigin(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setActiveDappOrigin]);
@@ -349,18 +351,11 @@ export function useOpenDappView() {
     }
 
     collapseDappWebViewModal();
-    onHideActiveDapp();
-  }, [
-    onHideActiveDapp,
-    collapseDappWebViewModal,
-    removeOpenedDapp,
-    activeDappOrigin,
-  ]);
+  }, [collapseDappWebViewModal, removeOpenedDapp, activeDappOrigin]);
 
   const collapseActiveOpenedDapp = useCallback(() => {
     collapseDappWebViewModal();
-    onHideActiveDapp();
-  }, [onHideActiveDapp, collapseDappWebViewModal]);
+  }, [collapseDappWebViewModal]);
 
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
@@ -419,7 +414,7 @@ export function useOpenDappView() {
     removeOpenedDapp,
     closeOpenedDapp,
 
-    onHideActiveDapp,
+    clearActiveDappOrigin,
     closeActiveOpenedDapp,
     collapseActiveOpenedDapp,
   };

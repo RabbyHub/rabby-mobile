@@ -210,7 +210,7 @@ export function OpenedDappWebViewStub() {
     expandDappWebViewModal,
     collapseDappWebViewModal,
     closeOpenedDapp,
-    onHideActiveDapp,
+    clearActiveDappOrigin,
     collapseActiveOpenedDapp,
   } = useOpenDappView();
 
@@ -226,8 +226,8 @@ export function OpenedDappWebViewStub() {
 
   const hideDappSheetModal = useCallback(() => {
     collapseDappWebViewModal();
-    onHideActiveDapp();
-  }, [collapseDappWebViewModal, onHideActiveDapp]);
+    clearActiveDappOrigin();
+  }, [collapseDappWebViewModal, clearActiveDappOrigin]);
 
   const handleBottomSheetChanges = useCallback<
     BottomSheetModalProps['onChange'] & object
@@ -244,17 +244,30 @@ export function OpenedDappWebViewStub() {
          * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
          * it will umount children component of BottomSheetModal
          */
-        onHideActiveDapp();
+        // clearActiveDappOrigin();
       }
     },
-    [onHideActiveDapp],
+    [
+      /* clearActiveDappOrigin */
+    ],
   );
 
   // const activeDapp = useDebounceValue(origActiveDapp, 100);
 
+  const expandTimerRef = useRef<any>(null);
   useEffect(() => {
+    const clearTimer = () => {
+      if (expandTimerRef.current) clearTimeout(expandTimerRef.current);
+      expandTimerRef.current = null;
+    };
+
     if (openedDappItems.length && activeDapp) {
-      expandDappWebViewModal();
+      expandTimerRef.current = setTimeout(() => {
+        clearTimer();
+        expandDappWebViewModal();
+      }, 200);
+
+      return clearTimer;
     } else if (!openedDappItems.length || !activeDapp) {
       globalSetActiveDappState({ dappOrigin: null, tabId: null });
     }
