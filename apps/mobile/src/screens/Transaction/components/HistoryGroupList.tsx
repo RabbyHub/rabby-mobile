@@ -8,7 +8,7 @@ import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { useAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { formatTimestamp } from '@/utils/time';
@@ -66,10 +66,8 @@ function markFirstItems(
   return newArr;
 }
 
-const AddressInfo = ({ address }: { address: string }) => {
-  const { accounts } = useAccounts();
+const AddressInfo = ({ account }: { account?: KeyringAccountWithAlias }) => {
   const { styles } = useTheme2024({ getStyle });
-  const account = accounts.find(item => isSameAddress(item.address, address));
   if (account) {
     return (
       <View style={styles.addressInfo}>
@@ -107,6 +105,7 @@ export const HistoryList = ({
     return markFirstItems(list || []);
   }, [list]);
   const { styles } = useTheme2024({ getStyle });
+  const { accounts } = useMyAccounts();
 
   const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
     if ('projectDict' in item.data) {
@@ -117,7 +116,7 @@ export const HistoryList = ({
               {formatTimestamp(item.data.time_at * 1000)}
             </Text>
           ) : null}
-          {item.isFirst ? <AddressInfo address={item.data.address} /> : null}
+          {item.isFirst ? <AddressInfo account={item.data.account} /> : null}
           <HistoryItem
             data={item.data}
             projectDict={item.data.projectDict}
@@ -136,9 +135,12 @@ export const HistoryList = ({
           ) || [],
           i => i.nonce,
         )?.nonce === item.data.nonce;
+      const account = accounts.find(i =>
+        isSameAddress(i.address, item.data.address),
+      );
       return (
         <>
-          {item.isFirst ? <AddressInfo address={item.data.address} /> : null}
+          {item.isFirst ? <AddressInfo account={account} /> : null}
           <TransactionItem
             data={item.data}
             canCancel={canCancel}
