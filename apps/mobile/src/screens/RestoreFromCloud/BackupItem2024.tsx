@@ -26,12 +26,6 @@ import { ellipsisAddress } from '@/utils/address';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  root: {
-    borderWidth: 1,
-    borderColor: 'transparent',
-    borderRadius: 8,
-    backgroundColor: colors2024['neutral-card-1'],
-  },
   rootImported: {
     opacity: 0.5,
     borderColor: 'transparent',
@@ -175,11 +169,7 @@ export const BackupItem: React.FC<BackupItemProps> = ({
   return (
     <TouchableOpacity
       onPress={imported ? noop : onPress}
-      style={StyleSheet.flatten([
-        styles.root,
-        imported && styles.rootImported,
-        style,
-      ])}>
+      style={StyleSheet.flatten([imported && styles.rootImported, style])}>
       <Card style={styles.body}>
         <View style={styles.header}>
           <Text style={styles.bodyTitle}>Seed Phrase {index + 1}</Text>
