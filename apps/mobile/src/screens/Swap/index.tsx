@@ -6,7 +6,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import { ReserveGasPopup } from '@/components/ReserveGasPopup';
 import TouchableItem from '@/components/Touchable/TouchableItem';
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { swapService } from '@/core/services';
@@ -30,7 +30,7 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, View } from 'react-native';
+import { Platform, Text, TextInput, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useMount from 'react-use/lib/useMount';
@@ -54,7 +54,11 @@ import {
   useRabbyFeeVisible,
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
+import { Button } from '@/components2024/Button';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+
+const isAndroid = Platform.OS === 'android';
 
 const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
@@ -214,6 +218,8 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     DexDisplayName,
     isWrapToken,
   ]);
+
+  const { safeOffBottom } = useSafeSizes();
 
   const [isShowSign, setIsShowSign] = useState(false);
   const gotoSwap = useMemoizedFn(async () => {
@@ -385,40 +391,13 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   const navigation = useNavigation();
 
   return (
-    <FooterButtonScreenContainer
-      as="View"
-      buttonProps={{
-        title: btnText,
-        disabled:
-          !payToken ||
-          !receiveToken ||
-          !payAmount ||
-          Number(payAmount) === 0 ||
-          !activeProvider,
-        onPress: () => {
-          if (!activeProvider || expired || slippageChanged) {
-            refresh(e => e + 1);
-            return;
-          }
-          if (activeProvider?.shouldTwoStepApprove) {
-            setTwoStepApproveModalVisible(true);
-            return;
-          }
-          // gotoSwap();
-          handleSwap();
-        },
-      }}
-      style={styles.screen}
-      footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 24,
-      }}>
+    <NormalScreenContainer2024 type="bg1">
       {isForMultipleAdderss && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
         style={styles.container}
-        contentContainerStyle={styles.container}
+        // contentContainerStyle={styles.container}
         enableOnAndroid
         extraHeight={200}
         keyboardOpeningTime={0}>
@@ -610,6 +589,34 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
           ) : null}
         </View>
       </KeyboardAwareScrollView>
+      <View
+        style={[
+          styles.buttonContainer,
+          isAndroid && { paddingBottom: 20 + safeOffBottom },
+        ]}>
+        <Button
+          onPress={() => {
+            if (!activeProvider || expired || slippageChanged) {
+              refresh(e => e + 1);
+              return;
+            }
+            if (activeProvider?.shouldTwoStepApprove) {
+              setTwoStepApproveModalVisible(true);
+              return;
+            }
+            // gotoSwap();
+            handleSwap();
+          }}
+          title={btnText}
+          disabled={
+            !payToken ||
+            !receiveToken ||
+            !payAmount ||
+            Number(payAmount) === 0 ||
+            !activeProvider
+          }
+        />
+      </View>
       <TwpStepApproveModal
         open={twoStepApproveModalVisible}
         onCancel={() => {
@@ -680,7 +687,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         visible={lowCreditVisible}
         onCancel={() => setLowCreditVisible(false)}
       />
-    </FooterButtonScreenContainer>
+    </NormalScreenContainer2024>
   );
 };
 
@@ -696,18 +703,16 @@ Swap.ForMultipleAddress = (
 Swap.SwapHeader = SwapHeader;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  screen: {
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
   container: {
-    // flex: 1,
+    flex: 1,
+    marginBottom: 100,
   },
   content: {
     minHeight: 300,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    paddingBottom: 20,
+    paddingBottom: 30,
   },
   label: {
     fontSize: 17,
