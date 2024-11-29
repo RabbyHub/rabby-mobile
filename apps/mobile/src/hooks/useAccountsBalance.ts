@@ -35,7 +35,8 @@ export default function useAccountsBalance(opts?: {
   const lastTimeStamps = useRef<number>(0);
 
   const queue = new PQueue({
-    concurrency: 10,
+    interval: 2000,
+    intervalCap: 10,
   });
 
   const isNeedFetchData = useMemoizedFn(() => {
@@ -86,46 +87,47 @@ export default function useAccountsBalance(opts?: {
         );
       }
 
-      for (let i = 0; i < allList.length; i++) {
-        const account = allList[i];
-        queue.add(async () => {
-          if (fetchType === 'from_cache') {
-            const cacheData = preferenceService.getAddressBalance(account);
-            if (uniqueList.includes(account)) {
-              balancesArr.push({
-                address: account,
-                balance: cacheData?.total_usd_value || 0,
-              });
-            }
-            return;
-          }
-
-          try {
-            // get from server api
-            const resData = await apiBalance.getAddressBalance(account, {
-              force: true,
+      if (fetchType === 'from_cache') {
+        allList.map(account => {
+          const cacheData = preferenceService.getAddressBalance(account);
+          if (uniqueList.includes(account)) {
+            balancesArr.push({
+              address: account,
+              balance: cacheData?.total_usd_value || 0,
             });
-            if (uniqueList.includes(account)) {
-              balancesArr.push({
-                address: account,
-                balance: resData?.total_usd_value || 0,
-              });
-            }
-          } catch (e) {
-            console.log('fetchTotalBalance  error', e);
-            // api fetch error fallback get from cache store
-            const cacheData = preferenceService.getAddressBalance(account);
-            if (uniqueList.includes(account)) {
-              balancesArr.push({
-                address: account,
-                balance: cacheData?.total_usd_value || 0,
-              });
-            }
           }
         });
+      } else {
+        for (let i = 0; i < allList.length; i++) {
+          const account = allList[i];
+          // batch fetch by queue
+          queue.add(async () => {
+            try {
+              // get from server api
+              const resData = await apiBalance.getAddressBalance(account, {
+                force: true,
+              });
+              if (uniqueList.includes(account)) {
+                balancesArr.push({
+                  address: account,
+                  balance: resData?.total_usd_value || 0,
+                });
+              }
+            } catch (e) {
+              console.log('fetchTotalBalance  error', e);
+              // api fetch error fallback get from cache store
+              const cacheData = preferenceService.getAddressBalance(account);
+              if (uniqueList.includes(account)) {
+                balancesArr.push({
+                  address: account,
+                  balance: cacheData?.total_usd_value || 0,
+                });
+              }
+            }
+          });
+        }
+        await waitQueueFinished(queue);
       }
-
-      await waitQueueFinished(queue);
 
       setBalanceAccounts(balancesArr);
       setBalanceLoading(false);
