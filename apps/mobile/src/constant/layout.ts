@@ -339,6 +339,18 @@ export function makeHeadersPresets({
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
+    withBgCard1_2024: {
+      headerStyle: {
+        backgroundColor: colors2024?.['neutral-bg-1'],
+      },
+      headerTitleStyle: {
+        color: colors?.['neutral-title-1'],
+        fontWeight: '700' as const,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+      },
+      headerTintColor: colors?.['neutral-title-1'],
+    },
     withBgCard2_2024: {
       headerStyle: {
         backgroundColor: colors?.['neutral-card2'],

@@ -35,7 +35,7 @@ export default function TransactionNavigator() {
   // console.log('============== TransactionNavigator Render =========');
 
   const { colors, colors2024 } = useTheme2024();
-  const headerPresets = makeHeadersPresets({ colors });
+  const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
   return (
     <TransactionStack.Navigator
@@ -195,7 +195,7 @@ export default function TransactionNavigator() {
         component={Bridge}
         options={mergeScreenOptions({
           title: 'Bridge',
-          ...headerPresets.withBgCard2,
+          // ...headerPresets.withBgCard1_2024,
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
@@ -213,7 +213,7 @@ export default function TransactionNavigator() {
         component={Bridge.ForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Bridge',
-          ...headerPresets.withBgCard2,
+          // ...headerPresets.withBgCard1_2024,
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher

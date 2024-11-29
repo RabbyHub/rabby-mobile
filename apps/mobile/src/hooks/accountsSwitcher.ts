@@ -109,8 +109,6 @@ export function useResetSceneAccountInfo() {
 }
 
 export function usePreFetchBeforeEnterScene() {
-  const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { fetchCurrentAccountAsync } = useCurrentAccount({
     disableAutoFetch: true,

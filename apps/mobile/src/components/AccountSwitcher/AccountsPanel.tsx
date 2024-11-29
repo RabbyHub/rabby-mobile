@@ -76,11 +76,13 @@ const SectionCollapsableNav = function ({
 export function AccountsPanelInModal({
   forScene,
   containerStyle,
+  linearContainerProps,
   onSwitchSceneAccount,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
   // isVisible?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
+  linearContainerProps?: React.ComponentProps<typeof LinearGradientContainer>;
   onSwitchSceneAccount?: (ctx: {
     switchAction: () => void;
     sceneAccount: Account;
@@ -88,7 +90,7 @@ AccountSwitcherAopProps<{
 }>) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
-  const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
+  const { toggleSceneVisible } = useAccountSceneVisible(forScene);
 
   const {
     isPinnedAccount,
@@ -163,14 +165,16 @@ AccountSwitcherAopProps<{
   );
 
   const handlePressUseAll = useCallback(() => {
-    console.debug('handlePressUseAll');
     toggleUseAllAccountsOnScene(forScene, true);
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleUseAllAccountsOnScene, toggleSceneVisible]);
 
+  console.log('[feat] linearContainerProps', linearContainerProps);
+
   return (
     <LinearGradientContainer
       type="linear"
+      {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
         <ScrollView

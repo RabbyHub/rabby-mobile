@@ -1,4 +1,4 @@
-import { TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   createGetStyles2024,
@@ -21,8 +21,12 @@ import { IS_ANDROID } from '@/core/native/utils';
 export function AccountSwitcherModal({
   forScene,
   inScreen = false,
+  panelLinearGradientProps,
 }: AccountSwitcherAopProps<{
   inScreen?: boolean;
+  panelLinearGradientProps?: React.ComponentProps<
+    typeof AccountsPanelInModal
+  >['linearContainerProps'];
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -45,6 +49,8 @@ export function AccountSwitcherModal({
     maxHeight: Math.floor(offScreen.modalBackgroundHeight),
   };
 
+  console.log('[feat] panelLinearGradientProps', panelLinearGradientProps);
+
   return (
     <AutoLockView
       style={[
@@ -62,7 +68,10 @@ export function AccountSwitcherModal({
       />
       <View
         style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
-        <AccountsPanelInModal forScene={forScene} />
+        <AccountsPanelInModal
+          linearContainerProps={panelLinearGradientProps}
+          forScene={forScene}
+        />
       </View>
     </AutoLockView>
   );

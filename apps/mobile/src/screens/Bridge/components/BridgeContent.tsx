@@ -441,7 +441,11 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   return (
     <NormalScreenContainer>
       {isForMultipleAdderss && (
-        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+        <AccountSwitcherModal
+          forScene="MakeTransactionAbout"
+          inScreen
+          panelLinearGradientProps={{ type: 'classical:bg2' }}
+        />
       )}
       <KeyboardAwareScrollView
         style={styles.container}

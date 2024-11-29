@@ -10,7 +10,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -31,11 +31,11 @@ import RootScreenContainer from '@/components/ScreenContainer/RootScreenContaine
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { createGetStyles2024 } from '@/utils/styles';
 const PAGE_COUNT = 10;
 
 function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const account = preferenceService.getCurrentAccount();
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
@@ -188,13 +188,16 @@ const HistoryScreen = () => {
 
   const { currentAccount } = useCurrentAccount();
 
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { colors, styles } = useTheme2024({ getStyle: getStyles });
   useLastUsedAccountInScreen();
 
   return (
     <RootScreenContainer fitStatuBar style={styles.page}>
-      <AccountSwitcherModal forScene="History" inScreen />
+      <AccountSwitcherModal
+        forScene="History"
+        inScreen
+        panelLinearGradientProps={{ type: 'bg1' }}
+      />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <NetSwitchTabs
         value={selectedTab}
@@ -216,15 +219,15 @@ const HistoryScreen = () => {
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
+const getStyles = createGetStyles2024(ctx => {
+  return {
     page: {
-      backgroundColor: colors['neutral-bg-2'],
+      backgroundColor: ctx.colors['neutral-bg-2'],
     },
     link: {
       marginHorizontal: 20,
       marginBottom: 12,
-      backgroundColor: colors['neutral-card1'],
+      backgroundColor: ctx.colors['neutral-card1'],
       borderRadius: 6,
       paddingHorizontal: 12,
       paddingVertical: 15,
@@ -236,7 +239,7 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 15,
       lineHeight: 18,
       fontWeight: '500',
-      color: colors['neutral-body'],
+      color: ctx.colors['neutral-body'],
     },
     netTabs: {
       marginBottom: 12,
@@ -250,9 +253,10 @@ const getStyles = (colors: AppColorsVariants) =>
     notFoundText: {
       fontSize: 14,
       lineHeight: 17,
-      color: colors['neutral-body'],
+      color: ctx.colors['neutral-body'],
       marginTop: 16,
     },
-  });
+  };
+});
 
 export default HistoryScreen;

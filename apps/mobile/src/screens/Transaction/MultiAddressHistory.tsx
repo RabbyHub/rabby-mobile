@@ -344,7 +344,11 @@ const HistoryScreen = () => {
 
   return (
     <NormalScreenContainer2024 type="bg1">
-      <AccountSwitcherModal forScene="MultiHistory" inScreen />
+      <AccountSwitcherModal
+        forScene="MultiHistory"
+        inScreen
+        panelLinearGradientProps={{ type: 'bg1' }}
+      />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} />
       <BottomSheetModalTokenDetail
