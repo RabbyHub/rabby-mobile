@@ -189,17 +189,25 @@ function MultiAddressHome(): JSX.Element {
     }
   }, [pendingTxCount, spinValue]);
 
-  const { balanceAccounts, triggerUpdate, balanceLoading, accountsLength } =
-    useAccountsBalance({
-      cacheTime: 5 * 60 * 1000, // 5 minutes
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
+  const {
+    balanceAccounts,
+    balanceCacheAccounts,
+    triggerUpdate,
+    balanceLoading,
+    accountsLength,
+  } = useAccountsBalance({
+    cacheTime: 5 * 60 * 1000, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
 
   const fetchHistory = useCallback(() => {
-    const addresses = balanceAccounts.map(i => i.address);
+    const addresses = balanceCacheAccounts.map(i => i.address);
+    if (!addresses.length) {
+      return;
+    }
     const { pendingsLength, pendings } =
       transactionHistoryService.getPendingsAddresses(addresses);
-    console.log('fetchHistory :', balanceAccounts, pendingsLength, pendings);
+    console.log('fetchHistory :', balanceCacheAccounts, pendings);
     setPendingTxCount(pendingsLength);
     if (pendingsLength) {
       if (!timeRef.current) {
@@ -209,7 +217,7 @@ function MultiAddressHome(): JSX.Element {
       timeRef.current && clearInterval(timeRef.current);
       timeRef.current = null;
     }
-  }, [balanceAccounts]);
+  }, [balanceCacheAccounts]);
 
   // useMount(() => {  no use ?
   //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);

@@ -46,7 +46,6 @@ export const useNoLongerSupports = () => {
         onDone() {
           removeWalletConnect();
           removeGlobalBottomSheetModal2024(modalIdRef.current);
-          modalIdRef.current = undefined;
         },
       });
     }, 0);
