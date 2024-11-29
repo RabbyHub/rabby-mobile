@@ -60,6 +60,7 @@ interface ReceiveDetailsProps {
   bestQuoteDex: string;
   chain: CHAINS_ENUM;
   openQuotesList: () => void;
+  scrollToEnd?: () => void;
 }
 export const ReceiveDetails = (props: ReceiveDetailsProps) => {
   const { t } = useTranslation();
@@ -73,6 +74,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     bestQuoteDex,
     chain,
     openQuotesList,
+    scrollToEnd,
   } = props;
 
   const [reverse, setReverse] = useState(false);
@@ -122,6 +124,18 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     () => isSwapWrapToken(payToken.id, receiveToken.id, chain),
     [payToken, receiveToken, chain],
   );
+  useEffect(() => {
+    let id;
+    if (showLoss && scrollToEnd) {
+      id = setTimeout(() => {
+        scrollToEnd?.();
+      }, 500);
+    }
+    return () => {
+      id && clearTimeout(id);
+    };
+  }, [scrollToEnd, showLoss]);
+
   if (!activeProvider) {
     return (
       <View style={[styles.receiveWrapper, styles.receiveWrapperEmpty]}>

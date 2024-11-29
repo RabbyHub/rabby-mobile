@@ -28,7 +28,7 @@ import {
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TextInput, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -63,6 +63,7 @@ const isAndroid = Platform.OS === 'android';
 const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { t } = useTranslation();
+  const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
   const { colors2024, styles } = useTheme2024({ getStyle });
 
@@ -389,6 +390,9 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   );
 
   const navigation = useNavigation();
+  const scrollToEnd = () => {
+    keyboardAwareRef.current?.scrollToEnd(true);
+  };
 
   return (
     <NormalScreenContainer2024 type="bg1">
@@ -396,7 +400,14 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
-        style={styles.container}
+        style={[
+          styles.container,
+          // eslint-disable-next-line react-native/no-inline-styles
+          {
+            marginBottom: 112 + (isAndroid ? 20 + safeOffBottom : 0),
+          },
+        ]}
+        ref={keyboardAwareRef}
         // contentContainerStyle={styles.container}
         enableOnAndroid
         extraHeight={200}
@@ -541,6 +552,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
                 receiveToken={receiveToken}
                 quoteWarning={activeProvider?.quoteWarning}
                 chain={chain}
+                scrollToEnd={scrollToEnd}
                 openQuotesList={openQuotesList}
               />
             </>
@@ -705,7 +717,6 @@ Swap.SwapHeader = SwapHeader;
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
-    marginBottom: 100,
   },
   content: {
     minHeight: 300,
