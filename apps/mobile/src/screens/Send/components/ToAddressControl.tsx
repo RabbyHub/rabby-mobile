@@ -71,8 +71,12 @@ export default function ToAddressControl({
     }
   }, [handleFieldChange, scanner]);
 
-  const CustomIcon = React.useCallback(
+  const CustomIcon = React.useCallback<
+    React.ComponentProps<typeof NextInput>['customIcon'] & Function
+  >(
     ctx => {
+      if (formValues.to) return null;
+
       return (
         <TouchableOpacity
           onPress={openCamera}
@@ -80,11 +84,11 @@ export default function ToAddressControl({
             ctx.iconStyle,
             styles.scanButtonContainer,
           ])}>
-          <ScannerCC color={colors2024['neutral-title-1']} />
+          <ScannerCC color={styles.scanIcon.color} />
         </TouchableOpacity>
       );
     },
-    [colors2024, openCamera, styles.scanButtonContainer],
+    [formValues.to, openCamera, styles],
   );
 
   const shouldShowWhitelistAlert = formValues.to && showWhitelistAlert;
@@ -170,7 +174,7 @@ export default function ToAddressControl({
         inputStyle={[styles.input, !formValues.to && styles.inputWithoutValue]}
         hasError={!!errors.to}
         clearable={false}
-        // customIcon={CustomIcon}
+        customIcon={CustomIcon}
         inputProps={{
           ...inputProps,
           multiline: true,
@@ -326,6 +330,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     scanButtonContainer: {
       marginRight: 24,
+    },
+
+    scanIcon: {
+      color: colors2024['neutral-title1'],
     },
 
     extraView: {
