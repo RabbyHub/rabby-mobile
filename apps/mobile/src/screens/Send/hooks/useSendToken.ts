@@ -382,6 +382,16 @@ export function useSendTokenForm() {
     ...DF_SEND_TOKEN_FORM,
   });
 
+  useEffect(() => {
+    setFormValues(prev => {
+      return {
+        ...DF_SEND_TOKEN_FORM,
+        to: prev.to,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAccount?.type, currentAccount?.address]);
+
   const { validationSchema } = useMemo(() => {
     return {
       validationSchema: makeSendTokenValidationSchema({ t }),

@@ -55,7 +55,10 @@ import {
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
-import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import {
+  PropsForAccountSwitchScreen,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const isAndroid = Platform.OS === 'android';
@@ -703,16 +706,24 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   );
 };
 
-Swap.ForMultipleAddress = (
+Swap.SwapHeader = SwapHeader;
+
+const ForMultipleAddress = (
   props: Omit<
     React.ComponentProps<typeof Swap>,
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  return <Swap {...props} isForMultipleAdderss />;
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  return (
+    <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
+  );
 };
 
-Swap.SwapHeader = SwapHeader;
+Swap.ForMultipleAddress = ForMultipleAddress;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
