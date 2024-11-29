@@ -116,7 +116,7 @@ function useSetupPasswordForm(
       });
 
       const updatePassword = async () => {
-        const result = await apisLock.forceOverwritePassword(values.password);
+        const result = await apisLock.resetPasswordOnUI(values.password);
         if (result.error) {
           toast.show(result.error);
           return false;

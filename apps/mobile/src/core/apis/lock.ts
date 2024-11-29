@@ -131,12 +131,26 @@ export async function updateWalletPassword(
   return result;
 }
 
-export async function forceOverwritePassword(newPassword: string) {
+export async function resetPasswordOnUI(newPassword: string) {
   const result = getInitError(newPassword);
   if (result.error) return result;
 
   try {
-    await keyringService.resetPassword(newPassword);
+    const hasRestAccount = keyringService.getRestAccountsCount() > 0;
+
+    if (hasRestAccount) {
+      const lockInfo = await getRabbyLockInfo();
+      if (!lockInfo.isUseCustomPwd) {
+        await setupWalletPassword(newPassword);
+      } else {
+        throw new Error(
+          'Cannot reset password when using custom password and have rest accounts',
+        );
+      }
+      // await updateWalletPassword(RABBY_MOBILE_KR_PWD, newPassword);
+    } else {
+      await keyringService.resetPassword(newPassword);
+    }
   } catch (error) {
     console.error(error);
     result.error = 'Failed to reset password';

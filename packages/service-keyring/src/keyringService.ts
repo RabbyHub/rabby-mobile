@@ -146,17 +146,23 @@ export class KeyringService extends RNEventEmitter {
     await this.persistAllKeyrings();
   }
 
-  #filterAllKeyringsNeedPassword() {
-    return this.keyrings.filter(
-      keyring =>
-        ![
-          KEYRING_TYPE.WatchAddressKeyring,
-          KEYRING_TYPE.WalletConnectKeyring,
-          // some hardware keyrings which will create keyrings right away on bootstrap
-          KEYRING_TYPE.OneKeyKeyring,
-          KEYRING_TYPE.LedgerKeyring,
-        ].includes(keyring.type as any),
-    );
+  // #filterAllKeyringsNeedPassword() {
+  //   return this.keyrings.filter(
+  //     keyring =>
+  //       ![
+  //         KEYRING_TYPE.WatchAddressKeyring,
+  //         KEYRING_TYPE.WalletConnectKeyring,
+  //         // some hardware keyrings which will create keyrings right away on bootstrap
+  //         KEYRING_TYPE.OneKeyKeyring,
+  //         KEYRING_TYPE.LedgerKeyring,
+  //       ].includes(keyring.type as any),
+  //   );
+  // }
+
+  getRestAccountsCount() {
+    return this.keyrings.reduce((accu, kr) => {
+      return accu + kr.accounts.length;
+    }, 0);
   }
 
   /**
@@ -165,9 +171,8 @@ export class KeyringService extends RNEventEmitter {
    * @param newPassword
    */
   async resetPassword(newPassword: string) {
-    const restSensitiveKeyrings = this.#filterAllKeyringsNeedPassword();
-    if (restSensitiveKeyrings.length) {
-      console.warn("You're trying to overwrite password on existing keyrings.");
+    if (this.getRestAccountsCount()) {
+      throw new Error("You're trying to overwrite password on existing keyrings.");
     }
 
     await this._setupBoot(newPassword);

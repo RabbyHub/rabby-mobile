@@ -102,7 +102,7 @@ export function useCreateAddressProc() {
 
   const confirmPassword = useCallback(async () => {
     const { password, enableBiometrics } = createAddressProc.passwordForm;
-    const result = await apisLock.forceOverwritePassword(password);
+    const result = await apisLock.resetPasswordOnUI(password);
     if (result.error) {
       toast.show(result.error);
       return false;
