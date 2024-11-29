@@ -13,10 +13,8 @@ interface balanceAccountType {
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
-    q.on('empty', () => {
-      if (q.pending <= 0) {
-        resolve(null);
-      }
+    q.on('idle', () => {
+      resolve(null);
     });
   });
 };
