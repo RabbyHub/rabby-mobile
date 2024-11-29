@@ -7,11 +7,7 @@
 /* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
-import {
-  DisplayKeyring,
-  generateAliasName,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -237,21 +233,18 @@ export class KeyringService extends RNEventEmitter {
       .then(async _keyring => {
         keyring = _keyring;
         const [address] = await keyring.getAccounts();
-        const keyrings = await this.getAllTypedAccounts();
-        if (!this.contactService?.getContactByAddress(address)) {
-          const alias = generateAliasName({
-            keyringType: KEYRING_TYPE.SimpleKeyring,
-            keyringCount:
-              keyrings.filter(k => k.type === KEYRING_TYPE.SimpleKeyring)
-                .length - 1,
-          });
-          this.contactService?.updateAlias({
-            address,
-            name: alias,
-          });
-        }
-        return this.persistAllKeyrings.bind(this);
+        const curAccount = {
+          address,
+          type: keyring.type as KeyringTypeName,
+          brandName: keyring.type,
+        };
+        return this.onSetAddressAlias?.(
+          keyring,
+          curAccount,
+          this.contactService,
+        );
       })
+      .then(this.persistAllKeyrings.bind(this))
       .then(this.setUnlocked.bind(this))
       .then(this.fullUpdate.bind(this))
       .then(() => keyring);
