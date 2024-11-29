@@ -200,7 +200,7 @@ export function useRabbyAppNavigation<
 
 export function resetNavigationTo(
   navigation: NavigationInstance,
-  type: 'Home' | 'Unlock' = 'Home',
+  type: 'Home' | 'Unlock' | 'GetStarted2024' = 'Home',
 ) {
   switch (type) {
     default:
@@ -222,6 +222,20 @@ export function resetNavigationTo(
       navigation.reset({
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
+      });
+      break;
+    }
+    case 'GetStarted2024': {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootNames.StackGetStarted,
+            params: {
+              screen: RootNames.GetStartedScreen2024,
+            },
+          },
+        ],
       });
       break;
     }

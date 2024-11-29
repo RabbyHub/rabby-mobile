@@ -20,4 +20,5 @@ export * as apiMnemonic from './mnemonic';
 export * as apiToken from './token';
 export { apiCustomTestnet } from './customTestnet';
 export { apiCustomRPC } from './customRPC';
+export * as apisAccount from './account';
 export * as apisAccountSwitch from './accountSwitch';

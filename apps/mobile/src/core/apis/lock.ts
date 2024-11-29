@@ -136,9 +136,10 @@ export async function resetPasswordOnUI(newPassword: string) {
   if (result.error) return result;
 
   try {
-    const hasRestAccount = keyringService.getRestAccountsCount() > 0;
+    const hasAccountsInKeyring =
+      keyringService.getCountOfAccountsInKeyring() > 0;
 
-    if (hasRestAccount) {
+    if (hasAccountsInKeyring) {
       const lockInfo = await getRabbyLockInfo();
       if (!lockInfo.isUseCustomPwd) {
         await setupWalletPassword(newPassword);
