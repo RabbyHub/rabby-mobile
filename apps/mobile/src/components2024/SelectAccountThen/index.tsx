@@ -27,6 +27,7 @@ export const SelectAccountThen: React.FC<SelectAccountThenProps> = ({
         <AccountsPanelInSheetModal
           containerStyle={styles.accountRoot}
           onSelectAccount={onDone}
+          defaultPressItemAction="copy"
         />
       </View>
     </AutoLockView>

@@ -62,12 +62,14 @@ function AddressItemInSheetModal({
   isCurrent,
   isPinned,
   showCopyAndQR,
+  defaultPressAction = showCopyAndQR ? 'copy' : 'asPress',
   onPressAccount: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   isPinned?: boolean;
   showCopyAndQR?: boolean;
+  defaultPressAction?: 'copy' | 'asPress';
   onPressAccount?: (account: Account) => void;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
@@ -101,7 +103,9 @@ function AddressItemInSheetModal({
       activeOpacity={1}
       onPressIn={() => setIsPressing(true)}
       onPressOut={() => setIsPressing(false)}
-      onPress={handleCopyAddress}>
+      onPress={
+        defaultPressAction === 'copy' ? handleCopyAddress : onPressAccount
+      }>
       <AddressItem {...addressItemProps}>
         {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
           return (
@@ -312,10 +316,14 @@ export function AccountsPanelInSheetModal({
   containerStyle,
   onSelectAccount,
   scene,
+  defaultPressItemAction = 'asPress',
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
   scene?: 'GasAccount' | undefined;
+  defaultPressItemAction?: React.ComponentProps<
+    typeof AddressItemInSheetModal
+  >['defaultPressAction'];
 }) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -458,6 +466,7 @@ export function AccountsPanelInSheetModal({
                       isPinned={isPinnedAccount(item)}
                       onPressAccount={onSelectAccount}
                       showCopyAndQR={!isGasAccount}
+                      defaultPressAction={defaultPressItemAction}
                       style={[index > 0 && styles.addressItemTopGap]}
                     />
                   )}
