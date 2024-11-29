@@ -12,13 +12,11 @@ import {
   TouchableOpacity,
   Easing,
   TouchableWithoutFeedback,
-  ImageBackground,
   RefreshControl,
   ScrollView,
 } from 'react-native';
+import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import LinearGradient from 'react-native-linear-gradient';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
@@ -26,10 +24,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { useAccounts } from '@/hooks/account';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
 import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
 import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
@@ -381,23 +377,7 @@ function MultiAddressHome(): JSX.Element {
         locations: [0.2072, 0.3181],
         start: { x: 0.5, y: 0 },
         end: { x: 0.5, y: 1 },
-      }}
-      overwriteStyle={
-        {
-          // paddingTop: 0,
-        }
-      }>
-      {/* <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]}
-        locations={[0.2195, 0.3181]}
-        start={{ x: 0.5, y: -0.2 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.rootScreenContainer}> */}
-      {/* <ImageBackground
-        source={require('@/assets2024/icons/home/ImgBgHome.png')}
-        resizeMode="cover"
-        style={styles.bgImage}
-      /> */}
+      }}>
       <View style={styles.paddingContainer}>
         <MultiAddressHomeHeader loading={balanceLoading} />
         <ScrollView
@@ -473,14 +453,17 @@ function MultiAddressHome(): JSX.Element {
                     });
                   }}>
                   <el.icon />
-                  <Text style={styles.gridText}>{el.title}</Text>
+                  <Text style={styles.gridText}>
+                    {el.title === MultiHomeFeatTitle.Dapps && IS_IOS
+                      ? 'Websites'
+                      : el.title}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
         </ScrollView>
       </View>
-      {/* </LinearGradient> */}
     </NormalScreenContainer2024>
   );
 }
