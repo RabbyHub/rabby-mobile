@@ -45,7 +45,7 @@ export const DuplicateAddressModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { accounts } = useAccounts();
-  const { switchAccount } = useCurrentAccount();
+  // const { switchAccount } = useCurrentAccount();
 
   const currentAccount = React.useMemo(() => {
     if (!account) {
@@ -62,10 +62,10 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const handleSwitch = React.useCallback(async () => {
     if (currentAccount) {
-      switchAccount(currentAccount);
+      // switchAccount(currentAccount);
       navigate(RootNames.StackRoot, { screen: RootNames.Home });
     }
-  }, [switchAccount, currentAccount]);
+  }, [currentAccount]);
 
   const onCancel = React.useCallback(() => {
     setVisible(false);
