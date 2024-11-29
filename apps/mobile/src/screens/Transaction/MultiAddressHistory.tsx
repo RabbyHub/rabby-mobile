@@ -26,7 +26,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -37,6 +37,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { toast } from '@/components2024/Toast';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const PAGE_COUNT = 10;
 
@@ -46,6 +48,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   tokenDict: TxHistoryResult['token_dict'];
   address: string;
   key: string;
+  account?: KeyringAccountWithAlias;
 }
 
 interface IFetchHistory {
@@ -87,7 +90,8 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
       ? unionAccounts
       : [finalSceneCurrentAccount];
     const queue = new PQueue({
-      concurrency: 10,
+      interval: 2000,
+      intervalCap: 10,
     });
     for (let i = 0; i < accountList.length; i++) {
       queue.add(async () => {
@@ -106,8 +110,16 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
           hasMoreMap.current[addr] = true;
         }
         lastMap.current[addr] = result.last || 0;
-        list.push(...result.list);
+        list.push(
+          ...result.list.map(item => ({
+            ...item,
+            account,
+          })),
+        );
       });
+    }
+    if (!isReady.current) {
+      isReady.current = true;
     }
     await waitQueueFinished(queue);
     return { list };
@@ -128,48 +140,46 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     }
 
     const getHistory = openapi.listTxHisotry;
+    try {
+      const res = await getHistory({
+        id: address,
+        start_time: startTime,
+        page_count: PAGE_COUNT,
+      });
 
-    const res = await getHistory({
-      id: address,
-      start_time: startTime,
-      page_count: PAGE_COUNT,
-    });
-
-    const { project_dict, cate_dict, token_dict, history_list: list } = res;
-    const displayList = list
-      .map(item => ({
-        ...item,
-        projectDict: project_dict,
-        cateDict: cate_dict,
-        tokenDict: token_dict,
-        address,
-        key: `${address}_${item.chain}_${item.id}`,
-      }))
-      .sort((v1, v2) => v2.time_at - v1.time_at);
-    return {
-      last: last(displayList)?.time_at || 0,
-      list: displayList,
-    };
+      const { project_dict, cate_dict, token_dict, history_list: list } = res;
+      const displayList = list
+        .map(item => ({
+          ...item,
+          projectDict: project_dict,
+          cateDict: cate_dict,
+          tokenDict: token_dict,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
+      };
+    } catch (e) {
+      toast.error(`${address} fetch failed, ${e}`);
+      return {
+        last: 0,
+        list: [],
+      };
+    }
   };
-
-  const { data, loading, loadingMore, loadMore, reloadAsync } =
-    useInfiniteScroll(() => batchFetchData(), {
-      isNoMore: () => {
-        return Object.values(hasMoreMap.current).every(item => !item);
-      },
-      onSuccess() {
-        setCurrentPage(currentPage + 1);
-        runFetchLocalTx();
-        if (!isReady.current) {
-          isReady.current = true;
-        }
-      },
-    });
 
   const batchFetchLocalTx = async () => {
     const list: TransactionGroup[] = [];
-    for (let i = 0; i < unionAccounts.length; i++) {
-      const addr = unionAccounts[i].address.toLowerCase();
+    const accountList = isSceneUsingAllAccounts
+      ? unionAccounts
+      : [finalSceneCurrentAccount];
+    for (let i = 0; i < accountList.length; i++) {
+      const account = accountList[i];
+      if (!account) continue;
+      const addr = account.address.toLowerCase();
       const localTxs = await fetchLocalTx(addr);
       list.push(...localTxs);
     }
@@ -235,17 +245,43 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
 
   useEffect(() => {
     if (isReady.current) {
+      cancel();
       refresh();
     }
-  }, [refresh, sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
+
+  const { data, loading, loadingMore, loadMore, reloadAsync, cancel } =
+    useInfiniteScroll(() => batchFetchData(), {
+      isNoMore: () => {
+        return Object.values(hasMoreMap.current).every(item => !item);
+      },
+      onSuccess() {
+        setCurrentPage(currentPage + 1);
+        runFetchLocalTx();
+      },
+    });
 
   const allTxHistory = useMemo(() => {
     return orderBy(data?.list || [], 'time_at', 'desc');
   }, [data]);
 
   const displayList = useMemo(() => {
-    return allTxHistory.slice(0, (currentPage + 1) * PAGE_COUNT);
-  }, [allTxHistory, currentPage]);
+    return allTxHistory
+      .filter(tx => {
+        if (isSceneUsingAllAccounts) return true;
+        return isSameAddress(
+          finalSceneCurrentAccount?.address || '',
+          tx.address,
+        );
+      })
+      .slice(0, (currentPage + 1) * PAGE_COUNT);
+  }, [
+    allTxHistory,
+    currentPage,
+    isSceneUsingAllAccounts,
+    finalSceneCurrentAccount,
+  ]);
 
   useMount(() => {
     eventBus.addListener(EVENTS.RELOAD_TX, refresh);
@@ -300,7 +336,7 @@ const HistoryScreen = () => {
     tokenDetailAddress,
     setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
-
+  console.log('tokenDetailAddress', tokenDetailAddress);
   useLastUsedAccountInScreen();
 
   const { isSceneUsingAllAccounts, finalSceneCurrentAccount } =
@@ -327,7 +363,7 @@ const HistoryScreen = () => {
         }}
         address={tokenDetailAddress}
         nextTxRedirectAccount={
-          !isSceneUsingAllAccounts ? finalSceneCurrentAccount || null : null
+          !isSceneUsingAllAccounts ? tokenDetailAddress || null : null
         }
       />
     </NormalScreenContainer2024>

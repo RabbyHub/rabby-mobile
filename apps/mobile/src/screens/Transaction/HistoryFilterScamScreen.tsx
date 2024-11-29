@@ -40,7 +40,8 @@ function HistoryFilterScamScreen({
     const list: HistoryDisplayItem[] = [];
     const accountList = route?.params.addresses || unionAccounts;
     const queue = new PQueue({
-      concurrency: 10,
+      interval: 2000,
+      intervalCap: 10,
     });
     for (let i = 0; i < accountList.length; i++) {
       queue.add(async () => {
@@ -53,7 +54,7 @@ function HistoryFilterScamScreen({
           const result = await fetchData(addr);
           list.push(...result.list);
         } catch (e) {
-          toast.error(`${account.address} load failed, ${JSON.stringify(e)}`);
+          toast.error(`${account.address} load failed, ${e}`);
         }
       });
     }

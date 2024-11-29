@@ -474,7 +474,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       data?: RedirectToType;
     }) => void;
     hideOperationButtons?: boolean;
-    address?: string;
+    address?: KeyringAccountWithAlias;
     nextTxRedirectAccount?: Account | null;
   }
 >(
@@ -494,7 +494,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const { styles, colors } = useThemeStyles(getStyles);
     const { t } = useTranslation();
     const { currentAccount } = useCurrentAccount();
-    const finalAddress = address || currentAccount?.address;
+    const finalAccount = address || currentAccount;
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;
@@ -511,7 +511,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
     const getTokenAmount = React.useCallback(async () => {
       if (
-        !finalAddress ||
+        !finalAccount ||
         !token ||
         /* token.amount !== undefined */ token.amount
       )
@@ -520,7 +520,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       setTokenLoad({ isLoading: true, token: null });
       try {
         const res = await openapi.getToken(
-          finalAddress,
+          finalAccount.address,
           token.chain,
           token._tokenId,
         );
@@ -530,7 +530,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       } finally {
         setTokenLoad(prev => ({ ...prev, isLoading: false }));
       }
-    }, [finalAddress, token]);
+    }, [finalAccount, token]);
     const tokenWithAmount = useMemo(() => {
       if (!token) return null;
       const { token: tokenInfo } = tokenLoad;
@@ -622,7 +622,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
         try {
           const res: TxHistoryResult = await openapi.listTxHisotry({
-            id: finalAddress,
+            id: finalAccount?.address,
             chain_id: token?.chain,
             start_time: lastEarliestTime ?? undefined,
             page_count: PAGE_COUNT,

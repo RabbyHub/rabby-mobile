@@ -9,6 +9,7 @@ import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from 'react-native';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { useNFTDetailSheetModalOnHistory } from '@/screens/NftDetail/hooks';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 export default function TokenLabel({
   token,
@@ -20,7 +21,7 @@ export default function TokenLabel({
 }: RNViewProps & {
   isMyOwn?: boolean;
   disableClickToken?: boolean;
-  address?: string;
+  address?: KeyringAccountWithAlias;
 } & (
     | {
         token: TokenItem;

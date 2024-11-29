@@ -6,6 +6,7 @@ import { atom, useAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 const popups = {
   generalTokenDetailPopup: {
@@ -13,7 +14,7 @@ const popups = {
     ref: React.createRef<BottomSheetModalMethods>(),
   },
   tokenDetailPopupUseAccount: {
-    atom: atom(undefined as string | undefined),
+    atom: atom(undefined as KeyringAccountWithAlias | undefined),
     ref: React.createRef<BottomSheetModalMethods>(),
   },
   tokenDetailPopupOnSendToken: {

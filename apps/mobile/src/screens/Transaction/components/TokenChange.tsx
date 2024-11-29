@@ -84,7 +84,7 @@ const TxChangeItem = ({
           ? { token: token as NFTItem, isNft }
           : { token: token as TokenItem })}
         isMyOwn={!isSend}
-        address={data.address}
+        address={data.account}
       />
     </View>
   );
