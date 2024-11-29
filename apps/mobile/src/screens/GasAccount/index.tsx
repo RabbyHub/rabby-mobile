@@ -90,11 +90,11 @@ export const GasAccountScreen = () => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
-  useEffect(() => {
-    if (!isLogin) {
-      setLoginVisible(true);
-    }
-  }, [isLogin, setLoginVisible]);
+  // useEffect(() => {
+  //   if (!isLogin) {
+  //     setLoginVisible(true);
+  //   }
+  // }, [isLogin, setLoginVisible]);
 
   useEffect(() => {
     if (!loading && !isLogin) {
