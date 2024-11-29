@@ -236,6 +236,7 @@ function makeScreenSpecConfig() {
       Home: bg1DefaultConf,
       MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
+      MultiAddressHistory: bg1Default2024Conf,
 
       // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,

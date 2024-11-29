@@ -52,7 +52,12 @@ function HistoryFilterScamScreen({
         try {
           const addr = account.address.toLowerCase();
           const result = await fetchData(addr);
-          list.push(...result.list);
+          list.push(
+            ...result.list.map(item => ({
+              ...item,
+              account,
+            })),
+          );
         } catch (e) {
           toast.error(`${account.address} load failed, ${e}`);
         }

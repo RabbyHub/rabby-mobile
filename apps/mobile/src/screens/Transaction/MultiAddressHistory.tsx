@@ -364,9 +364,7 @@ const HistoryScreen = () => {
           setTokenDetailAddress(undefined);
         }}
         address={tokenDetailAddress}
-        nextTxRedirectAccount={
-          !isSceneUsingAllAccounts ? tokenDetailAddress || null : null
-        }
+        nextTxRedirectAccount={tokenDetailAddress}
       />
     </NormalScreenContainer2024>
   );
