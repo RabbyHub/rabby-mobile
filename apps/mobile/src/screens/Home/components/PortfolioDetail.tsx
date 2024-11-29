@@ -251,7 +251,7 @@ type SupplementsProps = {
 };
 
 export const Supplements = ({ data }: SupplementsProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, colors } = useTheme2024({ getStyle: getStyles });
 
   const list = useMemo(
     () => data?.filter((x): x is SupplementType => !!x),
@@ -260,10 +260,10 @@ export const Supplements = ({ data }: SupplementsProps) => {
 
   const linearColors = useMemo(() => {
     return [
-      colord(colors2024['blue-default']).alpha(0.1).toRgbString(),
+      colord(colors['blue-default']).alpha(0.1).toRgbString(),
       colord(colors2024['neutral-title-2']).alpha(0).toRgbString(),
     ];
-  }, [colors2024]);
+  }, [colors, colors2024]);
 
   return list?.length ? (
     <LinearGradient

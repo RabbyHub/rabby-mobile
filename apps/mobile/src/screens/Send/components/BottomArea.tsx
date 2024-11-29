@@ -143,10 +143,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     buttonContainer: {},
 
-    buttonText: {
-      color: colors2024['neutral-title-2'],
-    },
-
     whitelistAlertContentContainer: {
       flexDirection: 'row',
       marginBottom: 20,

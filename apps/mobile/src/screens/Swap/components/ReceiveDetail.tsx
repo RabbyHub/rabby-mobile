@@ -380,11 +380,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     padding: 10,
   },
-  tooltipText: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: colors2024['neutral-title-2'],
-  },
   gap4: {
     gap: 4,
   },

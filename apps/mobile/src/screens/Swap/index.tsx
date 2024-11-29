@@ -868,9 +868,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     color: colors2024['neutral-foot'],
   },
-  btnTitle: {
-    color: colors2024['neutral-title-2'],
-  },
   maxBtn: {
     marginLeft: 12,
     padding: 4,

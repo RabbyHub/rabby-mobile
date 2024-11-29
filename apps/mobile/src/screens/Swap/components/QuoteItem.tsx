@@ -613,12 +613,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 12,
     alignItems: 'center',
   },
-  disabledContentText: {
-    color: colors2024['neutral-title-2'],
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 17,
-  },
   disabledContentBtnText: {
     color: colors2024['blue-default'],
     fontSize: 14,

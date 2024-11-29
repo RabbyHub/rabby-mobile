@@ -469,7 +469,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 16,
   },
   corner: {
-    backgroundColor: 'rgba(0, 0, 0, 0.30)',
+    backgroundColor: colors2024['neutral-black'],
     position: 'absolute',
     right: 4,
     top: 4,
@@ -480,7 +480,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     opacity: 0.8,
   },
   cornerNumber: {
-    color: colors2024['neutral-title-2'],
+    color: colors2024['neutral-InvertHighlight'],
     fontSize: 12,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
