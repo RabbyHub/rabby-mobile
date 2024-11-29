@@ -1,8 +1,9 @@
-import { EVENT_NAMES } from './types';
+import { EVENT_NAMES, MODAL_ID } from './types';
 import { globalSheetModalEvents } from './event';
 import { apisAppWin2024 } from '@/core/services2024/appWin';
 import { keyringService } from '@/core/services/shared';
 import { uiRefreshTimeout } from '@/core/apis/autoLock';
+import { debounce } from 'lodash';
 
 class IdSet<T = any> extends Set<T> {
   add(id: T) {
@@ -14,7 +15,7 @@ class IdSet<T = any> extends Set<T> {
     return super.delete(id);
   }
 }
-const allIds = new IdSet<string>();
+const allIds = new IdSet<MODAL_ID>();
 globalSheetModalEvents.on(EVENT_NAMES.CREATE, id => {
   allIds.add(id);
 });
@@ -27,8 +28,14 @@ keyringService.on('lock', () => {
   });
 });
 
-export const createGlobalBottomSheetModal2024 =
-  apisAppWin2024.createGlobalBottomSheetModal;
+export const createGlobalBottomSheetModal2024 = debounce(
+  apisAppWin2024.createGlobalBottomSheetModal,
+  200,
+  {
+    leading: true,
+    trailing: false,
+  },
+);
 export const removeGlobalBottomSheetModal2024 =
   apisAppWin2024.removeGlobalBottomSheetModal;
 export const globalBottomSheetModalAddListener2024 =
