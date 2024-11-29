@@ -31,7 +31,7 @@ import { useShowUserAgreementLikeModal } from '../ManagePassword/components/User
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
+import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import {
   useCreateAddressProc,
@@ -209,9 +209,9 @@ function MainListBlocks() {
 
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText style={styles.headerTitleStyle}>
+      <HeaderTitleText2024 style={styles.headerTitleStyle}>
         {state.title || '2. Set password'}
-      </HeaderTitleText>
+      </HeaderTitleText2024>
     );
   }, [state.title, styles.headerTitleStyle]);
 

@@ -161,7 +161,8 @@ export class KeyringService extends RNEventEmitter {
 
   getRestAccountsCount() {
     return this.keyrings.reduce((accu, kr) => {
-      return accu + kr.accounts.length;
+      // !!!notice: kr.accounts maybe undefined!!!
+      return accu + (kr.accounts || []).length;
     }, 0);
   }
 
