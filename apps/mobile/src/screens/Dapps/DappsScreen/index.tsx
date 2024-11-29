@@ -29,7 +29,7 @@ export function DappsScreen(): JSX.Element {
     browserHistoryList,
     favoriteApps,
     setBrowserHistory,
-    updateFavorite,
+    setDapp,
     removeBrowserHistory,
     disconnectDapp,
   } = useDappsHome();
@@ -51,7 +51,12 @@ export function DappsScreen(): JSX.Element {
   });
 
   const handleFavoriteDapp = (dapp: DappInfo) => {
-    updateFavorite(dapp.origin, !dapp.isFavorite);
+    const v = !dapp.isFavorite;
+    setDapp({
+      ...dapp,
+      isFavorite: v,
+      favoriteAt: v ? Date.now() : null,
+    });
   };
 
   const handleDeleteHistory = useMemoizedFn((dapp: DappInfo) => {
