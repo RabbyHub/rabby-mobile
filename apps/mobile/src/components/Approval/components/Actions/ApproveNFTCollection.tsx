@@ -123,15 +123,10 @@ const ApproveNFTCollection = ({
           />
 
           <SecurityListItem
-            tip={t('page.signTx.nftApprove.nftContractTrustValueTip')}
-            id="1054"
-            engineResult={engineResultMap['1054']}
-            dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
-              value: '$10,000',
-            })}
-            warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
-              value: '$100,000',
-            })}
+            tip={t('page.signTx.tokenApprove.contractTrustValueTip')}
+            id="1146"
+            engineResult={engineResultMap['1146']}
+            warningText={'$0'}
             title={t('page.signTx.trustValueTitle')}
           />
 

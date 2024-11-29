@@ -351,6 +351,7 @@ function reportStatsData() {
       createdBy: statsData?.createdBy,
       source: statsData?.source,
       trigger: statsData?.trigger,
+      networkType: statsData?.networkType,
     };
     if (statsData.signMethod) {
       sData.signMethod = statsData.signMethod;
@@ -367,6 +368,7 @@ function reportStatsData() {
       createdBy: statsData?.createdBy,
       source: statsData?.source,
       trigger: statsData?.trigger,
+      networkType: statsData?.networkType || '',
     });
   }
   statsData.reported = true;
