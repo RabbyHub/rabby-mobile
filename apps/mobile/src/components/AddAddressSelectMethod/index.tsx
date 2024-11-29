@@ -60,7 +60,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
             });
 
             navigateTo(RootNames.ImportMethods, {
-              hasCurrentAddress: true,
+              isNotNewUserProc: true,
             });
             onDone();
           }}

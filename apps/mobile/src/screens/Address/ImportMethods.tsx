@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
 
@@ -36,7 +37,7 @@ function ImportMethods(): JSX.Element {
     s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
   ) as
     | {
-        hasCurrentAddress?: boolean; // if has address
+        isNotNewUserProc?: boolean; // if has address
       }
     | undefined;
   // const state = undefined;
@@ -54,15 +55,15 @@ function ImportMethods(): JSX.Element {
         <View
           style={StyleSheet.flatten([
             styles.blockView,
-            state?.hasCurrentAddress && styles.noMarginTop,
+            state?.isNotNewUserProc && styles.noMarginTop,
           ])}>
           <View style={styles.section}>
-            {state?.hasCurrentAddress && (
+            {state?.isNotNewUserProc && (
               <Text style={styles.titleText}>Import Address</Text>
             )}
             <Card
               style={styles.importItem}
-              hasArrow={state?.hasCurrentAddress}
+              hasArrow={state?.isNotNewUserProc}
               onPress={() => {
                 trigger('impactLight', {
                   enableVibrateFallback: true,
@@ -70,7 +71,7 @@ function ImportMethods(): JSX.Element {
                 });
                 if (
                   // only has address in this set password
-                  state?.hasCurrentAddress &&
+                  state?.isNotNewUserProc &&
                   shouldRedirectToSetPasswordBefore2024({
                     backScreen: RootNames.ImportMnemonic2024,
                   })
@@ -86,7 +87,7 @@ function ImportMethods(): JSX.Element {
               <Text style={styles.importType}>Import Seed Phrase</Text>
             </Card>
             <Card
-              hasArrow={state?.hasCurrentAddress}
+              hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
               onPress={() => {
                 trigger('impactLight', {
@@ -94,7 +95,7 @@ function ImportMethods(): JSX.Element {
                   ignoreAndroidSystemSettings: false,
                 });
                 if (
-                  state?.hasCurrentAddress &&
+                  state?.isNotNewUserProc &&
                   shouldRedirectToSetPasswordBefore2024({
                     backScreen: RootNames.ImportPrivateKey2024,
                   })
@@ -109,11 +110,11 @@ function ImportMethods(): JSX.Element {
               <PrivateKeyIcon style={styles.icon} />
               <Text style={styles.importType}>Import Private Key</Text>
             </Card>
-            {state?.hasCurrentAddress && (
+            {state?.isNotNewUserProc && (
               <>
                 <Text style={styles.titleText}>Import Safe Address</Text>
                 <Card
-                  hasArrow={state?.hasCurrentAddress}
+                  hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
                     trigger('impactLight', {
@@ -135,7 +136,7 @@ function ImportMethods(): JSX.Element {
                 </Card>
                 <Text style={styles.titleText}>Import Watch-only Address</Text>
                 <Card
-                  hasArrow={state?.hasCurrentAddress}
+                  hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
                     trigger('impactLight', {
@@ -158,9 +159,9 @@ function ImportMethods(): JSX.Element {
               </>
             )}
 
-            {!state?.hasCurrentAddress && (
+            {!state?.isNotNewUserProc && (
               <Card
-                hasArrow={state?.hasCurrentAddress}
+                hasArrow={state?.isNotNewUserProc}
                 style={styles.importItem}
                 onPress={() => {
                   trigger('impactLight', {
@@ -178,7 +179,7 @@ function ImportMethods(): JSX.Element {
             )}
           </View>
         </View>
-        {!state?.hasCurrentAddress && (
+        {!state?.isNotNewUserProc && (
           <Pressable
             style={styles.tipWrapper}
             onPress={() => {
