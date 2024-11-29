@@ -22,6 +22,7 @@ const waitQueueFinished = (q: PQueue) => {
 };
 
 const balanceAtom = atom<balanceAccountType[]>([]);
+const balanceCacheAtom = atom<balanceAccountType[]>([]);
 const lengthAtom = atom<number>(0);
 
 export default function useAccountsBalance(opts?: {
@@ -30,6 +31,8 @@ export default function useAccountsBalance(opts?: {
 }) {
   const { cacheTime = 10 * 60 * 1000, accountsNoUnique = true } = opts || {};
   const [balanceAccounts, setBalanceAccounts] = useAtom(balanceAtom);
+  const [balanceCacheAccounts, setBalanceCacheAccounts] =
+    useAtom(balanceCacheAtom);
   const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const lastTimeStamps = useRef<number>(0);
@@ -51,8 +54,8 @@ export default function useAccountsBalance(opts?: {
           return;
         }
         setBalanceLoading(true);
-        // cache data to batch update
-        const balancesArr = [] as balanceAccountType[];
+        // batch update
+        const cacheBalancesArr = [] as balanceAccountType[];
 
         const list = await keyringService.getAllVisibleAccountsArray();
 
@@ -83,17 +86,22 @@ export default function useAccountsBalance(opts?: {
           );
         }
 
-        if (fetchType === 'from_cache') {
-          allList.map(account => {
-            const cacheData = preferenceService.getAddressBalance(account);
-            if (uniqueList.includes(account)) {
-              balancesArr.push({
-                address: account,
-                balance: cacheData?.total_usd_value || 0,
-              });
-            }
-          });
-        } else {
+        // deault first get from cache store
+        allList.map(account => {
+          const cacheData = preferenceService.getAddressBalance(account);
+          if (uniqueList.includes(account)) {
+            cacheBalancesArr.push({
+              address: account,
+              balance: cacheData?.total_usd_value || 0,
+            });
+          }
+        });
+        setBalanceCacheAccounts(cacheBalancesArr);
+        setBalanceAccounts(cacheBalancesArr);
+
+        if (fetchType === 'from_api') {
+          const queueBalanceArr = [] as balanceAccountType[];
+          // get from server api by queue
           const queue = new PQueue({
             interval: 2000,
             intervalCap: 10,
@@ -103,12 +111,11 @@ export default function useAccountsBalance(opts?: {
             // batch fetch by queue
             queue.add(async () => {
               try {
-                // get from server api
                 const resData = await apiBalance.getAddressBalance(account, {
                   force: true,
                 });
                 if (uniqueList.includes(account)) {
-                  balancesArr.push({
+                  queueBalanceArr.push({
                     address: account,
                     balance: resData?.total_usd_value || 0,
                   });
@@ -118,7 +125,7 @@ export default function useAccountsBalance(opts?: {
                 // api fetch error fallback get from cache store
                 const cacheData = preferenceService.getAddressBalance(account);
                 if (uniqueList.includes(account)) {
-                  balancesArr.push({
+                  queueBalanceArr.push({
                     address: account,
                     balance: cacheData?.total_usd_value || 0,
                   });
@@ -127,8 +134,8 @@ export default function useAccountsBalance(opts?: {
             });
           }
           await waitQueueFinished(queue);
+          setBalanceAccounts(queueBalanceArr);
         }
-        setBalanceAccounts(balancesArr);
       } catch (e) {
         console.error('fetchTotalBalance  error', e);
       } finally {
@@ -151,6 +158,7 @@ export default function useAccountsBalance(opts?: {
 
   return {
     balanceAccounts,
+    balanceCacheAccounts,
     accountsLength, // maybe has some same address with other type
     triggerUpdate,
     balanceLoading,
