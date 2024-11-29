@@ -42,6 +42,8 @@ export const ScreenWithAccountSwitcherLayouts = {
    * see details apps/mobile/node_modules/@react-navigation/elements/src/Header/getDefaultHeaderHeight.tsx
    */
   screenHeaderHeight: 56,
+
+  modalBottomSpace: 133,
 };
 
 export const ScreenColors = {

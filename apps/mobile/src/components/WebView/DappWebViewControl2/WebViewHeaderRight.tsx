@@ -56,7 +56,7 @@ export function WebViewHeaderRight({
         },
       ]}
       onPress={() => {
-        toggleSceneVisible('@ActiveDappWebViewModal', true);
+        toggleSceneVisible('@ActiveDappWebViewModal');
       }}>
       <WalletIcon
         type={lastUsedAccount?.type}

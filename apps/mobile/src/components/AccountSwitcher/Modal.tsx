@@ -1,4 +1,4 @@
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   createGetStyles2024,
@@ -16,7 +16,7 @@ import {
   getAccountsPanelInModalMaxHeight,
 } from './AccountsPanel';
 import AutoLockView from '../AutoLockView';
-import { useLayoutEffect } from 'react';
+import { useCallback, useLayoutEffect } from 'react';
 import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -36,13 +36,18 @@ export function AccountSwitcherModal({
   const { styles } = useTheme2024({ getStyle: getModalStyle });
 
   const { topValue, offScreen } = useSafeOffTop({
-    modalBackgroundHeight: ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+    modalBackgroundHeight:
+      ScreenWithAccountSwitcherLayouts.screenHeaderHeight /*  + ScreenWithAccountSwitcherLayouts.modalBottomSpace */,
   });
 
   useLayoutEffect(() => {
     return () => {
       toggleSceneVisible(forScene, false);
     };
+  }, [forScene, toggleSceneVisible]);
+
+  const handlePressToClose = useCallback(() => {
+    toggleSceneVisible(forScene, false);
   }, [forScene, toggleSceneVisible]);
 
   if (!isVisible) return null;
@@ -61,9 +66,7 @@ export function AccountSwitcherModal({
         absoluteStyle,
       ]}>
       <TouchableOpacity
-        onPressIn={() => {
-          toggleSceneVisible(forScene, false);
-        }}
+        onPressIn={handlePressToClose}
         style={[styles.bgMask, { height: absoluteStyle.maxHeight }]}
         delayLongPress={1000}
       />
@@ -71,7 +74,11 @@ export function AccountSwitcherModal({
         style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
         <AccountsPanelInModal
           linearContainerProps={panelLinearGradientProps}
-          containerStyle={{ height: '100%' }}
+          containerStyle={{
+            maxHeight:
+              getAccountsPanelInModalMaxHeight() -
+              ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+          }}
           forScene={forScene}
         />
       </View>
@@ -97,10 +104,12 @@ const getModalStyle = createGetStyles2024(ctx => {
     panelContainer: {
       position: 'relative',
       width: '100%',
-      height: getAccountsPanelInModalMaxHeight(),
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: 'blue',
-      // }),
+      height:
+        getAccountsPanelInModalMaxHeight() -
+        ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+      ...makeDevOnlyStyle({
+        backgroundColor: 'blue',
+      }),
     },
     bgMask: {
       position: 'absolute',
@@ -139,6 +148,10 @@ export function AccountSwitcherModalInDappWebView({
 
   const { setDappCurrentAccount } = useDappCurrentAccount();
 
+  const handlePressToClose = useCallback(() => {
+    toggleSceneVisible(forScene, false);
+  }, [forScene, toggleSceneVisible]);
+
   if (!isVisible) return null;
 
   const absoluteStyle = IS_ANDROID
@@ -158,19 +171,16 @@ export function AccountSwitcherModalInDappWebView({
     <AutoLockView
       style={[
         styles.container,
-        inScreen && { zIndex: 19 },
+        // inScreen && { zIndex: 19 },
         !isVisible && { display: 'none' },
         absoluteStyle,
       ]}>
       <TouchableOpacity
-        onPressIn={() => {
-          toggleSceneVisible(forScene, false);
-        }}
+        onPressIn={handlePressToClose}
         style={[styles.bgMask, { height: absoluteStyle.maxHeight }]}
         delayLongPress={1000}
       />
-      <View
-        style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
+      <View style={[styles.panelContainer]}>
         <AccountsPanelInModal
           forScene={forScene}
           onSwitchSceneAccount={ctx => {
@@ -202,10 +212,12 @@ const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
     panelContainer: {
       position: 'relative',
       width: '100%',
-      height: getAccountsPanelInModalMaxHeight(),
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: 'blue',
-      // }),
+      height:
+        getAccountsPanelInModalMaxHeight() -
+        ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+      ...makeDevOnlyStyle({
+        backgroundColor: 'blue',
+      }),
     },
     bgMask: {
       position: 'absolute',

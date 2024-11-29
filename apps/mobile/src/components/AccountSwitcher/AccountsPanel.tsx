@@ -4,9 +4,7 @@ import {
   Dimensions,
   ScrollView,
   StyleProp,
-  StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
@@ -20,14 +18,11 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
-import RcIconCorrectCC from './icons/correct-cc.svg';
 import { Account } from '@/core/services/preference';
-import { trigger } from 'react-native-haptic-feedback';
 import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { AddressItemInPanel, AddressItemSizes } from './AddressItemInPanel';
 import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
+import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 
 const SectionCollapsableNav = function ({
   isCollapsed = false,
@@ -287,7 +282,9 @@ AccountSwitcherAopProps<{
 }
 
 export function getAccountsPanelInModalMaxHeight() {
-  return Dimensions.get('window').height - 133;
+  const winInfo = Dimensions.get('window');
+
+  return winInfo.height - ScreenWithAccountSwitcherLayouts.modalBottomSpace;
 }
 const getPanelStyle = createGetStyles2024(ctx => {
   return {
@@ -295,7 +292,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       position: 'relative',
       width: '100%',
       minHeight: '50%',
-      maxHeight: getAccountsPanelInModalMaxHeight(),
+      height: '100%',
       flexDirection: 'column',
     },
     scrollViewContainer: {

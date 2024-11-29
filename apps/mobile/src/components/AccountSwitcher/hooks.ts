@@ -47,8 +47,9 @@ export function useAccountSceneVisible(forScene?: AccountSwitcherScene) {
   const [scenes, setScenes] = useAtom(screenHeaderAccountSwitcherAtom);
 
   const toggleSceneVisible = useCallback(
-    (scene: AccountSwitcherScene, nextVisible: boolean) => {
+    (scene: AccountSwitcherScene, nextVisible?: boolean) => {
       setScenes(prev => {
+        nextVisible = nextVisible ?? !!prev[scene]?.collapsed;
         return {
           ...prev,
           [scene]: {
