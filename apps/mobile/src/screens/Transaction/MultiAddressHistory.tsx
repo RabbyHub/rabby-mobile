@@ -26,7 +26,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import { useMyAccounts } from '@/hooks/account';
+import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -300,7 +300,13 @@ const HistoryScreen = () => {
     tokenDetailAddress,
     setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
+
   useLastUsedAccountInScreen();
+
+  const { isSceneUsingAllAccounts, finalSceneCurrentAccount } =
+    useSceneAccountInfo({
+      forScene: 'MultiHistory',
+    });
 
   return (
     <NormalScreenContainer2024 type="bg1">
@@ -320,6 +326,9 @@ const HistoryScreen = () => {
           setTokenDetailAddress(undefined);
         }}
         address={tokenDetailAddress}
+        nextTxRedirectAccount={
+          !isSceneUsingAllAccounts ? finalSceneCurrentAccount || null : null
+        }
       />
     </NormalScreenContainer2024>
   );

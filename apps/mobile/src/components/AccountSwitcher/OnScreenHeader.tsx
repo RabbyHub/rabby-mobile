@@ -12,7 +12,7 @@ import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
-  useSwitchAccountBeforeEnterScene,
+  usePreFetchBeforeEnterScene,
 } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +43,7 @@ export function ScreenHeaderAccountSwitcher({
     forScene,
   });
 
-  const { preFetchData } = useSwitchAccountBeforeEnterScene();
+  const { preFetchData } = usePreFetchBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
     return typeof titleText === 'string' ? (

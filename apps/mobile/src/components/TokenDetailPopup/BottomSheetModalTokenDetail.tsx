@@ -62,7 +62,7 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
 import AutoLockView from '../AutoLockView';
 import { BlockedButton } from './BlockedButton';
-import { Token } from '@/core/services/preference';
+import { Account, Token } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useManageTokenList } from '@/screens/Home/hooks/useManageToken';
@@ -71,6 +71,11 @@ import { DisplayedToken } from '@/screens/Home/utils/project';
 import { CustomizedSwitch } from './CustomizedSwitch';
 import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
+import {
+  usePreFetchBeforeEnterScene,
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -470,6 +475,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }) => void;
     hideOperationButtons?: boolean;
     address?: string;
+    nextTxRedirectAccount?: Account | null;
   }
 >(
   (
@@ -481,6 +487,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       hideOperationButtons = false,
       isTestnet,
       address,
+      nextTxRedirectAccount,
     },
     ref,
   ) => {
@@ -740,6 +747,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, []);
 
     const navigation = useRabbyAppNavigation();
+    const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
     const onRedirecTo = useCallback(
       (type?: RedirectToType) => {
@@ -750,6 +758,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
         switch (type) {
           case 'Swap':
+            switchSceneCurrentAccount(
+              'MakeTransactionAbout',
+              nextTxRedirectAccount || null,
+            );
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Swap,
               params: {
@@ -759,6 +771,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             });
             break;
           case 'Send': {
+            switchSceneCurrentAccount(
+              'MakeTransactionAbout',
+              nextTxRedirectAccount || null,
+            );
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Send,
               params: {
@@ -769,6 +785,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             break;
           }
           case 'Receive': {
+            switchSceneCurrentAccount(
+              'MakeTransactionAbout',
+              nextTxRedirectAccount || null,
+            );
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Receive,
               params: {
@@ -783,6 +803,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       [
         navigation,
         onTriggerDismissFromInternal,
+        switchSceneCurrentAccount,
+        nextTxRedirectAccount,
         token?._tokenId,
         token?.chain,
         token?.symbol,

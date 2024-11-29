@@ -108,7 +108,7 @@ export function useResetSceneAccountInfo() {
   };
 }
 
-export function useSwitchAccountBeforeEnterScene() {
+export function usePreFetchBeforeEnterScene() {
   const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
@@ -119,19 +119,6 @@ export function useSwitchAccountBeforeEnterScene() {
   const { getPinAddressesAsync } = usePinAddresses({
     disableAutoFetch: true,
   });
-
-  const switchAccountBeforeEnterScene = useCallback(
-    (scene: AccountSwitcherScene, account: Account) => {
-      setSceneAccountInfo(prev => ({
-        ...prev,
-        [scene]: {
-          ...prev[scene],
-          currentAccount: normalizeSceneKeyringAccount(account),
-        },
-      }));
-    },
-    [setSceneAccountInfo],
-  );
 
   const preFetchData = useCallback(async () => {
     setTimeout(() => {
@@ -144,7 +131,6 @@ export function useSwitchAccountBeforeEnterScene() {
   }, [fetchAccounts, fetchCurrentAccountAsync, getPinAddressesAsync]);
 
   return {
-    switchAccountBeforeEnterScene,
     preFetchData,
   };
 }
