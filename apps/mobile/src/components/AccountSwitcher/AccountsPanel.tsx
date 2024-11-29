@@ -1,6 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
+  Dimensions,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -169,8 +170,6 @@ AccountSwitcherAopProps<{
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleUseAllAccountsOnScene, toggleSceneVisible]);
 
-  console.log('[feat] linearContainerProps', linearContainerProps);
-
   return (
     <LinearGradientContainer
       type="linear"
@@ -286,13 +285,17 @@ AccountSwitcherAopProps<{
     </LinearGradientContainer>
   );
 }
+
+export function getAccountsPanelInModalMaxHeight() {
+  return Dimensions.get('window').height - 133;
+}
 const getPanelStyle = createGetStyles2024(ctx => {
   return {
     panel: {
       position: 'relative',
       width: '100%',
-      minHeight: 453,
-      maxHeight: '80%',
+      minHeight: '50%',
+      maxHeight: getAccountsPanelInModalMaxHeight(),
       flexDirection: 'column',
     },
     scrollViewContainer: {

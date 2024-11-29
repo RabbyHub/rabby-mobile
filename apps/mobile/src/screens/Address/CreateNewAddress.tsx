@@ -30,10 +30,10 @@ import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useNavigationState } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import LinearGradient from 'react-native-linear-gradient';
 import { replaceToFirst } from '@/utils/navigation';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 
 const MAX_ACCOUNT_COUNT = 50;
 const PROGRESS_BAR_STEP = {
@@ -62,20 +62,11 @@ function MainListBlocks() {
       }
     | undefined;
 
-  useEffect(() => {
-    if (!state?.title) {
-      return;
-    }
-    setNavigationOptions({
-      title: state?.title,
-    });
-  }, [setNavigationOptions, state?.title]);
-
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText style={styles.title}>
+      <HeaderTitleText2024 style={styles.title}>
         {state?.title || '1. Name Your Address'}
-      </HeaderTitleText>
+      </HeaderTitleText2024>
     );
   }, [state?.title, styles.title]);
 

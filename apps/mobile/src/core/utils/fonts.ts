@@ -1,5 +1,6 @@
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { IS_IOS } from '../native/utils';
+import { StyleProp, TextStyle } from 'react-native';
 
 export const enum FontWeightEnum {
   thin = 100,
@@ -106,4 +107,31 @@ export function getFontWeightType(fontWeight?: string | number) {
   }
 
   return result;
+}
+
+const AllSoloWeightFonts = [
+  FontNames.sf_pro_rounded_bold,
+  FontNames.sf_pro_rounded_regular,
+  FontNames.sf_pro_rounded_medium,
+  FontNames.sf_pro_rounded_heavy,
+];
+type TextStyleInput = { fontWeight?: string; fontFamily?: string } & (StyleProp<
+  Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight'> & {
+    color?: string;
+  }
+> &
+  object);
+export function cleanSpecialSoloWeightFont<T extends TextStyleInput>(
+  input?: T,
+) {
+  if (!input) return input;
+
+  if (input.fontFamily && AllSoloWeightFonts.includes(input.fontFamily)) {
+    return {
+      ...input,
+      fontWeight: undefined,
+    };
+  }
+
+  return input;
 }

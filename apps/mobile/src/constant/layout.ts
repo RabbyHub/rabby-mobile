@@ -250,8 +250,10 @@ function makeScreenSpecConfig() {
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
 
-      // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      Send: bg1Default2024Conf,
+      MultiSend: bg1Default2024Conf,
+      Swap: bg1Default2024Conf,
+      MultiSwap: bg1Default2024Conf,
       // Receive: blueLightConf,
 
       GnosisTransactionQueue: card2DefaultConf,

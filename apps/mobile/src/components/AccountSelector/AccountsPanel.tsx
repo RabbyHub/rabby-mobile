@@ -56,7 +56,7 @@ const triggerLight = () => {
 };
 
 type AddressItemProps = React.ComponentProps<typeof AddressItem>;
-function AddressItemInPanel({
+function AddressItemInSheetModal({
   style,
   addressItemProps,
   isCurrent,
@@ -101,7 +101,7 @@ function AddressItemInPanel({
       activeOpacity={1}
       onPressIn={() => setIsPressing(true)}
       onPressOut={() => setIsPressing(false)}
-      onPress={onPressAccount}>
+      onPress={handleCopyAddress}>
       <AddressItem {...addressItemProps}>
         {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
           return (
@@ -137,7 +137,8 @@ function AddressItemInPanel({
                       <RcIconCopy style={styles.icon} />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => {
+                      onPress={evt => {
+                        evt.stopPropagation();
                         triggerLight();
                         onPressAccount();
                       }}
@@ -314,15 +315,13 @@ export function AccountsPanelInSheetModal({
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
-  scene?: 'GasAccount' | 'Swap' | 'Send' | 'Receive' | undefined;
+  scene?: 'GasAccount' | undefined;
 }) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
   const isGasAccount = scene === 'GasAccount';
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const scrollViewRef = React.useRef<FlatList>(null);
   const scrollToBottom = useCallback(() => {
@@ -453,7 +452,7 @@ export function AccountsPanelInSheetModal({
                   data={combinedItem.data}
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => (
-                    <AddressItemInPanel
+                    <AddressItemInSheetModal
                       key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                       addressItemProps={{ account: item }}
                       isPinned={isPinnedAccount(item)}

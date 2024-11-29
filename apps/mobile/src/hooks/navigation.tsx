@@ -31,6 +31,7 @@ import RNTimeChanged from '@/core/native/RNTimeChanged';
 import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
 import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
 import { useIsForceAllowScreenshot } from './appSettings';
+import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -120,11 +121,17 @@ export const useStackScreenConfig = () => {
         ),
       };
 
-      return merge(
+      const result = merge(
         {},
         screenOptions,
         ...optsList.map(x => ({ ...x })),
       ) as ScreenOptions;
+
+      result.headerTitleStyle =
+        cleanSpecialSoloWeightFont(result.headerTitleStyle) ||
+        result.headerTitleStyle;
+
+      return result;
     },
     [headerPresets, colors, navBack],
   );
@@ -156,11 +163,17 @@ export const useStackScreenConfig = () => {
         ),
       };
 
-      return merge(
+      const result = merge(
         {},
         screenOptions,
         ...optsList.map(x => ({ ...x })),
       ) as ScreenOptions;
+
+      result.headerTitleStyle =
+        cleanSpecialSoloWeightFont(result.headerTitleStyle) ||
+        result.headerTitleStyle;
+
+      return result;
     },
     [headerPresets, colors2024, navBack],
   );

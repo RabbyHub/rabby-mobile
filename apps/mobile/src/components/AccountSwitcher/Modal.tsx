@@ -1,4 +1,4 @@
-import { TouchableOpacity, View } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   createGetStyles2024,
@@ -11,7 +11,10 @@ import {
   ScreenLayouts2,
   ScreenWithAccountSwitcherLayouts,
 } from '@/constant/layout';
-import { AccountsPanelInModal } from './AccountsPanel';
+import {
+  AccountsPanelInModal,
+  getAccountsPanelInModalMaxHeight,
+} from './AccountsPanel';
 import AutoLockView from '../AutoLockView';
 import { useLayoutEffect } from 'react';
 import { useDappCurrentAccount } from '@/hooks/useDapps';
@@ -49,8 +52,6 @@ export function AccountSwitcherModal({
     maxHeight: Math.floor(offScreen.modalBackgroundHeight),
   };
 
-  console.log('[feat] panelLinearGradientProps', panelLinearGradientProps);
-
   return (
     <AutoLockView
       style={[
@@ -70,6 +71,7 @@ export function AccountSwitcherModal({
         style={[styles.panelContainer, { maxHeight: absoluteStyle.maxHeight }]}>
         <AccountsPanelInModal
           linearContainerProps={panelLinearGradientProps}
+          containerStyle={{ height: '100%' }}
           forScene={forScene}
         />
       </View>
@@ -95,14 +97,7 @@ const getModalStyle = createGetStyles2024(ctx => {
     panelContainer: {
       position: 'relative',
       width: '100%',
-      // height: '50%',
-      ...(IS_ANDROID
-        ? {
-            maxHeight: '90%',
-          }
-        : {
-            height: '50%',
-          }),
+      height: getAccountsPanelInModalMaxHeight(),
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'blue',
       // }),
@@ -207,14 +202,7 @@ const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
     panelContainer: {
       position: 'relative',
       width: '100%',
-      height: '50%',
-      ...(IS_ANDROID
-        ? {
-            maxHeight: '90%',
-          }
-        : {
-            height: '50%',
-          }),
+      height: getAccountsPanelInModalMaxHeight(),
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'blue',
       // }),

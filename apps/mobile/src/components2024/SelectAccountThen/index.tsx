@@ -3,6 +3,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 export type SelectAccountThenProps = {
   modalTitle?: string;
@@ -18,7 +19,11 @@ export const SelectAccountThen: React.FC<SelectAccountThenProps> = ({
   return (
     <AutoLockView as="BottomSheetView">
       <View style={styles.container}>
-        {modalTitle && <Text style={styles.title}>{modalTitle}</Text>}
+        {modalTitle && (
+          <BottomSheetHandlableView>
+            <Text style={styles.title}>{modalTitle}</Text>
+          </BottomSheetHandlableView>
+        )}
         <AccountsPanelInSheetModal
           containerStyle={styles.accountRoot}
           onSelectAccount={onDone}

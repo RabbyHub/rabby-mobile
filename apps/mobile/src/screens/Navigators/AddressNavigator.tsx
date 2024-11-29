@@ -202,12 +202,14 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportMethods}
         component={ImportMethods}
-        options={mergeScreenOptions({
-          headerTitle: 'Select Import Method',
-          title: 'Select Import Method',
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: styles.headerTitleText,
-        })}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: 'Select Import Method',
+            title: 'Select Import Method',
+            headerTintColor: colors['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          },
+        ])}
       />
       <AddressStack.Screen
         name={RootNames.ImportSafeAddress}
