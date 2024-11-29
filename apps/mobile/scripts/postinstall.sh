@@ -23,7 +23,7 @@ yarn link-assets
 
 cd $repo_dir/apps/mobile;
 echo "3. Patch npm packages"
-if [ -z $CI ]; then
+if [ -z "${CI:-}" ]; then
   yarn apply-patch
 else
   # allow failed
