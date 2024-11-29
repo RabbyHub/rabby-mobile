@@ -184,7 +184,7 @@ AccountSwitcherAopProps<{
                     marginBottom: AddressItemSizes.itemGap,
                     height: AddressItemSizes.useAllItemH,
                   }}
-                  addressCount={myAddresses.length}
+                  allAccounts={myAddresses}
                   onPress={handlePressUseAll}
                   isSelected={isSceneUsingAllAccounts}
                 />

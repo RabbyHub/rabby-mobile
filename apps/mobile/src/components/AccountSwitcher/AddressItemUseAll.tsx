@@ -1,4 +1,11 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  ImageSourcePropType,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -7,16 +14,21 @@ import SeedPNG from '@/assets2024/icons/wallet/seed.png';
 import RcIconCorrectCC from './icons/correct-cc.svg';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Account } from '@/core/services/preference';
+import { getWalletIcon2024 } from '@/utils/walletInfo2024';
+import { SvgProps } from 'react-native-svg';
 
 const ImagesList = [PrivateKeyPNG, SeedPNG, SeedPNG];
 
 export default function AllAddressIcon({
+  imageSourceList = [],
   containerWidth = 58,
   size = 40,
   imageRadius = 6,
   imageGap = 6,
 }: {
+  imageSourceList: (ImageSourcePropType | React.FC<SvgProps>)[];
   containerWidth?: number;
   size?: number;
   imageRadius?: number;
@@ -26,10 +38,37 @@ export default function AllAddressIcon({
     getStyle: getAllAddressIconStyle,
   });
 
+  if (!imageSourceList.length) return null;
+
   return (
     <View style={[styles.container, { width: containerWidth, height: size }]}>
-      {ImagesList.map((image, index) => {
+      {imageSourceList.map((image, index) => {
         const k = `image-item-${index}-${image}`;
+
+        const Icon = image;
+        let imageNode =
+          typeof Icon === 'function' ? (
+            <Icon
+              width={size}
+              height={size}
+              style={StyleSheet.flatten([
+                {
+                  borderRadius: imageRadius,
+                  width: size,
+                  height: size,
+                },
+              ])}
+            />
+          ) : (
+            <Image
+              style={[
+                styles.image,
+                { width: size, height: size, borderRadius: imageRadius },
+              ]}
+              source={Icon}
+            />
+          );
+
         return (
           <View
             key={k}
@@ -37,13 +76,7 @@ export default function AllAddressIcon({
               styles.iconWrapper,
               { left: (ImagesList.length - index - 1) * imageGap },
             ]}>
-            <Image
-              style={[
-                styles.image,
-                { width: size, height: size, borderRadius: imageRadius },
-              ]}
-              source={image}
-            />
+            {imageNode}
           </View>
         );
       })}
@@ -74,12 +107,12 @@ const getAllAddressIconStyle = createGetStyles2024(ctx => {
 });
 
 export function UseAllAccountsItemInPanel({
-  addressCount,
+  allAccounts = [],
   isSelected,
   style,
   onPress,
 }: {
-  addressCount: number;
+  allAccounts: Account[];
   isSelected?: boolean;
   onPress?: () => void;
 } & RNViewProps) {
@@ -92,6 +125,20 @@ export function UseAllAccountsItemInPanel({
   const onPressAddress = useCallback(() => {
     onPress?.();
   }, [onPress]);
+
+  const imageSourceList = useMemo(() => {
+    return allAccounts
+      .slice(0, 3)
+      .map(account => getWalletIcon2024(account.brandName))
+      .filter(Boolean);
+  }, [allAccounts]);
+
+  if (!allAccounts.length) {
+    console.warn('UseAllAccountsItemInPanel: allAccounts is empty');
+    return null;
+  }
+
+  const addressCount = allAccounts.length;
 
   return (
     <TouchableOpacity
@@ -107,7 +154,12 @@ export function UseAllAccountsItemInPanel({
       onPress={onPressAddress}>
       <View style={styles.itemInner}>
         <View style={[styles.leftArea, { marginLeft: -0, marginRight: 12 }]}>
-          <AllAddressIcon size={26} containerWidth={40} imageRadius={8} />
+          <AllAddressIcon
+            imageSourceList={imageSourceList}
+            size={26}
+            containerWidth={40}
+            imageRadius={8}
+          />
         </View>
         <View style={styles.centerInfo}>
           <Text style={styles.text}>
