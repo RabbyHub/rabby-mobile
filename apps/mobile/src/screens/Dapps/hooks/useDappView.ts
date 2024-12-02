@@ -286,8 +286,11 @@ export function useOpenDappView() {
       const result = { willClose: false };
       if (openingActiveDappRef.current) return result;
 
-      // toggleShowSheetModal('openedDappWebviewSheetModalRef', // OPEN_DAPP_VIEW_INDEXES.collapsed);
-      toggleShowSheetModal('openedDappWebviewSheetModalRef', false);
+      toggleShowSheetModal(
+        'openedDappWebviewSheetModalRef',
+        OPEN_DAPP_VIEW_INDEXES.collapsed,
+      );
+      // toggleShowSheetModal('openedDappWebviewSheetModalRef', false);
 
       if (ctx?.dappOrigin && ctx.webviewId) {
         setLastWebViewIdByDappOrigin(ctx.dappOrigin, {
@@ -502,7 +505,6 @@ export function useOpenDappView() {
     closeOpenedDapp,
 
     clearActiveDappOrigin,
-    closeActiveOpenedDapp,
   };
 }
 
