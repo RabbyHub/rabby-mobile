@@ -50,10 +50,12 @@ import { Skeleton } from '@rneui/base';
 import { transactionHistoryService } from '@/core/services';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useMount } from 'ahooks';
+import { useMemoizedFn, useMount } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { apisAccount } from '@/core/apis';
+import { resetNavigationTo } from '@/hooks/navigation';
 
 const MENU_ARR = [
   {
@@ -203,7 +205,7 @@ function MultiAddressHome(): JSX.Element {
     }
     const { pendingsLength, pendings } =
       transactionHistoryService.getPendingsAddresses(addresses);
-    console.log('fetchHistory :', balanceCacheAccounts, pendings);
+    console.debug('fetchHistory :', balanceCacheAccounts, pendings);
     setPendingTxCount(pendingsLength);
     if (pendingsLength) {
       if (!timeRef.current) {
@@ -215,6 +217,15 @@ function MultiAddressHome(): JSX.Element {
     }
   }, [balanceCacheAccounts]);
 
+  const detectHasAccounts = useMemoizedFn(async () => {
+    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+    if (!hasAccountsInKeyring) {
+      resetNavigationTo(navigation, 'GetStarted2024');
+    }
+
+    return hasAccountsInKeyring;
+  });
+
   // useMount(() => {  no use ?
   //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
   //   return () => {
@@ -224,10 +235,13 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      if (!timeRef.current) {
-        fetchHistory();
-      }
-    }, [fetchHistory]),
+      (async () => {
+        const hasAccountsInKeyring = await detectHasAccounts();
+        if (hasAccountsInKeyring && !timeRef.current) {
+          fetchHistory();
+        }
+      })();
+    }, [detectHasAccounts, fetchHistory]),
   );
 
   useFocusEffect(
