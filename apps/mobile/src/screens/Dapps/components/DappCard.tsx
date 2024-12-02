@@ -143,10 +143,9 @@ export const DappCardInner: React.FC<DappCardProps> = ({
         </View>
         <TouchableOpacity
           style={styles.dappAction}
-          disallowInterruption={true}
+          // disallowInterruption={true}
           hitSlop={10}
           onLongPress={noop}
-          // delayLongPress={100}
           onPress={() => {
             onFavoritePress?.(data);
           }}>

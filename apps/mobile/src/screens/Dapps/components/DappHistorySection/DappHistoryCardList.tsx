@@ -46,6 +46,7 @@ export const DappHistoryCardList = ({
         return (
           <View style={styles.listItem}>
             <ContextMenuView
+              triggerProps={{ action: 'longPress' }}
               menuConfig={{
                 menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
                 menuActions: [

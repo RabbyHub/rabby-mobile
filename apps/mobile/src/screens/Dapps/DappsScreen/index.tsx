@@ -50,14 +50,14 @@ export function DappsScreen(): JSX.Element {
     Keyboard.dismiss();
   });
 
-  const handleFavoriteDapp = (dapp: DappInfo) => {
+  const handleFavoriteDapp = useMemoizedFn((dapp: DappInfo) => {
     const v = !dapp.isFavorite;
     setDapp({
       ...dapp,
       isFavorite: v,
       favoriteAt: v ? Date.now() : null,
     });
-  };
+  });
 
   const handleDeleteHistory = useMemoizedFn((dapp: DappInfo) => {
     removeBrowserHistory(dapp.origin);
