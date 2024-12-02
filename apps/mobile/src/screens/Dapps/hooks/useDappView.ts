@@ -15,7 +15,6 @@ import {
 } from '@/core/bridges/state';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
 import {
   isSameAccount,
   useSceneAccountInfo,
@@ -61,6 +60,7 @@ export type OpenedDappItem = {
    *
    **/
   openTime: number;
+  lastOpenWebViewId?: string | null;
 };
 const DAPPS_VIEW_LIMIT = {
   maxCount: 3,
@@ -175,6 +175,11 @@ export const OPEN_DAPP_VIEW_INDEXES = {
   expanded: 1,
   collapsed: 0,
 };
+export type DappWebViewHideContext = {
+  webviewId: string | undefined;
+  dappOrigin?: string;
+  latestUrl?: string;
+};
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
   const [activeDappOrigin, _setActiveDappOrigin] =
@@ -235,12 +240,34 @@ export function useOpenDappView() {
     );
   }, [toggleShowSheetModal]);
 
-  const collapseDappWebViewModal = useCallback(() => {
-    toggleShowSheetModal(
-      'openedDappWebviewSheetModalRef',
-      OPEN_DAPP_VIEW_INDEXES.collapsed,
-    );
-  }, [toggleShowSheetModal]);
+  const setLastWebViewIdByDappOrigin = useCallback(
+    (dappOrigin: DappInfo['origin'], webviewId?: string) => {
+      // if (urlUtils.canoicalizeDappUrl(url).httpOrigin !== dappOrigin) return ;
+
+      setOpenedOriginsDapps(prev => {
+        const itemIdx = prev.findIndex(item => item.origin === dappOrigin);
+        if (itemIdx === -1) return prev;
+
+        prev[itemIdx].lastOpenWebViewId = webviewId || null;
+
+        return [...prev];
+      });
+    },
+    [setOpenedOriginsDapps],
+  );
+
+  const collapseDappWebViewModal = useCallback(
+    (ctx?: DappWebViewHideContext) => {
+      toggleShowSheetModal(
+        'openedDappWebviewSheetModalRef',
+        OPEN_DAPP_VIEW_INDEXES.collapsed,
+      );
+      if (ctx?.dappOrigin && ctx.webviewId) {
+        setLastWebViewIdByDappOrigin(ctx.dappOrigin, ctx.webviewId);
+      }
+    },
+    [toggleShowSheetModal, setLastWebViewIdByDappOrigin],
+  );
 
   const openUrlAsDapp = useCallback(
     (
@@ -250,10 +277,14 @@ export function useOpenDappView() {
         isActiveDapp?: boolean;
         /** @default {false} */
         showSheetModalFirst?: boolean;
+        useLatestWebViewId?: boolean;
       },
     ) => {
-      const { isActiveDapp = true, showSheetModalFirst = false } =
-        options || {};
+      const {
+        isActiveDapp = true,
+        showSheetModalFirst = false,
+        useLatestWebViewId = false,
+      } = options || {};
 
       const item =
         typeof dappUrl === 'string'
@@ -264,8 +295,9 @@ export function useOpenDappView() {
             }
           : dappUrl;
 
-      const itemUrl = item.origin;
-      const { origin: targetOrigin, urlInfo } = canoicalizeDappUrl(itemUrl);
+      const itemDappOrigin = item.origin;
+      const { httpOrigin: targetOrigin, urlInfo } =
+        canoicalizeDappUrl(itemDappOrigin);
       if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) return false;
 
       if (showSheetModalFirst) showDappWebViewModal();
@@ -284,9 +316,9 @@ export function useOpenDappView() {
 
       syncBasicDappInfo(item.origin);
 
-      item.$openParams = {
+      const $openParams = {
         ...item.$openParams,
-        initialUrl: item.$openParams?.initialUrl || itemUrl,
+        initialUrl: item.$openParams?.initialUrl || itemDappOrigin,
       };
 
       setOpenedOriginsDapps(prev => {
@@ -297,14 +329,24 @@ export function useOpenDappView() {
           return [...prev, item];
         }
 
-        prev[itemIdx] = {
-          ...prev[itemIdx],
-          $openParams: {
-            ...prev[itemIdx].$openParams,
-            ...item.$openParams,
-          },
-          openTime: Date.now(),
-        };
+        if (
+          useLatestWebViewId &&
+          prev[itemIdx].lastOpenWebViewId === prev[itemIdx].dappTabId
+        ) {
+          // call to open active id
+          setActiveDappOrigin(item.origin);
+          console.debug(`open existed dapp webview ${prev[itemIdx].dappTabId}`);
+        } else {
+          prev[itemIdx] = {
+            ...prev[itemIdx],
+            $openParams: {
+              ...prev[itemIdx].$openParams,
+              ...$openParams,
+            },
+            openTime: Date.now(),
+          };
+          console.debug('will open new dapp webview');
+        }
 
         return [...prev];
       });
@@ -351,9 +393,12 @@ export function useOpenDappView() {
     collapseDappWebViewModal();
   }, [collapseDappWebViewModal, removeOpenedDapp, activeDappOrigin]);
 
-  const collapseActiveOpenedDapp = useCallback(() => {
-    collapseDappWebViewModal();
-  }, [collapseDappWebViewModal]);
+  const collapseActiveOpenedDapp = useCallback(
+    (ctx: DappWebViewHideContext) => {
+      collapseDappWebViewModal(ctx);
+    },
+    [collapseDappWebViewModal],
+  );
 
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
