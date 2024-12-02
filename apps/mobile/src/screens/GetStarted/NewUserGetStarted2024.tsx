@@ -23,7 +23,7 @@ import {
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
 import { isNonPublicProductionEnv } from '@/constant/env';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -92,11 +92,12 @@ function GetStartedScreen2024(): JSX.Element {
       const accounts = await keyringService.getAllVisibleAccountsArray();
       setGetStaretd(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
       if (accounts?.length) {
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
+        // navigation.dispatch(
+        //   StackActions.replace(RootNames.StackRoot, {
+        //     screen: RootNames.Home,
+        //   }),
+        // );
+        resetNavigationTo(navigation, 'Home');
       }
     } catch (err) {
       console.error(err);

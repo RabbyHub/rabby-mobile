@@ -218,12 +218,17 @@ function MultiAddressHome(): JSX.Element {
   }, [balanceCacheAccounts]);
 
   const detectHasAccounts = useMemoizedFn(async () => {
-    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+    const result = { redirectAction: null as Function | null };
+    const hasAccountsInKeyring =
+      (await apisAccount.getAllVisibleAccounts()).length > 0;
+
     if (!hasAccountsInKeyring) {
-      resetNavigationTo(navigation, 'GetStarted2024');
+      result.redirectAction = () => {
+        resetNavigationTo(navigation, 'GetStarted2024');
+      };
     }
 
-    return hasAccountsInKeyring;
+    return result;
   });
 
   // useMount(() => {  no use ?
@@ -236,8 +241,10 @@ function MultiAddressHome(): JSX.Element {
   useFocusEffect(
     useCallback(() => {
       (async () => {
-        const hasAccountsInKeyring = await detectHasAccounts();
-        if (hasAccountsInKeyring && !timeRef.current) {
+        const { redirectAction } = await detectHasAccounts();
+        if (redirectAction) {
+          redirectAction();
+        } else if (!timeRef.current) {
           fetchHistory();
         }
       })();
