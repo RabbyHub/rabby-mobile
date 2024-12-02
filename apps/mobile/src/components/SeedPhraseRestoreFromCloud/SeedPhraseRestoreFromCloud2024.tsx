@@ -11,7 +11,7 @@ import { RootNames } from '@/constant/layout';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  shouldRedirect2SetPassword?: (any) => boolean;
+  shouldRedirect2SetPassword?: (any) => Promise<boolean>;
   files: BackupData[];
 }
 
@@ -51,7 +51,7 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
         await new Promise(resolve => setTimeout(resolve, 500));
         onDone();
         if (
-          shouldRedirect2SetPassword?.({
+          await shouldRedirect2SetPassword?.({
             backScreen: RootNames.ImportSuccess2024,
             isFirstImportPassword: true,
           })

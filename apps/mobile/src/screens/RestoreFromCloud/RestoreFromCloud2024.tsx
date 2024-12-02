@@ -28,7 +28,7 @@ const { isSameAddress } = addressUtils;
 
 export const RestoreFromCloud2024: React.FC<{
   onDone: () => void;
-  shouldRedirect2SetPassword?: () => boolean;
+  shouldRedirect2SetPassword?: () => Promise<boolean>;
 }> = ({ onDone, shouldRedirect2SetPassword }) => {
   const [backups, setBackups] = React.useState<BackupData[]>();
   const [loading, setLoading] = React.useState(true);
