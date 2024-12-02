@@ -31,7 +31,7 @@ interface Props {
   descriptionStyle?: StyleProp<TextStyle>;
 }
 
-const getStyle = createGetStyles2024(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   progress: {
     position: 'absolute',
     top: -10,
@@ -58,7 +58,7 @@ const getStyle = createGetStyles2024(colors => ({
   },
   description: {
     marginTop: 36,
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '700',
@@ -68,11 +68,11 @@ const getStyle = createGetStyles2024(colors => ({
     position: 'relative',
   },
   errorText: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
     marginTop: 28,
   },
   successText: {
-    color: colors['green-default'],
+    color: colors2024['green-default'],
   },
   statusIconDownloading: {
     transform: [{ rotate: '180deg' }],
