@@ -97,10 +97,6 @@ function DevUIDapps() {
                     Open ID/Origin: {record.origin} {' '.repeat(100)}
                   </Text>
                   <Text style={{ marginBottom: 12 }}>
-                    Open Last WebView ID: {record.lastOpenWebViewId || '-'}{' '}
-                    {' '.repeat(100)}
-                  </Text>
-                  <Text style={{ marginBottom: 12 }}>
                     Open Time:{' '}
                     {dayjs(record.openTime)
                       .format('YYYY/MM/DD HH:mm:ss')

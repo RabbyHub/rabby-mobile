@@ -36,7 +36,6 @@ import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { IS_ANDROID } from '@/core/native/utils';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '../utils';
 import { FontNames } from '@/core/utils/fonts';
-import { DappWebViewHideContext } from '@/screens/Dapps/hooks/useDappView';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl2::error]', ...info);
@@ -82,9 +81,7 @@ type DappWebViewControlProps = {
    */
   embedHtml?: string;
   initialUrl?: string;
-  onPressHeaderLeftClose?: (
-    ctx: { defaultAction: () => void } & DappWebViewHideContext,
-  ) => void;
+  onPressHeaderLeftClose?: (ctx: { defaultAction: () => void }) => void;
 
   headerRight?: React.ReactNode | (() => React.ReactNode);
   headerNode?:
@@ -239,18 +236,11 @@ const DappWebViewControl2 = React.forwardRef<
       if (typeof onPressHeaderLeftClose === 'function') {
         return onPressHeaderLeftClose({
           defaultAction: handlePressCloseDefault,
-          latestUrl: latestUrl,
-          webviewId: webviewIdRef.current,
         });
       }
 
       return handlePressCloseDefault();
-    }, [
-      handlePressCloseDefault,
-      onPressHeaderLeftClose,
-      latestUrl,
-      webviewIdRef,
-    ]);
+    }, [handlePressCloseDefault, onPressHeaderLeftClose]);
 
     const { headerRightNode, finalNavControlNode } = useDefaultNodes({
       headerRight,

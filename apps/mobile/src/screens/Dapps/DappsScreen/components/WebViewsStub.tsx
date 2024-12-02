@@ -5,7 +5,6 @@ import {
   useOpenDappView,
   useActiveViewSheetModalRefs,
   OPEN_DAPP_VIEW_INDEXES,
-  DappWebViewHideContext,
 } from '../../hooks/useDappView';
 import { devLog } from '@/utils/logger';
 import {
@@ -212,6 +211,7 @@ export function OpenedDappWebViewStub() {
     collapseDappWebViewModal,
     closeOpenedDapp,
     clearActiveDappOrigin,
+    collapseActiveOpenedDapp,
   } = useOpenDappView();
 
   const {
@@ -224,13 +224,10 @@ export function OpenedDappWebViewStub() {
 
   const { isDappConnected, disconnectDapp, updateFavorite } = useDapps();
 
-  const hideDappSheetModal = useCallback(
-    (ctx?: DappWebViewHideContext) => {
-      collapseDappWebViewModal(ctx);
-      clearActiveDappOrigin();
-    },
-    [collapseDappWebViewModal, clearActiveDappOrigin],
-  );
+  const hideDappSheetModal = useCallback(() => {
+    collapseDappWebViewModal();
+    clearActiveDappOrigin();
+  }, [collapseDappWebViewModal, clearActiveDappOrigin]);
 
   const handleBottomSheetChanges = useCallback<
     BottomSheetModalProps['onChange'] & object
@@ -279,15 +276,10 @@ export function OpenedDappWebViewStub() {
   useHandleBackPressClosable(
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
-      const state = control?.getWebViewState();
-      if (state?.canGoBack) {
+      if (control?.getWebViewState().canGoBack) {
         control?.getWebViewActions().handleGoBack();
       } else if (activeDapp) {
-        hideDappSheetModal({
-          // webViewId: control?.getWebViewId(),
-          latestUrl: state?.url,
-          webviewId: control?.getWebViewId(),
-        });
+        hideDappSheetModal();
       }
       return !activeDapp;
     }, [activeDapp, hideDappSheetModal]),
@@ -372,7 +364,7 @@ export function OpenedDappWebViewStub() {
                   globalSetActiveDappState({ dappOrigin: dappInfo.origin });
                   // @ts-expect-error
                   activeDappWebViewControlRef.current = inst;
-                  // const activeTabId = inst?.getWebViewId() ?? undefined;
+                  const activeTabId = inst?.getWebViewId() ?? undefined;
                   globalSetActiveDappState({
                     dappOrigin: dappInfo.origin,
                     tabId: dappInfo.dappTabId,
@@ -405,7 +397,8 @@ export function OpenedDappWebViewStub() {
               }}
               headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
               onPressHeaderLeftClose={ctx => {
-                hideDappSheetModal(ctx);
+                hideDappSheetModal();
+                collapseActiveOpenedDapp();
               }}
               // headerNode={({ header }) => {
               //   return <WebViewControlHeader headerNode={header} />;

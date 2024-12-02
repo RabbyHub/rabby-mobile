@@ -42,21 +42,13 @@ export function DappsScreen(): JSX.Element {
   const navigation = useNavigation();
   const searchState = useSearchDapps();
 
-  type OpenUrlAsDappOptions = Pick<
-    Parameters<typeof openUrlAsDapp>[1] & object,
-    'useLatestWebViewId'
-  >;
-  const handleOpenURL = useMemoizedFn(
-    (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
-        useLatestWebViewId: true,
-        ...options,
-        showSheetModalFirst: true,
-      });
-      setBrowserHistory(safeGetOrigin(url));
-      Keyboard.dismiss();
-    },
-  );
+  const handleOpenURL = useMemoizedFn((url: string) => {
+    openUrlAsDapp(url, {
+      showSheetModalFirst: true,
+    });
+    setBrowserHistory(safeGetOrigin(url));
+    Keyboard.dismiss();
+  });
 
   const handleFavoriteDapp = useMemoizedFn((dapp: DappInfo) => {
     const v = !dapp.isFavorite;
