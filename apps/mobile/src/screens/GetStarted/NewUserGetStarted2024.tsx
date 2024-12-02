@@ -176,7 +176,7 @@ function GetStartedScreen2024(): JSX.Element {
                   !getStaretd.processedInit || getStaretd.localHasAccounts
                 }
                 onPress={handleGoToImport}>
-                I already have a address
+                I already have an address
               </TouchableText>
             </>
           ) : (

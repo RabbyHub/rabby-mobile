@@ -55,12 +55,26 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import LinearGradient from 'react-native-linear-gradient';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
   80 + 70 * actionsNum,
 ];
+
+const Linear = () => {
+  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
+
+  return (
+    <LinearGradient
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.linear}
+      colors={[colors2024['neutral-bg-2'], colors2024['neutral-bg-1']]}
+    />
+  );
+};
 
 const isAndroid = Platform.OS === 'android';
 
@@ -331,14 +345,27 @@ export const HomeTopArea = () => {
                 balance === null ||
                 (balanceFromCache && balance === 0) ||
                 balanceUpdating ? (
-                  <Skeleton width={140} height={38} />
+                  <Skeleton
+                    LinearGradientComponent={Linear}
+                    circle
+                    skeletonStyle={styles.skeleton}
+                    width={140}
+                    height={38}
+                  />
                 ) : (
                   usd
                 )}
               </Text>
 
               {balanceLoading ? (
-                <Skeleton style={{ marginLeft: 1 }} width={50} height={16} />
+                <Skeleton
+                  circle
+                  style={{ marginLeft: 1 }}
+                  LinearGradientComponent={Linear}
+                  skeletonStyle={styles.skeleton}
+                  width={50}
+                  height={16}
+                />
               ) : (
                 !!percent && (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -656,5 +683,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   decrease: {
     color: ctx.colors2024['red-default'],
+  },
+  linear: {
+    height: '100%',
+  },
+  skeleton: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
 }));
