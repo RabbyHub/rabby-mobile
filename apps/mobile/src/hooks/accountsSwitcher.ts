@@ -148,16 +148,23 @@ export function useSwitchSceneCurrentAccount() {
       account: Account | null,
       options?: { maybeReEntrant?: boolean },
     ) => {
+      const prev = sceneAccountInfo;
       const { maybeReEntrant } = options || {};
-      setSceneAccountInfo(prev => {
+
+      try {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
+
+        const doReturn = <T extends typeof prev>(val: T) => {
+          setSceneAccountInfo(val);
+          return val;
+        };
 
         if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
           patches.useAllAccounts = false;
         }
 
         if (account) {
-          apisAccountSwitch.enableSceneAccount(account);
+          await apisAccountSwitch.enableSceneAccount(account);
 
           // avoid duplicate set same account
           if (isSameAccount(account, prev[scene]?.currentAccount)) {
@@ -167,26 +174,31 @@ export function useSwitchSceneCurrentAccount() {
           }
         } else {
           patches.currentAccount = null;
-          apisAccountSwitch.inactivateSceneAccount();
+          await apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.currentAccount) {
-            return prev;
+            return doReturn(prev);
           }
         }
 
         if (Object.keys(patches).length === 0) {
-          return prev;
+          return doReturn(prev);
         }
 
-        return {
+        return doReturn({
           ...prev,
           [scene]: {
             ...prev[scene],
             ...patches,
           },
-        };
-      });
+        });
+      } catch (error) {
+        if (__DEV__) {
+          console.error('switchSceneSigningAccount error', error);
+        }
+        return prev;
+      }
     },
-    [setSceneAccountInfo],
+    [sceneAccountInfo, setSceneAccountInfo],
   );
 
   /**
