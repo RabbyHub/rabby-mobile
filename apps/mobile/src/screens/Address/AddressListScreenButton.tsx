@@ -3,6 +3,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -36,19 +38,25 @@ export const AddressListScreenButton: React.FC<Props> = ({
   type = 'address',
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+  const maxHeight = Dimensions.get('window').height - 104;
+  const contentHeight =
+    accounts.length * (94 + 12) + (IS_ANDROID ? 60 + 56 : 0);
+
   const onPress = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {
-        enableDynamicSizing: true,
-        maxDynamicContentSize: Dimensions.get('window').height - 104,
+        snapPoints: [Math.min(contentHeight, maxHeight)],
       },
       type,
       onCancel: () => {
         removeGlobalBottomSheetModal2024(id);
       },
     });
-  }, [type]);
+  }, [contentHeight, maxHeight, type]);
 
   return (
     <TouchableOpacity

@@ -1,6 +1,6 @@
 import { useAccounts } from '@/hooks/account';
 import React from 'react';
-import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
@@ -114,7 +114,6 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   list: {
     padding: 16,
-    maxHeight: Dimensions.get('window').height,
     marginBottom: 56,
   },
   addressItem: {
