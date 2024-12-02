@@ -64,7 +64,7 @@ function ImportMethods(): JSX.Element {
             <Card
               style={styles.importItem}
               hasArrow={state?.isNotNewUserProc}
-              onPress={() => {
+              onPress={async () => {
                 trigger('impactLight', {
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
@@ -72,9 +72,9 @@ function ImportMethods(): JSX.Element {
                 if (
                   // only has address in this set password
                   state?.isNotNewUserProc &&
-                  shouldRedirectToSetPasswordBefore2024({
+                  (await shouldRedirectToSetPasswordBefore2024({
                     backScreen: RootNames.ImportMnemonic2024,
-                  })
+                  }))
                 ) {
                   return;
                 }
@@ -89,16 +89,16 @@ function ImportMethods(): JSX.Element {
             <Card
               hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
-              onPress={() => {
+              onPress={async () => {
                 trigger('impactLight', {
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
                 });
                 if (
                   state?.isNotNewUserProc &&
-                  shouldRedirectToSetPasswordBefore2024({
+                  (await shouldRedirectToSetPasswordBefore2024({
                     backScreen: RootNames.ImportPrivateKey2024,
-                  })
+                  }))
                 ) {
                   return;
                 }

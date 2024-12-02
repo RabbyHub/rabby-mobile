@@ -229,14 +229,14 @@ export const ImportSeedPhraseScreen2024 = () => {
     }
   }, [mnemonics, t]);
 
-  const handleConfirm = React.useCallback(() => {
+  const handleConfirm = React.useCallback(async () => {
     // verify mnemonics for setPassword
     if (!verfiyMnemonics()) {
       return;
     }
 
     if (
-      shouldRedirectToSetPasswordBefore2024({
+      await shouldRedirectToSetPasswordBefore2024({
         backScreen: RootNames.ImportSuccess2024,
         isFirstImportPassword: true,
       })

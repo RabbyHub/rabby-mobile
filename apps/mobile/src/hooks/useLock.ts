@@ -300,11 +300,11 @@ export function useSetPasswordFirst() {
   );
 
   const shouldRedirectToSetPasswordBefore2024 = React.useCallback(
-    ({
+    async ({
       backScreen,
       isFirstImportPassword,
     }: {
-      backScreen?: (SettingNavigatorParamList['SetPassword'] & {
+      backScreen: (SettingNavigatorParamList['SetPassword'] & {
         actionAfterSetup: 'backScreen';
       })['replaceScreen'];
       isFirstImportPassword?: boolean;
@@ -312,7 +312,11 @@ export function useSetPasswordFirst() {
       if (!APP_FEATURE_SWITCH.customizePassword) {
         return false;
       }
-      if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+      // if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+      //   return false;
+      // }
+      const shouldAsk = await apisLock.shouldAskSetPassword();
+      if (!shouldAsk) {
         return false;
       }
 
@@ -331,7 +335,7 @@ export function useSetPasswordFirst() {
       }
       return false;
     },
-    [navigation, lockInfo],
+    [navigation],
   );
 
   return {

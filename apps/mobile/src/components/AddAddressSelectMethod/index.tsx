@@ -11,10 +11,13 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { trigger } from 'react-native-haptic-feedback';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  shouldRedirectToSetPasswordBefore2024: any;
+  shouldRedirectToSetPasswordBefore2024: ReturnType<
+    typeof useSetPasswordFirst
+  >['shouldRedirectToSetPasswordBefore2024'];
   navigateTo: (screen: AppRootName, params?: object) => void;
 }
 
@@ -30,14 +33,14 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
       <View style={styles.section}>
         <ListItem
-          onPress={() => {
+          onPress={async () => {
             trigger('impactLight', {
               enableVibrateFallback: true,
               ignoreAndroidSystemSettings: false,
             });
 
             if (
-              shouldRedirectToSetPasswordBefore2024({
+              await shouldRedirectToSetPasswordBefore2024({
                 backScreen: RootNames.CreateSelectMethod,
               })
             ) {

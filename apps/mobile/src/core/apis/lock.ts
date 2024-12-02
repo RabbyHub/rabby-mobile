@@ -131,6 +131,14 @@ export async function updateWalletPassword(
   return result;
 }
 
+export async function shouldAskSetPassword() {
+  const lockInfo = await getRabbyLockInfo();
+
+  if (!lockInfo.isUseCustomPwd) return true;
+
+  return keyringService.getCountOfAccountsInKeyring() === 0;
+}
+
 export async function resetPasswordOnUI(newPassword: string) {
   const result = getInitError(newPassword);
   if (result.error) return result;

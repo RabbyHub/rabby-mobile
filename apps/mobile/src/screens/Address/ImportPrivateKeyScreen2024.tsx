@@ -86,14 +86,14 @@ export const ImportPrivateKeyScreen2024 = () => {
     }
   }, [privateKey, t]);
 
-  const handleConfirm = React.useCallback(() => {
+  const handleConfirm = React.useCallback(async () => {
     // verify private key for setPassword
     if (!verfiyPrivateKey()) {
       return;
     }
 
     if (
-      shouldRedirectToSetPasswordBefore2024({
+      await shouldRedirectToSetPasswordBefore2024({
         backScreen: RootNames.ImportSuccess2024,
         isFirstImportPassword: true,
       })

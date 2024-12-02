@@ -8,8 +8,6 @@ import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
-import { CHAINS_ENUM } from '@/constant/chains';
-import { apiAccount } from '.';
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
