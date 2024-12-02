@@ -3,9 +3,9 @@ import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, View, Keyboard } from 'react-native';
 import { BackupIcon } from './BackupIcon';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
@@ -82,6 +82,28 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   const [loading, setLoading] = React.useState(false);
   const { isCorrectPassword } = useCreateAddressProc();
 
+  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
   const handleConfirm = React.useCallback(async () => {
     if (!password) {
       return;
@@ -132,17 +154,19 @@ export const BackupUnlockScreen: React.FC<Props> = ({
           />
         </View>
       </View>
-      <Button
-        disabled={!password}
-        containerStyle={styles.btnContainer}
-        buttonStyle={{
-          borderRadius: 100,
-        }}
-        type="primary"
-        loading={loading}
-        title={t('page.nextComponent.createNewAddress.Confirm')}
-        onPress={handleConfirm}
-      />
+      {!keyboardVisible && (
+        <Button
+          disabled={!password}
+          containerStyle={styles.btnContainer}
+          buttonStyle={{
+            borderRadius: 100,
+          }}
+          type="primary"
+          loading={loading}
+          title={t('page.nextComponent.createNewAddress.Confirm')}
+          onPress={handleConfirm}
+        />
+      )}
     </View>
   );
 };
