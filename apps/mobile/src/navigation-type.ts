@@ -23,24 +23,8 @@ export type RootStackParamsList = {
   [RootNames.StackFavoriteDapps]: NavigatorScreenParams<FavoriteDappsNavigatorParamList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
-  [RootNames.ImportMoreAddress]?: {
-    type: KEYRING_TYPE;
-    brand?: string;
-    mnemonics?: string;
-    passphrase?: string;
-    keyringId?: number;
-    isExistedKR?: boolean;
-  };
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
-  [RootNames.SetPassword2024]?: {
-    finishGoToScreen: string;
-    title?: string;
-    hideProgress?: boolean;
-    delaySetPassword?: boolean;
-    hideBackIcon?: boolean;
-    isFirstImportPassword?: boolean;
-  };
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
 };
 
@@ -72,7 +56,18 @@ export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {};
-  [RootNames.SetPassword2024]?: {};
+  [RootNames.SetPassword2024]?: {
+    finishGoToScreen:
+      | typeof RootNames.CreateSelectMethod
+      | typeof RootNames.ImportSuccess2024
+      | typeof RootNames.ImportMnemonic2024
+      | typeof RootNames.ImportPrivateKey2024;
+    title?: string;
+    hideProgress?: boolean;
+    delaySetPassword?: boolean;
+    hideBackIcon?: boolean;
+    isFirstImportPassword?: boolean;
+  };
   [RootNames.ImportSafeAddress2024]?: {};
   [RootNames.ImportWatchAddress2024]?: {};
   [RootNames.CreateSelectOnCurrentSeed]?: {};
@@ -117,6 +112,14 @@ export type AddressNavigatorParamList = {
     type: string;
     brandName: string;
     byImport?: string;
+  };
+  [RootNames.ImportMoreAddress]?: {
+    type: KEYRING_TYPE;
+    brand?: string;
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
   [RootNames.ImportPrivateKey]?: {};
   [RootNames.ImportPrivateKey2024]?: {};

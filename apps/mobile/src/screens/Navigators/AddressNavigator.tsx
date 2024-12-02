@@ -47,9 +47,10 @@ import CreateChooseBackup from '../Address/CreateChooseBackup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
-import { StyleSheet } from 'react-native';
+import { AddressNavigatorParamList } from '@/navigation-type';
 
-const AddressStack = createCustomNativeStackNavigator();
+const AddressStack =
+  createCustomNativeStackNavigator<AddressNavigatorParamList>();
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {

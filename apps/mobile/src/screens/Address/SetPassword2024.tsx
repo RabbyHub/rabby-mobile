@@ -38,6 +38,7 @@ import {
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { AddressNavigatorParamList } from '@/navigation-type';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -52,7 +53,8 @@ const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
 function useSetupPasswordForm(
   toggleBiometrics: ReturnType<typeof useBiometrics>['toggleBiometrics'],
-  finishGoToScreen: string,
+  finishGoToScreen: (AddressNavigatorParamList['SetPassword2024'] &
+    object)['finishGoToScreen'],
   isBiometricsEnabled: boolean,
   delaySetPassword?: boolean,
   isFirstImportPassword?: boolean,
@@ -154,7 +156,7 @@ function useSetupPasswordForm(
             resetImportAddressProc();
           } else {
             navigation.replace(RootNames.StackAddress, {
-              screen: finishGoToScreen as any,
+              screen: finishGoToScreen,
             });
           }
         }
@@ -178,7 +180,8 @@ function MainListBlocks() {
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
   ) as {
-    finishGoToScreen: string;
+    finishGoToScreen: (AddressNavigatorParamList['SetPassword2024'] &
+      object)['finishGoToScreen'];
     title: string;
     hideProgress: boolean;
     delaySetPassword?: boolean;

@@ -7,7 +7,10 @@ import { apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from './navigation';
 import { useFocusEffect } from '@react-navigation/native';
-import { SettingNavigatorParamList } from '@/navigation-type';
+import {
+  AddressNavigatorParamList,
+  SettingNavigatorParamList,
+} from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -304,9 +307,9 @@ export function useSetPasswordFirst() {
       backScreen,
       isFirstImportPassword,
     }: {
-      backScreen: (SettingNavigatorParamList['SetPassword'] & {
+      backScreen: (AddressNavigatorParamList['SetPassword2024'] & {
         actionAfterSetup: 'backScreen';
-      })['replaceScreen'];
+      })['finishGoToScreen'];
       isFirstImportPassword?: boolean;
     }) => {
       if (!APP_FEATURE_SWITCH.customizePassword) {
