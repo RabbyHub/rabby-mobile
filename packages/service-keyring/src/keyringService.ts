@@ -159,12 +159,9 @@ export class KeyringService extends RNEventEmitter {
   //   );
   // }
 
-  // TODO: should we refactor it with `.getAllVisibleAccountsArray`?
-  getCountOfAccountsInKeyring() {
-    return this.keyrings.reduce((accu, kr) => {
-      // !!!notice: kr.accounts maybe undefined!!!
-      return accu + (kr.accounts || []).length;
-    }, 0);
+  async getCountOfAccountsInKeyring() {
+    const accus = await this.getAllTypedVisibleAccounts();
+    return accus.length;
   }
 
   /**
@@ -173,7 +170,7 @@ export class KeyringService extends RNEventEmitter {
    * @param newPassword
    */
   async resetPassword(newPassword: string) {
-    if (this.getCountOfAccountsInKeyring()) {
+    if (await this.getCountOfAccountsInKeyring()) {
       throw new Error("You're trying to overwrite password on existing keyrings.");
     }
 

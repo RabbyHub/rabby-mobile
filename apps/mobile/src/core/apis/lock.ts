@@ -136,7 +136,7 @@ export async function shouldAskSetPassword() {
 
   if (!lockInfo.isUseCustomPwd) return true;
 
-  return keyringService.getCountOfAccountsInKeyring() === 0;
+  return (await keyringService.getCountOfAccountsInKeyring()) === 0;
 }
 
 export async function resetPasswordOnUI(newPassword: string) {
@@ -145,7 +145,7 @@ export async function resetPasswordOnUI(newPassword: string) {
 
   try {
     const hasAccountsInKeyring =
-      keyringService.getCountOfAccountsInKeyring() > 0;
+      (await keyringService.getCountOfAccountsInKeyring()) > 0;
 
     if (hasAccountsInKeyring) {
       const lockInfo = await getRabbyLockInfo();
