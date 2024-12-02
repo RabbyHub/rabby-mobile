@@ -37,12 +37,20 @@ export function FavoriteDappsScreen(): JSX.Element {
     getStyle,
   });
 
-  const handleOpenURL = useMemoizedFn((url: string) => {
-    openUrlAsDapp(url, {
-      showSheetModalFirst: true,
-    });
-    setBrowserHistory(safeGetOrigin(url));
-  });
+  type OpenUrlAsDappOptions = Pick<
+    Parameters<typeof openUrlAsDapp>[1] & object,
+    'useLatestWebViewId'
+  >;
+  const handleOpenURL = useMemoizedFn(
+    (url: string, options?: OpenUrlAsDappOptions) => {
+      openUrlAsDapp(url, {
+        useLatestWebViewId: true,
+        ...options,
+        showSheetModalFirst: true,
+      });
+      setBrowserHistory(safeGetOrigin(url));
+    },
+  );
 
   const handleFavoriteDapp = useMemoizedFn((dapp: DappInfo) => {
     updateFavorite(dapp.origin, !dapp.isFavorite);
