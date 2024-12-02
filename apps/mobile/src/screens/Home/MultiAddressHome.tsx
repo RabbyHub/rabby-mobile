@@ -301,7 +301,7 @@ function MultiAddressHome(): JSX.Element {
             modalTitle: 'Select Receive Address',
             onDone: async selectedAccount => {
               removeGlobalBottomSheetModal2024(selectAddressModalId);
-              switchSceneCurrentAccount('Receive', selectedAccount);
+              await switchSceneCurrentAccount('Receive', selectedAccount);
               const id = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.SELECT_SORTED_CHAIN,
                 value: CHAINS_ENUM.ETH,

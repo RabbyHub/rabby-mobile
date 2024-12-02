@@ -761,7 +761,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     );
 
     const onRedirecTo = useCallback(
-      (type?: RedirectToType) => {
+      async (type?: RedirectToType) => {
         onTriggerDismissFromInternal?.({ reason: 'redirect-to', data: type });
         const chainItem = !token?.chain
           ? null
@@ -796,7 +796,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             break;
           }
           case 'Receive': {
-            switchSceneCurrentAccount(
+            await switchSceneCurrentAccount(
               'MakeTransactionAbout',
               nextTxRedirectAccount || null,
             );
