@@ -160,8 +160,8 @@ export class KeyringService extends RNEventEmitter {
   // }
 
   async getCountOfAccountsInKeyring() {
-    const accus = await this.getAllTypedVisibleAccounts();
-    return accus.length;
+    const accounts = await this.getAllTypedVisibleAccounts();
+    return accounts.length;
   }
 
   /**

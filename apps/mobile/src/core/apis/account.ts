@@ -18,10 +18,11 @@ function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
 }
 
 export async function hasVisibleAccounts() {
-  return keyringService.getCountOfAccountsInKeyring() > 0;
+  const restAccountsCount = await keyringService.getCountOfAccountsInKeyring();
+  return restAccountsCount > 0;
 }
 
-export async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
+async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
   const typedAccounts = await keyringService.getAllTypedVisibleAccounts();
 
   return typedAccounts.map(account => ({
