@@ -71,11 +71,7 @@ import { DisplayedToken } from '@/screens/Home/utils/project';
 import { CustomizedSwitch } from './CustomizedSwitch';
 import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  usePreFetchBeforeEnterScene,
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -465,6 +461,8 @@ type RedirectToType = 'Swap' | 'Send' | 'Receive';
 export const BottomSheetModalTokenDetail = React.forwardRef<
   BottomSheetModalMethods,
   {
+    /** @internal */
+    __shouldSwitchSceneAccountBeforeRedirect__: boolean;
     token?: AbstractPortfolioToken | null;
     canClickToken?: boolean;
     isTestnet?: boolean;
@@ -480,6 +478,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 >(
   (
     {
+      __shouldSwitchSceneAccountBeforeRedirect__,
       token,
       canClickToken,
       onDismiss,
@@ -747,7 +746,19 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, []);
 
     const navigation = useRabbyAppNavigation();
-    const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+    const { switchSceneCurrentAccount: _switchSceneCurrentAccount } =
+      useSwitchSceneCurrentAccount();
+
+    const switchSceneCurrentAccount = useCallback<
+      typeof _switchSceneCurrentAccount
+    >(
+      async (...args) => {
+        if (!__shouldSwitchSceneAccountBeforeRedirect__) return;
+
+        return _switchSceneCurrentAccount(...args);
+      },
+      [__shouldSwitchSceneAccountBeforeRedirect__, _switchSceneCurrentAccount],
+    );
 
     const onRedirecTo = useCallback(
       (type?: RedirectToType) => {

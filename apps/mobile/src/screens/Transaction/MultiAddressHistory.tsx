@@ -352,6 +352,7 @@ const HistoryScreen = () => {
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} />
       <BottomSheetModalTokenDetail
+        __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
         token={focusingToken}
         onDismiss={() => {

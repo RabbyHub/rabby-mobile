@@ -33,6 +33,7 @@ import { CustomTokenListPopup } from './CustomTokenListPopup';
 import { PositionLoader } from './Skeleton';
 import { TokenWalletFooter } from './TokenWalletFooter';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { Account } from '@/core/services/preference';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -45,6 +46,7 @@ const formatPercentage = (x: number) => {
 const ITEM_HEIGHT = 68;
 
 type TokenWalletProps = {
+  currentAccount?: Account | null;
   tokens?: AbstractPortfolioToken[];
   testnetTokens?: AbstractPortfolioToken[];
   customizeTokens?: AbstractPortfolioToken[];
@@ -175,6 +177,7 @@ const TokenRow = memo(
 );
 
 export const TokenWallet = ({
+  currentAccount,
   tokens,
   testnetTokens,
   customizeTokens,
@@ -359,6 +362,8 @@ export const TokenWallet = ({
         </AutoLockView>
       </AppBottomSheetModal>
       <BottomSheetModalTokenDetail
+        __shouldSwitchSceneAccountBeforeRedirect__
+        nextTxRedirectAccount={currentAccount}
         ref={tokenDetailModalRef}
         token={focusingToken}
         isTestnet={isTestnetToken}
