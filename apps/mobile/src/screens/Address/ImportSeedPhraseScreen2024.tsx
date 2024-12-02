@@ -350,7 +350,7 @@ export const ImportSeedPhraseScreen2024 = () => {
             onPress={() => {
               const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
-                title: "What is a 'Seed phrase'",
+                title: "What's a Seed Phrase",
                 sections: [
                   {
                     description:

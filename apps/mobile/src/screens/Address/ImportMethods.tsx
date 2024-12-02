@@ -191,7 +191,7 @@ function ImportMethods(): JSX.Element {
                   enableContentPanningGesture: true,
                   enablePanDownToClose: true,
                 },
-                title: 'Is it safe to import it in Rabby?',
+                title: 'Is it safe to import into Rabby?',
                 sections: [
                   {
                     description:

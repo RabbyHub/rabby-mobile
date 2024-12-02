@@ -93,7 +93,9 @@ export function AddressListScreen(): JSX.Element {
         ListEmptyComponent={AddressEmptyContainer}
         ListHeaderComponent={
           <View style={styles.headline}>
-            <Text style={styles.headlineText}>My Address ({list?.length})</Text>
+            <Text style={styles.headlineText}>
+              My addresses ({list?.length})
+            </Text>
           </View>
         }
         ListFooterComponent={
@@ -101,13 +103,13 @@ export function AddressListScreen(): JSX.Element {
             {hasSafeAddress && (
               <OtherAddressNav
                 onPress={onGotoSafeAddress}
-                text={'Imported Safe Address'}
+                text={'Imported Safe addresses'}
               />
             )}
             {hasWatchAddress && (
               <OtherAddressNav
                 onPress={onGotoWatchAddress}
-                text={'Imported Watch-only address'}
+                text={'Imported watch-only addresses'}
               />
             )}
             <View style={styles.footerGap} />

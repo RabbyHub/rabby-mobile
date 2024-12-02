@@ -153,7 +153,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                       },
                 )}
                 inputProps={{
-                  placeholder: 'Enter your Private Key',
+                  placeholder: 'Enter your private Key',
                   value: privateKey,
                   onChangeText: setPrivateKey,
                 }}
@@ -222,7 +222,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                 },
               });
             }}>
-            <Text style={styles.tip}>What is 'Private Key'</Text>
+            <Text style={styles.tip}>What's a private key</Text>
             <HelpIcon style={styles.tipIcon} />
           </Pressable>
         </View>
