@@ -9,6 +9,7 @@ import {
 } from '../../hooks/useDappView';
 import { devLog } from '@/utils/logger';
 import {
+  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModalProps,
   useBottomSheet,
@@ -31,7 +32,7 @@ import {
   useAutoLockBottomSheetModalOnChange,
 } from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
@@ -45,16 +46,15 @@ import { toast } from '@/components/Toast';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
 
 const renderBackdrop = (props: Omit<BottomSheetBackdropProps, 'style'>) => {
-  // const { colors2024 } = useTheme2024();
   return (
-    <RefreshAutoLockBottomSheetBackdrop
+    <BottomSheetBackdrop
       {...props}
+      pressBehavior={'collapse'}
       // style={undefined}
-      disappearsOnIndex={0}
-      appearsOnIndex={1}
+      disappearsOnIndex={OPEN_DAPP_VIEW_INDEXES.collapsed}
+      appearsOnIndex={OPEN_DAPP_VIEW_INDEXES.expanded}
     />
   );
 };
@@ -204,9 +204,9 @@ export function OpenedDappWebViewStub() {
     getStyle: getWebViewStubStyles,
   });
   const {
+    openingActiveDappRef,
     openedDappItems,
     finalActiveDappId,
-    // activeDapp: origActiveDapp,
     activeDapp,
     expandDappWebViewModal,
     collapseDappWebViewModal,
@@ -220,42 +220,36 @@ export function OpenedDappWebViewStub() {
 
   const activeDappWebViewControlRef = useRef<DappWebViewControl2Type>(null);
 
-  useForceExpandOnceOnBootstrap(openedDappWebviewSheetModalRef);
+  // useForceExpandOnceOnBootstrap(openedDappWebviewSheetModalRef);
 
   const { isDappConnected, disconnectDapp, updateFavorite } = useDapps();
 
   const hideDappSheetModal = useCallback(
     (ctx?: DappWebViewHideContext) => {
+      if (openingActiveDappRef.current) return;
       collapseDappWebViewModal(ctx);
       clearActiveDappOrigin();
     },
-    [collapseDappWebViewModal, clearActiveDappOrigin],
+    [openingActiveDappRef, collapseDappWebViewModal, clearActiveDappOrigin],
   );
 
   const handleBottomSheetChanges = useCallback<
     BottomSheetModalProps['onChange'] & object
-  >(
-    (index, pos, type) => {
-      devLog(
-        '[OpenedDappWebViewStub::handleBottomSheetChanges] index: %s; pos: %s; type: %s',
-        index,
-        pos,
-        type,
-      );
-      if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
-        /**
-         * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
-         * it will umount children component of BottomSheetModal
-         */
-        // clearActiveDappOrigin();
-      }
-    },
-    [
-      /* clearActiveDappOrigin */
-    ],
-  );
-
-  // const activeDapp = useDebounceValue(origActiveDapp, 100);
+  >((index, pos, type) => {
+    devLog(
+      '[OpenedDappWebViewStub::handleBottomSheetChanges] index: %s; pos: %s; type: %s',
+      index,
+      pos,
+      type,
+    );
+    if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
+      /**
+       * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
+       * it will umount children component of BottomSheetModal
+       */
+      // clearActiveDappOrigin();
+    }
+  }, []);
 
   const expandTimerRef = useRef<any>(null);
   useEffect(() => {
@@ -268,7 +262,7 @@ export function OpenedDappWebViewStub() {
       expandTimerRef.current = setTimeout(() => {
         clearTimer();
         expandDappWebViewModal();
-      }, 200);
+      }, 50);
 
       return clearTimer;
     } else if (!openedDappItems.length || !activeDapp) {
@@ -289,9 +283,16 @@ export function OpenedDappWebViewStub() {
           latestUrl: state?.url,
           webviewId: control?.getWebViewId(),
         });
+      } else if (!openingActiveDappRef.current) {
+        openedDappWebviewSheetModalRef?.current?.close();
       }
       return !activeDapp;
-    }, [activeDapp, hideDappSheetModal]),
+    }, [
+      activeDapp,
+      hideDappSheetModal,
+      openingActiveDappRef,
+      openedDappWebviewSheetModalRef,
+    ]),
     { autoEffectEnabled: !!activeDapp },
   );
 
@@ -306,14 +307,14 @@ export function OpenedDappWebViewStub() {
     containerPaddingBottom,
   } = useSafeSizes();
 
-  const hasOpenedDapps = !!openedDappItems.length;
+  const hasOpenedDapps = !!openedDappItems.length; /*  && !!activeDapp */
 
-  const webviewKeys = useMemo(() => {
-    return openedDappItems.map((dappInfo, idx) => {
-      return `${dappInfo.origin}-${dappInfo.dappTabId}`;
-    });
-  }, [openedDappItems]);
-  console.debug('openedDapp webviews keys', webviewKeys);
+  // const webviewKeys = useMemo(() => {
+  //   return openedDappItems.map((dappInfo, idx) => {
+  //     return `${dappInfo.origin}-${dappInfo.dappTabId}`;
+  //   });
+  // }, [openedDappItems]);
+  // console.debug('openedDapp webviews keys', webviewKeys);
 
   return (
     <OpenedDappBottomSheetModal
@@ -322,17 +323,22 @@ export function OpenedDappWebViewStub() {
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
       // containerComponent={React.Fragment}
-      containerStyle={{
-        ...(hasOpenedDapps && {
-          height: '100%',
-          backgroundColor: 'transparent',
-          // ...makeDevOnlyStyle({
-          //   backgroundColor: 'red',
-          // }),
-        }),
-      }}
+      containerStyle={[
+        styles.sheetModalContainerStyle,
+        {
+          ...(!hasOpenedDapps
+            ? {}
+            : {
+                height: '100%',
+                // ...makeDevOnlyStyle({
+                //   backgroundColor: colors2024['brand-default'],
+                // }),
+              }),
+        },
+      ]}
       handleStyle={{ height: 0 }}
-      backgroundStyle={styles.modalBg}
+      backgroundStyle={[styles.modalBg]}
+      style={[styles.sheetModal, !activeDapp && styles.bgMustBeTransparent]}
       name="openedDappWebviewSheetModalRef"
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
@@ -342,7 +348,8 @@ export function OpenedDappWebViewStub() {
         as="BottomSheetView"
         style={[
           styles.bsView,
-          !!openedDappItems.length && styles.bsViewOpened,
+          // !!openedDappItems.length && styles.bsViewOpened,
+          !activeDapp ? styles.bgMustBeTransparent : styles.bsViewOpened,
           {
             paddingTop: containerPaddingTop,
             paddingBottom: containerPaddingBottom,
@@ -459,11 +466,25 @@ export function OpenedDappWebViewStub() {
 }
 
 const getWebViewStubStyles = createGetStyles2024(ctx => {
+  const bgMustBeTransparent = {
+    backgroundColor: 'transparent',
+  };
   return {
+    bgMustBeTransparent,
+    sheetModalContainerStyle: { ...bgMustBeTransparent },
     modalBg: {
       paddingTop: 0,
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
+      /**
+       * warning: never set backgroundColor other than transparent,
+       * or you will see it cover on top of the screens in some cases.
+       *
+       * only set background color when you need debug the layout
+       */
+      ...bgMustBeTransparent,
+    },
+    sheetModal: {
       backgroundColor: ctx.colors['neutral-bg-1'],
     },
     bsView: {
@@ -471,7 +492,7 @@ const getWebViewStubStyles = createGetStyles2024(ctx => {
       paddingVertical: 0,
       alignItems: 'center',
       justifyContent: 'center',
-      height: '100%',
+      // height: '100%',
       /** @why keep '100%' for iOS layout, but could set as windowHeight for Android */
       maxHeight: DeviceUtils.isAndroid()
         ? Dimensions.get('window').height

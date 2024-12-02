@@ -21,6 +21,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { useRefState } from '@/hooks/common/useRefState';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -191,6 +192,8 @@ export function useOpenDappView() {
 
   const { activate, inactivate } = useDappLastUsedAccount();
 
+  // const openingActiveDappRef = useRef<boolean>(false);
+  const { stateRef: openingActiveDappRef, setRefState } = useRefState(false);
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
       globalSetActiveDappState({ dappOrigin: origin });
@@ -223,6 +226,7 @@ export function useOpenDappView() {
         // sort desc by openTime
         nextVal.sort((a, b) => b.openTime - a.openTime);
       }
+
       // trim all dapps expired
       nextVal = nextVal.filter(
         item => Date.now() - item.openTime <= dappsViewConfig.expireDuration,
@@ -233,16 +237,24 @@ export function useOpenDappView() {
     [openedDappRecords, _setOpenedOriginsDapps, dappsViewConfig],
   );
 
-  const showDappWebViewModal = useCallback(() => {
-    toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
-  }, [toggleShowSheetModal]);
+  const expandDappWebViewModal = useCallback(
+    ({ onDone }: { onDone?: () => void } = {}) => {
+      if (openingActiveDappRef.current) return;
+      openingActiveDappRef.current = true;
 
-  const expandDappWebViewModal = useCallback(() => {
-    toggleShowSheetModal(
-      'openedDappWebviewSheetModalRef',
-      OPEN_DAPP_VIEW_INDEXES.expanded,
-    );
-  }, [toggleShowSheetModal]);
+      setTimeout(() => {
+        openingActiveDappRef.current = false;
+        onDone?.();
+      }, 1500 - 800);
+
+      toggleShowSheetModal(
+        'openedDappWebviewSheetModalRef',
+        OPEN_DAPP_VIEW_INDEXES.expanded,
+        { duration: 250 },
+      );
+    },
+    [toggleShowSheetModal, openingActiveDappRef],
+  );
 
   const setLastWebViewIdByDappOrigin = useCallback(
     (
@@ -272,10 +284,9 @@ export function useOpenDappView() {
 
   const collapseDappWebViewModal = useCallback(
     (ctx?: DappWebViewHideContext) => {
-      toggleShowSheetModal(
-        'openedDappWebviewSheetModalRef',
-        OPEN_DAPP_VIEW_INDEXES.collapsed,
-      );
+      // toggleShowSheetModal('openedDappWebviewSheetModalRef', // OPEN_DAPP_VIEW_INDEXES.collapsed);
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', false);
+
       if (ctx?.dappOrigin && ctx.webviewId) {
         setLastWebViewIdByDappOrigin(ctx.dappOrigin, {
           webviewId: ctx.webviewId,
@@ -292,7 +303,9 @@ export function useOpenDappView() {
       options?: {
         /** @default {true} */
         isActiveDapp?: boolean;
-        /** @default {false} */
+        /**
+         * @deprecated
+         */
         showSheetModalFirst?: boolean;
         useLatestWebViewId?: boolean;
       },
@@ -319,7 +332,11 @@ export function useOpenDappView() {
 
       if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) return false;
 
-      if (showSheetModalFirst) showDappWebViewModal();
+      // if (showSheetModalFirst)
+      // force toggle to make sure the sheet modal is opened in next tick
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', true, {
+        duration: 250,
+      });
 
       item.origin = targetOrigin;
 
@@ -359,7 +376,9 @@ export function useOpenDappView() {
         ) {
           // call to open active id
           setActiveDappOrigin(item.origin);
-          console.debug(`open existed dapp webview ${prev[itemIdx].dappTabId}`);
+          console.debug(
+            `[dapp webview - ${prev[itemIdx].dappTabId}] just show webview.`,
+          );
         } else {
           prev[itemIdx] = {
             ...prev[itemIdx],
@@ -368,7 +387,9 @@ export function useOpenDappView() {
               ...$openParams,
             },
           };
-          console.debug('will open new dapp webview');
+          console.debug(
+            `[dapp webview - ${prev[itemIdx].dappTabId}] will redirect webview.`,
+          );
         }
 
         return [...prev];
@@ -380,13 +401,12 @@ export function useOpenDappView() {
 
       return true;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      showDappWebViewModal,
       dapps,
       setOpenedOriginsDapps,
       addDapp,
       setActiveDappOrigin,
+      toggleShowSheetModal,
     ],
   );
 
@@ -463,6 +483,7 @@ export function useOpenDappView() {
   const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
 
   return {
+    openingActiveDappRef,
     activeDapp,
     finalActiveDappId: activeDapp?.origin,
     openedDappItems,
