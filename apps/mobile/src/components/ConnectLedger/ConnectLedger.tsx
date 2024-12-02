@@ -97,6 +97,14 @@ export const ConnectLedger: React.FC<{
 
         return;
       }
+      await apiLedger.getCurrentUsedHDPathType().then(res => {
+        const hdPathType = res ?? LedgerHDPathType.LedgerLive;
+        apiLedger.setHDPathType(hdPathType);
+        setSetting({
+          startNumber: 1,
+          hdPath: hdPathType,
+        });
+      });
 
       if (address) {
         navigate(RootNames.StackAddress, {
@@ -110,22 +118,10 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       } else {
-        await apiLedger
-          .getCurrentUsedHDPathType()
-          .then(res => {
-            const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-            apiLedger.setHDPathType(hdPathType);
-            setSetting({
-              startNumber: 1,
-              hdPath: hdPathType,
-            });
-          })
-          .then(() => {
-            navigate(RootNames.ImportMoreAddress, {
-              type: KEYRING_TYPE.LedgerKeyring,
-            });
-            onDone?.();
-          });
+        navigate(RootNames.ImportMoreAddress, {
+          type: KEYRING_TYPE.LedgerKeyring,
+        });
+        onDone?.();
       }
     },
     [onDone, setIsLoaded, setSetting, t],
