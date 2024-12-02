@@ -118,8 +118,11 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       } else {
-        navigate(RootNames.ImportMoreAddress, {
-          type: KEYRING_TYPE.LedgerKeyring,
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportMoreAddress,
+          params: {
+            type: KEYRING_TYPE.LedgerKeyring,
+          },
         });
         onDone?.();
       }

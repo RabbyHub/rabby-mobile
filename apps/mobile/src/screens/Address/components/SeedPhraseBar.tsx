@@ -35,13 +35,15 @@ export const SeedPhraseBar: React.FC<Props> = ({ address }) => {
           passphrase,
         );
         const keyringId = result.keyringId;
-
-        navigate(RootNames.ImportMoreAddress, {
-          type: KEYRING_TYPE.HdKeyring,
-          mnemonics,
-          passphrase,
-          keyringId: keyringId || undefined,
-          isExistedKR: result.isExistedKR,
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportMoreAddress,
+          params: {
+            type: KEYRING_TYPE.HdKeyring,
+            mnemonics,
+            passphrase,
+            keyringId: keyringId || undefined,
+            isExistedKR: result.isExistedKR,
+          },
         });
       },
     });

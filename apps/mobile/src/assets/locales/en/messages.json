@@ -597,7 +597,7 @@
     },
     "receive": {
       "title": "Receive {{token}} on {{chain}}",
-      "watchModeAlert": "This is a Watch Mode address. Are you sure to use it to receive assets?"
+      "watchModeAlert": "This is a watch-only address. Are you sure you want to use it to receive assets?"
     },
     "sendToken": {
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
@@ -1948,7 +1948,7 @@
       "source": "Source",
       "hd-path": "HD Path",
       "manage-seed-phrase": "Manage Seed Phrase",
-      "manage-addresses-under-this-seed-phrase": "Create Address under this Seed Phrase",
+      "manage-addresses-under-this-seed-phrase": "Add address from this seed phrase",
       "safeModuleAddress": "Safe Module Address",
       "coboSafeErrorModule": "Address has expired, please delete and import the address again.",
       "importedDelegatedAddress": "Imported Delegated address"

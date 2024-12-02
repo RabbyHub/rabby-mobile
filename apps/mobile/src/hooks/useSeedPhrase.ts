@@ -33,12 +33,14 @@ export const useSeedPhrase = () => {
           'publickey',
           publicKey,
         );
-
-        navigate(RootNames.ImportMoreAddress, {
-          type: KEYRING_TYPE.HdKeyring,
-          mnemonics: data.mnemonic!,
-          passphrase: data.passphrase!,
-          keyringId,
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportMoreAddress,
+          params: {
+            type: KEYRING_TYPE.HdKeyring,
+            mnemonics: data.mnemonic!,
+            passphrase: data.passphrase!,
+            keyringId,
+          },
         });
       }
     },
