@@ -159,6 +159,7 @@ function useDefaultNodes({
 }
 
 export type DappWebViewControl2Type = {
+  getWebViewDappOrigin: () => string;
   getWebViewId: () => string;
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
@@ -224,11 +225,12 @@ const DappWebViewControl2 = React.forwardRef<
     React.useImperativeHandle(
       ref,
       () => ({
+        getWebViewDappOrigin: () => dappOrigin,
         getWebViewId: () => webviewIdRef.current || '',
         getWebViewState: () => webviewState,
         getWebViewActions: () => webviewActions,
       }),
-      [webviewIdRef, webviewState, webviewActions],
+      [dappOrigin, webviewIdRef, webviewState, webviewActions],
     );
 
     const handlePressCloseDefault = useCallback(() => {
@@ -239,6 +241,7 @@ const DappWebViewControl2 = React.forwardRef<
       if (typeof onPressHeaderLeftClose === 'function') {
         return onPressHeaderLeftClose({
           defaultAction: handlePressCloseDefault,
+          dappOrigin: dappOrigin,
           latestUrl: latestUrl,
           webviewId: webviewIdRef.current,
         });
@@ -248,6 +251,7 @@ const DappWebViewControl2 = React.forwardRef<
     }, [
       handlePressCloseDefault,
       onPressHeaderLeftClose,
+      dappOrigin,
       latestUrl,
       webviewIdRef,
     ]);

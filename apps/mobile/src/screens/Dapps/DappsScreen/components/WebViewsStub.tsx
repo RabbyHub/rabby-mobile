@@ -285,6 +285,7 @@ export function OpenedDappWebViewStub() {
       } else if (activeDapp) {
         hideDappSheetModal({
           // webViewId: control?.getWebViewId(),
+          dappOrigin: control?.getWebViewDappOrigin() || '',
           latestUrl: state?.url,
           webviewId: control?.getWebViewId(),
         });
@@ -306,6 +307,13 @@ export function OpenedDappWebViewStub() {
   } = useSafeSizes();
 
   const hasOpenedDapps = !!openedDappItems.length;
+
+  const webviewKeys = useMemo(() => {
+    return openedDappItems.map((dappInfo, idx) => {
+      return `${dappInfo.origin}-${dappInfo.dappTabId}`;
+    });
+  }, [openedDappItems]);
+  console.debug('openedDapp webviews keys', webviewKeys);
 
   return (
     <OpenedDappBottomSheetModal
@@ -362,7 +370,7 @@ export function OpenedDappWebViewStub() {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${dappInfo.dappTabId}-${idx}`;
+          const key = `${dappInfo.origin}-${dappInfo.dappTabId}`;
 
           return (
             <DappWebViewControl2

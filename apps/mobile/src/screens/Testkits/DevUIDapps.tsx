@@ -119,7 +119,9 @@ function DevUIDapps() {
               key={key}
               containerStyle={{ marginBottom: 12 }}
               onPress={() => {
-                openUrlAsDapp(url);
+                openUrlAsDapp(url, {
+                  useLatestWebViewId: true,
+                });
               }}
               title={`open ${urlUtils.canoicalizeDappUrl(url).hostname}`}
             />
