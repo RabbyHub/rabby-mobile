@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Dimensions, Platform, Text, View } from 'react-native';
 import {
   useOpenUrlView,
@@ -226,13 +232,14 @@ export function OpenedDappWebViewStub() {
 
   const hideDappSheetModal = useCallback(
     (ctx?: DappWebViewHideContext) => {
-      if (openingActiveDappRef.current) return;
-      collapseDappWebViewModal(ctx);
+      const { willClose } = collapseDappWebViewModal(ctx);
+      if (!willClose) return;
       clearActiveDappOrigin();
     },
-    [openingActiveDappRef, collapseDappWebViewModal, clearActiveDappOrigin],
+    [collapseDappWebViewModal, clearActiveDappOrigin],
   );
 
+  const [_, setSheetModalIndex] = useState(OPEN_DAPP_VIEW_INDEXES.collapsed);
   const handleBottomSheetChanges = useCallback<
     BottomSheetModalProps['onChange'] & object
   >((index, pos, type) => {
@@ -242,6 +249,7 @@ export function OpenedDappWebViewStub() {
       pos,
       type,
     );
+    setSheetModalIndex(index);
     if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
       /**
        * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
@@ -274,6 +282,7 @@ export function OpenedDappWebViewStub() {
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
       const state = control?.getWebViewState();
+
       if (state?.canGoBack) {
         control?.getWebViewActions().handleGoBack();
       } else if (activeDapp) {

@@ -193,7 +193,7 @@ export function useOpenDappView() {
   const { activate, inactivate } = useDappLastUsedAccount();
 
   // const openingActiveDappRef = useRef<boolean>(false);
-  const { stateRef: openingActiveDappRef, setRefState } = useRefState(false);
+  const { stateRef: openingActiveDappRef } = useRefState<any>(false);
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
       globalSetActiveDappState({ dappOrigin: origin });
@@ -240,12 +240,11 @@ export function useOpenDappView() {
   const expandDappWebViewModal = useCallback(
     ({ onDone }: { onDone?: () => void } = {}) => {
       if (openingActiveDappRef.current) return;
-      openingActiveDappRef.current = true;
 
-      setTimeout(() => {
+      openingActiveDappRef.current = setTimeout(() => {
         openingActiveDappRef.current = false;
         onDone?.();
-      }, 1500 - 800);
+      }, 500);
 
       toggleShowSheetModal(
         'openedDappWebviewSheetModalRef',
@@ -284,6 +283,9 @@ export function useOpenDappView() {
 
   const collapseDappWebViewModal = useCallback(
     (ctx?: DappWebViewHideContext) => {
+      const result = { willClose: false };
+      if (openingActiveDappRef.current) return result;
+
       // toggleShowSheetModal('openedDappWebviewSheetModalRef', // OPEN_DAPP_VIEW_INDEXES.collapsed);
       toggleShowSheetModal('openedDappWebviewSheetModalRef', false);
 
@@ -293,8 +295,12 @@ export function useOpenDappView() {
           url: ctx.latestUrl,
         });
       }
+
+      result.willClose = true;
+
+      return result;
     },
-    [toggleShowSheetModal, setLastWebViewIdByDappOrigin],
+    [openingActiveDappRef, toggleShowSheetModal, setLastWebViewIdByDappOrigin],
   );
 
   const openUrlAsDapp = useCallback(
