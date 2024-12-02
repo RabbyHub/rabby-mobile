@@ -98,6 +98,12 @@ export const KEYRING_CLASS = {
   // COINBASE: CoinbaseKeyring.type,
 };
 
+export const CORE_KEYRING_TYPES = [
+  KEYRING_CLASS.MNEMONIC,
+  KEYRING_CLASS.PRIVATE_KEY,
+  ...Object.values(KEYRING_CLASS.HARDWARE),
+];
+
 export enum KEYRING_CATEGORY {
   Mnemonic = 'Mnemonic',
   PrivateKey = 'PrivateKey',

@@ -634,6 +634,11 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       <MiniApproval
         visible={isShowSign}
         txs={txs}
+        ga={{
+          category: 'Bridge',
+          source: 'bridge',
+          // trigger: rbiSource,
+        }}
         onReject={() => {
           setIsShowSign(false);
           mutateTxs([]);

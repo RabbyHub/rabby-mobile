@@ -262,7 +262,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
                   .toNumber(),
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
-              dex_id: activeProvider?.name.replace('API', '') || 'WrapToken',
+              dex_id: activeProvider?.name || 'WrapToken',
             },
           },
           {
@@ -315,7 +315,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
                   .toNumber(),
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
-              dex_id: activeProvider?.name.replace('API', '') || 'WrapToken',
+              dex_id: activeProvider?.name || 'WrapToken',
             },
           },
           {
@@ -679,6 +679,11 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       <MiniApproval
         visible={isShowSign}
         txs={txs}
+        ga={{
+          category: 'Swap',
+          source: 'swap',
+          // trigger: rbiSource,
+        }}
         onReject={() => {
           setIsShowSign(false);
           mutateTxs([]);

@@ -76,9 +76,7 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
 
   const Row = useCallback(
     ({ item }) => {
-      const disabled = new BigNumber(item.amount || 0)
-        .times(item.price)
-        .lt(new BigNumber(cost).times(1));
+      const disabled = new BigNumber(item.amount || 0).lt(cost);
 
       return (
         <Tip
