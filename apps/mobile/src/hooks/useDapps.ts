@@ -82,8 +82,6 @@ export function useDapps() {
 }
 
 export function useDappCurrentAccount() {
-  const [dapps, setDapps] = useAtom(dappsAtom);
-
   const setDappCurrentAccount = useCallback(
     (id: DappInfo['origin'], currentAccount: Account) => {
       if (!dappService.getDapp(id)) {

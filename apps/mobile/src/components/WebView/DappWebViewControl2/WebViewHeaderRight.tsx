@@ -22,30 +22,13 @@ export function WebViewHeaderRight({
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: '@ActiveDappWebViewModal',
   });
-  const lastUsedAccount =
-    activeDapp?.currentAccount ?? finalSceneCurrentAccount;
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-
-  useEffect(() => {
-    if (!lastUsedAccount) return;
-    if (isSameAccount(lastUsedAccount, finalSceneCurrentAccount)) return;
-
-    switchSceneCurrentAccount('@ActiveDappWebViewModal', lastUsedAccount);
-  }, [lastUsedAccount, finalSceneCurrentAccount, switchSceneCurrentAccount]);
-
-  useEffect(() => {
-    return () => {
-      switchSceneCurrentAccount('@ActiveDappWebViewModal', null);
-    };
-  }, [switchSceneCurrentAccount]);
 
   const { toggleSceneVisible } = useAccountSceneVisible(
     '@ActiveDappWebViewModal',
   );
 
   // TODO: check if openedDapp is active dapp;
-  if (!lastUsedAccount) return null;
+  if (!finalSceneCurrentAccount) return null;
 
   return (
     <TouchableView
@@ -59,7 +42,7 @@ export function WebViewHeaderRight({
         toggleSceneVisible('@ActiveDappWebViewModal');
       }}>
       <WalletIcon
-        type={lastUsedAccount?.type}
+        type={finalSceneCurrentAccount?.type}
         width={24}
         height={24}
         style={{ borderRadius: 6 }}

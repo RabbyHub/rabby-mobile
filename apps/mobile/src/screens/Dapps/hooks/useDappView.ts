@@ -16,7 +16,11 @@ import {
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import {
+  isSameAccount,
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
@@ -137,18 +141,24 @@ export function useDappsViewConfig() {
 /**
  * auto activate and inactivate last used account in dapp
  */
-export const useDappLastUsedAccount = () => {
+const useDappLastUsedAccount = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: '@ActiveDappWebViewModal',
+  });
 
   const activate = useCallback(
     (dapp: DappInfo) => {
-      dapp.currentAccount &&
+      if (!dapp.currentAccount) return;
+
+      if (!isSameAccount(dapp.currentAccount, finalSceneCurrentAccount)) {
         switchSceneCurrentAccount(
           '@ActiveDappWebViewModal',
           dapp.currentAccount,
         );
+      }
     },
-    [switchSceneCurrentAccount],
+    [switchSceneCurrentAccount, finalSceneCurrentAccount],
   );
 
   const inactivate = useCallback(() => {
@@ -170,8 +180,7 @@ export function useOpenDappView() {
   const [activeDappOrigin, _setActiveDappOrigin] =
     useAtom(activeDappOriginAtom);
 
-  const dappLastUsedAccount = useDappLastUsedAccount();
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { activate, inactivate } = useDappLastUsedAccount();
 
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
@@ -179,21 +188,12 @@ export function useOpenDappView() {
       _setActiveDappOrigin(origin);
 
       if (!origin) {
-        dappLastUsedAccount.inactivate();
-      } else {
-        const dappInfo = dapps[origin];
-        switchSceneCurrentAccount(
-          '@ActiveDappWebViewModal',
-          dappInfo.currentAccount || null,
-        );
+        inactivate();
+      } else if (dapps[origin]) {
+        activate(dapps[origin]);
       }
     },
-    [
-      _setActiveDappOrigin,
-      dappLastUsedAccount,
-      dapps,
-      switchSceneCurrentAccount,
-    ],
+    [_setActiveDappOrigin, activate, inactivate, dapps],
   );
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
@@ -312,8 +312,6 @@ export function useOpenDappView() {
       if (isActiveDapp) {
         setActiveDappOrigin(item.origin);
       }
-
-      dappLastUsedAccount.activate(dapps[item.origin]);
 
       return true;
     },

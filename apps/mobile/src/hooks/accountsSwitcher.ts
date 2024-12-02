@@ -153,10 +153,29 @@ export function useSwitchSceneCurrentAccount() {
 
       try {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
+        const finalResult = {
+          nextEnableAccount: undefined as null | Account | undefined,
+          result: prev,
+        };
 
-        const doReturn = <T extends typeof prev>(val: T) => {
+        const doReturn = async <T extends typeof prev>(val: T) => {
           setSceneAccountInfo(val);
-          return val;
+
+          try {
+            if (finalResult.nextEnableAccount) {
+              await apisAccountSwitch.enableSceneAccount(
+                finalResult.nextEnableAccount,
+              );
+            } else if (finalResult.nextEnableAccount === null) {
+              await apisAccountSwitch.inactivateSceneAccount();
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('switchSceneCurrentAccount doReturn error', error);
+            }
+          } finally {
+            return val;
+          }
         };
 
         if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
@@ -164,7 +183,8 @@ export function useSwitchSceneCurrentAccount() {
         }
 
         if (account) {
-          await apisAccountSwitch.enableSceneAccount(account);
+          finalResult.nextEnableAccount = account;
+          // await apisAccountSwitch.enableSceneAccount(account);
 
           // avoid duplicate set same account
           if (isSameAccount(account, prev[scene]?.currentAccount)) {
@@ -174,7 +194,8 @@ export function useSwitchSceneCurrentAccount() {
           }
         } else {
           patches.currentAccount = null;
-          await apisAccountSwitch.inactivateSceneAccount();
+          finalResult.nextEnableAccount = null;
+          // await apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.currentAccount) {
             return doReturn(prev);
           }
