@@ -95,13 +95,17 @@ export const ImportSuccessScreen2024 = () => {
     disableAutoFetch: true,
   });
 
-  const handleDone = React.useCallback(() => {
+  const saveFirstAddressAlias = React.useCallback(() => {
     importAddresses.forEach(item => {
       contactService.setAlias({
         address: item.address,
         alias: item.aliasName || ellipsisAddress(item.address), // for empty inputText
       });
     });
+  }, [importAddresses]);
+
+  const handleDone = React.useCallback(() => {
+    saveFirstAddressAlias();
     Keyboard.dismiss();
 
     navigation.reset({
@@ -115,7 +119,7 @@ export const ImportSuccessScreen2024 = () => {
         },
       ],
     });
-  }, [importAddresses, navigation]);
+  }, [navigation, saveFirstAddressAlias]);
 
   const isFocus = useIsFocused();
 
@@ -189,6 +193,9 @@ export const ImportSuccessScreen2024 = () => {
     if (modalRef.current) {
       return;
     }
+
+    saveFirstAddressAlias();
+
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
       params: {

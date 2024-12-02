@@ -42,8 +42,7 @@ export const AddressListScreenButton: React.FC<Props> = ({
     disableAutoFetch: true,
   });
   const maxHeight = Dimensions.get('window').height - 104;
-  const contentHeight =
-    accounts.length * (94 + 12) + (IS_ANDROID ? 60 + 56 : 0);
+  const contentHeight = accounts.length * (94 + 12) + 60 + 56;
 
   const onPress = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
