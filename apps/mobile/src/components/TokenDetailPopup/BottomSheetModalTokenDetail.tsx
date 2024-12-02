@@ -769,7 +769,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
         switch (type) {
           case 'Swap':
-            switchSceneCurrentAccount(
+            await switchSceneCurrentAccount(
               'MakeTransactionAbout',
               nextTxRedirectAccount || null,
             );
@@ -782,7 +782,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             });
             break;
           case 'Send': {
-            switchSceneCurrentAccount(
+            await switchSceneCurrentAccount(
               'MakeTransactionAbout',
               nextTxRedirectAccount || null,
             );

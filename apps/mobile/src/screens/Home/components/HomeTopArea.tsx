@@ -187,8 +187,8 @@ export const HomeTopArea = () => {
   const bridgeItemAction = {
     title: 'Bridge',
     Icon: RcIconBridge,
-    onPress: () => {
-      switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    onPress: async () => {
+      await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.Bridge,
       });
@@ -206,8 +206,8 @@ export const HomeTopArea = () => {
     {
       title: 'Send',
       Icon: RcIconSend,
-      onPress: () => {
-        switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+      onPress: async () => {
+        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Send,
           params: {
@@ -244,8 +244,8 @@ export const HomeTopArea = () => {
     {
       title: 'Swap',
       Icon: RcIconSwap,
-      onPress: () => {
-        switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+      onPress: async () => {
+        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Swap,
         });
@@ -281,8 +281,8 @@ export const HomeTopArea = () => {
           {
             title: 'Approvals',
             Icon: RcIconApproval,
-            onPress: () => {
-              switchSceneCurrentAccount('Approvals', currentAccount);
+            onPress: async () => {
+              await switchSceneCurrentAccount('Approvals', currentAccount);
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.Approvals,
               });

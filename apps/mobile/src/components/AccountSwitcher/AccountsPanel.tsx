@@ -137,8 +137,8 @@ AccountSwitcherAopProps<{
   }, [changeCollapsed, shouldWatchAddressesExpanded]);
 
   const switchSceneAction = useCallback(
-    (account: Account | null) => {
-      switchSceneCurrentAccount(forScene, account);
+    async (account: Account | null) => {
+      await switchSceneCurrentAccount(forScene, account);
       toggleSceneVisible(forScene, false);
     },
     [forScene, switchSceneCurrentAccount, toggleSceneVisible],

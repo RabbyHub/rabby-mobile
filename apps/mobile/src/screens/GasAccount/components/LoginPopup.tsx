@@ -55,7 +55,7 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
       }
       setLoading(true);
       try {
-        switchSceneCurrentAccount('GasAccount', account);
+        await switchSceneCurrentAccount('GasAccount', account);
         await login(account);
       } catch (error) {
         console.error(error);
