@@ -56,6 +56,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
 import { resetNavigationTo } from '@/hooks/navigation';
+import { useGasAccountInfo } from '../GasAccount/hooks';
 
 const MENU_ARR = [
   {
@@ -163,6 +164,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
+  const { value } = useGasAccountInfo(); // for gas account remove acount listener
   const { styles, colors, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
