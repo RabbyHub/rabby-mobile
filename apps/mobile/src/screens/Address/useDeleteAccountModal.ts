@@ -1,8 +1,11 @@
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apiMnemonic, apisLock } from '@/core/apis';
+import { keyringService } from '@/core/services';
 import { KeyringAccountWithAlias, useRemoveAccount } from '@/hooks/account';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useMemoizedFn } from 'ahooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +13,15 @@ export const useDeleteAccountModal = () => {
   const { t } = useTranslation();
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
   const removeAccount = useRemoveAccount();
+  const navigation = useRabbyAppNavigation();
+
+  const handleShouldGoStartPage = useMemoizedFn(async () => {
+    const hasAccountsInKeyring =
+      (await keyringService.getCountOfAccountsInKeyring()) > 0;
+    if (!hasAccountsInKeyring) {
+      resetNavigationTo(navigation, 'GetStarted2024');
+    }
+  });
 
   const handlePresentDeleteModalPress = useCallback(
     async ({
@@ -54,6 +66,7 @@ export const useDeleteAccountModal = () => {
           : { authType: ['biometrics', 'password'] }),
         onFinished: async () => {
           await removeAccount(account);
+          await handleShouldGoStartPage();
           onFinished?.();
         },
         validationHandler: async (password: string) => {
@@ -65,7 +78,7 @@ export const useDeleteAccountModal = () => {
         },
       });
     },
-    [invokeEnterPassphrase, removeAccount, t],
+    [invokeEnterPassphrase, removeAccount, t, handleShouldGoStartPage],
   );
 
   return handlePresentDeleteModalPress;
