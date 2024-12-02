@@ -220,7 +220,7 @@ export const HomeTopArea = () => {
       title: 'Receive',
       Icon: RcIconReceive,
       onPress: async () => {
-        await switchSceneCurrentAccount('Receive', currentAccount);
+        switchSceneCurrentAccount('Receive', currentAccount);
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
           value: CHAINS_ENUM.ETH,
