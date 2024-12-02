@@ -1,7 +1,7 @@
 import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ScreenLayouts2 } from '@/constant/layout';
-import { useWalletBrandLogo } from '@/hooks/account';
+import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 
 import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
 import { DappInfo } from '@/core/services/dappService';
@@ -13,12 +13,7 @@ import {
 import { useEffect } from 'react';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 
-export function WebViewHeaderRight({
-  activeDapp,
-}: {
-  activeDapp?: DappInfo | null;
-}) {
-  // const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+export function WebViewHeaderRight() {
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: '@ActiveDappWebViewModal',
   });

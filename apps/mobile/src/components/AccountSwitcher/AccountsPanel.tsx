@@ -80,7 +80,7 @@ AccountSwitcherAopProps<{
   containerStyle?: StyleProp<ViewStyle>;
   linearContainerProps?: React.ComponentProps<typeof LinearGradientContainer>;
   onSwitchSceneAccount?: (ctx: {
-    switchAction: () => void;
+    switchAction: () => Promise<void>;
     sceneAccount: Account;
   }) => void;
 }>) {
@@ -149,12 +149,12 @@ AccountSwitcherAopProps<{
   >(
     async account => {
       if (typeof onSwitchSceneAccount === 'function') {
-        const switchAction = () => {
-          switchSceneAction(account);
+        const switchAction = async () => {
+          await switchSceneAction(account);
         };
         onSwitchSceneAccount({ sceneAccount: account, switchAction });
       } else {
-        switchSceneAction(account);
+        await switchSceneAction(account);
       }
     },
     [switchSceneAction, onSwitchSceneAccount],

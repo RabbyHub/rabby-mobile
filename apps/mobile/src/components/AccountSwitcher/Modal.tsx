@@ -127,10 +127,8 @@ const getModalStyle = createGetStyles2024(ctx => {
 export function AccountSwitcherModalInDappWebView({
   activeDappId,
   forScene,
-  inScreen = false,
 }: AccountSwitcherAopProps<{
   activeDappId?: DappInfo['origin'];
-  inScreen?: boolean;
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -183,10 +181,10 @@ export function AccountSwitcherModalInDappWebView({
       <View style={[styles.panelContainer]}>
         <AccountsPanelInModal
           forScene={forScene}
-          onSwitchSceneAccount={ctx => {
+          onSwitchSceneAccount={async ctx => {
             if (!activeDappId) return;
             setDappCurrentAccount(activeDappId, ctx.sceneAccount);
-            ctx.switchAction();
+            await ctx.switchAction();
           }}
         />
       </View>

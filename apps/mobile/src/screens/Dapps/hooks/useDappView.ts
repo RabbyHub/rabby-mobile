@@ -156,14 +156,9 @@ const useDappLastUsedAccount = () => {
     (dapp: DappInfo) => {
       if (!dapp.currentAccount) return;
 
-      if (!isSameAccount(dapp.currentAccount, finalSceneCurrentAccount)) {
-        switchSceneCurrentAccount(
-          '@ActiveDappWebViewModal',
-          dapp.currentAccount,
-        );
-      }
+      switchSceneCurrentAccount('@ActiveDappWebViewModal', dapp.currentAccount);
     },
-    [switchSceneCurrentAccount, finalSceneCurrentAccount],
+    [switchSceneCurrentAccount],
   );
 
   const inactivate = useCallback(() => {
@@ -171,6 +166,7 @@ const useDappLastUsedAccount = () => {
   }, [switchSceneCurrentAccount]);
 
   return {
+    finalSceneCurrentAccount,
     activate,
     inactivate,
   };
@@ -199,13 +195,9 @@ export function useOpenDappView() {
       globalSetActiveDappState({ dappOrigin: origin });
       _setActiveDappOrigin(origin);
 
-      if (!origin) {
-        inactivate();
-      } else if (dapps[origin]) {
-        activate(dapps[origin]);
-      }
+      if (!origin) inactivate();
     },
-    [_setActiveDappOrigin, activate, inactivate, dapps],
+    [_setActiveDappOrigin, inactivate],
   );
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
@@ -408,6 +400,8 @@ export function useOpenDappView() {
         setActiveDappOrigin(item.origin);
       }
 
+      activate(dapps[item.origin]);
+
       return true;
     },
     [
@@ -416,6 +410,7 @@ export function useOpenDappView() {
       addDapp,
       setActiveDappOrigin,
       toggleShowSheetModal,
+      activate,
     ],
   );
 
