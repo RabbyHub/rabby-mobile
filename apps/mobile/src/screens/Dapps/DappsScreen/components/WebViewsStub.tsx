@@ -5,7 +5,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, Platform, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Platform,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 import {
   useOpenUrlView,
   useOpenDappView,
@@ -53,12 +61,29 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 
-const renderBackdrop = (props: Omit<BottomSheetBackdropProps, 'style'>) => {
+const revealedTopBackdropStyle = StyleSheet.flatten([
+  {
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 99,
+  },
+]) as StyleProp<ViewStyle>;
+const renderBackdrop = (
+  props: Omit<BottomSheetBackdropProps, 'style'>,
+  { shouldRevealTop }: { shouldRevealTop: boolean },
+) => {
   return (
-    <BottomSheetBackdrop
+    <RefreshAutoLockBottomSheetBackdrop
       {...props}
+      opacity={__DEV__ ? 0.8 : 0.5}
       pressBehavior={'collapse'}
-      // style={undefined}
+      {...(shouldRevealTop && {
+        style: revealedTopBackdropStyle,
+      })}
       disappearsOnIndex={OPEN_DAPP_VIEW_INDEXES.collapsed}
       appearsOnIndex={OPEN_DAPP_VIEW_INDEXES.expanded}
     />
@@ -239,7 +264,9 @@ export function OpenedDappWebViewStub() {
     [collapseDappWebViewModal, clearActiveDappOrigin],
   );
 
-  const [_, setSheetModalIndex] = useState(OPEN_DAPP_VIEW_INDEXES.collapsed);
+  const [sheetModalIndex, setSheetModalIndex] = useState(
+    OPEN_DAPP_VIEW_INDEXES.collapsed,
+  );
   const handleBottomSheetChanges = useCallback<
     BottomSheetModalProps['onChange'] & object
   >((index, pos, type) => {
@@ -250,7 +277,7 @@ export function OpenedDappWebViewStub() {
       type,
     );
     setSheetModalIndex(index);
-    if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
+    if (index > OPEN_DAPP_VIEW_INDEXES.collapsed) {
       /**
        * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
        * it will umount children component of BottomSheetModal
@@ -316,7 +343,7 @@ export function OpenedDappWebViewStub() {
     containerPaddingBottom,
   } = useSafeSizes();
 
-  const hasOpenedDapps = !!openedDappItems.length; /*  && !!activeDapp */
+  const hasOpenedDapps = !!openedDappItems.length && !!activeDapp;
 
   // const webviewKeys = useMemo(() => {
   //   return openedDappItems.map((dappInfo, idx) => {
@@ -329,7 +356,13 @@ export function OpenedDappWebViewStub() {
     <OpenedDappBottomSheetModal
       index={OPEN_DAPP_VIEW_INDEXES.collapsed}
       {...(isIOS && { detached: false })}
-      backdropComponent={renderBackdrop}
+      // notice: this property is not reactive, once changed it, you need to reload app to make it work
+      backdropComponent={props =>
+        renderBackdrop(props, {
+          shouldRevealTop:
+            !activeDapp && sheetModalIndex > OPEN_DAPP_VIEW_INDEXES.collapsed,
+        })
+      }
       enablePanDownToClose={false}
       // containerComponent={React.Fragment}
       containerStyle={[
@@ -352,6 +385,8 @@ export function OpenedDappWebViewStub() {
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
       enableDynamicSizing={false}
+      // animateOnMount={false}
+      // animationConfigs={{ duration: 500 }}
       onChange={handleChange}>
       <AutoLockView
         as="BottomSheetView"
@@ -362,6 +397,10 @@ export function OpenedDappWebViewStub() {
           {
             paddingTop: containerPaddingTop,
             paddingBottom: containerPaddingBottom,
+            // ...makeDevOnlyStyle({
+            ///  // backgroundColor: 'blue',
+            //   // height: '100%'
+            // })
           },
         ]}>
         {!openedDappItems.length && (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { DappInfo } from '@/core/services/dappService';
@@ -12,6 +12,7 @@ import { useOpenDappView } from '../hooks/useDappView';
 import { Text } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
+import { debounce } from 'lodash';
 
 export function FavoriteDappsScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -56,6 +57,12 @@ export function FavoriteDappsScreen(): JSX.Element {
     updateFavorite(dapp.origin, !dapp.isFavorite);
   });
 
+  const handleOpenURLDebounced = useMemo(() => {
+    return debounce((dapp: DappInfo) => {
+      handleOpenURL(dapp.origin);
+    }, 200);
+  }, [handleOpenURL]);
+
   return (
     <LinearGradient
       colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
@@ -65,9 +72,7 @@ export function FavoriteDappsScreen(): JSX.Element {
         <DappCardList
           data={favoriteApps}
           onFavoritePress={handleFavoriteDapp}
-          onPress={dapp => {
-            handleOpenURL(dapp.origin);
-          }}
+          onPress={handleOpenURLDebounced}
         />
       </NormalScreenContainer>
     </LinearGradient>

@@ -49,7 +49,7 @@
     "@ethereumjs/common": "4.2.0",
     "@ethereumjs/tx": "5.1.0",
     "@ethereumjs/util": "^9.0.1",
-    "@gorhom/bottom-sheet": "alpha",
+    "@gorhom/bottom-sheet": "5.0.0-alpha.9",
     "@ledgerhq/react-native-hw-transport-ble": "6.33.4",
     "@metamask/abi-utils": "2.0.2",
     "@metamask/eth-sig-util": "5.1.0",

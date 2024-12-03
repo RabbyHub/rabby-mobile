@@ -326,6 +326,7 @@ export function useOpenDappView() {
             }
           : dappUrl;
 
+      const newUrl = item.origin;
       const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
         item.origin,
       );
@@ -355,7 +356,7 @@ export function useOpenDappView() {
 
       const $openParams = {
         ...item.$openParams,
-        initialUrl: item.$openParams?.initialUrl || targetOrigin,
+        initialUrl: item.$openParams?.initialUrl || newUrl,
       };
 
       setOpenedOriginsDapps(prev => {

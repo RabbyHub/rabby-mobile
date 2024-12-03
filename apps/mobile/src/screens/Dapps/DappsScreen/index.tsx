@@ -9,7 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useNavigation } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Keyboard, View } from 'react-native';
 import {
   TouchableOpacity,
@@ -23,6 +23,7 @@ import { useSearchDapps } from '../hooks/useSearchDapps';
 import LinearGradient from 'react-native-linear-gradient';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IS_IOS } from '@/core/native/utils';
+import { debounce } from 'lodash';
 
 export function DappsScreen(): JSX.Element {
   const {
@@ -83,6 +84,12 @@ export function DappsScreen(): JSX.Element {
     });
     inputRef.current?.focus();
   });
+
+  const handleOpenURLDebounced = useMemo(() => {
+    return debounce((dapp: DappInfo) => {
+      handleOpenURL(dapp.origin);
+    }, 200);
+  }, [handleOpenURL]);
 
   return (
     <TouchableWithoutFeedback
@@ -160,17 +167,13 @@ export function DappsScreen(): JSX.Element {
               <DappHistorySection
                 style={{ height: '100%' }}
                 data={browserHistoryList}
-                onPress={dapp => {
-                  handleOpenURL(dapp.origin);
-                }}
+                onPress={handleOpenURLDebounced}
                 onFavoritePress={handleFavoriteDapp}
                 onDeletePress={handleDeleteHistory}
                 HeaderComponent={
                   <DappFavoriteSection
                     data={favoriteApps}
-                    onPress={dapp => {
-                      handleOpenURL(dapp.origin);
-                    }}
+                    onPress={handleOpenURLDebounced}
                   />
                 }
               />
