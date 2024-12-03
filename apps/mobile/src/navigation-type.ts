@@ -5,7 +5,6 @@ import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-
 /**
  * Learn more about using TypeScript with React Navigation:
  * https://reactnavigation.org/docs/typescript/
@@ -55,12 +54,19 @@ type TestKitsNavigatorParamsList = {
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
-  [RootNames.CreateNewAddress]?: {};
+  [RootNames.CreateNewAddress]?: {
+    noSetupPassword?: boolean;
+    useCurrentSeed?: boolean;
+    mnemonics?: string;
+    title?: string;
+    accounts?: string[];
+  };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
       | typeof RootNames.ImportSuccess2024
       | typeof RootNames.ImportMnemonic2024
+      | typeof RootNames.CreateChooseBackup
       | typeof RootNames.ImportPrivateKey2024;
     title?: string;
     hideProgress?: boolean;
@@ -72,7 +78,9 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportWatchAddress2024]?: {};
   [RootNames.CreateSelectOnCurrentSeed]?: {};
   [RootNames.CreateSelectMethod]?: {};
-  [RootNames.CreateChooseBackup]?: {};
+  [RootNames.CreateChooseBackup]?: {
+    delaySetPassword?: boolean;
+  };
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {

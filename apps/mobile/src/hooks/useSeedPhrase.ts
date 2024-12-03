@@ -50,8 +50,6 @@ export const useSeedPhrase = () => {
   const handleAddSeedPhraseAddress2024 = useCallback(
     async (publicKey: string, accounts: string[]) => {
       if (publicKey) {
-        const keyringId =
-          apiMnemonic.getMnemonicKeyRingIdFromPublicKey(publicKey);
         const data = await apiMnemonic.getMnemonicKeyring(
           'publickey',
           publicKey,
@@ -61,8 +59,7 @@ export const useSeedPhrase = () => {
           screen: RootNames.CreateNewAddress,
           params: {
             useCurrentSeed: true,
-            mnemonics: data.mnemonic,
-            keyringId,
+            mnemonics: data.mnemonic as string,
             title: '3. Name Your Address',
             accounts,
           },
