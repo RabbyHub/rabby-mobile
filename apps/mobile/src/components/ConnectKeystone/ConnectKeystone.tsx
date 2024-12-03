@@ -1,7 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiKeystone } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_TYPE,
@@ -30,7 +29,7 @@ export const ConnectKeystone: React.FC<{
 
     if (address) {
       navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportSuccess,
+        screen: RootNames.ImportSuccess2024,
         params: {
           type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
           brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,

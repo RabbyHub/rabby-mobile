@@ -1,19 +1,18 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput, TouchableOpacity } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { atom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
-import { FooterButton } from '../FooterButton/FooterButton';
-import { Radio } from '../Radio';
-import { Spin } from '../Spin';
-import { Text } from '../Text';
+import { ScrollView, View, Text } from 'react-native';
+import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
+import { FooterButton } from '@/components2024/FooterButton/FooterButton';
+import { Radio } from '@/components2024/Radio';
+import { Spin } from '@/components/Spin';
 import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
-import AutoLockView from '../AutoLockView';
+import AutoLockView from '@/components/AutoLockView';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const MAX_ACCOUNT_COUNT = 50;
 const HARDENED_OFFSET = 0x80000000 - 50;
@@ -46,93 +45,112 @@ export interface Props {
   disableStartFrom?: boolean;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    root: {
-      height: '100%',
-      position: 'relative',
-    },
-    item: {
-      flexDirection: 'row',
-      width: '100%',
-      backgroundColor: colors['neutral-card-2'],
-      padding: 16,
-      borderRadius: 8,
-      overflow: 'hidden',
-      position: 'relative',
-    },
-    list: {
-      flex: 1,
-      rowGap: 16,
-      marginBottom: 24,
-    },
-    itemTitle: {
-      fontSize: 16,
-      color: colors['neutral-title-1'],
-      fontWeight: '600',
-    },
-    itemDesc: {
-      fontSize: 14,
-      color: colors['neutral-body'],
-    },
-    itemText: {
-      rowGap: 6,
-      flex: 1,
-    },
-    scrollView: {
-      paddingHorizontal: 20,
-      flex: 1,
-    },
-    radio: {
-      padding: 0,
-      margin: 0,
-    },
-    selectIndexText: {
-      fontSize: 13,
-      color: colors['neutral-title-1'],
-      fontWeight: '500',
-    },
-    selectIndexFoot: {
-      fontSize: 13,
-      color: colors['neutral-foot'],
-      marginBottom: 24,
-    },
-    selectIndex: {
-      rowGap: 12,
-    },
-    input: {
-      borderColor: colors['neutral-line'],
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 16,
-      fontSize: 16,
-      color: colors['neutral-title-1'],
-    },
-    dot: {
-      width: 8,
-      height: 8,
-      position: 'absolute',
-      top: 12,
-      right: 12,
-      backgroundColor: colors['green-default'],
-      borderRadius: 10,
-    },
-    footerButtonTitle: {
-      fontWeight: '600',
-      fontSize: 16,
-    },
-    radioIcon: {
-      width: 24,
-      height: 24,
-    },
-    radioIconUncheck: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      borderWidth: 1.5,
-      borderColor: colors['neutral-foot'],
-    },
-  });
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  root: {
+    height: '100%',
+    position: 'relative',
+  },
+  title: {
+    marginTop: 0,
+    paddingTop: 28,
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    marginBottom: 24,
+  },
+  item: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: colors2024['neutral-bg-2'],
+    padding: 16,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-bg-2'],
+    overflow: 'hidden',
+    position: 'relative',
+    gap: 12,
+  },
+  list: {
+    flex: 1,
+    rowGap: 16,
+    marginBottom: 20,
+  },
+  itemTitle: {
+    fontSize: 17,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
+  itemDesc: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  itemText: {
+    rowGap: 8,
+    flex: 1,
+  },
+  scrollView: {
+    paddingHorizontal: 24,
+    flex: 1,
+  },
+  radio: {
+    padding: 0,
+    margin: 0,
+  },
+  selectIndexText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-body'],
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
+  selectIndexFoot: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    marginBottom: 24,
+    color: colors2024['neutral-info'],
+  },
+  selectIndex: {
+    rowGap: 12,
+  },
+  input: {
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    backgroundColor: colors2024['neutral-bg-2'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    position: 'absolute',
+    top: 23,
+    right: 16,
+    backgroundColor: colors2024['green-default'],
+    borderRadius: 10,
+  },
+  radioIcon: {
+    margin: 0,
+    padding: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 100,
+    borderWidth: 2,
+    borderColor: colors2024['brand-disable'],
+  },
+  radioIconUncheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 100,
+    borderWidth: 2,
+    borderColor: colors2024['neutral-info'],
+  },
+}));
 
 export const MainContainer: React.FC<Props> = ({
   hdPathOptions,
@@ -150,8 +168,7 @@ export const MainContainer: React.FC<Props> = ({
     React.useState<InitAccounts>();
   const [hdPath, setHdPath] = React.useState(setting.hdPath);
   const [startNumber, setStartNumber] = React.useState(setting.startNumber);
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
   const currentLoading = loading || fetching;
 
@@ -195,6 +212,7 @@ export const MainContainer: React.FC<Props> = ({
     <Spin spinning={currentLoading}>
       <AutoLockView as="BottomSheetView" style={styles.root}>
         <AppBottomSheetModalTitle
+          style={styles.title}
           title={t('page.newAddress.hd.customAddressHdPath')}
         />
         <ScrollView style={styles.scrollView}>
@@ -255,7 +273,6 @@ export const MainContainer: React.FC<Props> = ({
         </ScrollView>
         <FooterButton
           title={t('global.Confirm')}
-          titleStyle={styles.footerButtonTitle}
           disabled={isPressing}
           onPress={async () => {
             setIsPressing(true);

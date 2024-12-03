@@ -25,3 +25,7 @@ export const getTxScanLink = (scankLink: string, hash: string) => {
     ? `${scankLink}tx/${hash}`
     : `${scankLink}/tx/${hash}`;
 };
+
+export function ellipsis (text: string) {
+  return text.toString().replace(/^(.{6})(.*)(.{4})$/, '$1...$3');
+};

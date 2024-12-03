@@ -13,7 +13,7 @@ import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigate, redirectToAddAddressEntry } from '@/utils/navigation';
 import { Button } from '@rneui/themed';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import axios from 'axios';
@@ -62,7 +62,7 @@ function GetStartedScreen(): JSX.Element {
       return;
     }
 
-    navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    redirectToAddAddressEntry();
     // if (preferenceService.getPreference('isInvited')) {
     //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     // } else {

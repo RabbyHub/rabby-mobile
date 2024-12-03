@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
@@ -10,7 +10,6 @@ import {
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -26,7 +25,9 @@ export const ImportAddressList = () => {
 
   const handlePrivateKey = React.useCallback(() => {
     if (
-      shouldRedirectToSetPasswordBefore({ screen: RootNames.ImportPrivateKey })
+      shouldRedirectToSetPasswordBefore({
+        screen: RootNames.ImportPrivateKey,
+      })
     )
       return;
 
@@ -36,7 +37,11 @@ export const ImportAddressList = () => {
   }, [shouldRedirectToSetPasswordBefore]);
 
   const handleSeedPhrase = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore({ screen: RootNames.ImportMnemonic }))
+    if (
+      shouldRedirectToSetPasswordBefore({
+        screen: RootNames.ImportMnemonic,
+      })
+    )
       return;
 
     navigate(RootNames.StackAddress, {

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, Platform, StyleSheet } from 'react-native';
+import { Text, View, Platform, StyleSheet, Dimensions } from 'react-native';
 import {
   Tabs,
   MaterialTabBar,
@@ -9,8 +9,13 @@ import {
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
+import {
+  createGetStyles,
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
 import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
@@ -27,6 +32,7 @@ import NetSwitchTabs, {
   useSwitchNetTab,
 } from '@/components/PillsSwitch/NetSwitchTabs';
 import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
+import { IS_IOS } from '@/core/native/utils';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -76,6 +82,10 @@ const ApprovalScreenContainer = () => {
 
   return (
     <Tabs.Container
+      {...(IS_IOS && {
+        // leave horizontal space to make swipable-to-back area larger
+        width: Dimensions.get('window').width - IOS_SWIPABLE_LEFT_OFFSET * 2,
+      })}
       initialTabName={filterType}
       onTabChange={({ tabName }) => {
         setFilterType(tabName as any);
@@ -104,8 +114,8 @@ const ApprovalScreenContainer = () => {
   );
 };
 
-function MainnetApprovalsScreen() {
-  const colors = useThemeColors();
+function MainnetApprovalsContent() {
+  const { styles } = useTheme2024({ getStyle: getApprovalsContentStyle });
 
   const approvalsPageCtx = useApprovalsPageOnTop({ isTestnet: false });
 
@@ -117,13 +127,7 @@ function MainnetApprovalsScreen() {
 
   return (
     <ApprovalsPageContext.Provider value={approvalsPageCtx}>
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          backgroundColor: colors['neutral-bg2'],
-          position: 'relative',
-        }}>
+      <View style={styles.verticalContainer}>
         <ApprovalScreenContainer />
 
         <BottomSheetApprovalContract />
@@ -134,6 +138,18 @@ function MainnetApprovalsScreen() {
     </ApprovalsPageContext.Provider>
   );
 }
+
+const IOS_SWIPABLE_LEFT_OFFSET = !IS_IOS ? 0 : 2;
+const getApprovalsContentStyle = createGetStyles2024(ctx => {
+  return {
+    verticalContainer: {
+      flex: 1,
+      alignItems: 'center',
+      backgroundColor: ctx.colors['neutral-bg2'],
+      position: 'relative',
+    },
+  };
+});
 
 export default function ApprovalsScreen() {
   const { selectedTab, onTabChange } = useSwitchNetTab();
@@ -147,7 +163,7 @@ export default function ApprovalsScreen() {
         style={styles.netTabs}
       />
       {selectedTab === 'mainnet' ? (
-        <MainnetApprovalsScreen />
+        <MainnetApprovalsContent />
       ) : (
         <View style={styles.notFound}>
           <RcIconNotFindCC color={colors['neutral-body']} />

@@ -12,7 +12,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
  */
 
 export type RootStackParamsList = {
-  [RootNames.StackRoot]?: NavigatorScreenParams<BottomTabParamsList>;
+  [RootNames.StackRoot]?: NavigatorScreenParams<RootNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -20,26 +20,19 @@ export type RootStackParamsList = {
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
-  [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
-  [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
+  [RootNames.StackFavoriteDapps]: NavigatorScreenParams<FavoriteDappsNavigatorParamList>;
+  [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
-  [RootNames.ImportMoreAddress]?: {
-    type: KEYRING_TYPE;
-    brand?: string;
-    mnemonics?: string;
-    passphrase?: string;
-    keyringId?: number;
-    isExistedKR?: boolean;
-  };
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
+  [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
 };
 
-export type BottomTabParamsList = {
+export type RootNavigatorParamsList = {
   [RootNames.Home]?: {};
-  [RootNames.Dapps]?: {};
+  /** @deprecated */
   [RootNames.Points]?: {};
-  [RootNames.History]?: {};
+  [RootNames.Dapps]?: {};
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
@@ -47,22 +40,69 @@ export type BottomTabParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
+  [RootNames.GetStartedScreen2024]?: {};
+};
+
+type TestKitsNavigatorParamsList = {
+  [RootNames.NewUserGetStarted2024]?: {};
+  [RootNames.DevUIFontShowCase]?: {};
+  [RootNames.DevUIFormShowCase]?: {};
+  [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIScreenContainerShowCase]?: {};
+  [RootNames.DevUIDapps]?: {};
 };
 
 export type AddressNavigatorParamList = {
-  [RootNames.CurrentAddress]?: {};
+  [RootNames.AddressList]?: {};
+  // [RootNames.MultiAddressHome]?: {};
+  [RootNames.CreateNewAddress]?: {};
+  [RootNames.SetPassword2024]?: {
+    finishGoToScreen:
+      | typeof RootNames.CreateSelectMethod
+      | typeof RootNames.ImportSuccess2024
+      | typeof RootNames.ImportMnemonic2024
+      | typeof RootNames.ImportPrivateKey2024;
+    title?: string;
+    hideProgress?: boolean;
+    delaySetPassword?: boolean;
+    hideBackIcon?: boolean;
+    isFirstImportPassword?: boolean;
+  };
+  [RootNames.ImportSafeAddress2024]?: {};
+  [RootNames.ImportWatchAddress2024]?: {};
+  [RootNames.CreateSelectOnCurrentSeed]?: {};
+  [RootNames.CreateSelectMethod]?: {};
+  [RootNames.CreateChooseBackup]?: {};
   [RootNames.ImportNewAddress]?: {};
+  [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {
     address: string | string[];
     brandName: string;
     deepLink?: string;
     realBrandName?: string;
     isFirstImport?: boolean;
+    isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
     mnemonics?: string;
     passphrase?: string;
     keyringId?: number;
+    alias?: string;
+    isExistedKR?: boolean;
+  };
+  [RootNames.ImportSuccess2024]?: {
+    address: string | string[];
+    brandName: string;
+    deepLink?: string;
+    realBrandName?: string;
+    isFirstImport?: boolean;
+    isFirstCreate?: boolean;
+    type: KEYRING_TYPE;
+    supportChainList?: Chain[];
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    alias?: string;
     isExistedKR?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
@@ -73,8 +113,19 @@ export type AddressNavigatorParamList = {
     brandName: string;
     byImport?: string;
   };
+  [RootNames.ImportMoreAddress]?: {
+    type: KEYRING_TYPE;
+    brand?: string;
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
+  };
   [RootNames.ImportPrivateKey]?: {};
+  [RootNames.ImportPrivateKey2024]?: {};
+  [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
+  [RootNames.ImportMnemonic2024]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
@@ -87,24 +138,35 @@ export type AddressNavigatorParamList = {
     data: string;
   };
   [RootNames.RestoreFromCloud]?: {};
+  [RootNames.WatchAddressList]?: {};
+  [RootNames.SafeAddressList]?: {};
 };
 
 export type AccountNavigatorParamList = {
   [RootNames.MyBundle]?: {};
 };
 
+export type SingleAddressNavigatorParamList = {
+  [RootNames.SingleAddressHome]?: {};
+};
+
 export type TransactionNavigatorParamList = {
+  [RootNames.History]?: {};
+  [RootNames.MultiAddressHistory]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
+  [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;
     collectionName?: string;
   };
   [RootNames.Swap]?: {};
+  [RootNames.MultiSwap]?: {};
   [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.Bridge]?: {};
+  [RootNames.MultiBridge]?: {};
   [RootNames.GasAccount]?: {};
 };
 
@@ -117,7 +179,11 @@ export type SettingNavigatorParamList = {
         replaceScreen:
           | typeof RootNames.PreCreateMnemonic
           | typeof RootNames.ImportPrivateKey
-          | typeof RootNames.ImportMnemonic;
+          | typeof RootNames.ImportMnemonic
+          | typeof RootNames.ImportMnemonic2024
+          | typeof RootNames.CreateSelectMethod
+          | typeof RootNames.ImportPrivateKey2024
+          | typeof RootNames.ImportSuccess2024;
       }
     | {
         actionAfterSetup: 'onSettings';
@@ -132,10 +198,6 @@ export type SettingNavigatorParamList = {
   };
 };
 
-export type FavoritePopularDappsNavigatorParamList = {
-  [RootNames.FavoritePopularDapps]?: {};
-};
-
-export type SearchDappsNavigatorParamList = {
-  [RootNames.SearchDapps]?: {};
+export type FavoriteDappsNavigatorParamList = {
+  [RootNames.FavoriteDapps]?: {};
 };

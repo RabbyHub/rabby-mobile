@@ -1,9 +1,8 @@
-import { RootNames } from '@/constant/layout';
 import { apiLedger } from '@/core/apis';
+import { RootNames } from '@/constant/layout';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
@@ -98,10 +97,18 @@ export const ConnectLedger: React.FC<{
 
         return;
       }
+      await apiLedger.getCurrentUsedHDPathType().then(res => {
+        const hdPathType = res ?? LedgerHDPathType.LedgerLive;
+        apiLedger.setHDPathType(hdPathType);
+        setSetting({
+          startNumber: 1,
+          hdPath: hdPathType,
+        });
+      });
 
       if (address) {
         navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
+          screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.LedgerKeyring,
             brandName: KEYRING_CLASS.HARDWARE.LEDGER,
@@ -111,22 +118,13 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       } else {
-        await apiLedger
-          .getCurrentUsedHDPathType()
-          .then(res => {
-            const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-            apiLedger.setHDPathType(hdPathType);
-            setSetting({
-              startNumber: 1,
-              hdPath: hdPathType,
-            });
-          })
-          .then(() => {
-            navigate(RootNames.ImportMoreAddress, {
-              type: KEYRING_TYPE.LedgerKeyring,
-            });
-            onDone?.();
-          });
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportMoreAddress,
+          params: {
+            type: KEYRING_TYPE.LedgerKeyring,
+          },
+        });
+        onDone?.();
       }
     },
     [onDone, setIsLoaded, setSetting, t],

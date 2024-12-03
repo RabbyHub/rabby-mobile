@@ -1,4 +1,4 @@
-import { AppColorsVariants } from '@/constant/theme';
+import { AppColorsVariants, AppColors2024Variants } from '@/constant/theme';
 import { IS_IOS } from '@/core/native/utils';
 import {
   FontNames,
@@ -19,6 +19,28 @@ export const createGetStyles =
   ) =>
   (colors: AppColorsVariants, ctx?: CreateStylesOptions) =>
     StyleSheet.create(mutateStyles(styles(colors, ctx)));
+
+type CreateStyles2024Options = {
+  isLight?: boolean;
+  /**
+   * @description same as classicalColors
+   */
+  classicalColors: AppColorsVariants;
+  /**
+   * @description same as classicalColors
+   */
+  colors: AppColorsVariants;
+  /**
+   * @description same as colors
+   */
+  colors2024: AppColors2024Variants;
+};
+export const createGetStyles2024 =
+  <T extends NamedStyles<T> | NamedStyles<any>>(
+    styles: (ctx: CreateStyles2024Options) => T | NamedStyles<T>,
+  ) =>
+  (ctx: CreateStyles2024Options) =>
+    StyleSheet.create(mutateStyles(styles(ctx)));
 
 type TriAngleConf = {
   dir?: 'up' | 'down' | 'left' | 'right';
@@ -122,16 +144,22 @@ function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
       // like sf pro rounded
       if (lcFontFamily && /sf(.?)pro(.?)rounded/i.test(lcFontFamily)) {
         switch (fwTypeResult.supertype) {
+          case FontWeightEnum.heavy: {
+            input[key].fontFamily = FontNames.sf_pro_rounded_heavy;
+            delete input[key].fontWeight;
+            break;
+          }
           case FontWeightEnum.bold: {
             input[key].fontFamily = FontNames.sf_pro_rounded_bold;
             delete input[key].fontWeight;
             break;
           }
-          case FontWeightEnum.light: {
-            input[key].fontFamily = FontNames.sf_pro_rounded_light;
+          case FontWeightEnum.medium: {
+            input[key].fontFamily = FontNames.sf_pro_rounded_medium;
             delete input[key].fontWeight;
             break;
           }
+          case FontWeightEnum.normal:
           default: {
             input[key].fontFamily = FontNames.sf_pro_rounded_regular;
             delete input[key].fontWeight;

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import ImgLock from '@/assets/icons/swap/lock.svg';
 import ImgVerified from '@/assets/icons/swap/verified.svg';
 import { CHAINS_ENUM } from '@debank/common';
@@ -14,15 +15,14 @@ import {
   useRabbyFeeVisible,
   useSetQuoteVisible,
   useSwapSettings,
-  useSwapSettingsVisible,
 } from '../hooks';
 
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { RcIconSwapGas, RcIconSwapGasRed } from '@/assets/icons/swap';
 import { AssetAvatar, Tip } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -73,7 +73,6 @@ export const DexQuoteItem = (
     chain,
     // userAddress,
     isBestQuote,
-    slippage,
     // fee,
     inSufficient,
     preExecResult,
@@ -85,12 +84,8 @@ export const DexQuoteItem = (
     onPress,
   } = props;
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getQuoteItemStyle(colors), [colors]);
-
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-
-  const { setVisible: openSwapSettings } = useSwapSettingsVisible();
 
   const openSwapQuote = useSetQuoteVisible();
 
@@ -161,8 +156,8 @@ export const DexQuoteItem = (
               styles.percentText,
               {
                 color: !isBestQuote
-                  ? colors['red-default']
-                  : colors['green-default'],
+                  ? colors2024['red-default']
+                  : colors2024['green-default'],
               },
             ]}>
             {isBestQuote
@@ -227,7 +222,7 @@ export const DexQuoteItem = (
       styles.percentText,
       styles.failedTipText,
       isBestQuote,
-      colors,
+      colors2024,
       t,
     ]);
 
@@ -344,11 +339,11 @@ export const DexQuoteItem = (
           {
             position: 'relative',
             backgroundColor: !(disabled || inSufficient || gasFeeTooHight)
-              ? colors['neutral-card-1']
+              ? colors2024['neutral-card-1']
               : 'transparent',
             borderColor: !(disabled || inSufficient || gasFeeTooHight)
               ? 'transparent'
-              : colors['neutral-line'],
+              : colors2024['neutral-line'],
             borderWidth: !(disabled || inSufficient || gasFeeTooHight)
               ? 0
               : StyleSheet.hairlineWidth,
@@ -434,7 +429,7 @@ export const DexQuoteItem = (
                 paddingLeft: 4,
               },
               gasFeeTooHight && {
-                backgroundColor: colors['red-light'],
+                backgroundColor: colors2024['red-light'],
               },
             ]}>
             {!disabled && !inSufficient && (
@@ -451,7 +446,7 @@ export const DexQuoteItem = (
                 <Text
                   style={[
                     styles.gasUsd,
-                    gasFeeTooHight && { color: colors['red-default'] },
+                    gasFeeTooHight && { color: colors2024['red-default'] },
                   ]}>
                   {preExecResult?.gasUsd}
                 </Text>
@@ -461,7 +456,12 @@ export const DexQuoteItem = (
 
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
             {disabled ? (
-              <Text>{bestQuotePercent}</Text>
+              <Text
+                style={{
+                  fontFamily: 'SF Pro Rounded',
+                }}>
+                {bestQuotePercent}
+              </Text>
             ) : (
               <>
                 <Text style={styles.receivedTokenUsd}>
@@ -474,9 +474,9 @@ export const DexQuoteItem = (
                 {isWrapToken ? (
                   <Tip content={t('page.swap.no-fees-for-wrap')}>
                     <RcIconInfoCC
-                      width={14}
-                      height={14}
-                      color={colors['neutral-foot']}
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-foot']}
                     />
                   </Tip>
                 ) : (
@@ -490,9 +490,9 @@ export const DexQuoteItem = (
                       });
                     }}>
                     <RcIconInfoCC
-                      width={14}
-                      height={14}
-                      color={colors['neutral-foot']}
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-foot']}
                     />
                   </TouchableOpacity>
                 )}
@@ -521,15 +521,14 @@ export function CheckedIcon() {
     </Tip>
   );
 }
-
-export const getQuoteItemStyle = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dexContainer: {
     position: 'relative',
     // borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 15,
-    // gap: 10,
+    paddingLeft: 25,
+    paddingRight: 17,
+    paddingTop: 36,
+    paddingBottom: 30,
     justifyContent: 'center',
     borderRadius: 6,
     shadowColor: 'rgba(0, 0, 0, 0.08)',
@@ -554,31 +553,36 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
   percentText: {
     fontSize: 12,
     lineHeight: 14,
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
   failedTipText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '400',
-    color: colors['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
     lineHeight: 16,
   },
 
   nameText: {
     fontSize: 16,
-    lineHeight: 19,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
 
   gasUsd: {
-    color: colors['neutral-foot'],
-    fontSize: 13,
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
     lineHeight: 16,
   },
   receivedTokenUsd: {
-    color: colors['neutral-foot'],
-    fontSize: 13,
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
     lineHeight: 16,
   },
@@ -586,9 +590,10 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
   middleDefaultText: {
     width: 'auto',
     fontSize: 16,
-    lineHeight: 19,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
 
   disabledContentWrapper: {
@@ -598,7 +603,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     right: 0,
     bottom: 0,
     borderRadius: 6,
-    backgroundColor: colors['neutral-black'],
+    backgroundColor: colors2024['neutral-black'],
     justifyContent: 'center',
   },
 
@@ -608,14 +613,8 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     paddingLeft: 12,
     alignItems: 'center',
   },
-  disabledContentText: {
-    color: colors['neutral-title-2'],
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 17,
-  },
   disabledContentBtnText: {
-    color: colors['blue-default'],
+    color: colors2024['blue-default'],
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'left',
@@ -630,9 +629,9 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     paddingVertical: 1,
     borderTopLeftRadius: 4,
     borderBottomRightRadius: 4,
-    backgroundColor: colors['red-light'],
+    backgroundColor: colors2024['red-light'],
   },
   bestQuotePercentContainerIsBest: {
-    backgroundColor: colors['green-light'],
+    backgroundColor: colors2024['green-light'],
   },
 }));

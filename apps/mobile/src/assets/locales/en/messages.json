@@ -597,7 +597,7 @@
     },
     "receive": {
       "title": "Receive {{token}} on {{chain}}",
-      "watchModeAlert": "This is a Watch Mode address. Are you sure to use it to receive assets?"
+      "watchModeAlert": "This is a watch-only address. Are you sure you want to use it to receive assets?"
     },
     "sendToken": {
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
@@ -663,7 +663,8 @@
       },
       "tokenInfoPrice": "Price",
       "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
-      "whitelistAlert__notWhitelisted": "The address is not whitelisted. \n I agree to grant temporary permission to transfer.",
+      "whitelistAlert__notWhitelisted_tip": "The address is not whitelisted.",
+      "whitelistAlert__notWhitelisted": "The address is not whitelisted. I agree to grant temporary permission to transfer.",
       "whitelistAlert__temporaryGranted": "Temporary permission granted",
       "whitelistAlert__whitelisted": "The address is whitelisted",
       "balanceWarn": {
@@ -848,6 +849,7 @@
       "get-quotes": "Get quotes",
       "chain": "Chain",
       "swap-from": "Swap from",
+      "from": "From",
       "to": "To",
       "search-by-name-address": "Search by Name / Address",
       "amount-in": "Amount in {{symbol}}",
@@ -1350,6 +1352,44 @@
       },
       "noNft": "No NFT"
     },
+    "nextComponent": {
+      "createNewAddress": {
+        "verificationFailed": "Verification failed",
+        "addressTopTips": "Use it to send and receive \n crypto on blockchain",
+        "Continue": "Continue",
+        "Confirm": "Confirm",
+        "passwordTopTips": "This password will be used to unlock your wallet and encrypt your local data.",
+        "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost.",
+        "passwordMin": "Must be at least 8 characters",
+        "confirmPasswordTips": "Passwords match",
+        "whatIsSeedPhrase": "What's a Seed Phrase",
+        "icloudBackup": "iCloud Backup",
+        "UnderstandsecurityPrecautions": "I understand these security precautions.",
+        "selectWords": "Select words",
+        "inOrder": "in the correct order.",
+        "WriteSeedPhrase": "This is your seed phrase. Write it down on paper and store it in a secure place. You will need to re-enter it, in the correct order, in the next step.",
+        "WriteDownSeedPhrase": "Write Down Your Seed Phrase",
+        "VerifyDownSeedPhrase": "Verify seed phrase ",
+        "BackupSeedPhrase": "Manually Backup Seed Phrase",
+        "savedPhrase": "I've Saved the Phrase",
+        "Verify": "Verify",
+        "createdSuccessfully": "Created successfully!",
+        "createNewSeedPhrase": "Create New Seed Phrase",
+        "createNewDesc": "Generate a new seed phrase for new addresses",
+        "createOnCurrent": "Use Current Seed Phrase",
+        "createOnCurrentDesc": "Create address with an existing imported seed phrase",
+        "riskTips": "Before you begin, please read and keep these security tips in mind:"
+      },
+      "addAddress": {
+        "createAddress": "Create Address",
+        "importAddress": "Import Address",
+        "hardwareWallet": "Hardware Wallet"
+      },
+      "multiAddressHome": {
+        "services": "Services",
+        "totalBalance": "Total Balance"
+      }
+    },
     "newAddress": {
       "title": "Add an Address",
       "importSeedPhrase": "Import Seed Phrase",
@@ -1428,10 +1468,11 @@
         "chooseBackupMethodDesc": "Backups let you restore your wallet if you delete the app or lose your device.",
         "icloudBackup": "iCloud Backup",
         "googleDriveBackup": "Google Drive Backup",
-        "manuallyBackup": "Manually Backup",
+        "manuallyBackup": "Manual Backup",
         "backupUnlockTitle": "Encrypt with App Password",
         "backupUnlockDesc": "Keep your password safe to restore backups. Rabby Wallet doesn't store it and can't recover it.",
         "backupUnlockPlaceholder": "Enter the Password to Confirm",
+        "passwordMinTip": "Must be at least 8 characters",
         "backupUnlockButton": "Continue",
         "backupUploadToICloud": "Backing Up to iCloud...",
         "backupUploadToGDrive": "Backing Up to Google Drive...",
@@ -1468,7 +1509,7 @@
           "question": "What is a private key?",
           "answer": "A string of letters and numbers used to control your assets."
         },
-        "repeatImportTips": "This address has been imported. Do you want to switch to this address?",
+        "repeatImportTips": "This address has been imported",
         "isItSafeToImportItInRabby": {
           "question": "Is it safe to import it in Rabby?",
           "answer": "Yes, it will be stored locally on your phone and only accessible to you."
@@ -1519,7 +1560,7 @@
           "firmwareOrAppUpdateRequired": "Please update the firmware and Ethereum App on your Ledger"
         },
         "openEthApp": {
-          "title": "Connect Ledger",
+          "title": "Connecting",
           "description": "Please open Ethereum app on Ledger"
         }
       },
@@ -1589,7 +1630,7 @@
         },
         "scan": {
           "title": "Scan Keystone to Connect",
-          "description": "Scan the QR code on the Keystone hardware wallet"
+          "description": "Scan the QR-code on your Keystone wallet"
         }
       },
       "walletConnect": {
@@ -1907,7 +1948,7 @@
       "source": "Source",
       "hd-path": "HD Path",
       "manage-seed-phrase": "Manage Seed Phrase",
-      "manage-addresses-under-this-seed-phrase": "Manage addresses under this Seed Phrase",
+      "manage-addresses-under-this-seed-phrase": "Add address from this seed phrase",
       "safeModuleAddress": "Safe Module Address",
       "coboSafeErrorModule": "Address has expired, please delete and import the address again.",
       "importedDelegatedAddress": "Imported Delegated address"
@@ -2006,6 +2047,7 @@
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
+      "passwordMinTip": "Must be at least 8 characters",
       "confirmPasswordPlaceholder": "Confirm password ",
       "confirmRequired": "Please Confirm Password",
       "confirmError": "Passwords do not match",
@@ -2251,8 +2293,8 @@
         "gotIt": "Got it"
       },
       "loginConfirmModal": {
-        "title": "Log in with Current Address",
-        "desc": "Once confirmed, you can only deposit it at this address"
+        "title": "Select An Address to Login",
+        "desc": "Once login, you can only deposit it at this address"
       },
       "logoutConfirmModal": {
         "title": "Log out current GasAccount",
@@ -2303,8 +2345,8 @@
         "gotIt": "Got it"
       },
       "loginConfirmModal": {
-        "title": "Log in with Current Address",
-        "desc": "Once confirmed, you can only deposit it at this address"
+        "title": "Select An Address to Login",
+        "desc": "Once login, you can only deposit it at this address"
       },
       "logoutConfirmModal": {
         "title": "Log out current GasAccount",
@@ -2336,6 +2378,10 @@
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
       }
+    },
+    "accountSwitcher": {
+      "screenHeaderSubTitle_one": "1 address",
+      "screenHeaderSubTitle_other": "{{count}} addresses"
     },
     "AccountSearchInput": {
       "noMatchAddress": "No match address",
@@ -2495,6 +2541,11 @@
       "fast": "Fast",
       "normal": "Normal",
       "doNotReserve": "Don't reserve Gas"
+    },
+    "NoLongerSupports": {
+      "title": "Mobile wallet addresses are no longer supported",
+      "desc": "The following addresses will be removed. You can still find them in the original wallet app. Import the seed phrase or private key to use them here.",
+      "button": "Got it"
     }
   },
   "native": {

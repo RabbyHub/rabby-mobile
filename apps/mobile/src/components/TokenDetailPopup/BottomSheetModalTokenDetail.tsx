@@ -16,6 +16,7 @@ import { RcIconCopyRegularCC, RcIconJumpCC } from '@/assets/icons/common';
 import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
+  BottomSheetProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
@@ -24,7 +25,7 @@ import {
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { AbstractPortfolioToken } from '@/screens/home/types';
 import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
@@ -61,7 +62,7 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
 import AutoLockView from '../AutoLockView';
 import { BlockedButton } from './BlockedButton';
-import { Token } from '@/core/services/preference';
+import { Account, Token } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useManageTokenList } from '@/screens/Home/hooks/useManageToken';
@@ -70,6 +71,7 @@ import { DisplayedToken } from '@/screens/Home/utils/project';
 import { CustomizedSwitch } from './CustomizedSwitch';
 import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -459,6 +461,8 @@ type RedirectToType = 'Swap' | 'Send' | 'Receive';
 export const BottomSheetModalTokenDetail = React.forwardRef<
   BottomSheetModalMethods,
   {
+    /** @internal */
+    __shouldSwitchSceneAccountBeforeRedirect__: boolean;
     token?: AbstractPortfolioToken | null;
     canClickToken?: boolean;
     isTestnet?: boolean;
@@ -468,22 +472,28 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       data?: RedirectToType;
     }) => void;
     hideOperationButtons?: boolean;
+    address?: KeyringAccountWithAlias;
+    nextTxRedirectAccount?: Account | null;
   }
 >(
   (
     {
+      __shouldSwitchSceneAccountBeforeRedirect__,
       token,
       canClickToken,
       onDismiss,
       onTriggerDismissFromInternal,
       hideOperationButtons = false,
       isTestnet,
+      address,
+      nextTxRedirectAccount,
     },
     ref,
   ) => {
     const { styles, colors } = useThemeStyles(getStyles);
     const { t } = useTranslation();
     const { currentAccount } = useCurrentAccount();
+    const finalAccount = address || currentAccount;
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;
@@ -500,7 +510,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
     const getTokenAmount = React.useCallback(async () => {
       if (
-        !currentAccount?.address ||
+        !finalAccount ||
         !token ||
         /* token.amount !== undefined */ token.amount
       )
@@ -509,7 +519,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       setTokenLoad({ isLoading: true, token: null });
       try {
         const res = await openapi.getToken(
-          currentAccount.address,
+          finalAccount.address,
           token.chain,
           token._tokenId,
         );
@@ -519,7 +529,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       } finally {
         setTokenLoad(prev => ({ ...prev, isLoading: false }));
       }
-    }, [currentAccount?.address, token]);
+    }, [finalAccount, token]);
     const tokenWithAmount = useMemo(() => {
       if (!token) return null;
       const { token: tokenInfo } = tokenLoad;
@@ -611,7 +621,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
         try {
           const res: TxHistoryResult = await openapi.listTxHisotry({
-            id: currentAccount?.address,
+            id: finalAccount?.address,
             chain_id: token?.chain,
             start_time: lastEarliestTime ?? undefined,
             page_count: PAGE_COUNT,
@@ -736,9 +746,22 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, []);
 
     const navigation = useRabbyAppNavigation();
+    const { switchSceneCurrentAccount: _switchSceneCurrentAccount } =
+      useSwitchSceneCurrentAccount();
+
+    const switchSceneCurrentAccount = useCallback<
+      typeof _switchSceneCurrentAccount
+    >(
+      async (...args) => {
+        if (!__shouldSwitchSceneAccountBeforeRedirect__) return;
+
+        return _switchSceneCurrentAccount(...args);
+      },
+      [__shouldSwitchSceneAccountBeforeRedirect__, _switchSceneCurrentAccount],
+    );
 
     const onRedirecTo = useCallback(
-      (type?: RedirectToType) => {
+      async (type?: RedirectToType) => {
         onTriggerDismissFromInternal?.({ reason: 'redirect-to', data: type });
         const chainItem = !token?.chain
           ? null
@@ -746,6 +769,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
         switch (type) {
           case 'Swap':
+            await switchSceneCurrentAccount(
+              'MakeTransactionAbout',
+              nextTxRedirectAccount || null,
+            );
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Swap,
               params: {
@@ -755,6 +782,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             });
             break;
           case 'Send': {
+            await switchSceneCurrentAccount(
+              'MakeTransactionAbout',
+              nextTxRedirectAccount || null,
+            );
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Send,
               params: {
@@ -765,6 +796,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             break;
           }
           case 'Receive': {
+            await switchSceneCurrentAccount(
+              'MakeTransactionAbout',
+              nextTxRedirectAccount || null,
+            );
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Receive,
               params: {
@@ -779,6 +814,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       [
         navigation,
         onTriggerDismissFromInternal,
+        switchSceneCurrentAccount,
+        nextTxRedirectAccount,
         token?._tokenId,
         token?.chain,
         token?.symbol,
@@ -886,13 +923,20 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       );
     }, [t, styles.emptyHolderContainer, shouldRenderLoadingOnEmpty]);
 
-    const { onHardwareBackHandler } = useHandleBackPressClosable(
+    const [isShowing, setIsShowing] = React.useState(false);
+    const onSnapshotChange = useCallback<BottomSheetProps['onChange'] & object>(
+      index => {
+        setIsShowing(index > 0);
+      },
+      [],
+    );
+    useHandleBackPressClosable(
       useCallback(() => {
         onTriggerDismissFromInternal?.();
         return false;
       }, [onTriggerDismissFromInternal]),
+      { autoEffectEnabled: isShowing },
     );
-    useFocusEffect(onHardwareBackHandler);
 
     return (
       <AppBottomSheetModal
@@ -904,7 +948,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         enableContentPanningGesture={false}
         enablePanDownToClose={true}
         snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
-        onChange={useCallback(() => {}, [])}
+        onChange={onSnapshotChange}
         onDismiss={onDismiss}>
         <AutoLockView
           as="BottomSheetView"

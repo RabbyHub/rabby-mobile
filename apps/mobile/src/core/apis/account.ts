@@ -8,8 +8,6 @@ import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
-import { CHAINS_ENUM } from '@/constant/chains';
-import { apiAccount } from '.';
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -19,7 +17,12 @@ function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   return new DisplayKeyring(keyring);
 }
 
-export async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
+export async function hasVisibleAccounts() {
+  const restAccountsCount = await keyringService.getCountOfAccountsInKeyring();
+  return restAccountsCount > 0;
+}
+
+async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
   const typedAccounts = await keyringService.getAllTypedVisibleAccounts();
 
   return typedAccounts.map(account => ({

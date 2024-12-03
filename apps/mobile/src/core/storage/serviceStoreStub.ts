@@ -13,6 +13,8 @@ import {
 import { chainListAtom } from '@/hooks/useChainList';
 import { getChainList } from '@/constant/chains';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
+import { useDappsHome } from '@/hooks/useDappsHome';
+import { useBrowserHistory } from '@/hooks/useBrowserHistory';
 
 const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
   dappService.store,
@@ -34,6 +36,8 @@ export function useSetupServiceStub() {
   const [, setCurrentAccount] = useAtom(currentAccountAtom);
   const [, setChainList] = useAtom(chainListAtom);
   const { getAllRPC } = useCustomRPC();
+  const [dapps] = useAtom(dappsAtom);
+  const { getBrowserHistoryList } = useBrowserHistory({ dapps });
 
   useEffect(() => {
     const disposes: Function[] = [];
@@ -70,5 +74,9 @@ export function useSetupServiceStub() {
 
   useMount(() => {
     getAllRPC();
+  });
+
+  useMount(() => {
+    getBrowserHistoryList();
   });
 }

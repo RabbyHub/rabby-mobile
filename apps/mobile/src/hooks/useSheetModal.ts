@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 
 type ShowType = boolean | 'destroy' | 'collapse' | number;
 
@@ -51,7 +52,17 @@ export function useSheetModals<T extends string>(
   sheetModalRefs: DappBottomSheetModalRefs<T>,
 ) {
   const toggleShowSheetModal = React.useCallback(
-    async (type: T, shownType: ShowType) => {
+    async (
+      type: T,
+      shownType: ShowType,
+      animationConfigs?: WithSpringConfig | WithTimingConfig,
+    ) => {
+      let finalAc: typeof animationConfigs;
+      if (animationConfigs) {
+        finalAc = {
+          ...animationConfigs,
+        };
+      }
       switch (shownType) {
         case 'destroy':
           sheetModalRefs[type]?.current?.dismiss();

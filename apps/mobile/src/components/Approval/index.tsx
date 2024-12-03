@@ -4,7 +4,7 @@ import { IExtractFromPromise } from '@/utils/type';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
-import * as ApprovalComponent from './components';
+import { ApprovalComponent } from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
 import {
   isInternalSession,

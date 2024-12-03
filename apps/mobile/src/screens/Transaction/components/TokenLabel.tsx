@@ -9,6 +9,7 @@ import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from 'react-native';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { useNFTDetailSheetModalOnHistory } from '@/screens/NftDetail/hooks';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 export default function TokenLabel({
   token,
@@ -16,9 +17,11 @@ export default function TokenLabel({
   isMyOwn,
   disableClickToken: propDisableClick,
   style,
+  address,
 }: RNViewProps & {
   isMyOwn?: boolean;
   disableClickToken?: boolean;
+  address?: KeyringAccountWithAlias;
 } & (
     | {
         token: TokenItem;
@@ -31,6 +34,7 @@ export default function TokenLabel({
   )) {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
+
   const symbolName = useMemo(() => {
     const symbol = isNft ? '' : getTokenSymbol(token);
 
@@ -40,7 +44,8 @@ export default function TokenLabel({
       : symbol;
   }, [t, isNft, token]);
 
-  const { openTokenDetailPopup } = useGeneralTokenDetailSheetModal();
+  const { openTokenDetailPopup, setTokenDetailAddress } =
+    useGeneralTokenDetailSheetModal();
   const { handlePressNftToken } = useNFTDetailSheetModalOnHistory();
 
   const disableClickToken = propDisableClick || (isNft && !isMyOwn);
@@ -60,6 +65,9 @@ export default function TokenLabel({
         if (isNft) {
           handlePressNftToken(token, { needSendButton: isMyOwn });
         } else {
+          if (address) {
+            setTokenDetailAddress(address);
+          }
           openTokenDetailPopup(token as TokenItem);
         }
       }}

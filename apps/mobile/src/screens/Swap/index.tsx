@@ -1,20 +1,23 @@
-import { RcIconMaxButton, RcIconSwapArrow } from '@/assets/icons/swap';
-import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
-import { AppSwitch, Button, Tip } from '@/components';
+import { RcIconSwapArrow } from '@/assets/icons/swap';
+import { AppSwitch, Tip } from '@/components';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import { ReserveGasPopup } from '@/components/ReserveGasPopup';
 import TouchableItem from '@/components/Touchable/TouchableItem';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { createGetStyles } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
@@ -25,15 +28,16 @@ import {
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Text, TextInput, View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useMount from 'react-use/lib/useMount';
 import { BestQuoteLoading } from '../Bridge/components/loading';
-import { ChainInfo } from '../Send/components/ChainInfo';
+import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { SwapHeader } from './components/Header';
+import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { ReceiveDetails } from './components/ReceiveDetail';
 import { Slippage } from './components/Slippage';
@@ -50,20 +54,26 @@ import {
   useRabbyFeeVisible,
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { ReserveGasPopup } from '@/components/ReserveGasPopup';
-import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
+import { Button } from '@/components2024/Button';
+import {
+  PropsForAccountSwitchScreen,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
-const Swap = () => {
+const isAndroid = Platform.OS === 'android';
+
+const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
+  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { t } = useTranslation();
-  const { colors, styles } = useThemeStyles(getStyles);
+  const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
+
+  const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   useEffect(() => {
     setNavigationOptions({
-      headerRight: () => <SwapHeader />,
+      headerRight: SwapHeader,
     });
   }, [setNavigationOptions]);
 
@@ -157,7 +167,12 @@ const Swap = () => {
   );
 
   const navState = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Swap)?.params,
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
+      )?.params,
   ) as
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
     | undefined;
@@ -208,7 +223,7 @@ const Swap = () => {
     isWrapToken,
   ]);
 
-  const { bottom } = useSafeAreaInsets();
+  const { safeOffBottom } = useSafeSizes();
 
   const [isShowSign, setIsShowSign] = useState(false);
   const gotoSwap = useMemoizedFn(async () => {
@@ -378,27 +393,40 @@ const Swap = () => {
   );
 
   const navigation = useNavigation();
+  const scrollToEnd = () => {
+    keyboardAwareRef.current?.scrollToEnd(true);
+  };
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer2024 type="bg1">
+      {isForMultipleAdderss && (
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      )}
       <KeyboardAwareScrollView
-        style={styles.container}
-        contentContainerStyle={styles.container}
+        style={[
+          styles.container,
+          // eslint-disable-next-line react-native/no-inline-styles
+          {
+            marginBottom: 112 + (isAndroid ? 20 + safeOffBottom : 0),
+          },
+        ]}
+        ref={keyboardAwareRef}
+        // contentContainerStyle={styles.container}
         enableOnAndroid
         extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.content}>
-          <Text style={[styles.label, { marginBottom: 8 }]}>
+          <Text style={[styles.label, { marginBottom: 12 }]}>
             {t('page.swap.chain')}
           </Text>
-          <ChainInfo
+          <ChainInfo2024
             chainEnum={chain}
             onChange={switchChain}
             supportChains={SWAP_SUPPORT_CHAINS}
           />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
-              <Text style={styles.label}>{t('page.swap.swap-from')}</Text>
+              <Text style={styles.label}>{t('page.swap.from')}</Text>
             </View>
             <View style={styles.arrow} />
 
@@ -426,8 +454,8 @@ const Swap = () => {
                 }
               />
             </View>
-            <TouchableItem onPress={exchangeToken}>
-              <RcIconSwapArrow width={20} height={20} style={styles.arrow} />
+            <TouchableItem style={styles.arrowWrapper} onPress={exchangeToken}>
+              <RcIconSwapArrow width={22} height={22} style={styles.arrow} />
             </TouchableItem>
             <View style={styles.flex1}>
               <TokenSelect
@@ -454,11 +482,7 @@ const Swap = () => {
             </View>
           </View>
           <View style={styles.amountInContainer}>
-            <Text style={styles.label}>
-              {t('page.swap.amount-in', {
-                symbol: payToken ? getTokenSymbol(payToken) : '',
-              })}
-            </Text>
+            <Text style={styles.label}>Amount:</Text>
             <TouchableOpacity
               style={{ flexDirection: 'row', alignItems: 'center' }}
               onPress={() => {
@@ -466,29 +490,35 @@ const Swap = () => {
                   handleBalance();
                 }
               }}>
-              <Text style={[styles.label]}>
-                {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
+              <Text
+                style={[styles.balanceText, inSufficient && styles.errorTip]}>
+                {inSufficient
+                  ? t('page.swap.insufficient-balance')
+                  : t('global.Balance')}
+                : {formatAmount(payToken?.amount || 0)}
               </Text>
               {payTokenAmountAvailable && (
                 <TouchableOpacity
                   style={[styles.maxBtn]}
                   onPress={handleBalance}>
-                  <RcIconMaxButton width={34} height={16} />
+                  <Text style={styles.maxButtonText}>MAX</Text>
                 </TouchableOpacity>
               )}
             </TouchableOpacity>
           </View>
           <View style={styles.inputContainer}>
-            <TextInput
-              value={payAmount}
-              onChangeText={handleAmountChange}
-              keyboardType="numeric"
-              inputMode="decimal"
-              placeholder="0"
-              numberOfLines={1}
-              style={styles.input}
-              placeholderTextColor={colors['neutral-foot']}
-            />
+            <View style={styles.inputWrapper}>
+              <TextInput
+                value={payAmount}
+                onChangeText={handleAmountChange}
+                keyboardType="numeric"
+                inputMode="decimal"
+                placeholder="0"
+                numberOfLines={1}
+                style={styles.input}
+                placeholderTextColor={colors2024['neutral-foot']}
+              />
+            </View>
             <Text style={styles.inputUsdValue}>
               {payAmount
                 ? `≈ ${formatUsdValue(
@@ -496,7 +526,7 @@ const Swap = () => {
                       .times(payToken?.price || 0)
                       .toString(10),
                   )}`
-                : ''}
+                : '≈$0'}
             </Text>
           </View>
           {quoteLoading &&
@@ -505,7 +535,9 @@ const Swap = () => {
           Number(payAmount) > 0 &&
           !inSufficient &&
           !activeProvider?.manualClick ? (
-            <BestQuoteLoading />
+            <View style={styles.loadingQuoteContainer}>
+              <BestQuoteLoading />
+            </View>
           ) : null}
           {Number(payAmount) > 0 &&
           !inSufficient &&
@@ -523,6 +555,7 @@ const Swap = () => {
                 receiveToken={receiveToken}
                 quoteWarning={activeProvider?.quoteWarning}
                 chain={chain}
+                scrollToEnd={scrollToEnd}
                 openQuotesList={openQuotesList}
               />
             </>
@@ -570,23 +603,11 @@ const Swap = () => {
             </>
           ) : null}
         </View>
-
-        {inSufficient ? (
-          <View style={styles.inSufficient}>
-            <RcDangerIcon width={16} height={16} style={{ marginRight: 2 }} />
-
-            <Text style={styles.inSufficientText}>
-              {t('page.swap.insufficient-balance')}
-            </Text>
-          </View>
-        ) : null}
       </KeyboardAwareScrollView>
       <View
         style={[
           styles.buttonContainer,
-          {
-            paddingBottom: Math.max(bottom, 20),
-          },
+          isAndroid && { paddingBottom: 20 + safeOffBottom },
         ]}>
         <Button
           onPress={() => {
@@ -602,7 +623,6 @@ const Swap = () => {
             handleSwap();
           }}
           title={btnText}
-          titleStyle={styles.btnTitle}
           disabled={
             !payToken ||
             !receiveToken ||
@@ -687,30 +707,60 @@ const Swap = () => {
         visible={lowCreditVisible}
         onCancel={() => setLowCreditVisible(false)}
       />
-    </NormalScreenContainer>
+    </NormalScreenContainer2024>
   );
 };
 
 Swap.SwapHeader = SwapHeader;
 
-const getStyles = createGetStyles(colors => ({
+const ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof Swap>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  return (
+    <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
+  );
+};
+
+Swap.ForMultipleAddress = ForMultipleAddress;
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
   },
   content: {
     minHeight: 300,
-    padding: 12,
-    marginHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
+    paddingBottom: 30,
   },
   label: {
-    fontSize: 13,
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  balanceText: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
     fontWeight: '400',
-    color: colors['neutral-body'],
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+  },
+  errorTip: {
+    color: colors2024['red-default'],
   },
   rowView: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
   },
@@ -723,11 +773,21 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginTop: 20,
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 12,
   },
   flex1: {
-    flex: 1,
+    width: 128,
+  },
+  arrowWrapper: {
+    width: 45,
+    height: 45,
+    borderWidth: 0.7,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 100,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   arrow: {
     marginHorizontal: 8,
@@ -744,42 +804,64 @@ const getStyles = createGetStyles(colors => ({
   },
 
   inputContainer: {
+    flexDirection: 'column',
+    height: 98,
+    paddingLeft: 13,
+    paddingTop: 4,
+    paddingBottom: 16,
+    borderRadius: 30,
+    justifyContent: 'space-between',
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
+  inputWrapper: {
+    height: 60,
     flexDirection: 'row',
-    height: 52,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors['neutral-line'],
-    paddingHorizontal: 12,
-    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 0,
   },
   input: {
-    paddingRight: 10,
-    fontSize: 20,
-    fontWeight: '600',
-    position: 'relative',
     flex: 1,
-    color: colors['neutral-title-1'],
-    backgroundColor: 'transparent',
+    fontSize: 28,
+    lineHeight: 36,
+    paddingVertical: 0,
+    paddingBottom: 0,
+    textAlignVertical: 'center',
+    justifyContent: 'center',
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   inputUsdValue: {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 18,
+    height: 18,
     fontWeight: '400',
-    color: colors['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-info'],
+  },
+  loadingQuoteContainer: {
+    borderWidth: 1,
+    paddingBottom: 16,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 24,
+    marginTop: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
 
   afterWrapper: {
-    marginTop: 12,
-    gap: 12,
-    paddingHorizontal: 12,
+    marginTop: 20,
+    gap: 20,
   },
   afterLabel: {
-    fontSize: 13,
-    color: colors['neutral-body'],
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
   },
   afterValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   inSufficient: {
     flexDirection: 'row',
@@ -788,7 +870,7 @@ const getStyles = createGetStyles(colors => ({
     marginHorizontal: 20,
   },
   inSufficientText: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
     fontSize: 15,
     fontWeight: '500',
   },
@@ -797,11 +879,10 @@ const getStyles = createGetStyles(colors => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
-    borderTopColor: colors['neutral-line'],
-    borderTopWidth: StyleSheet.hairlineWidth * 2,
-    backgroundColor: colors['neutral-bg-1'],
+    paddingHorizontal: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    padding: 20,
+    marginBottom: 56,
   },
   approveContainer: {
     flexDirection: 'row',
@@ -814,21 +895,23 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     gap: 6,
   },
-  approveText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
-  },
   unlimitedText: {
     fontSize: 13,
     fontWeight: '500',
-    color: colors['neutral-foot'],
-  },
-  btnTitle: {
-    color: colors['neutral-title-2'],
+    color: colors2024['neutral-foot'],
   },
   maxBtn: {
-    marginLeft: 6,
+    marginLeft: 12,
+    padding: 4,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 8,
+  },
+  maxButtonText: {
+    color: colors2024['brand-default'],
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

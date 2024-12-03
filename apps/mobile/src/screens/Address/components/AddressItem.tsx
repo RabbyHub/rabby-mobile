@@ -1,177 +1,139 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { RectButton, TouchableOpacity } from 'react-native-gesture-handler';
-
-import { RcIconAddressDelete, RcIconAddressPin } from '@/assets/icons/address';
-import { useThemeColors } from '@/hooks/theme';
-import {
-  KeyringAccountWithAlias,
-  useCurrentAccount,
-  usePinAddresses,
-  useRemoveAccount,
-} from '@/hooks/account';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback } from 'react';
+import { StyleSheet, TouchableOpacity } from 'react-native';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
-import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
-import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
-import { AddressItemInner, getStyles } from './AddressItemInner';
+import { createGetStyles2024 } from '@/utils/styles';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
+import { useDeleteAccountModal } from '../useDeleteAccountModal';
+import { AddressItemInner2024 } from './AddressItemInner2024';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { useAddressDetailModal } from '../useAddressDetailModal';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { trigger } from 'react-native-haptic-feedback';
+
+const { isSameAddress } = addressUtils;
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  root: {
+    borderRadius: 30,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-3'],
+  },
+  rootPressing: {
+    borderColor: colors2024['brand-light-2'],
+  },
+}));
 
 interface AddressItemProps {
-  wallet: KeyringAccountWithAlias;
-  isCurrentAddress?: boolean;
-  isInModal?: boolean;
+  account: KeyringAccountWithAlias;
+  lastSelectedAccount?: KeyringAccountWithAlias;
+  onSelect?: () => void;
 }
-export const AddressItem = (props: AddressItemProps) => {
-  const { wallet, isCurrentAddress, isInModal } = props;
+export const AddressItemEntry = (props: AddressItemProps) => {
+  const { account, lastSelectedAccount, onSelect } = props;
   const { switchAccount } = useCurrentAccount();
+  const { styles } = useTheme2024({ getStyle });
+  const removeAccount = useDeleteAccountModal();
+  const editAliasName = useAliasNameEditModal();
+  const showAddressDetail = useAddressDetailModal();
+  const [isPressing, setIsPressing] = React.useState(false);
 
-  const themeColors = useThemeColors();
-  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
-  const navigation = useNavigation<any>();
-
-  const isWalletConnect = wallet?.type === KEYRING_TYPE.WalletConnectKeyring;
-
-  const removeAccount = useRemoveAccount();
-  const { togglePinAddressAsync } = usePinAddresses({
-    disableAutoFetch: false,
-  });
-
-  const gotoAddressDetail = useCallback(() => {
-    navigation.push(RootNames.StackAddress, {
-      screen: RootNames.AddressDetail,
-      params: {
-        address: wallet.address,
-        type: wallet.type,
-        brandName: wallet.brandName,
-        // byImport: wallet?.byImport,
-      },
+  const onDetail = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
     });
-  }, [navigation, wallet.address, wallet.type, wallet.brandName]);
+    switchAccount(account);
+    onSelect?.();
+    navigate(RootNames.SingleAddressStack, {
+      screen: RootNames.SingleAddressHome,
+    });
+  }, [account, onSelect, switchAccount]);
 
-  const handleSwitch = useCallback(async () => {
-    if (isCurrentAddress) {
-      gotoAddressDetail();
-    } else {
-      switchAccount(wallet);
-      navigate(RootNames.StackRoot, { screen: RootNames.Home });
-    }
-  }, [isCurrentAddress, gotoAddressDetail, switchAccount, wallet]);
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+  const menuActions = React.useMemo(() => {
+    return [
+      {
+        title: 'Edit Name',
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+        androidIconName: 'ic_rabby_menu_edit',
+        key: 'edit',
+        action() {
+          editAliasName.show(account);
+        },
+      },
 
-  const swipeRef = useRef<Swipeable>(null);
+      {
+        title: 'Address Details',
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
+        key: 'detail',
+        androidIconName: 'ic_rabby_menu_more',
+        action() {
+          showAddressDetail({ account });
+        },
+      },
+      {
+        title: 'Delete',
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+        key: 'delete',
+        androidIconName: 'ic_rabby_menu_delete',
+        destructive: true,
+        action() {
+          removeAccount({ account });
+        },
+      },
+    ] as MenuAction[];
+  }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
 
-  const renderRightAction = useCallback(
-    (
-      type: 'pin' | 'delete',
-      color: string,
-      x: number,
-      progress: Animated.AnimatedInterpolation<number>,
-    ) => {
-      const trans = progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [x, 0],
-      });
-      const pressHandler = () => {
-        if (type === 'delete') {
-          removeAccount(wallet);
-        }
-        if (type === 'pin') {
-          togglePinAddressAsync({
-            address: wallet.address,
-            brandName: wallet.brandName,
-          });
-        }
-        swipeRef.current?.close();
-      };
-
-      return (
-        <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
-          <RectButton
-            style={[styles.rightAction, { backgroundColor: color }]}
-            onPress={pressHandler}>
-            {type === 'pin' && <RcIconAddressPin style={styles.actionIcon} />}
-            {type === 'delete' && (
-              <RcIconAddressDelete style={styles.actionIcon} />
-            )}
-          </RectButton>
-        </Animated.View>
-      );
-    },
-    [
-      styles.rightAction,
-      styles.actionIcon,
-      removeAccount,
-      wallet,
-      togglePinAddressAsync,
-    ],
-  );
-
-  const disableDeleteButton =
-    wallet.type === KEYRING_TYPE.SimpleKeyring ||
-    wallet.type === KEYRING_TYPE.HdKeyring;
+  const isCurrentAccount = React.useMemo(() => {
+    return (
+      lastSelectedAccount &&
+      isSameAddress(lastSelectedAccount.address, account.address) &&
+      lastSelectedAccount.type === account.type
+    );
+  }, [lastSelectedAccount, account]);
 
   return (
-    <Swipeable
-      ref={swipeRef}
-      containerStyle={StyleSheet.compose(
-        styles.swipeContainer,
-        isCurrentAddress && styles.currentAddressView,
-      )}
-      rightThreshold={40}
-      overshootRight={false}
-      renderRightActions={useMemo(
-        () =>
-          isCurrentAddress
-            ? () => null
-            : (
-                progress: Animated.AnimatedInterpolation<number>,
-                _dragAnimatedValue: Animated.AnimatedInterpolation<number>,
-              ) => (
-                <View
-                  style={{
-                    width: disableDeleteButton ? 56 : 112,
-                    flexDirection: 'row',
-                  }}>
-                  {renderRightAction(
-                    'pin',
-                    themeColors['blue-default'],
-                    112,
-                    progress,
-                  )}
-                  {!disableDeleteButton &&
-                    renderRightAction(
-                      'delete',
-                      themeColors['red-default'],
-                      56,
-                      progress,
-                    )}
-                </View>
-              ),
-        [disableDeleteButton, isCurrentAddress, renderRightAction, themeColors],
-      )}>
+    <ContextMenuView
+      menuConfig={{
+        menuTitle: account.aliasName,
+        menuActions: menuActions,
+      }}
+      triggerProps={{ action: 'longPress' }}>
       <TouchableOpacity
-        onPress={handleSwitch}
-        style={StyleSheet.compose(
-          styles.box,
-          StyleSheet.compose(
-            isCurrentAddress && styles.currentAddressView,
-            isCurrentAddress && isWalletConnect && styles.isWalletConnect,
-          ),
-        )}>
-        <AddressItemInner
-          wallet={wallet}
-          isCurrentAddress={isCurrentAddress}
-          isInModal={isInModal}
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([
+          styles.root,
+          isPressing && styles.rootPressing,
+        ])}
+        delayLongPress={200} // long press delay
+        onPress={onDetail}
+        onLongPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}>
+        <AddressItemInner2024
+          isPressing={isCurrentAccount || isPressing}
+          account={account}
         />
-
-        {isCurrentAddress && isWalletConnect && (
-          <SessionStatusBar
-            address={wallet.address}
-            brandName={wallet.brandName}
-          />
-        )}
       </TouchableOpacity>
-    </Swipeable>
+    </ContextMenuView>
   );
 };

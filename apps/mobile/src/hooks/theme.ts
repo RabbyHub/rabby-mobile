@@ -9,12 +9,14 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 
 import {
   ThemeColors,
+  ThemeColors2024,
   AppColorsVariants,
   AppThemeScheme,
   AppColorSchemes,
+  AppColors2024Variants,
 } from '@/constant/theme';
 import { atomByMMKV } from '@/core/storage/mmkv';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
@@ -157,6 +159,40 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
 
   return {
     ...cs,
+    appThemeMode,
+    isLight,
+  };
+}
+
+export function useTheme2024<
+  T extends ReturnType<typeof createGetStyles2024>,
+>(opts?: { getStyle?: T; isLight?: boolean }) {
+  const { getStyle } = opts || {};
+  const appThemeMode = useGetBinaryMode();
+  const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
+  const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
+
+  const isLight =
+    typeof opts?.isLight === 'boolean'
+      ? opts?.isLight
+      : appThemeMode === 'light';
+
+  const cs = React.useMemo(() => {
+    return {
+      styles: getStyle?.({
+        colors: classicalColors,
+        colors2024,
+        classicalColors,
+        isLight,
+      }) as T extends void ? void : ReturnType<T>,
+    };
+  }, [colors2024, classicalColors, getStyle, isLight]);
+
+  return {
+    ...cs,
+    colors: classicalColors,
+    classicalColors,
+    colors2024,
     appThemeMode,
     isLight,
   };

@@ -17,9 +17,12 @@ export const useImportKeystone = () => {
       startNumber: 1,
       hdPath: LedgerHDPathType.BIP44,
     });
-    navigate(RootNames.ImportMoreAddress, {
-      type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
-      brand: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportMoreAddress,
+      params: {
+        type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+        brand: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+      },
     });
   }, [setSetting]);
 

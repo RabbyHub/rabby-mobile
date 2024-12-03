@@ -29,10 +29,13 @@ import {
 import { GasAccountWrapperBg } from './components/WrapperBg';
 import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
 import { useCurrentAccount } from '@/hooks/account';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 const DEPOSIT_LIMIT = 1000;
 
 export const GasAccountScreen = () => {
+  useLastUsedAccountInScreen();
+
   const colors = useThemeColors();
   const { t } = useTranslation();
   const [showDesposit, setShowDesposit] = useState(false);
@@ -53,15 +56,15 @@ export const GasAccountScreen = () => {
 
   const gotoDashboard = useGasAccountGoBack();
 
-  const { accountId } = useGasAccountSign();
+  // const { accountId } = useGasAccountSign();
 
-  const { currentAccount } = useCurrentAccount();
+  // const { currentAccount } = useCurrentAccount();
 
   const gotoDesposit = () => {
-    if (accountId && currentAccount?.address !== accountId) {
-      setSwitchAddrVisible(true);
-      return;
-    }
+    // if (accountId && currentAccount?.address !== accountId) {
+    //   setSwitchAddrVisible(true);
+    //   return;
+    // }
     setShowDesposit(true);
   };
 
@@ -87,11 +90,11 @@ export const GasAccountScreen = () => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
-  useEffect(() => {
-    if (!isLogin) {
-      setLoginVisible(true);
-    }
-  }, [isLogin, setLoginVisible]);
+  // useEffect(() => {
+  //   if (!isLogin) {
+  //     setLoginVisible(true);
+  //   }
+  // }, [isLogin, setLoginVisible]);
 
   useEffect(() => {
     if (!loading && !isLogin) {

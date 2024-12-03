@@ -20,6 +20,7 @@ export const TokenScreen = ({ onRefresh }: { onRefresh(): void }) => {
   const sortTokens = useSortToken(tokens);
   return (
     <TokenWallet
+      currentAccount={currentAccount}
       tokens={sortTokens}
       testnetTokens={testnetTokens}
       blockedTokens={blockedTokens}

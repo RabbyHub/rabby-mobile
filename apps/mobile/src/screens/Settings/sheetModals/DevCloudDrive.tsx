@@ -21,7 +21,7 @@ import {
   RcGoogleDrive,
   RcGoogleSignout,
 } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop } from './devTest';
+import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 
 const cloudDriveTestItemModalVisibleAtom = atom(false);
 export function useCloudDriveTestItemModalVisible() {
@@ -130,25 +130,20 @@ export default function CloudDriveTestItemModal({
             const itemKey = `testitem-${item.label}`;
 
             return (
-              <TouchableView
-                style={[
-                  styles.settingItem,
-                  idx > 0 && styles.notFirstOne,
-                  { opacity: item.disabled ? 0.6 : 1 },
-                ]}
+              <GeneralTestItem
+                {...item}
                 key={itemKey}
-                disabled={!item.onPress}
-                onPress={() => {
-                  item.onPress?.();
-
-                  setCloudDriveTestItemModalVisible(false);
+                itemIndex={idx}
+                afterPress={async result => {
+                  if (!result?.keepModalVisible)
+                    setCloudDriveTestItemModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
                 <RcArrowRightCC color={colors['neutral-foot']} />
-              </TouchableView>
+              </GeneralTestItem>
             );
           })}
         </View>

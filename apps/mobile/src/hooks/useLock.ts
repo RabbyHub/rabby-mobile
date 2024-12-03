@@ -7,7 +7,10 @@ import { apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from './navigation';
 import { useFocusEffect } from '@react-navigation/native';
-import { SettingNavigatorParamList } from '@/navigation-type';
+import {
+  AddressNavigatorParamList,
+  SettingNavigatorParamList,
+} from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -299,7 +302,47 @@ export function useSetPasswordFirst() {
     [navigation, lockInfo],
   );
 
+  const shouldRedirectToSetPasswordBefore2024 = React.useCallback(
+    async ({
+      backScreen,
+      isFirstImportPassword,
+    }: {
+      backScreen: (AddressNavigatorParamList['SetPassword2024'] & {
+        actionAfterSetup: 'backScreen';
+      })['finishGoToScreen'];
+      isFirstImportPassword?: boolean;
+    }) => {
+      if (!APP_FEATURE_SWITCH.customizePassword) {
+        return false;
+      }
+      // if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+      //   return false;
+      // }
+      const shouldAsk = await apisLock.shouldAskSetPassword();
+      if (!shouldAsk) {
+        return false;
+      }
+
+      if (backScreen) {
+        navigation.push(RootNames.StackAddress, {
+          screen: RootNames.SetPassword2024,
+          params: {
+            title: 'Set Password',
+            hideProgress: true,
+            finishGoToScreen: backScreen,
+            isFirstImportPassword,
+            hideBackIcon: isFirstImportPassword,
+          },
+        });
+        return true;
+      }
+      return false;
+    },
+    [navigation],
+  );
+
   return {
     shouldRedirectToSetPasswordBefore,
+    shouldRedirectToSetPasswordBefore2024,
   };
 }

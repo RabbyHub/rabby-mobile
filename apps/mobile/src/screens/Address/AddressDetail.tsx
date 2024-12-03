@@ -95,9 +95,9 @@ interface AddressInfoProps {
   account: KeyringAccountWithAlias;
 }
 
-const AddressInfo = (props: AddressInfoProps) => {
+export const AddressInfo = (props: AddressInfoProps) => {
   const { account } = props;
-  const navigation = useNavigation<AddressDetailProps['navigation']>();
+  // const navigation = useNavigation<AddressDetailProps['navigation']>();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const [aliasName, setAliasName] = useAlias(account.address);
@@ -179,11 +179,11 @@ const AddressInfo = (props: AddressInfoProps) => {
     try {
       await removeAccount(account);
       handleCloseDeleteModalPress();
-      navigation.goBack();
+      // navigation.goBack();
     } catch (error) {
       console.log('handleDelete', error);
     }
-  }, [account, handleCloseDeleteModalPress, navigation, removeAccount]);
+  }, [account, handleCloseDeleteModalPress, removeAccount]);
 
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
   const handlePresentDeleteModalPress = useCallback(async () => {

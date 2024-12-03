@@ -21,6 +21,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { Linking, Platform } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
+import { Account } from '@/core/services/preference';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -82,36 +83,42 @@ export const useGasAccountMethods = () => {
 
   const setGasAccount = useSetGasAccount();
 
-  const login = useCallback(async () => {
-    const account = await preferenceService.getCurrentAccount();
-    if (!account) throw new Error('background.error.noCurrentAccount');
-    const { text } = await openapi.getGasAccountSignText(account.address);
-    const signature = await sendRequest<string>(
-      {
-        method: 'personal_sign',
-        params: [text, account.address],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
-
-    if (signature) {
-      const result = await pRetry(
-        async () =>
-          openapi.loginGasAccount({
-            sig: signature,
-            account_id: account.address,
-          }),
-        {
-          retries: 2,
-        },
-      );
-
-      if (result?.success) {
-        setGasAccount(signature, account);
-        setLoginVisible(false);
+  const login = useCallback(
+    async (selectAccount: Account | null) => {
+      const account =
+        selectAccount || (await preferenceService.getCurrentAccount());
+      if (!account) {
+        throw new Error('background.error.noCurrentAccount');
       }
-    }
-  }, [setGasAccount, setLoginVisible]);
+      console.debug('selectAccount', account);
+      const { text } = await openapi.getGasAccountSignText(account.address);
+      const signature = await sendRequest<string>(
+        {
+          method: 'personal_sign',
+          params: [text, account.address],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+      if (signature) {
+        const result = await pRetry(
+          async () =>
+            openapi.loginGasAccount({
+              sig: signature,
+              account_id: account.address,
+            }),
+          {
+            retries: 2,
+          },
+        );
+
+        if (result?.success) {
+          setGasAccount(signature, account);
+          setLoginVisible(false);
+        }
+      }
+    },
+    [setGasAccount, setLoginVisible],
+  );
 
   const logout = useCallback(async () => {
     if (sig && accountId) {

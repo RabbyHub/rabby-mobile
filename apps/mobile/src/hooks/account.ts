@@ -25,6 +25,7 @@ import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
+import { appServiceEvents } from '@/core/services/_utils';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -103,7 +104,38 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   }, [disableAutoFetch, fetchAccounts]);
 
   return {
-    accounts,
+    accounts: [...accounts],
+    fetchAccounts,
+  };
+}
+
+export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
+  const [accounts, setAccounts] = useAtom(accountsAtom);
+
+  const { disableAutoFetch = false } = opts || {};
+
+  const doFetchAccounts = useCallback(async () => {
+    const nextAccounts = await fetchAllAccounts();
+    setAccounts(nextAccounts);
+  }, [setAccounts]);
+
+  const { fetchAction: fetchAccounts } = useAtomicRequest({
+    isRequestingAtom: fetchingAccountsAtom,
+    doRequest: doFetchAccounts,
+  });
+
+  useEffect(() => {
+    if (!disableAutoFetch) {
+      fetchAccounts();
+    }
+  }, [disableAutoFetch, fetchAccounts]);
+
+  return {
+    accounts: [
+      ...accounts.filter(
+        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+      ),
+    ],
     fetchAccounts,
   };
 }
@@ -114,7 +146,10 @@ const fetchingCurrentAccountAtom = atom(false);
  * @description this hooks GET CURRENT account and re-PICK it from accounts, so you need to
  * ensure the accounts is fetched/updated before using this hook
  */
-export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
+export function useCurrentAccount(options?: {
+  disableAutoFetch?: boolean;
+  isTop?: true;
+}) {
   const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
   const [accounts] = useAtom(accountsAtom);
 
@@ -140,6 +175,10 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
     doRequest: doFetchCurrentAccount,
   });
 
+  const fetchCurrentAccountAsync = useCallback(async () => {
+    return fetchCurrentAccount();
+  }, [fetchCurrentAccount]);
+
   const switchAccount = useCallback(
     (account: Account) => {
       preferenceService.setCurrentAccount(account);
@@ -148,29 +187,54 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
     [setCurrentAccount],
   );
 
-  const { disableAutoFetch = false } = options || {};
+  const { disableAutoFetch = false, isTop = false } = options || {};
 
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchCurrentAccount();
+      fetchCurrentAccountAsync();
     }
-  }, [disableAutoFetch, fetchCurrentAccount]);
+  }, [disableAutoFetch, fetchCurrentAccountAsync]);
 
   return {
     switchAccount,
     fetchCurrentAccount,
+    fetchCurrentAccountAsync,
     currentAccount,
   };
+}
+
+/**
+ * @description this hooks will listen to the event of current account changed
+ */
+export function useCurrentAccountOnAppTop() {
+  const { fetchCurrentAccountAsync } = useCurrentAccount();
+  useEffect(() => {
+    const listener = () => {
+      fetchCurrentAccountAsync();
+    };
+    appServiceEvents.on('currentAccountChanged', listener);
+
+    return () => {
+      appServiceEvents.off('currentAccountChanged', listener);
+    };
+  }, [fetchCurrentAccountAsync]);
 }
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
 
-  const getPinAddressesAsync = useCallback(() => {
+  /**
+   * @deprecated
+   */
+  const getPinAddresses = useCallback(() => {
     const addresses = preferenceService.getPinAddresses();
     setPinAddresses(addresses);
   }, [setPinAddresses]);
+
+  const getPinAddressesAsync = useCallback(async () => {
+    return getPinAddresses();
+  }, [getPinAddresses]);
 
   const togglePinAddressAsync = useCallback(
     (payload: {

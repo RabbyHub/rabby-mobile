@@ -43,6 +43,7 @@ function NativeStackNavigator({
 
   React.useEffect(
     () =>
+      // @ts-expect-error
       navigation?.addListener?.('tabPress', (e: any) => {
         const isFocused = navigation.isFocused();
 
@@ -78,16 +79,11 @@ function NativeStackNavigator({
   );
 }
 
-export default createNavigatorFactory<
-  StackNavigationState<ParamListBase>,
-  NativeStackNavigationOptions,
-  NativeStackNavigationEventMap,
-  typeof NativeStackNavigator
->(NativeStackNavigator);
-
 export const createCustomNativeStackNavigator = createNavigatorFactory<
   StackNavigationState<ParamListBase>,
   NativeStackNavigationOptions,
   NativeStackNavigationEventMap,
   typeof NativeStackNavigator
 >(NativeStackNavigator);
+
+export default createCustomNativeStackNavigator;

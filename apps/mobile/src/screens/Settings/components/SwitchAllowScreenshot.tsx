@@ -2,18 +2,27 @@ import React, { useCallback } from 'react';
 
 import { AppSwitch, SwitchToggleType } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
-import { useAllowScreenshot } from '@/hooks/appSettings';
+import { useForceAllowScreenshot } from '@/hooks/appSettings';
+import { IS_IOS } from '@/core/native/utils';
+import { Alert } from 'react-native';
 
 export const SwitchAllowScreenshot = React.forwardRef<
   SwitchToggleType,
   React.ComponentProps<typeof AppSwitch>
 >((props, ref) => {
-  const { allowScreenshot, setAllowScreenshot } = useAllowScreenshot();
+  const { forceAllowScreenshot, setAllowScreenshot } =
+    useForceAllowScreenshot();
   const colors = useThemeColors();
 
   const handleToggle = useCallback(
     (value?: boolean) => {
       setAllowScreenshot(prev => value ?? !prev);
+      if (IS_IOS) {
+        Alert.alert(
+          `Restart required`,
+          `Please restart the app for the changes to take effect`,
+        );
+      }
     },
     [setAllowScreenshot],
   );
@@ -28,10 +37,10 @@ export const SwitchAllowScreenshot = React.forwardRef<
     <AppSwitch
       {...props}
       circleSize={20}
-      value={!!allowScreenshot}
+      value={!!forceAllowScreenshot}
       changeValueImmediately={false}
       onValueChange={() => {
-        handleToggle(!allowScreenshot);
+        handleToggle(!forceAllowScreenshot);
       }}
       backgroundActive={colors['green-default']}
       circleBorderActiveColor={colors['green-default']}

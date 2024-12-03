@@ -1,53 +1,59 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '../QRCodeScanner/QRCodeScanner';
 import { Code } from 'react-native-vision-camera';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { apiKeystone } from '@/core/apis';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    root: {
-      height: '100%',
-      position: 'relative',
-    },
-    main: {
-      flex: 1,
-      alignItems: 'center',
-      paddingHorizontal: 48,
-    },
-    text: {
-      fontSize: 16,
-      color: colors['neutral-body'],
-      lineHeight: 20,
-      textAlign: 'center',
-    },
-    imageWrapper: {
-      marginTop: 55,
-      position: 'relative',
-    },
-    progress: {
-      position: 'absolute',
-      top: -15,
-      left: -15,
-    },
-    scanner: {
-      width: 240,
-      height: 240,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  root: {
+    height: '100%',
+    position: 'relative',
+  },
+  main: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  text: {
+    fontSize: 17,
+    color: colors2024['neutral-secondary'],
+    lineHeight: 22,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
+  imageWrapper: {
+    marginTop: 24,
+    position: 'relative',
+  },
+  progress: {
+    position: 'absolute',
+    top: -15,
+    left: -15,
+  },
+  scanner: {
+    width: 250,
+    height: 250,
+  },
+  titleText: {
+    fontSize: 20,
+    color: colors2024['neutral-title-1'],
+    lineHeight: 24,
+    fontFamily: 'SF Pro Rounded',
+  },
+}));
 
 export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
   onScanFinish,
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
   const decoder = React.useRef(new URDecoder());
   const [progress, setProgress] = React.useState(0);
   const [errorMessage, setErrorMessage] = React.useState('');
@@ -99,6 +105,7 @@ export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
     <View style={styles.root}>
       <AppBottomSheetModalTitle
         title={t('page.newAddress.keystone.scan.title')}
+        style={styles.titleText}
       />
       <View style={styles.main}>
         <Text style={styles.text}>

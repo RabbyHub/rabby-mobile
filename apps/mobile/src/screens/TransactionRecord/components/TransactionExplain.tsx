@@ -1,26 +1,11 @@
-// import { ExplainTxResponse } from 'background/service/openapi';
-// import React from 'react';
-// import { Trans, useTranslation } from 'react-i18next';
-// import { SvgIconOpenExternal } from 'ui/assets';
-// import IconUser from 'ui/assets/address-management.svg';
-// import IconUnknown from 'ui/assets/icon-unknown.svg';
-// import { splitNumberByStep } from 'ui/utils/number';
-
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Trans, useTranslation } from 'react-i18next';
 import RcIconUnknown from '@/assets/icons/transaction-record/icon-unknown.svg';
-import {
-  Image,
-  ImageStyle,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, ImageStyle, StyleProp, Text, View } from 'react-native';
 import { splitNumberByStep } from '@/utils/number';
 import RcIconSend from '@/assets/icons/history/send.svg';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 const ImageWraper = ({
   src,
@@ -54,8 +39,7 @@ export const TransactionExplain = ({
   isWithdrawed: boolean;
   explain?: ExplainTxResponse;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   let icon: React.ReactNode = <RcIconUnknown />;
   let content: string | React.ReactNode = t(
@@ -227,28 +211,30 @@ export const TransactionExplain = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    explain: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      flex: 1,
-    },
-    logo: {
-      width: 20,
-      height: 20,
-      borderRadius: 2,
-    },
-    title: {
-      fontSize: 15,
-      lineHeight: 18,
-      color: colors['neutral-title1'],
-    },
-    status: {
-      color: colors['red-default'],
-      fontSize: 12,
-      lineHeight: 14,
-      marginLeft: 'auto',
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  explain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  logo: {
+    width: 20,
+    height: 20,
+    borderRadius: 2,
+  },
+  title: {
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
+  status: {
+    color: colors2024['red-default'],
+    fontSize: 12,
+    lineHeight: 14,
+    marginLeft: 'auto',
+    fontFamily: 'SF Pro Rounded',
+  },
+}));

@@ -82,11 +82,10 @@ jobs:
       - name: Install and build
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
-          yarn install;
-          yarn postinstall;
           cd apps/mobile;
+          rm -rf node_modules;
+          yarn install;
           bundle install;
-          yarn prepare-archive;
 
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";

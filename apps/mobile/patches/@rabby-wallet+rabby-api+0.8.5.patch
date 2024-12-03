@@ -1,0 +1,22 @@
+diff --git a/node_modules/@rabby-wallet/rabby-api/dist/types.d.ts b/node_modules/@rabby-wallet/rabby-api/dist/types.d.ts
+index d3b20d0..595005f 100644
+--- a/node_modules/@rabby-wallet/rabby-api/dist/types.d.ts
++++ b/node_modules/@rabby-wallet/rabby-api/dist/types.d.ts
+@@ -258,14 +258,14 @@ export interface NFTItem {
+     id: string;
+     contract_id: string;
+     inner_id: string;
+-    token_id: string;
++    token_id?: string;
+     name: string;
+     contract_name: string;
+     description: string;
+-    usd_price: number;
++    usd_price?: number;
+     amount: number;
+     collection_id?: string;
+-    pay_token: {
++    pay_token?: {
+         id: string;
+         name: string;
+         symbol: string;

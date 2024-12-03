@@ -111,3 +111,6 @@ export const RcGoogleSignout = makeThemeIconFromCC(
   RcGoogleSignoutCC,
   'neutral-body',
 );
+
+import { default as RcCodeCC } from './code-cc.svg';
+export const RcCode = makeThemeIconFromCC(RcCodeCC, 'neutral-body');

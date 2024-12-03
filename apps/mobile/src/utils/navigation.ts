@@ -1,5 +1,7 @@
+import { RootNames } from '@/constant/layout';
 import { RootStackParamsList } from '@/navigation-type';
 import {
+  CommonActions,
   StackActions,
   createNavigationContainerRef,
 } from '@react-navigation/native';
@@ -67,3 +69,82 @@ export const redirectBackErrorHandler = (
     });
   }
 };
+
+export function redirectToAddAddressEntry(options?: {
+  action?: `${'' | 'classical:'}${'push' | 'replace' | 'resetTo'}`;
+}) {
+  // navigate(RootNames.StackAddress, {
+  //   screen: RootNames.ImportNewAddress,
+  // });
+
+  const action = options?.action || 'classical:push';
+
+  switch (action) {
+    case 'classical:push': {
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportNewAddress,
+      });
+      break;
+    }
+    case 'classical:replace': {
+      replace(RootNames.StackAddress, {
+        screen: RootNames.ImportNewAddress,
+      });
+      break;
+    }
+    case 'classical:resetTo': {
+      navigationRef.resetRoot({
+        index: 0,
+        routes: [
+          {
+            name: 'Root',
+            state: {
+              index: 0,
+              routes: [{ name: RootNames.ImportNewAddress }],
+            },
+          },
+        ],
+      });
+      break;
+    }
+    case 'replace':
+      replace(RootNames.StackGetStarted, {
+        screen: RootNames.GetStartedScreen2024,
+      });
+      break;
+    case 'resetTo':
+      navigationRef.resetRoot({
+        index: 0,
+        routes: [
+          {
+            name: RootNames.StackGetStarted,
+            state: {
+              index: 0,
+              routes: [{ name: RootNames.GetStartedScreen2024 }],
+            },
+          },
+        ],
+      });
+      break;
+    case 'push':
+    default:
+      navigate(RootNames.StackGetStarted, {
+        screen: RootNames.GetStartedScreen2024,
+      });
+      break;
+  }
+}
+
+export const replaceToFirst = ((name: any, params?: object) => {
+  if (navigationRef.isReady()) {
+    navigationRef.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name, params }],
+      }),
+    );
+  } else {
+    // You can decide what to do if react navigation is not ready
+    // You can ignore this, or add these actions to a queue you can call later
+  }
+}) as typeof navigationRef.navigate;

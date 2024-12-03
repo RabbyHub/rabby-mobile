@@ -9,6 +9,8 @@ export default function ApprovalTokenDetailSheetModalStub() {
   return (
     <>
       <BottomSheetModalTokenDetail
+        __shouldSwitchSceneAccountBeforeRedirect__={false}
+        nextTxRedirectAccount={null}
         canClickToken={false}
         hideOperationButtons
         ref={sheetModalRef}

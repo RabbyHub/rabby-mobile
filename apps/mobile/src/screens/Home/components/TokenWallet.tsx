@@ -16,11 +16,10 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { SMALL_TOKEN_ID } from '@/utils/token';
-import { makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSetState } from 'ahooks';
@@ -34,10 +33,20 @@ import { CustomTokenListPopup } from './CustomTokenListPopup';
 import { PositionLoader } from './Skeleton';
 import { TokenWalletFooter } from './TokenWalletFooter';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { Account } from '@/core/services/preference';
+
+const formatPercentage = (x: number) => {
+  if (Math.abs(x) < 0.00001) {
+    return '0%';
+  }
+  const percentage = (x * 100).toFixed(3);
+  return `${x >= 0 ? '+' : ''}${percentage}%`;
+};
 
 const ITEM_HEIGHT = 68;
 
 type TokenWalletProps = {
+  currentAccount?: Account | null;
   tokens?: AbstractPortfolioToken[];
   testnetTokens?: AbstractPortfolioToken[];
   customizeTokens?: AbstractPortfolioToken[];
@@ -67,8 +76,19 @@ const TokenRow = memo(
     onSmallTokenPress?(token: AbstractPortfolioToken): void;
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
-    const colors = useThemeColors();
-    const styles = useMemo(() => getStyle(colors), [colors]);
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const percentColor = useMemo(() => {
+      if (
+        !data?.price_24h_change ||
+        Math.abs(data.price_24h_change) < 0.00001
+      ) {
+        return colors2024['neutral-secondary'];
+      }
+      if (data.price_24h_change > 0) {
+        return colors2024['green-default'];
+      }
+      return colors2024['red-default'];
+    }, [colors2024, data.price_24h_change]);
 
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
@@ -91,7 +111,7 @@ const TokenRow = memo(
           {data?.id === SMALL_TOKEN_ID ? (
             <Image
               source={require('@/assets/icons/assets/small-token.png')}
-              style={styles.tokenRowLogo}
+              style={styles.smallTokenRowLogo}
             />
           ) : (
             <AssetAvatar
@@ -114,7 +134,10 @@ const TokenRow = memo(
                   ellipsizeMode="tail">
                   {data.symbol}
                 </Text>
-                <RcArrowRight2CC color={colors['neutral-foot']} />
+                <RcArrowRight2CC
+                  style={styles.arrow}
+                  color={colors2024['neutral-body']}
+                />
               </View>
             ) : (
               <Text
@@ -125,18 +148,28 @@ const TokenRow = memo(
               </Text>
             )}
             {data._priceStr ? (
-              <Text style={styles.tokenRowPrice} numberOfLines={1}>
-                {data._priceStr}
+              <Text style={styles.amountStr} numberOfLines={1}>
+                {`${data._amountStr} ${data.symbol}`}
               </Text>
             ) : null}
           </View>
         </View>
 
         <View style={styles.tokenRowUsdValueWrap}>
+          <Text
+            style={
+              data._amountStr ? styles.tokenRowAmount : styles.tokenRowUsdValue
+            }>
+            {data._usdValueStr}
+          </Text>
           {data._amountStr ? (
-            <Text style={styles.tokenRowAmount}>{data._amountStr}</Text>
+            <Text
+              style={StyleSheet.compose(styles.percent, {
+                color: percentColor,
+              })}>
+              {formatPercentage(data.price_24h_change || 0)}
+            </Text>
           ) : null}
-          <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -144,6 +177,7 @@ const TokenRow = memo(
 );
 
 export const TokenWallet = ({
+  currentAccount,
   tokens,
   testnetTokens,
   customizeTokens,
@@ -155,8 +189,7 @@ export const TokenWallet = ({
   isPortfoliosLoading,
   onRefresh,
 }: TokenWalletProps) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyle(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const refreshing = useMemo(() => {
     if ((tokens?.length || 0) > 0) {
@@ -211,7 +244,7 @@ export const TokenWallet = ({
           showHistory={showHistory}
           onSmallTokenPress={handleOpenSmallToken}
           onTokenPress={handleOpenTokenDetail}
-          logoSize={36}
+          logoSize={40}
         />
       );
     },
@@ -294,8 +327,10 @@ export const TokenWallet = ({
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
+        contentContainerStyle={styles.bgContainer}
         refreshControl={
           <RefreshControl
+            style={styles.bgContainer}
             onRefresh={() => {
               refreshPositions();
               onRefresh();
@@ -327,6 +362,8 @@ export const TokenWallet = ({
         </AutoLockView>
       </AppBottomSheetModal>
       <BottomSheetModalTokenDetail
+        __shouldSwitchSceneAccountBeforeRedirect__
+        nextTxRedirectAccount={currentAccount}
         ref={tokenDetailModalRef}
         token={focusingToken}
         isTestnet={isTestnetToken}
@@ -407,91 +444,119 @@ export const TokenWallet = ({
     </>
   );
 };
+const getStyles = createGetStyles2024(ctx => ({
+  handlableHead: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 1,
+    marginBottom: 2,
+  },
+  titleText: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  bgContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  tokenRowWrap: {
+    height: 72,
+    width: '100%',
+    paddingHorizontal: 20,
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tokenRowTokenWrap: {
+    flexShrink: 1,
+    flexDirection: 'row',
+    maxWidth: '70%',
+  },
+  tokenSymbol: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    width: '100%',
+    // ...makeDebugBorder(),
+  },
+  tokenRowLogo: {
+    marginRight: 12,
+  },
+  smallTokenRowLogo: {
+    marginRight: 12,
+    width: 40,
+    height: 40,
+  },
+  tokenRowTokenInner: {
+    flexShrink: 1,
+    justifyContent: 'center',
+  },
+  tokenRowTokenInnerSmallToken: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    display: 'flex',
+  },
+  amountStr: {
+    marginTop: 2,
+    color: ctx.colors2024['neutral-foot'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+  },
+  tokenRowChange: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  tokenRowUsdValueWrap: {
+    flexShrink: 0,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+  },
+  tokenRowAmount: {
+    marginBottom: 2,
+    textAlign: 'right',
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenRowUsdValue: {
+    textAlign: 'right',
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
+  percent: {
+    textAlign: 'right',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+  },
+  smallTokenSymbol: {
+    color: ctx.colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    width: 'auto',
+  },
+  arrow: {
+    width: 14,
+    height: 14,
+  },
 
-const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    handlableHead: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 1,
-      marginBottom: 2,
-    },
-    titleText: {
-      color: colors['neutral-title-1'],
-      fontSize: 20,
-      fontWeight: '600',
-    },
-    tokenRowWrap: {
-      height: 68,
-      width: '100%',
-      paddingHorizontal: 20,
-      flexGrow: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    tokenRowTokenWrap: {
-      flexShrink: 1,
-      flexDirection: 'row',
-      maxWidth: '70%',
-    },
-    tokenSymbol: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '600',
-      width: '100%',
-      // ...makeDebugBorder(),
-    },
-    tokenRowLogo: {
-      marginRight: 12,
-    },
-    tokenRowTokenInner: {
-      flexShrink: 1,
-      justifyContent: 'center',
-    },
-    tokenRowTokenInnerSmallToken: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    tokenRowPrice: {
-      marginTop: 2,
-      color: colors['neutral-foot'],
-      fontSize: 13,
-      fontWeight: '400',
-    },
-    tokenRowChange: {
-      fontSize: 10,
-      fontWeight: '500',
-    },
-    tokenRowUsdValueWrap: {
-      flexShrink: 0,
-      justifyContent: 'flex-end',
-      alignItems: 'flex-end',
-    },
-    tokenRowAmount: {
-      marginBottom: 2,
-      textAlign: 'right',
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    tokenRowUsdValue: {
-      textAlign: 'right',
-      color: colors['neutral-foot'],
-      fontSize: 13,
-      fontWeight: '400',
-    },
-    smallTokenSymbol: {
-      color: colors['neutral-title-1'],
-      fontSize: 13,
-      fontWeight: '400',
-      width: undefined,
-    },
-
-    // modal
-    scrollView: {
-      height: 150,
-      marginBottom: 15,
-    },
-  });
+  // modal
+  scrollView: {
+    height: 150,
+    marginBottom: 15,
+  },
+}));

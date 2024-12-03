@@ -1,11 +1,18 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { AppColorsVariants, ThemeColors } from './theme';
+import {
+  AppColors2024Variants,
+  AppColorsVariants,
+  ThemeColors,
+  ThemeColors2024,
+} from './theme';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
   titleTopOffset: 8,
 };
 
+// for DappWebViewControl
 export const ScreenLayouts = {
   headerAreaHeight: 56,
   bottomBarHeight: 60,
@@ -17,26 +24,48 @@ export const ScreenLayouts = {
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
 
+// for DappWebViewControl2
+export const ScreenLayouts2 = {
+  headerAreaHeight: 56,
+
+  dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
+  dappWebViewControlNavHeight: 68,
+};
+
+export const ScreenWithAccountSwitcherLayouts = {
+  /**
+   * @description for our app,
+   * - landscape layout is not supported
+   * - not for iPad/tvOS
+   *
+   * so the screen header height must be 56
+   * see details apps/mobile/node_modules/@react-navigation/elements/src/Header/getDefaultHeaderHeight.tsx
+   */
+  screenHeaderHeight: 56,
+
+  modalBottomSpace: 133,
+};
+
 export const ScreenColors = {
   homeHeaderBlue: '#434EB9',
 };
 
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
-
+  GetStartedScreen2024: 'GetStartedScreen2024',
+  CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
   NotFound: 'NotFound',
   Unlock: 'Unlock',
 
   StackBottom: 'StackBottom',
   Home: 'Home',
+  // MultiAddressHome: 'MultiAddressHome',
   Points: 'Points',
 
   Dapps: 'Dapps',
-  StackFavoritePopularDapps: 'StackFavoritePopularDapps',
-  FavoritePopularDapps: 'FavoritePopularDapps',
-  StackSearchDapps: 'StackSearchDapps',
-  SearchDapps: 'SearchDapps',
+  StackFavoriteDapps: 'StackFavoriteDapps',
+  FavoriteDapps: 'FavoriteDapps',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -44,39 +73,68 @@ export const RootNames = {
   CustomTestnet: 'CustomTestnet',
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
+  /** @deprecated */
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
   /* warning: dev only ------ end */
 
+  /* warning: testkits only ------ start */
+  StackTestkits: 'StackTestkits',
+  TestKits: 'TestKits',
+  NewUserGetStarted2024: 'NewUserGetStarted2024',
+  DevUIFontShowCase: 'DevUIFontShowCase',
+  DevUIFormShowCase: 'DevUIFormShowCase',
+  DevUIAccountShowCase: 'DevUIAccountShowCase',
+  DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
+  DevUIDapps: 'DevUIDapps',
+  /* warning: testkits only ------ start */
+
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
+  MultiSendNFT: 'MultiSendNFT',
   Receive: 'Receive',
   Swap: 'Swap',
+  MultiSwap: 'MultiSwap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
+  /** @deprecated */
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
+  MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
+  MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
-  CurrentAddress: 'CurrentAddress',
+  AddressList: 'AddressList',
   ImportNewAddress: 'ImportNewAddress',
+  ImportHardwareAddress: 'ImportHardwareAddress',
   ImportSuccess: 'ImportSuccess',
+  ImportSuccess2024: 'ImportSuccess2024',
+  ImportMethods: 'ImportMethods',
   ImportWatchAddress: 'ImportWatchAddress',
+  ImportWatchAddress2024: 'ImportWatchAddress2024',
   ImportSafeAddress: 'ImportSafeAddress',
+  ImportSafeAddress2024: 'ImportSafeAddress2024',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
+  CreateNewAddress: 'CreateNewAddress',
+  CreateSelectOnCurrentSeed: 'CreateSelectOnCurrentSeed',
+  SetPassword2024: 'SetPassword2024',
+  CreateChooseBackup: 'CreateChooseBackup',
 
   ImportLedger: 'ImportLedger',
   ImportMoreAddress: 'ImportMoreAddress',
   ImportPrivateKey: 'ImportPrivateKey',
+  ImportPrivateKey2024: 'ImportPrivateKey2024',
   ImportMnemonic: 'ImportMnemonic',
+  ImportMnemonic2024: 'ImportMnemonic2024',
   CreateMnemonic: 'CreateMnemonic',
   PreCreateMnemonic: 'PreCreateMnemonic',
   AddMnemonic: 'AddMnemonic',
@@ -86,6 +144,11 @@ export const RootNames = {
   BackupPrivateKey: 'BackupPrivateKey',
   BackupMnemonic: 'BackupMnemonic',
   RestoreFromCloud: 'RestoreFromCloud',
+  WatchAddressList: 'WatchAddressList',
+  SafeAddressList: 'SafeAddressList',
+
+  SingleAddressStack: 'SingleAddressStack',
+  SingleAddressHome: 'SingleAddressHome',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -122,11 +185,18 @@ function makeScreenSpecConfig() {
       : ('dark' as const);
 
     const colors = ThemeColors[isDarkTheme ? 'dark' : 'light'];
+    const colors2024 = ThemeColors2024[isDarkTheme ? 'dark' : 'light'];
 
     const bg1DefaultConf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
       androidStatusBarBg: colors['neutral-bg1'],
+    };
+
+    const bg1Default2024Conf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors2024['neutral-bg-1'],
     };
 
     const bg2DefaultConf = <ScreenStatusBarConf>{
@@ -157,14 +227,18 @@ function makeScreenSpecConfig() {
       '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
-        barStyle: 'light-content',
+        barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: 'rgba(0, 0, 0, 1)',
+        androidStatusBarBg: colors['neutral-bg-1'],
       },
       GetStarted: blueLightConf,
+      GetStartedScreen2024: bg1DefaultConf,
+      NewUserGetStarted2024: bg1DefaultConf,
 
       Home: bg1DefaultConf,
+      MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
+      MultiAddressHistory: bg1Default2024Conf,
 
       // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
@@ -172,20 +246,24 @@ function makeScreenSpecConfig() {
       // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
 
       // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // CurrentAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // AddressList: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       ImportWatchAddress: blueLightConf,
       ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,
+      // ImportSuccess2024: blueLightConf,
 
-      // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      Receive: blueLightConf,
+      Send: bg1Default2024Conf,
+      MultiSend: bg1Default2024Conf,
+      Swap: bg1Default2024Conf,
+      MultiSwap: bg1Default2024Conf,
+      // Receive: blueLightConf,
 
       GnosisTransactionQueue: card2DefaultConf,
 
       Approvals: bg2DefaultConf,
 
       SetPassword: blueLightConf,
+      SetPassword2024: bg1Default2024Conf,
       SetBiometricsAuthentication: bg1DefaultConf,
       Scanner: blueLightConf,
       // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
@@ -226,7 +304,8 @@ export const DEFAULT_NAVBAR_FONT_SIZE = 18;
 
 export function makeHeadersPresets({
   colors,
-}: { colors?: AppColorsVariants } = {}) {
+  colors2024,
+}: { colors?: AppColorsVariants; colors2024?: AppColors2024Variants } = {}) {
   const navigationBarHeaderTitle = {
     fontWeight: '500' as const,
     fontSize: DEFAULT_NAVBAR_FONT_SIZE,
@@ -242,6 +321,7 @@ export function makeHeadersPresets({
       headerBackVisible: false,
       headerTitleStyle: { ...navigationBarHeaderTitle },
     } as NativeStackNavigationOptions,
+    /** @deprecated */
     withBgCard2: {
       headerStyle: {
         backgroundColor: colors?.['neutral-card2'],
@@ -252,15 +332,48 @@ export function makeHeadersPresets({
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
+    /** @deprecated */
     withBg2: {
       headerStyle: {
         backgroundColor: colors?.['neutral-bg2'],
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        ...navigationBarHeaderTitle,
+        fontWeight: '700' as const,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: DEFAULT_NAVBAR_FONT_SIZE,
       },
       headerTintColor: colors?.['neutral-title-1'],
+    },
+    withBgCard1_2024: {
+      headerStyle: {
+        backgroundColor: colors2024?.['neutral-bg-1'],
+      },
+      headerTitleStyle: {
+        color: colors?.['neutral-title-1'],
+        fontWeight: '700' as const,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+      },
+      headerTintColor: colors?.['neutral-title-1'],
+    },
+    withBgCard2_2024: {
+      headerStyle: {
+        backgroundColor: colors?.['neutral-card2'],
+      },
+      headerTitleStyle: {
+        color: colors?.['neutral-title-1'],
+        fontWeight: '700' as const,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+      },
+      headerTintColor: colors?.['neutral-title-1'],
+    },
+    titleFont_2024: {
+      color: colors2024?.['neutral-title-1'],
+      fontWeight: '700' as const,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
     },
   };
 }

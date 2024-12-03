@@ -193,12 +193,15 @@ export const ImportSuccessScreen = () => {
     if (!state.isFirstImport) {
       return;
     }
-    navigate(RootNames.ImportMoreAddress, {
-      type: state.type,
-      brand: state.brandName,
-      mnemonics: state.mnemonics,
-      passphrase: state.passphrase,
-      keyringId: state.keyringId,
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportMoreAddress,
+      params: {
+        type: state.type,
+        brand: state.brandName,
+        mnemonics: state.mnemonics,
+        passphrase: state.passphrase,
+        keyringId: state.keyringId,
+      },
     });
   }, [state]);
 

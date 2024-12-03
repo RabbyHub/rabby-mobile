@@ -18,7 +18,12 @@ export const getPrivateKey = async (
 
 export const importPrivateKey = async data => {
   const privateKey = ethUtil.stripHexPrefix(data);
-  const buffer = Buffer.from(privateKey, 'hex');
+  const cleanedPrivateKey = privateKey
+    .replace(/\n/g, '')
+    .replace(/\r/g, '')
+    .trim();
+
+  const buffer = Buffer.from(cleanedPrivateKey, 'hex');
 
   const error = new Error(t('background.error.invalidPrivateKey'));
   try {
@@ -29,6 +34,6 @@ export const importPrivateKey = async data => {
     throw error;
   }
 
-  const keyring = await keyringService.importPrivateKey(privateKey);
+  const keyring = await keyringService.importPrivateKey(cleanedPrivateKey);
   return _setCurrentAccountFromKeyring(keyring);
 };

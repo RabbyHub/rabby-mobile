@@ -70,6 +70,25 @@ export default function ToAddressControl({
     }
   }, [handleFieldChange, scanner]);
 
+  const CustomIcon = useCallback<
+    React.ComponentProps<typeof FormInput>['customIcon'] & Function
+  >(
+    ctx => {
+      if (formValues.to) return null;
+      return (
+        <TouchableView
+          onPress={openCamera}
+          style={StyleSheet.flatten([
+            ctx.iconStyle,
+            styles.scanButtonContainer,
+          ])}>
+          <RcIconInnerScanner style={styles.scanIcon} />
+        </TouchableView>
+      );
+    },
+    [formValues.to, openCamera, styles],
+  );
+
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(formInputRef);
 
@@ -123,21 +142,7 @@ export default function ToAddressControl({
         inputStyle={[styles.input, !formValues.to && styles.inputWithoutValue]}
         hasError={!!errors.to}
         clearable={false}
-        customIcon={ctx => {
-          if (formValues.to) {
-            return null;
-          }
-          return (
-            <TouchableView
-              onPress={openCamera}
-              style={StyleSheet.flatten([
-                ctx.iconStyle,
-                styles.scanButtonContainer,
-              ])}>
-              <RcIconInnerScanner style={styles.scanIcon} />
-            </TouchableView>
-          );
-        }}
+        customIcon={CustomIcon}
         inputProps={{
           ...inputProps,
           multiline: true,
@@ -147,7 +152,7 @@ export default function ToAddressControl({
           },
           onBlur: formik.handleBlur('to'),
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
-          placeholder: 'Enter an address or scan',
+          placeholder: 'Enter an address',
           placeholderTextColor: colors['neutral-foot'],
           style: {
             paddingTop: 0,

@@ -2,34 +2,25 @@ import ImgVerified from '@/assets/icons/swap/verified.svg';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { RcIconInfoCC } from '@/assets/icons/common';
-import {
-  RcIconSwapHistoryEmpty,
-  RcIconSwitchQuoteCC,
-} from '@/assets/icons/swap';
+import { RcIconSwitchQuoteCC } from '@/assets/icons/swap';
 import { Tip } from '@/components';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { DEX_WITH_WRAP } from '@/constant/swap';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import i18n from '@/utils/i18n';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { Skeleton, SkeletonProps } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { QuoteProvider } from '../hooks';
 import { isSwapWrapToken } from '../utils';
 import { DexQuoteItem } from './QuoteItem';
+import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
 
 const getQuoteLessWarning = ([receive, diff]: [string, string]) =>
   i18n.t('page.swap.QuoteLessWarning', { receive, diff });
@@ -69,30 +60,24 @@ interface ReceiveDetailsProps {
   bestQuoteDex: string;
   chain: CHAINS_ENUM;
   openQuotesList: () => void;
+  scrollToEnd?: () => void;
 }
 export const ReceiveDetails = (props: ReceiveDetailsProps) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const {
     receiveRawAmount: receiveAmount,
     payAmount,
     payToken,
     receiveToken,
-    quoteWarning,
-    loading = false,
     activeProvider,
-    isWrapToken,
     bestQuoteDex,
     chain,
     openQuotesList,
+    scrollToEnd,
   } = props;
 
   const [reverse, setReverse] = useState(false);
-
-  const reverseRate = useCallback(() => {
-    setReverse(e => !e);
-  }, []);
 
   useEffect(() => {
     if (payToken && receiveToken) {
@@ -100,38 +85,30 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     }
   }, [receiveToken, payToken]);
 
-  const {
-    receiveNum,
-    payUsd,
-    receiveUsd,
-    rate,
-    diff,
-    sign,
-    showLoss,
-    lossUsd,
-  } = useMemo(() => {
-    const pay = new BigNumber(payAmount).times(payToken.price || 0);
-    const receiveAll = new BigNumber(receiveAmount);
-    const receive = receiveAll.times(receiveToken.price || 0);
-    const cut = receive.minus(pay).div(pay).times(100);
-    const rateBn = new BigNumber(reverse ? payAmount : receiveAll).div(
-      reverse ? receiveAll : payAmount,
-    );
-    const lossUsd = formatUsdValue(receive.minus(pay).abs().toString());
+  const { receiveNum, payUsd, receiveUsd, diff, sign, showLoss, lossUsd } =
+    useMemo(() => {
+      const pay = new BigNumber(payAmount).times(payToken.price || 0);
+      const receiveAll = new BigNumber(receiveAmount);
+      const receive = receiveAll.times(receiveToken.price || 0);
+      const cut = receive.minus(pay).div(pay).times(100);
+      const rateBn = new BigNumber(reverse ? payAmount : receiveAll).div(
+        reverse ? receiveAll : payAmount,
+      );
+      const lossUsd = formatUsdValue(receive.minus(pay).abs().toString());
 
-    return {
-      receiveNum: formatAmount(receiveAll.toString(10)),
-      payUsd: formatUsdValue(pay.toString(10)),
-      receiveUsd: formatUsdValue(receive.toString(10)),
-      rate: rateBn.lt(0.0001)
-        ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
-        : formatAmount(rateBn.toString(10)),
-      sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
-      diff: cut.abs().toFixed(2),
-      showLoss: cut.lte(-5),
-      lossUsd,
-    };
-  }, [payAmount, payToken.price, receiveAmount, receiveToken.price, reverse]);
+      return {
+        receiveNum: formatAmount(receiveAll.toString(10)),
+        payUsd: formatUsdValue(pay.toString(10)),
+        receiveUsd: formatUsdValue(receive.toString(10)),
+        rate: rateBn.lt(0.0001)
+          ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
+          : formatAmount(rateBn.toString(10)),
+        sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
+        diff: cut.abs().toFixed(2),
+        showLoss: cut.lte(-5),
+        lossUsd,
+      };
+    }, [payAmount, payToken.price, receiveAmount, receiveToken.price, reverse]);
 
   const isBestQuote = useMemo(
     () => !!bestQuoteDex && activeProvider?.name === bestQuoteDex,
@@ -147,28 +124,28 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     () => isSwapWrapToken(payToken.id, receiveToken.id, chain),
     [payToken, receiveToken, chain],
   );
+  useEffect(() => {
+    let id;
+    if (showLoss && scrollToEnd) {
+      id = setTimeout(() => {
+        scrollToEnd?.();
+      }, 500);
+    }
+    return () => {
+      id && clearTimeout(id);
+    };
+  }, [scrollToEnd, showLoss]);
 
   if (!activeProvider) {
     return (
       <View style={[styles.receiveWrapper, styles.receiveWrapperEmpty]}>
         <TouchableOpacity onPress={openQuotesList}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <RcIconSwapHistoryEmpty width={18} height={18} />
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: 'normal',
-                color: colors['neutral-foot'],
-              }}>
+          <View style={styles.emptyWrapper}>
+            <RcIconNoFind width={159} height={117} />
+            <Text style={styles.emptyText}>
               {t('page.swap.No-available-quote')}
             </Text>
           </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quoteProvider} onPress={openQuotesList}>
-          <RcIconSwitchQuoteCC
-            color={colors['blue-default']}
-            style={styles.switchImage}
-          />
         </TouchableOpacity>
       </View>
     );
@@ -216,7 +193,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
               onPress={openQuotesList}>
               <Text style={styles.quoteProviderBestText}>Best</Text>
               <RcIconSwitchQuoteCC
-                color={colors['green-default']}
+                color={colors2024['neutral-InvertHighlight']}
                 style={styles.switchImage}
               />
             </TouchableOpacity>
@@ -226,7 +203,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
               style={styles.quoteProvider}
               onPress={openQuotesList}>
               <RcIconSwitchQuoteCC
-                color={colors['blue-default']}
+                color={colors2024['neutral-body']}
                 style={styles.switchImage}
               />
             </TouchableOpacity>
@@ -262,7 +239,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
                     </View>
                   }>
                   <RcIconInfoCC
-                    color={colors['neutral-foot']}
+                    color={colors2024['neutral-foot']}
                     width={14}
                     height={14}
                   />
@@ -283,28 +260,41 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   receiveWrapper: {
     position: 'relative',
-    marginTop: 24,
+    marginTop: 35,
     borderWidth: 1,
-    borderColor: colors['blue-default'],
-    borderRadius: 4,
-    // padding: 12,
-    color: colors['neutral-title-1'],
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 24,
+    color: colors2024['neutral-title-1'],
     fontSize: 13,
   },
   receiveWrapperBest: {
-    borderColor: colors['green-default'],
+    borderColor: colors2024['green-default'],
+    backgroundColor: colors2024['green-light-4'],
   },
   receiveWrapperEmpty: {
-    borderColor: colors['neutral-line'],
+    borderColor: colors2024['neutral-line'],
     padding: 0,
-    paddingVertical: 40,
+    paddingVertical: 11,
+    marginTop: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
+  },
+  emptyWrapper: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 21,
+  },
+  emptyText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: 'normal',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-info'],
   },
   column: {
     paddingBottom: 12,
@@ -334,45 +324,30 @@ const getStyles = createGetStyles(colors => ({
     width: 14,
     height: 14,
   },
-  titleText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
-    marginRight: 2,
-  },
-  amountText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
-    maxWidth: 170,
-    overflow: 'hidden',
-    marginLeft: 8,
-    marginRight: 4,
-  },
   diffText: {
     fontSize: 13,
     fontWeight: '400',
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
   warning: {
     marginBottom: 8,
     padding: 8,
     position: 'relative',
-    backgroundColor: colors['orange-light'],
+    backgroundColor: colors2024['orange-light'],
     borderRadius: 4,
   },
   warningText: {
     fontWeight: '400',
     fontSize: 13,
-    color: colors['orange-default'],
+    color: colors2024['orange-default'],
   },
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors['neutral-line'],
+    borderTopColor: colors2024['neutral-line'],
     paddingTop: 8,
   },
   rateText: {
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
     fontSize: 14,
     fontWeight: '400',
   },
@@ -380,7 +355,7 @@ const getStyles = createGetStyles(colors => ({
     maxWidth: 182,
     fontSize: 14,
     fontWeight: '400',
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   quoteProvider: {
     position: 'absolute',
@@ -395,19 +370,20 @@ const getStyles = createGetStyles(colors => ({
     paddingHorizontal: 6,
     paddingVertical: 2,
 
-    backgroundColor: colors['blue-light-1'],
+    backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: colors['blue-default'],
+    borderColor: colors2024['neutral-line'],
   },
   quoteProviderBest: {
-    backgroundColor: colors['green-light'],
-    borderColor: colors['green-default'],
+    backgroundColor: colors2024['green-default'],
+    borderColor: colors2024['green-default'],
   },
   quoteProviderBestText: {
     fontSize: 13,
     lineHeight: 16,
-    color: colors['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-InvertHighlight'],
   },
   switchImage: {
     width: 12,
@@ -418,11 +394,6 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'space-between',
     padding: 10,
   },
-  tooltipText: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: colors['neutral-title-2'],
-  },
   gap4: {
     gap: 4,
   },
@@ -430,10 +401,10 @@ const getStyles = createGetStyles(colors => ({
   gap6: { gap: 6 },
 
   red: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
   },
   green: {
-    color: colors['green-default'],
+    color: colors2024['green-default'],
   },
   afterWrapper: {
     marginTop: 12,
@@ -442,7 +413,8 @@ const getStyles = createGetStyles(colors => ({
   },
   afterLabel: {
     fontSize: 13,
-    color: colors['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
   },
   afterValueContainer: {
     flexDirection: 'row',
@@ -451,31 +423,36 @@ const getStyles = createGetStyles(colors => ({
   },
   afterValue: {
     fontSize: 14,
+    lineHeight: 17,
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   impactTooltip: {
     flexDirection: 'column',
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    backgroundColor: 'black',
   },
   impactTooltipText: {
     fontSize: 12,
     lineHeight: 14,
-    color: colors['neutral-title-2'],
+    fontFamily: 'SF Pro Rounded',
+    color: 'white',
   },
   warningTipContainer: {
-    marginTop: 8,
+    marginTop: 11,
     marginHorizontal: 12,
     borderRadius: 4,
-    backgroundColor: colors['red-light'],
-    padding: 10,
+    backgroundColor: colors2024['red-light-1'],
+    padding: 8,
   },
   warningTip: {
-    color: colors['red-default'],
+    color: colors2024['red-default'],
     fontWeight: '400',
-    fontSize: 14,
-    lineHeight: 17,
+    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 14.3,
   },
 }));

@@ -33,16 +33,43 @@ export const useSeedPhrase = () => {
           'publickey',
           publicKey,
         );
-
-        navigate(RootNames.ImportMoreAddress, {
-          type: KEYRING_TYPE.HdKeyring,
-          mnemonics: data.mnemonic!,
-          passphrase: data.passphrase!,
-          keyringId,
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportMoreAddress,
+          params: {
+            type: KEYRING_TYPE.HdKeyring,
+            mnemonics: data.mnemonic!,
+            passphrase: data.passphrase!,
+            keyringId,
+          },
         });
       }
     },
     [invokeEnterPassphrase],
+  );
+
+  const handleAddSeedPhraseAddress2024 = useCallback(
+    async (publicKey: string, accounts: string[]) => {
+      if (publicKey) {
+        const keyringId =
+          apiMnemonic.getMnemonicKeyRingIdFromPublicKey(publicKey);
+        const data = await apiMnemonic.getMnemonicKeyring(
+          'publickey',
+          publicKey,
+        );
+
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.CreateNewAddress,
+          params: {
+            useCurrentSeed: true,
+            mnemonics: data.mnemonic,
+            keyringId,
+            title: '3. Name Your Address',
+            accounts,
+          },
+        });
+      }
+    },
+    [],
   );
 
   const seedPhraseList = useMemo(() => {
@@ -66,6 +93,7 @@ export const useSeedPhrase = () => {
   return {
     seedPhraseList,
     handleAddSeedPhraseAddress,
+    handleAddSeedPhraseAddress2024,
   };
 };
 

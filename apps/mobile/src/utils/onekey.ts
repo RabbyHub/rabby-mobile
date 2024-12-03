@@ -5,20 +5,21 @@ import {
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { eventBus, EVENTS } from './events';
-import { apisAppWin } from '@/core/services/appWin';
+import { apisAppWin2024 } from '@/core/services2024/appWin';
+import { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
 
 // 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
 const ONLY_IN_DEVICE = true;
 
-let pinModalId: string | null = null;
-let passphraseModalId: string | null = null;
+let pinModalId: MODAL_ID | null = null;
+let passphraseModalId: MODAL_ID | null = null;
 
 function createPinModal(
   oneKeyKeyring: OneKeyKeyring,
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  pinModalId = apisAppWin.createGlobalBottomSheetModal({
+  pinModalId = apisAppWin2024.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(pin: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePin({
@@ -29,11 +30,13 @@ function createPinModal(
   });
 
   eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-    apisAppWin.removeGlobalBottomSheetModal(pinModalId, { waitMaxtime: 300 });
+    apisAppWin2024.removeGlobalBottomSheetModal(pinModalId, {
+      waitMaxtime: 300,
+    });
     pinModalId = null;
   });
 
-  apisAppWin.globalBottomSheetModalAddListener(
+  apisAppWin2024.globalBottomSheetModalAddListener(
     EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== pinModalId) {
@@ -51,7 +54,7 @@ function createPassphraseModal(
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  passphraseModalId = apisAppWin.createGlobalBottomSheetModal({
+  passphraseModalId = apisAppWin2024.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(passphrase: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePassphrase({
@@ -62,13 +65,13 @@ function createPassphraseModal(
   });
 
   eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, async () => {
-    apisAppWin.removeGlobalBottomSheetModal(passphraseModalId, {
+    apisAppWin2024.removeGlobalBottomSheetModal(passphraseModalId, {
       waitMaxtime: 300,
     });
     passphraseModalId = null;
   });
 
-  apisAppWin.globalBottomSheetModalAddListener(
+  apisAppWin2024.globalBottomSheetModalAddListener(
     EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== passphraseModalId) {

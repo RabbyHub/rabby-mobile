@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { View, Text, TextInput } from 'react-native';
-
-import { Skeleton } from '@rneui/themed';
-import { TokenAmountInput } from '@/components/Token';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
-  createGetStyles,
-  makeDebugBorder,
-  makeTriangleStyle,
-} from '@/utils/styles';
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import { Skeleton } from '@rneui/themed';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
   useInputBlurOnEvents,
   useSendTokenInternalContext,
@@ -16,8 +16,6 @@ import {
 import { useCurrentAccount } from '@/hooks/account';
 import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import TouchableView from '@/components/Touchable/TouchableView';
-import { default as RcMaxButton } from './icons/max-button.svg';
 import { useTranslation } from 'react-i18next';
 import { useFindChain } from '@/hooks/useFindChain';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
@@ -25,31 +23,10 @@ import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
-import { devLog } from '@/utils/logger';
-
-const getSectionStyles = createGetStyles(colors => {
-  return {
-    sectionPanel: {
-      borderRadius: 8,
-      padding: 12,
-      backgroundColor: colors['neutral-card1'],
-      width: '100%',
-    },
-  };
-});
-
-export function SendTokenSection({
-  children,
-  style,
-}: React.PropsWithChildren<RNViewProps>) {
-  const colors = useThemeColors();
-  const styles = getSectionStyles(colors);
-
-  return <View style={[styles.sectionPanel, style]}>{children}</View>;
-}
+import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
 
 export function BalanceSection({ style }: RNViewProps) {
-  const { styles } = useThemeStyles(getBalanceStyles);
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const { currentAccount } = useCurrentAccount();
@@ -106,61 +83,70 @@ export function BalanceSection({ style }: RNViewProps) {
   // devLog('BalanceSection:: balanceError', balanceError);
   // devLog('BalanceSection:: formValues.amount', formValues.amount);
   // devLog('BalanceSection:: showGasReserved', showGasReserved);
-  devLog(
-    'BalanceSection:: screenState.selectedGasLevel',
-    screenState.selectedGasLevel,
-  );
+  // devLog(
+  //   'BalanceSection:: screenState.selectedGasLevel',
+  //   screenState.selectedGasLevel,
+  // );
 
   if (!chainItem || !currentToken) return null;
 
   return (
-    <SendTokenSection style={style}>
-      <View className="mt-[0]" style={styles.titleSection}>
-        <TouchableView
-          style={styles.balanceArea}
-          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
-          {screenState.isLoading ? (
-            <Skeleton style={{ width: 100, height: 16 }} />
-          ) : (
-            <>
-              <Text style={styles.balanceText}>
-                {t('page.sendToken.sectionBalance.title')}:{' '}
-                {currentTokenBalance}
-              </Text>
-              {/* max button */}
-              {currentToken.amount > 0 &&
-                (screenState.isEstimatingGas ? (
-                  <Skeleton
-                    style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
-                  />
-                ) : (
-                  <TouchableView
-                    disabled={screenState.isEstimatingGas}
-                    className="h-[100%] ml-[4]"
-                    style={styles.maxButtonWrapper}
-                    onPress={handleClickMaxButton}>
-                    <RcMaxButton />
-                  </TouchableView>
-                ))}
-            </>
-          )}
-        </TouchableView>
+    <View style={style}>
+      <View style={styles.titleSection}>
+        <Text style={styles.sectionTitle}>Amount:</Text>
 
-        {/* right area */}
-        <View style={styles.issueBlock}>
-          {screenState.showGasReserved && !screenState.selectedGasLevel && (
-            <Skeleton style={styles.issueBlockSkeleton} />
-          )}
-          {!screenState.showGasReserved &&
-          (screenState.balanceError || screenState.balanceWarn) ? (
-            <Text style={[styles.issueText]}>
-              {screenState.balanceError || screenState.balanceWarn}
-            </Text>
-          ) : null}
+        <View style={styles.titleRight}>
+          <View style={styles.issueBlock}>
+            {screenState.showGasReserved && !screenState.selectedGasLevel && (
+              <Skeleton style={styles.issueBlockSkeleton} />
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={styles.balanceArea}
+            onPress={screenState.isLoading ? noop : handleClickMaxButton}>
+            {screenState.isLoading ? (
+              <Skeleton style={{ width: 100, height: 16 }} />
+            ) : (
+              <>
+                {!screenState.showGasReserved &&
+                (screenState.balanceError || screenState.balanceWarn) ? (
+                  <Text style={[styles.issueText]}>
+                    {screenState.balanceError ? (
+                      <>
+                        {screenState.balanceError}: {currentTokenBalance}
+                      </>
+                    ) : screenState.balanceWarn ? (
+                      <>{screenState.balanceWarn}</>
+                    ) : null}
+                  </Text>
+                ) : (
+                  <Text style={styles.balanceText}>
+                    {t('page.sendToken.sectionBalance.title')}:{' '}
+                    {currentTokenBalance}
+                  </Text>
+                )}
+                {/* max button */}
+                {currentToken.amount > 0 &&
+                  (screenState.isEstimatingGas ? (
+                    <Skeleton
+                      style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      disabled={screenState.isEstimatingGas}
+                      style={styles.maxButtonWrapper}
+                      onPress={handleClickMaxButton}>
+                      <Text style={styles.maxButtonText}>MAX</Text>
+                    </TouchableOpacity>
+                  ))}
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
-      <View style={{ marginTop: 10 }}>
+      <View>
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
@@ -177,14 +163,18 @@ export function BalanceSection({ style }: RNViewProps) {
           />
         )}
       </View>
-      <View style={{ marginTop: 16 }}>
+      <View style={styles.tokenDetail}>
         <View style={styles.tokenDetailBlock}>
           <View style={styles.tokenDetailTriangle} />
           {!isNativeToken && (
             <View style={styles.tokenDetailLine}>
               <Text style={styles.tokenDetailText}>Contract Address</Text>
               <View style={styles.tokenDetailCopy}>
-                <AddressViewer address={currentToken.id} showArrow={false} />
+                <AddressViewer
+                  addressStyle={styles.tokenDetailValue}
+                  address={currentToken.id}
+                  showArrow={false}
+                />
                 <CopyAddressIcon address={currentToken.id} />
               </View>
             </View>
@@ -197,7 +187,7 @@ export function BalanceSection({ style }: RNViewProps) {
               </Text>
             )}
           </View>
-          <View style={[styles.tokenDetailLine, { marginTop: 8 }]}>
+          <View style={[styles.tokenDetailLine]}>
             <Text style={styles.tokenDetailText}>Price</Text>
             <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
               {currentTokenPrice}
@@ -218,44 +208,61 @@ export function BalanceSection({ style }: RNViewProps) {
         rawHexBalance={currentToken.raw_amount_hex_str}
         onClose={gasLevel => handleGasLevelChanged(gasLevel)}
       />
-    </SendTokenSection>
+    </View>
   );
 }
 
-const getBalanceStyles = createGetStyles((colors, ctx) => {
-  const tipWrapperBg = colors['neutral-card2'];
-
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
+    sectionTitle: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+
     balanceText: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: 'normal',
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
 
     titleSection: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      fontSize: 13,
+      height: 26,
+      marginBottom: 12,
     },
     maxButtonWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
+      marginLeft: 12,
+      padding: 4,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 8,
+    },
+    maxButtonText: {
+      color: colors2024['brand-default'],
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
     maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
 
     balanceArea: {
       flexDirection: 'row',
-      height: 16,
-      flexShrink: 0,
+      alignItems: 'center',
+    },
+
+    titleRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
 
     issueBlock: {
       flexDirection: 'row',
-      height: 16,
-      flexShrink: 1,
-      width: '100%',
       justifyContent: 'flex-end',
     },
 
@@ -270,30 +277,42 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
     },
 
     issueText: {
-      color: colors['red-default'],
+      color: colors2024['red-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
     },
 
-    tokenDetailBlock: {
-      width: '100%',
-      backgroundColor: tipWrapperBg,
-      padding: 12,
-      borderRadius: 4,
-      position: 'relative',
-      justifyContent: 'center',
+    tokenDetail: {
+      marginTop: 13,
     },
 
     tokenDetailTriangle: {
       position: 'absolute',
-      left: 16,
-      top: -8 * 2,
-      ...makeTriangleStyle({
-        dir: 'up',
-        size: 8,
-        color: tipWrapperBg,
-      }),
-      borderTopWidth: 8,
-      borderLeftWidth: 8,
-      borderRightWidth: 8,
+      right: 56,
+      top: -5,
+      width: 8,
+      height: 8,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      transform: [{ rotate: '45deg' }],
+      borderBottomWidth: 0,
+      borderRightWidth: 0,
+      backgroundColor: colors2024['neutral-bg-1'],
+      borderRadius: 0,
+    },
+    tokenDetailBlock: {
+      width: '100%',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      paddingTop: 16,
+      borderRadius: 4,
+      position: 'relative',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      gap: 6,
     },
 
     tokenDetailLine: {
@@ -302,12 +321,19 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
       alignItems: 'flex-start',
     },
     tokenDetailText: {
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontSize: 12,
       fontWeight: '400',
+      lineHeight: 16,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenDetailValue: {
       textAlign: 'right',
+      color: colors2024['neutral-body'],
+      fontSize: 12,
+      fontWeight: '400',
+      lineHeight: 16,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenDetailCopy: {
       display: 'flex',
