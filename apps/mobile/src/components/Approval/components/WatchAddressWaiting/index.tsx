@@ -7,7 +7,11 @@ import { useSessionStatus } from '@/hooks/useSessionStatus';
 import { eventBus, EVENTS } from '@/utils/events';
 import { WALLETCONNECT_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { toast } from '@/components/Toast';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  notificationService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { apisWalletConnect } from '@/core/apis';
 import { View } from 'react-native';
@@ -98,7 +102,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
     setConnectStatus(WALLETCONNECT_STATUS_MAP.PENDING);
     setConnectError(null);
-    apisWalletConnect.resendWalletConnect(account);
+    notificationService.callCurrentRequestDeferFn();
     emitSignComponentAmounted();
     openWalletByBrandName(account.brandName);
     toast.success(t('page.signFooterBar.walletConnect.requestSuccessToast'));

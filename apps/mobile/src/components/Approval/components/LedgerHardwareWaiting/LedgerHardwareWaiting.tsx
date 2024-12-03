@@ -170,10 +170,7 @@ export const LedgerHardwareWaiting = ({
         method: params?.extra?.signTextMethod,
       });
     }
-    eventBus.addListener(EVENTS.LEDGER.REJECT_APPROVAL, data => {
-      rejectApproval(data, false, true);
-    });
-    eventBus.addListener(EVENTS.LEDGER.REJECTED, async data => {
+    eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
       setErrorMessage(data);
       setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
     });
@@ -233,8 +230,7 @@ export const LedgerHardwareWaiting = ({
     mountedRef.current = true;
 
     return () => {
-      eventBus.removeAllListeners(EVENTS.LEDGER.REJECT_APPROVAL);
-      eventBus.removeAllListeners(EVENTS.LEDGER.REJECTED);
+      eventBus.removeAllListeners(EVENTS.COMMON_HARDWARE.REJECTED);
       eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
       eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
     };
