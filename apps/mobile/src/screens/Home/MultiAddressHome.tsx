@@ -33,6 +33,7 @@ import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
+import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import RcIconEcosystem from '@/assets2024/icons/home/IconEcosystem.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -79,10 +80,10 @@ const MENU_ARR = [
     title: MultiHomeFeatTitle.History,
     icon: RcIconHistory,
   },
-  // {
-  //   title: MultiHomeFeatTitle.Approvals,
-  //   icon: RcIconApprovals,
-  // },
+  {
+    title: MultiHomeFeatTitle.Approvals,
+    icon: RcIconApprovals,
+  },
   {
     title: MultiHomeFeatTitle.GasAccount,
     icon: RcIconGasAccount,
@@ -350,11 +351,11 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        // case MultiHomeFeatTitle.Approvals:
-        //   navigation.push(RootNames.StackTransaction, {
-        //     screen: RootNames.Approvals,
-        //   });
-        //   break;
+        case MultiHomeFeatTitle.Approvals:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.Approvals,
+          });
+          break;
         case MultiHomeFeatTitle.GasAccount:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
