@@ -13,7 +13,6 @@ const getTotalBalanceCached = cached(async address => {
   if (filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))) {
     core = true;
   }
-  console.log('core', core);
   const data = await openapi.getTotalBalance(address, core);
   preferenceService.updateAddressBalance(address, data);
   return data;

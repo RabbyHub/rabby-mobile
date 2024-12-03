@@ -12,12 +12,12 @@ import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
-  useMount,
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, unionBy, orderBy } from 'lodash';
 import { Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -283,7 +283,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     finalSceneCurrentAccount,
   ]);
 
-  useMount(() => {
+  useFocusEffect(() => {
     eventBus.addListener(EVENTS.RELOAD_TX, refresh);
     return () => {
       eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
