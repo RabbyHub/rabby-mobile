@@ -16,18 +16,19 @@ export const useNoLongerSupports = () => {
   const modalIdRef = React.useRef<MODAL_ID>();
   const removeAccount = useRemoveAccount();
 
-  const removeWalletConnect = React.useCallback(() => {
-    accounts?.forEach(account => {
-      if (account.type === KEYRING_TYPE.WalletConnectKeyring) {
-        removeAccount(account);
-      }
-    });
+  const removeWalletConnect = React.useCallback(async () => {
+    await Promise.allSettled([
+      ...accounts.map(async account => {
+        if (account.type === KEYRING_TYPE.WalletConnectKeyring) {
+          await removeAccount(account);
+        }
+      }),
+    ]);
 
-    apisAccount.hasVisibleAccounts().then(hasRestAccounts => {
-      if (!hasRestAccounts) {
-        redirectToAddAddressEntry({ action: 'resetTo' });
-      }
-    });
+    const hasRestAccounts = await apisAccount.hasVisibleAccounts();
+    if (!hasRestAccounts) {
+      redirectToAddAddressEntry({ action: 'resetTo' });
+    }
   }, [accounts, removeAccount]);
 
   React.useEffect(() => {
