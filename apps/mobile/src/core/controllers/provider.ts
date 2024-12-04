@@ -439,7 +439,7 @@ class ProviderController extends BaseController {
     const lowGasDeadline = approvalRes.lowGasDeadline;
     const preReqId = approvalRes.reqId;
     const isGasLess = approvalRes.isGasLess || false;
-    const logId = approvalRes.logId || '';
+    const logId = approvalRes?.logId || '';
     const isGasAccount = approvalRes.isGasAccount || false;
 
     let signedTransactionSuccess = false;
