@@ -251,7 +251,7 @@ export const useTokenPair = (userAddress: string) => {
   const { value: gasList } = useAsync(() => {
     gasPriceRef.current = undefined;
     setGasLevel('normal');
-    return openapi.gasMarket(chainInfo.serverId);
+    return openapi.gasMarket({ chainId: chainInfo.serverId });
   }, [chainInfo?.serverId]);
 
   const [reserveGasOpen, setReserveGasOpen] = useState(false);

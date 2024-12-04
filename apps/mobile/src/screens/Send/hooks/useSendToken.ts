@@ -385,37 +385,6 @@ export function useSendTokenForm() {
     ...DF_SEND_TOKEN_FORM,
   });
 
-  useEffect(() => {
-    setFormValues(prev => {
-      return {
-        ...DF_SEND_TOKEN_FORM,
-        to: prev.to,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAccount?.type, currentAccount?.address]);
-
-  const { validationSchema } = useMemo(() => {
-    return {
-      validationSchema: makeSendTokenValidationSchema({ t }),
-    };
-  }, [t]);
-
-  const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
-    async () => fetchGasList(chainItem),
-    [chainItem, putScreenState],
-  );
-
-  if (__DEV__ && loadGasListError) {
-    console.error(loadGasListError);
-  }
-
-  useEffect(() => {
-    loadGasList().then(list => {
-      putScreenState({ gasList: list });
-    });
-  }, [loadGasList, putScreenState]);
-
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
@@ -427,16 +396,13 @@ export function useSendTokenForm() {
       };
     }, [isNativeToken, addressType]);
 
-  const handleSubmit = useCallback(
-    async ({
+  const getParams = useCallback(
+    ({
       to,
       amount,
       messageDataForSendToEoa,
       messageDataForContractCall,
     }: FormSendToken) => {
-      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
-
-      putScreenState({ isSubmitLoading: true });
       const chain = findChainByServerID(currentToken.chain)!;
       const sendValue = new BigNumber(amount)
         .multipliedBy(10 ** currentToken.decimals)
@@ -484,6 +450,73 @@ export function useSendTokenForm() {
         }
 
         params.value = `0x${sendValue.toString(16)}`;
+      }
+
+      return params;
+    },
+    [
+      currentAccount,
+      currentToken.chain,
+      currentToken.decimals,
+      currentToken.id,
+      isNativeToken,
+      isShowMessageDataForContract,
+      isShowMessageDataForToken,
+      screenState,
+    ],
+  );
+
+  useEffect(() => {
+    setFormValues(prev => {
+      return {
+        ...DF_SEND_TOKEN_FORM,
+        to: prev.to,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAccount?.type, currentAccount?.address]);
+
+  const { validationSchema } = useMemo(() => {
+    return {
+      validationSchema: makeSendTokenValidationSchema({ t }),
+    };
+  }, [t]);
+
+  const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
+    async () => fetchGasList(chainItem, getParams(formValues) as Tx),
+    [chainItem, putScreenState],
+  );
+
+  if (__DEV__ && loadGasListError) {
+    console.error(loadGasListError);
+  }
+
+  useEffect(() => {
+    loadGasList().then(list => {
+      putScreenState({ gasList: list });
+    });
+  }, [loadGasList, putScreenState]);
+
+  const handleSubmit = useCallback(
+    async ({
+      to,
+      amount,
+      messageDataForSendToEoa,
+      messageDataForContractCall,
+    }: FormSendToken) => {
+      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
+      putScreenState({ isSubmitLoading: true });
+      const chain = findChain({
+        serverId: currentToken.chain,
+      })!;
+
+      const params = getParams({
+        to,
+        amount,
+        messageDataForSendToEoa,
+        messageDataForContractCall,
+      });
+      if (isNativeToken) {
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
           !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
@@ -572,12 +605,11 @@ export function useSendTokenForm() {
     [
       currentAccount,
       currentToken,
+      getParams,
       isNativeToken,
-      isShowMessageDataForContract,
       isShowMessageDataForToken,
       putScreenState,
       screenState.estimatedGas,
-      screenState.safeInfo?.nonce,
       screenState.selectedGasLevel?.price,
       screenState.showGasReserved,
     ],

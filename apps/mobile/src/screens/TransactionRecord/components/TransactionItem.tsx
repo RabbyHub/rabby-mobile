@@ -104,7 +104,10 @@ export const TransactionItem = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chain?.id!,
         })
-      : await openapi.gasMarket(chain?.serverId!);
+      : await openapi.gasMarket({
+          chainId: chain?.serverId!,
+          tx: originTx.rawTx,
+        });
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
     try {
@@ -203,7 +206,10 @@ export const TransactionItem = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chain?.id!,
         })
-      : await openapi.gasMarket(chain?.serverId!);
+      : await openapi.gasMarket({
+          chainId: chain?.serverId!,
+          tx: maxGasTx.rawTx,
+        });
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
     try {
       await sendRequest(
