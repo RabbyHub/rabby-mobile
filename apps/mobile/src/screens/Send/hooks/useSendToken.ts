@@ -14,7 +14,7 @@ import { EventEmitter } from 'events';
 import { customTestnetService, preferenceService } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi, testOpenapi } from '@/core/request';
 import { TFunction } from 'i18next';
@@ -298,10 +298,13 @@ function findInstanceLevel(gasList: GasLevel[]) {
     prev.price >= current.price ? prev : current,
   );
 }
-const fetchGasList = async (chainItem: Chain | null) => {
+const fetchGasList = async (chainItem: Chain | null, params: Tx) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
-    : await openapi.gasMarket(chainItem?.serverId || '');
+    : await openapi.gasMarket({
+        chainId: chainItem?.serverId || '',
+        tx: params,
+      });
 
   return list;
 };

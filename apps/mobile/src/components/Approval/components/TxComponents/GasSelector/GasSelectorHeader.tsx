@@ -9,7 +9,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { GasLevel, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import {
   Image,
   NativeSyntheticEvent,
@@ -69,6 +69,7 @@ export interface GasSelectorResponse extends GasLevel {
 }
 
 interface GasSelectorProps {
+  tx: Tx;
   gasLimit: string | undefined;
   gas: {
     gasCostUsd: number | string | BigNumber;
@@ -173,6 +174,7 @@ export const GasSelectorHeader = ({
   gasMethod,
   gasAccountCost,
   onChangeGasMethod,
+  tx,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -227,10 +229,11 @@ export const GasSelectorHeader = ({
       if (chain?.isTestnet) {
         return null;
       }
-      const list = await openapi.gasMarket(
-        chain.serverId,
-        custom && custom > 0 ? custom : undefined,
-      );
+      const list = await openapi.gasMarket({
+        chainId: chain.serverId,
+        customGas: custom && custom > 0 ? custom : undefined,
+        tx,
+      });
       return list.find(item => item.level === 'custom')!;
     },
   );
