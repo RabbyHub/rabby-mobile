@@ -77,7 +77,5 @@ export declare class KeyringIntf {
     ...args: any[]
   ): Promise<AccountItemWithBrandQueryResult[]>;
 
-  resetResend?(): void;
-
   [P: string]: any;
 }

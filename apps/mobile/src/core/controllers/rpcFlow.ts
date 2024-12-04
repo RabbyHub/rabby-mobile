@@ -285,12 +285,21 @@ const flowContext = flow
             })
             .then(resolve)
             .catch((e: any) => {
-              Sentry.captureException(e);
-              if (isSignApproval(approvalType)) {
-                eventBus.emit(EVENTS.SIGN_FINISHED, {
+              const payload = {
+                method: EVENTS.SIGN_FINISHED,
+                params: {
                   success: false,
                   errorMsg: e?.message || JSON.stringify(e),
-                });
+                },
+              };
+              if (e.method) {
+                payload.method = e.method;
+                payload.params = e.message;
+              }
+
+              Sentry.captureException(e);
+              if (isSignApproval(approvalType)) {
+                eventBus.emit(EVENTS.broadcastToUI, payload);
               } else if (__DEV__) {
                 console.error(e);
               }
@@ -385,7 +394,6 @@ export default async (request: ProviderRequest) => {
       flow.requestedApproval = false;
       // only unlock notification if current flow is an approval flow
       notificationService.unLock();
-      keyringService.resetResend();
     }
   });
 };
