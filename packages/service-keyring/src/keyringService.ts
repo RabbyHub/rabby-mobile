@@ -171,7 +171,9 @@ export class KeyringService extends RNEventEmitter {
    */
   async resetPassword(newPassword: string) {
     if (await this.getCountOfAccountsInKeyring()) {
-      throw new Error("You're trying to overwrite password on existing keyrings.");
+      throw new Error(
+        "You're trying to overwrite password on existing keyrings.",
+      );
     }
 
     await this._setupBoot(newPassword);
@@ -853,12 +855,6 @@ export class KeyringService extends RNEventEmitter {
       },
     );
     return addrs.map(normalizeAddress);
-  }
-
-  resetResend() {
-    this.keyrings.forEach(keyring => {
-      (keyring as KeyringIntf)?.resetResend?.();
-    });
   }
 
   /**

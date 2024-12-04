@@ -175,14 +175,3 @@ export async function getWalletConnectStatus(
   }
   return;
 }
-
-export async function resendWalletConnect(account: Account) {
-  const keyring = await getKeyring<WalletConnectKeyring>(
-    KEYRING_TYPE.WalletConnectKeyring,
-  );
-
-  if (keyring) {
-    return keyring.resend(account);
-  }
-  return;
-}

@@ -129,6 +129,7 @@ interface ApprovalRes extends Tx {
   reqId?: string;
   isGasLess?: boolean;
   isGasAccount?: boolean;
+  logId?: string;
 }
 
 interface Web3WalletPermission {
@@ -438,6 +439,7 @@ class ProviderController extends BaseController {
     const lowGasDeadline = approvalRes.lowGasDeadline;
     const preReqId = approvalRes.reqId;
     const isGasLess = approvalRes.isGasLess || false;
+    const logId = approvalRes?.logId || '';
     const isGasAccount = approvalRes.isGasAccount || false;
 
     let signedTransactionSuccess = false;
@@ -538,13 +540,25 @@ class ProviderController extends BaseController {
       reported: false,
     };
 
+    let signedTx;
     try {
-      const signedTx = await keyringService.signTransaction(
+      signedTx = await keyringService.signTransaction(
         keyring,
         tx,
         txParams.from,
         opts,
       );
+    } catch (e: any) {
+      const errObj =
+        typeof e === 'object'
+          ? { message: e.message }
+          : ({ message: e } as any);
+      errObj.method = EVENTS.COMMON_HARDWARE.REJECTED;
+
+      throw errObj;
+    }
+
+    try {
       if (
         currentAccount.type === KEYRING_TYPE.GnosisKeyring
         // ||
@@ -765,7 +779,8 @@ class ProviderController extends BaseController {
               origin,
               is_gasless: isGasLess,
               is_gas_account: isGasAccount,
-            });
+              // log_id: logId,
+            } as Parameters<typeof openapi.submitTx>[0]);
 
             hash = res.req.tx_id || undefined;
             reqId = res.req.id || undefined;
