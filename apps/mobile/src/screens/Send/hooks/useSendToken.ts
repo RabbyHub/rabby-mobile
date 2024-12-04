@@ -404,7 +404,7 @@ export function useSendTokenForm() {
       messageDataForContractCall,
     }: FormSendToken) => {
       const chain = findChainByServerID(currentToken.chain)!;
-      const sendValue = new BigNumber(amount)
+      const sendValue = new BigNumber(amount || 0)
         .multipliedBy(10 ** currentToken.decimals)
         .decimalPlaces(0, BigNumber.ROUND_DOWN);
       const dataInput = [
@@ -422,7 +422,10 @@ export function useSendTokenForm() {
             },
           ] as any[],
         } as const,
-        [to, sendValue.toFixed(0)] as any[],
+        [
+          to || '0x0000000000000000000000000000000000000000',
+          sendValue.toFixed(0),
+        ] as any[],
       ] as const;
       const params: Record<string, any> = {
         chainId: chain.id,
