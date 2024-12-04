@@ -8,11 +8,11 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { Button } from '@/components';
-
+import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { Button } from '@/components2024/Button';
 import { useTranslation, Trans } from 'react-i18next';
-import { createGetStyles } from '@/utils/styles';
+
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 
 import {
   RcIconCheckedCC,
@@ -25,6 +25,7 @@ import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -82,8 +83,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
 export function ApprovalsBottomArea() {
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
 
   const [showModal, setShowModal] = useState(false);
 
@@ -131,6 +131,7 @@ export function ApprovalsBottomArea() {
     setRefState: setIsSubmitLoading,
     stateRef: isSubmitLoadingRef,
   } = useRefState(false);
+  const { safeOffBottom } = useSafeSizes();
 
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
@@ -170,13 +171,12 @@ export function ApprovalsBottomArea() {
 
   return (
     <View
-      style={[styles.bottomDockArea, { height: safeSizes.bottomAreaHeight }]}>
+      style={[
+        styles.bottomDockArea,
+        isAndroid && { paddingBottom: 20 + safeOffBottom },
+      ]}>
       <Button
         disabled={!couldSubmit}
-        containerStyle={styles.buttonContainer}
-        titleStyle={styles.buttonText}
-        disabledTitleStyle={styles.buttonText}
-        type="primary"
         title={buttonTitle}
         loading={isSubmitLoading}
         onPress={onRevoke}
@@ -218,81 +218,76 @@ export function ApprovalsBottomArea() {
   );
 }
 
-const getStyles = createGetStyles(colors => {
-  return {
-    bottomDockArea: {
-      bottom: 0,
-      width: '100%',
-      padding: 20,
-      height: ApprovalsLayouts.bottomAreaHeight,
-      backgroundColor: colors['neutral-bg1'],
-      // ...makeDevOnlyStyle({ backgroundColor: 'transparent' }),
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
-      position: 'absolute',
-    },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  bottomDockArea: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    backgroundColor: 'transparent',
+    width: '100%',
+    marginBottom: 56,
+  },
 
-    buttonContainer: {
-      width: '100%',
-      height: 52,
-      borderRadius: 6,
-      ...(!isAndroid && {
-        marginBottom: 16,
-      }),
-    },
-
-    buttonText: {
-      color: colors['neutral-title-2'],
-    },
-
-    modalContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-      width: '80%',
-      backgroundColor: colors['neutral-bg1'],
-      borderRadius: 16,
-      padding: 20,
-      alignItems: 'center',
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: '500',
-      lineHeight: 24,
-      color: colors['neutral-title1'],
-      textAlign: 'center',
+  buttonContainer: {
+    width: '100%',
+    height: 52,
+    borderRadius: 6,
+    ...(!isAndroid && {
       marginBottom: 16,
-    },
-    highlightText: {
-      color: colors['blue-default'],
-    },
-    modalBody: {
-      fontSize: 14,
-      color: colors['neutral-body'],
-      lineHeight: 20,
-      textAlign: 'center',
-      marginBottom: 60,
-    },
-    okButton: {
-      width: '100%',
-      height: 48,
-      backgroundColor: colors['blue-default'],
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 8,
-    },
-    okButtonText: {
-      color: colors['neutral-title2'],
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '600',
-    },
-  };
-});
+    }),
+  },
+
+  buttonText: {
+    color: colors2024['neutral-title-2'],
+  },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  highlightText: {
+    color: colors2024['brand-default'],
+  },
+  modalBody: {
+    fontSize: 14,
+    color: colors2024['neutral-body'],
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 60,
+  },
+  okButton: {
+    width: '100%',
+    height: 48,
+    backgroundColor: colors2024['brand-default'],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  okButtonText: {
+    color: colors2024['neutral-title-2'],
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+}));
 
 export const getTooltipContentStyles = createGetStyles(colors => {
   return {

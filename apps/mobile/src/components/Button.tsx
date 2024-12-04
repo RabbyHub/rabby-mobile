@@ -15,7 +15,6 @@ import {
   TouchableOpacityProps,
   TouchableOpacity,
 } from 'react-native';
-import { colord } from 'colord';
 
 import {
   useThemeColors,

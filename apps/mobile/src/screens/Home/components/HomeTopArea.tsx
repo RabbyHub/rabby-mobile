@@ -288,7 +288,10 @@ export const HomeTopArea = () => {
               });
               moresheetModalRef.current?.dismiss();
             },
-            badge: approvalRiskAlert,
+            badge:
+              currentAccount?.type === KEYRING_TYPE.WatchAddressKeyring
+                ? 0
+                : approvalRiskAlert,
           },
         ]),
   ];
