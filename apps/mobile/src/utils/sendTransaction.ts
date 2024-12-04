@@ -453,7 +453,7 @@ export const sendTransaction = async ({
       approvalRes: {
         ...transaction,
         signingTxId,
-        logId: logId,
+        // logId: logId,
         lowGasDeadline,
         isGasLess,
         isGasAccount: autoUseGasAccount ? canUseGasAccount : isGasAccount,

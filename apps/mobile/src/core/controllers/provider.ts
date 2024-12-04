@@ -779,8 +779,8 @@ class ProviderController extends BaseController {
               origin,
               is_gasless: isGasLess,
               is_gas_account: isGasAccount,
-              log_id: logId,
-            });
+              // log_id: logId,
+            } as Parameters<typeof openapi.submitTx>[0]);
 
             hash = res.req.tx_id || undefined;
             reqId = res.req.id || undefined;
