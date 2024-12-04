@@ -314,6 +314,8 @@ export const ImportSeedPhraseScreen2024 = () => {
                 inputProps={{
                   placeholder: 'Enter your seed phrase',
                   value: mnemonics,
+                  secureTextEntry: true,
+                  textContentType: 'none',
                   onChangeText: text => {
                     if (importing) {
                       return;
