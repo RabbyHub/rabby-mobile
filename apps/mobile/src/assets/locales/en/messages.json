@@ -2326,6 +2326,9 @@
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
       }
+    },
+    "approvalsAddressList": {
+      "title": "Approvals"
     }
   },
   "component": {

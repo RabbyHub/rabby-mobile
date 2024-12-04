@@ -35,7 +35,6 @@ import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconEcosystem from '@/assets2024/icons/home/IconEcosystem.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
@@ -47,17 +46,14 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { Skeleton } from '@rneui/base';
 import { transactionHistoryService } from '@/core/services';
-import { eventBus, EVENTS } from '@/utils/events';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useMemoizedFn, useMount } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
 import { resetNavigationTo } from '@/hooks/navigation';
-import { useGasAccountInfo } from '../GasAccount/hooks';
+import { navigate } from '@/utils/navigation';
 
 const MENU_ARR = [
   {
@@ -81,6 +77,7 @@ const MENU_ARR = [
     icon: RcIconHistory,
   },
   {
+    // TODO: alert amounts
     title: MultiHomeFeatTitle.Approvals,
     icon: RcIconApprovals,
   },
@@ -105,7 +102,6 @@ const MENU_ARR = [
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
-  const { safeOffHeader, safeTop } = useSafeSizes();
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -163,10 +159,9 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 }
 
 function MultiAddressHome(): JSX.Element {
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { value } = useGasAccountInfo(); // for gas account remove acount listener
-  const { styles, colors, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
 
@@ -352,8 +347,8 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Approvals:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Approvals,
+          navigate(RootNames.StackAddress, {
+            screen: RootNames.ApprovalAddressList,
           });
           break;
         case MultiHomeFeatTitle.GasAccount:

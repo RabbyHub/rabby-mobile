@@ -140,6 +140,7 @@ export type AddressNavigatorParamList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
   [RootNames.SafeAddressList]?: {};
+  [RootNames.ApprovalAddressList]?: {};
 };
 
 export type AccountNavigatorParamList = {
