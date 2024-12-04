@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Platform, StyleSheet, Dimensions } from 'react-native';
 import {
@@ -24,12 +24,18 @@ import {
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
 import { IS_IOS } from '@/core/native/utils';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
+import { ellipsisAddress } from '@/utils/address';
+import RcIconSearch from '@/assets2024/icons/approval/search.svg';
 
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
   const { currentAccount } = useCurrentAccount();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+
   const { t } = useTranslation();
 
   const renderTabItem = React.useCallback<
@@ -64,6 +70,30 @@ const ApprovalScreenContainer = () => {
     ),
     [colors2024, renderTabItem, styles.indicator, styles.label, styles.tabBar],
   );
+
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <HeaderTitleText2024 style={styles.title}>
+        {currentAccount?.address
+          ? currentAccount?.aliasName || ellipsisAddress(currentAccount.address)
+          : 'Approvals'}
+      </HeaderTitleText2024>
+    );
+  }, [currentAccount?.address, currentAccount?.aliasName, styles.title]);
+
+  const headerRight = useCallback(() => <RcIconSearch />, []);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      headerRight,
+    });
+  }, [
+    setNavigationOptions,
+    getHeaderTitle,
+    currentAccount?.aliasName,
+    headerRight,
+  ]);
 
   const { filterType, setFilterType } = useApprovalsPage();
 
@@ -142,6 +172,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     alignItems: 'center',
     position: 'relative',
+  },
+  title: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 24,
   },
   tabContainer: {
     backgroundColor: colors2024['neutral-bg-2'],
