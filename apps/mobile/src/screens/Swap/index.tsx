@@ -28,7 +28,13 @@ import {
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TextInput, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -71,11 +77,12 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const headerRight = useCallback(() => <SwapHeader />, []);
   useEffect(() => {
     setNavigationOptions({
-      headerRight: SwapHeader,
+      headerRight,
     });
-  }, [setNavigationOptions]);
+  }, [headerRight, setNavigationOptions]);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
