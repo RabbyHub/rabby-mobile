@@ -205,18 +205,11 @@ function MultiAddressHome(): JSX.Element {
     if (!addresses.length) {
       return;
     }
-    const { pendingsLength, pendings } =
+    const { pendingsLength } =
       transactionHistoryService.getPendingsAddresses(addresses);
-    console.debug('fetchHistory :', balanceCacheAccounts, pendings);
     setPendingTxCount(pendingsLength);
-    if (pendingsLength) {
-      if (!timeRef.current) {
-        timeRef.current = setInterval(fetchHistory, 5000);
-      }
-    } else {
-      timeRef.current && clearInterval(timeRef.current);
-      timeRef.current = null;
-    }
+    timeRef.current && clearInterval(timeRef.current);
+    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [balanceCacheAccounts]);
 
   const detectHasAccounts = useMemoizedFn(async () => {
@@ -245,7 +238,7 @@ function MultiAddressHome(): JSX.Element {
         const { redirectAction } = await detectHasAccounts();
         if (redirectAction) {
           redirectAction();
-        } else if (!timeRef.current) {
+        } else {
           fetchHistory();
         }
       })();
@@ -613,6 +606,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     width: '48%',
+    marginRight: -6,
     minWidth: 0,
     borderRadius: 18,
     flexShrink: 0,

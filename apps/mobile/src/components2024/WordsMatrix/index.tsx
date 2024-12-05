@@ -111,6 +111,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '48%',
     minWidth: 0,
     borderRadius: 12,
+    marginRight: -4,
     flexShrink: 0,
 
     position: 'relative',
