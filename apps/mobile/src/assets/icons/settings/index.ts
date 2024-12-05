@@ -114,3 +114,7 @@ export const RcGoogleSignout = makeThemeIconFromCC(
 
 import { default as RcCodeCC } from './code-cc.svg';
 export const RcCode = makeThemeIconFromCC(RcCodeCC, 'neutral-body');
+
+// i18n-cc.svg
+import { default as RcI18nCC } from './i18n-cc.svg';
+export const RcI18n = makeThemeIconFromCC(RcI18nCC, 'neutral-body');
