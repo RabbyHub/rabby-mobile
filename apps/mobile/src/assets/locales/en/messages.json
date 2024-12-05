@@ -775,8 +775,14 @@
             "contractTrustValue": "Trust value refers to the total asset value spent by this contract. A low trust value indicates either risk or inactivity for 180 days.",
             "contractTrustValueWarning": "The contract trust value < $100,000",
             "contractTrustValueDanger": "The contract trust value < $10,000",
+            "normalTrustValueDanger": "The contract trust value:{{ contractUsdText }}",
+            "revokeDangerTitle": "Contract 24h Revoke Trends > 4",
+            "revokeWarningTitle": "Contract 24h Revoke double than Revoke",
             "revokeTrendsValueWarning": "Recent revokes are greater than double the number of newly approved users.",
-            "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users."
+            "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users.",
+            "revokeNewApproved": "Newly approved users(24h): {{ count }}",
+            "revokeRecenet": " Recent revokes(24h): {{ count }}",
+            "button": "I Got It."
           }
         },
         "byAssets": {

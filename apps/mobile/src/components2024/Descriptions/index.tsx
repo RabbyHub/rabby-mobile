@@ -1,26 +1,30 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Button, ButtonProps } from '../Button';
 import AutoLockView from '@/components/AutoLockView';
 
 export const Descriptions: React.FC<{
   title?: string;
+  titleStyle?: StyleProp<TextStyle>;
+  sectionStyle?: StyleProp<ViewStyle>;
   sections: Array<{
     title?: string;
     description?: string;
   }>;
   nextButtonProps?: ButtonProps;
-}> = ({ title, sections, nextButtonProps }) => {
+}> = ({ title, sections, nextButtonProps, titleStyle, sectionStyle }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      {!!title && <Text style={styles.title}>{title}</Text>}
+      {!!title && <Text style={[styles.title, titleStyle]}>{title}</Text>}
       <View style={styles.sectionContainer}>
         {sections.map((section, idx) => (
-          <View key={`section-${section.title}-${idx}`} style={styles.section}>
+          <View
+            key={`section-${section.title}-${idx}`}
+            style={[styles.section, sectionStyle]}>
             {!!section.title && (
               <Text style={styles.sectionTitle}>{section.title}</Text>
             )}
@@ -55,6 +59,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   sectionContainer: {
     paddingBottom: 32,
+    width: '100%',
   },
   section: {
     marginTop: 28,

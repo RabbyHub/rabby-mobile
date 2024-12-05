@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
@@ -25,7 +25,11 @@ import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { parseApprovalSpenderSelection } from '../utils';
 import { RcIconInfoCC } from '@/assets/icons/common';
-import { Tip } from '@/components';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 export const ContractFloorLayouts = {
   floorHeader: { paddingTop: 0 },
@@ -251,40 +255,54 @@ function CardProto({
             )}
           </Text>
         </View>
-        <Tip
-          // {...(!trustValueEvalutation.isRisky && { isVisible: false })}
-          contentStyle={[styles.riskyAlertTooltipContent]}
-          content={
-            <View style={[styles.riskyAlertTooltipInner]}>
-              {trustValueEvalutation.isDanger && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
+        <TouchableOpacity
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              titleStyle: styles.modalTitle,
+              sectionStyle: styles.section,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              title: trustValueEvalutation.isDanger
+                ? t(
                     'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueDanger',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {trustValueEvalutation.isWarning && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
+                  )
+                : trustValueEvalutation.isWarning
+                ? t(
                     'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueWarning',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {!trustValueEvalutation.isRisky && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  The contract trust value : {contractUsdText}
-                  {'\n'}
-                </Text>
-              )}
-              <Text style={styles.riskyAlertTooltipText}>
-                {t(
-                  'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
-                )}
-              </Text>
-            </View>
-          }>
+                  )
+                : t(
+                    'page.approvals.tableConfig.byContracts.columnTip.normalTrustValueDanger',
+                    {
+                      contractUsdText,
+                    },
+                  ),
+              sections: [
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
+                  ),
+                },
+              ],
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>
+                    {t(
+                      'page.approvals.tableConfig.byContracts.columnTip.button',
+                    )}
+                  </Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={trustValueEvalutation.finalTextStyle}>
             {contractUsdText}
           </Text>
@@ -297,7 +315,7 @@ function CardProto({
               trustValueEvalutation.finalUnderlineStyle,
             ]}
           />
-        </Tip>
+        </TouchableOpacity>
       </View>
 
       {/* floor 3 */}
@@ -309,41 +327,72 @@ function CardProto({
             )}
           </Text>
         </View>
-        <Tip
-          // {...(!revokeTrendsEvaluation.isRisky && { isVisible: false })}
-          placement="top"
-          contentStyle={[
-            styles.riskyAlertTooltipContent,
-            !revokeTrendsEvaluation.isRisky &&
-              styles.riskyAlertTooltipContentForSafeRevokeTrend,
-          ]}
-          content={
-            <View style={styles.riskyAlertTooltipInner}>
-              {revokeTrendsEvaluation.isDanger && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {revokeTrendsEvaluation.isWarning && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              <Text style={styles.riskyAlertTooltipText}>
-                Newly approved users(24h):{' '}
-                {contract.$riskAboutValues.approve_user_count}
-                {'\n'}
-                Recent revokes(24h):{' '}
-                {contract.$riskAboutValues.revoke_user_count}
-              </Text>
-            </View>
-          }>
+        <TouchableOpacity
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              titleStyle: styles.modalTitle,
+              sectionStyle: styles.section,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              // TODO: is text correct from BD ?
+              title: revokeTrendsEvaluation.isDanger
+                ? t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeDangerTitle',
+                  )
+                : revokeTrendsEvaluation.isWarning
+                ? t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeWarningTitle',
+                  )
+                : '',
+              sections: [
+                {
+                  description: revokeTrendsEvaluation.isDanger
+                    ? t(
+                        'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
+                      )
+                    : revokeTrendsEvaluation.isWarning
+                    ? t(
+                        'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
+                      )
+                    : '',
+                },
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeNewApproved',
+                    {
+                      count: contract.$riskAboutValues.approve_user_count,
+                    },
+                  ),
+                },
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeNewApproved',
+                    {
+                      count: contract.$riskAboutValues.revoke_user_count,
+                    },
+                  ),
+                },
+              ].filter(i => !!i.description),
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>
+                    {t(
+                      'page.approvals.tableConfig.byContracts.columnTip.button',
+                    )}
+                  </Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={revokeTrendsEvaluation.finalTextStyle}>
             {contract.$riskAboutValues.revoke_user_count}
           </Text>
@@ -357,7 +406,7 @@ function CardProto({
             ]}
             innerBg={!isTreatedAsSelected ? undefined : colors['blue-light1']}
           />
-        </Tip>
+        </TouchableOpacity>
       </View>
     </TouchableView>
   );
@@ -512,6 +561,21 @@ export const getCardStyles = createGetStyles2024(ctx => {
     },
     chainIcon: {
       marginRight: 6,
+    },
+    modalNextButtonText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '700',
+      lineHeight: 24,
+      textAlign: 'center',
+      backgroundColor: ctx.colors2024['brand-default'],
+      color: ctx.colors2024['neutral-InvertHighlight'],
+    },
+    modalTitle: {
+      marginTop: 12,
+    },
+    section: {
+      marginTop: 20,
     },
   };
 });
