@@ -931,6 +931,14 @@
       }
     },
     "bridge": {
+      "From": "From",
+      "bridgeFrom": "Bridge From",
+      "To": "To",
+      "Balance": "Balance: ",
+      "Select": "Select",
+      "select-chain": "Select Chain",
+      "no-quote-found": "No quote found. Please try other token pairs.",
+      "no-quote": "No Quote",
       "title": "Bridge",
       "history": "Bridge history",
       "the-following-bridge-route-are-found": "Found following bridge route",
