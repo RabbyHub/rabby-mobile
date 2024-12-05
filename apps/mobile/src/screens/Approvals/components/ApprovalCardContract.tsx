@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import {
-  createGetStyles,
+  createGetStyles2024,
   makeDebugBorder,
   makeTriangleStyle,
 } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { type ContractApprovalItem } from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
@@ -40,7 +40,7 @@ function CardProto({
     contract: ContractApprovalItem;
   }) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getCardStyles);
+  const { colors, styles } = useTheme2024({ getStyle: getCardStyles });
   const { t } = useTranslation();
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
@@ -325,8 +325,9 @@ function CardProto({
   );
 }
 
-export const getCardStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+export const getCardStyles = createGetStyles2024(ctx => {
+  const selectableStyles = getSelectableContainerStyle(ctx);
+  const { colors } = ctx;
 
   return {
     container: {

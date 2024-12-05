@@ -1,80 +1,52 @@
-import { useState, useRef, useCallback } from 'react';
-import { TextInput, StyleSheet } from 'react-native';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { useRef } from 'react';
+import { TextInput } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
-import { useApprovalsPage } from '../useApprovalsPage';
 import { ApprovalsLayouts } from '../layout';
 
 export function TopSearch({
-  filterType,
+  value,
+  onChange,
 }: {
-  filterType: 'contract' | 'assets';
+  value: string;
+  onChange: (s: string) => void;
 }) {
-  const { colors, styles } = useThemeStyles(getStyles);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnTouchaway(formInputRef);
 
-  const [isInputActive, setIsInputActive] = useState(false);
-  const handleInputFocus = useCallback(() => {
-    setIsInputActive(true);
-  }, []);
-
-  const handleInputBlur = useCallback(() => {
-    setIsInputActive(false);
-  }, []);
-
-  const { skAssets, skContract, setSearchKw } = useApprovalsPage();
-
-  const searchKw = filterType === 'contract' ? skContract : skAssets;
-
   return (
     <SearchInput
-      isActive={isInputActive}
       containerStyle={styles.searchInputContainer}
       searchIconStyle={styles.searchIconStyle}
       clearable
       inputProps={{
-        value: searchKw,
-        onChangeText: setSearchKw,
-        onFocus: handleInputFocus,
-        onBlur: handleInputBlur,
-        placeholder: t('page.approvals.search.placeholder', {
-          type: filterType === 'contract' ? 'contract' : 'assets',
-        }),
-        placeholderTextColor: colors['neutral-foot'],
+        value,
+        autoFocus: true,
+        onChangeText: onChange,
+        placeholder: t('page.approvals.search.placeholder'),
+        placeholderTextColor: colors2024['neutral-info'],
       }}
-      // inputStyle={styles.input}
     />
   );
 }
 
-const getStyles = createGetStyles(colors => {
-  return {
-    searchInputContainer: {
-      borderRadius: 8,
-      borderWidth: StyleSheet.hairlineWidth,
-      backgroundColor: colors['neutral-card1'],
-      marginVertical: ApprovalsLayouts.searchBarMarginOffset,
-      height: ApprovalsLayouts.searchBarHeight,
-    },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  searchInputContainer: {
+    borderRadius: 30,
+    width: 250,
+    borderWidth: 0,
+    backgroundColor: colors2024['neutral-bg-2'],
+    height: ApprovalsLayouts.searchBarHeight,
+  },
 
-    searchIconStyle: {
-      width: 16,
-      height: 16,
-    },
-
-    // input: {
-    //   backgroundColor: colors['neutral-card1'],
-    //   color: colors['neutral-title1'],
-    //   width: '100%',
-    //   paddingRight: 8,
-    //   paddingTop: 12,
-    //   paddingHorizontal: 12,
-    // },
-  };
-});
+  searchIconStyle: {
+    width: 16,
+    height: 16,
+  },
+}));

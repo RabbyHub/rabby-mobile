@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { View, Text, Dimensions } from 'react-native';
 
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
   useFocusedApprovalOnApprovals,
@@ -29,7 +28,9 @@ function RightTouchableView({
   children,
   ...props
 }: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
+  const { styles } = useTheme2024({
+    getStyle: getAssetsApprovalRowStyles,
+  });
 
   return (
     <TouchableView
@@ -45,8 +46,9 @@ function AssetsApprovalRowProto({
 }: {
   assetApproval: AssetApprovalItem;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
-  const { t } = useTranslation();
+  const { colors, styles } = useTheme2024({
+    getStyle: getAssetsApprovalRowStyles,
+  });
 
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
 
@@ -163,8 +165,9 @@ function AssetsApprovalRowProto({
   );
 }
 
-export const getAssetsApprovalRowStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
+  const selectableStyles = getSelectableContainerStyle(ctx);
+  const { colors, colors2024 } = ctx;
 
   return {
     container: {

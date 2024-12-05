@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { View } from 'react-native';
 import { ApprovalsLayouts } from '../layout';
 import { getCardStyles } from './ApprovalCardContract';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 
 const getSkeletonStyles = createGetStyles(colors => {
@@ -22,7 +22,9 @@ const getSkeletonStyles = createGetStyles(colors => {
 });
 
 export const SkeletonListByContracts = memo(() => {
-  const { styles: cardStyles, colors } = useThemeStyles(getCardStyles);
+  const { styles: cardStyles, colors } = useTheme2024({
+    getStyle: getCardStyles,
+  });
   const { styles: skeletonStyles } = useThemeStyles(getSkeletonStyles);
   return (
     <View
@@ -84,7 +86,7 @@ export const SkeletonListByContracts = memo(() => {
 });
 
 export const SkeletonListByAssets = memo(() => {
-  const { styles: cardStyles } = useThemeStyles(getCardStyles);
+  const { styles: cardStyles } = useTheme2024({ getStyle: getCardStyles });
   return (
     <View
       style={{

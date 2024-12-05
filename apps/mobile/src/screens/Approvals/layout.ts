@@ -15,7 +15,7 @@ export const ApprovalsLayouts = {
   bottomSheetConfirmAreaHeight: isAndroid ? 100 : 120,
 
   searchBarMarginOffset: 16,
-  searchBarHeight: 48,
+  searchBarHeight: 46,
 
   contractRowHeight,
   contractRowHeightWithRiskAlert:

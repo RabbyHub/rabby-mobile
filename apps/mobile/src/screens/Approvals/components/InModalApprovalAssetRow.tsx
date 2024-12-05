@@ -3,9 +3,13 @@ import { View, Text } from 'react-native';
 
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
-import { AssetAvatar, Tip } from '@/components';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { Tip } from '@/components';
+import {
+  createGetStyles,
+  createGetStyles2024,
+  makeDebugBorder,
+} from '@/utils/styles';
+import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 
 import {
   AssetApprovalItem,
@@ -17,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
 import BigNumber from 'bignumber.js';
 import { ellipsisAddress } from '@/utils/address';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { querySelectedAssetSpender } from '../utils';
 import Permit2Badge from './Permit2Badge';
@@ -139,7 +142,7 @@ export function InModalApprovalAssetRow({
     ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem },
   ) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getStyles);
+  const { colors, styles } = useTheme2024({ getStyle: getStyle });
 
   const { assetFocusingRevokeMap } = useRevokeApprovals();
   const isSelected = React.useMemo(
@@ -238,8 +241,9 @@ export function InModalApprovalAssetRow({
   );
 }
 
-const getStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+const getStyle = createGetStyles2024(ctx => {
+  const selectableStyles = getSelectableContainerStyle(ctx);
+  const { colors } = ctx;
 
   return {
     container: {

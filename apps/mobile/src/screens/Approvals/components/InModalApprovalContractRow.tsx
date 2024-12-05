@@ -7,8 +7,8 @@ import { NFTApproval } from '@rabby-wallet/rabby-api/dist/types';
 
 import { AssetAvatar, Tip } from '@/components';
 import NFTAvatar from '@/components/NFTAvatar';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import {
   getContractNFTType,
   querySelectedContractSpender,
@@ -149,7 +149,9 @@ export function InModalApprovalContractRow({
     },
   ) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
+  const { colors, styles } = useTheme2024({
+    getStyle: getApprovalContractRowStyles,
+  });
 
   const { contractFocusingRevokeMap } = useRevokeApprovals();
   const { spender, isSelected, associatedSpender } = React.useMemo(() => {
@@ -291,8 +293,9 @@ export function InModalApprovalContractRow({
   );
 }
 
-const getApprovalContractRowStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+const getApprovalContractRowStyles = createGetStyles2024(ctx => {
+  const selectableStyles = getSelectableContainerStyle(ctx);
+  const { colors } = ctx;
 
   return {
     container: {

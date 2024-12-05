@@ -6,7 +6,6 @@ import {
   RefreshControl,
   Platform,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import {
   ApprovalsTabView,
@@ -15,7 +14,6 @@ import {
 } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { TopSearch } from './components/TopSearch';
 import {
   type ContractApprovalItem,
   useApprovalsPage,
@@ -136,13 +134,6 @@ export default function ListByContracts() {
         styles.innerContainer,
         // makeDebugBorder('red')
       ]}>
-      {/* Search input area */}
-      <View
-        style={{
-          paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-        }}>
-        <TopSearch filterType={'contract'} />
-      </View>
       <Tabs.SectionList<ContractApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
@@ -192,7 +183,7 @@ const getStyles = createGetStyles(colors => {
 
     list: {},
     listContainer: {
-      paddingTop: 0,
+      paddingTop: 20,
       paddingBottom: 0,
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
@@ -206,7 +197,7 @@ const getStyles = createGetStyles(colors => {
     },
     itemWrapper: {
       width: '100%',
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+      paddingHorizontal: 16,
     },
     cardContainer: {
       maxWidth:

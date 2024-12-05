@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Platform, StyleSheet, Dimensions } from 'react-native';
 import {
@@ -25,16 +25,19 @@ import BottomSheetApprovalContract from './components/BottomSheetApprovalContrac
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
 import { IS_IOS } from '@/core/native/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { ellipsisAddress } from '@/utils/address';
-import RcIconSearch from '@/assets2024/icons/approval/search.svg';
-
+import { HeaderRight } from './components/Headers/HeaderRight';
+import { HeaderCenter } from './components/Headers/HeaderCenter';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
   const { currentAccount } = useCurrentAccount();
+  const [isSearching, setIsSearching] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const { filterType, skAssets, skContract, setSearchKw, setFilterType } =
+    useApprovalsPage();
+  const searchKw = filterType === 'contract' ? skContract : skAssets;
 
   const { t } = useTranslation();
 
@@ -73,29 +76,55 @@ const ApprovalScreenContainer = () => {
 
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText2024 style={styles.title}>
-        {currentAccount?.address
-          ? currentAccount?.aliasName || ellipsisAddress(currentAccount.address)
-          : 'Approvals'}
-      </HeaderTitleText2024>
+      <HeaderCenter
+        textTitle={
+          currentAccount?.address
+            ? currentAccount?.aliasName ||
+              ellipsisAddress(currentAccount.address)
+            : 'Approvals'
+        }
+        type={filterType}
+        inputValue={searchKw}
+        inputOnChange={setSearchKw}
+        isSearching={isSearching}
+      />
     );
-  }, [currentAccount?.address, currentAccount?.aliasName, styles.title]);
+  }, [
+    currentAccount?.address,
+    currentAccount?.aliasName,
+    filterType,
+    isSearching,
+    searchKw,
+    setSearchKw,
+  ]);
 
-  const headerRight = useCallback(() => <RcIconSearch />, []);
+  const getHeaderRight = React.useCallback(() => {
+    return (
+      <HeaderRight
+        isSearching={isSearching}
+        onTap={() => {
+          if (isSearching) {
+            setSearchKw('');
+          }
+          setIsSearching(pre => !pre);
+        }}
+      />
+    );
+  }, [isSearching, setSearchKw]);
 
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      headerRight,
+      headerTitleAlign: isSearching ? 'left' : 'center',
+      headerRight: getHeaderRight,
     });
   }, [
     setNavigationOptions,
     getHeaderTitle,
     currentAccount?.aliasName,
-    headerRight,
+    isSearching,
+    getHeaderRight,
   ]);
-
-  const { filterType, setFilterType } = useApprovalsPage();
 
   if (!currentAccount?.address) {
     return null;
@@ -166,7 +195,7 @@ export default function ApprovalsScreen() {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    // backgroundColor: colors2024['neutral-bg-2'],
   },
   verticalContainer: {
     flex: 1,
@@ -181,10 +210,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
   },
   tabContainer: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    // backgroundColor: colors2024['neutral-bg-2'],
   },
   tabHeaderContainer: {
-    backgroundColor: colors2024['neutral-bg-2'],
     shadowColor: 'transparent',
     borderTopWidth: 0,
     borderColor: colors2024['neutral-line'],

@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  SectionList,
   ActivityIndicator,
   RefreshControl,
   Platform,
@@ -15,7 +14,6 @@ import {
 } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { TopSearch } from './components/TopSearch';
 import {
   type AssetApprovalItem,
   useApprovalsPage,
@@ -31,8 +29,7 @@ import { ApprovalsLayouts } from './layout';
 const isIOS = Platform.OS === 'ios';
 
 export default function ListByAssets() {
-  const { colors, styles } = useThemeStyles(getStyles);
-  const { t } = useTranslation();
+  const { styles } = useThemeStyles(getStyles);
 
   const {
     isLoading,
@@ -142,13 +139,6 @@ export default function ListByAssets() {
         styles.innerContainer,
         // makeDebugBorder('red')
       ]}>
-      {/* Search input area */}
-      <View
-        style={{
-          paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-        }}>
-        <TopSearch filterType={'assets'} />
-      </View>
       <Tabs.SectionList<AssetApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
@@ -198,7 +188,7 @@ const getStyles = createGetStyles(colors => {
       // ...makeDebugBorder(),
     },
     listContainer: {
-      paddingTop: 0,
+      paddingTop: 20,
       paddingBottom: 0,
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),

@@ -384,19 +384,21 @@ const getNotMatchedHolderStyle = createGetStyles(colors => {
   };
 });
 
-export const getSelectableContainerStyle = createGetStyles(colors => {
-  return {
-    container: {
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors['neutral-card1'],
-    },
-    selectedContainer: {
-      borderColor: colors['blue-default'],
-      backgroundColor: colors['blue-light1'],
-    },
-  };
-});
+export const getSelectableContainerStyle = createGetStyles2024(
+  ({ colors, colors2024 }) => {
+    return {
+      container: {
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: colors2024['neutral-line'],
+      },
+      selectedContainer: {
+        borderColor: colors['blue-default'],
+        backgroundColor: colors['blue-light1'],
+      },
+    };
+  },
+);
 
 export function BottomSheetModalFooterButton({
   ...buttonProps

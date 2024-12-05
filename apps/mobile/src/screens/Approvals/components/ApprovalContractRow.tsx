@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import {
-  createGetStyles,
+  createGetStyles2024,
   makeDebugBorder,
   makeTriangleStyle,
 } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   useFocusedApprovalOnApprovals,
   type ContractApprovalItem,
@@ -37,7 +37,7 @@ function RightTouchableView({
   children,
   ...props
 }: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getCardStyles);
+  const { styles } = useTheme2024({ getStyle: getCardStyles });
 
   return (
     <TouchableView
@@ -59,7 +59,7 @@ function CardProto({
     contract: ContractApprovalItem;
   }) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getCardStyles);
+  const { styles, colors } = useTheme2024({ getStyle: getCardStyles });
   const { t } = useTranslation();
 
   const { contractRevokeMap, onSelectAllContractApprovals } =
@@ -363,13 +363,14 @@ function CardProto({
   );
 }
 
-export const getCardStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+export const getCardStyles = createGetStyles2024(ctx => {
+  const { colors, colors2024 } = ctx;
+  const selectableStyles = getSelectableContainerStyle(ctx);
 
   return {
     container: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card1'],
+      borderRadius: 30,
+      backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: 10,
