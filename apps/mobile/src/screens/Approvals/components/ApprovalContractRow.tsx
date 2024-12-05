@@ -63,7 +63,9 @@ function CardProto({
     contract: ContractApprovalItem;
   }) => void;
 } & RNViewProps) {
-  const { styles, colors } = useTheme2024({ getStyle: getCardStyles });
+  const { styles, colors, colors2024 } = useTheme2024({
+    getStyle: getCardStyles,
+  });
   const { t } = useTranslation();
 
   const { contractRevokeMap, onSelectAllContractApprovals } =
@@ -185,6 +187,11 @@ function CardProto({
       <View
         style={[styles.contractItemFloor, ContractFloorLayouts.floorHeader]}>
         <View style={styles.floorLeft}>
+          <SelectionCheckbox
+            isSelectedAll={isSelectedAll}
+            isSelectedPartial={isSelectedPartial}
+            style={styles.contractCheckbox}
+          />
           {chainLogoUrl ? (
             <ChainIconImage
               containerStyle={styles.chainIcon}
@@ -209,11 +216,6 @@ function CardProto({
               ({contract.name})
             </Text>
           </View>
-          <SelectionCheckbox
-            isSelectedAll={isSelectedAll}
-            isSelectedPartial={isSelectedPartial}
-            style={styles.contractCheckbox}
-          />
         </View>
         <RightTouchableView
           style={styles.rightOps}
@@ -225,7 +227,7 @@ function CardProto({
           <RcIconRightEntryMiniCC
             width={14}
             height={14}
-            color={colors['neutral-foot']}
+            color={colors2024['neutral-foot']}
           />
         </RightTouchableView>
       </View>
@@ -422,10 +424,10 @@ export const getCardStyles = createGetStyles2024(ctx => {
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      paddingVertical: 10,
+      paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
+      paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
       height: ApprovalsLayouts.contractRowHeight,
       width: '100%',
-      padding: ApprovalsLayouts.contractCardPadding,
       ...selectableStyles.container,
     },
     containerWithRisky: {
@@ -485,31 +487,37 @@ export const getCardStyles = createGetStyles2024(ctx => {
       justifyContent: 'flex-start',
     },
     contractAddrText: {
-      color: colors['neutral-title1'],
-      fontSize: 16,
-      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     contractName: {
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-foot'],
       fontSize: 14,
+      lineHeight: 18,
       fontWeight: '400',
-      marginLeft: 6,
+      fontFamily: 'SF Pro Rounded',
       maxWidth: 100,
     },
     contractNameInDetailModal: {
       maxWidth: 80,
     },
     contractCheckbox: {
-      marginLeft: 6,
+      marginRight: 6,
     },
     rightOps: {
       flexShrink: 0,
     },
     entryText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors['neutral-title1'],
       marginRight: 2,
+
+      color: colors2024['neutral-title-1'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     approvalsCount: {
       fontSize: 14,

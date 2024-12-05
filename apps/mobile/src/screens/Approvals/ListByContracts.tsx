@@ -54,7 +54,7 @@ export default function ListByContracts() {
         <View
           style={[
             styles.itemWrapper,
-            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
+            isFirstItem ? { marginTop: 0 } : { marginTop: 16 },
           ]}>
           <ApprovalContractRow style={styles.cardContainer} contract={item} />
         </View>
