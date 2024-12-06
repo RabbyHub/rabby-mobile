@@ -353,11 +353,17 @@ export function NotMatchedHolder({
   style,
   text = 'Not Matched',
 }: RNViewProps & { text?: string }) {
+  const { searchKw, setSearchKw } = useApprovalsPage();
   const { styles } = useTheme2024({ getStyle: getNotMatchedHolderStyle });
   return (
     <View style={[styles.container, style]}>
       <RcIconNoFind width={159} height={117} />
       <Text style={styles.emptyText}>{text}</Text>
+      {!!searchKw && (
+        <TouchableOpacity onPress={() => setSearchKw('')}>
+          <Text style={styles.cleanText}>Review All approvals</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -375,6 +381,13 @@ const getNotMatchedHolderStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-info'],
       fontWeight: '400',
+    },
+    cleanText: {
+      marginTop: 12,
+      fontWeight: '700',
+      fontSize: 16,
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

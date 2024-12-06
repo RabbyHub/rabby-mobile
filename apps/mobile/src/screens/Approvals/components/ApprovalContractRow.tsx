@@ -430,11 +430,27 @@ export const getCardStyles = createGetStyles2024(ctx => {
       paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
       height: ApprovalsLayouts.contractRowHeight,
       width: '100%',
+      shadowColor: colors2024['neutral-black'],
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.06,
+      shadowRadius: 60,
+      // box-shadow: 0px 4px 60px 0px rgba(0, 0, 0, 0.06);
+
       ...selectableStyles.container,
     },
     riskContainer: {
       backgroundColor: colors2024['red-light-1'],
       borderColor: colors2024['red-light-2'],
+      shadowColor: colors2024['red-default'],
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.06,
+      shadowRadius: 60,
     },
     containerWithRisky: {
       height: ApprovalsLayouts.contractRowHeightWithRiskAlert,

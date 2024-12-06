@@ -143,7 +143,10 @@ export default function ListByAssets() {
           </View>
         }
         style={styles.list}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[
+          styles.listContainer,
+          !!sectionList.length && styles.round,
+        ]}
         renderItem={renderItem}
         // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
@@ -185,12 +188,14 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       paddingBottom: 0,
       paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
     },
-    listContainer: {
+    round: {
       borderRadius: 24,
       overflow: 'hidden',
-      backgroundColor: colors2024['neutral-bg-1'],
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
+    },
+    listContainer: {
+      backgroundColor: colors2024['neutral-bg-1'],
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
       // height: '100%',

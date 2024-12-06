@@ -35,9 +35,8 @@ const ApprovalScreenContainer = () => {
   const [isSearching, setIsSearching] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { filterType, skAssets, skContract, setSearchKw, setFilterType } =
+  const { filterType, searchKw, setSearchKw, setFilterType } =
     useApprovalsPage();
-  const searchKw = filterType === 'contract' ? skContract : skAssets;
 
   const { t } = useTranslation();
 
