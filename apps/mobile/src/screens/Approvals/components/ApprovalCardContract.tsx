@@ -168,11 +168,18 @@ function CardProto({
               {ellipsisAddress(contract.id)}
             </Text>
           </View>
-          <CopyAddressIcon
+          <Text
+            style={[styles.contractName]}
+            ellipsizeMode="tail"
+            numberOfLines={1}>
+            {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
+            ({contract.name})
+          </Text>
+          {/* <CopyAddressIcon
             address={contract.id}
             style={{ marginLeft: 2 }}
             color={colors2024['neutral-foot']}
-          />
+          /> */}
         </View>
       </View>
 

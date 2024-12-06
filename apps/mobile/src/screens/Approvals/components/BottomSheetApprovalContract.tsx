@@ -183,9 +183,11 @@ export default function BottomSheetApprovalContract({
             initialNumToRender={4}
             maxToRenderPerBatch={20}
             ListFooterComponent={
-              <View style={styles.listFooterContainer}>
-                {isFetchingNextPage ? <ActivityIndicator /> : null}
-              </View>
+              sectionList.length >= 15 ? (
+                <View style={styles.listFooterContainer}>
+                  {isFetchingNextPage ? <ActivityIndicator /> : null}
+                </View>
+              ) : null
             }
             style={[styles.scrollableView, styles.scrollableArea]}
             contentContainerStyle={styles.listContainer}
