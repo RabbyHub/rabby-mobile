@@ -15,7 +15,6 @@ import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
-
 interface Props {
   onDone: () => void;
   delaySetPassword?: boolean;
@@ -38,7 +37,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
       seedPhrase: seedPharseData,
       alias: addressList?.[0].aliasName || '',
       address: addressList?.[0].address || '',
-      accountsToCreate: addressList,
+      accountsToCreate: addressList || [],
     };
   }, [seedPharseData, addressList]);
   const { t } = useTranslation();
@@ -72,7 +71,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         await addKeyringAndactiveAndPersistAccounts(
           mnemonics,
           passphrase,
-          accountsToCreate as any,
+          accountsToCreate,
           true,
         );
         keyringService.removePreMnemonics();

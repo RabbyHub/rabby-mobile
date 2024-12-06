@@ -4,6 +4,7 @@ import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
 } from '@gorhom/bottom-sheet';
+import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -42,19 +43,25 @@ export interface TokenSelectorProps {
   visible: boolean;
   list: TokenItem[];
   isLoading?: boolean;
+
   onConfirm(item: TokenItem): void;
   onCancel(): void;
   onSearch: (
-    ctx: SearchCallbackCtx & {
-      keyword: string;
-    },
+    ctx:
+      | (SearchCallbackCtx & {
+          keyword: string;
+        })
+      | string,
   ) => void;
   onRemoveChainFilter?: (ctx: SearchCallbackCtx) => void;
-  type?: 'default' | 'swapFrom' | 'swapTo';
+  type?: 'default' | 'swapFrom' | 'swapTo' | 'bridgeFrom' | 'bridgeTo';
   placeholder?: string;
   chainServerId?: string;
   disabledTips?: string;
   supportChains?: CHAINS_ENUM[] | undefined;
+  hideChainFilter?: boolean;
+  headerTitle?: React.ReactNode;
+  value?: TokenItem;
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
@@ -69,19 +76,25 @@ export const TokenSelectorSheetModal = React.forwardRef<
     {
       visible,
       list,
+      value,
       chainServerId,
       onConfirm,
       onCancel,
       onRemoveChainFilter,
+      hideChainFilter,
+      type,
       onSearch,
       supportChains,
       disabledTips,
       isLoading,
+      headerTitle,
     },
     ref,
   ) => {
     const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
       useSheetModal();
+
+    const isBridgeTo = type === 'bridgeTo';
 
     useEffect(() => {
       toggleShowSheetModal(visible ? true : false);
@@ -108,7 +121,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
     useDebounce(
       () => {
-        onSearch({ ...chainSearchCtx, keyword: query });
+        onSearch(isBridgeTo ? query : { ...chainSearchCtx, keyword: query });
       },
       150,
       [chainSearchCtx, query],
@@ -127,13 +140,21 @@ export const TokenSelectorSheetModal = React.forwardRef<
     };
 
     useEffect(() => {
-      if (!visible) setQuery('');
+      if (!visible) {
+        setQuery('');
+      }
     }, [visible]);
 
     const displayList = useMemo(() => {
+      if (isBridgeTo) {
+        return list || [];
+      }
+
       if (!supportChains?.length) {
         const resultList = list || [];
-        if (!chainServerId) return resultList.filter(filterTestnetTokenItem);
+        if (!chainServerId) {
+          return resultList.filter(filterTestnetTokenItem);
+        }
 
         return resultList;
       }
@@ -164,12 +185,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
 
       return [...varied.natural, ...varied.disabled];
-    }, [list, supportChains, chainServerId]);
+    }, [list, supportChains, chainServerId, isBridgeTo]);
 
     const tokens = useMemo(() => {
       return (displayList ?? [])
         .map(x => {
-          const _netWorth = x.amount * x.price || 0;
+          const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
 
           return {
             id: x.id,
@@ -181,11 +202,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
             _netWorth: _netWorth,
             _netWorthStr: formatNetworth(_netWorth),
             _chain: x.chain,
+            trade_volume_level: x?.trade_volume_level,
             $origin: x,
           };
         })
         .sort((m, n) => n._netWorth - m._netWorth);
-    }, [displayList]);
+    }, [displayList, isBridgeTo]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {
@@ -243,7 +265,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           </View>
 
           {/* TODO: chain selector */}
-          {chainItem && (
+          {chainItem && !hideChainFilter && (
             <View style={[styles.chainFiltersContainer, styles.internalBlock]}>
               <ChainFilterItem
                 chainItem={chainItem}
@@ -279,8 +301,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         </>
                       );
                     }
-                  : null,
-              [isLoading],
+                  : headerTitle || null,
+              [isLoading, headerTitle],
             )}
             ListEmptyComponent={
               <NotMatchedHolder
@@ -301,6 +323,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 if (isLoading) {
                   return null;
                 }
+                const isSelected = value && value.tokenId === token.id;
                 const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
                 const currentChainItem = findChainByServerID(token._chain);
                 const disabled =
@@ -322,6 +345,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     style={[
                       styles.tokenItem,
                       disabled && styles.tokenItemDisabled,
+                      isSelected && styles.isSelected,
                     ]}>
                     <View style={styles.tokenLeft}>
                       <AssetAvatar
@@ -331,9 +355,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         chainSize={16}
                       />
                       <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
-                        <Text style={styles.tokenName} numberOfLines={1}>
-                          {token?._symbol}
-                        </Text>
+                        <View style={styles.tokenNameBox}>
+                          <Text style={styles.tokenName} numberOfLines={1}>
+                            {token?._symbol}
+                          </Text>
+                          <View>{isSelected ? <RcIconChecked /> : null}</View>
+                        </View>
                         <Text
                           style={[styles.tokenPrice, { marginTop: 4 }]}
                           numberOfLines={1}>
@@ -341,16 +368,40 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         </Text>
                       </View>
                     </View>
-                    <View
-                      style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                      <Text style={styles.tokenHeaderAmount}>
-                        {token._amount}
-                      </Text>
-                      <Text
-                        style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
-                        {token._netWorthStr}
-                      </Text>
-                    </View>
+                    {isBridgeTo ? (
+                      <View style={styles.tokenInfoColRight}>
+                        <Text
+                          style={[
+                            styles.tardeLevel,
+                            {
+                              color:
+                                token.trade_volume_level === 'low'
+                                  ? colors2024['orange-default']
+                                  : colors2024['green-default'],
+                              backgroundColor:
+                                token.trade_volume_level === 'low'
+                                  ? colors2024['orange-light-4']
+                                  : colors2024['green-light-4'],
+                            },
+                          ]}>
+                          {token.trade_volume_level}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View
+                        style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+                        <Text style={styles.tokenHeaderAmount}>
+                          {token._amount}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.tokenHeaderNetworth,
+                            { marginTop: 4 },
+                          ]}>
+                          {token._netWorthStr}
+                        </Text>
+                      </View>
+                    )}
                   </TouchableView>
                 );
               },
@@ -369,6 +420,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 styles.tokenInfoColRight,
                 styles.tokenHeaderAmount,
                 styles.tokenHeaderNetworth,
+                styles.tardeLevel,
+                styles.isSelected,
+                styles.tokenNameBox,
+                value,
+                colors2024,
+                isBridgeTo,
               ],
             )}
           />
@@ -383,6 +440,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     container: {
       paddingTop: ModalLayouts.titleTopOffset,
       flex: 1,
+    },
+    tardeLevel: {
+      borderRadius: 900,
+      color: colors2024['green-default'],
+      backgroundColor: colors2024['green-light-4'],
+      fontSize: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
     internalBlock: {
       paddingHorizontal: 24,
@@ -423,7 +491,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderWidth: 1,
       marginHorizontal: 24,
       borderRadius: 24,
-      paddingHorizontal: 16,
+      // paddingHorizontal: 16,
     },
 
     tokenItem: {
@@ -431,7 +499,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       height: ITEM_HEIGHT,
-
+      paddingHorizontal: 16,
       // // leave here for debug
       // borderWidth: 1,
       // borderColor: 'blue',
@@ -447,9 +515,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'center',
       marginLeft: 12,
     },
+    tokenNameBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     tokenName: {
+      marginRight: 4,
       color: colors2024['neutral-title-1'],
       fontSize: 16,
+      justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
       fontFamily: 'SF Pro Rounded',
@@ -472,6 +546,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 20,
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',
+    },
+    isSelected: {
+      backgroundColor: colors2024['brand-light-1'],
     },
     tokenHeaderNetworth: {
       color: colors2024['neutral-foot'],
