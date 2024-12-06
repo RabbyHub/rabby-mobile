@@ -284,16 +284,6 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
             loading={props.loading}
             sortIncludeGasFee={sortIncludeGasFee}
           />
-          <Quotes
-            {...props}
-            loading={props.loading}
-            sortIncludeGasFee={sortIncludeGasFee}
-          />
-          <Quotes
-            {...props}
-            loading={props.loading}
-            sortIncludeGasFee={sortIncludeGasFee}
-          />
         </BottomSheetScrollView>
         {/* <View style={styles.floatBottom}> */}
         <LinearGradient

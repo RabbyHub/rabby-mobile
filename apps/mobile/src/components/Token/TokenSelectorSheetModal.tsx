@@ -369,7 +369,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       </View>
                     </View>
                     {isBridgeTo ? (
-                      <View style={styles.tokenInfoColRight}>
+                      <View
+                        style={[styles.tokenInfoColRight, styles.tardeLevel]}>
                         <Text
                           style={[
                             styles.tardeLevel,
