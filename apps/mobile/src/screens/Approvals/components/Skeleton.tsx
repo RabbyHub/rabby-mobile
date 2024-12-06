@@ -130,10 +130,7 @@ export const SkeletonListByContracts = memo(() => {
 export const SkeletonListByAssets = memo(() => {
   const { styles: cardStyles } = useTheme2024({ getStyle: getCardStyles });
   return (
-    <View
-      style={{
-        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-      }}>
+    <View>
       {Array(15)
         .fill(0)
         .map((e, i) => (
@@ -141,18 +138,20 @@ export const SkeletonListByAssets = memo(() => {
             key={i}
             style={[
               cardStyles.container,
-              { height: ApprovalsLayouts.assetsItemHeight },
-              i > 0 && {
-                marginTop: 10,
+              {
+                height: ApprovalsLayouts.assetsItemHeight,
+                borderWidth: 0,
               },
             ]}>
             <View style={{ flexDirection: 'row' }}>
               <Skeleton
                 animation="pulse"
+                circle
                 style={{ width: '100%', flexShrink: 1, height: '100%' }}
               />
               <Skeleton
-                animation="pulse"
+                animation="wave"
+                circle
                 width={'100%'}
                 style={[
                   { width: 54, flexShrink: 0, height: '100%', marginLeft: 6 },

@@ -5,15 +5,14 @@ import {
   RefreshControl,
   Platform,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import {
   ApprovalsTabView,
   NotMatchedHolder,
   getScrollableSectionHeight,
 } from './components/Layout';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
   useApprovalsPage,
@@ -29,7 +28,7 @@ import { ApprovalsLayouts } from './layout';
 const isIOS = Platform.OS === 'ios';
 
 export default function ListByAssets() {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
 
   const {
     isLoading,
@@ -51,11 +50,7 @@ export default function ListByAssets() {
     ({ item, section, index }) => {
       const isFirstItem = index === 0;
       return (
-        <View
-          style={[
-            styles.itemWrapper,
-            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
-          ]}>
+        <View style={styles.itemWrapper}>
           <ApprovalAssetRow assetApproval={item} />
         </View>
       );
@@ -153,6 +148,7 @@ export default function ListByAssets() {
         // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
         sections={sectionList}
+        // sections={[]}
         keyExtractor={keyExtractor}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}
@@ -174,7 +170,7 @@ export default function ListByAssets() {
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
   return {
     emptyHolderContainer: {
       height: getScrollableSectionHeight(),
@@ -185,11 +181,16 @@ const getStyles = createGetStyles(colors => {
     },
 
     list: {
-      // ...makeDebugBorder(),
-    },
-    listContainer: {
       paddingTop: 20,
       paddingBottom: 0,
+      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+    },
+    listContainer: {
+      borderRadius: 24,
+      overflow: 'hidden',
+      backgroundColor: colors2024['neutral-bg-1'],
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
       // height: '100%',
@@ -204,7 +205,6 @@ const getStyles = createGetStyles(colors => {
     },
     itemWrapper: {
       width: '100%',
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
     },
     footContainer: {},
 

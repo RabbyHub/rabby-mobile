@@ -28,11 +28,11 @@ export const ApprovalsLayouts = {
   contractCardPaddingVertical: 16,
   contractCardPaddingHorizontal: 24,
 
-  assetsItemHeight: 60,
+  assetsItemHeight: 72,
   assetsItemPadding: 16,
 
   listFooterComponentHeight: 56,
-  innerContainerHorizontalOffset: 20,
+  innerContainerHorizontalOffset: 16,
 
   get riskAlertTooltipMaxWidth() {
     return (
