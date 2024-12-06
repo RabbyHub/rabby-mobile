@@ -191,6 +191,7 @@ function CardProto({
             isSelectedAll={isSelectedAll}
             isSelectedPartial={isSelectedPartial}
             style={styles.contractCheckbox}
+            size={24}
           />
           {chainLogoUrl ? (
             <ChainIconImage
@@ -528,8 +529,11 @@ export const getCardStyles = createGetStyles2024(ctx => {
       alignItems: 'center',
     },
     floorLabel: {
-      color: colors['neutral-body'],
-      fontSize: 15,
+      color: colors2024['neutral-secondary'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     riskyAlertTooltipContent: {
       borderRadius: 2,
@@ -553,9 +557,11 @@ export const getCardStyles = createGetStyles2024(ctx => {
       fontWeight: '400',
     },
     floorValue: {
-      color: colors['neutral-title1'],
-      fontSize: 15,
-      fontWeight: '600',
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
       position: 'relative',
     },
     floorValueWarn: {

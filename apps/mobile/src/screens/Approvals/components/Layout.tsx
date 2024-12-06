@@ -14,17 +14,15 @@ import { useTranslation, Trans } from 'react-i18next';
 
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 
-import {
-  RcIconCheckedCC,
-  RcIconIndeterminateCC,
-  RcIconNotMatchedCC,
-  RcIconUncheckCC,
-} from '../icons';
+import { RcIconPartChecked } from '../icons';
+import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
+
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
+import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
@@ -319,7 +317,9 @@ export function SelectionCheckbox({
 
   if (isSelectedAll) {
     return (
-      <RcIconCheckedCC
+      <RcIconHasCheckbox
+        width={size}
+        height={size}
         style={[contractCheckboxStyle, style]}
         color={colors['blue-default']}
       />
@@ -328,7 +328,7 @@ export function SelectionCheckbox({
 
   if (isSelectedPartial) {
     return (
-      <RcIconIndeterminateCC
+      <RcIconPartChecked
         width={size}
         height={size}
         style={[contractCheckboxStyle, style]}
@@ -338,7 +338,7 @@ export function SelectionCheckbox({
   }
 
   return (
-    <RcIconUncheckCC
+    <RcIconNoCheck
       width={size}
       height={size}
       style={[contractCheckboxStyle, style]}
@@ -356,19 +356,15 @@ export function NotMatchedHolder({
   style,
   text = 'Not Matched',
 }: RNViewProps & { text?: string }) {
-  const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);
+  const { styles } = useTheme2024({ getStyle: getNotMatchedHolderStyle });
   return (
     <View style={[styles.container, style]}>
-      <RcIconNotMatchedCC
-        width={32}
-        height={32}
-        color={colors['neutral-body']}
-      />
+      <RcIconNoFind width={159} height={117} />
       <Text style={styles.emptyText}>{text}</Text>
     </View>
   );
 }
-const getNotMatchedHolderStyle = createGetStyles(colors => {
+const getNotMatchedHolderStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       flex: 1,
@@ -376,10 +372,12 @@ const getNotMatchedHolderStyle = createGetStyles(colors => {
       justifyContent: 'center',
     },
     emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors['neutral-body'],
-      fontWeight: '600',
+      marginTop: 21,
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-info'],
+      fontWeight: '400',
     },
   };
 });

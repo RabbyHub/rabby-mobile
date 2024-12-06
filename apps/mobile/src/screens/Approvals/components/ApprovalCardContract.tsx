@@ -327,18 +327,18 @@ function CardProto({
 
 export const getCardStyles = createGetStyles2024(ctx => {
   const selectableStyles = getSelectableContainerStyle(ctx);
-  const { colors } = ctx;
+  const { colors, colors2024 } = ctx;
 
   return {
     container: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card1'],
+      borderRadius: 30,
+      backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      paddingVertical: 10,
       height: ApprovalsLayouts.contractCardHeight,
+      paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
+      paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
       width: '100%',
-      padding: ApprovalsLayouts.contractCardPadding,
       ...selectableStyles.container,
     },
     containerWithRisky: {

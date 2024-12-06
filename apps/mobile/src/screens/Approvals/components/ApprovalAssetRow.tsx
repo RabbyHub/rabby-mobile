@@ -135,6 +135,7 @@ function AssetsApprovalRowProto({
                 isSelectedAll={isSelectedAll}
                 isSelectedPartial={isSelectedPartial}
                 style={styles.contractCheckbox}
+                size={24}
               />
             </View>
             {approvalInfo.hasFloor2 && (

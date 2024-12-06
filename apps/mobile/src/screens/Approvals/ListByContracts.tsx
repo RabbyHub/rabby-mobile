@@ -137,7 +137,6 @@ export default function ListByContracts() {
       <Tabs.SectionList<ContractApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
-        // ListHeaderComponent={renderHeaderComponent}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? <ActivityIndicator /> : null}
@@ -146,7 +145,6 @@ export default function ListByContracts() {
         style={styles.list}
         contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
-        // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
         sections={sectionList}
         keyExtractor={keyExtractor}

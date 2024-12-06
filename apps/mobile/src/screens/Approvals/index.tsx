@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Platform, StyleSheet, Dimensions } from 'react-native';
+import { View, Platform, Dimensions } from 'react-native';
 import {
   Tabs,
   MaterialTabBar,
@@ -216,10 +216,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     shadowColor: 'transparent',
     borderTopWidth: 0,
     borderColor: colors2024['neutral-line'],
-    borderWidth: StyleSheet.hairlineWidth,
   },
   tabBar: {
     height: ApprovalsLayouts.tabbarHeight,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   label: {
     fontSize: 16,
