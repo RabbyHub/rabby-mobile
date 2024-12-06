@@ -39,10 +39,11 @@ import { RootNames } from '@/constant/layout';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
-import { useBridge } from '../hooks/tokenV2';
 import { findChainByEnum } from '@/utils/chain';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
+import { useBridge } from '../hooks/token';
+import { Button } from '@/components2024/Button';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -52,6 +53,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flex: 1,
     paddingTop: 16,
     paddingBottom: 20,
+    // marginBottom: 12,
   },
   noRecoomedTokenText: {
     fontSize: 14,
@@ -151,11 +153,10 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     color: colors['neutral-foot'],
   },
   buttonContainer: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
-    borderTopColor: colors['neutral-line'],
-    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    // position: 'absolute',
+    // left: 0,
+    // bottom: 0,
+    height: 140,
     backgroundColor: colors['neutral-bg-1'],
     width: '100%',
     padding: 20,
@@ -168,9 +169,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
 export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
-
-  // const colors = useThemeColors();
-  // const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { colors2024, styles, colors } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -185,13 +183,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     useState(false);
 
   const { currentAccount } = useCurrentAccount();
-  const bridgeSupportedChains = useBridgeSupportedChains();
-  const aggregators = useAggregatorsList();
-
-  const aggregatorIds = useMemo(
-    () => aggregators.map(e => e.id),
-    [aggregators],
-  );
 
   const quoteVisible = useQuoteVisible();
 
@@ -239,7 +230,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     clearExpiredTimer,
   } = useBridge();
   const [showMoreOpen, setShowMoreOpen] = useState(false);
-  const { noBestQuote } = useTokenPair(currentAccount?.address || '');
   const refresh = useSetRefreshId();
 
   const [fetchingBridgeQuote, setFetchingBridgeQuote] = useState(false);
@@ -496,20 +486,21 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   };
 
   return (
-    <FooterButtonScreenContainer
-      as="View"
-      buttonProps={{
-        title: btnText,
-        onPress: handleConfirm,
-        disabled: btnDisabled,
-        loading: fetchingBridgeQuote,
-      }}
-      style={styles.screen}
-      footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 20,
-        paddingTop: 16,
-      }}>
+    <NormalScreenContainer overwriteStyle={styles.screen}>
+      {/* // <FooterButtonScreenContainer
+    //   as="View"
+    //   buttonProps={{
+    //     title: btnText,
+    //     onPress: handleConfirm,
+    //     disabled: btnDisabled,
+    //     loading: fetchingBridgeQuote,
+    //   }}
+    //   style={styles.screen}
+    //   footerBottomOffset={56}
+    //   footerContainerStyle={{
+    //     paddingHorizontal: 20,
+    //     paddingTop: 16,
+    //   }}> */}
       {isForMultipleAdderss && (
         <AccountSwitcherModal
           forScene="MakeTransactionAbout"
@@ -601,6 +592,36 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         </View>
       </KeyboardAwareScrollView>
 
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            paddingBottom: Math.max(bottom, 50),
+          },
+        ]}>
+        <Button
+          onPress={() => {
+            if (fetchingBridgeQuote) {
+              return;
+            }
+            if (!selectedBridgeQuote) {
+              refresh(e => e + 1);
+
+              return;
+            }
+            if (selectedBridgeQuote?.shouldTwoStepApprove) {
+              setTwoStepApproveModalVisible(true);
+              return;
+            }
+            handleBridge();
+          }}
+          title={btnText}
+          titleStyle={styles.btnTitle}
+          loading={fetchingBridgeQuote}
+          disabled={btnDisabled}
+        />
+      </View>
+
       <TwpStepApproveModal
         open={twoStepApproveModalVisible}
         onCancel={() => {
@@ -652,6 +673,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           }, 500);
         }}
       />
-    </FooterButtonScreenContainer>
+    </NormalScreenContainer>
   );
 };

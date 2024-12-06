@@ -1,60 +1,110 @@
+// import { CHAINS_ENUM, ETH_USDT_CONTRACT } from '@/constant';
+import { CHAINS_ENUM } from '@debank/common';
+import { ETH_USDT_CONTRACT } from '@/constant/swap';
+// import { useAsyncInitializeChainList } from '@/ui/hooks/useChain';
+import { useAsyncInitializeChainList } from '@/hooks/useChain';
+// import { useRabbySelector } from '@/ui/store';
+// import { formatUsdValue, isSameAddress, useWallet } from '@/ui/utils';
+import { formatUsdValue } from '@/utils/number';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import BigNumber from 'bignumber.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
+// import { useAsyncFn, useDebounce } from 'react-use';
+import useAsync from 'react-use/lib/useAsync';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
+import useDebounce from 'react-use/lib/useDebounce';
+import { stats } from '@/utils/stats';
+import { openapi } from '@/core/request';
 import {
   useQuoteVisible,
   useRefreshId,
   useSetQuoteVisible,
   useSetRefreshId,
 } from './context';
-
-import { findChain } from '@/utils/chain';
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import { openapi } from '@/core/request';
-import { bridgeService } from '@/core/services';
-import { useAsyncInitializeChainList } from '@/hooks/useChain';
+// import { getChainDefaultToken, tokenAmountBn } from '@/ui/utils/token';
+import { getChainDefaultToken } from '@/constant/swap';
+import { tokenAmountBn } from '@/screens/Swap/utils';
+import BigNumber from 'bignumber.js';
+import { useBridgeSlippage } from './slippage';
+import { isNaN } from 'lodash';
+import { useCurrentAccount } from '@/hooks/account';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
-import { formatSpeicalAmount } from '@/utils/number';
-import { stats } from '@/utils/stats';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { ETH_USDT_CONTRACT } from '@/constant/swap';
-import useAsync from 'react-use/lib/useAsync';
-import useDebounce from 'react-use/lib/useDebounce';
-import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-const { isSameAddress } = addressUtils;
+export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
+  shouldApproveToken?: boolean;
+  shouldTwoStepApprove?: boolean;
+  loading?: boolean;
+  tx?: BridgeQuote['tx'];
+  manualClick?: boolean;
+}
 
-const useTokenInfo = ({
-  userAddress,
-  chain,
-  defaultToken,
-}: {
-  userAddress?: string;
-  chain?: CHAINS_ENUM;
-  defaultToken?: TokenItem;
-}) => {
+export const tokenPriceImpact = (
+  fromToken?: TokenItem,
+  toToken?: TokenItem,
+  fromAmount?: string | number,
+  toAmount?: string | number,
+) => {
+  const notReady = [fromToken, toToken, fromAmount, toAmount].some(e =>
+    isNaN(e),
+  );
+
+  if (notReady) {
+    return;
+  }
+
+  const fromUsdBn = new BigNumber(fromAmount || 0).times(fromToken?.price || 0);
+  const toUsdBn = new BigNumber(toAmount || 0).times(toToken?.price || 0);
+
+  const cut = toUsdBn.minus(fromUsdBn).div(fromUsdBn).times(100);
+
+  return {
+    showLoss: cut.lte(-5),
+    lossUsd: formatUsdValue(toUsdBn.minus(fromUsdBn).abs().toString()),
+    diff: cut.abs().toFixed(2),
+    fromUsd: formatUsdValue(fromUsdBn.toString(10)),
+    toUsd: formatUsdValue(toUsdBn.toString(10)),
+  };
+};
+
+const useToken = (type: 'from' | 'to') => {
   const refreshId = useRefreshId();
-  const [token, setToken] = useState<TokenItem | undefined>(defaultToken);
+
+  const { currentAccount } = useCurrentAccount();
+  const userAddress = currentAccount?.address;
+
+  const [chain, setChain] = useState<CHAINS_ENUM>();
+
+  const [token, setToken] = useState<TokenItem>();
+
+  const switchChain: (changeChain?: CHAINS_ENUM, resetToken?: boolean) => void =
+    useCallback(
+      (changeChain?: CHAINS_ENUM, resetToken = true) => {
+        setChain(changeChain);
+        if (resetToken) {
+          if (type === 'from') {
+            setToken(
+              changeChain ? getChainDefaultToken(changeChain) : undefined,
+            );
+          } else {
+            setToken(undefined);
+          }
+        }
+      },
+      [type],
+    );
 
   const { value, loading, error } = useAsync(async () => {
     if (userAddress && token?.id && chain) {
       const data = await openapi.getToken(
         userAddress,
-        findChain({ enum: chain })?.serverId || CHAINS[chain].serverId,
+        findChainByEnum(chain)!.serverId,
         token.id,
       );
-      return data;
+      return { ...data, tokenId: token.id };
     }
-  }, [
-    refreshId,
-    userAddress,
-    token?.id,
-    //
-    token?.raw_amount_hex_str,
-    chain,
-  ]);
+  }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str, chain]);
 
   useDebounce(
     () => {
@@ -66,210 +116,256 @@ const useTokenInfo = ({
     [value, error, loading],
   );
 
-  if (error) {
-    console.error('token info error', chain, token?.symbol, token?.id, error);
-  }
-  return [token, setToken] as const;
+  return [chain, token, setToken, switchChain] as const;
 };
 
-export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
-  shouldApproveToken?: boolean;
-  shouldTwoStepApprove?: boolean;
-  loading?: boolean;
-  tx?: BridgeQuote['tx'];
-  manualClick?: boolean;
-}
-
-export const useTokenPair = (userAddress: string) => {
+export const useBridge = () => {
+  const { currentAccount } = useCurrentAccount();
+  const userAddress = currentAccount?.address;
   const refreshId = useRefreshId();
 
-  const {
-    initialSelectedChain,
-    oChain,
-    defaultSelectedFromToken,
-    defaultSelectedToToken,
-  } = useMemo(() => {
-    const lastSelectedChain = bridgeService.getSelectedChain();
+  const setRefreshId = useSetRefreshId();
 
-    return {
-      initialSelectedChain: lastSelectedChain,
-      oChain: bridgeService.getSelectedChain() || CHAINS_ENUM.ETH,
-      defaultSelectedFromToken: bridgeService.getSelectedFromToken(),
-      defaultSelectedToToken: bridgeService.getSelectedToToken(),
-    };
-  }, []);
+  const [fromChain, fromToken, setFromToken, switchFromChain] =
+    useToken('from');
+  const [toChain, toToken, setToToken, switchToChain] = useToken('to');
 
-  const [chain, setChain] = useState(oChain);
-  const handleChain = useCallback((c: CHAINS_ENUM) => {
-    setChain(c);
-    bridgeService.setSelectedChain(c);
-  }, []);
+  const [amount, setAmount] = useState('');
 
-  const [payToken, setPayToken] = useTokenInfo({
-    userAddress,
-    chain: defaultSelectedFromToken?.chain
-      ? findChain({ serverId: defaultSelectedFromToken?.chain })?.enum
-      : undefined,
-    defaultToken: defaultSelectedFromToken,
-  });
+  const slippageObj = useBridgeSlippage();
 
-  const [receiveToken, setReceiveToken] = useTokenInfo({
-    userAddress,
-    chain,
-    defaultToken: defaultSelectedToToken,
-  });
+  const [recommendFromToken, setRecommendFromToken] = useState<TokenItem>();
 
-  const setSelectedBridgeQuote: React.Dispatch<
-    React.SetStateAction<SelectedBridgeQuote | undefined>
-  > = useCallback(p => {
-    if (expiredTimer.current) {
-      clearTimeout(expiredTimer.current);
-    }
-    setExpired(false);
-    expiredTimer.current = setTimeout(() => {
-      setExpired(true);
-    }, 1000 * 30);
-    setOriSelectedBridgeQuote(p);
-  }, []);
-
-  const switchChain = useCallback(
-    (c: CHAINS_ENUM) => {
-      handleChain(c);
-      setPayToken(undefined);
-      setReceiveToken(undefined);
-      setPayAmount('');
-      setSelectedBridgeQuote(undefined);
-    },
-    [handleChain, setSelectedBridgeQuote, setPayToken, setReceiveToken],
-  );
-
-  const supportedChains = useBridgeSupportedChains();
-
-  useAsyncInitializeChainList({
-    // NOTICE: now `useTokenPair` is only used for swap page, so we can use `SWAP_SUPPORT_CHAINS` here
-    supportChains: supportedChains,
-    onChainInitializedAsync: firstEnum => {
-      // only init chain if it's not cached before
-      if (!initialSelectedChain) {
-        switchChain(firstEnum);
+  const fillRecommendFromToken = useCallback(() => {
+    if (recommendFromToken) {
+      const targetChain = findChainByServerID(recommendFromToken?.chain);
+      if (targetChain) {
+        switchFromChain(targetChain.enum, false);
+        setFromToken(recommendFromToken);
+        setAmount('');
       }
-    },
-  });
-
-  useEffect(() => {
-    bridgeService.setSelectedFromToken(payToken);
-  }, [payToken]);
-
-  useEffect(() => {
-    bridgeService.setSelectedToToken(receiveToken);
-  }, [receiveToken]);
-
-  const [payAmount, setPayAmount] = useState('');
+    }
+  }, [recommendFromToken, switchFromChain, setFromToken]);
 
   const [selectedBridgeQuote, setOriSelectedBridgeQuote] = useState<
     SelectedBridgeQuote | undefined
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>();
-  const [expired, setExpired] = useState(false);
-
-  const handleAmountChange = useCallback((e: string) => {
-    const v = formatSpeicalAmount(e);
-    if (!/^\d*(\.\d*)?$/.test(v)) {
-      return;
-    }
-    setPayAmount(v);
-  }, []);
-
-  const handleBalance = useCallback(() => {
-    if (payToken) {
-      setPayAmount(tokenAmountBn(payToken).toString(10));
-    }
-  }, [payToken]);
 
   const inSufficient = useMemo(
     () =>
-      payToken
-        ? tokenAmountBn(payToken).lt(payAmount)
-        : new BigNumber(0).lt(payAmount),
-    [payToken, payAmount],
+      fromToken
+        ? tokenAmountBn(fromToken).lt(amount)
+        : new BigNumber(0).lt(amount),
+    [fromToken, amount],
   );
+
+  const getRecommendToChain = async (chain: CHAINS_ENUM) => {
+    const getRemoteRecommendChain = async () => {
+      const data = await openapi.getRecommendBridgeToChain({
+        from_chain_id: findChainByEnum(chain)!.serverId,
+      });
+      switchToChain(findChainByServerID(data.to_chain_id)?.enum);
+    };
+    if (userAddress) {
+      const latestTx = await openapi.getBridgeHistoryList({
+        user_addr: userAddress,
+        start: 0,
+        limit: 1,
+      });
+      const latestToToken = latestTx?.history_list?.[0]?.to_token;
+      if (latestToToken) {
+        const lastBridgeChain = findChainByServerID(latestToToken.chain);
+        if (lastBridgeChain && lastBridgeChain.enum !== chain) {
+          switchToChain(lastBridgeChain.enum);
+          setToToken(latestToToken);
+        } else {
+          await getRemoteRecommendChain();
+        }
+      } else {
+        await getRemoteRecommendChain();
+      }
+    }
+  };
+
+  const { value: isSameToken, loading: isSameTokenLoading } =
+    useAsync(async () => {
+      if (fromChain && fromToken?.id && toChain && toToken?.id) {
+        try {
+          const data = await openapi.isSameBridgeToken({
+            from_chain_id: findChainByEnum(fromChain)!.serverId,
+            from_token_id: fromToken?.id,
+            to_chain_id: findChainByEnum(toChain)!.serverId,
+            to_token_id: toToken?.id,
+          });
+          return data?.every(e => e.is_same);
+        } catch (error) {
+          return false;
+        }
+      }
+      return false;
+    }, [fromChain, fromToken?.id, toChain, toToken?.id]);
+
+  useEffect(() => {
+    if (!isSameTokenLoading && slippageObj.autoSlippage) {
+      slippageObj.setSlippage(isSameToken ? '0.5' : '1');
+    }
+  }, [slippageObj, isSameToken, isSameTokenLoading]);
+
+  const supportedChains = useBridgeSupportedChains();
+  // the most worth chain is the first
+  useAsyncInitializeChainList({
+    supportChains: supportedChains,
+    onChainInitializedAsync: firstEnum => {
+      switchFromChain(firstEnum);
+      getRecommendToChain(firstEnum);
+    },
+  });
+
+  const handleAmountChange = useCallback((v: string) => {
+    if (!/^\d*(\.\d*)?$/.test(v)) {
+      return;
+    }
+    setAmount(v);
+  }, []);
+
+  const switchToken = useCallback(() => {
+    switchFromChain(toChain, false);
+    switchToChain(fromChain, false);
+    setFromToken(toToken);
+    setToToken(fromToken);
+  }, [
+    setFromToken,
+    toToken,
+    setToToken,
+    fromToken,
+    switchFromChain,
+    toChain,
+    switchToChain,
+    fromChain,
+  ]);
 
   const [quoteList, setQuotesList] = useState<SelectedBridgeQuote[]>([]);
 
+  const setSelectedBridgeQuote = useCallback(
+    (quote?: SelectedBridgeQuote) => {
+      if (!quote?.manualClick && expiredTimer.current) {
+        clearTimeout(expiredTimer.current);
+      }
+      if (!quote?.manualClick) {
+        expiredTimer.current = setTimeout(() => {
+          setRefreshId(e => e + 1);
+        }, 1000 * 30);
+      }
+      setOriSelectedBridgeQuote(quote);
+    },
+    [setRefreshId],
+  );
+
   useEffect(() => {
     setQuotesList([]);
-    setSelectedBridgeQuote(undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+    setRecommendFromToken(undefined);
+  }, [fromToken?.id, toToken?.id, fromChain, toChain, amount, inSufficient]);
 
-  const setRefreshId = useSetRefreshId();
-
+  // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
 
-  const [noBestQuote, setNoBestQuote] = useState(false);
-
   const fetchIdRef = useRef(0);
-
-  const inFetching = useRef(false);
-
-  const [{ loading: quoteLoading, error: quotesError }, callGetQuotes] =
+  const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
       if (
         !inSufficient &&
         userAddress &&
-        payToken?.id &&
-        receiveToken?.id &&
-        receiveToken &&
-        chain &&
-        Number(payAmount) > 0 &&
+        fromToken?.id &&
+        toToken?.id &&
+        toToken &&
+        fromChain &&
+        toChain &&
+        Number(amount) > 0 &&
         aggregatorsList.length > 0
       ) {
-        inFetching.current = true;
-
         fetchIdRef.current += 1;
         const currentFetchId = fetchIdRef.current;
 
-        let preQuotesIsEmpty = false;
+        let isEmpty = false;
         const result: SelectedBridgeQuote[] = [];
 
         setQuotesList(e => {
           if (!e.length) {
-            preQuotesIsEmpty = true;
+            isEmpty = true;
           }
           return e?.map(e => ({ ...e, loading: true }));
         });
 
-        setSelectedBridgeQuote(undefined);
+        const originData: Omit<BridgeQuote, 'tx'>[] = [];
 
-        const originData = await openapi
-          .getBridgeQuoteList({
-            aggregator_ids: aggregatorsList.map(e => e.id).join(','),
-            from_token_id: payToken.id,
-            user_addr: userAddress,
-            from_chain_id: payToken.chain,
-            from_token_raw_amount: new BigNumber(payAmount)
-              .times(10 ** payToken.decimals)
-              .toFixed(0, 1)
-              .toString(),
-            to_chain_id: receiveToken.chain,
-            to_token_id: receiveToken.id,
-          })
-          .catch(err => {
-            console.log('err', err);
-            if (currentFetchId === fetchIdRef.current) {
-              stats.report('bridgeQuoteResult', {
-                aggregatorIds: aggregatorsList.map(e => e.id).join(','),
-                fromChainId: payToken.chain,
-                fromTokenId: payToken.id,
-                toTokenId: receiveToken.id,
-                toChainId: receiveToken.chain,
-                status: 'fail',
-                amount: payAmount,
-              });
-            }
-          })
-          .finally(() => {});
+        const getQUoteV2 = async (alternativeToken?: TokenItem) =>
+          await Promise.allSettled(
+            aggregatorsList.map(async bridgeAggregator => {
+              const data = await openapi
+                .getBridgeQuoteV2({
+                  aggregator_id: bridgeAggregator.id,
+                  user_addr: userAddress,
+                  from_chain_id: alternativeToken?.chain || fromToken.chain,
+                  from_token_id: alternativeToken?.id || fromToken.id,
+                  from_token_raw_amount: alternativeToken
+                    ? new BigNumber(amount)
+                        .times(fromToken.price)
+                        .div(alternativeToken.price)
+                        .times(10 ** alternativeToken.decimals)
+                        .toFixed(0, 1)
+                        .toString()
+                    : new BigNumber(amount)
+                        .times(10 ** fromToken.decimals)
+                        .toFixed(0, 1)
+                        .toString(),
+                  to_chain_id: toToken.chain,
+                  to_token_id: toToken.id,
+                  slippage: new BigNumber(slippageObj.slippageState)
+                    .div(100)
+                    .toString(10),
+                })
+                .catch(e => {
+                  if (
+                    currentFetchId === fetchIdRef.current &&
+                    !alternativeToken
+                  ) {
+                    stats.report('bridgeQuoteResult', {
+                      aggregatorIds: bridgeAggregator.id,
+                      fromChainId: fromToken.chain,
+                      fromTokenId: fromToken.id,
+                      toTokenId: toToken.id,
+                      toChainId: toToken.chain,
+                      status: 'fail',
+                    });
+                  }
+                });
+
+              if (alternativeToken) {
+                if (data && currentFetchId === fetchIdRef.current) {
+                  setRecommendFromToken(alternativeToken);
+                  return;
+                }
+              }
+              if (data && currentFetchId === fetchIdRef.current) {
+                originData.push(...data);
+              }
+              if (currentFetchId === fetchIdRef.current) {
+                stats.report('bridgeQuoteResult', {
+                  aggregatorIds: bridgeAggregator.id,
+                  fromChainId: fromToken.chain,
+                  fromTokenId: fromToken.id,
+                  toTokenId: toToken.id,
+                  toChainId: toToken.chain,
+                  status: data?.length ? 'success' : 'none',
+                });
+              }
+              return data;
+            }),
+          );
+
+        await getQUoteV2();
 
         const data = originData?.filter(
           quote =>
@@ -280,18 +376,45 @@ export const useTokenPair = (userAddress: string) => {
         );
 
         if (currentFetchId === fetchIdRef.current) {
+          setPending(false);
+
+          if (data.length < 1) {
+            try {
+              const res = await openapi.getRecommendFromToken({
+                user_addr: userAddress,
+                from_chain_id: fromToken.chain,
+                from_token_id: fromToken.id,
+                from_token_amount: new BigNumber(amount)
+                  .times(10 ** fromToken.decimals)
+                  .toFixed(0, 1)
+                  .toString(),
+                to_chain_id: toToken.chain,
+                to_token_id: toToken.id,
+              });
+              if (res?.token_list?.[0]) {
+                await getQUoteV2(res?.token_list?.[0]);
+              } else {
+                setRecommendFromToken(undefined);
+              }
+            } catch (error) {
+              setRecommendFromToken(undefined);
+            }
+
+            setSelectedBridgeQuote(undefined);
+          }
+
           stats.report('bridgeQuoteResult', {
             aggregatorIds: aggregatorsList.map(e => e.id).join(','),
-            fromChainId: payToken.chain,
-            fromTokenId: payToken.id,
-            toTokenId: receiveToken.id,
-            toChainId: receiveToken.chain,
+            fromChainId: fromToken.chain,
+            fromTokenId: fromToken.id,
+            toTokenId: toToken.id,
+            toChainId: toToken.chain,
             status: data ? (data?.length === 0 ? 'none' : 'success') : 'fail',
           });
         }
 
         if (data && currentFetchId === fetchIdRef.current) {
-          if (!preQuotesIsEmpty) {
+          if (!isEmpty) {
             setQuotesList(data.map(e => ({ ...e, loading: true })));
           }
 
@@ -302,30 +425,30 @@ export const useTokenPair = (userAddress: string) => {
               }
               let tokenApproved = false;
               let allowance = '0';
-              const fromChain = findChain({ serverId: payToken?.chain });
-              if (payToken?.id === fromChain?.nativeTokenAddress) {
+              const fromFindChain = findChain({ serverId: fromToken?.chain });
+              if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
                 tokenApproved = true;
               } else {
                 allowance = await getERC20Allowance(
-                  payToken.chain,
-                  payToken.id,
+                  fromToken.chain,
+                  fromToken.id,
                   quote.approve_contract_id,
                 );
                 tokenApproved = new BigNumber(allowance).gte(
-                  new BigNumber(payAmount).times(10 ** payToken.decimals),
+                  new BigNumber(amount).times(10 ** fromToken.decimals),
                 );
               }
               let shouldTwoStepApprove = false;
               if (
-                fromChain?.enum === CHAINS_ENUM.ETH &&
-                isSameAddress(payToken.id, ETH_USDT_CONTRACT) &&
+                fromFindChain?.enum === CHAINS_ENUM.ETH &&
+                isSameAddress(fromToken.id, ETH_USDT_CONTRACT) &&
                 Number(allowance) !== 0 &&
                 !tokenApproved
               ) {
                 shouldTwoStepApprove = true;
               }
 
-              if (preQuotesIsEmpty) {
+              if (isEmpty) {
                 result.push({
                   ...quote,
                   shouldTwoStepApprove,
@@ -354,53 +477,62 @@ export const useTokenPair = (userAddress: string) => {
             }),
           );
 
-          if (preQuotesIsEmpty && currentFetchId === fetchIdRef.current) {
+          if (isEmpty && currentFetchId === fetchIdRef.current) {
             setQuotesList(result);
           }
         }
       }
+      setSelectedBridgeQuote(undefined);
     }, [
       inSufficient,
       aggregatorsList,
       refreshId,
       userAddress,
-      payToken?.id,
-      receiveToken?.id,
-      chain,
-      payAmount,
+      fromToken?.id,
+      toToken?.id,
+      fromChain,
+      toChain,
+      amount,
+      slippageObj.slippage,
     ]);
 
-  const [stateChangeLoading, setStateChangeLoading] = useState(false);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     if (
       !inSufficient &&
       userAddress &&
-      payToken?.id &&
-      receiveToken?.id &&
-      chain &&
-      Number(payAmount) > 0 &&
+      fromToken?.id &&
+      toToken?.id &&
+      toToken &&
+      fromChain &&
+      toChain &&
+      Number(amount) > 0 &&
       aggregatorsList.length > 0
     ) {
-      setStateChangeLoading(true);
+      setPending(true);
+    } else {
+      setPending(false);
     }
   }, [
-    aggregatorsList.length,
-    chain,
     inSufficient,
-    payAmount,
-    payToken?.id,
-    receiveToken,
     userAddress,
+    fromToken?.id,
+    toToken?.id,
+    toToken,
+    fromChain,
+    toChain,
+    amount,
+    aggregatorsList.length,
     refreshId,
   ]);
 
-  useDebounce(
+  const [, cancelDebounce] = useDebounce(
     () => {
-      callGetQuotes();
+      getQuoteList();
     },
     300,
-    [callGetQuotes],
+    [getQuoteList],
   );
 
   const [bestQuoteId, setBestQuoteId] = useState<
@@ -414,26 +546,18 @@ export const useTokenPair = (userAddress: string) => {
   const openQuote = useSetQuoteVisible();
 
   const openQuotesList = useCallback(() => {
-    setQuotesList([]);
-    setRefreshId(e => e + 1);
     openQuote(true);
-  }, [openQuote, setRefreshId]);
+  }, [openQuote]);
 
   useEffect(() => {
-    if (
-      !quoteLoading &&
-      receiveToken &&
-      Number(payAmount) > 0 &&
-      quoteList.every(e => !e.loading) &&
-      inFetching.current
-    ) {
+    if (!quoteLoading && toToken && quoteList.every(e => !e.loading)) {
       const sortedList = quoteList?.sort((b, a) => {
         return new BigNumber(a.to_token_amount)
-          .times(receiveToken.price || 1)
+          .times(toToken.price || 1)
           .minus(a.gas_fee.usd_value)
           .minus(
             new BigNumber(b.to_token_amount)
-              .times(receiveToken.price || 1)
+              .times(toToken.price || 1)
               .minus(b.gas_fee.usd_value),
           )
           .toNumber();
@@ -443,74 +567,74 @@ export const useTokenPair = (userAddress: string) => {
         sortedList[0]?.bridge_id &&
         sortedList[0]?.aggregator?.id
       ) {
-        setNoBestQuote(false);
-
         setBestQuoteId({
           bridgeId: sortedList[0]?.bridge_id,
           aggregatorId: sortedList[0]?.aggregator?.id,
         });
 
-        setSelectedBridgeQuote(preItem =>
-          preItem?.manualClick ? preItem : sortedList[0],
-        );
-      } else {
-        setNoBestQuote(true);
+        let useQuote = sortedList[0];
+
+        setOriSelectedBridgeQuote(preItem => {
+          useQuote = preItem?.manualClick ? preItem : sortedList[0];
+          return preItem;
+        });
+
+        setSelectedBridgeQuote(useQuote);
       }
-
-      inFetching.current = false;
-      setStateChangeLoading(false);
-
-      return () => {
-        setNoBestQuote(false);
-      };
     }
-  }, [
-    quoteList,
-    quoteLoading,
-    receiveToken,
-    setSelectedBridgeQuote,
-    payAmount,
-  ]);
+  }, [quoteList, quoteLoading, toToken, setSelectedBridgeQuote]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
   }
 
-  useEffect(() => {
-    setExpired(false);
-    setSelectedBridgeQuote(undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  const showLoss = useMemo(() => {
+    if (selectedBridgeQuote) {
+      return !!tokenPriceImpact(
+        fromToken,
+        toToken,
+        amount,
+        selectedBridgeQuote?.to_token_amount,
+      )?.showLoss;
+    }
+    return false;
+  }, [fromToken, toToken, amount, selectedBridgeQuote]);
+
+  const clearExpiredTimer = useCallback(() => {
+    if (expiredTimer.current) {
+      clearTimeout(expiredTimer.current);
+    }
+  }, []);
 
   return {
-    chain,
-    switchChain,
+    clearExpiredTimer,
 
-    payToken,
-    setPayToken,
-    receiveToken,
-    setReceiveToken,
+    fromChain,
+    fromToken,
+    setFromToken,
+    switchFromChain,
+    toChain,
+    toToken,
+    setToToken,
+    switchToChain,
+    switchToken,
 
-    handleAmountChange,
-    handleBalance,
-    payAmount,
+    recommendFromToken,
+    fillRecommendFromToken,
 
     inSufficient,
-    noBestQuote: noBestQuote,
+    amount,
+    handleAmountChange,
+    showLoss,
 
-    quoteLoading: stateChangeLoading,
-    quoteList,
-    selectedBridgeQuote,
-    setSelectedBridgeQuote,
     openQuotesList,
+    quoteLoading: pending || quoteLoading,
+    quoteList,
 
     bestQuoteId,
-    expired,
+    selectedBridgeQuote,
+
+    setSelectedBridgeQuote,
+    ...slippageObj,
   };
 };
-
-function tokenAmountBn(token: TokenItem) {
-  return new BigNumber(token?.raw_amount_hex_str || 0, 16).div(
-    10 ** (token?.decimals || 1),
-  );
-}

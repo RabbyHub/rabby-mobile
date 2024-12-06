@@ -206,7 +206,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
           </View>
         </View>
       )}
-      {!!tips && (
+      {!!tips && slippageOpen && (
         <View style={styles.warningTipContainer}>
           <Text style={styles.warningTip}>{tips}</Text>
         </View>

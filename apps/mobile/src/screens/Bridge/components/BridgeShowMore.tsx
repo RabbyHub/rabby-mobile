@@ -23,7 +23,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
 import RcIconPolygon from '@/assets2024/icons/bridge/IconPolygon.svg';
 // import { tokenPriceImpact } from '../hooks';
-import { tokenPriceImpact } from '../hooks/tokenV2';
+import { tokenPriceImpact } from '../hooks/token';
 import { AssetAvatar } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
