@@ -20,20 +20,9 @@ import {
 } from '../hooks';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
-import { ChainInfo } from '@/screens/Send/components/ChainInfo';
-import { BridgeTokenPair } from './BridgeTokenPair';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
-import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@/utils/math';
-import { BestQuoteLoading } from './loading';
-import RcArrowDown from '@/assets/icons/bridge/down.svg';
-import { formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
-
-import { BridgeReceiveDetails } from './BridgeReceiveDetail';
 import { QuoteList } from './BridgeQuotes';
-import { Button } from '@/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { BridgeHeader } from './BridgeHeader';
@@ -42,7 +31,6 @@ import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components/Toast';
-import { RcIconMaxButton } from '@/assets/icons/swap';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
@@ -54,29 +42,32 @@ import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { useBridge } from '../hooks/tokenV2';
 import { findChainByEnum } from '@/utils/chain';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
+import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
     backgroundColor: colors['neutral-bg-1'],
   },
   container: {
-    // flexDirection: 'column',
-    // marginHorizontal: 20,
-    // gap: 8,
     flex: 1,
-    paddingTop: 12,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  noRecoomedTokenText: {
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['red-default'],
+    fontWeight: '500',
+    marginHorizontal: 24,
   },
   cardContainer: {
     position: 'relative',
     flexDirection: 'column',
     // marginHorizontal: 20,
     gap: 12,
+    marginBottom: -8,
     // width: '100%',
     // flex: 1,
-  },
-  bridgeTokenContainer: {
-    flexDirection: 'column',
-    marginBottom: 8,
   },
   switchButtonContainer: {
     position: 'absolute',
@@ -247,7 +238,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
     clearExpiredTimer,
   } = useBridge();
-
+  const [showMoreOpen, setShowMoreOpen] = useState(false);
   const { noBestQuote } = useTokenPair(currentAccount?.address || '');
   const refresh = useSetRefreshId();
 
@@ -259,7 +250,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   const [isShowSign, setIsShowSign] = useState(false);
 
-  const gotoBridge = async () => {
+  const gotoBridge = useMemoizedFn(async () => {
     if (
       !inSufficient &&
       fromToken &&
@@ -271,7 +262,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         setFetchingBridgeQuote(true);
         const { tx } = await pRetry(
           () =>
-            openapi.getBridgeQuote({
+            openapi.getBridgeQuoteTxV2({
               aggregator_id: selectedBridgeQuote.aggregator.id,
               bridge_id: selectedBridgeQuote.bridge_id,
               from_token_id: fromToken.id,
@@ -283,6 +274,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 .toString(),
               to_chain_id: toToken.chain,
               to_token_id: toToken.id,
+              slippage: new BigNumber(slippageState).div(100).toString(10),
             }),
           { retries: 1 },
         );
@@ -348,7 +340,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         setFetchingBridgeQuote(false);
       }
     }
-  };
+  });
 
   const buildTxs = async () => {
     if (
@@ -362,7 +354,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         setFetchingBridgeQuote(true);
         const { tx } = await pRetry(
           () =>
-            openapi.getBridgeQuote({
+            openapi.getBridgeQuoteTxV2({
               aggregator_id: selectedBridgeQuote.aggregator.id,
               bridge_id: selectedBridgeQuote.bridge_id,
               from_token_id: fromToken.id,
@@ -374,6 +366,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 .toString(),
               to_chain_id: toToken.chain,
               to_token_id: toToken.id,
+              slippage: new BigNumber(slippageState).div(100).toString(10),
             }),
           { retries: 1 },
         );
@@ -459,6 +452,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     ) {
       await runBuildTxs();
       setIsShowSign(true);
+      clearExpiredTimer();
     } else {
       gotoBridge();
     }
@@ -505,7 +499,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     <FooterButtonScreenContainer
       as="View"
       buttonProps={{
-        title: t('page.bridge.title'),
+        title: btnText,
         onPress: handleConfirm,
         disabled: btnDisabled,
         loading: fetchingBridgeQuote,
@@ -514,6 +508,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
+        paddingTop: 16,
       }}>
       {isForMultipleAdderss && (
         <AccountSwitcherModal
@@ -524,9 +519,9 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       )}
       <KeyboardAwareScrollView
         style={styles.container}
-        contentContainerStyle={styles.container}
         enableOnAndroid
-        extraHeight={200}
+        scrollEnabled
+        extraHeight={52}
         keyboardOpeningTime={0}>
         <View style={styles.card}>
           <View style={styles.cardContainer}>
@@ -552,7 +547,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               }
               fromTokenId={fromToken?.id}
               valueLoading={quoteLoading}
-              value={selectedBridgeQuote?.to_token_amount.toFixed(2)}
+              value={selectedBridgeQuote?.to_token_amount}
               excludeChains={fromChain ? [fromChain] : undefined}
               noQuote={noQuote}
             />
@@ -561,38 +556,49 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               onPress={switchToken}
             />
           </View>
-
-          {quoteLoading &&
-            Number(amount) > 0 &&
-            !inSufficient &&
-            !selectedBridgeQuote?.manualClick && <BestQuoteLoading />}
-
-          {fromToken &&
-            !inSufficient &&
-            toToken &&
-            Number(amount) > 0 &&
-            (!quoteLoading || selectedBridgeQuote?.manualClick) && (
-              <BridgeReceiveDetails
-                openQuotesList={openQuotesList}
-                activeProvider={selectedBridgeQuote}
-                payAmount={amount}
-                payToken={fromToken}
-                receiveToken={toToken}
-                bestQuoteId={bestQuoteId}
-                noBestQuote={noBestQuote}
-              />
-            )}
         </View>
 
-        {/* {inSufficient ? (
-          <View style={styles.inSufficient}>
-            <RcDangerIcon width={16} height={16} style={{ marginRight: 2 }} />
-
-            <Text style={styles.inSufficientText}>
-              {t('page.swap.insufficient-balance')}
-            </Text>
-          </View>
-        ) : null} */}
+        <View>
+          {selectedBridgeQuote && (
+            <BridgeShowMore
+              open={showMoreOpen}
+              setOpen={setShowMoreOpen}
+              sourceName={selectedBridgeQuote?.aggregator.name || ''}
+              sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
+              slippage={slippageState}
+              displaySlippage={slippage}
+              onSlippageChange={e => {
+                setSlippageChanged(true);
+                setSlippage(e);
+              }}
+              fromToken={fromToken}
+              toToken={toToken}
+              amount={amount || 0}
+              toAmount={selectedBridgeQuote?.to_token_amount}
+              openQuotesList={openQuotesList}
+              quoteLoading={quoteLoading}
+              slippageError={isSlippageHigh || isSlippageLow}
+              autoSlippage={autoSlippage}
+              isCustomSlippage={isCustomSlippage}
+              setAutoSlippage={setAutoSlippage}
+              setIsCustomSlippage={setIsCustomSlippage}
+            />
+          )}
+          {noQuote && (
+            <>
+              {recommendFromToken ? (
+                <RecommendFromToken
+                  token={recommendFromToken}
+                  onOk={fillRecommendFromToken}
+                />
+              ) : (
+                <Text style={styles.noRecoomedTokenText}>
+                  {t('page.bridge.no-quote-found')}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
       </KeyboardAwareScrollView>
 
       <TwpStepApproveModal

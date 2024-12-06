@@ -126,6 +126,15 @@ const BridgeToken = ({
         <View style={styles.inputContainer}>
           {valueLoading ? (
             <View style={styles.skeleton} />
+          ) : isToken ? (
+            <Text
+              numberOfLines={1}
+              style={StyleSheet.flatten([
+                styles.input,
+                (showNoQuote || !value) && styles.showNoQuoteText,
+              ])}>
+              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
+            </Text>
           ) : (
             <TextInput
               numberOfLines={1}
@@ -133,10 +142,9 @@ const BridgeToken = ({
               inputMode="decimal"
               placeholderTextColor={colors2024['neutral-info']}
               style={styles.input}
-              placeholder={showNoQuote ? t('page.bridge.no-quote') : '0'}
+              placeholder={'0'}
               value={value?.toString()}
               onChangeText={inputChange}
-              editable={isFromToken}
               ref={inputRef}
             />
           )}
@@ -280,6 +288,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 56,
     alignItems: 'center',
   },
+  showNoQuoteText: {
+    color: colors2024['neutral-info'],
+  },
   input: {
     flex: 1,
     paddingVertical: 0,
@@ -294,6 +305,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 36,
     paddingLeft: 0,
     borderWidth: 0,
+    overflow: 'hidden',
   },
   skeleton: {
     // marginTop: 16,

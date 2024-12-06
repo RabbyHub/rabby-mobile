@@ -160,7 +160,7 @@ const TokenSelect = ({
           </>
         ) : (
           <>
-            <Text style={styles.selectText}>{t('page.swap.select-token')}</Text>
+            <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
             <RcIconSwapBottomArrow />
           </>
         )}

@@ -10,8 +10,8 @@ import {
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar, Tip } from '@/components';
 import { QuoteLogo } from './QuoteLogo';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconGasCC from '@/assets/icons/swap/gas-cc.svg';
 import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
@@ -25,9 +25,7 @@ interface QuoteItemProps extends SelectedBridgeQuote {
   isBestQuote?: boolean;
   bestQuoteUsd: string;
   sortIncludeGasFee: boolean;
-  setSelectedBridgeQuote?: React.Dispatch<
-    React.SetStateAction<SelectedBridgeQuote | undefined>
-  >;
+  setSelectedBridgeQuote?: (quote?: SelectedBridgeQuote) => void;
   onlyShow?: boolean;
   loading?: boolean;
   inSufficient?: boolean;
@@ -44,8 +42,7 @@ export const bridgeQuoteEstimatedValueBn = (
 };
 
 export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const openBridgeQuote = useSetQuoteVisible();
 
@@ -184,31 +181,33 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     flexDirection: 'column',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: 30,
     padding: 16,
     paddingTop: 20,
-    height: 88,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    height: 116,
   },
   enabledAggregator: {},
   onlyShow: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
     height: 'auto',
     padding: 0,
     paddingTop: 0,
   },
   insufficient: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors['neutral-line'],
   },
   normal: {
-    backgroundColor: colors['neutral-card1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors['neutral-line'],
   },
   topRow: {
     flexDirection: 'row',
@@ -289,17 +288,18 @@ const getStyles = createGetStyles(colors => ({
   badge: {
     position: 'absolute',
     top: -1,
-    left: -1,
-    borderTopLeftRadius: 4,
-    borderBottomRightRadius: 4,
+    left: 24,
+    borderRadius: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 1,
   },
   bestBadge: {
-    backgroundColor: colors['green-light'],
+    backgroundColor: colors2024['green-light-4'],
   },
   diffBadge: {
-    backgroundColor: colors['red-light'],
+    backgroundColor: colors2024['red-light-1'],
   },
 
   bestQuoteText: {
