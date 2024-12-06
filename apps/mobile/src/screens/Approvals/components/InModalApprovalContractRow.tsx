@@ -7,7 +7,7 @@ import { NFTApproval } from '@rabby-wallet/rabby-api/dist/types';
 
 import { AssetAvatar, Tip } from '@/components';
 import NFTAvatar from '@/components/NFTAvatar';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import {
   getContractNFTType,
@@ -21,12 +21,12 @@ import {
   ToggleSelectApprovalSpenderCtx,
   useRevokeApprovals,
 } from '../useApprovalsPage';
-import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
 import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import Permit2Badge from './Permit2Badge';
+import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 import { getTokenSymbol } from '@/utils/token';
 
 function ApprovalAmountInfo({
@@ -39,7 +39,7 @@ function ApprovalAmountInfo({
 } & RNViewProps) {
   const { t } = useTranslation();
 
-  const { styles } = useThemeStyles(getApprovalAmountStyles);
+  const { styles } = useTheme2024({ getStyle: getApprovalAmountStyles });
   const { styles: tooltipContentStyles } = useThemeStyles(
     getTooltipContentStyles,
   );
@@ -105,34 +105,36 @@ function ApprovalAmountInfo({
   );
 }
 
-const getApprovalAmountStyles = createGetStyles(colors => {
-  return {
-    amountInfo: {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
-    },
-    textWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      textAlign: 'right',
-      width: '100%',
-      // ...makeDebugBorder('yellow')
-    },
-    approvalAmount: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: colors['neutral-body'],
-    },
-    approvalValues: {
-      marginTop: 4,
-      fontSize: 13,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
-    },
-  };
-});
+const getApprovalAmountStyles = createGetStyles2024(
+  ({ colors, colors2024 }) => {
+    return {
+      amountInfo: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+      },
+      textWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        textAlign: 'right',
+        width: '100%',
+        // ...makeDebugBorder('yellow')
+      },
+      approvalAmount: {
+        fontSize: 14,
+        fontWeight: '400',
+        color: colors2024['neutral-foot'],
+      },
+      approvalValues: {
+        marginTop: 2,
+        fontSize: 14,
+        fontWeight: '700',
+        color: colors2024['neutral-body'],
+      },
+    };
+  },
+);
 
 export function InModalApprovalContractRow({
   style,
@@ -221,6 +223,17 @@ export function InModalApprovalContractRow({
         onToggleSelection?.({ spender, approval, contractApproval });
       }}>
       <View style={styles.leftArea}>
+        {isSelected ? (
+          <RcIconHasCheckbox
+            style={styles.itemCheckbox}
+            color={colors['blue-default']}
+          />
+        ) : (
+          <RcIconNoCheck
+            style={styles.itemCheckbox}
+            color={colors['neutral-line']}
+          />
+        )}
         {maybeTokenInfo.isToken ? (
           <AssetAvatar
             style={styles.chainIcon}
@@ -229,14 +242,14 @@ export function InModalApprovalContractRow({
             logoStyle={{ backgroundColor: colors['neutral-foot'] }}
             chain={contractApproval?.chain}
             chainIconPosition="tr"
-            size={28}
+            size={40}
             chainSize={16}
           />
         ) : (
           <NFTAvatar
             nftImageUrl={maybeNFTInfo.nftImageURL}
             style={styles.chainIcon}
-            size={28}
+            size={40}
           />
         )}
 
@@ -277,17 +290,6 @@ export function InModalApprovalContractRow({
                 balanceValue: '',
               })}
         />
-        {isSelected ? (
-          <RcIconCheckedCC
-            style={styles.itemCheckbox}
-            color={colors['blue-default']}
-          />
-        ) : (
-          <RcIconUncheckCC
-            style={styles.itemCheckbox}
-            color={colors['neutral-line']}
-          />
-        )}
       </View>
     </TouchableView>
   );
@@ -295,18 +297,16 @@ export function InModalApprovalContractRow({
 
 const getApprovalContractRowStyles = createGetStyles2024(ctx => {
   const selectableStyles = getSelectableContainerStyle(ctx);
-  const { colors } = ctx;
+  const { colors2024 } = ctx;
 
   return {
     container: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      borderRadius: 8,
       padding: 16,
-      backgroundColor: colors['neutral-card1'],
-      height: 60,
-      ...selectableStyles.container,
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: 72,
     },
     selectedContainer: {
       ...selectableStyles.selectedContainer,
@@ -341,11 +341,12 @@ const getApprovalContractRowStyles = createGetStyles2024(ctx => {
     },
     itemName: {
       fontSize: 16,
-      fontWeight: '500',
-      color: colors['neutral-title1'],
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
     },
     itemCheckbox: {
-      marginLeft: 16,
+      marginRight: 12,
       width: 24,
       height: 24,
     },

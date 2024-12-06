@@ -808,6 +808,7 @@
         "unSelectAll": "Unselect All",
         "confirm": "Confirm {{ selectedCount }}",
         "title": "Approvals",
+        "contractTitle": "Approval Details",
         "tooltipPermit2": "This approval is approved via Permit2 contract:\n{{ permit2Id }}"
       }
     },

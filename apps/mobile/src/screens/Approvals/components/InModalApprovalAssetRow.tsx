@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
+import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 import { Tip } from '@/components';
 import {
   createGetStyles,
@@ -16,7 +16,6 @@ import {
   ToggleSelectApprovalSpenderCtx,
   useRevokeApprovals,
 } from '../useApprovalsPage';
-import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import { useTranslation } from 'react-i18next';
 import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
 import BigNumber from 'bignumber.js';
@@ -226,12 +225,12 @@ export function InModalApprovalAssetRow({
           />
         )}
         {isSelected ? (
-          <RcIconCheckedCC
+          <RcIconHasCheckbox
             style={styles.itemCheckbox}
             color={colors['blue-default']}
           />
         ) : (
-          <RcIconUncheckCC
+          <RcIconNoCheck
             style={styles.itemCheckbox}
             color={colors['neutral-line']}
           />

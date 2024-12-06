@@ -294,6 +294,7 @@ export const getTooltipContentStyles = createGetStyles(colors => {
       padding: 12,
       alignItems: 'center',
       flexDirection: 'row',
+      fontFamily: 'SF Pro Rounded',
     },
     tipContentIcon: {
       width: 12,
@@ -391,8 +392,7 @@ export const getSelectableContainerStyle = createGetStyles2024(
         borderColor: colors2024['neutral-line'],
       },
       selectedContainer: {
-        borderColor: colors['blue-default'],
-        backgroundColor: colors['blue-light1'],
+        backgroundColor: colors2024['brand-light-1'],
       },
     };
   },
@@ -434,10 +434,6 @@ export function BottomSheetModalFooterButton({
 const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
   return {
     footerContainer: {
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
-      backgroundColor: colors['neutral-bg1'],
       paddingVertical: 20,
       paddingHorizontal: 20,
       height: ApprovalsLayouts.bottomSheetConfirmAreaHeight,

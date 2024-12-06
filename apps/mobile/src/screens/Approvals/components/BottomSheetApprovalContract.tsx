@@ -11,8 +11,8 @@ import {
   useFocusedApprovalOnApprovals,
   useRevokeContractSpenders,
 } from '../useApprovalsPage';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import ApprovalCardContract from './ApprovalCardContract';
 import { MiniButton } from '@/components/Button';
 import { InModalApprovalContractRow } from './InModalApprovalContractRow';
@@ -24,6 +24,7 @@ import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { ModalLayouts } from '@/constant/layout';
 import AutoLockView from '@/components/AutoLockView';
+import { useTranslation } from 'react-i18next';
 
 export default function BottomSheetApprovalContract({
   modalProps,
@@ -36,6 +37,7 @@ export default function BottomSheetApprovalContract({
     focusedContractApproval,
     toggleFocusedContractItem,
   } = useFocusedApprovalOnApprovals();
+  const { t } = useTranslation();
 
   const {
     toggleSelectContractSpender,
@@ -48,7 +50,7 @@ export default function BottomSheetApprovalContract({
     [contractFocusingRevokeMap],
   );
 
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
 
   const { fallList, simulateLoadNext, isFetchingNextPage } = usePsudoPagination(
     focusedContractApproval?.list || [],
@@ -78,24 +80,20 @@ export default function BottomSheetApprovalContract({
       object
   >(
     ({ item, section: _, index }) => {
-      const isFirstItem = index === 0;
       const { id, chain } = parseContractApprovalListItem(item);
 
-      if (!focusedContractApproval) return null;
+      if (!focusedContractApproval) {
+        return null;
+      }
 
       return (
-        <View
-          key={`${chain}-${id}-${index}`}
-          style={[
-            styles.rowItem,
-            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
-          ]}>
-          {__DEV__ && (
+        <View key={`${chain}-${id}-${index}`} style={[styles.rowItem]}>
+          {/* {__DEV__ && (
             <Text
               style={[styles.rowOrderText, { marginRight: 4, flexShrink: 0 }]}>
               {index + 1}.
             </Text>
-          )}
+          )} */}
           <InModalApprovalContractRow
             style={{ flexShrink: 1 }}
             approval={focusedContractApproval}
@@ -137,7 +135,7 @@ export default function BottomSheetApprovalContract({
         return (
           <BottomSheetModalFooterButton
             title={[
-              `Confirm`,
+              'Confirm',
               confirmingContractCount && ` (${confirmingContractCount})`,
             ]
               .filter(Boolean)
@@ -151,11 +149,14 @@ export default function BottomSheetApprovalContract({
           />
         );
       }}
-      snapPoints={[ModalLayouts.defaultHeightPercentText]}
+      snapPoints={['90%']}
       bottomInset={1}>
       {focusedContractApproval && (
         <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
+            <Text style={styles.headerTitle}>
+              {t('page.approvals.RevokeApprovalModal.contractTitle')}
+            </Text>
             <ApprovalCardContract contract={focusedContractApproval} />
 
             <View style={styles.listHeadOps}>
@@ -164,6 +165,7 @@ export default function BottomSheetApprovalContract({
               </Text>
               <MiniButton
                 disabled={!focusedContractApproval?.list.length}
+                style={styles.miniBtn}
                 onPress={() =>
                   onSelectAllContractApprovals(
                     focusedContractApproval!,
@@ -202,17 +204,19 @@ export default function BottomSheetApprovalContract({
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
   return {
     sheetModalContainer: {
       paddingVertical: 0,
       flexDirection: 'column',
+      overflow: 'hidden',
+      borderRadius: 32,
     },
     handle: {
       height: 20,
     },
     bg: {
-      backgroundColor: colors['neutral-bg2'],
+      backgroundColor: colors2024['neutral-bg-1'],
     },
     bodyContainer: {
       paddingVertical: 8,
@@ -224,17 +228,30 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 16,
       flexShrink: 0,
     },
+    headerTitle: {
+      marginTop: 8,
+      marginBottom: 30,
+      fontSize: 20,
+      fontWeight: '800',
+      color: colors2024['neutral-title-1'],
+      textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
+    },
     listHeadOps: {
-      marginTop: 16,
+      marginTop: 30,
       width: '100%',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     listHeadText: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: '400',
+      color: colors2024['neutral-foot'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    miniBtn: {
+      backgroundColor: 'transparent',
     },
     scrollableArea: {
       flexShrink: 1,
@@ -248,11 +265,16 @@ const getStyles = createGetStyles(colors => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
+      borderRadius: 24,
+      borderWidth: 1,
+      overflow: 'hidden',
+      borderColor: colors2024['neutral-line'],
     },
     listFooterContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors2024['neutral-bg-1'],
       height: ApprovalsLayouts.listFooterComponentHeight,
       // ...makeDebugBorder('green'),
     },

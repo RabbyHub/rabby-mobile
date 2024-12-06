@@ -16,14 +16,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import {
-  useThemeColors,
-  useGetBinaryMode,
-  useThemeStyles,
-} from '@/hooks/theme';
+import { useThemeColors, useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
 import TouchableView from './Touchable/TouchableView';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export type ButtonProps = TouchableOpacityProps &
   TouchableNativeFeedbackProps & {
@@ -364,7 +360,7 @@ export function MiniButton({
   title?: string;
   textStyle?: StyleProp<TextStyle>;
 }) {
-  const { styles } = useThemeStyles(getMiniButtonStyle);
+  const { styles } = useTheme2024({ getStyle: getMiniButtonStyle });
 
   return (
     <TouchableView {...props} style={[styles.miniBtnView, props.style]}>
@@ -373,18 +369,19 @@ export function MiniButton({
   );
 }
 
-const getMiniButtonStyle = createGetStyles(colors => {
+const getMiniButtonStyle = createGetStyles2024(({ colors, colors2024 }) => {
   return {
     miniBtnView: {
       paddingVertical: 4,
       paddingHorizontal: 8,
-      backgroundColor: colors['blue-light2'],
+      backgroundColor: colors2024['brand-light-2'],
       borderRadius: 4,
     },
     miniBtnTextView: {
-      color: colors['blue-default'],
-      fontSize: 13,
-      fontWeight: '600',
+      color: colors2024['brand-default'],
+      fontSize: 14,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });
