@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
@@ -19,8 +19,12 @@ import { RcIconUnknown } from '../icons';
 import { getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import { RcIconInfoCC } from '@/assets/icons/common';
-import { Tip } from '@/components';
+import RcIconWarning from '@/assets2024/icons/common/warning.svg';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 export const ContractFloorLayouts = {
   floorHeader: { height: 33, paddingTop: 0 },
@@ -40,7 +44,9 @@ function CardProto({
     contract: ContractApprovalItem;
   }) => void;
 } & RNViewProps) {
-  const { colors, styles } = useTheme2024({ getStyle: getCardStyles });
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getCardStyles,
+  });
   const { t } = useTranslation();
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
@@ -96,7 +102,7 @@ function CardProto({
         const finalUnderlineStyle = StyleSheet.flatten([
           styles.floorValueUnderlineDefault,
           isRisky && {
-            borderColor: finalTextStyle['color'],
+            borderColor: finalTextStyle.color,
           },
         ]);
 
@@ -142,13 +148,12 @@ function CardProto({
         style,
       ]}>
       {/* floor header */}
-      <View
-        style={[styles.contractItemFloor, ContractFloorLayouts.floorHeader]}>
+      <View style={[styles.contractItemFloor, styles.header]}>
         <View style={styles.floorLeft}>
           {chainLogoUrl ? (
             <ChainIconImage
               containerStyle={styles.chainIcon}
-              size={20}
+              size={30}
               source={{ uri: chainLogoUrl }}
             />
           ) : (
@@ -165,24 +170,19 @@ function CardProto({
           <CopyAddressIcon
             address={contract.id}
             style={{ marginLeft: 2 }}
-            color={colors['neutral-foot']}
+            color={colors2024['neutral-foot']}
           />
-        </View>
-        <View style={styles.rightOps}>
-          <Text style={[styles.entryText, styles.approvalsCount]}>
-            {contract.list.length} Approvals
-          </Text>
         </View>
       </View>
 
       {risky && (
-        <View style={[styles.contractItemFloor]}>
+        <View style={[styles.contractItemFloor, styles.riskContainer]}>
           <View style={[styles.riskyTip]}>
-            <RcIconInfoCC
-              width={14}
-              height={14}
-              color={colors['neutral-title2']}
-              style={{ marginRight: 6 }}
+            <RcIconWarning
+              width={11}
+              height={11}
+              color={colors2024['red-default']}
+              style={{ marginRight: 3 }}
             />
             <Text style={styles.riskyTipText}>{contract.risk_alert}</Text>
 
@@ -190,6 +190,21 @@ function CardProto({
           </View>
         </View>
       )}
+
+      <View style={[styles.divider, risky && styles.dangerDivider]} />
+
+      {/* floor 0 */}
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
+        <View style={styles.floorLeft}>
+          <Text style={styles.floorLabel}>All Approvals</Text>
+        </View>
+        <Text
+          style={[styles.floorValue]}
+          ellipsizeMode="tail"
+          numberOfLines={1}>
+          {contract.list.length}approvals
+        </Text>
+      </View>
 
       {/* floor 1 */}
       <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
@@ -214,40 +229,54 @@ function CardProto({
             )}
           </Text>
         </View>
-        <Tip
-          // {...(!trustValueEvalutation.isRisky && { isVisible: false })}
-          contentStyle={[styles.riskyAlertTooltipContent]}
-          content={
-            <View style={[styles.riskyAlertTooltipInner]}>
-              {trustValueEvalutation.isDanger && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
+        <TouchableOpacity
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              titleStyle: styles.modalTitle,
+              sectionStyle: styles.section,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              title: trustValueEvalutation.isDanger
+                ? t(
                     'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueDanger',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {trustValueEvalutation.isWarning && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
+                  )
+                : trustValueEvalutation.isWarning
+                ? t(
                     'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueWarning',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {!trustValueEvalutation.isRisky && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  The contract trust value : {contractUsdText}
-                  {'\n'}
-                </Text>
-              )}
-              <Text style={styles.riskyAlertTooltipText}>
-                {t(
-                  'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
-                )}
-              </Text>
-            </View>
-          }>
+                  )
+                : t(
+                    'page.approvals.tableConfig.byContracts.columnTip.normalTrustValueDanger',
+                    {
+                      contractUsdText,
+                    },
+                  ),
+              sections: [
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
+                  ),
+                },
+              ],
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>
+                    {t(
+                      'page.approvals.tableConfig.byContracts.columnTip.button',
+                    )}
+                  </Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={trustValueEvalutation.finalTextStyle}>
             {contractUsdText}
           </Text>
@@ -260,7 +289,7 @@ function CardProto({
               trustValueEvalutation.finalUnderlineStyle,
             ]}
           />
-        </Tip>
+        </TouchableOpacity>
       </View>
 
       {/* floor 3 */}
@@ -272,41 +301,72 @@ function CardProto({
             )}
           </Text>
         </View>
-        <Tip
-          // {...(!revokeTrendsEvaluation.isRisky && { isVisible: false })}
-          placement="top"
-          contentStyle={[
-            styles.riskyAlertTooltipContent,
-            !revokeTrendsEvaluation.isRisky &&
-              styles.riskyAlertTooltipContentForSafeRevokeTrend,
-          ]}
-          content={
-            <View style={styles.riskyAlertTooltipInner}>
-              {revokeTrendsEvaluation.isDanger && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {revokeTrendsEvaluation.isWarning && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              <Text style={styles.riskyAlertTooltipText}>
-                Newly approved users(24h):{' '}
-                {contract.$riskAboutValues.approve_user_count}
-                {'\n'}
-                Recent revokes(24h):{' '}
-                {contract.$riskAboutValues.revoke_user_count}
-              </Text>
-            </View>
-          }>
+        <TouchableOpacity
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              titleStyle: styles.modalTitle,
+              sectionStyle: styles.section,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              // TODO: is text correct from BD ?
+              title: revokeTrendsEvaluation.isDanger
+                ? t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeDangerTitle',
+                  )
+                : revokeTrendsEvaluation.isWarning
+                ? t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeWarningTitle',
+                  )
+                : '',
+              sections: [
+                {
+                  description: revokeTrendsEvaluation.isDanger
+                    ? t(
+                        'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
+                      )
+                    : revokeTrendsEvaluation.isWarning
+                    ? t(
+                        'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
+                      )
+                    : '',
+                },
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeNewApproved',
+                    {
+                      count: contract.$riskAboutValues.approve_user_count,
+                    },
+                  ),
+                },
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeNewApproved',
+                    {
+                      count: contract.$riskAboutValues.revoke_user_count,
+                    },
+                  ),
+                },
+              ].filter(i => !!i.description),
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>
+                    {t(
+                      'page.approvals.tableConfig.byContracts.columnTip.button',
+                    )}
+                  </Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={revokeTrendsEvaluation.finalTextStyle}>
             {contract.$riskAboutValues.revoke_user_count}
           </Text>
@@ -319,7 +379,7 @@ function CardProto({
               revokeTrendsEvaluation.finalUnderlineStyle,
             ]}
           />
-        </Tip>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -327,7 +387,7 @@ function CardProto({
 
 export const getCardStyles = createGetStyles2024(ctx => {
   const selectableStyles = getSelectableContainerStyle(ctx);
-  const { colors, colors2024 } = ctx;
+  const { colors2024 } = ctx;
 
   return {
     container: {
@@ -335,14 +395,15 @@ export const getCardStyles = createGetStyles2024(ctx => {
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      height: ApprovalsLayouts.contractCardHeight,
       paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
-      paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
+      paddingVertical: 22,
       width: '100%',
       ...selectableStyles.container,
     },
     containerWithRisky: {
-      height: ApprovalsLayouts.contractCardHeightWithRiskAlert,
+      // height: ApprovalsLayouts.contractCardHeightWithRiskAlert,
+      backgroundColor: colors2024['red-light-1'],
+      borderColor: colors2024['red-light-2'],
     },
     selectedContainer: {
       ...selectableStyles.selectedContainer,
@@ -352,6 +413,22 @@ export const getCardStyles = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
+      marginTop: 12,
+    },
+    header: {
+      marginTop: 0,
+    },
+    riskContainer: {
+      marginTop: 5,
+    },
+    divider: {
+      height: 1,
+      marginBottom: 4,
+      marginTop: 16,
+      backgroundColor: colors2024['neutral-line'],
+    },
+    dangerDivider: {
+      backgroundColor: colors2024['red-light-1'],
     },
     floorLeft: {
       flexDirection: 'row',
@@ -370,26 +447,30 @@ export const getCardStyles = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',
-      borderRadius: 6,
-      padding: 8,
-      backgroundColor: colors['red-default'],
+      borderRadius: 12,
+      paddingVertical: 7,
+      paddingHorizontal: 15,
+      backgroundColor: colors2024['red-light-2'],
       position: 'relative',
     },
     riskyTipArrow: {
       position: 'absolute',
       left: '20%',
-      top: -7,
+      top: -6,
       ...makeTriangleStyle({
         dir: 'up',
-        size: 12,
-        color: colors['red-default'],
+        size: 6,
+        color: colors2024['red-light-2'],
       }),
       borderTopWidth: 0,
-      borderLeftWidth: 12,
-      borderRightWidth: 12,
+      borderLeftWidth: 6,
+      borderRightWidth: 6,
     },
     riskyTipText: {
-      color: colors['neutral-title2'],
+      color: colors2024['red-default'],
+      fontSize: 12,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     addrContractWrapper: {
       flexShrink: 1,
@@ -398,15 +479,16 @@ export const getCardStyles = createGetStyles2024(ctx => {
       justifyContent: 'flex-start',
     },
     contractAddrText: {
-      color: colors['neutral-title1'],
-      fontSize: 14,
-      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      fontWeight: '800',
     },
     contractName: {
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-foot'],
       fontSize: 14,
+      lineHeight: 18,
       fontWeight: '400',
-      marginLeft: 6,
+      fontFamily: 'SF Pro Rounded',
       maxWidth: 100,
     },
     contractNameInDetailModal: {
@@ -419,9 +501,13 @@ export const getCardStyles = createGetStyles2024(ctx => {
       flexShrink: 0,
     },
     entryText: {
+      marginRight: 2,
+
+      color: colors2024['neutral-title-1'],
       fontSize: 14,
-      fontWeight: '600',
-      color: colors['neutral-title1'],
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     approvalsCount: {
       fontSize: 14,
@@ -432,8 +518,10 @@ export const getCardStyles = createGetStyles2024(ctx => {
       alignItems: 'center',
     },
     floorLabel: {
-      color: colors['neutral-body'],
-      fontSize: 13,
+      color: colors2024['neutral-secondary'],
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
     },
     riskyAlertTooltipContent: {
       borderRadius: 2,
@@ -451,28 +539,39 @@ export const getCardStyles = createGetStyles2024(ctx => {
       paddingVertical: 8,
       paddingHorizontal: 12,
     },
-    riskyAlertTooltipText: {
-      color: colors['neutral-title2'],
-      fontSize: 13,
-      fontWeight: '400',
-    },
     floorValue: {
-      color: colors['neutral-title1'],
-      fontSize: 13,
-      fontWeight: '600',
+      color: colors2024['neutral-body'],
+      fontSize: 14,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
       position: 'relative',
     },
     floorValueWarn: {
-      color: colors['orange-default'],
+      color: colors2024['orange-default'],
     },
     floorValueDanger: {
-      color: colors['red-default'],
+      color: colors2024['red-dark'],
     },
     floorValueUnderlineDefault: {
-      borderColor: colors['neutral-line'],
+      borderColor: 'transparent',
     },
     chainIcon: {
       marginRight: 6,
+    },
+    modalTitle: {
+      marginTop: 12,
+    },
+    section: {
+      marginTop: 20,
+    },
+    modalNextButtonText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '700',
+      lineHeight: 24,
+      textAlign: 'center',
+      backgroundColor: colors2024['brand-default'],
+      color: colors2024['neutral-InvertHighlight'],
     },
   };
 });

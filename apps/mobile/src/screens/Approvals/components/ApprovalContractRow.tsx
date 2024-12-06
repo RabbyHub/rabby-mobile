@@ -575,7 +575,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       color: colors2024['red-default'],
     },
     floorValueUnderlineDefault: {
-      borderColor: colors2024['neutral-line'],
+      borderColor: 'transparent',
     },
     chainIcon: {
       marginRight: 6,
