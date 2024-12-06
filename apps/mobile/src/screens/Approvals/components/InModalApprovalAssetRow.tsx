@@ -1,24 +1,19 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
+import { useTranslation } from 'react-i18next';
+import BigNumber from 'bignumber.js';
 
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 import { Tip } from '@/components';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
-
 import {
   AssetApprovalItem,
   ToggleSelectApprovalSpenderCtx,
   useRevokeApprovals,
 } from '../useApprovalsPage';
-import { useTranslation } from 'react-i18next';
 import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
-import BigNumber from 'bignumber.js';
 import { ellipsisAddress } from '@/utils/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { querySelectedAssetSpender } from '../utils';
@@ -27,29 +22,24 @@ import Permit2Badge from './Permit2Badge';
 function ApprovalAmountInfo({
   style,
   amountValue,
-  balanceValue,
 }: {
   amountValue: string | number;
   balanceValue: string | number;
 } & RNViewProps) {
   const { t } = useTranslation();
 
-  const { styles } = useThemeStyles(getApprovalAmountStyles);
+  const { styles } = useTheme2024({ getStyle: getApprovalAmountStyles });
   const { styles: tooltipContentStyles } = useThemeStyles(
     getTooltipContentStyles,
   );
 
   const amountText = React.useMemo(() => {
-    if (typeof amountValue !== 'number') return amountValue;
+    if (typeof amountValue !== 'number') {
+      return amountValue;
+    }
 
     return bizNumberUtils.formatNumber(amountValue);
   }, [amountValue]);
-
-  // const balanceText = React.useMemo(() => {
-  //   if (typeof balanceValue !== 'number') return balanceValue;
-
-  //   return bizNumberUtils.formatNumber(balanceValue);
-  // }, [balanceValue]);
 
   return (
     <View style={[styles.amountInfo, style]}>
@@ -75,59 +65,41 @@ function ApprovalAmountInfo({
           </Tip>
         </View>
       )}
-
-      {/* {balanceText && (
-        <View>
-          <Tip
-            isVisible={false}
-            // My Balance
-            content={
-              <Text>
-                {t(
-                  'page.approvals.tableConfig.byAssets.columnCell.approvedAmount.tipMyBalance',
-                )}
-              </Text>
-            }
-            placement="top"
-            isLight>
-            <View style={styles.textWrapper}>
-              <Text style={[styles.approvalValues]}>{balanceText}</Text>
-            </View>
-          </Tip>
-        </View>
-      )} */}
     </View>
   );
 }
 
-const getApprovalAmountStyles = createGetStyles(colors => {
-  return {
-    amountInfo: {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
-    },
-    textWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      textAlign: 'right',
-      width: '100%',
-      // ...makeDebugBorder('yellow')
-    },
-    approvalAmount: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors['neutral-body'],
-    },
-    approvalValues: {
-      marginTop: 4,
-      fontSize: 13,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
-    },
-  };
-});
+const getApprovalAmountStyles = createGetStyles2024(
+  ({ colors, colors2024 }) => {
+    return {
+      amountInfo: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+      },
+      textWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        textAlign: 'right',
+        width: '100%',
+        // ...makeDebugBorder('yellow')
+      },
+      approvalAmount: {
+        fontSize: 14,
+        fontWeight: '400',
+        fontFamily: 'SF Pro Rounded',
+        color: colors2024['neutral-foot'],
+      },
+      approvalValues: {
+        marginTop: 4,
+        fontSize: 13,
+        fontWeight: '400',
+        color: colors['neutral-foot'],
+      },
+    };
+  },
+);
 
 export function InModalApprovalAssetRow({
   style,
@@ -187,6 +159,17 @@ export function InModalApprovalAssetRow({
         onToggleSelection?.({ spender, approval });
       }}>
       <View style={styles.leftArea}>
+        {isSelected ? (
+          <RcIconHasCheckbox
+            style={styles.itemCheckbox}
+            color={colors['blue-default']}
+          />
+        ) : (
+          <RcIconNoCheck
+            style={styles.itemCheckbox}
+            color={colors['neutral-line']}
+          />
+        )}
         <View style={styles.basicInfo}>
           <View style={styles.basicInfoF1}>
             <Text style={styles.address} ellipsizeMode="tail" numberOfLines={1}>
@@ -224,17 +207,6 @@ export function InModalApprovalAssetRow({
                 })}
           />
         )}
-        {isSelected ? (
-          <RcIconHasCheckbox
-            style={styles.itemCheckbox}
-            color={colors['blue-default']}
-          />
-        ) : (
-          <RcIconNoCheck
-            style={styles.itemCheckbox}
-            color={colors['neutral-line']}
-          />
-        )}
       </View>
     </TouchableView>
   );
@@ -242,18 +214,16 @@ export function InModalApprovalAssetRow({
 
 const getStyle = createGetStyles2024(ctx => {
   const selectableStyles = getSelectableContainerStyle(ctx);
-  const { colors } = ctx;
+  const { colors, colors2024 } = ctx;
 
   return {
     container: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      borderRadius: 8,
       padding: 16,
-      backgroundColor: colors['neutral-card1'],
-      height: 60,
-      ...selectableStyles.container,
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: 72,
     },
     selectedContainer: {
       ...selectableStyles.selectedContainer,
@@ -295,19 +265,23 @@ const getStyle = createGetStyles2024(ctx => {
       // marginLeft: 6,
     },
     address: {
-      fontWeight: '500',
-      color: colors['neutral-title1'],
+      fontWeight: '700',
+      fontSize: 14,
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
     },
     protocolName: {
-      color: colors['neutral-foot'],
+      fontSize: 12,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-foot'],
       marginLeft: 4,
     },
     itemCheckbox: {
-      marginLeft: 16,
+      marginRight: 12,
       width: 24,
       height: 24,
     },
-    chainIcon: { marginRight: 12 },
     permit2: {
       marginLeft: 0,
     },

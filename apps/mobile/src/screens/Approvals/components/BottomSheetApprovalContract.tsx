@@ -22,7 +22,6 @@ import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import { ModalLayouts } from '@/constant/layout';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 
