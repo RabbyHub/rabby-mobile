@@ -24,6 +24,7 @@ import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -206,9 +207,11 @@ export function ApprovalsBottomArea() {
                 'page.approvals.component.RevokeButton.permit2Batch.modalContent',
               )}
             </Text>
-            <TouchableOpacity style={styles.okButton} onPress={handleRevoke}>
-              <Text style={styles.okButtonText}>{t('global.confirm')}</Text>
-            </TouchableOpacity>
+            <FooterButtonGroup
+              style={styles.btns}
+              onCancel={() => setShowModal(false)}
+              onConfirm={handleRevoke}
+            />
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -244,46 +247,39 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
+    width: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    lineHeight: 24,
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   highlightText: {
     color: colors2024['brand-default'],
   },
   modalBody: {
     fontSize: 14,
-    color: colors2024['neutral-body'],
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
     lineHeight: 20,
-    textAlign: 'center',
-    marginBottom: 60,
   },
-  okButton: {
-    width: '100%',
-    height: 48,
-    backgroundColor: colors2024['brand-default'],
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  okButtonText: {
-    color: colors2024['neutral-title-2'],
-    fontSize: 15,
-    lineHeight: 18,
-    fontWeight: '600',
+  btns: {
+    padding: 0,
+    marginTop: 20,
   },
 }));
 
