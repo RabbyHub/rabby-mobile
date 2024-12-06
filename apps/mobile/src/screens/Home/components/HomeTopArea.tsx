@@ -84,7 +84,7 @@ const triggerLight = () => {
     ignoreAndroidSystemSettings: false,
   });
 };
-function BadgeText({
+export function BadgeText({
   count,
   style,
 }: {

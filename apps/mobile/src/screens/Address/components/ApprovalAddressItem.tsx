@@ -7,6 +7,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Card } from '@/components2024/Card';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { BadgeText } from '@/screens/Home/components/HomeTopArea';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -62,6 +63,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontWeight: '500',
   },
+  badgeStyle: {
+    width: 20,
+    lineHeight: 20,
+    height: 20,
+  },
   itemName: {
     gap: 8,
     flexDirection: 'row',
@@ -74,6 +80,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  right: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
@@ -88,6 +100,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
+  alertCount?: number;
   lastSelectedAccount?: KeyringAccountWithAlias;
   onSelect?: () => void;
 }
@@ -95,7 +108,7 @@ interface AddressItemProps {
  * TODO: badge approval amount
  */
 export const AddressItemEntry = (props: AddressItemProps) => {
-  const { account, onSelect } = props;
+  const { account, onSelect, alertCount } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
 
@@ -135,20 +148,25 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           )}
         </InnerAddressItem>
 
-        <View
-          style={StyleSheet.flatten([
-            styles.arrow,
-            isPressing && styles.arrowPressing,
-          ])}>
-          <ArrowRightCC
-            color={
-              isPressing
-                ? colors2024['brand-default']
-                : colors2024['neutral-body']
-            }
-            width={20}
-            height={20}
-          />
+        <View style={styles.right}>
+          {!!alertCount && alertCount > 0 && (
+            <BadgeText count={alertCount} style={styles.badgeStyle} />
+          )}
+          <View
+            style={StyleSheet.flatten([
+              styles.arrow,
+              isPressing && styles.arrowPressing,
+            ])}>
+            <ArrowRightCC
+              color={
+                isPressing
+                  ? colors2024['brand-default']
+                  : colors2024['neutral-body']
+              }
+              width={20}
+              height={20}
+            />
+          </View>
         </View>
       </Card>
     </TouchableOpacity>

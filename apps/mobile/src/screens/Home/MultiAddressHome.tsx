@@ -54,50 +54,8 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
-
-const MENU_ARR = [
-  {
-    title: MultiHomeFeatTitle.Swap,
-    icon: RcIconSwap,
-  },
-  {
-    title: MultiHomeFeatTitle.Send,
-    icon: RcIconSend,
-  },
-  {
-    title: MultiHomeFeatTitle.Receive,
-    icon: RcIconReceive,
-  },
-  {
-    title: MultiHomeFeatTitle.Bridge,
-    icon: RcIconBridge,
-  },
-  {
-    title: MultiHomeFeatTitle.History,
-    icon: RcIconHistory,
-  },
-  {
-    // TODO: alert amounts
-    title: MultiHomeFeatTitle.Approvals,
-    icon: RcIconApprovals,
-  },
-  {
-    title: MultiHomeFeatTitle.GasAccount,
-    icon: RcIconGasAccount,
-  },
-  {
-    title: MultiHomeFeatTitle.Dapps,
-    icon: RcIconDapps,
-  },
-  // {
-  //   title: MultiHomeFeatTitle.Ecosystem,
-  //   icon: RcIconEcosystem,
-  // },
-  // {
-  //   title: MultiHomeFeatTitle.Points,
-  //   icon: RcIconPoints,
-  // },
-];
+import { useApprovalAlertCounts } from './hooks/approvals';
+import { BadgeText } from './components/HomeTopArea';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -105,6 +63,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
+
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -170,6 +129,51 @@ function MultiAddressHome(): JSX.Element {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+  const { appprovalAlertInfo, getAllAlert } = useApprovalAlertCounts();
+
+  const MENU_ARR = [
+    {
+      title: MultiHomeFeatTitle.Swap,
+      icon: RcIconSwap,
+    },
+    {
+      title: MultiHomeFeatTitle.Send,
+      icon: RcIconSend,
+    },
+    {
+      title: MultiHomeFeatTitle.Receive,
+      icon: RcIconReceive,
+    },
+    {
+      title: MultiHomeFeatTitle.Bridge,
+      icon: RcIconBridge,
+    },
+    {
+      title: MultiHomeFeatTitle.History,
+      icon: RcIconHistory,
+    },
+    {
+      title: MultiHomeFeatTitle.Approvals,
+      icon: RcIconApprovals,
+      badge: appprovalAlertInfo.total,
+    },
+    {
+      title: MultiHomeFeatTitle.GasAccount,
+      icon: RcIconGasAccount,
+    },
+    {
+      title: MultiHomeFeatTitle.Dapps,
+      icon: RcIconDapps,
+    },
+    // {
+    //   title: MultiHomeFeatTitle.Ecosystem,
+    //   icon: RcIconEcosystem,
+    // },
+    // {
+    //   title: MultiHomeFeatTitle.Points,
+    //   icon: RcIconPoints,
+    // },
+  ];
   useEffect(() => {
     if (pendingTxCount) {
       Animated.loop(
@@ -256,7 +260,8 @@ function MultiAddressHome(): JSX.Element {
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
-  }, [triggerUpdate]);
+    getAllAlert();
+  }, [getAllAlert, triggerUpdate]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -470,7 +475,12 @@ function MultiAddressHome(): JSX.Element {
                       action: `Click_${el.title}`,
                     });
                   }}>
-                  <el.icon />
+                  <View style={styles.iconWrapper}>
+                    <el.icon />
+                    {!!el.badge && el.badge > 0 && (
+                      <BadgeText count={el.badge} style={styles.badgeStyle} />
+                    )}
+                  </View>
                   <Text style={styles.gridText}>
                     {el.title === MultiHomeFeatTitle.Dapps && IS_IOS
                       ? 'Websites'
@@ -585,6 +595,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
   },
+  iconWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  badgeStyle: {
+    width: 20,
+    height: 20,
+    lineHeight: 20,
+  },
   headerText: {
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
@@ -618,6 +640,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     height: 100,
     gap: 12,
+    position: 'relative',
   },
   pendingContainer: {
     flexDirection: 'row',

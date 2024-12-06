@@ -8,7 +8,6 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/ApprovalAddressItem';
 import { useFocusEffect, useNavigation } from '@react-navigation/core';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,13 +15,15 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { AddressEmptyContainer } from './components/AddressEmptyContainer';
 import { trigger } from 'react-native-haptic-feedback';
 import { RootNames } from '@/constant/layout';
+import {
+  FILTER_ACCOUNT_TYPES,
+  useApprovalAlertCounts,
+} from '@/screens/Home/hooks/approvals';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
   'StackAddress'
 >;
-
-const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
 export function ApprovalAddressListScreen(): JSX.Element {
   const { accounts, fetchAccounts } = useAccounts({
@@ -35,6 +36,8 @@ export function ApprovalAddressListScreen(): JSX.Element {
   );
 
   const { switchAccount } = useCurrentAccount();
+  const { appprovalAlertInfo } = useApprovalAlertCounts();
+
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const handleSelect = (account: KeyringAccountWithAlias) => {
@@ -70,6 +73,7 @@ export function ApprovalAddressListScreen(): JSX.Element {
             }>
             <AddressItemEntry
               account={item}
+              alertCount={appprovalAlertInfo.address2count[item.address]}
               onSelect={() => handleSelect(item)}
             />
           </View>
