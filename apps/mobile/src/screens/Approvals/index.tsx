@@ -220,6 +220,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tabBar: {
     height: ApprovalsLayouts.tabbarHeight,
     backgroundColor: colors2024['neutral-bg-1'],
+    borderBottomWidth: 0.5,
+    borderColor: colors2024['neutral-line'],
   },
   label: {
     fontSize: 16,
@@ -229,7 +231,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   indicator: {
     backgroundColor: colors2024['brand-default'],
-    height: 2,
+    height: 4,
+    borderRadius: 100,
   },
   netTabs: {
     marginBottom: 18,
