@@ -25,6 +25,7 @@ export function TopSearch({
       containerStyle={styles.searchInputContainer}
       searchIconStyle={styles.searchIconStyle}
       clearable
+      inputStyle={styles.inputStyle}
       inputProps={{
         value,
         autoFocus: true,
@@ -37,6 +38,12 @@ export function TopSearch({
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  inputStyle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 17,
+    color: colors2024['neutral-body'],
+  },
   searchInputContainer: {
     borderRadius: 30,
     width: 250,

@@ -24,7 +24,7 @@ import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { parseApprovalSpenderSelection } from '../utils';
-import { RcIconInfoCC } from '@/assets/icons/common';
+import RcIconWarning from '@/assets2024/icons/common/warning.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -178,6 +178,7 @@ function CardProto({
         styles.container,
         contract?.risk_alert ? styles.containerWithRisky : {},
         isTreatedAsSelected && styles.selectedContainer,
+        risky && styles.riskContainer,
         style,
       ]}
       onPress={() => {
@@ -236,11 +237,11 @@ function CardProto({
       {risky && (
         <View style={[styles.contractItemFloor, { marginTop: 7 }]}>
           <View style={[styles.riskyTip]}>
-            <RcIconInfoCC
-              width={14}
-              height={14}
-              color={colors['neutral-title2']}
-              style={{ marginRight: 6 }}
+            <RcIconWarning
+              width={11}
+              height={11}
+              color={colors2024['red-default']}
+              style={{ marginRight: 3 }}
             />
             <Text style={styles.riskyTipText}>{contract.risk_alert}</Text>
 
@@ -431,6 +432,10 @@ export const getCardStyles = createGetStyles2024(ctx => {
       width: '100%',
       ...selectableStyles.container,
     },
+    riskContainer: {
+      backgroundColor: colors2024['red-light-1'],
+      borderColor: colors2024['red-light-2'],
+    },
     containerWithRisky: {
       height: ApprovalsLayouts.contractRowHeightWithRiskAlert,
     },
@@ -460,26 +465,30 @@ export const getCardStyles = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',
-      borderRadius: 6,
-      padding: 8,
-      backgroundColor: colors['red-default'],
+      borderRadius: 12,
+      paddingVertical: 7,
+      paddingHorizontal: 15,
+      backgroundColor: colors2024['red-light-2'],
       position: 'relative',
     },
     riskyTipArrow: {
       position: 'absolute',
       left: '20%',
-      top: -7,
+      top: -6,
       ...makeTriangleStyle({
         dir: 'up',
-        size: 12,
-        color: colors['red-default'],
+        size: 6,
+        color: colors2024['red-light-2'],
       }),
       borderTopWidth: 0,
-      borderLeftWidth: 12,
-      borderRightWidth: 12,
+      borderLeftWidth: 6,
+      borderRightWidth: 6,
     },
     riskyTipText: {
-      color: colors['neutral-title2'],
+      color: colors2024['red-default'],
+      fontSize: 12,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     addrContractWrapper: {
       flexShrink: 1,
@@ -551,11 +560,6 @@ export const getCardStyles = createGetStyles2024(ctx => {
       paddingVertical: 8,
       paddingHorizontal: 12,
     },
-    riskyAlertTooltipText: {
-      color: colors['neutral-title2'],
-      fontSize: 13,
-      fontWeight: '400',
-    },
     floorValue: {
       color: colors2024['neutral-foot'],
       fontSize: 14,
@@ -565,13 +569,13 @@ export const getCardStyles = createGetStyles2024(ctx => {
       position: 'relative',
     },
     floorValueWarn: {
-      color: colors['orange-default'],
+      color: colors2024['orange-default'],
     },
     floorValueDanger: {
-      color: colors['red-default'],
+      color: colors2024['red-default'],
     },
     floorValueUnderlineDefault: {
-      borderColor: colors['neutral-line'],
+      borderColor: colors2024['neutral-line'],
     },
     chainIcon: {
       marginRight: 6,
@@ -582,8 +586,8 @@ export const getCardStyles = createGetStyles2024(ctx => {
       fontWeight: '700',
       lineHeight: 24,
       textAlign: 'center',
-      backgroundColor: ctx.colors2024['brand-default'],
-      color: ctx.colors2024['neutral-InvertHighlight'],
+      backgroundColor: colors2024['brand-default'],
+      color: colors2024['neutral-InvertHighlight'],
     },
     modalTitle: {
       marginTop: 12,
