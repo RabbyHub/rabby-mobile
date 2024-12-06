@@ -108,10 +108,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderColor: 'transparent',
     backgroundColor: colors2024['neutral-bg-2'],
-    width: '48%',
+    width: '47%',
     minWidth: 0,
     borderRadius: 12,
-    marginRight: -4,
     flexShrink: 0,
 
     position: 'relative',

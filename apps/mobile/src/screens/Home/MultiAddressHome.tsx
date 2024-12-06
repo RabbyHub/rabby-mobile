@@ -605,8 +605,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    width: '48%',
-    marginRight: -6,
+    width: '47%',
     minWidth: 0,
     borderRadius: 18,
     flexShrink: 0,
