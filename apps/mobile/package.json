@@ -8,10 +8,8 @@
   },
   "scripts": {
     "android": "react-native run-android",
-    "apply-patch": "./node_modules/.bin/patch-package --use-yarn",
     "build-inpage": "sh ./scripts/postinstall.sh",
     "build:deps": "yarn ../../ build",
-    "create-patch": "sh ./scripts/create-patch.sh",
     "devtools": "react-devtools",
     "doctor": "react-native doctor",
     "ensure-git-hooks": "yarn ../../ install-husky",
@@ -213,7 +211,6 @@
     "jest": "^27.5.1",
     "lint-staged": "^15.2.0",
     "metro-react-native-babel-preset": "0.76.8",
-    "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.7.1",
     "qrcode": "^1.5.3",
