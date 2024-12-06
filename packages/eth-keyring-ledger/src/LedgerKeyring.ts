@@ -4,7 +4,7 @@ import {
   TransactionFactory,
   FeeMarketEIP1559Transaction,
 } from '@ethereumjs/tx';
-import LedgerEth from '@ledgerhq/hw-app-eth';
+import LedgerEth, { ledgerService } from '@ledgerhq/hw-app-eth';
 import type Transport from '@ledgerhq/hw-transport';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { eventBus } from '@rabby-wallet/keyring-utils';
@@ -409,7 +409,12 @@ class LedgerKeyring {
     const hdPath = await this.unlockAccountByAddress(address);
     await this.makeApp(true);
     try {
-      const res = await this.app!.signTransaction(hdPath, rawTxHex);
+      const resolution = await ledgerService.resolveTransaction(
+        rawTxHex,
+        {},
+        {},
+      );
+      const res = await this.app!.signTransaction(hdPath, rawTxHex, resolution);
       const newOrMutatedTx = handleSigning(res);
       const valid = newOrMutatedTx.verifySignature();
       if (valid) {
