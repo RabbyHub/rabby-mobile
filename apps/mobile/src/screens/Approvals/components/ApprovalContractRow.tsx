@@ -13,6 +13,7 @@ import {
   useFocusedApprovalOnApprovals,
   type ContractApprovalItem,
   useRevokeContractSpenders,
+  useApprovalsPage,
 } from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
@@ -31,6 +32,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { HighlightText } from '@/components2024/HighlightText';
 
 export const ContractFloorLayouts = {
   floorHeader: { paddingTop: 0 },
@@ -163,6 +165,8 @@ function CardProto({
     [contract.risk_level],
   );
 
+  const { searchKw } = useApprovalsPage();
+
   const contractUsdText = useMemo(
     () =>
       bizNumberUtils.formatUsdValue(
@@ -205,18 +209,20 @@ function CardProto({
             <RcIconUnknown style={styles.chainIcon} />
           )}
           <View style={styles.addrContractWrapper}>
-            <Text
+            <HighlightText
               style={styles.contractAddrText}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {ellipsisAddress(contract.id)}
-            </Text>
-            <Text
-              style={[styles.contractName]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              ({contract.name})
-            </Text>
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              searchWords={[searchKw]}
+              textToHighlight={ellipsisAddress(contract.id)}
+            />
+            <HighlightText
+              style={styles.contractName}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              searchWords={[searchKw]}
+              textToHighlight={`(${contract.name})`}
+            />
             <CopyAddressIcon
               address={contract.id}
               style={{ marginLeft: 2 }}
@@ -526,6 +532,9 @@ export const getCardStyles = createGetStyles2024(ctx => {
       lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
+    },
+    highlightText: {
+      color: colors2024['brand-default'],
     },
     contractName: {
       color: colors2024['neutral-foot'],

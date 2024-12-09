@@ -5,6 +5,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
+  useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
@@ -17,6 +18,7 @@ import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
 import { parseApprovalSpenderSelection } from '../utils';
+import { HighlightText } from '@/components2024/HighlightText';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -51,6 +53,8 @@ function AssetsApprovalRowProto({
   });
 
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
+
+  const { searchKw } = useApprovalsPage();
 
   const { assetRevokeMap, onSelectAllAsset } = useRevokeAssetSpenders();
   const { isSelectedAll, isSelectedPartial } = React.useMemo(() => {
@@ -132,15 +136,16 @@ function AssetsApprovalRowProto({
                   style={styles.chainIcon}
                 />
               )}
-              <Text
+              <HighlightText
                 style={[
                   styles.assetNameText,
                   { flexShrink: 1, maxWidth: '85%' },
                 ]}
-                ellipsizeMode="tail"
-                numberOfLines={1}>
-                {approvalInfo.floor1Text}
-              </Text>
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                searchWords={[searchKw]}
+                textToHighlight={approvalInfo.floor1Text}
+              />
             </View>
             {approvalInfo.hasFloor2 && (
               <View style={styles.basicInfoF2}>
@@ -263,6 +268,9 @@ export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '700',
+    },
+    highlightText: {
+      color: colors2024['brand-default'],
     },
     contractName: {
       color: colors['neutral-foot'],
