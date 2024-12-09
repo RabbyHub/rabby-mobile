@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
@@ -171,6 +171,17 @@ function CardProto({
   );
 
   const isTreatedAsSelected = isSelectedAll || isSelectedPartial;
+
+  useEffect(() => {
+    if (risky && contract && contract.list?.length) {
+      onSelectAllContractApprovals(contract, true, 'final');
+    }
+    return () => {
+      if (risky && contract && contract.list?.length) {
+        onSelectAllContractApprovals(contract, false, 'final');
+      }
+    };
+  }, [contract, onSelectAllContractApprovals, risky, searchKw]);
 
   return (
     <TouchableView
