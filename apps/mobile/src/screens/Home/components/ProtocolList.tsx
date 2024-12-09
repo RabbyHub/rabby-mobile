@@ -190,6 +190,7 @@ const _ProtocolList = ({
       keyExtractor={item => item.id}
       ListEmptyComponent={ListEmptyComponent}
       contentContainerStyle={styles.bgContainer}
+      showsVerticalScrollIndicator={false}
       ListFooterComponent={ListFooterComponent}
       stickySectionHeadersEnabled={false}
       refreshControl={

@@ -112,7 +112,7 @@ export default function BottomSheetApprovalAsset({
         return (
           <BottomSheetModalFooterButton
             title={[
-              `Confirm`,
+              'Confirm',
               confirmingAssetsCount && ` (${confirmingAssetsCount})`,
             ]
               .filter(Boolean)
@@ -156,9 +156,11 @@ export default function BottomSheetApprovalAsset({
             initialNumToRender={4}
             maxToRenderPerBatch={20}
             ListFooterComponent={
-              <View style={styles.listFooterContainer}>
-                {isFetchingNextPage ? <ActivityIndicator /> : null}
-              </View>
+              sectionList.length >= 20 ? (
+                <View style={styles.listFooterContainer}>
+                  {isFetchingNextPage ? <ActivityIndicator /> : null}
+                </View>
+              ) : null
             }
             style={[styles.scrollableView, styles.scrollableArea]}
             contentContainerStyle={styles.listContainer}
