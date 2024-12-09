@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Keyboard } from 'react-native';
 import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
@@ -280,10 +280,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
               />
             </View>
           )}
-
+          {headerTitle || null}
           <BottomSheetFlatList
             keyboardShouldPersistTaps="handled"
-            style={[styles.scrollView]}
+            style={[
+              styles.scrollView,
+              Boolean(headerTitle) && styles.noTopBorder,
+            ]}
+            onScrollBeginDrag={() => Keyboard.dismiss()}
             data={tokens}
             windowSize={5}
             keyExtractor={token =>
@@ -301,8 +305,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         </>
                       );
                     }
-                  : headerTitle || null,
-              [isLoading, headerTitle],
+                  : null,
+              [isLoading],
             )}
             ListEmptyComponent={
               <NotMatchedHolder
@@ -370,19 +374,24 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     </View>
                     {isBridgeTo ? (
                       <View
-                        style={[styles.tokenInfoColRight, styles.tardeLevel]}>
+                        style={[
+                          styles.tokenInfoColRight,
+                          styles.tardeLevel,
+                          {
+                            backgroundColor:
+                              token.trade_volume_level === 'low'
+                                ? colors2024['orange-light-4']
+                                : colors2024['green-light-4'],
+                          },
+                        ]}>
                         <Text
                           style={[
-                            styles.tardeLevel,
+                            styles.tardeLevelText,
                             {
                               color:
                                 token.trade_volume_level === 'low'
                                   ? colors2024['orange-default']
                                   : colors2024['green-default'],
-                              backgroundColor:
-                                token.trade_volume_level === 'low'
-                                  ? colors2024['orange-light-4']
-                                  : colors2024['green-light-4'],
                             },
                           ]}>
                           {token.trade_volume_level}
@@ -424,6 +433,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 styles.tardeLevel,
                 styles.isSelected,
                 styles.tokenNameBox,
+                styles.tardeLevelText,
                 value,
                 colors2024,
                 isBridgeTo,
@@ -446,9 +456,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 900,
       color: colors2024['green-default'],
       backgroundColor: colors2024['green-light-4'],
-      fontSize: 14,
       paddingHorizontal: 12,
       paddingVertical: 4,
+    },
+    tardeLevelText: {
+      color: colors2024['green-default'],
+      fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
@@ -494,7 +507,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 24,
       // paddingHorizontal: 16,
     },
-
+    noTopBorder: {
+      borderTopWidth: 0,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    },
     tokenItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',

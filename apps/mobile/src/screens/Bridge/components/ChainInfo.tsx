@@ -93,7 +93,6 @@ export function ChainInfo({
   }, []);
 
   const createChainModal = React.useCallback(() => {
-    console.log('createChainModal. ', excludeChains);
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_SORTED_CHAIN,
       value: chainEnum,

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Keyboard, Text, View } from 'react-native';
 
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
@@ -182,6 +182,9 @@ export default function SelectSortedChain({
       ) : (
         <View style={[styles.chainListWrapper]}>
           <MixedFlatChainList
+            onScrollBeginDrag={() => {
+              Keyboard.dismiss();
+            }}
             style={styles.innerBlock}
             matteredList={matteredList}
             unmatteredList={unmatteredList}
