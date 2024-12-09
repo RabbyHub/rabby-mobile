@@ -192,7 +192,9 @@ export function DappsScreen(): JSX.Element {
               }}
               chain={searchState.state.chain}
               onFavoritePress={handleFavoriteDapp}
-              onOpenURL={handleOpenURL}
+              onOpenURL={(newUrl: string) =>
+                handleOpenURL(newUrl, { useLatestWebViewId: false })
+              }
               currentDapp={searchState.currentDapp}
               currentURL={searchState.currentURL}
               searchText={searchState.state.searchText}
