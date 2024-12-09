@@ -344,7 +344,11 @@ export const useBridge = () => {
                 });
 
               if (alternativeToken) {
-                if (data && currentFetchId === fetchIdRef.current) {
+                if (
+                  data &&
+                  data?.length &&
+                  currentFetchId === fetchIdRef.current
+                ) {
                   setRecommendFromToken(alternativeToken);
                   return;
                 }
