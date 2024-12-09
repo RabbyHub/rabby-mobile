@@ -697,7 +697,6 @@ DEPENDENCIES:
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-cloud-storage (from `../node_modules/react-native-cloud-storage`)
-  - "react-native-compat (from `../node_modules/@walletconnect/react-native-compat`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-ios-context-menu (from `../node_modules/react-native-ios-context-menu`)
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
@@ -837,8 +836,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/blur"
   react-native-cloud-storage:
     :path: "../node_modules/react-native-cloud-storage"
-  react-native-compat:
-    :path: "../node_modules/@walletconnect/react-native-compat"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-ios-context-menu:
