@@ -58,13 +58,8 @@ function RightTouchableView({
 function CardProto({
   style,
   contract,
-  onPressArea,
 }: {
   contract: ContractApprovalItem;
-  onPressArea?: (ctx: {
-    type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
-    contract: ContractApprovalItem;
-  }) => void;
 } & RNViewProps) {
   const { styles, colors, colors2024 } = useTheme2024({
     getStyle: getCardStyles,
@@ -246,7 +241,7 @@ function CardProto({
       </View>
 
       {risky && (
-        <View style={[styles.contractItemFloor, { marginTop: 7 }]}>
+        <View style={[styles.contractItemFloor, styles.riskRow]}>
           <View style={[styles.riskyTip]}>
             <RcIconWarning
               width={11}
@@ -431,7 +426,7 @@ function CardProto({
 }
 
 export const getCardStyles = createGetStyles2024(ctx => {
-  const { colors, colors2024 } = ctx;
+  const { colors2024 } = ctx;
   const selectableStyles = getSelectableContainerStyle(ctx);
 
   return {
@@ -440,7 +435,6 @@ export const getCardStyles = createGetStyles2024(ctx => {
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
       paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
       height: ApprovalsLayouts.contractRowHeight,
       width: '100%',
@@ -451,6 +445,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       },
       shadowOpacity: 0.06,
       shadowRadius: 60,
+      // elevation: 4,
       // box-shadow: 0px 4px 60px 0px rgba(0, 0, 0, 0.06);
 
       ...selectableStyles.container,
@@ -474,9 +469,15 @@ export const getCardStyles = createGetStyles2024(ctx => {
     },
     contractItemFloor: {
       flexDirection: 'row',
+      paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
+    },
+    riskRow: {
+      marginTop: 7,
+      paddingHorizontal: 0,
+      justifyContent: 'center',
     },
     floorLeft: {
       flexDirection: 'row',
@@ -493,17 +494,18 @@ export const getCardStyles = createGetStyles2024(ctx => {
     },
     riskyTip: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
+      alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: 12,
       paddingVertical: 7,
-      paddingHorizontal: 15,
+      paddingHorizontal: 12,
+      textAlign: 'center',
       backgroundColor: colors2024['red-light-2'],
       position: 'relative',
     },
     riskyTipArrow: {
       position: 'absolute',
-      left: '20%',
+      left: '30%',
       top: -6,
       ...makeTriangleStyle({
         dir: 'up',
