@@ -333,13 +333,16 @@ function CardProto({
         </View>
         <TouchableOpacity
           onPress={() => {
+            const hasRisk =
+              revokeTrendsEvaluation.isDanger ||
+              revokeTrendsEvaluation.isWarning;
             const modalId = createGlobalBottomSheetModal2024({
               name: MODAL_NAMES.DESCRIPTION,
               titleStyle: styles.modalTitle,
               sectionStyle: styles.section,
               bottomSheetModalProps: {
                 enableDismissOnClose: true,
-                snapPoints: ['40%'],
+                snapPoints: [hasRisk ? '47%' : '34%'],
                 enableContentPanningGesture: true,
                 enablePanDownToClose: true,
               },
@@ -375,7 +378,7 @@ function CardProto({
                 },
                 {
                   description: t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeNewApproved',
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeRecenet',
                     {
                       count: contract.$riskAboutValues.revoke_user_count,
                     },
