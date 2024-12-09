@@ -1,5 +1,5 @@
 // import { CHAINS_ENUM, ETH_USDT_CONTRACT } from '@/constant';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 // import { useAsyncInitializeChainList } from '@/ui/hooks/useChain';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
@@ -31,6 +31,7 @@ import { isNaN } from 'lodash';
 import { useCurrentAccount } from '@/hooks/account';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
+import { GasLevelType } from '@/components/ReserveGasPopup';
 
 export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
   shouldApproveToken?: boolean;
@@ -606,6 +607,115 @@ export const useBridge = () => {
     }
   }, []);
 
+  const chainInfo = useMemo(
+    () => findChainByEnum(fromChain) || CHAINS[fromChain || 'ETH'],
+    [fromChain],
+  );
+
+  const [gasLevel, setGasLevel] = useState<GasLevelType>('normal');
+  const gasPriceRef = useRef<number>();
+
+  const { value: gasList } = useAsync(() => {
+    gasPriceRef.current = undefined;
+    setGasLevel('normal');
+    return openapi.gasMarket(chainInfo.serverId);
+  }, [chainInfo?.serverId]);
+
+  const [passGasPrice, setUseGasPrice] = useState(false);
+  const [reserveGasOpen, setReserveGasOpen] = useState(false);
+  const isMaxRef = useRef(false);
+
+  const normalGasPrice = useMemo(
+    () => gasList?.find(e => e.level === 'normal')?.price,
+    [gasList],
+  );
+
+  const nativeTokenDecimals = useMemo(
+    () => findChain({ enum: fromChain })?.nativeTokenDecimals || 1e18,
+    [fromChain],
+  );
+
+  const gasLimit = useMemo(
+    () => (fromChain === CHAINS_ENUM.ETH ? 1000000 : 2000000),
+    [fromChain],
+  );
+
+  const payTokenIsNativeToken = useMemo(() => {
+    if (fromToken) {
+      return isSameAddress(fromToken.id, chainInfo.nativeTokenAddress);
+    }
+    return false;
+  }, [chainInfo?.nativeTokenAddress, fromToken]);
+
+  useEffect(() => {
+    if (payTokenIsNativeToken && gasList) {
+      const checkGasIsEnough = (price: number) => {
+        return new BigNumber(fromToken?.raw_amount_hex_str || 0, 16).gte(
+          new BigNumber(gasLimit).times(price),
+        );
+      };
+      const normalPrice = gasList?.find(e => e.level === 'normal')?.price || 0;
+      const slowPrice = gasList?.find(e => e.level === 'slow')?.price || 0;
+      const isNormalEnough = checkGasIsEnough(normalPrice);
+      const isSlowEnough = checkGasIsEnough(slowPrice);
+      if (isNormalEnough) {
+        setGasLevel('normal');
+        gasPriceRef.current = normalGasPrice;
+      } else if (isSlowEnough) {
+        setGasLevel('slow');
+        gasPriceRef.current = slowPrice;
+      } else {
+        setGasLevel('custom');
+        gasPriceRef.current = 0;
+      }
+    }
+  }, [
+    payTokenIsNativeToken,
+    gasList,
+    gasLimit,
+    fromToken?.raw_amount_hex_str,
+    normalGasPrice,
+  ]);
+
+  const closeReserveGasOpen = useCallback(() => {
+    setReserveGasOpen(false);
+  }, []);
+
+  const closeReserveGasOpenAndUpdatePayAmount = useCallback(() => {
+    setReserveGasOpen(false);
+
+    if (fromToken && gasPriceRef.current !== undefined) {
+      const val = tokenAmountBn(fromToken).minus(
+        new BigNumber(gasLimit)
+          .times(gasPriceRef.current)
+          .div(10 ** nativeTokenDecimals),
+      );
+      setAmount(val.lt(0) ? '0' : val.toString(10));
+    }
+  }, [fromToken, nativeTokenDecimals, gasLimit]);
+
+  const changeGasPrice = useCallback(
+    (gasLevel: GasLevel) => {
+      gasPriceRef.current = gasLevel.level === 'custom' ? 0 : gasLevel.price;
+      setGasLevel(gasLevel.level as GasLevelType);
+      closeReserveGasOpenAndUpdatePayAmount();
+      setUseGasPrice(true);
+    },
+    [closeReserveGasOpenAndUpdatePayAmount],
+  );
+
+  const handleMax = useCallback(() => {
+    if (payTokenIsNativeToken) {
+      setReserveGasOpen(true);
+      return;
+    }
+
+    if (!payTokenIsNativeToken && fromToken) {
+      isMaxRef.current = true;
+      handleAmountChange?.(tokenAmountBn(fromToken)?.toString(10));
+    }
+  }, [fromToken, handleAmountChange, setReserveGasOpen, payTokenIsNativeToken]);
+
   return {
     clearExpiredTimer,
 
@@ -633,6 +743,17 @@ export const useBridge = () => {
 
     bestQuoteId,
     selectedBridgeQuote,
+
+    gasLevel,
+    gasLimit,
+    changeGasPrice,
+    gasList,
+    reserveGasOpen,
+    closeReserveGasOpen,
+    passGasPrice,
+    handleMax,
+    isMaxRef,
+    payTokenIsNativeToken,
 
     setSelectedBridgeQuote,
     ...slippageObj,

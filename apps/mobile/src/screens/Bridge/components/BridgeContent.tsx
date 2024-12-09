@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   StyleSheet,
   Text,
@@ -44,6 +50,10 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
+import { ReserveGasPopup } from '@/components/ReserveGasPopup';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { tokenAmountBn } from '@/screens/Swap/utils';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -228,6 +238,17 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     setIsCustomSlippage,
 
     clearExpiredTimer,
+
+    gasLevel,
+    gasLimit,
+    changeGasPrice,
+    gasList,
+    reserveGasOpen,
+    closeReserveGasOpen,
+    passGasPrice,
+    handleMax,
+    isMaxRef,
+    payTokenIsNativeToken,
   } = useBridge();
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const refresh = useSetRefreshId();
@@ -290,6 +311,10 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             chainId: tx.chainId,
             shouldApprove: !!selectedBridgeQuote.shouldApproveToken,
             shouldTwoStepApprove: !!selectedBridgeQuote.shouldTwoStepApprove,
+            gasPrice:
+              payTokenIsNativeToken && passGasPrice
+                ? gasList?.find(e => e.level === gasLevel)?.price
+                : undefined,
             payTokenId: fromToken.id,
             payTokenChainServerId: fromToken.chain,
             info: {
@@ -382,6 +407,10 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             chainId: tx.chainId,
             shouldApprove: !!selectedBridgeQuote.shouldApproveToken,
             shouldTwoStepApprove: !!selectedBridgeQuote.shouldTwoStepApprove,
+            gasPrice:
+              payTokenIsNativeToken && passGasPrice
+                ? gasList?.find(e => e.level === gasLevel)?.price
+                : undefined,
             payTokenId: fromToken.id,
             payTokenChainServerId: fromToken.chain,
             info: {
@@ -487,26 +516,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
-      {/* // <FooterButtonScreenContainer
-    //   as="View"
-    //   buttonProps={{
-    //     title: btnText,
-    //     onPress: handleConfirm,
-    //     disabled: btnDisabled,
-    //     loading: fetchingBridgeQuote,
-    //   }}
-    //   style={styles.screen}
-    //   footerBottomOffset={56}
-    //   footerContainerStyle={{
-    //     paddingHorizontal: 20,
-    //     paddingTop: 16,
-    //   }}> */}
       {isForMultipleAdderss && (
-        <AccountSwitcherModal
-          forScene="MakeTransactionAbout"
-          inScreen
-          panelLinearGradientProps={{ type: 'classical:bg2' }}
-        />
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
         style={styles.container}
@@ -521,7 +532,12 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               inSufficient={inSufficient}
               chain={fromChain}
               token={fromToken}
-              onChangeToken={setFromToken}
+              isMaxRef={isMaxRef}
+              handleMax={handleMax}
+              onChangeToken={item => {
+                handleAmountChange('');
+                setFromToken(item);
+              }}
               onChangeChain={switchFromChain}
               value={amount}
               onInputChange={handleAmountChange}
@@ -600,21 +616,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           },
         ]}>
         <Button
-          onPress={() => {
-            if (fetchingBridgeQuote) {
-              return;
-            }
-            if (!selectedBridgeQuote) {
-              refresh(e => e + 1);
-
-              return;
-            }
-            if (selectedBridgeQuote?.shouldTwoStepApprove) {
-              setTwoStepApproveModalVisible(true);
-              return;
-            }
-            handleBridge();
-          }}
+          onPress={handleConfirm}
           title={btnText}
           titleStyle={styles.btnTitle}
           loading={fetchingBridgeQuote}
@@ -628,6 +630,17 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           setTwoStepApproveModalVisible(false);
         }}
         onConfirm={handleBridge}
+      />
+
+      <ReserveGasPopup
+        selectedItem={gasLevel}
+        chain={fromChain || CHAINS_ENUM.ETH}
+        limit={gasLimit}
+        onGasChange={changeGasPrice}
+        gasList={gasList}
+        visible={reserveGasOpen}
+        onClose={closeReserveGasOpen}
+        rawHexBalance={fromToken?.raw_amount_hex_str}
       />
 
       {fromToken && toToken && Number(amount) > 0 ? (

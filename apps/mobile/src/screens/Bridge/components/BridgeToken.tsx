@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -22,12 +22,13 @@ import { ChainInfo } from './ChainInfo';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
 import BridgeFromTokenSelect from './BridgeFromTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const BridgeToken = ({
   type = 'from',
@@ -43,7 +44,11 @@ const BridgeToken = ({
   fromTokenId,
   noQuote,
   inSufficient,
+  isMaxRef,
+  handleMax,
 }: {
+  handleMax?: () => void;
+  isMaxRef?: React.MutableRefObject<boolean>;
   type?: 'from' | 'to';
   token?: TokenItem;
   chain?: CHAINS_ENUM;
@@ -70,17 +75,14 @@ const BridgeToken = ({
   const chainObj = findChainByEnum(chain);
 
   const openFeePopup = useSetSettingVisible();
-
-  const isMaxRef = useRef(false);
-
   const inputRef = useRef<TextInput>(null);
 
   useLayoutEffect(() => {
-    if (isFromToken && inputRef.current && !isMaxRef.current) {
+    if (isFromToken && inputRef.current && !isMaxRef?.current) {
       inputRef.current.focus();
-      isMaxRef.current = false;
+      isMaxRef && (isMaxRef.current = false);
     }
-  }, [value, isFromToken]);
+  }, [value, isFromToken, isMaxRef]);
 
   const showNoQuote = useMemo(() => isToken && !!noQuote, [noQuote, isToken]);
 
@@ -99,13 +101,6 @@ const BridgeToken = ({
     },
     [onInputChange],
   );
-
-  const handleMax = React.useCallback(() => {
-    if (token) {
-      isMaxRef.current = true;
-      onInputChange?.(tokenAmountBn(token)?.toString(10));
-    }
-  }, [token, onInputChange]);
 
   return (
     <View style={styles.container}>

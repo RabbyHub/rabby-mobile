@@ -14,7 +14,7 @@ import {
 export const Bridge = ({
   isForMultipleAdderss,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
+  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
 
   return (
     <SettingVisibleProvider>
