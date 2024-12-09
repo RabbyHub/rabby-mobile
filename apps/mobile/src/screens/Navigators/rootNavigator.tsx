@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import { Platform } from 'react-native';
+import { Platform, StyleProp, TextStyle } from 'react-native';
 
 import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 
@@ -27,6 +27,7 @@ import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsS
 import createCustomNativeStackNavigator from '@/utils/CustomNativeStackNavigator';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { useStackScreenConfig } from '@/hooks/navigation';
+import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 
 const RootStack = createCustomNativeStackNavigator<RootNavigatorParamsList>();
 
@@ -54,7 +55,6 @@ const getStyles = createGetStyles(colors => ({
 export default function RootScreenNavigator() {
   const colors = useThemeColors();
   const { mergeScreenOptions } = useStackScreenConfig();
-  const isDark = useGetBinaryMode() === 'dark';
 
   const { systembarOffsetBottom } = useSafeSizes();
   const tabbarHeight = ScreenLayouts.bottomBarHeight + systembarOffsetBottom;
@@ -107,12 +107,11 @@ export default function RootScreenNavigator() {
           options={useMemo(
             () =>
               mergeScreenOptions({
-                headerTitle: 'Settings',
-                headerTitleStyle: {
-                  fontWeight: '500',
-                  fontSize: 20,
-                  color: colors['neutral-title-1'],
-                },
+                headerTitle: () => (
+                  <I18nRouteScreenTitle
+                    i18nTitle={({ t }) => t('screens.settings.screenTitle')}
+                  />
+                ),
                 gestureEnabled: false,
                 headerTitleAlign: 'center',
                 headerTintColor: colors['neutral-title-1'],

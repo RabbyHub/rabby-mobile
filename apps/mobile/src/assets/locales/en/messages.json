@@ -1,4 +1,9 @@
 {
+  "screens": {
+    "settings": {
+      "screenTitle": "Settings"
+    }
+  },
   "page": {
     "transactions": {
       "title": "Transactions",

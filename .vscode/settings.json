@@ -4,8 +4,15 @@
     "*.pro": "proguard",
     "**/apps/mobile/ios/**/*.h": "objective-c",
   },
-  "i18n-ally.localesPaths": ["apps/mobile/src/assets/locales"],
+  "i18n-ally.localesPaths": [
+    "packages/**/**/i18n",
+    "apps/mobile/src/assets/locales"
+  ],
   "i18n-ally.keystyle": "nested",
   "i18n-ally.extract.ignored": ["Gwei"],
-  "i18n-ally.sourceLanguage": "en"
+  "i18n-ally.sourceLanguage": "en",
+  "i18n-ally.enabledFrameworks": [
+    "i18next",
+    "react-i18next"
+  ],
 }

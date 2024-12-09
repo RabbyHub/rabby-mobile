@@ -1,10 +1,55 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enLocale from '@/assets/locales/en/messages.json';
+import zh_CNLocale from '@/assets/locales/zh-CN/messages.json';
 
-export function getLocale(locale: string) {
+import codeConfig from '@/assets/locales/index.json';
+import { isNonPublicProductionEnv } from '@/constant/env';
+
+export enum SupportedLang {
+  'en' = 'en',
+  'zh-CN' = 'zh-CN',
+}
+
+export const SupportedLangs = (
+  codeConfig as { code: SupportedLang; name: string }[]
+).reduce(
+  (accu, item) => {
+    if (SupportedLang.hasOwnProperty(item.code)) {
+      accu.push({ lang: item.code, label: item.name });
+    }
+
+    return accu;
+  },
+  [] as {
+    lang: SupportedLang;
+    label: string;
+  }[],
+);
+
+export function coerceLang(lang: SupportedLang): SupportedLang {
+  if (isNonPublicProductionEnv) return lang;
+
+  return 'en' as SupportedLang;
+}
+
+export function filterSupportedLang(lang: string): SupportedLang {
+  if (SupportedLang.hasOwnProperty(lang)) {
+    return coerceLang(lang as SupportedLang);
+  }
+
+  return coerceLang(SupportedLang.en);
+}
+
+export function getLocale(locale: SupportedLang) {
   // ONLY support en for now
-  return enLocale;
+  switch (locale) {
+    default:
+    case SupportedLang.en:
+      return enLocale;
+    case SupportedLang['zh-CN']:
+      return zh_CNLocale;
+  }
 }
 
 i18n
@@ -25,17 +70,17 @@ export function strings(...args: Parameters<typeof i18n.t>) {
   return i18n.t(...args);
 }
 
-export function addResourceBundle(locale: string) {
+export function addResourceBundle(locale: SupportedLang) {
   if (i18n.hasResourceBundle(locale, I18N_NS)) return;
   const bundle = getLocale(locale);
 
   i18n.addResourceBundle(locale, I18N_NS, bundle);
 }
 
-addResourceBundle('en');
+addResourceBundle('en' as SupportedLang);
 
-i18n.on('languageChanged', function (lng) {
-  addResourceBundle(lng);
+i18n.on('languageChanged', function (lng: string) {
+  addResourceBundle(filterSupportedLang(lng));
 });
 
 export default i18n;
