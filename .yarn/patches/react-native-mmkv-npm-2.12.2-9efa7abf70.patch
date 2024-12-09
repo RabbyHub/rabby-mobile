@@ -1,7 +1,7 @@
-diff --git a/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp b/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp
-index 1ffbdc2..ce8da60 100644
---- a/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp
-+++ b/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp
+diff --git a/android/src/main/cpp/MmkvHostObject.cpp b/android/src/main/cpp/MmkvHostObject.cpp
+index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..ce8da605bb28830cfb50c099eaa4dd42bba2ae6a 100644
+--- a/android/src/main/cpp/MmkvHostObject.cpp
++++ b/android/src/main/cpp/MmkvHostObject.cpp
 @@ -52,6 +52,7 @@ std::vector<jsi::PropNameID> MmkvHostObject::getPropertyNames(jsi::Runtime& rt)
    result.push_back(jsi::PropNameID::forUtf8(rt, std::string("getAllKeys")));
    result.push_back(jsi::PropNameID::forUtf8(rt, std::string("deleteAll")));
@@ -29,10 +29,10 @@ index 1ffbdc2..ce8da60 100644
 +
    return jsi::Value::undefined();
  }
-diff --git a/node_modules/react-native-mmkv/ios/MmkvHostObject.mm b/node_modules/react-native-mmkv/ios/MmkvHostObject.mm
-index 16045fd..580e95b 100644
---- a/node_modules/react-native-mmkv/ios/MmkvHostObject.mm
-+++ b/node_modules/react-native-mmkv/ios/MmkvHostObject.mm
+diff --git a/ios/MmkvHostObject.mm b/ios/MmkvHostObject.mm
+index 16045fd7d4b020e9fcb10d0550d5668501b385fb..580e95b35596a460b10ee9d3aad5dfa571a9949f 100644
+--- a/ios/MmkvHostObject.mm
++++ b/ios/MmkvHostObject.mm
 @@ -291,5 +291,17 @@
          });
    }
@@ -51,10 +51,10 @@ index 16045fd..580e95b 100644
 +
    return jsi::Value::undefined();
  }
-diff --git a/node_modules/react-native-mmkv/lib/module/MMKV.js b/node_modules/react-native-mmkv/lib/module/MMKV.js
-index c7b6cdd..e6f28ce 100644
---- a/node_modules/react-native-mmkv/lib/module/MMKV.js
-+++ b/node_modules/react-native-mmkv/lib/module/MMKV.js
+diff --git a/lib/module/MMKV.js b/lib/module/MMKV.js
+index c7b6cddc2287ea71841eac6fced4a0f02bc527e4..e6f28cedc4476859347b9b4df9c98ac72a026edf 100644
+--- a/lib/module/MMKV.js
++++ b/lib/module/MMKV.js
 @@ -83,6 +83,10 @@ export class MMKV {
      const func = this.getFunctionFromCache('recrypt');
      return func(key);
@@ -66,10 +66,10 @@ index c7b6cdd..e6f28ce 100644
    toString() {
      return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
    }
-diff --git a/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts b/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts
-index 98de6b8..f2d0b4f 100644
---- a/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts
-+++ b/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts
+diff --git a/lib/typescript/MMKV.d.ts b/lib/typescript/MMKV.d.ts
+index 98de6b8fefec0ffcc46de4544d8c3cfb002d342c..f2d0b4f2c9f1db500a431fe64472847dcd68ea83 100644
+--- a/lib/typescript/MMKV.d.ts
++++ b/lib/typescript/MMKV.d.ts
 @@ -100,6 +100,16 @@ interface MMKVInterface {
       * Encryption keys can have a maximum length of 16 bytes.
       */
@@ -104,10 +104,10 @@ index 98de6b8..f2d0b4f 100644
      toString(): string;
      toJSON(): object;
      addOnValueChangedListener(onValueChanged: (key: string) => void): Listener;
-diff --git a/node_modules/react-native-mmkv/react-native-mmkv.podspec b/node_modules/react-native-mmkv/react-native-mmkv.podspec
-index 599f39e..34c5f84 100644
---- a/node_modules/react-native-mmkv/react-native-mmkv.podspec
-+++ b/node_modules/react-native-mmkv/react-native-mmkv.podspec
+diff --git a/react-native-mmkv.podspec b/react-native-mmkv.podspec
+index 599f39e20baad5a1db037a80560f5105a0ad7d20..34c5f847d787e44f53f7ed7da632a3ed39edf061 100644
+--- a/react-native-mmkv.podspec
++++ b/react-native-mmkv.podspec
 @@ -27,7 +27,7 @@ Pod::Spec.new do |s|
      'ios/**/*.h'
    ]
@@ -117,10 +117,10 @@ index 599f39e..34c5f84 100644
    if respond_to?(:install_modules_dependencies, true)
      install_modules_dependencies(s)
    else
-diff --git a/node_modules/react-native-mmkv/src/MMKV.ts b/node_modules/react-native-mmkv/src/MMKV.ts
-index 973a5e7..5b32d70 100644
---- a/node_modules/react-native-mmkv/src/MMKV.ts
-+++ b/node_modules/react-native-mmkv/src/MMKV.ts
+diff --git a/src/MMKV.ts b/src/MMKV.ts
+index 973a5e74244c28ab22c47b2bffba078e20b84fe1..5b32d703ff898c2ad732f011c54d259e1027fde0 100644
+--- a/src/MMKV.ts
++++ b/src/MMKV.ts
 @@ -106,6 +106,16 @@ interface MMKVInterface {
     * Encryption keys can have a maximum length of 16 bytes.
     */
@@ -157,10 +157,10 @@ index 973a5e7..5b32d70 100644
  
    toString(): string {
      return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
-diff --git a/node_modules/react-native-mmkv/src/createMMKV.mock.ts b/node_modules/react-native-mmkv/src/createMMKV.mock.ts
-index c81bb57..29ebc91 100644
---- a/node_modules/react-native-mmkv/src/createMMKV.mock.ts
-+++ b/node_modules/react-native-mmkv/src/createMMKV.mock.ts
+diff --git a/src/createMMKV.mock.ts b/src/createMMKV.mock.ts
+index c81bb57129a2934e4647a5f3dfc06a4bb15be198..29ebc9168ef7a58dc11abeb4f3992e2b5c66d6f9 100644
+--- a/src/createMMKV.mock.ts
++++ b/src/createMMKV.mock.ts
 @@ -29,5 +29,8 @@ export const createMockMMKV = (): NativeMMKV => {
      recrypt: () => {
        console.warn('Encryption is not supported in mocked MMKV instances!');

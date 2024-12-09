@@ -1,7 +1,7 @@
-diff --git a/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js b/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
-index 59d62eb..b0504fa 100644
---- a/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
-+++ b/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
+diff --git a/lib/module/menu/create-android-menu/index.android.js b/lib/module/menu/create-android-menu/index.android.js
+index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966be5beca2 100644
+--- a/lib/module/menu/create-android-menu/index.android.js
++++ b/lib/module/menu/create-android-menu/index.android.js
 @@ -176,7 +176,12 @@ If you want to use a custom component as your <Content />, you can use the creat
          menuAttributes.hidden = true;
        }
@@ -87,10 +87,10 @@ index 59d62eb..b0504fa 100644
      }, triggerItem);
    }, 'Root');
    const Separator = create(_ => {
-diff --git a/node_modules/zeego/lib/typescript/menu/types.d.ts b/node_modules/zeego/lib/typescript/menu/types.d.ts
-index 4ecd414..ea890fa 100644
---- a/node_modules/zeego/lib/typescript/menu/types.d.ts
-+++ b/node_modules/zeego/lib/typescript/menu/types.d.ts
+diff --git a/lib/typescript/menu/types.d.ts b/lib/typescript/menu/types.d.ts
+index 4ecd41495309a5cde5f12f5357072073173890cf..ea890fa93f8c840427c55cf57ee7c7241cdd5125 100644
+--- a/lib/typescript/menu/types.d.ts
++++ b/lib/typescript/menu/types.d.ts
 @@ -39,6 +39,7 @@ export type MenuTriggerProps = {
       * Only applies for `ios` and `android`.
       */

@@ -21,12 +21,12 @@ echo "2. Link & Copy Assets..."
 cd $repo_dir/apps/mobile;
 yarn link-assets
 
-cd $repo_dir/apps/mobile;
-echo "3. Patch npm packages"
-if [ -z "${CI:-}" ]; then
-  yarn apply-patch
-else
-  # allow failed
-  yarn apply-patch || true
-fi
+# cd $repo_dir/apps/mobile;
+# echo "3. Patch npm packages"
+# if [ -z "${CI:-}" ]; then
+#   yarn apply-patch
+# else
+#   # allow failed
+#   yarn apply-patch || true
+# fi
 

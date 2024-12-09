@@ -1,7 +1,7 @@
-diff --git a/node_modules/@debank/common/dist/chain.d.ts b/node_modules/@debank/common/dist/chain.d.ts
-index ae0b2d4..70873af 100644
---- a/node_modules/@debank/common/dist/chain.d.ts
-+++ b/node_modules/@debank/common/dist/chain.d.ts
+diff --git a/dist/chain.d.ts b/dist/chain.d.ts
+index ae0b2d4bae688b199a3ff375d7bfc89bab20362e..70873af56664bae8cba3f13a95e90b802294290e 100644
+--- a/dist/chain.d.ts
++++ b/dist/chain.d.ts
 @@ -2,6 +2,7 @@ import { CHAINS_ENUM, ChainRaw } from "./chain-data";
  export declare type Chain = ChainRaw & {
      logo: string;
