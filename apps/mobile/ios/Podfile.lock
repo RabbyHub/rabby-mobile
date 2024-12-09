@@ -448,9 +448,6 @@ PODS:
   - react-native-cloud-storage (1.4.1):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
-  - react-native-compat (2.11.0):
-    - RCT-Folly (= 2021.07.22.00)
-    - React-Core
   - react-native-get-random-values (1.10.0):
     - React-Core
   - react-native-ios-context-menu (1.15.3):
@@ -697,7 +694,6 @@ DEPENDENCIES:
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-cloud-storage (from `../node_modules/react-native-cloud-storage`)
-  - "react-native-compat (from `../node_modules/@walletconnect/react-native-compat`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-ios-context-menu (from `../node_modules/react-native-ios-context-menu`)
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
@@ -837,8 +833,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/blur"
   react-native-cloud-storage:
     :path: "../node_modules/react-native-cloud-storage"
-  react-native-compat:
-    :path: "../node_modules/@walletconnect/react-native-compat"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-ios-context-menu:
@@ -992,7 +986,6 @@ SPEC CHECKSUMS:
   react-native-ble-plx: 1c04d21b1d9990227745f28b40b7422ea1e4e493
   react-native-blur: cfdad7b3c01d725ab62a8a729f42ea463998afa2
   react-native-cloud-storage: 13f403af3a6243b6c51365393ae12467d6f52882
-  react-native-compat: d658d1a1c8589c5a1b6c0f6c8c83c0a51880b7d2
   react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
   react-native-mmkv: 436ee510dcc43b58a49d7be0451f285e06a9fd1d

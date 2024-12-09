@@ -32,7 +32,6 @@ import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 import { SeedPhraseBackupToCloud } from '../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
 import { SeedPhraseRestoreFromCloud } from '../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
 import { BackupNotAvailableScreen } from '../SeedPhraseBackupToCloud/BackupNotAvailableScreen';
-import { WalletConnectConnection } from '../CommonPopup/WalletConnectConnection';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -65,7 +64,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
-  [MODAL_NAMES.WALLET_CONNECT]: [300],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -92,7 +90,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,
-  [MODAL_NAMES.WALLET_CONNECT]: WalletConnectConnection,
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
   [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,

@@ -33,7 +33,6 @@ import { AddAddressSelectMethod } from '@/components/AddAddressSelectMethod';
 import { SeedPhraseManualBackup } from '@/components2024/SeedPhraseManualBackup';
 import { SeedPhraseRestoreFromCloud } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
 import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen';
-import { WalletConnectConnection } from '@/components/CommonPopup/WalletConnectConnection';
 import { Descriptions } from '@/components2024/Descriptions';
 import React from 'react';
 import { RestoreFromCloud2024 } from '@/screens/RestoreFromCloud/RestoreFromCloud2024';
@@ -83,7 +82,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
-  [MODAL_NAMES.WALLET_CONNECT]: [300],
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [410],
   [MODAL_NAMES.DESCRIPTION]: [674],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
@@ -122,7 +120,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]:
     SeedPhraseRestoreFromCloud2024,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,
-  [MODAL_NAMES.WALLET_CONNECT]: WalletConnectConnection,
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
   [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,
