@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { atom, useAtom } from 'jotai';
 import { apiBalance } from '@/core/apis';
 import { keyringService, preferenceService } from '@/core/services';
@@ -74,18 +74,8 @@ export default function useAccountsBalance(opts?: {
             )
           : formatList;
 
-        let allList = list
-          .filter(a => a.type !== KEYRING_CLASS.WALLETCONNECT)
-          .map(a => a.address.toLowerCase());
-
-        if (accountsNoUnique) {
-          allList = allList.filter(
-            (value, index, self) => self.indexOf(value) === index,
-          );
-        }
-
         // deault first get from cache store
-        allList.map(account => {
+        uniqueList.map(account => {
           const cacheData = preferenceService.getAddressBalance(account);
           if (uniqueList.includes(account)) {
             cacheBalancesArr.push({
@@ -104,8 +94,8 @@ export default function useAccountsBalance(opts?: {
             interval: 2000,
             intervalCap: 10,
           });
-          for (let i = 0; i < allList.length; i++) {
-            const account = allList[i];
+          for (let i = 0; i < uniqueList.length; i++) {
+            const account = uniqueList[i];
             // batch fetch by queue
             queue.add(async () => {
               try {
