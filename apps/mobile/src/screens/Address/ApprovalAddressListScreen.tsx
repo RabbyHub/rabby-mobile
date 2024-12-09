@@ -25,18 +25,30 @@ type CurrentAddressProps = NativeStackScreenProps<
   'StackAddress'
 >;
 
+interface AccountWithApprovalInofItem extends KeyringAccountWithAlias {
+  alertCount?: number;
+  approvalCount?: number;
+}
 export function ApprovalAddressListScreen(): JSX.Element {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const { appprovalAlertInfo } = useApprovalAlertCounts();
   const { styles } = useTheme2024({ getStyle });
 
-  const displayAccounts = accounts.filter(
-    acc => !FILTER_ACCOUNT_TYPES.includes(acc.type),
-  );
+  const displayAccounts: AccountWithApprovalInofItem[] = accounts
+    .filter(acc => !FILTER_ACCOUNT_TYPES.includes(acc.type))
+    .map(item => ({
+      ...item,
+      // TODO: add approval account
+      alertCount: appprovalAlertInfo?.address2count?.[item.address],
+    }))
+    .sort((a, b) => {
+      // TODO: sort by alertCount desc then approval count
+      return b.alertCount - a.alertCount;
+    });
 
   const { switchAccount } = useCurrentAccount();
-  const { appprovalAlertInfo } = useApprovalAlertCounts();
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
