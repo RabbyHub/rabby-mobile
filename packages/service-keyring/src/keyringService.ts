@@ -7,11 +7,7 @@
 /* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
-import {
-  DisplayKeyring,
-  generateAliasName,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -45,7 +41,7 @@ type MemStoreState = {
 };
 
 type OnSetAddressAlias = (
-  keyring: KeyringInstance | KeyringIntf,
+  keyring: KeyringInstance | KeyringIntf | undefined,
   account: AccountItemWithBrandQueryResult,
   contactService?: ContactBookService,
 ) => Promise<void>;
@@ -137,7 +133,7 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ isUnlocked: true });
   }
 
-  // TODO: add strict check for newPassowrd in logic layer too.
+  // TODO: add strict check for newPassword in logic layer too.
   async updatePassword(oldPassword: string, newPassword: string) {
     await this.verifyPassword(oldPassword);
 
@@ -147,7 +143,66 @@ export class KeyringService extends RNEventEmitter {
 
     // reboot it
     await this._setupBoot(newPassword);
-    this.persistAllKeyrings();
+    await this.persistAllKeyrings();
+  }
+
+  // #filterAllKeyringsNeedPassword() {
+  //   return this.keyrings.filter(
+  //     keyring =>
+  //       ![
+  //         KEYRING_TYPE.WatchAddressKeyring,
+  //         KEYRING_TYPE.WalletConnectKeyring,
+  //         // some hardware keyrings which will create keyrings right away on bootstrap
+  //         KEYRING_TYPE.OneKeyKeyring,
+  //         KEYRING_TYPE.LedgerKeyring,
+  //       ].includes(keyring.type as any),
+  //   );
+  // }
+
+  async getCountOfAccountsInKeyring() {
+    const accounts = await this.getAllTypedVisibleAccounts();
+    return accounts.length;
+  }
+
+  /**
+   * @description on no keyrings stored, force reset password
+   *
+   * @param newPassword
+   */
+  async resetPassword(newPassword: string) {
+    if (await this.getCountOfAccountsInKeyring()) {
+      throw new Error(
+        "You're trying to overwrite password on existing keyrings.",
+      );
+    }
+
+    await this._setupBoot(newPassword);
+
+    this.keyrings = [];
+    try {
+      await this.persistAllKeyrings();
+    } catch (error) {
+      console.error(error);
+    }
+    this.memStore.updateState({ keyrings: [] });
+  }
+
+  async dangerouslyResetPasswordAndKeyrings(
+    oldPassword: string,
+    newPassword?: string,
+  ) {
+    if (newPassword) {
+      this.keyrings = [];
+      await this.updatePassword(oldPassword, newPassword);
+      await this.persistAllKeyrings();
+    } else {
+      await this.verifyPassword(oldPassword);
+
+      this.keyrings = [];
+      await this.persistAllKeyrings();
+      this.memStore.updateState({ keyrings: [] });
+      this.store.updateState({ vault: undefined, booted: undefined });
+    }
   }
 
   isBooted() {
@@ -184,21 +239,18 @@ export class KeyringService extends RNEventEmitter {
       .then(async _keyring => {
         keyring = _keyring;
         const [address] = await keyring.getAccounts();
-        const keyrings = await this.getAllTypedAccounts();
-        if (!this.contactService?.getContactByAddress(address)) {
-          const alias = generateAliasName({
-            keyringType: KEYRING_TYPE.SimpleKeyring,
-            keyringCount:
-              keyrings.filter(k => k.type === KEYRING_TYPE.SimpleKeyring)
-                .length - 1,
-          });
-          this.contactService?.updateAlias({
-            address,
-            name: alias,
-          });
-        }
-        return this.persistAllKeyrings.bind(this);
+        const curAccount = {
+          address,
+          type: keyring.type as KeyringTypeName,
+          brandName: keyring.type,
+        };
+        return this.onSetAddressAlias?.(
+          keyring,
+          curAccount,
+          this.contactService,
+        );
       })
+      .then(this.persistAllKeyrings.bind(this))
       .then(this.setUnlocked.bind(this))
       .then(this.fullUpdate.bind(this))
       .then(() => keyring);
@@ -288,6 +340,8 @@ export class KeyringService extends RNEventEmitter {
     this.emit('unlock');
   }
 
+  _isSubmittingPassword = false;
+
   /**
    * Submit Password
    *
@@ -302,6 +356,11 @@ export class KeyringService extends RNEventEmitter {
    * @returns A Promise that resolves to the state.
    */
   async submitPassword(password: string): Promise<MemStoreState> {
+    if (this._isSubmittingPassword) {
+      return this.memStore.getState();
+    }
+
+    this._isSubmittingPassword = true;
     await this.verifyPassword(password);
     this.#password = password;
     try {
@@ -310,6 +369,7 @@ export class KeyringService extends RNEventEmitter {
       //
     } finally {
       this.setUnlocked();
+      this._isSubmittingPassword = false;
     }
 
     return this.fullUpdate();
@@ -403,7 +463,7 @@ export class KeyringService extends RNEventEmitter {
    * @param options.onAddedAddress
    */
   addNewAccount(
-    selectedKeyring: KeyringInstance | KeyringIntf
+    selectedKeyring: KeyringInstance | KeyringIntf,
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
@@ -726,7 +786,10 @@ export class KeyringService extends RNEventEmitter {
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = typeof this.onCreateKeyring === 'function' ? this.onCreateKeyring(Keyring) : new Keyring({});
+    const keyring =
+      typeof this.onCreateKeyring === 'function'
+        ? this.onCreateKeyring(Keyring)
+        : new Keyring({});
     await keyring.deserialize(data);
 
     // getAccounts also validates the accounts for some keyrings
@@ -792,12 +855,6 @@ export class KeyringService extends RNEventEmitter {
       },
     );
     return addrs.map(normalizeAddress);
-  }
-
-  resetResend() {
-    this.keyrings.forEach(keyring => {
-      (keyring as KeyringIntf)?.resetResend?.();
-    });
   }
 
   /**
@@ -966,7 +1023,10 @@ export class KeyringService extends RNEventEmitter {
     return bip39.generateMnemonic(wordlist);
   }
 
-  async generatePreMnemonic(): Promise<string> {
+  async generatePreMnemonic(options?: {
+    /** @default {true} */
+    persist?: boolean;
+  }): Promise<string> {
     if (!this.#password) {
       throw new Error('background.error.unlock');
     }

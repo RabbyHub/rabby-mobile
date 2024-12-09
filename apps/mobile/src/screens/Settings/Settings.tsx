@@ -30,11 +30,13 @@ import {
   RcRPC,
   RcGoogleDrive,
   RcGoogleSignout,
+  RcCode,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import {
   BUILD_CHANNEL,
+  isNonPublicProductionEnv,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
@@ -42,6 +44,7 @@ import { RootNames } from '@/constant/layout';
 import {
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
+  useTheme2024,
   useThemeColors,
   useThemeStyles,
 } from '@/hooks/theme';
@@ -66,14 +69,17 @@ import {
 } from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   StackActions,
   useFocusEffect,
   useNavigationState,
 } from '@react-navigation/native';
-import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
+import {
+  ManagePasswordSheetModal,
+  ResetPasswordAndKeyringsSheetModal,
+} from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import {
   useBiometrics,
@@ -81,7 +87,7 @@ import {
   useVerifyByBiometrics,
 } from '@/hooks/biometrics';
 import {
-  useIsAllowScreenshot,
+  useIsForceAllowScreenshot,
   useToggleShowAutoLockCountdown,
 } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
@@ -120,6 +126,12 @@ import CloudDriveTestItemModal, {
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
 } from './sheetModals/DevWalletLock';
+import DevUIPlaygroundModal, {
+  useDevUIPlaygroundModalVisible,
+} from './sheetModals/DevUIPlayground';
+import DevUIWipModal, {
+  useUIDevWipModalVisiable,
+} from './sheetModals/DevUIWip';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -462,7 +474,7 @@ function SettingsBlocks() {
 }
 
 function DevSettingsBlocks() {
-  const { colors } = useThemeStyles(getStyles);
+  const { colors, colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const navigation = useRabbyAppNavigation();
 
   const { hasSetupCustomPassword, openManagePasswordSheetModal } =
@@ -482,7 +494,7 @@ function DevSettingsBlocks() {
   const { startBiometricsVerification, abortBiometricsVerification } =
     useVerifyByBiometrics();
 
-  const { allowScreenshot } = useIsAllowScreenshot();
+  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
@@ -500,6 +512,8 @@ function DevSettingsBlocks() {
   const { setCloudDriveTestItemModalVisible } =
     useCloudDriveTestItemModalVisible();
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
+  const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
+  const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -548,9 +562,23 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: allowScreenshot
-                ? `Allow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`
-                : `Disallow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`,
+              label: '[UI] Wip Helpers',
+              icon: RcCode,
+              onPress: () => {
+                setDevUIWipModalVisible(true);
+              },
+            },
+            {
+              label: '[UI] Playground',
+              icon: RcCode,
+              onPress: () => {
+                setDevUIPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: forceAllowScreenshot
+                ? `Force Allow Capture`
+                : `Disallow Capture Sensitive Scene`,
               icon: isIOS ? RcScreenRecord : RcScreenshot,
               rightNode: (
                 <SwitchAllowScreenshot ref={switchAllowScreenshotRef} />
@@ -558,7 +586,7 @@ function DevSettingsBlocks() {
               onPress: () => {
                 switchAllowScreenshotRef.current?.toggle();
               },
-              visible: __DEV__,
+              visible: isNonPublicProductionEnv,
             },
             {
               label: (
@@ -687,12 +715,14 @@ function DevSettingsBlocks() {
 
       <CloudDriveTestItemModal />
       <WalletLockTestItemModal />
+      <DevUIWipModal />
+      <DevUIPlaygroundModal />
     </>
   );
 }
 
 export default function SettingsScreen(): JSX.Element {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const {
     computed: { couldSetupBiometrics },
@@ -737,20 +767,21 @@ export default function SettingsScreen(): JSX.Element {
       <ThemeSelectorModal />
 
       <ManagePasswordSheetModal height={422} />
+      {NEED_DEVSETTINGBLOCKS && <ResetPasswordAndKeyringsSheetModal />}
 
       <SheetWebViewTester />
     </RootScreenContainer>
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyles = createGetStyles2024(ctx => {
   return {
     container: {
       position: 'relative',
       flex: 0,
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: colors['neutral-bg-2'],
+      backgroundColor: ctx.classicalColors['neutral-bg-2'],
       // paddingBottom: LAYOUTS.fiexedFooterHeight,
     },
     scrollableContentStyle: {

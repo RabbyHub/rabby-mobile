@@ -42,8 +42,8 @@ export const TxAvatar = ({ style, src, cateId }: TxAvatarProps) => {
 
 const styles = StyleSheet.create({
   image: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: 2,
   },
 });

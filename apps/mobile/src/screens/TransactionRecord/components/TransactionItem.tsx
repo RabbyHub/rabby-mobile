@@ -8,30 +8,48 @@ import {
   INTERNAL_REQUEST_ORIGIN,
   INTERNAL_REQUEST_SESSION,
 } from '@/constant';
-import { AppColorsVariants } from '@/constant/theme';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useThemeColors } from '@/hooks/theme';
-import { findChainByID } from '@/utils/chain';
 import { intToHex } from '@ethereumjs/util';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { maxBy } from 'lodash';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { TransactionCompleteTag } from './TransactionCompleteTag';
 import { TransactionExplain } from './TransactionExplain';
 import { TransactionPendingDetail } from './TransactionPendingDetail';
 import { TransactionPendingTag } from './TransactionPendingTag';
 import { toast } from '@/components/Toast';
-import { useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+} from '@/hooks/account';
 import { TransactionAction } from './TransactionAction';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apiCustomTestnet } from '@/core/apis';
 import { useFindChain } from '@/hooks/useFindChain';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+
+function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
+  const priority = {
+    [KEYRING_TYPE.HdKeyring]: 1,
+    [KEYRING_TYPE.SimpleKeyring]: 2,
+    [KEYRING_TYPE.LedgerKeyring]: 3,
+    [KEYRING_TYPE.OneKeyKeyring]: 4,
+    [KEYRING_TYPE.KeystoneKeyring]: 5,
+    [KEYRING_TYPE.GnosisKeyring]: 6,
+  };
+
+  return accounts.sort((item1, item2) => {
+    return (priority[item1.type] || 100) - (priority[item2.type] || 100);
+  })[0];
+}
 
 export const TransactionItem = ({
   data,
@@ -42,8 +60,7 @@ export const TransactionItem = ({
   canCancel?: boolean;
   onRefresh?: () => void;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
   const chain = useFindChain({
     id: data.chainId,
   });
@@ -51,8 +68,9 @@ export const TransactionItem = ({
   const isCanceled =
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
+  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
 
-  const { currentAccount } = useCurrentAccount();
+  const { accounts } = useAccounts();
 
   const handleTxSpeedUp = useMemoizedFn(async () => {
     if (!canCancel) {
@@ -60,10 +78,28 @@ export const TransactionItem = ({
     }
     const maxGasTx = data.maxGasTx;
     const originTx = data.originTx!;
+    const keyringType = data.keyringType;
     const maxGasPrice = Number(
       maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
     );
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    if (!account) {
+      throw Error('No account find');
+    }
 
+    await switchSceneSigningAccount('MultiHistory', account);
     const gasLevels: GasLevel[] = chain?.isTestnet
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chain?.id!,
@@ -71,27 +107,33 @@ export const TransactionItem = ({
       : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
-    await sendRequest(
-      {
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: originTx.rawTx.from,
-            value: originTx.rawTx.value,
-            data: originTx.rawTx.data,
-            nonce: originTx.rawTx.nonce,
-            chainId: originTx.rawTx.chainId,
-            to: originTx.rawTx.to,
-            gasPrice: intToHex(
-              Math.round(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-            ),
-            isSpeedUp: true,
-            reqId: maxGasTx.reqId,
-          },
-        ],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
+    try {
+      await sendRequest(
+        {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: originTx.rawTx.from,
+              value: originTx.rawTx.value,
+              data: originTx.rawTx.data,
+              nonce: originTx.rawTx.nonce,
+              chainId: originTx.rawTx.chainId,
+              to: originTx.rawTx.to,
+              gasPrice: intToHex(
+                Math.round(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
+              ),
+              isSpeedUp: true,
+              reqId: maxGasTx.reqId,
+            },
+          ],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await switchSceneSigningAccount('MultiHistory', null);
+    }
     onRefresh?.();
   });
 
@@ -134,6 +176,25 @@ export const TransactionItem = ({
     if (!canCancel) {
       return;
     }
+    const keyringType = data.keyringType;
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    if (!account) {
+      throw Error('No account find');
+    }
+
+    await switchSceneSigningAccount('MultiHistory', account);
     const maxGasTx = data.maxGasTx;
     const maxGasPrice = Number(
       maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
@@ -144,24 +205,30 @@ export const TransactionItem = ({
         })
       : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
-    await sendRequest(
-      {
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: maxGasTx.rawTx.from,
-            to: maxGasTx.rawTx.from,
-            gasPrice: intToHex(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-            value: '0x0',
-            chainId: data.chainId,
-            nonce: intToHex(data.nonce),
-            isCancel: true,
-            reqId: maxGasTx.reqId,
-          },
-        ],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
+    try {
+      await sendRequest(
+        {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: maxGasTx.rawTx.from,
+              to: maxGasTx.rawTx.from,
+              gasPrice: intToHex(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
+              value: '0x0',
+              chainId: data.chainId,
+              nonce: intToHex(data.nonce),
+              isCancel: true,
+              reqId: maxGasTx.reqId,
+            },
+          ],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await switchSceneSigningAccount('MultiHistory', null);
+    }
     onRefresh?.();
   };
 
@@ -180,7 +247,7 @@ export const TransactionItem = ({
           {chain?.name || 'Unknown'} #{data?.nonce}
         </Text>
       </View>
-      <View style={styles.content}>
+      <View>
         <View style={styles.body}>
           <TransactionExplain
             isCanceled={isCanceled}
@@ -189,17 +256,13 @@ export const TransactionItem = ({
             isWithdrawed={data.isWithdrawed}
             explain={data.originTx?.explain}
           />
-          {data?.isPending &&
-          ![
-            KEYRING_TYPE.WatchAddressKeyring,
-            KEYRING_TYPE.WalletConnectKeyring,
-          ].includes(currentAccount?.type!) ? (
+          {data?.isPending && (
             <TransactionAction
               canCancel={canCancel}
               onTxCancel={handleTxCancel}
               onTxSpeedUp={handleTxSpeedUp}
             />
-          ) : null}
+          )}
         </View>
         <View style={styles.footer}>
           {data?.originTx?.site ? (
@@ -228,54 +291,57 @@ export const TransactionItem = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    card: {
-      borderRadius: 6,
-      backgroundColor: colors['neutral-card1'],
-      marginBottom: 12,
-      paddingBottom: 4,
-    },
-    cardGray: {
-      opacity: 0.5,
-    },
-    content: {
-      paddingHorizontal: 12,
-    },
-    header: {
-      position: 'relative',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: 12,
-      paddingTop: 8,
-    },
-    nonce: {
-      lineHeight: 14,
-      fontSize: 12,
-      color: colors['neutral-foot'],
-      marginLeft: 'auto',
-    },
-    body: {
-      paddingVertical: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    footer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingBottom: 8,
-    },
-    origin: {
-      lineHeight: 14,
-      fontSize: 12,
-      color: colors['neutral-foot'],
-    },
-    gas: {
-      marginLeft: 'auto',
-      lineHeight: 14,
-      fontSize: 12,
-      color: colors['neutral-foot'],
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  card: {
+    borderRadius: 30,
+    backgroundColor: colors2024['neutral-card1'],
+    marginBottom: 12,
+    paddingBottom: 18,
+    paddingLeft: 16,
+    paddingRight: 16,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+  },
+  cardGray: {
+    opacity: 0.5,
+  },
+  header: {
+    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  nonce: {
+    lineHeight: 14,
+    fontSize: 12,
+    color: colors2024['neutral-foot'],
+    marginLeft: 'auto',
+    fontFamily: 'SF Pro Rounded',
+  },
+  body: {
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+  },
+  origin: {
+    lineHeight: 14,
+    fontSize: 12,
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  gas: {
+    marginLeft: 'auto',
+    lineHeight: 14,
+    fontSize: 12,
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+  },
+}));

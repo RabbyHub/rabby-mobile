@@ -1,4 +1,3 @@
-import { AddChain } from './../Approval/components/AddChain/AddChain';
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 
@@ -31,7 +30,7 @@ export enum MODAL_NAMES {
 
   'TIP_UPGRADE' = 'TIP_UPGRADE',
   '__TEST_MARKDOWN_IN_WEBVIEW' = '__TEST_MARKDOWN_IN_WEBVIEW',
-  'TIP_PRIVACY_POLYCY' = 'TIP_PRIVACY_POLYCY',
+  'TIP_PRIVACY_POLICY' = 'TIP_PRIVACY_POLICY',
   'TIP_TERM_OF_USE' = 'TIP_TERM_OF_USE',
   'ONEKEY_INPUT_PIN' = 'ONEKEY_INPUT_PIN',
   'ONEKEY_INPUT_PASSPHRASE' = 'ONEKEY_INPUT_PASSPHRASE',

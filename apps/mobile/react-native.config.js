@@ -1,8 +1,17 @@
 module.exports = {
-  assets: ['./assets/custom'],
+  assets: ['./assets/fonts', './assets/custom'],
   iosAssets: [],
-  // also copy to res/font manually
-  androidAssets: [
-    // 'assets/fonts/Anton-Regular.ttf'
-  ],
+  androidAssets: [],
+  dependencies: {
+    'react-native-ios-context-menu': {
+      platforms: {
+        android: null,
+      },
+    },
+    '@react-native-menu/menu': {
+      platforms: {
+        ios: null,
+      },
+    },
+  },
 };

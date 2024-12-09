@@ -13,7 +13,7 @@ import { SvgProps } from 'react-native-svg';
 import { RcIconCopyCC } from '@/assets/icons/common';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { toast } from '../Toast';
+import { toast } from '@/components2024/Toast';
 
 type ContainerOnPressProp = React.ComponentProps<
   typeof TouchableOpacity

@@ -1,9 +1,19 @@
 import { cached } from '@/utils/cache';
-import { preferenceService } from '../services';
+import { preferenceService, keyringService } from '../services';
 import { openapi, testOpenapi } from '../request';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 
 const getTotalBalanceCached = cached(async address => {
-  const data = await openapi.getTotalBalance(address);
+  const addresses = await keyringService.getAllAddresses();
+  const filtered = addresses.filter(item =>
+    isSameAddress(item.address, address),
+  );
+  let core = false;
+  if (filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))) {
+    core = true;
+  }
+  const data = await openapi.getTotalBalance(address, core);
   preferenceService.updateAddressBalance(address, data);
   return data;
 }, 5000);

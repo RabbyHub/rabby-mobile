@@ -1,5 +1,5 @@
-import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,10 +10,10 @@ import {
   useCurrentAccount,
 } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { AddressItemInner } from './AddressItemInner';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 
 const { isSameAddress } = addressUtils;
 
@@ -42,10 +42,10 @@ export const useDuplicateAddressModal = () => {
 export const DuplicateAddressModal: React.FC = () => {
   const [visible, setVisible] = useAtom(visibleAtom);
   const [account] = useAtom(accountAtom);
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { accounts } = useAccounts();
-  const { switchAccount } = useCurrentAccount();
+  // const { switchAccount } = useCurrentAccount();
 
   const currentAccount = React.useMemo(() => {
     if (!account) {
@@ -62,10 +62,10 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const handleSwitch = React.useCallback(async () => {
     if (currentAccount) {
-      switchAccount(currentAccount);
+      // switchAccount(currentAccount);
       navigate(RootNames.StackRoot, { screen: RootNames.Home });
     }
-  }, [switchAccount, currentAccount]);
+  }, [currentAccount]);
 
   const onCancel = React.useCallback(() => {
     setVisible(false);
@@ -88,19 +88,21 @@ export const DuplicateAddressModal: React.FC = () => {
             {t('page.newAddress.privateKey.repeatImportTips')}
           </Text>
           <View style={styles.body}>
-            {currentAccount && (
-              <AddressItemInner isInModal wallet={currentAccount} />
-            )}
+            {currentAccount && <AddressItem address={currentAccount.address} />}
           </View>
 
-          <FooterButtonGroup onCancel={onCancel} onConfirm={onConfirm} />
+          <FooterButtonGroup
+            style={styles.btns}
+            onCancel={onCancel}
+            onConfirm={onConfirm}
+          />
         </View>
       </View>
     </Modal>
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   modal: { maxWidth: 353, width: '100%' },
   overlay: {
     flex: 1,
@@ -110,23 +112,32 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
   },
   container: {
-    maxWidth: 350,
-    backgroundColor: colors['neutral-bg1'],
-    paddingVertical: 20,
-    borderRadius: 16,
+    maxWidth: 352,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingVertical: 24,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 20,
   },
   title: {
     fontSize: 18,
-    color: colors['neutral-title1'],
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
+    lineHeight: 22,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
     paddingHorizontal: 20,
   },
   body: {
-    backgroundColor: colors['neutral-card2'],
-    borderRadius: 6,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 16,
     marginHorizontal: 20,
     marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    padding: 12,
+  },
+  btns: {
+    padding: 0,
+    marginTop: 20,
+    paddingHorizontal: 20,
   },
 }));

@@ -48,6 +48,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 const getStyles = createGetStyles(colors => ({
   container: {
@@ -149,7 +150,7 @@ const getStyles = createGetStyles(colors => ({
   },
 }));
 
-export const BridgeContent = () => {
+export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
@@ -439,6 +440,13 @@ export const BridgeContent = () => {
 
   return (
     <NormalScreenContainer>
+      {isForMultipleAdderss && (
+        <AccountSwitcherModal
+          forScene="MakeTransactionAbout"
+          inScreen
+          panelLinearGradientProps={{ type: 'classical:bg2' }}
+        />
+      )}
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.container}
@@ -626,6 +634,11 @@ export const BridgeContent = () => {
       <MiniApproval
         visible={isShowSign}
         txs={txs}
+        ga={{
+          category: 'Bridge',
+          source: 'bridge',
+          // trigger: rbiSource,
+        }}
         onReject={() => {
           setIsShowSign(false);
           mutateTxs([]);

@@ -4,9 +4,11 @@ import { AsyncStorage } from '@react-native-async-storage/async-storage';
 
 let scriptHostname;
 
-const scriptURL = NativeModules.SourceCode.scriptURL;
-scriptHostname = scriptURL.split('://')[1].split(':')[0];
-console.debug('[ReactotronConfig] scriptHostname %s', scriptHostname);
+if (__DEV__) {
+  const scriptURL = NativeModules.SourceCode.scriptURL;
+  scriptHostname = scriptURL.split('://')[1].split(':')[0];
+  console.debug('[ReactotronConfig] scriptHostname %s', scriptHostname);
+}
 
 Reactotron.setAsyncStorageHandler(AsyncStorage)
   // controls connection & communication settings

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { RcArrowRightCC, RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -10,17 +10,18 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   RcCountdown,
   RcLockWallet,
   RcManagePassword,
 } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop } from './devTest';
+import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import { apisKeychain, apisLock } from '@/core/apis';
+import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -59,8 +60,11 @@ export default function WalletLockTestItemModal({
     onCancel?.();
   }, [setWalletTestItemModalVisible, onCancel]);
 
-  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
-    useManagePasswordOnSettings();
+  const {
+    hasSetupCustomPassword,
+    openManagePasswordSheetModal,
+    openResetPasswordAndKeyringSheetModal,
+  } = useManagePasswordOnSettings();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -79,6 +83,14 @@ export default function WalletLockTestItemModal({
           openManagePasswordSheetModal();
         },
         visible: APP_FEATURE_SWITCH.customizePassword || hasSetupCustomPassword,
+      },
+      {
+        label: 'Clear Password and Keyrings',
+        icon: <RcManagePassword style={styles.labelIcon} />,
+        disabled: !hasSetupCustomPassword,
+        onPress: () => {
+          openResetPasswordAndKeyringSheetModal();
+        },
       },
       {
         label: 'Time Since Last Unlock',
@@ -125,28 +137,22 @@ export default function WalletLockTestItemModal({
               typeof item.rightNode === 'function'
                 ? item.rightNode()
                 : item.rightNode;
-            const disabledPress = item.disabled || !item.onPress;
 
             return (
-              <TouchableView
-                style={[
-                  styles.settingItem,
-                  idx > 0 && styles.notFirstOne,
-                  { opacity: item.disabled ? 0.6 : 1 },
-                ]}
+              <GeneralTestItem
+                {...item}
                 key={itemKey}
-                disabled={disabledPress}
-                onPress={() => {
-                  item.onPress?.();
-
-                  setWalletTestItemModalVisible(false);
+                itemIndex={idx}
+                afterPress={async result => {
+                  if (!result?.keepModalVisible)
+                    setWalletTestItemModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
                 {rightNode || <RcArrowRightCC color={colors['neutral-foot']} />}
-              </TouchableView>
+              </GeneralTestItem>
             );
           })}
         </View>

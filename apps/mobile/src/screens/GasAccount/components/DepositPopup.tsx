@@ -27,7 +27,7 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
-import { useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { getTokenSymbol } from '@/utils/token';
@@ -40,7 +40,8 @@ import { TokenAmountItem } from '@/components/Approval/components/Actions/compon
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import useAsync from 'react-use/lib/useAsync';
 import { topUpGasAccount } from '@/core/apis/gasAccount';
-import { useGasAccountHistoryRefresh } from '../hooks/atom';
+import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 // import { GasAccountCloseIcon } from './PopupCloseIcon';
 
 const amountList = [20, 100, 500];
@@ -50,7 +51,8 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const { currentAccount: account } = useCurrentAccount();
+  const { account } = useGasAccountSign();
+  // const { currentAccount: account } = useCurrentAccount();
 
   const { value: list, loading } = useAsync(
     () => openapi.getGasAccountTokenList(account!.address),
@@ -74,9 +76,7 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
 
   const Row = useCallback(
     ({ item }) => {
-      const disabled = new BigNumber(item.amount || 0)
-        .times(item.price)
-        .lt(new BigNumber(cost).times(1));
+      const disabled = new BigNumber(item.amount || 0).lt(cost);
 
       return (
         <Tip
@@ -172,15 +172,21 @@ const GasAccountDepositContent = ({ onClose }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
+  const { account } = useGasAccountSign();
   const openTokenList = () => setTokenListVisible(true);
   const [loading, setLoading] = useState(false);
 
+  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
   const { refresh: refreshHistoryList } = useGasAccountHistoryRefresh();
 
   const topUp = async () => {
-    if (token && !loading) {
+    if (token && account && !loading) {
       setLoading(true);
       const chainEnum = findChainByServerID(token.chain)!;
+      await switchSceneSigningAccount(
+        'GasAccount',
+        account as KeyringAccountWithAlias,
+      );
       try {
         await topUpGasAccount({
           to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
@@ -194,6 +200,7 @@ const GasAccountDepositContent = ({ onClose }) => {
         onClose();
         refreshHistoryList();
       } catch (error) {}
+      await switchSceneSigningAccount('GasAccount', null);
       setLoading(false);
     }
   };

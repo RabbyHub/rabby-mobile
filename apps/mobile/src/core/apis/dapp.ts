@@ -27,11 +27,13 @@ export const connect = ({
   session,
   info,
   chainId,
+  currentAccount,
 }: {
-  origin;
+  origin: string;
   chainId: CHAINS_ENUM;
   session?: SessionProp;
   info?: BasicDappInfo;
+  currentAccount?: DappInfo['currentAccount'];
 }) => {
   const dapp = dappService.getDapp(origin);
   if (dapp) {
@@ -39,6 +41,7 @@ export const connect = ({
       [origin]: {
         chainId,
         isConnected: true,
+        ...(currentAccount !== undefined && { currentAccount }),
       },
     });
     return;
@@ -49,6 +52,7 @@ export const connect = ({
       info,
       isConnected: true,
       chainId,
+      ...(currentAccount !== undefined && { currentAccount }),
     });
     return;
   }
@@ -60,6 +64,7 @@ export const connect = ({
         icon: '',
       },
     ),
+    ...(currentAccount !== undefined && { currentAccount }),
     isConnected: true,
     chainId,
   });

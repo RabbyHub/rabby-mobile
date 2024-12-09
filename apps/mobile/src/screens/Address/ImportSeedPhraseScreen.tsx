@@ -91,13 +91,15 @@ export const ImportSeedPhraseScreen = () => {
         } catch (error) {
           console.log('error', error);
         }
-
-        navigate(RootNames.ImportMoreAddress, {
-          type: KEYRING_TYPE.HdKeyring,
-          mnemonics,
-          passphrase,
-          keyringId: keyringId || undefined,
-          isExistedKR,
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportMoreAddress,
+          params: {
+            type: KEYRING_TYPE.HdKeyring,
+            mnemonics,
+            passphrase,
+            keyringId: keyringId || undefined,
+            isExistedKR,
+          },
         });
       })
       .catch(err => {

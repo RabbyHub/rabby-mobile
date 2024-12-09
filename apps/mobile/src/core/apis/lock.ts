@@ -93,6 +93,7 @@ export async function setupWalletPassword(newPassword: string) {
   try {
     const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
     if (r.error) {
+      console.log('r.error', r.error, RABBY_MOBILE_KR_PWD);
       throw new Error(ERRORS.CURRENT_IS_INCORRET);
     }
     await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
@@ -125,6 +126,63 @@ export async function updateWalletPassword(
     await keyringService.updatePassword(oldPassword, newPassword);
   } catch (error) {
     result.error = 'Failed to set password';
+  }
+
+  return result;
+}
+
+export async function shouldAskSetPassword() {
+  const lockInfo = await getRabbyLockInfo();
+
+  if (!lockInfo.isUseCustomPwd) return true;
+
+  return (await keyringService.getCountOfAccountsInKeyring()) === 0;
+}
+
+export async function resetPasswordOnUI(newPassword: string) {
+  const result = getInitError(newPassword);
+  if (result.error) return result;
+
+  try {
+    const hasAccountsInKeyring =
+      (await keyringService.getCountOfAccountsInKeyring()) > 0;
+
+    if (hasAccountsInKeyring) {
+      const lockInfo = await getRabbyLockInfo();
+      if (!lockInfo.isUseCustomPwd) {
+        await setupWalletPassword(newPassword);
+      } else {
+        throw new Error(
+          'Cannot reset password when using custom password and have rest accounts',
+        );
+      }
+      // await updateWalletPassword(RABBY_MOBILE_KR_PWD, newPassword);
+    } else {
+      await keyringService.resetPassword(newPassword);
+    }
+  } catch (error) {
+    console.error(error);
+    result.error = 'Failed to reset password';
+  }
+
+  return result;
+}
+
+export async function dangerouslyResetPasswordAndKeyrings(
+  oldPassword: string,
+  newPassword?: string,
+) {
+  const result = { error: '' };
+  if (result.error) return result;
+
+  try {
+    await keyringService.dangerouslyResetPasswordAndKeyrings(
+      oldPassword,
+      newPassword,
+    );
+  } catch (error) {
+    console.error(error);
+    result.error = 'Failed to reset password an clear keyrings';
   }
 
   return result;

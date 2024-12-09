@@ -1,9 +1,9 @@
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { toastIndicator } from '@/components/Toast';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { apiOneKey } from '@/core/apis';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
@@ -28,7 +28,7 @@ export const useOneKeyStatus = (address: string) => {
 
   const onClickConnect = React.useCallback(
     (cb?: () => void) => {
-      const id = createGlobalBottomSheetModal({
+      const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_ONEKEY,
         deviceId,
         onSelectDeviceId: async (connectDeviceId: string) => {
@@ -47,7 +47,7 @@ export const useOneKeyStatus = (address: string) => {
             setStatus('DISCONNECTED');
           } finally {
             setTimeout(() => {
-              removeGlobalBottomSheetModal(id);
+              removeGlobalBottomSheetModal2024(id);
             }, 0);
             toastHiddenRef.current?.();
           }

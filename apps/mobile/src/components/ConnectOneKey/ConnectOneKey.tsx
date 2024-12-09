@@ -47,7 +47,7 @@ export const ConnectOneKey: React.FC<{
 
     if (address) {
       navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportSuccess,
+        screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.OneKeyKeyring,
           brandName: KEYRING_CLASS.HARDWARE.ONEKEY,
@@ -61,8 +61,11 @@ export const ConnectOneKey: React.FC<{
         startNumber: 1,
         hdPath: LedgerHDPathType.BIP44,
       });
-      navigate(RootNames.ImportMoreAddress, {
-        type: KEYRING_TYPE.OneKeyKeyring,
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportMoreAddress,
+        params: {
+          type: KEYRING_TYPE.OneKeyKeyring,
+        },
       });
       onDone?.();
     }

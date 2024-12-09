@@ -23,13 +23,14 @@ import {
   AbstractPortfolio,
 } from '../types';
 import PortfolioTemplate from '../portfolios';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { PositionLoader } from './Skeleton';
 import { AppColorsVariants } from '@/constant/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { createGetStyles2024 } from '@/utils/styles';
 
 // 已支持的模板
 const TemplateDict = {
@@ -65,8 +66,8 @@ type ProtocolListProps = {
 
 const MemoItem = memo(
   ({ item }: { item: AbstractPortfolio }) => {
-    const colors = useThemeColors();
-    const styles = useMemo(() => getStyle(colors), [colors]);
+    const { styles } = useTheme2024({ getStyle: getStyles });
+
     const types = item._originPortfolio.detail_types?.reverse();
     const type =
       types?.find(t => (t in TemplateDict ? t : '')) || 'unsupported';
@@ -94,8 +95,8 @@ const _ProtocolList = ({
   onRefresh,
   ...rest
 }: ProtocolListProps & Partial<SectionListProps<AbstractPortfolio>>) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyle(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
   const ref = useRef(null);
   const refreshing = useMemo(() => {
     if ((portfolios?.length || 0) > 0) {
@@ -188,12 +189,13 @@ const _ProtocolList = ({
       renderSectionHeader={renderSectionHeader}
       keyExtractor={item => item.id}
       ListEmptyComponent={ListEmptyComponent}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={styles.bgContainer}
       ListFooterComponent={ListFooterComponent}
       stickySectionHeadersEnabled={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
+          style={styles.bgContainer}
           onRefresh={() => {
             refreshPositions();
             onRefresh();
@@ -215,8 +217,7 @@ const ProjectTitle = ({
   onPress?: () => void;
   isExpanded?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyle(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <View>
@@ -224,7 +225,7 @@ const ProjectTitle = ({
         <View style={styles.projectHeaderName}>
           <AssetAvatar
             logo={data?.logo}
-            size={36}
+            size={40}
             chain={data?.chain}
             chainSize={16}
           />
@@ -251,72 +252,74 @@ const ProjectTitle = ({
   );
 };
 
-const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    list: {},
-    emptyList: {
-      marginTop: 160,
-      alignItems: 'center',
-    },
-    emptyListText: {
-      fontSize: 15,
-      color: colors['neutral-title-1'],
-      fontWeight: '600',
-    },
+const getStyles = createGetStyles2024(ctx => ({
+  emptyList: {
+    marginTop: 160,
+    alignItems: 'center',
+  },
+  emptyListText: {
+    fontSize: 15,
+    color: ctx.colors2024['neutral-title-1'],
+    fontWeight: '600',
+  },
 
-    listFooter: {
-      height: 120,
-    },
+  listFooter: {
+    height: 120,
+  },
 
-    //projectTitle
-    projectHeader: {
-      marginHorizontal: 20,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      height: 68,
-      alignItems: 'center',
-    },
-    projectHeaderName: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    projectName: {
-      marginLeft: 12,
-      color: colors['neutral-title-1'],
-      fontSize: 15,
-      fontWeight: '600',
-    },
-    projectHeaderUsd: {
-      alignSelf: 'flex-end',
-      flexShrink: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      height: 68,
-    },
-    projectHeaderNetWorth: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '600',
-      textAlign: 'right',
-    },
-    portfolioCard: {
-      marginBottom: 8,
-      padding: 12,
-      marginHorizontal: 20,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['neutral-line'],
-      borderRadius: 6,
-      backgroundColor: colors['neutral-bg-1'],
-    },
-    arrowButton: {
-      width: 20,
-      color: colors['neutral-foot'],
-      marginLeft: 12,
-    },
-    separator: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors['neutral-line'],
-      marginRight: 20,
-      marginLeft: 68,
-    },
-  });
+  //projectTitle
+  projectHeader: {
+    marginHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    height: 68,
+    alignItems: 'center',
+  },
+  projectHeaderName: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  projectName: {
+    marginLeft: 8,
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  projectHeaderUsd: {
+    alignSelf: 'flex-end',
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 68,
+  },
+  projectHeaderNetWorth: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'right',
+  },
+  portfolioCard: {
+    marginBottom: 8,
+    padding: 12,
+    marginHorizontal: 20,
+    borderRadius: 6,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  arrowButton: {
+    width: 20,
+    color: ctx.colors2024['neutral-foot'],
+    marginLeft: 12,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: ctx.colors2024['neutral-line'],
+    marginRight: 20,
+    marginLeft: 68,
+  },
+  bgContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+}));

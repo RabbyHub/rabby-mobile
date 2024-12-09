@@ -11,7 +11,7 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy, uniqBy, result } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -22,7 +22,7 @@ import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
-import { id } from 'ethers/lib/utils';
+import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -57,6 +57,7 @@ export interface TransactionHistoryItem {
   };
 
   $ctx?: any;
+  keyringType?: KeyringTypeName;
 }
 
 export interface TransactionSigningItem {
@@ -232,6 +233,26 @@ export class TransactionHistoryService {
         groups.filter(item => !item.isPending),
         item => -item.createdAt,
       ),
+    };
+  }
+
+  getPendingsAddresses(addresses: string[]): {
+    pendings: TransactionGroup[];
+    pendingsLength: number;
+  } {
+    let pendings: TransactionGroup[] = [];
+
+    for (let i = 0; i < addresses.length; i++) {
+      const addr = addresses[i].toLowerCase();
+      const groups = this.getTransactionGroups({
+        address: addr,
+      });
+
+      pendings = pendings.concat(groups.filter(item => item.isPending));
+    }
+    return {
+      pendings,
+      pendingsLength: pendings.length,
     };
   }
 
@@ -645,5 +666,9 @@ export class TransactionGroup {
 
   get createdAt() {
     return minBy(this.txs, 'createdAt')?.createdAt || 0;
+  }
+
+  get keyringType() {
+    return this.maxGasTx.keyringType;
   }
 }

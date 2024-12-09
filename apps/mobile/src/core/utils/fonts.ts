@@ -1,5 +1,6 @@
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { IS_IOS } from '../native/utils';
+import { StyleProp, TextStyle } from 'react-native';
 
 export const enum FontWeightEnum {
   thin = 100,
@@ -16,12 +17,15 @@ export const enum FontWeightEnum {
 }
 
 export const FontNames = {
-  sf_pro: IS_IOS ? 'SF Pro' : 'SF-Pro',
+  sf_pro: IS_IOS ? 'SF Pro' : 'Roboto',
   sf_pro_rounded_bold: IS_IOS ? 'SFProRounded-Bold' : 'SF-Pro-Rounded-Bold',
-  sf_pro_rounded_light: IS_IOS ? 'SFProRounded-Light' : 'SF-Pro-Rounded-Light',
   sf_pro_rounded_regular: IS_IOS
     ? 'SFProRounded-Regular'
     : 'SF-Pro-Rounded-Regular',
+  sf_pro_rounded_medium: IS_IOS
+    ? 'SFProRounded-Medium'
+    : 'SF-Pro-Rounded-Medium',
+  sf_pro_rounded_heavy: IS_IOS ? 'SFProRounded-Heavy' : 'SF-Pro-Rounded-Heavy',
 };
 /**
  * @description mutate fontFamily based on the input's fontFamily & fontWeight
@@ -43,63 +47,91 @@ export function getFontWeightType(fontWeight?: string | number) {
 
   const result = {
     supertype: FontWeightEnum.normal,
-    type: FontWeightEnum.normal,
+    finalFontWeight: FontWeightEnum.normal,
+    inputFontWeight: fwStr,
   };
 
   if (!fontWeight) return result;
 
   if (['heavy'].includes(fwStr) || fontWeightNumber >= 900) {
     result.supertype = FontWeightEnum.heavy;
-    result.type = FontWeightEnum.heavy;
+    result.finalFontWeight = FontWeightEnum.heavy;
   } else if (
     ['ultrabold', 'extrabold'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.heavy - 100
   ) {
     result.supertype = FontWeightEnum.bold;
-    result.type = FontWeightEnum.extraBold;
+    result.finalFontWeight = FontWeightEnum.extraBold;
   } else if (
     ['bold'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.bold - 100
   ) {
     result.supertype = FontWeightEnum.bold;
-    result.type = FontWeightEnum.bold;
+    result.finalFontWeight = FontWeightEnum.bold;
   } else if (
     ['semibold', 'demibold'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.semiBold - 100
   ) {
     result.supertype = FontWeightEnum.bold;
-    result.type = FontWeightEnum.semiBold;
+    result.finalFontWeight = FontWeightEnum.semiBold;
   } else if (
     ['medium'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.medium - 100
   ) {
     result.supertype = FontWeightEnum.medium;
-    result.type = FontWeightEnum.medium;
+    result.finalFontWeight = FontWeightEnum.medium;
   } else if (
     ['normal', 'regular'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.normal - 100
   ) {
     result.supertype = FontWeightEnum.normal;
-    result.type = FontWeightEnum.normal;
+    result.finalFontWeight = FontWeightEnum.normal;
   } else if (
     ['light'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.light - 100
   ) {
     result.supertype = FontWeightEnum.light;
-    result.type = FontWeightEnum.light;
+    result.finalFontWeight = FontWeightEnum.light;
   } else if (
     ['extralight', 'ultralight'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.extraLight - 100
   ) {
     result.supertype = FontWeightEnum.light;
-    result.type = FontWeightEnum.extraLight;
+    result.finalFontWeight = FontWeightEnum.extraLight;
   } else if (
     ['thin', 'hairline'].includes(fwStr) ||
     fontWeightNumber > FontWeightEnum.thin - 100
   ) {
     result.supertype = FontWeightEnum.thin;
-    result.type = FontWeightEnum.thin;
+    result.finalFontWeight = FontWeightEnum.thin;
   }
 
   return result;
+}
+
+const AllSoloWeightFonts = [
+  FontNames.sf_pro_rounded_bold,
+  FontNames.sf_pro_rounded_regular,
+  FontNames.sf_pro_rounded_medium,
+  FontNames.sf_pro_rounded_heavy,
+];
+type TextStyleInput = { fontWeight?: string; fontFamily?: string } & (StyleProp<
+  Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight'> & {
+    color?: string;
+  }
+> &
+  object);
+export function cleanSpecialSoloWeightFont<T extends TextStyleInput>(
+  input?: T,
+) {
+  if (!input) return input;
+
+  if (input.fontFamily && AllSoloWeightFonts.includes(input.fontFamily)) {
+    return {
+      ...input,
+      fontWeight: undefined,
+    };
+  }
+
+  return input;
 }

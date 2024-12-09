@@ -1,4 +1,4 @@
-import { findChain, isTestnet } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { useCallback, useMemo } from 'react';
@@ -6,10 +6,15 @@ import { atom, useAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 const popups = {
   generalTokenDetailPopup: {
     atom: atom(null as AbstractPortfolioToken | null),
+    ref: React.createRef<BottomSheetModalMethods>(),
+  },
+  tokenDetailPopupUseAccount: {
+    atom: atom(undefined as KeyringAccountWithAlias | undefined),
     ref: React.createRef<BottomSheetModalMethods>(),
   },
   tokenDetailPopupOnSendToken: {
@@ -21,6 +26,9 @@ const popups = {
 export function useGeneralTokenDetailSheetModal() {
   const [focusingToken, onFocusToken] = useAtom(
     popups.generalTokenDetailPopup.atom,
+  );
+  const [tokenDetailAddress, setTokenDetailAddress] = useAtom(
+    popups.tokenDetailPopupUseAccount.atom,
   );
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(
     popups.generalTokenDetailPopup.ref,
@@ -60,6 +68,8 @@ export function useGeneralTokenDetailSheetModal() {
     openTokenDetailPopup,
     cleanFocusingToken,
     isTestnetToken,
+    setTokenDetailAddress,
+    tokenDetailAddress,
   };
 }
 

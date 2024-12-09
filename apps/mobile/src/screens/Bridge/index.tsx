@@ -5,15 +5,41 @@ import {
   SettingVisibleProvider,
 } from './hooks';
 import { BridgeContent } from './components/BridgeContent';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import {
+  PropsForAccountSwitchScreen,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 
-export const Bridge = () => {
+export const Bridge = ({
+  isForMultipleAdderss,
+}: PropsForAccountSwitchScreen) => {
+  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
+
   return (
     <SettingVisibleProvider>
       <RefreshIdProvider>
         <QuoteVisibleProvider>
-          <BridgeContent />
+          <BridgeContent isForMultipleAdderss={isForMultipleAdderss} />
         </QuoteVisibleProvider>
       </RefreshIdProvider>
     </SettingVisibleProvider>
   );
 };
+
+const ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof Bridge>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  return (
+    <Bridge key={sceneCurrentAccountDepKey} {...props} isForMultipleAdderss />
+  );
+};
+
+Bridge.ForMultipleAddress = ForMultipleAddress;

@@ -43,6 +43,7 @@ interface Props {
   buttonText: string;
   btnProps?: FootButtonProps;
   style?: StyleProp<ViewStyle>;
+  scrollableViewStyle?: StyleProp<ViewStyle>;
   onCancel?: () => void;
 }
 
@@ -78,6 +79,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
   children,
   btnProps,
   style,
+  scrollableViewStyle,
   onCancel,
 }) => {
   const { top } = useSafeAreaInsets();
@@ -93,7 +95,9 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
         style,
       ])}
       behavior="padding">
-      <ScrollView style={styles.main}>{children}</ScrollView>
+      <ScrollView style={[styles.main, scrollableViewStyle]}>
+        {children}
+      </ScrollView>
 
       {onCancel ? (
         <FooterButtonGroup

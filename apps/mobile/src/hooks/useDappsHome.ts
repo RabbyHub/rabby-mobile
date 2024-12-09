@@ -1,40 +1,38 @@
+import { sortBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { useAtom } from 'jotai';
-import { useFocusEffect } from '@react-navigation/native';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
-import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
-import useMount from 'react-use/lib/useMount';
-import { syncBasicDappInfo } from '@/core/apis/dapp';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAtom } from 'jotai';
+import { useBrowserHistory } from './useBrowserHistory';
 import { useDapps } from './useDapps';
 
 export const useDappsHome = () => {
   const [dapps] = useAtom(dappsAtom);
-  const { getDapps, addDapp, updateFavorite, removeDapp, disconnectDapp } =
-    useDapps();
+  const {
+    getDapps,
+    addDapp,
+    updateFavorite,
+    removeDapp,
+    disconnectDapp,
+    setDapp,
+  } = useDapps();
 
-  const { openedDappItems } = useOpenDappView();
+  const {
+    browserHistoryList,
+    getBrowserHistoryList,
+    removeBrowserHistory,
+    setBrowserHistory,
+  } = useBrowserHistory({ dapps });
 
   const favoriteApps = useMemo(() => {
-    return Object.values(dapps || {}).filter(item => item.isFavorite);
+    return sortBy(
+      Object.values(dapps || {}).filter(item => item.isFavorite),
+      dapp => {
+        return -(dapp.favoriteAt || 0);
+      },
+    );
   }, [dapps]);
-
-  const dappSections = useMemo(() => {
-    return [
-      {
-        key: 'inUse',
-        title: '',
-        type: 'active',
-        data: openedDappItems.map(item => item.maybeDappInfo!).filter(Boolean),
-      },
-
-      {
-        key: 'favorites',
-        title: 'Favorites',
-        data: favoriteApps,
-      },
-    ].filter(item => item.data.length);
-  }, [openedDappItems, favoriteApps]);
 
   useFocusEffect(
     useCallback(() => {
@@ -42,20 +40,30 @@ export const useDappsHome = () => {
     }, [getDapps]),
   );
 
-  useMount(async () => {
-    const res = getDapps();
-    await syncBasicDappInfo(Object.keys(res));
-    getDapps();
-  });
+  useFocusEffect(
+    useCallback(() => {
+      getBrowserHistoryList();
+    }, [getBrowserHistoryList]),
+  );
+
+  // useMount(async () => {
+  //   const res = getDapps();
+  //   await syncBasicDappInfo(Object.keys(res));
+  //   getDapps();
+  // });
 
   return {
     dapps,
-    dappSections,
     favoriteApps,
+    setDapp,
     getDapps,
     addDapp,
     updateFavorite,
     removeDapp,
     disconnectDapp,
+    browserHistoryList,
+    getBrowserHistoryList,
+    removeBrowserHistory,
+    setBrowserHistory,
   };
 };

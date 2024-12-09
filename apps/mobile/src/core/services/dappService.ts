@@ -3,6 +3,7 @@ import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import { Account } from './preference';
 
 export interface DappInfo {
   origin: string;
@@ -14,6 +15,8 @@ export interface DappInfo {
   chainId: CHAINS_ENUM;
   lastPath?: string; // 待定
   lastPathTimeAt?: number; //
+  currentAccount?: Account | null;
+  favoriteAt?: number | null;
 }
 
 export type DappStore = {
@@ -97,6 +100,7 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
     this.store.dapps[origin] = {
       ...this.store.dapps[origin],
       isFavorite,
+      favoriteAt: isFavorite ? Date.now() : null,
     };
 
     this.store.dapps = { ...this.store.dapps };
@@ -109,6 +113,7 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
 
   disconnect(origin: string) {
     this.store.dapps[origin].isConnected = false;
+    this.store.dapps[origin].currentAccount = null;
     this.store.dapps = { ...this.store.dapps };
   }
 

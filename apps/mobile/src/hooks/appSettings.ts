@@ -8,12 +8,13 @@ import { apisAutoLock } from '@/core/apis';
 import { DEFAULT_AUTO_LOCK_MINUTES, TIME_SETTINGS } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
 import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const isIOS = DeviceUtils.isIOS();
 
 type ScreenshotSettings = {
-  androidAllowScreenCapture: boolean;
-  iosAllowScreenRecord: boolean;
+  androidForceAllowScreenCapture: boolean;
+  iosForceAllowScreenRecord: boolean;
 };
 const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
   /**
@@ -21,31 +22,40 @@ const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
    *
    * for iOS, change it need restart the app
    */
-  androidAllowScreenCapture: !__DEV__,
-  iosAllowScreenRecord: !__DEV__,
+  androidForceAllowScreenCapture: false,
+  iosForceAllowScreenRecord: false,
 });
 
-const KEY = isIOS ? 'iosAllowScreenRecord' : 'androidAllowScreenCapture';
+const KEY = isIOS
+  ? 'iosForceAllowScreenRecord'
+  : 'androidForceAllowScreenCapture';
 function isAllowScreenshot(ret: ScreenshotSettings) {
   return ret[KEY];
 }
 
-export function useIsAllowScreenshot() {
-  const [{ androidAllowScreenCapture, iosAllowScreenRecord }] = useAtom(
-    ExperimentalSettingsAtom,
-  );
+export function useIsForceAllowScreenshot() {
+  const [{ androidForceAllowScreenCapture, iosForceAllowScreenRecord }] =
+    useAtom(ExperimentalSettingsAtom);
+
+  if (!isNonPublicProductionEnv) {
+    return {
+      androidForceAllowScreenCapture: false,
+      iosForceAllowScreenRecord: false,
+      forceAllowScreenshot: false,
+    };
+  }
 
   return {
-    androidAllowScreenCapture,
-    iosAllowScreenRecord,
-    allowScreenshot: isAllowScreenshot({
-      androidAllowScreenCapture,
-      iosAllowScreenRecord,
+    androidForceAllowScreenCapture,
+    iosForceAllowScreenRecord,
+    forceAllowScreenshot: isAllowScreenshot({
+      androidForceAllowScreenCapture,
+      iosForceAllowScreenRecord,
     }),
   };
 }
 
-export function useAllowScreenshot() {
+export function useForceAllowScreenshot() {
   const [result, setAtom] = useAtom(ExperimentalSettingsAtom);
 
   const setAllowScreenshot = useCallback(
@@ -66,9 +76,9 @@ export function useAllowScreenshot() {
   );
 
   return {
-    androidAllowScreenCapture: result.androidAllowScreenCapture,
-    iosAllowScreenRecord: result.iosAllowScreenRecord,
-    allowScreenshot: isAllowScreenshot(result),
+    androidForceAllowScreenCapture: result.androidForceAllowScreenCapture,
+    iosForceAllowScreenRecord: result.iosForceAllowScreenRecord,
+    forceAllowScreenshot: isAllowScreenshot(result),
     setAllowScreenshot,
   };
 }
@@ -77,18 +87,18 @@ export function useAllowScreenshot() {
  * @description call this hook only once on the top level of your app
  */
 export function useGlobalAppPreventScreenrecordOnDev() {
-  const { allowScreenshot } = useIsAllowScreenshot();
-  usePreventScreenshot(__DEV__ && !allowScreenshot);
+  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
+  usePreventScreenshot(__DEV__ && !forceAllowScreenshot);
 
   useEffect(() => {
     if (!isIOS && !__DEV__) return;
 
-    if (!allowScreenshot) {
+    if (!forceAllowScreenshot) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [allowScreenshot]);
+  }, [forceAllowScreenshot]);
 }
 
 const autoLockMinutesAtom = atom<number>(DEFAULT_AUTO_LOCK_MINUTES);
@@ -130,7 +140,7 @@ export function useAutoLockTimeMs() {
 
 const showFloatingViewAtom = atom({
   collapsed: true,
-  ui_showAutoLockCountdown: __DEV__,
+  ui_showAutoLockCountdown: false,
 });
 
 export function useFloatingView() {

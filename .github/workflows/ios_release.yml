@@ -66,9 +66,9 @@ jobs:
         shell: bash
         run: |
           cd apps/mobile;
+          rm -rf node_modules;
           yarn install;
           yarn postinstall;
-          yarn prepare-archive;
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain

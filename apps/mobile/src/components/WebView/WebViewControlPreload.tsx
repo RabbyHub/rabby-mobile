@@ -97,6 +97,7 @@ export default function WebViewControlPreload() {
   return (
     <DappWebViewControl
       // would be ignored, just for type checking
+      key={'internal-webview-control-preload'}
       dappOrigin={BLANK_RABBY_PAGE}
       initialUrl={BLANK_RABBY_PAGE}
       embedHtml={embedHtml}

@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,9 +6,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -23,7 +21,6 @@ import {
 } from './hooks/useSendToken';
 import BottomArea from './components/BottomArea';
 import {
-  findChain,
   findChainByEnum,
   findChainByID,
   findChainByServerID,
@@ -32,28 +29,40 @@ import {
 import { preferenceService } from '@/core/services';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import {
+  useCurrentAccount,
+  useLoadMatteredChainBalances,
+} from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
-import { BalanceSection, SendTokenSection } from './Section';
-import { ChainInfo } from './components/ChainInfo';
-import FromAddressInfo from './components/FromAddressInfo';
+import { BalanceSection } from './Section';
 import ToAddressControl from './components/ToAddressControl';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { ChainInfo2024 } from './components/ChainInfo2024';
+import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 
-function SendScreen(): JSX.Element {
+function SendScreen({
+  isForMultipleAdderss = false,
+}: PropsForAccountSwitchScreen): JSX.Element {
+  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
   const navigation = useNavigation();
-
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
 
   const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Send)?.params,
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiSend : RootNames.Send),
+      )?.params,
   ) as
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
     | { safeInfo: { nonce: number; chainId: number } }
@@ -272,6 +281,8 @@ function SendScreen(): JSX.Element {
     putScreenState({ inited: true });
   };
 
+  const { currentAccount } = useCurrentAccount();
+
   useEffect(() => {
     if (screenState.inited) {
       initByCache();
@@ -283,7 +294,12 @@ function SendScreen(): JSX.Element {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navParams, screenState.inited]);
+  }, [
+    navParams,
+    screenState.inited,
+    currentAccount?.address,
+    currentAccount?.type,
+  ]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
@@ -368,7 +384,10 @@ function SendScreen(): JSX.Element {
           handleGasLevelChanged,
         },
       }}>
-      <NormalScreenContainer style={styles.container}>
+      <NormalScreenContainer2024 type="bg1">
+        {isForMultipleAdderss && (
+          <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+        )}
         <TouchableWithoutFeedback
           onPress={() => {
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
@@ -377,82 +396,75 @@ function SendScreen(): JSX.Element {
           <View style={styles.sendScreen}>
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
-              <SendTokenSection>
+              <View>
+                {/* To */}
+                <ToAddressControl />
+
                 {/* ChainInfo */}
-                <View style={{ marginTop: 0 }}>
+                <View style={styles.chainSection}>
                   <Text style={styles.sectionTitle}>Chain</Text>
-                  <ChainInfo
-                    style={{ marginTop: 8 }}
+                  <ChainInfo2024
                     chainEnum={chainEnum}
                     onChange={handleChainChanged}
                   />
                 </View>
-
-                {/* From */}
-                <View style={{ marginTop: 20 }}>
-                  <Text style={styles.sectionTitle}>From</Text>
-                  <FromAddressInfo style={{ marginTop: 8 }} />
-                </View>
-
-                {/* To */}
-                <ToAddressControl style={{ marginTop: 20 }} />
-              </SendTokenSection>
-              {/* balance info */}
-              <BalanceSection style={{ marginTop: 20 }} />
+                {/* balance info */}
+                <BalanceSection />
+              </View>
             </KeyboardAwareScrollView>
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
-      </NormalScreenContainer>
+      </NormalScreenContainer2024>
     </SendTokenInternalContextProvider>
   );
 }
 
-const getStyles = createGetStyles(colors =>
+SendScreen.ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof SendScreen>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  return <SendScreen {...props} isForMultipleAdderss />;
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      alignItems: 'center',
-      backgroundColor: colors['neutral-card2'],
-      position: 'relative',
+    chainSection: {
+      marginBottom: 24,
     },
     sendScreen: {
-      width: '100%',
-      height: '100%',
       flexDirection: 'column',
       justifyContent: 'space-between',
+      flex: 1,
+      paddingTop: 16,
     },
     mainContent: {
-      width: '100%',
-      // height: '100%',
-      alignItems: 'center',
-      padding: 20,
-      paddingTop: 0,
+      paddingHorizontal: 24,
     },
-
     sectionTitle: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: 'normal',
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      marginBottom: 8,
     },
-
     bottomDockArea: {
       bottom: 0,
       width: '100%',
       padding: 20,
-      backgroundColor: colors['neutral-bg1'],
       borderTopWidth: 0.5,
       borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
+      borderTopColor: colors2024['neutral-line'],
       position: 'absolute',
     },
-
     buttonContainer: {
       width: '100%',
       height: 52,
     },
     button: {
-      backgroundColor: colors['blue-default'],
+      backgroundColor: colors2024['blue-default'],
     },
   }),
 );

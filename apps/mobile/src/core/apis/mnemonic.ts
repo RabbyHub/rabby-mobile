@@ -1,10 +1,10 @@
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import {
   KEYRING_CLASS,
-  generateAliasName,
   KEYRING_TYPE,
+  KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
 import {
@@ -13,6 +13,7 @@ import {
   keyringService,
   preferenceService,
 } from '../services';
+import { onSetAddressAlias } from '../services/keyringParams';
 import { Account } from '../services/preference';
 import {
   _getKeyringByType,
@@ -33,6 +34,7 @@ export const getMnemonics = async (password: string, address: string) => {
 
   return seedWords;
 };
+export const generateMnemonic = () => keyringService.generateMnemonic();
 export const getPreMnemonics = () => keyringService.getPreMnemonics();
 export const generatePreMnemonic = () => keyringService.generatePreMnemonic();
 export const removePreMnemonics = () => keyringService.removePreMnemonics();
@@ -277,6 +279,52 @@ export const requestHDKeyringByMnemonics = (
   }
 };
 
+export const addKeyringAndactiveAndPersistAccounts = async (
+  mnemonic: string,
+  passphrase: string,
+  accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  addAlias: boolean,
+) => {
+  try {
+    const Keyring = keyringService.getKeyringClassForType(
+      KEYRING_CLASS.MNEMONIC,
+    ) as any;
+
+    const keyring = new Keyring({ mnemonic, passphrase });
+
+    keyringService.updateHdKeyringIndex(keyring as any);
+    keyringService.addKeyring(keyring as any);
+
+    await keyring.activeAccounts(
+      accountsToImport.map(acc => (acc as any).index! - 1),
+    );
+
+    const detail = keyring.getInfoByAddress(accountsToImport[0].address);
+    if (detail?.basePublicKey) {
+      hdKeyringService.addUnixRecord(detail.basePublicKey);
+    }
+
+    await keyringService.persistAllKeyrings();
+
+    const _account = {
+      address: accountsToImport[0].address,
+      type: keyring.type,
+      brandName: keyring.type,
+    };
+    if (addAlias) {
+      accountsToImport.forEach(({ address, aliasName }) => {
+        contactService.setAlias({
+          address,
+          alias: aliasName,
+        });
+      });
+    }
+    preferenceService.setCurrentAccount(_account as any);
+  } catch (e) {
+    console.error('addKeyringAndactiveAndPersistAccounts error', e);
+  }
+};
+
 export const activeAndPersistAccountsByMnemonics = async (
   mnemonics: string,
   passphrase: string,
@@ -317,22 +365,13 @@ export const activeAndPersistAccountsByMnemonics = async (
     brandName: keyring.type,
   };
   if (addDefaultAlias) {
-    accountsToImport.forEach(({ address }, index) => {
-      if (
-        !accounts.includes(address) &&
-        !contactService.getContactByAddress(address)
-      ) {
-        const alias = generateAliasName({
-          keyringType: keyring.type,
-          brandName: keyring.type,
-          keyringCount: keyring?.index,
-          addressCount: (currentLength ?? 0) + index,
-        });
-        contactService.setAlias({
-          address,
-          alias,
-        });
-      }
+    accountsToImport.forEach(({ address }) => {
+      const curAccount = {
+        address,
+        type: keyring.type as KeyringTypeName,
+        brandName: keyring.type,
+      };
+      onSetAddressAlias(undefined, curAccount, contactService);
     });
   }
   preferenceService.setCurrentAccount(_account as any);
@@ -409,6 +448,78 @@ export const addMnemonicKeyringAndGotoSuccessScreen = async (
 
   return navigate(RootNames.StackAddress, {
     screen: RootNames.ImportSuccess,
+    params: {
+      type: KEYRING_TYPE.HdKeyring,
+      brandName: KEYRING_CLASS.MNEMONIC,
+      isFirstImport: false,
+      address: addresses,
+    },
+  });
+};
+
+// TODO: if address is existed, return keyringId
+export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
+  input: string | string[],
+  passphrase = '',
+) => {
+  const arr = Array.isArray(input) ? input : [input];
+  const addresses: string[] = [];
+  const currentAddressInfo = {
+    keyringId: null,
+    isExistedKR: false,
+  } as {
+    keyringId: number | null;
+    isExistedKR: boolean;
+  };
+
+  for (let i = 0; i < arr.length; i++) {
+    const mnemonics = arr[i];
+    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
+      mnemonics,
+      passphrase,
+    );
+
+    const firstAddress = await requestKeyring(
+      KEYRING_TYPE.HdKeyring,
+      'getAddresses',
+      keyringId ?? null,
+      0,
+      1,
+    );
+
+    addresses.push(firstAddress[0].address);
+    currentAddressInfo.keyringId = keyringId;
+    currentAddressInfo.isExistedKR = isExistedKR;
+
+    await new Promise(resolve => setTimeout(resolve, 1));
+    await activeAndPersistAccountsByMnemonics(
+      mnemonics,
+      passphrase,
+      firstAddress as any,
+      true,
+    );
+  }
+
+  keyringService.removePreMnemonics();
+
+  if (addresses.length === 1) {
+    return replaceToFirst(RootNames.StackAddress, {
+      screen: RootNames.ImportSuccess2024,
+      params: {
+        type: KEYRING_TYPE.HdKeyring,
+        brandName: KEYRING_CLASS.MNEMONIC,
+        isFirstImport: true,
+        address: addresses,
+        mnemonics: arr[0],
+        passphrase,
+        keyringId: currentAddressInfo.keyringId || undefined,
+        isExistedKR: currentAddressInfo.isExistedKR,
+      },
+    });
+  }
+
+  return replaceToFirst(RootNames.StackAddress, {
+    screen: RootNames.ImportSuccess2024,
     params: {
       type: KEYRING_TYPE.HdKeyring,
       brandName: KEYRING_CLASS.MNEMONIC,

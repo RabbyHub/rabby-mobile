@@ -12,16 +12,12 @@ import {
   MODAL_NAMES,
 } from './types';
 
-import {
-  APPROVAL_SNAP_POINTS,
-  makeBottomSheetProps,
-  MODAL_VIEWS,
-  SNAP_POINTS,
-} from './utils';
+import { makeBottomSheetProps, MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '../AutoLockView';
 import { globalSheetModalEvents } from './event';
+import { APPROVAL_SNAP_POINTS } from '../Approval/components/map';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -157,13 +153,12 @@ export const GlobalBottomSheetModal = () => {
     return modals.map(modal => !modal.params.allowAndroidHarewareBack);
   }, [modals]);
 
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
+  useHandleBackPressClosable(
     React.useCallback(() => {
       return !modalsToPreventBack.length;
     }, [modalsToPreventBack]),
+    { autoEffectEnabled: !!modalsToPreventBack.length },
   );
-
-  React.useEffect(onHardwareBackHandler);
 
   const { panResponder } = useRefreshAutoLockPanResponder();
 

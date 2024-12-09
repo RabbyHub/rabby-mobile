@@ -27,6 +27,9 @@ type Props = React.ComponentProps<typeof TouchableOpacity> & {
 
 const LOLLIPOP = 21;
 
+/**
+ * @deprecated use TouchableOpacity instead
+ */
 export default class TouchableView extends React.Component<Props> {
   static defaultProps = {
     pressColor: 'rgba(255, 255, 255, .4)',

@@ -13,6 +13,7 @@ import { StackActions } from '@react-navigation/native';
 const sheetModalRefAtom = atom({
   setupPasswordModalRef: React.createRef<BottomSheetModal>(),
   clearPasswordModalRef: React.createRef<BottomSheetModal>(),
+  resetPasswordAndKeyringModalRef: React.createRef<BottomSheetModal>(),
 });
 
 export function useSheetModalsForManagingPassword() {
@@ -42,8 +43,13 @@ export function useManagePasswordOnSettings() {
     }
   }, [toggleShowSheetModal, navigation, lockInfo.pwdStatus]);
 
+  const openResetPasswordAndKeyringSheetModal = useCallback(() => {
+    toggleShowSheetModal('resetPasswordAndKeyringModalRef', true);
+  }, [toggleShowSheetModal]);
+
   return {
     hasSetupCustomPassword,
     openManagePasswordSheetModal,
+    openResetPasswordAndKeyringSheetModal,
   };
 }

@@ -113,7 +113,10 @@ export const FixedHeader = memo(() => {
   const styles = useMemo(() => getStyle(colors), [colors]);
   const { top } = useSafeAreaInsets();
 
-  const style = useMemo(() => [styles.fixedTitle, { height: top + 56 }], [top]);
+  const style = useMemo(
+    () => [styles.fixedTitle, { height: top + 56 }],
+    [styles.fixedTitle, top],
+  );
 
   return (
     <View style={style}>

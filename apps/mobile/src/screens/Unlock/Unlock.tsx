@@ -22,7 +22,7 @@ import TouchableView, {
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
 import { toast, toastWithIcon } from '@/components/Toast';
-import { apisKeychain, apisLock } from '@/core/apis';
+import { apisAccount, apisKeychain, apisLock } from '@/core/apis';
 import {
   resetNavigationTo,
   usePreventGoBack,
@@ -61,7 +61,7 @@ const toastBiometricsFailed = (message?: string) => {
 const toastLoading = toastWithIcon(() => (
   <ActivityIndicator style={{ marginRight: 6 }} />
 ));
-const toastUnlocking = () => toastLoading('Unlocking');
+const toastUnlocking = () => toastLoading('Unlocking', { duration: 3000 });
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
   const { isFaceID = isIOS } = props;
@@ -77,6 +77,7 @@ function BiometricsIcon(props: { isFaceID?: boolean }) {
   );
 }
 
+const unlockOnceRef = { current: false };
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
@@ -87,10 +88,18 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   }, [t]);
   const { isUnlocking, unlockApp, afterLeaveFromUnlock } = useUnlockApp();
 
-  const checkUnlocked = useCallback(() => {
+  const checkUnlocked = useCallback(async () => {
     if (!apisLock.isUnlocked()) return;
 
-    resetNavigationTo(navigation, 'Home');
+    const hasUnlockOnce = unlockOnceRef.current;
+
+    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+    resetNavigationTo(
+      navigation,
+      !hasAccountsInKeyring && !hasUnlockOnce ? 'GetStarted2024' : 'Home',
+    );
+    unlockOnceRef.current = true;
+
     afterLeaveFromUnlock();
   }, [navigation, afterLeaveFromUnlock]);
 

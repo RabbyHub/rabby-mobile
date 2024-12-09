@@ -7,7 +7,7 @@ import {
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
@@ -29,6 +29,9 @@ import { apisLock } from '@/core/apis';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RNTimeChanged from '@/core/native/RNTimeChanged';
 import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
+import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
+import { useIsForceAllowScreenshot } from './appSettings';
+import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -75,7 +78,7 @@ type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
 export const useStackScreenConfig = () => {
-  const colors = useThemeColors();
+  const { colors, colors2024 } = useTheme2024();
 
   const navBack = useCallback(() => {
     const navigation = navigationRef.current;
@@ -89,8 +92,9 @@ export const useStackScreenConfig = () => {
     }
   }, []);
 
-  const headerPresets = makeHeadersPresets({ colors });
+  const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
+  /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
       const screenOptions: ScreenOptions = {
@@ -117,16 +121,64 @@ export const useStackScreenConfig = () => {
         ),
       };
 
-      return merge(
+      const result = merge(
         {},
         screenOptions,
         ...optsList.map(x => ({ ...x })),
       ) as ScreenOptions;
+
+      result.headerTitleStyle =
+        cleanSpecialSoloWeightFont(result.headerTitleStyle) ||
+        result.headerTitleStyle;
+
+      return result;
     },
     [headerPresets, colors, navBack],
   );
 
-  return { mergeScreenOptions };
+  const mergeScreenOptions2024 = useCallback(
+    (optsList: Partial<ScreenOptions>[], options?: any) => {
+      const screenOptions: ScreenOptions = {
+        animation: 'slide_from_right',
+        ...headerPresets.onlyTitle,
+        headerTitleStyle: {
+          ...(headerPresets.onlyTitle.headerTitleStyle as object),
+          color: colors2024['neutral-title-1'],
+          fontWeight: '800',
+          fontFamily: 'SF Pro Rounded',
+          fontSize: 20,
+        },
+        headerTintColor: colors2024['neutral-title-1'],
+        headerLeft: ({ tintColor }) => (
+          <CustomTouchableOpacity
+            style={styles.backButtonStyle}
+            hitSlop={hitSlop}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={tintColor || colors2024['neutral-body']}
+            />
+          </CustomTouchableOpacity>
+        ),
+      };
+
+      const result = merge(
+        {},
+        screenOptions,
+        ...optsList.map(x => ({ ...x })),
+      ) as ScreenOptions;
+
+      result.headerTitleStyle =
+        cleanSpecialSoloWeightFont(result.headerTitleStyle) ||
+        result.headerTitleStyle;
+
+      return result;
+    },
+    [headerPresets, colors2024, navBack],
+  );
+
+  return { mergeScreenOptions, mergeScreenOptions2024 };
 };
 
 const styles = StyleSheet.create({
@@ -148,7 +200,7 @@ export function useRabbyAppNavigation<
 
 export function resetNavigationTo(
   navigation: NavigationInstance,
-  type: 'Home' | 'Unlock' = 'Home',
+  type: 'Home' | 'Unlock' | 'GetStarted2024' = 'Home',
 ) {
   switch (type) {
     default:
@@ -170,6 +222,20 @@ export function resetNavigationTo(
       navigation.reset({
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
+      });
+      break;
+    }
+    case 'GetStarted2024': {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootNames.StackGetStarted,
+            params: {
+              screen: RootNames.GetStartedScreen2024,
+            },
+          },
+        ],
       });
       break;
     }
@@ -277,6 +343,8 @@ const PROTECTED_SCREENS: {
   [RootNames.CreateMnemonic]: getProtectedConf(),
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
+  [RootNames.ImportMnemonic2024]: getProtectedConf(),
+  [RootNames.ImportPrivateKey2024]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
   [RootNames.BackupMnemonic]: getProtectedConf(),
@@ -287,7 +355,7 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
   const result = {
     $routeName: routeName,
     $protectedConf: { ...defaultProtectedConf },
-    atSensitiveScreen: false,
+    _atSensitiveScreen: false,
   };
 
   if (!routeName || !PROTECTED_SCREENS[routeName]) return result;
@@ -297,26 +365,35 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
     ...PROTECTED_SCREENS[routeName],
   };
 
-  result.atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
+  result._atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
 
   return result;
 }
 
-export function useAtSensitiveScreen() {
+export function useAtSensitiveScene() {
   const currentRouteName = useAtomValue(currentRouteNameAtom);
+  const { anySensitiveModalOpened } = useSensitiveGlobalModalsOpened();
 
-  return useMemo(
-    () => getAtSensitveScreenInfo(currentRouteName),
-    [currentRouteName],
-  );
+  return useMemo(() => {
+    const srnInfo = getAtSensitveScreenInfo(currentRouteName);
+    return {
+      ...srnInfo,
+      anySensitiveModalOpened,
+      atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
+    };
+  }, [currentRouteName, anySensitiveModalOpened]);
 }
 /**
  * @description call this hook only once on the top level of your app
  */
 export function useAppPreventScreenshotOnScreen() {
-  const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
+  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
 
-  usePreventScreenshot(atSensitiveScreen);
+  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
+  const shouldPreventScreenCapturing =
+    atSensitiveScene && !forceAllowScreenshot;
+
+  usePreventScreenshot(shouldPreventScreenCapturing);
 
   const { isBeingCaptured } = useIOSScreenRecording({
     isTop: true,
@@ -328,12 +405,16 @@ export function useAppPreventScreenshotOnScreen() {
     if (!IS_IOS) return;
     if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
 
-    if (isBeingCaptured && atSensitiveScreen) {
+    if (isBeingCaptured && shouldPreventScreenCapturing) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScreen]);
+  }, [
+    $protectedConf.iosBlurType,
+    isBeingCaptured,
+    shouldPreventScreenCapturing,
+  ]);
 }
 
 if (__DEV__) {

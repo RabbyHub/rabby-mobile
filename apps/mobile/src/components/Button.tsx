@@ -41,6 +41,7 @@ export type ButtonProps = TouchableOpacityProps &
     loadingStyle?: StyleProp<ViewStyle>;
     loadingProps?: ActivityIndicatorProps;
     containerStyle?: StyleProp<ViewStyle>;
+    height?: number;
     linearGradientProps?: object;
     TouchableComponent?: typeof React.Component;
     ViewComponent?: typeof React.Component;
@@ -59,6 +60,7 @@ export const Button = ({
   titleProps,
   TouchableComponent,
   containerStyle,
+  height,
   onPress = () => console.log('Please attach a method to this component'),
   buttonStyle,
   type = 'primary',
@@ -233,7 +235,7 @@ export const Button = ({
 
   return (
     <View
-      style={[styles.container, containerStyle]}
+      style={[styles.container, containerStyle, !height ? {} : { height }]}
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}
@@ -243,7 +245,12 @@ export const Button = ({
         accessibilityState={accessibilityState}
         {...rest}
         style={rest.style}>
-        <ViewComponent {...linearGradientProps} style={innerStyle}>
+        <ViewComponent
+          {...linearGradientProps}
+          style={StyleSheet.flatten([
+            innerStyle,
+            !height ? {} : { height: '100%' },
+          ])}>
           {/* Activity Indicator on loading */}
           {loading && (
             <ActivityIndicator
@@ -301,6 +308,8 @@ export const PrimaryButton = (props: ButtonProps) => {
 };
 
 const styles = StyleSheet.create({
+  // containerNew: { height: 52, },
+  // buttonNew: { height: '100%' },
   container: {
     overflow: 'hidden',
     borderRadius: 0,

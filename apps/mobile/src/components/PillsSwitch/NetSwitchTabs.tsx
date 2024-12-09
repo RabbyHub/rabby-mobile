@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { PillsSwitch, PillsSwitchProps } from './index';
 

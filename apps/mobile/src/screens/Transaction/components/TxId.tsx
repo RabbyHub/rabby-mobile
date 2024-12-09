@@ -1,13 +1,11 @@
 import TouchableText from '@/components/Touchable/TouchableText';
-import { AppColorsVariants } from '@/constant/theme';
-import { openExternalUrl } from '@/core/utils/linking';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import { useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 export const TxId = ({
   style,
@@ -18,7 +16,7 @@ export const TxId = ({
   id: string;
   chain?: ReturnType<typeof getChain> | string;
 }) => {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
   const { chainItem, touchable } = useMemo(() => {
     const info = typeof chain === 'string' ? getChain(chain) : chain;
 
@@ -42,24 +40,24 @@ export const TxId = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    chain: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-body'],
-    },
-    txId: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-    },
-    txIdClickable: {
-      textDecorationLine: 'underline',
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  chain: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors2024['neutral-body'],
+  },
+  txId: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors2024['neutral-foot'],
+  },
+  txIdClickable: {
+    textDecorationLine: 'underline',
+  },
+}));

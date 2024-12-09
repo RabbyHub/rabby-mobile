@@ -16,9 +16,9 @@ const getStyles = createGetStyles(colors => ({
     bottom: 0,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors['neutral-line'],
-    backgroundColor: colors['neutral-bg-1'],
     padding: 20,
     paddingBottom: 35,
+    backgroundColor: colors['neutral-bg-1'],
   },
   button: {
     backgroundColor: colors['blue-default'],

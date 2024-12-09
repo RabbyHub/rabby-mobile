@@ -1,13 +1,13 @@
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { apiLedger } from '@/core/apis';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 
 export const ledgerStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
   'CONNECTED',
@@ -28,13 +28,13 @@ export const useLedgerStatus = (address: string) => {
 
   const onClickConnect = React.useCallback(
     (cb?: () => void) => {
-      const id = createGlobalBottomSheetModal({
+      const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_LEDGER,
         deviceId,
         onSelectDevice: async (d: Device) => {
           console.log('selected device', d.id);
           setTimeout(() => {
-            removeGlobalBottomSheetModal(id);
+            removeGlobalBottomSheetModal2024(id);
           }, 0);
           try {
             await TransportBLE.open(d.id);
