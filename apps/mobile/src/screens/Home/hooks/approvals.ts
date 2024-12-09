@@ -46,22 +46,38 @@ export function useApprovalAlert() {
 
 export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
-interface IApprovalAlertInfo {
+interface IApprovalsInfo {
   total: number;
   address2count: {
+    [address: string]: number;
+  };
+  address2approvalCount: {
     [address: string]: number;
   };
   loading: boolean;
 }
 
-const appprovalAlertMap = atom<IApprovalAlertInfo>({
+const appprovalsMap = atom<IApprovalsInfo>({
   total: 0,
   address2count: {},
   loading: false,
+  address2approvalCount: {},
 });
+
+// TODO: ONLY FOR TEST need use rabby-api pkg
+const getApprovalAccount = async (address: string) => {
+  try {
+    const approvalCountRes = await fetch(
+      `https://approval.rabby-api.debank.dbkops.com/v1/user/total_approval_asset_cnt?id=${address}`,
+    ).then(res => res.json());
+    return approvalCountRes?.['total_asset_cnt'] || 0;
+  } catch (error) {
+    console.log('🔍 CUSTOM_LOGGER:=>: getApprovalAccount)', error);
+    return 0;
+  }
+};
 export const useApprovalAlertCounts = () => {
-  const [appprovalAlertInfo, setAppprovalAlertInfo] =
-    useAtom(appprovalAlertMap);
+  const [appprovalInfo, setAppprovalInfo] = useAtom(appprovalsMap);
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -69,14 +85,15 @@ export const useApprovalAlertCounts = () => {
     acc => !FILTER_ACCOUNT_TYPES.includes(acc.type),
   );
 
-  const getAllAlert = useCallback(async () => {
+  const getAllApprovalInfo = useCallback(async () => {
     if (!displayAccounts.length) {
       return;
     }
     console.log('refresh alerts');
     const address2count = {};
+    const address2ApprovalCount = {};
     let total = 0;
-    setAppprovalAlertInfo(pre => ({
+    setAppprovalInfo(pre => ({
       ...pre,
       loading: true,
     }));
@@ -84,6 +101,11 @@ export const useApprovalAlertCounts = () => {
       displayAccounts.map(async acc => {
         try {
           const data = await openapi.approvalStatus(acc.address);
+          // TODO: const approvalCount = await openapi.getApprovalCount(acc.address);
+          console.log('🔍 CUSTOM_LOGGER:=>: acc.address)', acc.address);
+          const approvalCount = await getApprovalAccount(acc.address);
+
+          address2ApprovalCount[acc.address] = approvalCount;
           if (data) {
             const alertCount = data.reduce(
               (pre, now) =>
@@ -102,30 +124,28 @@ export const useApprovalAlertCounts = () => {
         }
       }),
     );
-    setAppprovalAlertInfo({
+
+    setAppprovalInfo({
       total,
       address2count,
       loading: false,
+      address2approvalCount: address2ApprovalCount,
     });
-  }, [displayAccounts, setAppprovalAlertInfo]);
+  }, [displayAccounts, setAppprovalInfo]);
 
   useEffect(() => {
     if (
-      Object.keys(appprovalAlertInfo.address2count).length ||
-      appprovalAlertInfo.loading
+      Object.keys(appprovalInfo.address2count).length ||
+      appprovalInfo.loading
     ) {
       return;
     }
-    getAllAlert();
-  }, [
-    appprovalAlertInfo.address2count,
-    appprovalAlertInfo.loading,
-    getAllAlert,
-  ]);
+    getAllApprovalInfo();
+  }, [appprovalInfo.address2count, appprovalInfo.loading, getAllApprovalInfo]);
 
   return {
-    appprovalAlertInfo,
-    getAllAlert,
+    appprovalInfo,
+    getAllApprovalInfo,
     fetchAccounts,
   };
 };

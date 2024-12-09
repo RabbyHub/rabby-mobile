@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { trigger } from 'react-native-haptic-feedback';
@@ -8,6 +8,7 @@ import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/Ad
 import { Card } from '@/components2024/Card';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { BadgeText } from '@/screens/Home/components/HomeTopArea';
+import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -50,6 +51,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '700',
+  },
+  approvalCount: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
+    fontWeight: '500',
   },
   itemNameTextHasPinned: {
     paddingRight: 52,
@@ -101,6 +109,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
   alertCount?: number;
+  approvalCount?: number;
   lastSelectedAccount?: KeyringAccountWithAlias;
   onSelect?: () => void;
 }
@@ -108,9 +117,10 @@ interface AddressItemProps {
  * TODO: badge approval amount
  */
 export const AddressItemEntry = (props: AddressItemProps) => {
-  const { account, onSelect, alertCount } = props;
+  const { account, onSelect, alertCount, approvalCount } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
+  const { t } = useTranslation();
 
   return (
     <TouchableOpacity
@@ -135,14 +145,16 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           isPressing && styles.cardPressing,
         ])}>
         <InnerAddressItem style={styles.rootItem} account={account}>
-          {({ WalletIcon, WalletName, WalletBalance }) => (
+          {({ WalletIcon, WalletName }) => (
             <View style={styles.item}>
               <WalletIcon style={styles.walletIcon} width={40} height={40} />
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
                   <WalletName style={styles.itemNameText} />
                 </View>
-                <WalletBalance style={styles.itemBalanceText} />
+                <Text style={styles.approvalCount}>
+                  {approvalCount || 0} {t('page.approvals.list.symbol')}
+                </Text>
               </View>
             </View>
           )}

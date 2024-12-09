@@ -728,6 +728,9 @@
       "header": {
         "title": "Approvals on {{ address }}"
       },
+      "list": {
+        "symbol": "Approvals"
+      },
       "tab-switch": {
         "contract": "By Contracts",
         "assets": "By Assets"

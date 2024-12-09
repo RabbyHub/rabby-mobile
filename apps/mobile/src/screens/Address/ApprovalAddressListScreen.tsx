@@ -33,20 +33,18 @@ export function ApprovalAddressListScreen(): JSX.Element {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const { appprovalAlertInfo } = useApprovalAlertCounts();
+  const { appprovalInfo } = useApprovalAlertCounts();
   const { styles } = useTheme2024({ getStyle });
 
   const displayAccounts: AccountWithApprovalInofItem[] = accounts
     .filter(acc => !FILTER_ACCOUNT_TYPES.includes(acc.type))
     .map(item => ({
       ...item,
-      // TODO: add approval account
-      alertCount: appprovalAlertInfo?.address2count?.[item.address],
+      approvalCount: appprovalInfo?.address2approvalCount?.[item.address],
+      alertCount: appprovalInfo?.address2count?.[item.address],
     }))
-    .sort((a, b) => {
-      // TODO: sort by alertCount desc then approval count
-      return b.alertCount - a.alertCount;
-    });
+    .sort((a, b) => b.approvalCount - a.approvalCount)
+    .sort((a, b) => b.alertCount - a.alertCount);
 
   const { switchAccount } = useCurrentAccount();
 
@@ -85,7 +83,8 @@ export function ApprovalAddressListScreen(): JSX.Element {
             }>
             <AddressItemEntry
               account={item}
-              alertCount={appprovalAlertInfo.address2count[item.address]}
+              alertCount={appprovalInfo.address2count[item.address]}
+              approvalCount={appprovalInfo.address2approvalCount[item.address]}
               onSelect={() => handleSelect(item)}
             />
           </View>
