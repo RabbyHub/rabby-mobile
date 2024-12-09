@@ -27,7 +27,7 @@ export const HeaderCenter = (props: IProps) => {
 };
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginLeft: 0,
+    marginLeft: 8,
     width: '100%',
   },
   title: {

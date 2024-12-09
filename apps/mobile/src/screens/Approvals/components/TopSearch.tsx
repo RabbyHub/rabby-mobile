@@ -42,7 +42,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 17,
+    flex: 1,
+    height: ApprovalsLayouts.searchBarHeight,
     color: colors2024['neutral-body'],
+    textAlignVertical: 'center',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   searchInputContainer: {
     borderRadius: 30,
