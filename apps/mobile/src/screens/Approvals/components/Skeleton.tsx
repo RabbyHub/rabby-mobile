@@ -7,20 +7,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import LinearGradient from 'react-native-linear-gradient';
 
-// FIXME: error when use
-const Linear = () => {
-  const { colors2024, styles } = useTheme2024({ getStyle: getSkeletonStyles });
-
-  return (
-    <LinearGradient
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.linear}
-      colors={[colors2024['neutral-bg-2'], 'neutral-bg-1']}
-    />
-  );
-};
-
 const getSkeletonStyles = createGetStyles2024(({ colors2024 }) => {
   return {
     skeletonFloor: {
@@ -80,11 +66,11 @@ export const SkeletonListByContracts = memo(() => {
                   animation="wave"
                   height={27}
                   circle
-                  // LinearGradientComponent={Linear}
+                  LinearGradientComponent={LinearGradient}
                   style={[skeletonStyles.skeletonBg]}
                 />
                 <Skeleton
-                  // LinearGradientComponent={Linear}
+                  LinearGradientComponent={LinearGradient}
                   circle
                   animation="wave"
                   height={27}
@@ -105,7 +91,7 @@ export const SkeletonListByContracts = memo(() => {
                   animation="wave"
                   width={'100%'}
                   circle
-                  // LinearGradientComponent={Linear}
+                  LinearGradientComponent={LinearGradient}
                   height={22}
                   style={[skeletonStyles.skeletonBg]}
                 />
@@ -115,7 +101,7 @@ export const SkeletonListByContracts = memo(() => {
                   height={22}
                   animation="wave"
                   width={'100%'}
-                  // LinearGradientComponent={Linear}
+                  LinearGradientComponent={LinearGradient}
                   circle
                   style={skeletonStyles.skeletonBg}
                 />
@@ -143,19 +129,21 @@ export const SkeletonListByAssets = memo(() => {
                 borderWidth: 0,
               },
             ]}>
-            <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               <Skeleton
-                animation="pulse"
+                animation="wave"
+                LinearGradientComponent={LinearGradient}
                 circle
-                style={{ width: '100%', flexShrink: 1, height: '100%' }}
+                width={30}
+                height={30}
+                style={cardStyles.skeletonBg}
               />
               <Skeleton
                 animation="wave"
+                LinearGradientComponent={LinearGradient}
                 circle
-                width={'100%'}
-                style={[
-                  { width: 54, flexShrink: 0, height: '100%', marginLeft: 6 },
-                ]}
+                height={30}
+                style={[cardStyles.skeletonBg, { flexShrink: 1 }]}
               />
             </View>
           </View>

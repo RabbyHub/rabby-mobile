@@ -594,6 +594,9 @@ export const getCardStyles = createGetStyles2024(ctx => {
       backgroundColor: colors2024['brand-default'],
       color: colors2024['neutral-InvertHighlight'],
     },
+    skeletonBg: {
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
   };
 });
 

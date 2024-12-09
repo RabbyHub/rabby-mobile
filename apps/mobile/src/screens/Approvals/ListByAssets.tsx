@@ -47,8 +47,7 @@ export default function ListByAssets() {
   const renderItem = React.useCallback<
     SectionListProps<AssetApprovalItem>['renderItem'] & object
   >(
-    ({ item, section, index }) => {
-      const isFirstItem = index === 0;
+    ({ item }) => {
       return (
         <View style={styles.itemWrapper}>
           <ApprovalAssetRow assetApproval={item} />
@@ -58,13 +57,8 @@ export default function ListByAssets() {
     [styles],
   );
 
-  const {
-    fallList,
-    simulateLoadNext,
-    resetPage,
-    isFetchingNextPage,
-    isReachTheEnd,
-  } = usePsudoPagination(displaySortedAssetApprovalList, { pageSize: 20 });
+  const { fallList, simulateLoadNext, resetPage, isFetchingNextPage } =
+    usePsudoPagination(displaySortedAssetApprovalList, { pageSize: 20 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
