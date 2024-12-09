@@ -325,6 +325,7 @@ export const TokenWallet = ({
         renderItem={renderItem}
         data={mainTokens}
         getItemLayout={getItemLayout}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
         contentContainerStyle={styles.bgContainer}
