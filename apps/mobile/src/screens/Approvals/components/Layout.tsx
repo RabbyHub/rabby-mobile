@@ -172,7 +172,7 @@ export function ApprovalsBottomArea() {
     <View
       style={[
         styles.bottomDockArea,
-        isAndroid && { paddingBottom: 20 + safeOffBottom },
+        isAndroid && { paddingBottom: safeOffBottom },
       ]}>
       <Button
         disabled={!couldSubmit}

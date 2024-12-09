@@ -175,11 +175,11 @@ function CardProto({
             {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
             ({contract.name})
           </Text>
-          {/* <CopyAddressIcon
+          <CopyAddressIcon
             address={contract.id}
             style={{ marginLeft: 2 }}
             color={colors2024['neutral-foot']}
-          /> */}
+          />
         </View>
       </View>
 

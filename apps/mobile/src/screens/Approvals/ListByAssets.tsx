@@ -199,6 +199,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
       // height: '100%',
+      paddingTop: 0,
       // ...makeDebugBorder('yellow'),
     },
     listFooterContainer: {

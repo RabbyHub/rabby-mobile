@@ -30,6 +30,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 
 export const ContractFloorLayouts = {
   floorHeader: { paddingTop: 0 },
@@ -214,9 +215,13 @@ function CardProto({
               style={[styles.contractName]}
               ellipsizeMode="tail"
               numberOfLines={1}>
-              {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
               ({contract.name})
             </Text>
+            <CopyAddressIcon
+              address={contract.id}
+              style={{ marginLeft: 2 }}
+              color={colors2024['neutral-foot']}
+            />
           </View>
         </View>
         <RightTouchableView
@@ -528,7 +533,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       lineHeight: 18,
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
-      maxWidth: 100,
+      maxWidth: 80,
     },
     contractNameInDetailModal: {
       maxWidth: 80,
