@@ -27,8 +27,6 @@ import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsS
 import createCustomNativeStackNavigator from '@/utils/CustomNativeStackNavigator';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { useTranslation } from 'react-i18next';
-import { useCurrentAppLang } from '@/hooks/lang';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 
 const RootStack = createCustomNativeStackNavigator<RootNavigatorParamsList>();

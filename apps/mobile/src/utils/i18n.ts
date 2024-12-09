@@ -4,6 +4,7 @@ import enLocale from '@/assets/locales/en/messages.json';
 import zh_CNLocale from '@/assets/locales/zh-CN/messages.json';
 
 import codeConfig from '@/assets/locales/index.json';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 export enum SupportedLang {
   'en' = 'en',
@@ -26,12 +27,18 @@ export const SupportedLangs = (
   }[],
 );
 
+export function coerceLang(lang: SupportedLang): SupportedLang {
+  if (isNonPublicProductionEnv) return lang;
+
+  return 'en' as SupportedLang;
+}
+
 export function filterSupportedLang(lang: string): SupportedLang {
   if (SupportedLang.hasOwnProperty(lang)) {
-    return lang as SupportedLang;
+    return coerceLang(lang as SupportedLang);
   }
 
-  return SupportedLang.en;
+  return coerceLang(SupportedLang.en);
 }
 
 export function getLocale(locale: SupportedLang) {

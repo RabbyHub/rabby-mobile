@@ -2,15 +2,13 @@ import { useCallback } from 'react';
 
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { atomByMMKV } from '@/core/storage/mmkv';
-import i18n, { filterSupportedLang, SupportedLang } from '@/utils/i18n';
+import i18n, {
+  coerceLang,
+  filterSupportedLang,
+  SupportedLang,
+} from '@/utils/i18n';
 
-const langAtom = atomByMMKV<'en' | 'zh-CN'>('@AppLang', 'en');
-
-export function useCurrentAppLang() {
-  return {
-    currentLanguage: useAtomValue(langAtom),
-  };
-}
+const langAtom = atomByMMKV<SupportedLang>('@AppLang', 'en' as SupportedLang);
 
 export function useAppLanguage() {
   const [currentLanguage, _setCurrentLanguage] = useAtom(langAtom);
@@ -25,7 +23,7 @@ export function useAppLanguage() {
   );
 
   return {
-    currentLanguage,
+    currentLanguage: coerceLang(currentLanguage),
     setCurrentLanguage,
   };
 }
