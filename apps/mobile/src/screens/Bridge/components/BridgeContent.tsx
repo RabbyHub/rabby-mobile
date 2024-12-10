@@ -255,13 +255,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   const [fetchingBridgeQuote, setFetchingBridgeQuote] = useState(false);
 
-  const btnText = useMemo(() => {
-    if (selectedBridgeQuote?.shouldApproveToken) {
-      return t('page.bridge.approve-and-bridge');
-    }
-    return t('page.bridge.title');
-  }, [t, selectedBridgeQuote?.shouldApproveToken]);
-
   const [isShowSign, setIsShowSign] = useState(false);
 
   const gotoBridge = useMemoizedFn(async () => {
@@ -499,6 +492,17 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     !selectedBridgeQuote ||
     quoteLoading ||
     !quoteList?.length;
+
+  const btnText = useMemo(() => {
+    if (btnDisabled) {
+      return t('page.bridge.title');
+    }
+
+    if (selectedBridgeQuote?.shouldApproveToken) {
+      return t('page.bridge.approve-and-bridge');
+    }
+    return t('page.bridge.title');
+  }, [t, selectedBridgeQuote?.shouldApproveToken, btnDisabled]);
 
   const navigation = useNavigation();
 
