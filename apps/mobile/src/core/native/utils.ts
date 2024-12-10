@@ -23,6 +23,9 @@ interface NativeModulesStatic {
   RNTimeChanged: NativeModule & {
     exitAppForSecurity(): void;
   };
+  RNHelpers: NativeModule & {
+    forceExitApp(): void;
+  };
 }
 
 export const IS_ANDROID = Platform.OS === 'android';
