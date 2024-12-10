@@ -41,7 +41,7 @@ export default function useCurrentBalance(
   const [balance, setBalance] = useAtom(balanceAtom);
   const [success, setSuccess] = useState(true);
   const { balanceNonce } = useTriggerHomeBalanceUpdate();
-  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [balanceLoading, setBalanceLoading] = useState(true);
   const [balanceUpdating, setBalanceUpdating] = useState(false);
   const [balanceFromCache, setBalanceFromCache] = useState(false);
   let isCanceled = false;
@@ -137,9 +137,9 @@ export default function useCurrentBalance(
       setHasValueChainBalances(chanList.filter(item => item.usd_value > 0));
       if (update) {
         setBalanceLoading(true);
-        getAddressBalance(account.toLowerCase(), { force });
+        await getAddressBalance(account.toLowerCase(), { force });
         if (includeTestnet) {
-          getTestnetBalance(account.toLowerCase(), { force });
+          await getTestnetBalance(account.toLowerCase(), { force });
         }
       } else {
         setBalanceLoading(false);
