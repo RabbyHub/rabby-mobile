@@ -165,29 +165,44 @@ export const useBridge = () => {
   );
 
   const getRecommendToChain = async (chain: CHAINS_ENUM) => {
-    const getRemoteRecommendChain = async () => {
-      const data = await openapi.getRecommendBridgeToChain({
-        from_chain_id: findChainByEnum(chain)!.serverId,
-      });
-      switchToChain(findChainByServerID(data.to_chain_id)?.enum);
-    };
     if (userAddress) {
-      const latestTx = await openapi.getBridgeHistoryList({
-        user_addr: userAddress,
-        start: 0,
-        limit: 1,
-      });
-      const latestToToken = latestTx?.history_list?.[0]?.to_token;
+      // const getRemoteRecommendChain = async () => {
+      //   const data = await openapi.getRecommendBridgeToChain({
+      //     from_chain_id: findChainByEnum(chain)!.serverId,
+      //   });
+      //   switchToChain(findChainByServerID(data.to_chain_id)?.enum);
+      // };
+      const getRemoteRecommendChain = async () => {
+        const data = await openapi.getRecommendBridgeToChain({
+          from_chain_id: findChainByEnum(chain)!.serverId,
+        });
+        return findChainByServerID(data.to_chain_id)?.enum;
+      };
+
+      const getBridgeHistory = async () => {
+        const latestTx = await openapi.getBridgeHistoryList({
+          user_addr: userAddress,
+          start: 0,
+          limit: 1,
+        });
+        return latestTx?.history_list?.[0]?.to_token;
+      };
+
+      const [remoteChain, latestToToken] = await Promise.all([
+        getRemoteRecommendChain(),
+        getBridgeHistory(),
+      ]);
+
       if (latestToToken) {
         const lastBridgeChain = findChainByServerID(latestToToken.chain);
         if (lastBridgeChain && lastBridgeChain.enum !== chain) {
           switchToChain(lastBridgeChain.enum);
           setToToken(latestToToken);
         } else {
-          await getRemoteRecommendChain();
+          switchToChain(remoteChain);
         }
       } else {
-        await getRemoteRecommendChain();
+        switchToChain(remoteChain);
       }
     }
   };
