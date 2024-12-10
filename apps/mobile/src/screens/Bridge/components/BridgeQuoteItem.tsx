@@ -144,6 +144,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           <Text
             style={[styles.estimatedValueText, { flex: 1 }]}
             numberOfLines={1}>
+            {'≈ '}
             {formatUsdValue(
               new BigNumber(props.to_token_amount)
                 .times(props.receiveToken.price)

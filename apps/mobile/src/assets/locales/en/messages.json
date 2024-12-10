@@ -982,7 +982,7 @@
       "slippage-adjusted-refresh-quote": "Slippage adjusted. Refresh route.",
       "price-expired-refresh-route": "Price expired. Refresh route.",
       "approve-x-symbol": "Approve {{symbol}}",
-      "approve-and-bridge": "Approve and Bridge on {{name}}",
+      "approve-and-bridge": "Approve and Bridge",
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",

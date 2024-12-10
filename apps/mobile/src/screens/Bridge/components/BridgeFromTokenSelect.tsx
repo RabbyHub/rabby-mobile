@@ -23,6 +23,7 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
+import { useBridgeSupportedChains } from '../hooks';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -33,18 +34,6 @@ interface TokenSelectProps {
   excludeTokens?: TokenItem['id'][];
   type?: 'from' | 'to';
   placeholder?: string;
-  hideChainIcon?: boolean;
-  value?: string;
-  loading?: boolean;
-  tokenRender?:
-    | (({
-        token,
-        openTokenModal,
-      }: {
-        token?: TokenItem;
-        openTokenModal: () => void;
-      }) => React.ReactNode)
-    | React.ReactNode;
 }
 const defaultExcludeTokens = [];
 const TokenSelect = ({
@@ -55,10 +44,6 @@ const TokenSelect = ({
   excludeTokens = defaultExcludeTokens,
   type = 'from',
   placeholder,
-  hideChainIcon = true,
-  value,
-  loading = false,
-  tokenRender,
   useSwapTokenList = false,
 }: TokenSelectProps) => {
   const [queryConds, setQueryConds] = useState({
@@ -118,17 +103,15 @@ const TokenSelect = ({
     );
 
   const availableToken = useMemo(() => {
-    const allTokens = queryConds.chainServerId
-      ? allDisplayTokens.filter(
-          token => token.chain === queryConds.chainServerId,
-        )
+    const all = queryConds.chainServerId
+      ? allDisplayTokens.filter(i => i.chain === queryConds.chainServerId)
       : allDisplayTokens;
     return uniqBy(
       queryConds.keyword
         ? searchedTokenByQuery.map(abstractTokenToTokenItem)
-        : allTokens,
-      token => {
-        return `${token.chain}-${token.id}`;
+        : all,
+      item => {
+        return `${item.chain}-${item.id}`;
       },
     ).filter(e => !excludeTokens.includes(e.id));
   }, [allDisplayTokens, searchedTokenByQuery, excludeTokens, queryConds]);
@@ -151,10 +134,12 @@ const TokenSelect = ({
     [setQueryConds],
   );
 
+  const bridgeSupportedChains = useBridgeSupportedChains();
+
   const handleCurrentTokenChange = useCallback(
-    token => {
+    item => {
       onChange && onChange('');
-      onTokenChange(token);
+      onTokenChange(item);
       setTokenSelectorVisible(false);
     },
     [onChange, onTokenChange],
@@ -204,7 +189,7 @@ const TokenSelect = ({
           </>
         ) : (
           <>
-            <Text style={styles.selectText}>{t('page.swap.select-token')}</Text>
+            <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
             <RcIconSwapBottomArrow />
           </>
         )}
@@ -229,7 +214,7 @@ const TokenSelect = ({
         placeholder={placeholder}
         chainServerId={queryConds.chainServerId}
         disabledTips={'Not supported'}
-        supportChains={SWAP_SUPPORT_CHAINS}
+        supportChains={bridgeSupportedChains}
       />
     </>
   );

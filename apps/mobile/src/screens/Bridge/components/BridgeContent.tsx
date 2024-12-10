@@ -256,8 +256,11 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const [fetchingBridgeQuote, setFetchingBridgeQuote] = useState(false);
 
   const btnText = useMemo(() => {
+    if (selectedBridgeQuote?.shouldApproveToken) {
+      return t('page.bridge.approve-and-bridge');
+    }
     return t('page.bridge.title');
-  }, [t]);
+  }, [t, selectedBridgeQuote?.shouldApproveToken]);
 
   const [isShowSign, setIsShowSign] = useState(false);
 
@@ -463,6 +466,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   const handleBridge = useMemoizedFn(async () => {
     if (
+      !toToken?.low_credit_score &&
       [
         KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,

@@ -32,24 +32,10 @@ interface TokenSelectProps {
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
   chainId: string;
-  useSwapTokenList?: boolean;
   excludeTokens?: TokenItem['id'][];
-  type?: 'from' | 'to';
   placeholder?: string;
-  hideChainIcon?: boolean;
-  value?: string;
   fromChainId?: string;
   fromTokenId?: string;
-  loading?: boolean;
-  tokenRender?:
-    | (({
-        token,
-        openTokenModal,
-      }: {
-        token?: TokenItem;
-        openTokenModal: () => void;
-      }) => React.ReactNode)
-    | React.ReactNode;
 }
 const defaultExcludeTokens = [];
 const TokenSelect = ({
@@ -60,22 +46,14 @@ const TokenSelect = ({
   onTokenChange,
   chainId,
   excludeTokens = defaultExcludeTokens,
-  type = 'from',
   placeholder,
-  hideChainIcon = true,
-  value,
-  loading = false,
-  tokenRender,
-  useSwapTokenList = false,
 }: TokenSelectProps) => {
   const [queryConds, setQueryConds] = useState({
     keyword: '',
   });
 
+  const bridgeSupportedChains = useBridgeSupportedChains();
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
-  const [updateNonce, setUpdateNonce] = useState(0);
-
-  const isSwapType = isSwapTokenType(type);
 
   const { currentAccount } = useCurrentAccount();
 
@@ -127,8 +105,6 @@ const TokenSelect = ({
   const handleSelectToken = () => {
     setTokenSelectorVisible(true);
   };
-
-  const bridgeSupportedChains = useBridgeSupportedChains();
 
   useEffect(() => {
     setQueryConds(prev => ({
