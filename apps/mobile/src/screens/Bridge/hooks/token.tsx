@@ -1,14 +1,14 @@
-// import { CHAINS_ENUM, ETH_USDT_CONTRACT } from '@/constant';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
-// import { useAsyncInitializeChainList } from '@/ui/hooks/useChain';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-// import { useRabbySelector } from '@/ui/store';
-// import { formatUsdValue, isSameAddress, useWallet } from '@/ui/utils';
 import { formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  BridgeQuote,
+  GasLevel,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // import { useAsyncFn, useDebounce } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
@@ -22,7 +22,6 @@ import {
   useSetQuoteVisible,
   useSetRefreshId,
 } from './context';
-// import { getChainDefaultToken, tokenAmountBn } from '@/ui/utils/token';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import BigNumber from 'bignumber.js';
