@@ -27,7 +27,10 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
-import { useCurrentAccount } from '@/hooks/account';
+import {
+  useCurrentAccount,
+  useLoadMatteredChainBalances,
+} from '@/hooks/account';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { GasLevelType } from '@/components/ReserveGasPopup';
@@ -213,15 +216,30 @@ export const useBridge = () => {
     }
   }, [slippageObj, isSameToken, isSameTokenLoading]);
 
+  const { fetchOrderedChainList } = useLoadMatteredChainBalances();
   const supportedChains = useBridgeSupportedChains();
   // the most worth chain is the first
-  useAsyncInitializeChainList({
-    supportChains: supportedChains,
-    onChainInitializedAsync: firstEnum => {
-      switchFromChain(firstEnum);
-      getRecommendToChain(firstEnum);
-    },
-  });
+  // useAsyncInitializeChainList({
+  //   supportChains: supportedChains,
+  //   onChainInitializedAsync: firstEnum => {
+  //     switchFromChain(firstEnum);
+  //     getRecommendToChain(firstEnum);
+  //   },
+  // });
+  const initChainByCache = useCallback(async () => {
+    const { firstChain } = await fetchOrderedChainList({
+      supportChains: supportedChains,
+    });
+    if (firstChain?.enum) {
+      switchFromChain(firstChain?.enum);
+      getRecommendToChain(firstChain?.enum);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchOrderedChainList]);
+
+  useEffect(() => {
+    initChainByCache();
+  }, [initChainByCache]);
 
   const handleAmountChange = useCallback((v: string) => {
     if (!/^\d*(\.\d*)?$/.test(v)) {
@@ -486,6 +504,7 @@ export const useBridge = () => {
           }
         }
       }
+      console.log('getQuoteList set quote undefined');
       setSelectedBridgeQuote(undefined);
     }, [
       inSufficient,

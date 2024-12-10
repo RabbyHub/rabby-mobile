@@ -1,4 +1,10 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -29,6 +35,8 @@ import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Skeleton } from '@rneui/themed';
+import LinearGradient from 'react-native-linear-gradient';
 
 const BridgeToken = ({
   type = 'from',
@@ -102,6 +110,18 @@ const BridgeToken = ({
     [onInputChange],
   );
 
+  const Linear = useCallback(() => {
+    return (
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{ height: '100%' }}
+        colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
+      />
+    );
+  }, [colors2024]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -120,7 +140,11 @@ const BridgeToken = ({
       <View style={styles.body}>
         <View style={styles.inputContainer}>
           {valueLoading ? (
-            <View style={styles.skeleton} />
+            <Skeleton
+              animation="wave"
+              LinearGradientComponent={Linear}
+              style={styles.skeleton}
+            />
           ) : isToken ? (
             <Text
               numberOfLines={1}
@@ -304,7 +328,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     // marginTop: 16,
-    backgroundColor: '#E0E5F0',
+    backgroundColor: colors2024['neutral-line'],
     height: 36,
     width: 138,
     borderRadius: 100,

@@ -14,9 +14,10 @@ import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconGasCC from '@/assets/icons/swap/gas-cc.svg';
+import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
 import RcIconInfoCC from '@/assets/icons/swap/info-outline-cc.svg';
-const ImgLock = require('@/assets/icons/swap/lock.svg');
+// const ImgLock = require('@/assets/icons/swap/lock.svg');
 
 interface QuoteItemProps extends SelectedBridgeQuote {
   payAmount: string;
@@ -106,7 +107,11 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           </Text>
           {props.shouldApproveToken && (
             <Tip content={t('page.bridge.need-to-approve-token-before-bridge')}>
-              <Image source={ImgLock} style={styles.icon} />
+              <RcIconLock
+                color={colors2024['neutral-foot']}
+                style={styles.icon}
+              />
+              {/* <Image source={RcIconLock} style={styles.icon} /> */}
             </Tip>
           )}
         </View>

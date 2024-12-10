@@ -207,17 +207,19 @@ export const RecommendFromToken = ({
   return (
     <View style={[styles.recommendFromToken, style]}>
       <View style={styles.recommendTextWrapper}>
-        <Text style={styles.recommendText}>Bridge from</Text>
+        <Text style={styles.recommendText}>{t('page.bridge.bridge-from')}</Text>
         <View style={styles.tokenContainer}>
           <AssetAvatar
-            size={16}
+            size={26}
             chain={token.chain}
             logo={token.logo_url}
-            chainSize={10}
+            chainSize={12}
           />
           <Text style={styles.tokenText}>{getTokenSymbol(token)}</Text>
         </View>
-        <Text style={styles.recommendText}>for an available quote</Text>
+        <Text style={styles.recommendText}>
+          {t('page.bridge.for-available-quote')}
+        </Text>
       </View>
       <TouchableOpacity onPress={onOk} style={styles.okButton}>
         <Text style={styles.okButtonText}>{t('global.ok')}</Text>
@@ -325,7 +327,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 122,
     marginTop: 100,
     marginHorizontal: 24,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 20,
     borderRadius: 30,
     borderWidth: 1,
@@ -356,7 +358,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 12,
   },
-  tokenText: { fontSize: 12, color: '#1E73C2', marginLeft: 6 },
+  tokenText: {
+    color: colors2024['neutral-title-1'],
+    marginLeft: 6,
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 20,
+  },
   okButton: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 100,
