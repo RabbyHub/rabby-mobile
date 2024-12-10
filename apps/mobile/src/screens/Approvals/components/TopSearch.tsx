@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { TextInput } from 'react-native';
+import { TextInput, Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { ApprovalsLayouts } from '../layout';
 
+const screenWidth = Dimensions.get('window').width;
 export function TopSearch({
   value,
   onChange,
@@ -22,7 +23,12 @@ export function TopSearch({
 
   return (
     <SearchInput
-      containerStyle={styles.searchInputContainer}
+      containerStyle={[
+        styles.searchInputContainer,
+        {
+          width: screenWidth - 130,
+        },
+      ]}
       searchIconStyle={styles.searchIconStyle}
       clearable
       inputStyle={styles.inputStyle}
@@ -51,7 +57,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   searchInputContainer: {
     borderRadius: 30,
-    width: 250,
     borderWidth: 0,
     backgroundColor: colors2024['neutral-bg-2'],
     height: ApprovalsLayouts.searchBarHeight,

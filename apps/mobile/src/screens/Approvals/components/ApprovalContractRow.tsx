@@ -173,10 +173,16 @@ function CardProto({
   const isTreatedAsSelected = isSelectedAll || isSelectedPartial;
 
   useEffect(() => {
+    let id;
     if (risky && contract && contract.list?.length) {
-      onSelectAllContractApprovals(contract, true, 'final');
+      id = setTimeout(() => {
+        onSelectAllContractApprovals(contract, true, 'final');
+      }, 0);
     }
     return () => {
+      if (id) {
+        clearTimeout(id);
+      }
       if (risky && contract && contract.list?.length) {
         onSelectAllContractApprovals(contract, false, 'final');
       }

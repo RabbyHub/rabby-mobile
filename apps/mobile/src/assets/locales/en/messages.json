@@ -784,7 +784,7 @@
             "revokeTrendsValueWarning": "Recent revokes are greater than double the number of newly approved users.",
             "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users.",
             "revokeNewApproved": "Newly approved users(24h): {{ count }}",
-            "revokeRecenet": " Recent revokes(24h): {{ count }}",
+            "revokeRecenet": "Recent revokes(24h): {{ count }}",
             "button": "I Got It."
           }
         },

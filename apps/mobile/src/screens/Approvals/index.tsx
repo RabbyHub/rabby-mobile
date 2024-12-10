@@ -114,7 +114,6 @@ const ApprovalScreenContainer = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      headerTitleAlign: isSearching ? 'left' : 'center',
       headerRight: getHeaderRight,
     });
   }, [
