@@ -67,7 +67,7 @@ export default function HomeHeaderArea() {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
-    marginLeft: 0,
+    marginLeft: 8,
   },
   innerBox: {
     width: '100%',

@@ -61,6 +61,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
   const {
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
+  const { safeOffBottom } = useSafeSizes();
 
   return (
     <ViewComponent
@@ -69,7 +70,8 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
         props?.style,
         {
           paddingTop: ApprovalsLayouts.tabbarHeight,
-          paddingBottom: safeSizes.bottomAreaHeight,
+          paddingBottom:
+            safeSizes.bottomAreaHeight + (isAndroid ? safeOffBottom : 0),
         },
       ]}>
       <View style={[{ height: '100%', width: '100%' }, innerStyle]}>
@@ -134,7 +136,9 @@ export function ApprovalsBottomArea() {
 
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
-    if (isSubmitLoadingRef.current) return;
+    if (isSubmitLoadingRef.current) {
+      return;
+    }
     setIsSubmitLoading(true, true);
 
     apiApprovals
