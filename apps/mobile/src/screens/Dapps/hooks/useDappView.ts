@@ -310,14 +310,16 @@ export function useOpenDappView() {
          * @deprecated
          */
         showSheetModalFirst?: boolean;
-        useLatestWebViewId?: boolean;
+        forceReopen?: boolean;
       },
     ) => {
       const {
         isActiveDapp = true,
         showSheetModalFirst = false,
-        useLatestWebViewId = false,
+        forceReopen = false,
       } = options || {};
+      let useLatestWebViewId = true;
+      if (forceReopen) useLatestWebViewId = false;
 
       const item =
         typeof dappUrl === 'string'
@@ -356,10 +358,14 @@ export function useOpenDappView() {
 
       syncBasicDappInfo(item.origin);
 
-      const $openParams = {
-        ...item.$openParams,
-        initialUrl: item.$openParams?.initialUrl || newUrl,
-      };
+      const needTriggerWebViewReload =
+        forceReopen || item.$openParams?.initialUrl !== newUrl;
+
+      const $openParams = { ...item.$openParams };
+      if (needTriggerWebViewReload) {
+        $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
+        item.$openParams = $openParams;
+      }
 
       setOpenedOriginsDapps(prev => {
         const itemIdx = prev.findIndex(
