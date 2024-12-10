@@ -72,8 +72,8 @@ export const SubTable = ({
   }, [target]);
 
   const handleLayout = (layout: LayoutRectangle) => {
-    // padding * 2 + marginBottom = 36
-    setVisible(layout.height > 36);
+    // padding * 2 + marginBottom = 36 for empty table, add a little more for compatibility
+    setVisible(layout.height > 40);
   };
 
   if (!visible) {
