@@ -148,7 +148,7 @@ export function useDappsViewConfig() {
  */
 const useDappLastUsedAccount = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+  const { computeFinalSceneAccount } = useSceneAccountInfo({
     forScene: '@ActiveDappWebViewModal',
   });
 
@@ -156,9 +156,12 @@ const useDappLastUsedAccount = () => {
     (dapp: DappInfo) => {
       if (!dapp.currentAccount) return;
 
-      switchSceneCurrentAccount('@ActiveDappWebViewModal', dapp.currentAccount);
+      switchSceneCurrentAccount(
+        '@ActiveDappWebViewModal',
+        computeFinalSceneAccount(dapp.currentAccount),
+      );
     },
-    [switchSceneCurrentAccount],
+    [switchSceneCurrentAccount, computeFinalSceneAccount],
   );
 
   const inactivate = useCallback(() => {
@@ -166,7 +169,6 @@ const useDappLastUsedAccount = () => {
   }, [switchSceneCurrentAccount]);
 
   return {
-    finalSceneCurrentAccount,
     activate,
     inactivate,
   };

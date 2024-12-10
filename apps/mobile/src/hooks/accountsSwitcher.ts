@@ -319,6 +319,81 @@ const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
   'MultiHistory',
 ];
 
+export function computeSceneAccountInfo({
+  forScene,
+  accounts = [],
+  pinAddresses,
+
+  sceneCurrentAccount,
+  isSceneUsingAllAccounts,
+}: {
+  forScene: AccountSwitcherScene;
+  accounts: Account[];
+  /** @description empty means not sort based on it */
+  pinAddresses?: IPinAddress[];
+
+  sceneCurrentAccount?: SceneAccountInfo['currentAccount'];
+  isSceneUsingAllAccounts?: SceneAccountInfo['useAllAccounts'];
+}) {
+  const isSceneSupportAllAccounts = ScenesSupportAllAccounts.includes(forScene);
+
+  const result = {
+    isSceneSupportAllAccounts,
+    isSceneUsingAllAccounts:
+      isSceneSupportAllAccounts && isSceneUsingAllAccounts,
+    totalCountOfAccount: accounts.length,
+    // sceneCurrentAccountIndexInMyAddresses: -1,
+    finalSceneCurrentAccount: null as null | SceneAccount,
+    myAddresses: [] as SceneAccount[],
+    watchAddresses: [] as SceneAccount[],
+    shouldWatchAddressesExpanded: false,
+    safeAddresses: [] as SceneAccount[],
+    shouldSafeAddressesExpanded: false,
+  };
+
+  for (const origAccount of accounts.values()) {
+    const account: SceneAccount = { ...origAccount };
+
+    if (account.type === KEYRING_CLASS.WATCH) {
+      result.watchAddresses.push(account);
+    } else if (account.type === KEYRING_CLASS.GNOSIS) {
+      result.safeAddresses.push(account);
+    } else {
+      result.myAddresses.push(account);
+    }
+
+    if (isSameAccount(account, sceneCurrentAccount)) {
+      result.finalSceneCurrentAccount = sceneKeyringAccountToAccount(
+        sceneCurrentAccount!,
+        account,
+      );
+    }
+  }
+
+  result.myAddresses = sortAccountList(result.myAddresses, {
+    highlightedAddresses: pinAddresses || [],
+  });
+  if (
+    !result.isSceneUsingAllAccounts &&
+    !result.finalSceneCurrentAccount &&
+    accounts.length
+  ) {
+    result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
+  }
+  if (result.finalSceneCurrentAccount) {
+    result.shouldSafeAddressesExpanded = !!result.safeAddresses.find(account =>
+      isSameAccount(account, result.finalSceneCurrentAccount),
+    );
+    if (!result.shouldSafeAddressesExpanded) {
+      result.shouldWatchAddressesExpanded = !!result.watchAddresses.find(
+        account => isSameAccount(account, result.finalSceneCurrentAccount),
+      );
+    }
+  }
+
+  return result;
+}
+
 type SceneAccount = Account & {
   isPinned?: boolean;
 };
@@ -328,10 +403,7 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const [sceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
-  const sceneCurrentAccount = sceneAccountInfo[forScene]?.currentAccount;
-  const isSceneUsingAllAccounts = !!sceneAccountInfo[forScene]?.useAllAccounts;
+  const [sceneAccounts] = useAtom(sceneAccountInfoAtom);
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -352,75 +424,47 @@ export function useSceneAccountInfo(options: {
     [pinAddressesDict],
   );
 
-  const isSceneSupportAllAccounts = ScenesSupportAllAccounts.includes(forScene);
+  const sceneAccountInfo = sceneAccounts[forScene];
+  const computeFinalSceneAccount = useCallback(
+    (account?: Account | null) => {
+      const result = computeSceneAccountInfo({
+        forScene,
+        sceneCurrentAccount: account || sceneAccountInfo?.currentAccount,
+        isSceneUsingAllAccounts: sceneAccountInfo?.useAllAccounts,
+        accounts,
+        pinAddresses,
+      });
 
+      return result.finalSceneCurrentAccount;
+    },
+    [
+      forScene,
+      accounts,
+      sceneAccountInfo?.currentAccount,
+      sceneAccountInfo?.useAllAccounts,
+      pinAddresses,
+    ],
+  );
   const computed = useMemo(() => {
-    const result = {
-      isSceneSupportAllAccounts,
-      isSceneUsingAllAccounts:
-        isSceneSupportAllAccounts && isSceneUsingAllAccounts,
-      totalCountOfAccount: accounts.length,
-      // sceneCurrentAccountIndexInMyAddresses: -1,
-      finalSceneCurrentAccount: null as null | SceneAccount,
-      myAddresses: [] as SceneAccount[],
-      watchAddresses: [] as SceneAccount[],
-      shouldWatchAddressesExpanded: false,
-      safeAddresses: [] as SceneAccount[],
-      shouldSafeAddressesExpanded: false,
-    };
+    return computeSceneAccountInfo({
+      forScene,
 
-    for (const origAccount of accounts.values()) {
-      const account: SceneAccount = { ...origAccount };
-
-      if (account.type === KEYRING_CLASS.WATCH) {
-        result.watchAddresses.push(account);
-      } else if (account.type === KEYRING_CLASS.GNOSIS) {
-        result.safeAddresses.push(account);
-      } else {
-        result.myAddresses.push(account);
-      }
-
-      if (isSameAccount(account, sceneCurrentAccount)) {
-        result.finalSceneCurrentAccount = sceneKeyringAccountToAccount(
-          sceneCurrentAccount!,
-          account,
-        );
-      }
-    }
-
-    result.myAddresses = sortAccountList(result.myAddresses, {
-      highlightedAddresses: pinAddresses,
+      sceneCurrentAccount: sceneAccountInfo?.currentAccount,
+      isSceneUsingAllAccounts: sceneAccountInfo?.useAllAccounts,
+      accounts,
+      pinAddresses,
     });
-    if (
-      !result.isSceneUsingAllAccounts &&
-      !result.finalSceneCurrentAccount &&
-      accounts.length
-    ) {
-      result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
-    }
-    if (result.finalSceneCurrentAccount) {
-      result.shouldSafeAddressesExpanded = !!result.safeAddresses.find(
-        account => isSameAccount(account, result.finalSceneCurrentAccount),
-      );
-      if (!result.shouldSafeAddressesExpanded) {
-        result.shouldWatchAddressesExpanded = !!result.watchAddresses.find(
-          account => isSameAccount(account, result.finalSceneCurrentAccount),
-        );
-      }
-    }
-
-    return result;
   }, [
+    forScene,
     accounts,
+    sceneAccountInfo?.currentAccount,
+    sceneAccountInfo?.useAllAccounts,
     pinAddresses,
-    isSceneSupportAllAccounts,
-    isSceneUsingAllAccounts,
-    sceneCurrentAccount,
   ]);
 
   return {
     ...computed,
-    sceneSigingAccount: sceneAccountInfo[forScene]?.signingAccount,
+    sceneSigingAccount: sceneAccountInfo?.signingAccount,
     sceneCurrentAccountDepKey: computed.isSceneUsingAllAccounts
       ? 'all'
       : [
@@ -431,5 +475,6 @@ export function useSceneAccountInfo(options: {
           .filter(Boolean)
           .join('-'),
     isPinnedAccount,
+    computeFinalSceneAccount,
   };
 }
