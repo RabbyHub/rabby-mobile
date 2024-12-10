@@ -1,7 +1,6 @@
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useEffect, useMemo } from 'react';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 
 // caret-down-cc.svg
@@ -65,13 +64,6 @@ export function ScreenHeaderAccountSwitcher({
     }
   });
 
-  const needShowAllAccounts = !!myAddresses.length;
-  if (!isSceneUsingAllAccounts && !finalSceneCurrentAccount?.address) {
-    return titleTextNode;
-  } else if (isSceneUsingAllAccounts && !needShowAllAccounts) {
-    return titleTextNode;
-  }
-
   const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   return (
@@ -87,20 +79,20 @@ export function ScreenHeaderAccountSwitcher({
       }}>
       {titleTextNode}
       <View style={styles.addressRow}>
-        {!isSceneUsingAllAccounts
-          ? !!finalSceneCurrentAccount && (
-              <Text style={styles.address}>
-                {finalSceneCurrentAccount.aliasName ||
-                  ellipsisAddress(finalSceneCurrentAccount?.address)}
-              </Text>
-            )
-          : needShowAllAccounts && (
-              <Text style={styles.address}>
-                {t('component.accountSwitcher.screenHeaderSubTitle', {
-                  count: myAddresses.length,
-                })}
-              </Text>
-            )}
+        {!isSceneUsingAllAccounts ? (
+          !!finalSceneCurrentAccount && (
+            <Text style={styles.address}>
+              {finalSceneCurrentAccount.aliasName ||
+                ellipsisAddress(finalSceneCurrentAccount?.address)}
+            </Text>
+          )
+        ) : (
+          <Text style={styles.address}>
+            {t('component.accountSwitcher.screenHeaderSubTitle', {
+              count: myAddresses.length,
+            })}
+          </Text>
+        )}
         {!disableSwitch && (
           <IconCom
             style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}

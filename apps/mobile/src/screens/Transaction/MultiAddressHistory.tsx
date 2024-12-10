@@ -121,7 +121,9 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     if (!isReady.current) {
       isReady.current = true;
     }
-    await waitQueueFinished(queue);
+    if (accountList.length > 0) {
+      await waitQueueFinished(queue);
+    }
     return { list };
   };
 
