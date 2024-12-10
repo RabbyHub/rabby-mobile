@@ -231,6 +231,7 @@ export const useBridge = () => {
       supportChains: supportedChains,
     });
     if (firstChain?.enum) {
+      setAmount('');
       switchFromChain(firstChain?.enum);
       getRecommendToChain(firstChain?.enum);
     }
