@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, FlatList } from 'react-native';
 import {
   KeyringAccountWithAlias,
@@ -17,6 +17,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { RootNames } from '@/constant/layout';
 import {
   FILTER_ACCOUNT_TYPES,
+  useApprovalsCount,
   useApprovalAlertCounts,
 } from '@/screens/Home/hooks/approvals';
 
@@ -33,15 +34,16 @@ export function ApprovalAddressListScreen(): JSX.Element {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const { appprovalInfo } = useApprovalAlertCounts();
+  const { address2Count, getAllApprovalCount } = useApprovalsCount();
+  const { alertInfo } = useApprovalAlertCounts();
   const { styles } = useTheme2024({ getStyle });
 
   const displayAccounts: AccountWithApprovalInofItem[] = accounts
     .filter(acc => !FILTER_ACCOUNT_TYPES.includes(acc.type))
     .map(item => ({
       ...item,
-      approvalCount: appprovalInfo?.address2approvalCount?.[item.address],
-      alertCount: appprovalInfo?.address2count?.[item.address],
+      approvalCount: address2Count?.[item.address],
+      alertCount: alertInfo.address2count?.[item.address],
     }))
     .sort((a, b) => b.approvalCount - a.approvalCount)
     .sort((a, b) => b.alertCount - a.alertCount);
@@ -49,6 +51,35 @@ export function ApprovalAddressListScreen(): JSX.Element {
   const { switchAccount } = useCurrentAccount();
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
+
+  const isInitialLoadRef = React.useRef(true);
+  const hasVisitedDetailRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (isInitialLoadRef.current) {
+      getAllApprovalCount(displayAccounts);
+      isInitialLoadRef.current = false;
+    }
+
+    return () => {
+      isInitialLoadRef.current = true;
+      hasVisitedDetailRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (hasVisitedDetailRef.current && !isInitialLoadRef.current) {
+        getAllApprovalCount(displayAccounts);
+      }
+
+      return () => {
+        hasVisitedDetailRef.current = true;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   const handleSelect = (account: KeyringAccountWithAlias) => {
     trigger('impactLight', {
@@ -83,8 +114,8 @@ export function ApprovalAddressListScreen(): JSX.Element {
             }>
             <AddressItemEntry
               account={item}
-              alertCount={appprovalInfo.address2count[item.address]}
-              approvalCount={appprovalInfo.address2approvalCount[item.address]}
+              alertCount={alertInfo.address2count?.[item.address]}
+              approvalCount={address2Count?.[item.address]}
               onSelect={() => handleSelect(item)}
             />
           </View>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Platform,
   View,
@@ -25,6 +25,7 @@ import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approva
 import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { useApprovalAlertCounts } from '@/screens/Home/hooks/approvals';
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -88,6 +89,7 @@ export function ApprovalsBottomArea() {
 
   const [showModal, setShowModal] = useState(false);
 
+  const { forceUpdate } = useApprovalAlertCounts();
   const {
     filterType,
     loadApprovals,
@@ -95,6 +97,8 @@ export function ApprovalsBottomArea() {
   } = useApprovalsPage();
   const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
     useRevokeApprovals();
+
+  const timeoutId = React.useRef<ReturnType<typeof setTimeout>>();
 
   const { currentRevokeList, revokeSummary } = React.useMemo(() => {
     const list =
@@ -134,6 +138,14 @@ export function ApprovalsBottomArea() {
   } = useRefState(false);
   const { safeOffBottom } = useSafeSizes();
 
+  useEffect(() => {
+    return () => {
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
+    };
+  }, []);
+
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
     if (isSubmitLoadingRef.current) {
@@ -144,7 +156,14 @@ export function ApprovalsBottomArea() {
     apiApprovals
       .revoke({ list: currentRevokeList })
       .then(() => {
-        loadApprovals();
+        if (timeoutId.current) {
+          clearTimeout(timeoutId.current);
+          timeoutId.current = undefined;
+        }
+        forceUpdate();
+        timeoutId.current = setTimeout(() => {
+          loadApprovals();
+        }, 1000);
         resetRevokeMaps();
       })
       .catch(err => {
@@ -154,9 +173,10 @@ export function ApprovalsBottomArea() {
         setIsSubmitLoading(false, true);
       });
   }, [
-    currentRevokeList,
     isSubmitLoadingRef,
     setIsSubmitLoading,
+    currentRevokeList,
+    forceUpdate,
     resetRevokeMaps,
     loadApprovals,
   ]);

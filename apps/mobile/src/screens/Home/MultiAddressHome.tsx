@@ -129,7 +129,11 @@ function MultiAddressHome(): JSX.Element {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  const { appprovalInfo, getAllApprovalInfo } = useApprovalAlertCounts();
+  const {
+    alertInfo,
+    forceUpdate,
+    triggerUpdate: triggerUpdateAlert,
+  } = useApprovalAlertCounts();
 
   const MENU_ARR = [
     {
@@ -155,7 +159,7 @@ function MultiAddressHome(): JSX.Element {
     {
       title: MultiHomeFeatTitle.Approvals,
       icon: RcIconApprovals,
-      badge: appprovalInfo.total,
+      badge: alertInfo.total,
     },
     {
       title: MultiHomeFeatTitle.GasAccount,
@@ -255,13 +259,14 @@ function MultiAddressHome(): JSX.Element {
   useFocusEffect(
     useCallback(() => {
       triggerUpdate();
-    }, [triggerUpdate]),
+      triggerUpdateAlert();
+    }, [triggerUpdate, triggerUpdateAlert]),
   );
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
-    getAllApprovalInfo();
-  }, [getAllApprovalInfo, triggerUpdate]);
+    forceUpdate();
+  }, [forceUpdate, triggerUpdate]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
