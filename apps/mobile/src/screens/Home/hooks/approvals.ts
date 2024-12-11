@@ -64,18 +64,6 @@ const appprovalsMap = atom<IApprovalsInfo>({
   address2approvalCount: {},
 });
 
-// TODO: ONLY FOR TEST need use rabby-api pkg
-const getApprovalAccount = async (address: string) => {
-  try {
-    const approvalCountRes = await fetch(
-      `https://approval.rabby-api.debank.dbkops.com/v1/user/total_approval_asset_cnt?id=${address}`,
-    ).then(res => res.json());
-    return approvalCountRes?.['total_asset_cnt'] || 0;
-  } catch (error) {
-    console.log('🔍 CUSTOM_LOGGER:=>: getApprovalAccount)', error);
-    return 0;
-  }
-};
 export const useApprovalAlertCounts = () => {
   const [appprovalInfo, setAppprovalInfo] = useAtom(appprovalsMap);
   const { accounts, fetchAccounts } = useAccounts({
@@ -101,11 +89,11 @@ export const useApprovalAlertCounts = () => {
       displayAccounts.map(async acc => {
         try {
           const data = await openapi.approvalStatus(acc.address);
-          // TODO: const approvalCount = await openapi.getApprovalCount(acc.address);
           console.log('🔍 CUSTOM_LOGGER:=>: acc.address)', acc.address);
-          const approvalCount = await getApprovalAccount(acc.address);
+          const approvalCountRes = await openapi.getApprovalCount(acc.address);
 
-          address2ApprovalCount[acc.address] = approvalCount;
+          address2ApprovalCount[acc.address] =
+            approvalCountRes['total_asset_cnt'];
           if (data) {
             const alertCount = data.reduce(
               (pre, now) =>
