@@ -25,6 +25,7 @@ export function SingleAddressNavigator() {
         name={RootNames.SingleAddressHome}
         component={SingleAddressHome}
         options={mergeScreenOptions({
+          title: '',
           headerTitle: '',
           headerShown: true,
           headerRight: RightMore,
