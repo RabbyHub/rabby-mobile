@@ -113,9 +113,6 @@ interface AddressItemProps {
   lastSelectedAccount?: KeyringAccountWithAlias;
   onSelect?: () => void;
 }
-/**
- * TODO: badge approval amount
- */
 export const AddressItemEntry = (props: AddressItemProps) => {
   const { account, onSelect, alertCount, approvalCount } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });

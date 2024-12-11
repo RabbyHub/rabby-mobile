@@ -9,7 +9,7 @@ import {
 } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import PQueue from 'p-queue';
 import { useMemoizedFn } from 'ahooks';
 
@@ -50,9 +50,7 @@ export function useApprovalAlert() {
   };
 }
 
-// export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
-// TODO: only for test
-export const FILTER_ACCOUNT_TYPES = [];
+export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
 interface IApprovalsAlert {
   total: number;
