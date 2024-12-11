@@ -40,7 +40,7 @@ export default function HomeHeaderArea() {
   return (
     <View style={styles.container}>
       <View style={styles.innerBox}>
-        <TouchableView style={styles.touchBox} onPress={handleCopyAddress}>
+        <View style={styles.touchBox}>
           <View style={styles.accountBox}>
             <View className="relative">
               <WalletIcon
@@ -50,15 +50,17 @@ export default function HomeHeaderArea() {
                 style={styles.walletIcon}
               />
             </View>
+          </View>
+          <TouchableOpacity style={styles.touchBox} onPress={handleCopyAddress}>
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
               style={styles.titleText}>
               {name}
             </Text>
-          </View>
-          <RcIconCopy style={styles.copy} />
-        </TouchableView>
+            <RcIconCopy style={styles.copy} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

@@ -51,15 +51,7 @@ function HomeScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer2024
-      type="linear"
-      linearProp={{
-        colors: [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']],
-        locations: [0.2072, 0.3181],
-        start: { x: 0.5, y: 0 },
-        end: { x: 0.5, y: 1 },
-      }}
-      style={styles.rootScreenContainer}>
+    <NormalScreenContainer2024 type="bg1" style={styles.rootScreenContainer}>
       {/* <ScreenSpecificStatusBar screenName={RootNames.Home} /> */}
       <SafeAreaView style={styles.safeView}>
         <AssetContainer

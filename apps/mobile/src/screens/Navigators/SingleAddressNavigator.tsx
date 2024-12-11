@@ -25,9 +25,10 @@ export function SingleAddressNavigator() {
         name={RootNames.SingleAddressHome}
         component={SingleAddressHome}
         options={mergeScreenOptions({
+          title: '',
+          headerTitle: '',
           headerShown: true,
           headerRight: RightMore,
-          headerTitle: '',
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-2'],
           },
