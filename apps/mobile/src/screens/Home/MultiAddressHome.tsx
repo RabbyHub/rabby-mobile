@@ -14,6 +14,8 @@ import {
   TouchableWithoutFeedback,
   RefreshControl,
   ScrollView,
+  Dimensions,
+  StyleSheet,
 } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
@@ -161,6 +163,9 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   );
 }
 
+const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
+const ITEM_GRID_GAP = 12;
+
 function MultiAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -168,6 +173,9 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
+  const { width } = Dimensions.get('window');
+  const itemWidth =
+    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
@@ -205,18 +213,11 @@ function MultiAddressHome(): JSX.Element {
     if (!addresses.length) {
       return;
     }
-    const { pendingsLength, pendings } =
+    const { pendingsLength } =
       transactionHistoryService.getPendingsAddresses(addresses);
-    console.debug('fetchHistory :', balanceCacheAccounts, pendings);
     setPendingTxCount(pendingsLength);
-    if (pendingsLength) {
-      if (!timeRef.current) {
-        timeRef.current = setInterval(fetchHistory, 5000);
-      }
-    } else {
-      timeRef.current && clearInterval(timeRef.current);
-      timeRef.current = null;
-    }
+    timeRef.current && clearInterval(timeRef.current);
+    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [balanceCacheAccounts]);
 
   const detectHasAccounts = useMemoizedFn(async () => {
@@ -245,7 +246,7 @@ function MultiAddressHome(): JSX.Element {
         const { redirectAction } = await detectHasAccounts();
         if (redirectAction) {
           redirectAction();
-        } else if (!timeRef.current) {
+        } else {
           fetchHistory();
         }
       })();
@@ -465,7 +466,10 @@ function MultiAddressHome(): JSX.Element {
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity
-                  style={styles.gridItem}
+                  style={StyleSheet.flatten([
+                    styles.gridItem,
+                    { width: itemWidth },
+                  ])}
                   key={index}
                   onPress={e => {
                     handleClickMenu(el.title);
@@ -492,7 +496,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   paddingContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     flex: 1,
     flexGrow: 1,
   },
@@ -601,7 +605,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderRadius: 8,
-    gap: 12,
+    gap: ITEM_GRID_GAP,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
@@ -612,7 +616,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    width: '48%',
+    width: '48%', // default
     minWidth: 0,
     borderRadius: 18,
     flexShrink: 0,
