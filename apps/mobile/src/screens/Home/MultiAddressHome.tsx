@@ -175,7 +175,7 @@ function MultiAddressHome(): JSX.Element {
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { width } = Dimensions.get('window');
   const itemWidth =
-    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP) / 2;
+    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
