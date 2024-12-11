@@ -29,7 +29,7 @@ const BridgeSwitchBtn = ({ onPress, ...others }) => {
       {isPressed ? (
         <RcIconSwitchBtnPressing />
       ) : (
-        <RcIconSwitchBtn color={colors2024['neutral-bg-1']} />
+        <RcIconSwitchBtn color={colors2024['neutral-bg-3']} />
       )}
     </TouchableOpacity>
   );
