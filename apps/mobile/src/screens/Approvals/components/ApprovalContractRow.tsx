@@ -476,7 +476,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
     },
     contractItemFloor: {
       flexDirection: 'row',
-      paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
+      paddingHorizontal: 16,
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
