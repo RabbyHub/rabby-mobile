@@ -174,7 +174,10 @@ const BridgeToken = ({
               {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
             </Text>
           ) : (
-            <ScrollView ref={scrollRef} horizontal={true}>
+            <ScrollView
+              ref={scrollRef}
+              horizontal={true}
+              keyboardShouldPersistTaps={'handled'}>
               <TextInput
                 numberOfLines={1}
                 textAlign="left"
@@ -348,6 +351,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     // height: 36,
+    width: 500,
     lineHeight: 36,
     paddingLeft: 0,
     borderWidth: 0,
