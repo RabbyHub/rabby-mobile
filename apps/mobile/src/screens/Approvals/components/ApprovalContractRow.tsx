@@ -191,12 +191,7 @@ function CardProto({
 
   return (
     <TouchableView
-      style={[
-        styles.container,
-        isTreatedAsSelected && styles.selectedContainer,
-        risky && styles.riskContainer,
-        style,
-      ]}
+      style={[styles.container, risky && styles.riskContainer, style]}
       onPress={() => {
         onSelectAllContractApprovals(contract, !isSelectedAll, 'final');
       }}>
