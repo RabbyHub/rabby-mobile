@@ -301,7 +301,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 4,
   },
   bestBadge: {
     backgroundColor: colors2024['green-light-4'],

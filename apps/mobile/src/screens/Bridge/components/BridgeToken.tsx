@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
 } from 'react-native';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +39,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
+import { Button } from '@/components2024/Button';
 
 const BridgeToken = ({
   type = 'from',
@@ -52,9 +55,11 @@ const BridgeToken = ({
   fromTokenId,
   noQuote,
   inSufficient,
+  clickMaxBtnCount,
   isMaxRef,
   handleMax,
 }: {
+  clickMaxBtnCount?: number;
   handleMax?: () => void;
   isMaxRef?: React.MutableRefObject<boolean>;
   type?: 'from' | 'to';
@@ -84,6 +89,7 @@ const BridgeToken = ({
 
   const openFeePopup = useSetSettingVisible();
   const inputRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
   useLayoutEffect(() => {
     if (isFromToken && inputRef.current && !isMaxRef?.current) {
@@ -91,6 +97,19 @@ const BridgeToken = ({
       isMaxRef && (isMaxRef.current = false);
     }
   }, [value, isFromToken, isMaxRef]);
+
+  useLayoutEffect(() => {
+    if (clickMaxBtnCount) {
+      handleScroll();
+    }
+  }, [clickMaxBtnCount]);
+
+  const handleScroll = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      inputRef.current?.blur();
+    }, 200);
+  };
 
   const showNoQuote = useMemo(() => isToken && !!noQuote, [noQuote, isToken]);
 
@@ -155,17 +174,21 @@ const BridgeToken = ({
               {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
             </Text>
           ) : (
-            <TextInput
-              numberOfLines={1}
-              keyboardType="numeric"
-              inputMode="decimal"
-              placeholderTextColor={colors2024['neutral-info']}
-              style={styles.input}
-              placeholder={'0'}
-              value={value?.toString()}
-              onChangeText={inputChange}
-              ref={inputRef}
-            />
+            <ScrollView ref={scrollRef} horizontal={true}>
+              <TextInput
+                numberOfLines={1}
+                textAlign="left"
+                keyboardType="numeric"
+                inputMode="decimal"
+                placeholderTextColor={colors2024['neutral-info']}
+                style={styles.input}
+                placeholder={'0'}
+                scrollEnabled={true}
+                value={value?.toString()}
+                onChangeText={inputChange}
+                ref={inputRef}
+              />
+            </ScrollView>
           )}
           <View style={styles.tokenSelectBox}>
             {isFromToken && !value && (
@@ -196,7 +219,6 @@ const BridgeToken = ({
             )}
           </View>
         </View>
-
         {!valueLoading && (
           <View style={styles.footer}>
             <View style={styles.balanceContainer}>
@@ -238,7 +260,7 @@ const BridgeToken = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 30,
+    borderRadius: 24,
     // borderWidth: 0.5,
     // borderColor: '#D0D8E0',
     height: 148,

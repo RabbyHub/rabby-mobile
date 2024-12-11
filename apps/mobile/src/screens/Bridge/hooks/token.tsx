@@ -245,11 +245,9 @@ export const useBridge = () => {
     const { firstChain } = await fetchOrderedChainList({
       supportChains: supportedChains,
     });
-    if (firstChain?.enum) {
-      setAmount('');
-      switchFromChain(firstChain?.enum);
-      getRecommendToChain(firstChain?.enum);
-    }
+    setAmount('');
+    switchFromChain(firstChain?.enum || CHAINS_ENUM.ETH);
+    getRecommendToChain(firstChain?.enum || CHAINS_ENUM.ETH);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchOrderedChainList]);
 
@@ -669,6 +667,7 @@ export const useBridge = () => {
   const [passGasPrice, setUseGasPrice] = useState(false);
   const [reserveGasOpen, setReserveGasOpen] = useState(false);
   const isMaxRef = useRef(false);
+  const [clickMaxBtnCount, setClickMaxBtnCount] = useState(0);
 
   const normalGasPrice = useMemo(
     () => gasList?.find(e => e.level === 'normal')?.price,
@@ -736,6 +735,7 @@ export const useBridge = () => {
           .div(10 ** nativeTokenDecimals),
       );
       setAmount(val.lt(0) ? '0' : val.toString(10));
+      setClickMaxBtnCount(e => e + 1);
     }
   }, [fromToken, nativeTokenDecimals, gasLimit]);
 
@@ -758,6 +758,7 @@ export const useBridge = () => {
     if (!payTokenIsNativeToken && fromToken) {
       isMaxRef.current = true;
       handleAmountChange?.(tokenAmountBn(fromToken)?.toString(10));
+      setClickMaxBtnCount(e => e + 1);
     }
   }, [fromToken, handleAmountChange, setReserveGasOpen, payTokenIsNativeToken]);
 
@@ -797,6 +798,7 @@ export const useBridge = () => {
     closeReserveGasOpen,
     passGasPrice,
     handleMax,
+    clickMaxBtnCount,
     isMaxRef,
     payTokenIsNativeToken,
 

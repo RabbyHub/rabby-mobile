@@ -26,12 +26,11 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { BridgeQuoteItem } from './BridgeQuoteItem';
 import { QuoteLoading } from './loading';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
     backgroundColor: colors2024['neutral-bg-1'],
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
   },
   refreshBox: {
     flexDirection: 'row',
@@ -255,6 +254,10 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
       snapPoints={['90%']}
       onDismiss={onClose}
       enableDismissOnClose
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
       // enableContentPanningGesture={false}
       handleStyle={styles.bottomBg}
       backgroundStyle={styles.bottomBg}>

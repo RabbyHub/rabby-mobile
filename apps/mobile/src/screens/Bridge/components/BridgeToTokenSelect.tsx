@@ -114,7 +114,7 @@ const TokenSelect = ({
   }, [chainId]);
 
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
     <>
@@ -176,7 +176,7 @@ const TokenSelect = ({
                     ],
                   });
                 }}>
-                <RcIcHelp />
+                <RcIcHelp color={colors2024['neutral-secondary']} />
               </TouchableOpacity>
             </View>
           </View>

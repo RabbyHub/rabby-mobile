@@ -76,7 +76,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     position: 'relative',
     flexDirection: 'column',
     // marginHorizontal: 20,
-    gap: 12,
+    gap: 8,
     marginBottom: -8,
     // width: '100%',
     // flex: 1,
@@ -247,6 +247,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     closeReserveGasOpen,
     passGasPrice,
     handleMax,
+    clickMaxBtnCount,
     isMaxRef,
     payTokenIsNativeToken,
   } = useBridge();
@@ -541,6 +542,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               chain={fromChain}
               token={fromToken}
               isMaxRef={isMaxRef}
+              clickMaxBtnCount={clickMaxBtnCount}
               handleMax={handleMax}
               onChangeToken={item => {
                 handleAmountChange('');
