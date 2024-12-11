@@ -9,7 +9,6 @@ import type { SelectAccountThenProps } from '../SelectAccountThen';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
-  'WALLET_CONNECT' = 'WALLET_CONNECT',
   'SWITCH_ADDRESS' = 'SWITCH_ADDRESS',
   'SWITCH_CHAIN' = 'SWITCH_CHAIN',
   'CANCEL_CONNECT' = 'CANCEL_CONNECT',

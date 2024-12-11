@@ -1,7 +1,7 @@
-diff --git a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/KeychainModule.java b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/KeychainModule.java
-index 6ca68cb..4c71995 100644
---- a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/KeychainModule.java
-+++ b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/KeychainModule.java
+diff --git a/android/src/main/java/com/oblador/keychain/KeychainModule.java b/android/src/main/java/com/oblador/keychain/KeychainModule.java
+index 6ca68cb043c1d3b8396fe08abbe21ef859fd4159..4c71995628930b663166d5f0f375fce85f01586b 100644
+--- a/android/src/main/java/com/oblador/keychain/KeychainModule.java
++++ b/android/src/main/java/com/oblador/keychain/KeychainModule.java
 @@ -1,6 +1,8 @@
  package com.oblador.keychain;
  
@@ -224,10 +224,10 @@ index 6ca68cb..4c71995 100644
  
      // store the encryption result
      prefsStorage.storeEncryptedEntry(service, encryptionResult);
-diff --git a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java
-index 5d7817f..29ef139 100644
---- a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java
-+++ b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java
+index 5d7817ff38d00edce5930b3e7976e785705794bc..29ef1391bc52394e665cbe822d803cb628a9fc49 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.java
 @@ -83,7 +83,8 @@ public interface CipherStorage {
    EncryptionResult encrypt(@NonNull final String alias,
                             @NonNull final String username,
@@ -238,10 +238,10 @@ index 5d7817f..29ef139 100644
      throws CryptoFailedException;
  
    /**
-diff --git a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
-index 5c82167..b0111a6 100644
---- a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
-+++ b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
+index 5c82167c354de8b6a30e676b06a8594040fbc62f..b0111a657847756f4dfb71dd1a831cb01f787068 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
 @@ -165,12 +165,12 @@ abstract public class CipherStorageBase implements CipherStorage {
  
    /** Get encryption algorithm specification builder instance. */
@@ -361,10 +361,10 @@ index 5c82167..b0111a6 100644
      }
  
      public SelfDestroyKey(@NonNull final String name, @NonNull final Key key) {
-diff --git a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java
-index 0dfc55a..ef5b214 100644
---- a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java
-+++ b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java
+index 0dfc55a80b2de898511d35b3776ac953defd8767..ef5b2143f0c3f7b76f2e384a2793b82179d44443 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.java
 @@ -72,7 +72,8 @@ public class CipherStorageFacebookConceal extends CipherStorageBase {
    public EncryptionResult encrypt(@NonNull final String alias,
                                    @NonNull final String username,
@@ -392,10 +392,10 @@ index 0dfc55a..ef5b214 100644
      throws GeneralSecurityException {
      throw new CryptoFailedException("Not designed for a call");
    }
-diff --git a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
-index 7dbcc8b..43bcb74 100644
---- a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
-+++ b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
+index 7dbcc8b8645e9394a38575e3a2cea5b77225ee70..43bcb741db3d974df7cb45e084ad7505ed00c086 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
 @@ -49,6 +49,8 @@ public class CipherStorageKeystoreAesCbc extends CipherStorageBase {
    public static final int ENCRYPTION_KEY_SIZE = 256;
  
@@ -465,10 +465,10 @@ index 7dbcc8b..43bcb74 100644
        .setKeySize(ENCRYPTION_KEY_SIZE);
    }
  
-diff --git a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
-index b191bdc..fab4060 100644
---- a/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
-+++ b/node_modules/react-native-keychain/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
+index b191bdcc386fba4898a248dd81d870118423a888..fab4060ccad0eb1576fef0367ff7c1a43fdb55e0 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
 @@ -61,7 +61,8 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
    public EncryptionResult encrypt(@NonNull final String alias,
                                    @NonNull final String username,

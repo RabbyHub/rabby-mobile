@@ -25,7 +25,6 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { useCurrentAccount } from '@/hooks/account';
-import { apisWalletConnect } from '@/core/apis';
 import { createGetStyles } from '@/utils/styles';
 
 type SectionProps = PropsWithChildren<{
@@ -424,21 +423,6 @@ function ProviderControllerTester(): JSX.Element {
       origin: TEST_DAPP_INFO.id,
     });
   }, [addDapp]);
-
-  React.useEffect(() => {
-    if (account && currentAccount && currentAccount.type === 'WalletConnect') {
-      apisWalletConnect
-        .checkClientIsCreate(currentAccount)
-        .then(res => {
-          setConnectStatus(res ?? 'DISCONNECTED');
-        })
-        .catch(e => {
-          console.error(e);
-        });
-    } else {
-      setConnectStatus('CONNECTED');
-    }
-  }, [account, currentAccount]);
 
   const isClientCreated = React.useMemo(() => {
     return !!connectStatus;

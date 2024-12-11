@@ -50,6 +50,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { apiBalance } from '@/core/apis';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -144,6 +145,19 @@ export const ImportSuccessScreen2024 = () => {
       action: `Success_Import_${getKRCategoryByType(state?.type)}`,
       label: state?.brandName,
     });
+
+    if (
+      state.type === KEYRING_TYPE.WatchAddressKeyring ||
+      state.type === KEYRING_TYPE.GnosisKeyring
+    ) {
+      Promise.all(
+        addresses.map(address =>
+          apiBalance.getAddressBalance(address, {
+            force: true,
+          }),
+        ),
+      );
+    }
   }, [state]);
 
   React.useEffect(() => {

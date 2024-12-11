@@ -38,7 +38,6 @@ import { splitNumberByStep } from '@/utils/number';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
-import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   AddressNavigatorParamList,
@@ -421,16 +420,6 @@ export const AddressInfo = (props: AddressInfoProps) => {
             </View>
           </View>
 
-          {account.type === KEYRING_TYPE.WalletConnectKeyring && (
-            <View>
-              <SessionStatusBar
-                address={account.address}
-                brandName={account.brandName}
-                bgColor={colors['neutral-card2']}
-                textColor={colors['neutral-title-1']}
-              />
-            </View>
-          )}
           {account.type === KEYRING_TYPE.HdKeyring && (
             <View
               style={StyleSheet.flatten([

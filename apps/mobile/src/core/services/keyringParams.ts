@@ -1,7 +1,6 @@
 import { ellipsisAddress } from '@/utils/address';
 import { bindLedgerEvents } from '@/utils/ledger';
 import { bindOneKeyEvents } from '@/utils/onekey';
-import { bindWalletConnectEvents } from '@/utils/wc';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
 import { getKeyringParams } from '../utils/getKeyringParams';
@@ -26,10 +25,6 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] &
 export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] &
   object = Keyring => {
   const keyring = new Keyring(getKeyringParams(Keyring.type as any));
-
-  if (Keyring.type === KEYRING_CLASS.WALLETCONNECT) {
-    bindWalletConnectEvents(keyring);
-  }
 
   if (Keyring.type === KEYRING_CLASS.HARDWARE.LEDGER) {
     bindLedgerEvents(keyring);
