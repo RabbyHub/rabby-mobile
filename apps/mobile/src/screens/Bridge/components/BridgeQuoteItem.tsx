@@ -16,6 +16,7 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconGasCC from '@/assets/icons/swap/gas-cc.svg';
 import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
+import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import RcIconInfoCC from '@/assets/icons/swap/info-outline-cc.svg';
 // const ImgLock = require('@/assets/icons/swap/lock.svg');
 
@@ -161,10 +162,11 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
               e.stopPropagation();
               openFeePopup(true);
             }}>
-            <RcIconInfoCC
+            <RcIcHelp color={colors2024['neutral-info']} />
+            {/* <RcIconInfoCC
               style={styles.infoIcon}
               color={colors['neutral-foot']}
-            />
+            /> */}
           </TouchableOpacity>
         </View>
       </View>
@@ -191,7 +193,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     flexDirection: 'column',
     justifyContent: 'center',
-    borderRadius: 30,
+    borderRadius: 24,
     padding: 16,
     paddingTop: 20,
     borderWidth: 1,
@@ -276,7 +278,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   estimatedValueSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 2,
     flexShrink: 1,
     justifyContent: 'flex-end',
   },
@@ -310,12 +312,16 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
 
   bestQuoteText: {
     fontSize: 12,
-    fontWeight: '500',
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
     color: colors['green-default'],
   },
   otherQuoteText: {
     fontSize: 12,
-    fontWeight: '500',
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
     color: colors['red-default'],
   },
 }));

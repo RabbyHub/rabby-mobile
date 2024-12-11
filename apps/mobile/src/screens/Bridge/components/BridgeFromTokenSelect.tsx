@@ -205,8 +205,8 @@ const TokenSelect = ({
         hideChainFilter={true}
         headerTitle={
           <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>Token</Text>
-            <Text style={styles.headerBoxText}>Vaue</Text>
+            <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
+            <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
           </View>
         }
         value={token}

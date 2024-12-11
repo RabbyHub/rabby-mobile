@@ -153,9 +153,11 @@ const TokenSelect = ({
         value={token}
         headerTitle={
           <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>Token</Text>
+            <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
             <View style={styles.liquidityBox}>
-              <Text style={styles.headerBoxText}>Liquidity </Text>
+              <Text style={styles.headerBoxText}>
+                {t('page.bridge.liquidity')}
+              </Text>
               <TouchableOpacity
                 onPress={() => {
                   createGlobalBottomSheetModal2024({

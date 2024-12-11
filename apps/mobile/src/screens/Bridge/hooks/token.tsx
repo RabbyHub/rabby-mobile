@@ -493,7 +493,10 @@ export const useBridge = () => {
                   shouldApproveToken: !tokenApproved,
                 });
               } else {
-                if (currentFetchId === fetchIdRef.current) {
+                if (
+                  currentFetchId === fetchIdRef.current &&
+                  Number(amount) > 0
+                ) {
                   setQuotesList(e => {
                     const filteredArr = e.filter(
                       item =>
@@ -515,7 +518,11 @@ export const useBridge = () => {
             }),
           );
 
-          if (isEmpty && currentFetchId === fetchIdRef.current) {
+          if (
+            isEmpty &&
+            currentFetchId === fetchIdRef.current &&
+            Number(amount) > 0
+          ) {
             setQuotesList(result);
           }
         }

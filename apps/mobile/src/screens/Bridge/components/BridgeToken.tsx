@@ -169,12 +169,8 @@ const BridgeToken = ({
           )}
           <View style={styles.tokenSelectBox}>
             {isFromToken && !value && (
-              <TouchableOpacity onPress={handleMax}>
-                <RcIconMaxButton
-                  width={40}
-                  height={26}
-                  style={styles.maxBtnBox}
-                />
+              <TouchableOpacity onPress={handleMax} style={styles.maxBtnBox}>
+                <Text style={styles.maxBtnText}>MAX</Text>
               </TouchableOpacity>
             )}
             <View style={styles.vecticalLine} />
@@ -185,7 +181,6 @@ const BridgeToken = ({
                 token={token}
                 onTokenChange={onChangeToken}
                 chainId={chainObj?.serverId!}
-                type={'to'}
                 placeholder={t('page.swap.search-by-name-address')}
               />
             ) : (
@@ -210,7 +205,7 @@ const BridgeToken = ({
                 <TouchableOpacity
                   onPress={() => openFeePopup(true)}
                   style={styles.infoIcon}>
-                  <RcIcHelp />
+                  <RcIcHelp color={colors2024['neutral-secondary']} />
                 </TouchableOpacity>
               )}
             </View>
@@ -267,7 +262,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   maxBtnBox: {
+    borderRadius: 8,
+    padding: 4,
+    backgroundColor: colors2024['brand-light-1'],
     marginRight: 8,
+  },
+  maxBtnText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
+    fontWeight: '700',
   },
   header: {
     flexDirection: 'row',
@@ -318,7 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     color: colors2024['neutral-title-1'],
     fontSize: 28,
-    // fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     // height: 36,
     lineHeight: 36,

@@ -930,10 +930,10 @@
       "rabbyFee": {
         "title": "Rabby fee",
         "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a 0.25% fee (0% for wrapping), which is automatically included in the quote.",
-        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a 0.25% fee, which is automatically included in the quote.",
+        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <0> 0.25% fee </0>, which is automatically included in the quote.",
         "wallet": "Wallet",
         "rate": "Fee rate",
-        "button": "Got it"
+        "button": "I Got it"
       },
       "lowCreditModal": {
         "title": "This token has a low credit value",
@@ -960,6 +960,9 @@
       "Select": "Select",
       "select-chain": "Select Chain",
       "no-quote-found": "No quote found. Please try other token pairs.",
+      "token": "Token",
+      "value": "Value",
+      "liquidity": "Liquidity",
       "no-quote": "No Quote",
       "title": "Bridge",
       "history": "Bridge history",

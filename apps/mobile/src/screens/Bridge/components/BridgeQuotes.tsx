@@ -30,6 +30,8 @@ import { QuoteLoading } from './loading';
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
     backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   refreshBox: {
     flexDirection: 'row',
@@ -74,7 +76,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['blue-default'],
+    color: colors2024['brand-default'],
   },
   radioContainer: {
     margin: 0,
@@ -199,7 +201,7 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
   const { visible, onClose, loading } = props;
   const refresh = useSetRefreshId();
 
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+  const { styles, colors2024, colors, isLight } = useTheme2024({ getStyle });
 
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   // const [loading, setLoading] = useState(false);
@@ -253,14 +255,14 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
       snapPoints={['90%']}
       onDismiss={onClose}
       enableDismissOnClose
-      enableContentPanningGesture={false}
+      // enableContentPanningGesture={false}
       handleStyle={styles.bottomBg}
       backgroundStyle={styles.bottomBg}>
       <LinearGradient
-        colors={['#FFF', '#F9F9F9']} // 渐变颜色
-        locations={[0.0745, 0.2242]} // 控制渐变颜色停靠位置（7.45% 和 22.42%）
-        start={{ x: 0, y: 0 }} // 渐变从上到下
-        end={{ x: 0, y: 1 }} // 渐变从上到下
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        locations={[0.0745, 0.2242]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={{ flex: 1 }}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>
@@ -284,13 +286,18 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
             loading={props.loading}
             sortIncludeGasFee={sortIncludeGasFee}
           />
+          <View style={{ height: 120 }} />
         </BottomSheetScrollView>
         {/* <View style={styles.floatBottom}> */}
         <LinearGradient
-          colors={['#FFF', 'rgba(249, 249, 249, 0.30)']} // 渐变的两种颜色
-          locations={[0.6393, 1]} // 控制渐变颜色的停靠位置（63.93% 和 105.74%）
-          start={{ x: 0, y: 1 }} // 从下到上的渐变方向
-          end={{ x: 0, y: 0 }} // 从下到上的渐变方向
+          colors={
+            isLight
+              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
+              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
+          }
+          locations={[0.6393, 1]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 0, y: 0 }}
           style={styles.floatBottom}>
           <Radio
             checked={!!sortIncludeGasFee}

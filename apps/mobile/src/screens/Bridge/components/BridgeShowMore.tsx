@@ -315,7 +315,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sourceLogo: { width: 18, height: 18, borderRadius: 16 },
   sourceName: {
-    color: colors2024['blue-default'],
+    color: colors2024['brand-default'],
     fontWeight: '500',
     marginLeft: 8,
     textDecorationLine: 'underline',

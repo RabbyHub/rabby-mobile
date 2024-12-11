@@ -57,7 +57,7 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   container: {
     flex: 1,
@@ -167,7 +167,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     // left: 0,
     // bottom: 0,
     height: 140,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     padding: 20,
   },

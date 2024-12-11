@@ -147,7 +147,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
             }}>
             <RcIconBluePolygon
               color={
-                tips ? colors2024['red-default'] : colors2024['blue-default']
+                tips ? colors2024['red-default'] : colors2024['brand-default']
               }
             />
           </Animated.View>
@@ -237,7 +237,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['blue-default'],
+    color: colors2024['brand-default'],
     textDecorationLine: 'underline',
   },
   warning: {
@@ -276,7 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   item: {
     flexDirection: 'row',
-    backgroundColor: colors2024['neutral-card-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
     justifyContent: 'center',
     alignItems: 'center',
     height: 40,
