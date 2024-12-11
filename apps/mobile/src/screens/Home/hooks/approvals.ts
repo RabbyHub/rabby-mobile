@@ -150,6 +150,11 @@ export const useApprovalAlertCounts = () => {
     acc => !FILTER_ACCOUNT_TYPES.includes(acc.type),
   );
 
+  useEffect(() => {
+    forceUpdate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayAccounts?.length]);
+
   const isNeedFetchData = useMemoizedFn(() => {
     const currentTime = Date.now();
     const diff = currentTime - lastTimeStamps;
