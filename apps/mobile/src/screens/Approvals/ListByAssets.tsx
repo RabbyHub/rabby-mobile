@@ -24,6 +24,7 @@ import { SectionListProps } from 'react-native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import ApprovalAssetRow from './components/ApprovalAssetRow';
 import { ApprovalsLayouts } from './layout';
+import { IS_IOS } from '@/core/native/utils';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -136,7 +137,14 @@ export default function ListByAssets() {
             {isFetchingNextPage ? <ActivityIndicator /> : null}
           </View>
         }
-        style={styles.list}
+        style={[
+          styles.list,
+          {
+            paddingHorizontal:
+              ApprovalsLayouts.innerContainerHorizontalOffset -
+              (IS_IOS ? 2 : 0),
+          },
+        ]}
         contentContainerStyle={[
           styles.listContainer,
           !!sectionList.length && styles.round,

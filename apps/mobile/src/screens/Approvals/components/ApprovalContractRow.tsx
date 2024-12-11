@@ -36,7 +36,7 @@ import { HighlightText } from '@/components2024/HighlightText';
 
 export const ContractFloorLayouts = {
   floorHeader: { paddingTop: 0 },
-  floor2: { marginTop: 17 },
+  floor2: { marginTop: 16 },
   floor3: { marginTop: 16 },
 };
 
@@ -193,7 +193,6 @@ function CardProto({
     <TouchableView
       style={[
         styles.container,
-        contract?.risk_alert ? styles.containerWithRisky : {},
         isTreatedAsSelected && styles.selectedContainer,
         risky && styles.riskContainer,
         style,
@@ -448,12 +447,11 @@ export const getCardStyles = createGetStyles2024(ctx => {
 
   return {
     container: {
-      borderRadius: 30,
+      borderRadius: 24,
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
-      height: ApprovalsLayouts.contractRowHeight,
       width: '100%',
       shadowColor: colors2024['neutral-black'],
       shadowOffset: {
@@ -477,9 +475,6 @@ export const getCardStyles = createGetStyles2024(ctx => {
       },
       shadowOpacity: 0.06,
       shadowRadius: 60,
-    },
-    containerWithRisky: {
-      height: ApprovalsLayouts.contractRowHeightWithRiskAlert,
     },
     selectedContainer: {
       ...selectableStyles.selectedContainer,

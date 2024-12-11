@@ -402,11 +402,11 @@ export const getCardStyles = createGetStyles2024(ctx => {
 
   return {
     container: {
-      borderRadius: 30,
+      borderRadius: 24,
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      paddingHorizontal: ApprovalsLayouts.contractCardPaddingHorizontal,
+      paddingHorizontal: 16,
       paddingVertical: 22,
       width: '100%',
       ...selectableStyles.container,
@@ -502,6 +502,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
     contractAddrText: {
       color: colors2024['neutral-title-1'],
       fontSize: 17,
+      fontFamily: 'SF Pro Rounded',
       fontWeight: '800',
     },
     contractName: {
@@ -571,7 +572,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       color: colors2024['orange-default'],
     },
     floorValueDanger: {
-      color: colors2024['red-dark'],
+      color: colors2024['red-default'],
     },
     floorValueUnderlineDefault: {
       borderColor: 'transparent',

@@ -25,6 +25,7 @@ import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
+import { IS_IOS } from '@/core/native/utils';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -55,8 +56,13 @@ export default function ListByContracts() {
           style={[
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 16 },
+            {
+              paddingHorizontal:
+                ApprovalsLayouts.innerContainerHorizontalOffset -
+                (IS_IOS ? 2 : 0),
+            },
           ]}>
-          <ApprovalContractRow style={styles.cardContainer} contract={item} />
+          <ApprovalContractRow contract={item} />
         </View>
       );
     },
@@ -195,12 +201,6 @@ const getStyles = createGetStyles(colors => {
     },
     itemWrapper: {
       width: '100%',
-      paddingHorizontal: 16,
-    },
-    cardContainer: {
-      maxWidth:
-        Dimensions.get('window').width -
-        ApprovalsLayouts.innerContainerHorizontalOffset * 2,
     },
     footContainer: {},
 

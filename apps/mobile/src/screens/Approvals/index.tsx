@@ -62,6 +62,7 @@ const ApprovalScreenContainer = () => {
       <MaterialTabBar
         {...props}
         scrollEnabled={false}
+        style={styles.tabBarWrap}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
         TabItemComponent={renderTabItem}
@@ -70,7 +71,14 @@ const ApprovalScreenContainer = () => {
         labelStyle={styles.label}
       />
     ),
-    [colors2024, renderTabItem, styles.indicator, styles.label, styles.tabBar],
+    [
+      colors2024,
+      renderTabItem,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabBarWrap,
+    ],
   );
 
   const getHeaderTitle = React.useCallback(() => {
@@ -220,6 +228,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderBottomWidth: 0.5,
     borderColor: colors2024['neutral-line'],
+  },
+  tabBarWrap: {
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   label: {
     fontSize: 16,
