@@ -101,7 +101,7 @@ export function ApprovalAddressListScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer2024>
+    <NormalScreenContainer2024 style={styles.root}>
       <FlatList
         data={displayAccounts}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
@@ -127,6 +127,9 @@ export function ApprovalAddressListScreen(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(() => ({
+  root: {
+    paddingBottom: 56,
+  },
   listContainer: {
     flex: 1,
     paddingHorizontal: 16,
