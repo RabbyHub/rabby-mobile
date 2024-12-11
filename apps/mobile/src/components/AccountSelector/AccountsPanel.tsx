@@ -320,7 +320,7 @@ export function AccountsPanelInSheetModal({
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
-  scene?: 'GasAccount' | undefined;
+  scene?: 'GasAccount' | 'receive' | undefined;
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
   >['defaultPressAction'];
@@ -328,6 +328,7 @@ export function AccountsPanelInSheetModal({
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
   const isGasAccount = scene === 'GasAccount';
+  const isReceive = scene === 'receive';
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
 
@@ -337,10 +338,10 @@ export function AccountsPanelInSheetModal({
   }, []);
 
   const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] = React.useState(
-    !isGasAccount,
+    !isGasAccount && !isReceive,
   );
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
-    React.useState(!isGasAccount);
+    React.useState(!isGasAccount && !isReceive);
 
   // combine data for a entire Flatlist
   const combinedData = [
@@ -436,7 +437,7 @@ export function AccountsPanelInSheetModal({
           return true;
       }
     },
-    [safeAddressNavCollapsed, watchAddressNavCollapsed, isGasAccount],
+    [safeAddressNavCollapsed, isGasAccount, watchAddressNavCollapsed],
   );
 
   return (

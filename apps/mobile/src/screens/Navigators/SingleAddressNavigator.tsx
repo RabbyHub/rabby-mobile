@@ -27,7 +27,7 @@ export function SingleAddressNavigator() {
         options={mergeScreenOptions({
           headerShown: true,
           headerRight: RightMore,
-          headerTitleAlign: 'left',
+          headerTitle: '',
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-2'],
           },

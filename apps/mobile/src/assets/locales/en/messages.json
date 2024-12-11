@@ -733,6 +733,9 @@
       "header": {
         "title": "Approvals on {{ address }}"
       },
+      "list": {
+        "symbol": "Approvals"
+      },
       "tab-switch": {
         "contract": "By Contracts",
         "assets": "By Assets"
@@ -765,7 +768,7 @@
         }
       },
       "search": {
-        "placeholder": "Search {{ type }} by name/address"
+        "placeholder": "Search by name/address"
       },
       "tableConfig": {
         "byContracts": {
@@ -780,8 +783,14 @@
             "contractTrustValue": "Trust value refers to the total asset value spent by this contract. A low trust value indicates either risk or inactivity for 180 days.",
             "contractTrustValueWarning": "The contract trust value < $100,000",
             "contractTrustValueDanger": "The contract trust value < $10,000",
+            "normalTrustValueDanger": "The contract trust value:{{ contractUsdText }}",
+            "revokeDangerTitle": "Contract 24h Revoke Trends > 4",
+            "revokeWarningTitle": "Contract 24h Revoke double than Revoke",
             "revokeTrendsValueWarning": "Recent revokes are greater than double the number of newly approved users.",
-            "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users."
+            "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users.",
+            "revokeNewApproved": "Newly approved users(24h): {{ count }}",
+            "revokeRecenet": "Recent revokes(24h): {{ count }}",
+            "button": "I Got It."
           }
         },
         "byAssets": {
@@ -807,6 +816,7 @@
         "unSelectAll": "Unselect All",
         "confirm": "Confirm {{ selectedCount }}",
         "title": "Approvals",
+        "contractTitle": "Approval Details",
         "tooltipPermit2": "This approval is approved via Permit2 contract:\n{{ permit2Id }}"
       }
     },
@@ -925,10 +935,10 @@
       "rabbyFee": {
         "title": "Rabby fee",
         "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a 0.25% fee (0% for wrapping), which is automatically included in the quote.",
-        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a 0.25% fee, which is automatically included in the quote.",
+        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <0> 0.25% fee </0>, which is automatically included in the quote.",
         "wallet": "Wallet",
         "rate": "Fee rate",
-        "button": "Got it"
+        "button": "I Got it"
       },
       "lowCreditModal": {
         "title": "This token has a low credit value",
@@ -936,9 +946,32 @@
       }
     },
     "bridge": {
+      "showMore": {
+        "title": "Show More",
+        "source": "Bridge Source"
+      },
+      "recommendFromToken": "Bridge from <1></1> for an available quote",
+      "est-payment": "Est. Payment:",
+      "est-receiving": "Est. Receiving:",
+      "est-difference": "Est. Difference:",
+      "loss-tips": "You're losing {{usd}}. Try a different amount.",
+      "price-impact": "Price Impact",
+      "From": "From",
+      "bridgeFrom": "Bridge From",
+      "bridge-from": "Bridge from",
+      "for-available-quote": "for an available quote",
+      "To": "To",
+      "Balance": "Balance: ",
+      "Select": "Select",
+      "select-chain": "Select Chain",
+      "no-quote-found": "No quote found. Please try other token pairs.",
+      "token": "Token",
+      "value": "Value",
+      "liquidity": "Liquidity",
+      "no-quote": "No Quote",
       "title": "Bridge",
       "history": "Bridge history",
-      "the-following-bridge-route-are-found": "Found following bridge route",
+      "the-following-bridge-route-are-found": "Found following rates",
       "no-transaction-records": "No transaction records",
       "pendingTip": "Tx submitted. If the tx is pending for long hours, you can try to clear pending in settings.",
       "Pending": "Pending",
@@ -959,7 +992,7 @@
       "slippage-adjusted-refresh-quote": "Slippage adjusted. Refresh route.",
       "price-expired-refresh-route": "Price expired. Refresh route.",
       "approve-x-symbol": "Approve {{symbol}}",
-      "approve-and-bridge": "Approve and Bridge on {{name}}",
+      "approve-and-bridge": "Approve and Bridge",
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
@@ -2331,6 +2364,9 @@
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
       }
+    },
+    "approvalsAddressList": {
+      "title": "Approvals"
     }
   },
   "component": {

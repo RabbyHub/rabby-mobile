@@ -1,47 +1,82 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectedBridgeQuote, useSetRefreshId } from '../hooks';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { useThemeColors } from '@/hooks/theme';
-import { StyleSheet, Text, View } from 'react-native';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconSwapChecked, RcIconSwapUnchecked } from '@/assets/icons/swap';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { Radio } from '@/components/Radio';
 import { SwapRefreshBtn } from '@/screens/Swap/components/SwapRefreshBtn';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { BridgeQuoteItem } from './BridgeQuoteItem';
 import { QuoteLoading } from './loading';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
-    backgroundColor: colors['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  refreshBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatBottom: {
+    width: '100%',
+    height: 130,
+    paddingTop: 40,
+    position: 'absolute',
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 20,
-    paddingLeft: 20,
+    paddingHorizontal: 20,
+    marginBottom: 12,
     alignSelf: 'stretch',
     gap: 3,
   },
 
   headerText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   refreshText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors['neutral-body'],
-    marginLeft: 4,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    marginLeft: 8,
   },
-
+  refreshContent: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
+  },
   radioContainer: {
     margin: 0,
     padding: 0,
@@ -73,7 +108,6 @@ const getStyles = createGetStyles(colors => ({
 }));
 
 interface QuotesProps {
-  chain: CHAINS_ENUM;
   userAddress: string;
   loading: boolean;
   inSufficient: boolean;
@@ -84,9 +118,7 @@ interface QuotesProps {
   visible: boolean;
   onClose: () => void;
   payAmount: string;
-  setSelectedBridgeQuote: React.Dispatch<
-    React.SetStateAction<SelectedBridgeQuote | undefined>
-  >;
+  setSelectedBridgeQuote: (quote?: SelectedBridgeQuote) => void;
   sortIncludeGasFee: boolean;
 }
 
@@ -97,8 +129,7 @@ export const Quotes = ({
   sortIncludeGasFee,
   ...other
 }: QuotesProps) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
 
@@ -166,15 +197,34 @@ export const Quotes = ({
 };
 
 export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
-  const { visible, onClose } = props;
+  const { visible, onClose, loading } = props;
   const refresh = useSetRefreshId();
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024, colors, isLight } = useTheme2024({ getStyle });
 
   const bottomRef = useRef<BottomSheetModalMethods>(null);
+  // const [loading, setLoading] = useState(false);
 
-  const snapPoints = useMemo(() => [520], []);
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ).start();
+    } else {
+      spinValue.resetAnimation();
+    }
+  }, [loading, spinValue]);
 
   const refreshQuote = React.useCallback(() => {
     refresh(e => e + 1);
@@ -200,36 +250,71 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={snapPoints}
       ref={bottomRef}
+      snapPoints={['90%']}
       onDismiss={onClose}
       enableDismissOnClose
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
+      // enableContentPanningGesture={false}
       handleStyle={styles.bottomBg}
       backgroundStyle={styles.bottomBg}>
-      <BottomSheetScrollView style={{ flex: 1 }}>
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        locations={[0.0745, 0.2242]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ flex: 1 }}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>
             {t('page.bridge.the-following-bridge-route-are-found')}
           </Text>
-          <SwapRefreshBtn onPress={refreshQuote} />
-
+          <TouchableOpacity onPress={refreshQuote} style={styles.refreshBox}>
+            <Animated.View
+              style={{
+                transform: [{ rotate: spin }],
+                marginRight: 4,
+              }}>
+              <RcIconLoading />
+            </Animated.View>
+            <Text style={styles.refreshContent}>{t('global.refresh')}</Text>
+          </TouchableOpacity>
+          {/* <SwapRefreshBtn onPress={refreshQuote} /> */}
+        </View>
+        <BottomSheetScrollView style={{ flex: 1 }}>
+          <Quotes
+            {...props}
+            loading={props.loading}
+            sortIncludeGasFee={sortIncludeGasFee}
+          />
+          <View style={{ height: 120 }} />
+        </BottomSheetScrollView>
+        {/* <View style={styles.floatBottom}> */}
+        <LinearGradient
+          colors={
+            isLight
+              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
+              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
+          }
+          locations={[0.6393, 1]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 0, y: 0 }}
+          style={styles.floatBottom}>
           <Radio
             checked={!!sortIncludeGasFee}
             onPress={() => setSortIncludeGasFee(e => !e)}
             title={t('page.swap.sort-with-gas')}
-            checkedIcon={<RcIconSwapChecked width={16} height={16} />}
-            uncheckedIcon={<RcIconSwapUnchecked width={16} height={16} />}
+            checkedIcon={<RcIconSwapChecked width={24} height={24} />}
+            uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
             textStyle={styles.refreshText}
             right={true}
             containerStyle={styles.radioContainer}
           />
-        </View>
-        <Quotes
-          {...props}
-          loading={props.loading}
-          sortIncludeGasFee={sortIncludeGasFee}
-        />
-      </BottomSheetScrollView>
+        </LinearGradient>
+        {/* </View> */}
+      </LinearGradient>
     </AppBottomSheetModal>
   );
 };

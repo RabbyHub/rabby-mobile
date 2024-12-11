@@ -184,9 +184,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Approvals',
           ...headerPresets.withBgCard2_2024,
-          headerStyle: {
-            backgroundColor: colors?.['neutral-bg-2'],
-          },
+          headerStyle: {},
         })}
       />
 

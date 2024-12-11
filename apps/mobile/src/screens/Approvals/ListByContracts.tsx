@@ -6,7 +6,6 @@ import {
   RefreshControl,
   Platform,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import {
   ApprovalsTabView,
@@ -15,7 +14,6 @@ import {
 } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { TopSearch } from './components/TopSearch';
 import {
   type ContractApprovalItem,
   useApprovalsPage,
@@ -27,6 +25,7 @@ import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
+import { IS_IOS } from '@/core/native/utils';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -57,8 +56,13 @@ export default function ListByContracts() {
           style={[
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
+            {
+              paddingHorizontal:
+                ApprovalsLayouts.innerContainerHorizontalOffset -
+                (IS_IOS ? 2 : 0),
+            },
           ]}>
-          <ApprovalContractRow style={styles.cardContainer} contract={item} />
+          <ApprovalContractRow contract={item} />
         </View>
       );
     },
@@ -136,17 +140,9 @@ export default function ListByContracts() {
         styles.innerContainer,
         // makeDebugBorder('red')
       ]}>
-      {/* Search input area */}
-      <View
-        style={{
-          paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-        }}>
-        <TopSearch filterType={'contract'} />
-      </View>
       <Tabs.SectionList<ContractApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
-        // ListHeaderComponent={renderHeaderComponent}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? <ActivityIndicator /> : null}
@@ -155,7 +151,6 @@ export default function ListByContracts() {
         style={styles.list}
         contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
-        // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
         sections={sectionList}
         keyExtractor={keyExtractor}
@@ -192,7 +187,7 @@ const getStyles = createGetStyles(colors => {
 
     list: {},
     listContainer: {
-      paddingTop: 0,
+      paddingTop: 20,
       paddingBottom: 0,
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
@@ -206,12 +201,6 @@ const getStyles = createGetStyles(colors => {
     },
     itemWrapper: {
       width: '100%',
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-    },
-    cardContainer: {
-      maxWidth:
-        Dimensions.get('window').width -
-        ApprovalsLayouts.innerContainerHorizontalOffset * 2,
     },
     footContainer: {},
 

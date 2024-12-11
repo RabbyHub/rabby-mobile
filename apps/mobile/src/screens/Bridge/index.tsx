@@ -14,7 +14,7 @@ import {
 export const Bridge = ({
   isForMultipleAdderss,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
+  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
 
   return (
     <SettingVisibleProvider>
@@ -33,13 +33,11 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
+  // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+  //   forScene: 'MakeTransactionAbout',
+  // });
 
-  return (
-    <Bridge key={sceneCurrentAccountDepKey} {...props} isForMultipleAdderss />
-  );
+  return <Bridge {...props} isForMultipleAdderss />;
 };
 
 Bridge.ForMultipleAddress = ForMultipleAddress;

@@ -6123,7 +6123,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.25
+    "@rabby-wallet/rabby-api": 0.9.3-beta.2
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
@@ -6479,9 +6479,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.8.5":
-  version: 0.8.5
-  resolution: "@rabby-wallet/rabby-api@npm:0.8.5"
+"@rabby-wallet/rabby-api@npm:0.9.3-beta.2":
+  version: 0.9.3-beta.2
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.3-beta.2"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -6492,24 +6492,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 6c3c602761b289c9fccc50953059f6ec004e828529529527d7a13bc76a29aa19089497e12a45ce88e3e36a259b48fc2ce8770b18ceca089cefac748a29b0314a
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 0.8.5
-  resolution: "@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch::version=0.8.5&hash=51205e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    "@rabby-wallet/rabby-sign": 0.4.0
-    axios: ^0.27.2
-    axios-rate-limit: ^1.3.0
-    eth-rpc-errors: ^4.0.3
-    lodash: ^4.17.21
-    qss: ^2.0.3
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 015842a023761fdb4a99977a0d9ecd018ace94b65ab0bee92f5f4253f9fa54e2fcd80d8f955e3e52f31625f4287908d9b335aaff37b08da89f2db291c3a3faf4
+  checksum: a6ffb174a5a759fbdd9966fad4c148212cbd80c34b2b2b2191354281cafcdc39bf31b60c7128776cac4cdf6e6d0e46f49d2b3f808c6e5e64cdf48d33e17cbea6
   languageName: node
   linkType: hard
 
@@ -27507,7 +27490,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
-    "@rabby-wallet/rabby-api": 0.8.5
+    "@rabby-wallet/rabby-api": 0.9.3-beta.2
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.0
     "@rabby-wallet/rabby-swap": 0.0.42

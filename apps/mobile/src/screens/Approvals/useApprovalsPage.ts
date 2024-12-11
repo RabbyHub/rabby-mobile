@@ -1,6 +1,4 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Platform, Dimensions } from 'react-native';
-
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import PQueue from 'p-queue';
@@ -34,7 +32,7 @@ export type ApprovalAssetsItem =
   | approvalUtils.SpenderInNFTApproval
   | approvalUtils.SpenderInTokenApproval;
 
-import { groupBy, sortBy, flatten, debounce } from 'lodash';
+import { groupBy, sortBy, flatten } from 'lodash';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -47,7 +45,6 @@ import { useSheetModals } from '@/hooks/useSheetModal';
 import {
   type RevokeItemDict,
   type ApprovalProcessType,
-  checkCompareContractItem,
   makeApprovalIndexURLBase,
   encodeApprovalSpenderKey,
   parseApprovalSpenderSelection,
@@ -57,7 +54,6 @@ import {
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
-import { ObjectMirror } from '@/utils/type';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -183,22 +179,10 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     __DEV__ ? 'contract' : 'contract',
   );
 
-  const [skContract, setSKContract] = useState('');
-  const [skAssets, setSKAssets] = useState('');
+  const [searchKw, setSearchKw] = useState('');
 
-  const setSearchKw = React.useCallback(
-    (nextVal: string) => {
-      if (filterType === 'contract') {
-        setSKContract(nextVal);
-      } else {
-        setSKAssets(nextVal);
-      }
-    },
-    [filterType],
-  );
-
-  const debouncedSkContract = useDebounceValue(skContract, 250);
-  const debouncedSkAssets = useDebounceValue(skAssets, 250);
+  const debouncedSkContract = useDebounceValue(searchKw, 250);
+  const debouncedSkAssets = useDebounceValue(searchKw, 250);
 
   const queueRef = useRef(new PQueue({ concurrency: 40 }));
 
@@ -574,7 +558,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   return {
     isLoading,
     loadApprovals,
-    skContract,
     contractEmptyStatus: useMemo(() => {
       if (!sortedContractList.length) return 'none' as const;
 
@@ -582,7 +565,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
 
       return false;
     }, [sortedContractList, displaySortedContractList]),
-    skAssets,
     assetEmptyStatus: useMemo(() => {
       if (!sortedTokenApprovals.length && !sortedNftApprovals.length)
         return 'none' as const;
@@ -595,7 +577,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
       sortedNftApprovals,
       displaySortedAssetApprovalList,
     ]),
-    searchKw: filterType === 'contract' ? skContract : skAssets,
+    searchKw,
     setSearchKw,
 
     filterType,
@@ -613,9 +595,7 @@ export const ApprovalsPageContext = React.createContext<
 >({
   isLoading: false,
   loadApprovals: async () => [],
-  skContract: '',
   contractEmptyStatus: false,
-  skAssets: '',
   assetEmptyStatus: false,
   searchKw: '',
   setSearchKw: () => {},

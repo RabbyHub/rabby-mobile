@@ -1,21 +1,18 @@
 import React from 'react';
 import {
   View,
-  SectionList,
   ActivityIndicator,
   RefreshControl,
   Platform,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import {
   ApprovalsTabView,
   NotMatchedHolder,
   getScrollableSectionHeight,
 } from './components/Layout';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
-import { TopSearch } from './components/TopSearch';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
   useApprovalsPage,
@@ -27,12 +24,12 @@ import { SectionListProps } from 'react-native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import ApprovalAssetRow from './components/ApprovalAssetRow';
 import { ApprovalsLayouts } from './layout';
+import { IS_IOS } from '@/core/native/utils';
 
 const isIOS = Platform.OS === 'ios';
 
 export default function ListByAssets() {
-  const { colors, styles } = useThemeStyles(getStyles);
-  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
 
   const {
     isLoading,
@@ -51,14 +48,9 @@ export default function ListByAssets() {
   const renderItem = React.useCallback<
     SectionListProps<AssetApprovalItem>['renderItem'] & object
   >(
-    ({ item, section, index }) => {
-      const isFirstItem = index === 0;
+    ({ item }) => {
       return (
-        <View
-          style={[
-            styles.itemWrapper,
-            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
-          ]}>
+        <View style={styles.itemWrapper}>
           <ApprovalAssetRow assetApproval={item} />
         </View>
       );
@@ -66,13 +58,8 @@ export default function ListByAssets() {
     [styles],
   );
 
-  const {
-    fallList,
-    simulateLoadNext,
-    resetPage,
-    isFetchingNextPage,
-    isReachTheEnd,
-  } = usePsudoPagination(displaySortedAssetApprovalList, { pageSize: 20 });
+  const { fallList, simulateLoadNext, resetPage, isFetchingNextPage } =
+    usePsudoPagination(displaySortedAssetApprovalList, { pageSize: 20 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
@@ -142,13 +129,6 @@ export default function ListByAssets() {
         styles.innerContainer,
         // makeDebugBorder('red')
       ]}>
-      {/* Search input area */}
-      <View
-        style={{
-          paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-        }}>
-        <TopSearch filterType={'assets'} />
-      </View>
       <Tabs.SectionList<AssetApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
@@ -157,12 +137,23 @@ export default function ListByAssets() {
             {isFetchingNextPage ? <ActivityIndicator /> : null}
           </View>
         }
-        style={styles.list}
-        contentContainerStyle={styles.listContainer}
+        style={[
+          styles.list,
+          {
+            paddingHorizontal:
+              ApprovalsLayouts.innerContainerHorizontalOffset -
+              (IS_IOS ? 2 : 0),
+          },
+        ]}
+        contentContainerStyle={[
+          styles.listContainer,
+          !!sectionList.length && styles.round,
+        ]}
         renderItem={renderItem}
         // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
         sections={sectionList}
+        // sections={[]}
         keyExtractor={keyExtractor}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}
@@ -184,7 +175,7 @@ export default function ListByAssets() {
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
   return {
     emptyHolderContainer: {
       height: getScrollableSectionHeight(),
@@ -195,14 +186,22 @@ const getStyles = createGetStyles(colors => {
     },
 
     list: {
-      // ...makeDebugBorder(),
+      paddingTop: 20,
+      paddingBottom: 0,
+      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+    },
+    round: {
+      borderRadius: 24,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
     },
     listContainer: {
-      paddingTop: 0,
-      paddingBottom: 0,
+      backgroundColor: colors2024['neutral-bg-1'],
       // repair top offset due to special contentInset in iOS
       ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
       // height: '100%',
+      paddingTop: 0,
       // ...makeDebugBorder('yellow'),
     },
     listFooterContainer: {
@@ -214,7 +213,6 @@ const getStyles = createGetStyles(colors => {
     },
     itemWrapper: {
       width: '100%',
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
     },
     footContainer: {},
 

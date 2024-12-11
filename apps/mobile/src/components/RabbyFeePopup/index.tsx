@@ -6,14 +6,16 @@ import {
   useWindowDimensions,
   Dimensions,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import RCIconRabbyWhite from '@/assets/icons/swap/rabby.svg'; // Ensure this is a compatible React Native SVG component
+import { useTranslation, Trans } from 'react-i18next';
+import RCIconRabbyWhite from '@/assets2024/icons/bridge/FeeRabbyWallet.svg';
+// import RCIconRabbyWhite from '@/assets/icons/swap/rabby.svg'; // Ensure this is a compatible React Native SVG component
 import ImgMetaMask from '@/assets/icons/swap/metamask.png';
 import ImgPhantom from '@/assets/icons/swap/phantom.png';
 import ImgRabbyWallet from '@/assets/icons/swap/rabby-wallet.png';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import { Button } from '../Button';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+// import { Button } from '@components2024/swap';
+import { Button } from '@/components2024/Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -69,8 +71,7 @@ export const RabbyFeePopup = ({
   dexName?: string;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
   const { sheetModalRef } = useSheetModal();
 
   const hasSwapDexFee = useMemo(() => {
@@ -82,7 +83,7 @@ export const RabbyFeePopup = ({
 
   const snapPoints = useMemo(
     () => [
-      Math.min(type === 'swap' ? (hasSwapDexFee ? 574 : 548) : 520, height),
+      Math.min(type === 'swap' ? (hasSwapDexFee ? 694 : 668) : 620, height),
     ],
     [type, hasSwapDexFee, height],
   );
@@ -105,15 +106,31 @@ export const RabbyFeePopup = ({
       backgroundStyle={styles.sheetBg}>
       <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
         <View style={styles.iconContainer}>
-          <RCIconRabbyWhite width={36} height={30} />
+          <RCIconRabbyWhite width={70} height={70} />
         </View>
 
         <Text style={styles.title}>{t('page.swap.rabbyFee.title')}</Text>
 
         <Text style={styles.description}>
-          {type === 'swap'
-            ? t('page.swap.rabbyFee.swapDesc')
-            : t('page.swap.rabbyFee.bridgeDesc')}
+          {type === 'swap' ? (
+            t('page.swap.rabbyFee.swapDesc')
+          ) : (
+            // <Trans
+            //   t={t}
+            //   i18nKey="page.swap.rabbyFee.bridgeDesc"
+            //   // values={{ name: 'John' }}
+            //   components={{
+            //     0: <Text style={styles.highlightText} />,
+            //   }}
+            // />
+            <>
+              {
+                'Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a '
+              }
+              <Text style={styles.highlightText}>0.25% fee</Text>
+              {', which is automatically included in the quote.'}
+            </>
+          )}
         </Text>
 
         <View style={styles.header}>
@@ -133,9 +150,21 @@ export const RabbyFeePopup = ({
               ]}>
               <View style={styles.itemLeft}>
                 <Image source={item.logo} style={styles.logo} />
-                <Text style={styles.itemText}>{item.name}</Text>
+                <Text
+                  style={[
+                    styles.itemText,
+                    item.name === 'Rabby Wallet' ? styles.highItem : {},
+                  ]}>
+                  {item.name}
+                </Text>
               </View>
-              <Text style={styles.itemText}>{item.rate}</Text>
+              <Text
+                style={[
+                  styles.itemText,
+                  item.name === 'Rabby Wallet' ? styles.highItem : {},
+                ]}>
+                {item.rate}
+              </Text>
             </View>
           ))}
         </View>
@@ -161,8 +190,7 @@ function SwapAggregatorFee({
   dexName?: string;
   feeDexDesc?: string;
 }) {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
   const { width } = useWindowDimensions();
   if (dexName && feeDexDesc && DEX?.[dexName]?.logo) {
     return (
@@ -179,9 +207,9 @@ function SwapAggregatorFee({
   return null;
 }
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   sheetBg: {
-    backgroundColor: colors['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   contentContainer: {
     flex: 1,
@@ -189,46 +217,72 @@ const getStyles = createGetStyles(colors => ({
     paddingVertical: 20,
     paddingHorizontal: 20,
     paddingTop: 24,
-    backgroundColor: colors['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   iconContainer: {
-    width: 52,
-    height: 52,
+    width: 70,
+    height: 70,
+    marginVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 26,
+    borderRadius: 45,
     backgroundColor: colors['blue-default'],
   },
   title: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    textAlign: 'center',
-    fontWeight: '500',
-    color: colors['neutral-title1'],
+    fontWeight: '700',
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
     marginVertical: 12,
   },
   description: {
-    fontSize: 14,
+    fontSize: 17,
     textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
+  },
+  highlightText: {
     color: colors['neutral-body'],
-    lineHeight: 21,
+    fontWeight: '700',
   },
   header: {
+    backgroundColor: colors2024['neutral-bg-2'],
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 16,
+    paddingVertical: 15,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    borderWidth: 0.5,
+    // borderBottomColor: colors2024['neutral-line'],
+    borderColor: colors2024['neutral-line'],
     marginTop: 20,
-    marginBottom: 8,
+    height: 52,
+    alignItems: 'center',
+    // marginBottom: 8,
   },
   headerText: {
-    fontSize: 12,
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-secondary'],
+    fontSize: 17,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+    lineHeight: 22,
   },
   listContainer: {
     width: '100%',
     borderWidth: 0.5,
-    borderColor: colors['neutral-line'],
-    borderRadius: 6,
+    borderColor: colors2024['neutral-line'],
+    borderTopWidth: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    // borderRadius: 6,
   },
   listItem: {
     flexDirection: 'row',
@@ -236,6 +290,7 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    height: 63,
     borderBottomWidth: 0.5,
     borderBottomColor: colors['neutral-line'],
   },
@@ -252,9 +307,16 @@ const getStyles = createGetStyles(colors => ({
     marginRight: 8,
   },
   itemText: {
-    fontSize: 13,
+    color: colors2024['neutral-body'],
+    fontSize: 16,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
-    color: colors['neutral-title1'],
+    lineHeight: 20,
+  },
+  highItem: {
+    color: colors['neutral-title-1'],
+    fontWeight: '700',
   },
   dexFeeContainer: {
     width: '100%',
@@ -279,5 +341,6 @@ const getStyles = createGetStyles(colors => ({
     flex: 1,
     justifyContent: 'flex-end',
     width: '100%',
+    marginBottom: 20,
   },
 }));

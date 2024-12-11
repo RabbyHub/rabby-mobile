@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Platform,
   View,
@@ -8,23 +8,24 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { Button } from '@/components';
-
+import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { Button } from '@/components2024/Button';
 import { useTranslation, Trans } from 'react-i18next';
-import { createGetStyles } from '@/utils/styles';
 
-import {
-  RcIconCheckedCC,
-  RcIconIndeterminateCC,
-  RcIconNotMatchedCC,
-  RcIconUncheckCC,
-} from '../icons';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+
+import { RcIconPartChecked } from '../icons';
+import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
+
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
+import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { useApprovalAlertCounts } from '@/screens/Home/hooks/approvals';
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -61,6 +62,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
   const {
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
+  const { safeOffBottom } = useSafeSizes();
 
   return (
     <ViewComponent
@@ -69,7 +71,8 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
         props?.style,
         {
           paddingTop: ApprovalsLayouts.tabbarHeight,
-          paddingBottom: safeSizes.bottomAreaHeight,
+          paddingBottom:
+            safeSizes.bottomAreaHeight + (isAndroid ? safeOffBottom : 0),
         },
       ]}>
       <View style={[{ height: '100%', width: '100%' }, innerStyle]}>
@@ -82,11 +85,11 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
 export function ApprovalsBottomArea() {
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle });
 
   const [showModal, setShowModal] = useState(false);
 
+  const { forceUpdate } = useApprovalAlertCounts();
   const {
     filterType,
     loadApprovals,
@@ -94,6 +97,8 @@ export function ApprovalsBottomArea() {
   } = useApprovalsPage();
   const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
     useRevokeApprovals();
+
+  const timeoutId = React.useRef<ReturnType<typeof setTimeout>>();
 
   const { currentRevokeList, revokeSummary } = React.useMemo(() => {
     const list =
@@ -131,16 +136,34 @@ export function ApprovalsBottomArea() {
     setRefState: setIsSubmitLoading,
     stateRef: isSubmitLoadingRef,
   } = useRefState(false);
+  const { safeOffBottom } = useSafeSizes();
+
+  useEffect(() => {
+    return () => {
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
+    };
+  }, []);
 
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
-    if (isSubmitLoadingRef.current) return;
+    if (isSubmitLoadingRef.current) {
+      return;
+    }
     setIsSubmitLoading(true, true);
 
     apiApprovals
       .revoke({ list: currentRevokeList })
       .then(() => {
-        loadApprovals();
+        if (timeoutId.current) {
+          clearTimeout(timeoutId.current);
+          timeoutId.current = undefined;
+        }
+        forceUpdate();
+        timeoutId.current = setTimeout(() => {
+          loadApprovals();
+        }, 1000);
         resetRevokeMaps();
       })
       .catch(err => {
@@ -150,9 +173,10 @@ export function ApprovalsBottomArea() {
         setIsSubmitLoading(false, true);
       });
   }, [
-    currentRevokeList,
     isSubmitLoadingRef,
     setIsSubmitLoading,
+    currentRevokeList,
+    forceUpdate,
     resetRevokeMaps,
     loadApprovals,
   ]);
@@ -170,13 +194,12 @@ export function ApprovalsBottomArea() {
 
   return (
     <View
-      style={[styles.bottomDockArea, { height: safeSizes.bottomAreaHeight }]}>
+      style={[
+        styles.bottomDockArea,
+        isAndroid && { paddingBottom: safeOffBottom },
+      ]}>
       <Button
         disabled={!couldSubmit}
-        containerStyle={styles.buttonContainer}
-        titleStyle={styles.buttonText}
-        disabledTitleStyle={styles.buttonText}
-        type="primary"
         title={buttonTitle}
         loading={isSubmitLoading}
         onPress={onRevoke}
@@ -208,9 +231,11 @@ export function ApprovalsBottomArea() {
                 'page.approvals.component.RevokeButton.permit2Batch.modalContent',
               )}
             </Text>
-            <TouchableOpacity style={styles.okButton} onPress={handleRevoke}>
-              <Text style={styles.okButtonText}>{t('global.confirm')}</Text>
-            </TouchableOpacity>
+            <FooterButtonGroup
+              style={styles.btns}
+              onCancel={() => setShowModal(false)}
+              onConfirm={handleRevoke}
+            />
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -218,81 +243,69 @@ export function ApprovalsBottomArea() {
   );
 }
 
-const getStyles = createGetStyles(colors => {
-  return {
-    bottomDockArea: {
-      bottom: 0,
-      width: '100%',
-      padding: 20,
-      height: ApprovalsLayouts.bottomAreaHeight,
-      backgroundColor: colors['neutral-bg1'],
-      // ...makeDevOnlyStyle({ backgroundColor: 'transparent' }),
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
-      position: 'absolute',
-    },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  bottomDockArea: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    backgroundColor: 'transparent',
+    width: '100%',
+    marginBottom: 56,
+  },
 
-    buttonContainer: {
-      width: '100%',
-      height: 52,
-      borderRadius: 6,
-      ...(!isAndroid && {
-        marginBottom: 16,
-      }),
-    },
-
-    buttonText: {
-      color: colors['neutral-title-2'],
-    },
-
-    modalContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-      width: '80%',
-      backgroundColor: colors['neutral-bg1'],
-      borderRadius: 16,
-      padding: 20,
-      alignItems: 'center',
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: '500',
-      lineHeight: 24,
-      color: colors['neutral-title1'],
-      textAlign: 'center',
+  buttonContainer: {
+    width: '100%',
+    height: 52,
+    borderRadius: 6,
+    ...(!isAndroid && {
       marginBottom: 16,
-    },
-    highlightText: {
-      color: colors['blue-default'],
-    },
-    modalBody: {
-      fontSize: 14,
-      color: colors['neutral-body'],
-      lineHeight: 20,
-      textAlign: 'center',
-      marginBottom: 60,
-    },
-    okButton: {
-      width: '100%',
-      height: 48,
-      backgroundColor: colors['blue-default'],
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 8,
-    },
-    okButtonText: {
-      color: colors['neutral-title2'],
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '600',
-    },
-  };
-});
+    }),
+  },
+
+  buttonText: {
+    color: colors2024['neutral-title-2'],
+  },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  highlightText: {
+    color: colors2024['brand-default'],
+  },
+  modalBody: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    lineHeight: 20,
+  },
+  btns: {
+    padding: 0,
+    marginTop: 20,
+  },
+}));
 
 export const getTooltipContentStyles = createGetStyles(colors => {
   return {
@@ -301,6 +314,7 @@ export const getTooltipContentStyles = createGetStyles(colors => {
       padding: 12,
       alignItems: 'center',
       flexDirection: 'row',
+      fontFamily: 'SF Pro Rounded',
     },
     tipContentIcon: {
       width: 12,
@@ -324,7 +338,9 @@ export function SelectionCheckbox({
 
   if (isSelectedAll) {
     return (
-      <RcIconCheckedCC
+      <RcIconHasCheckbox
+        width={size}
+        height={size}
         style={[contractCheckboxStyle, style]}
         color={colors['blue-default']}
       />
@@ -333,7 +349,7 @@ export function SelectionCheckbox({
 
   if (isSelectedPartial) {
     return (
-      <RcIconIndeterminateCC
+      <RcIconPartChecked
         width={size}
         height={size}
         style={[contractCheckboxStyle, style]}
@@ -343,7 +359,7 @@ export function SelectionCheckbox({
   }
 
   return (
-    <RcIconUncheckCC
+    <RcIconNoCheck
       width={size}
       height={size}
       style={[contractCheckboxStyle, style]}
@@ -361,19 +377,21 @@ export function NotMatchedHolder({
   style,
   text = 'Not Matched',
 }: RNViewProps & { text?: string }) {
-  const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);
+  const { searchKw, setSearchKw } = useApprovalsPage();
+  const { styles } = useTheme2024({ getStyle: getNotMatchedHolderStyle });
   return (
     <View style={[styles.container, style]}>
-      <RcIconNotMatchedCC
-        width={32}
-        height={32}
-        color={colors['neutral-body']}
-      />
+      <RcIconNoFind width={159} height={117} />
       <Text style={styles.emptyText}>{text}</Text>
+      {!!searchKw && (
+        <TouchableOpacity onPress={() => setSearchKw('')}>
+          <Text style={styles.cleanText}>Review All approvals</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
-const getNotMatchedHolderStyle = createGetStyles(colors => {
+const getNotMatchedHolderStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       flex: 1,
@@ -381,27 +399,37 @@ const getNotMatchedHolderStyle = createGetStyles(colors => {
       justifyContent: 'center',
     },
     emptyText: {
+      marginTop: 21,
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-info'],
+      fontWeight: '400',
+    },
+    cleanText: {
       marginTop: 12,
-      fontSize: 15,
-      color: colors['neutral-body'],
-      fontWeight: '600',
+      fontWeight: '700',
+      fontSize: 16,
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });
 
-export const getSelectableContainerStyle = createGetStyles(colors => {
-  return {
-    container: {
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors['neutral-card1'],
-    },
-    selectedContainer: {
-      borderColor: colors['blue-default'],
-      backgroundColor: colors['blue-light1'],
-    },
-  };
-});
+export const getSelectableContainerStyle = createGetStyles2024(
+  ({ colors, colors2024 }) => {
+    return {
+      container: {
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: colors2024['neutral-line'],
+      },
+      selectedContainer: {
+        backgroundColor: colors2024['brand-light-1'],
+      },
+    };
+  },
+);
 
 export function BottomSheetModalFooterButton({
   ...buttonProps
@@ -439,10 +467,6 @@ export function BottomSheetModalFooterButton({
 const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
   return {
     footerContainer: {
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
-      backgroundColor: colors['neutral-bg1'],
       paddingVertical: 20,
       paddingHorizontal: 20,
       height: ApprovalsLayouts.bottomSheetConfirmAreaHeight,

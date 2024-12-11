@@ -84,7 +84,7 @@ const triggerLight = () => {
     ignoreAndroidSystemSettings: false,
   });
 };
-function BadgeText({
+export function BadgeText({
   count,
   style,
 }: {
@@ -288,7 +288,10 @@ export const HomeTopArea = () => {
               });
               moresheetModalRef.current?.dismiss();
             },
-            badge: approvalRiskAlert,
+            badge:
+              currentAccount?.type === KEYRING_TYPE.WatchAddressKeyring
+                ? 0
+                : approvalRiskAlert,
           },
         ]),
   ];
