@@ -105,10 +105,10 @@ const BridgeToken = ({
   }, [clickMaxBtnCount]);
 
   const handleScroll = () => {
-    setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
-      inputRef.current?.blur();
-    }, 200);
+    // setTimeout(() => {
+    // scrollRef.current?.scrollTo({ y: 0, animated: true });
+    inputRef.current?.blur();
+    // }, 200);
   };
 
   const showNoQuote = useMemo(() => isToken && !!noQuote, [noQuote, isToken]);
@@ -174,12 +174,10 @@ const BridgeToken = ({
               {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
             </Text>
           ) : (
-            <ScrollView
-              ref={scrollRef}
-              horizontal={true}
-              keyboardShouldPersistTaps={'handled'}>
+            <View style={styles.inputBox}>
               <TextInput
                 numberOfLines={1}
+                multiline={false}
                 textAlign="left"
                 keyboardType="numeric"
                 inputMode="decimal"
@@ -191,7 +189,7 @@ const BridgeToken = ({
                 onChangeText={inputChange}
                 ref={inputRef}
               />
-            </ScrollView>
+            </View>
           )}
           <View style={styles.tokenSelectBox}>
             {isFromToken && !value && (
@@ -340,6 +338,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   showNoQuoteText: {
     color: colors2024['neutral-info'],
   },
+  inputBox: {
+    flex: 1,
+    height: 36,
+  },
   input: {
     flex: 1,
     paddingVertical: 0,
@@ -351,7 +353,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     // height: 36,
-    width: 500,
     lineHeight: 36,
     paddingLeft: 0,
     borderWidth: 0,
