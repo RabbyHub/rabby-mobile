@@ -3,7 +3,6 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { ApprovalComponentType } from '.';
 
 export const WaitingSignComponent: Record<string, ApprovalComponentType> = {
-  [KEYRING_CLASS.WALLETCONNECT]: 'WatchAddressWaiting',
   [KEYRING_CLASS.MNEMONIC]: 'PrivatekeyWaiting',
   [KEYRING_CLASS.PRIVATE_KEY]: 'PrivatekeyWaiting',
   [KEYRING_CLASS.HARDWARE.LEDGER]: 'LedgerHardwareWaiting',

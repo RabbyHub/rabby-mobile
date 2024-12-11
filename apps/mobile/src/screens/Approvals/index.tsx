@@ -1,21 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, Platform, StyleSheet, Dimensions } from 'react-native';
+import { View, Platform, Dimensions } from 'react-native';
 import {
   Tabs,
   MaterialTabBar,
   MaterialTabItem,
 } from 'react-native-collapsible-tab-view';
 
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useCurrentAccount } from '@/hooks/account';
-import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
 import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
@@ -28,17 +23,21 @@ import {
 } from './useApprovalsPage';
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
-import NetSwitchTabs, {
-  useSwitchNetTab,
-} from '@/components/PillsSwitch/NetSwitchTabs';
-import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
 import { IS_IOS } from '@/core/native/utils';
-
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { ellipsisAddress } from '@/utils/address';
+import { HeaderRight } from './components/Headers/HeaderRight';
+import { HeaderCenter } from './components/Headers/HeaderCenter';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
   const { currentAccount } = useCurrentAccount();
-  const { styles, colors } = useThemeStyles(getStyles);
+  const [isSearching, setIsSearching] = useState(false);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const { filterType, searchKw, setSearchKw, setFilterType } =
+    useApprovalsPage();
+
   const { t } = useTranslation();
 
   const renderTabItem = React.useCallback<
@@ -63,18 +62,75 @@ const ApprovalScreenContainer = () => {
       <MaterialTabBar
         {...props}
         scrollEnabled={false}
+        style={styles.tabBarWrap}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
         TabItemComponent={renderTabItem}
-        activeColor={colors['blue-default']}
-        inactiveColor={colors['neutral-body']}
+        activeColor={colors2024['brand-default']}
+        inactiveColor={colors2024['neutral-secondary']}
         labelStyle={styles.label}
       />
     ),
-    [colors, renderTabItem, styles.indicator, styles.label, styles.tabBar],
+    [
+      colors2024,
+      renderTabItem,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabBarWrap,
+    ],
   );
 
-  const { filterType, setFilterType } = useApprovalsPage();
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <HeaderCenter
+        textTitle={
+          currentAccount?.address
+            ? currentAccount?.aliasName ||
+              ellipsisAddress(currentAccount.address)
+            : 'Approvals'
+        }
+        type={filterType}
+        inputValue={searchKw}
+        inputOnChange={setSearchKw}
+        isSearching={isSearching}
+      />
+    );
+  }, [
+    currentAccount?.address,
+    currentAccount?.aliasName,
+    filterType,
+    isSearching,
+    searchKw,
+    setSearchKw,
+  ]);
+
+  const getHeaderRight = React.useCallback(() => {
+    return (
+      <HeaderRight
+        isSearching={isSearching}
+        onTap={() => {
+          if (isSearching) {
+            setSearchKw('');
+          }
+          setIsSearching(pre => !pre);
+        }}
+      />
+    );
+  }, [isSearching, setSearchKw]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      headerRight: getHeaderRight,
+    });
+  }, [
+    setNavigationOptions,
+    getHeaderTitle,
+    currentAccount?.aliasName,
+    isSearching,
+    getHeaderRight,
+  ]);
 
   if (!currentAccount?.address) {
     return null;
@@ -114,8 +170,10 @@ const ApprovalScreenContainer = () => {
   );
 };
 
-function MainnetApprovalsContent() {
-  const { styles } = useTheme2024({ getStyle: getApprovalsContentStyle });
+const IOS_SWIPABLE_LEFT_OFFSET = !IS_IOS ? 0 : 2;
+
+export default function ApprovalsScreen() {
+  const { styles } = useTheme2024({ getStyle });
 
   const approvalsPageCtx = useApprovalsPageOnTop({ isTestnet: false });
 
@@ -126,96 +184,78 @@ function MainnetApprovalsContent() {
   }, [loadApprovals]);
 
   return (
-    <ApprovalsPageContext.Provider value={approvalsPageCtx}>
-      <View style={styles.verticalContainer}>
-        <ApprovalScreenContainer />
+    <NormalScreenContainer2024 overwriteStyle={styles.root}>
+      <ApprovalsPageContext.Provider value={approvalsPageCtx}>
+        <View style={styles.verticalContainer}>
+          <ApprovalScreenContainer />
 
-        <BottomSheetApprovalContract />
-        <BottomSheetApprovalAsset />
+          <BottomSheetApprovalContract />
+          <BottomSheetApprovalAsset />
 
-        <ApprovalsBottomArea />
-      </View>
-    </ApprovalsPageContext.Provider>
-  );
-}
-
-const IOS_SWIPABLE_LEFT_OFFSET = !IS_IOS ? 0 : 2;
-const getApprovalsContentStyle = createGetStyles2024(ctx => {
-  return {
-    verticalContainer: {
-      flex: 1,
-      alignItems: 'center',
-      backgroundColor: ctx.colors['neutral-bg2'],
-      position: 'relative',
-    },
-  };
-});
-
-export default function ApprovalsScreen() {
-  const { selectedTab, onTabChange } = useSwitchNetTab();
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
-  return (
-    <NormalScreenContainer>
-      <NetSwitchTabs
-        value={selectedTab}
-        onTabChange={onTabChange}
-        style={styles.netTabs}
-      />
-      {selectedTab === 'mainnet' ? (
-        <MainnetApprovalsContent />
-      ) : (
-        <View style={styles.notFound}>
-          <RcIconNotFindCC color={colors['neutral-body']} />
-          <Text style={styles.notFoundText}>
-            Not supported for custom network
-          </Text>
+          <ApprovalsBottomArea />
         </View>
-      )}
-    </NormalScreenContainer>
+      </ApprovalsPageContext.Provider>
+    </NormalScreenContainer2024>
   );
 }
 
-const getStyles = createGetStyles(colors => {
-  return StyleSheet.create({
-    tabContainer: {
-      backgroundColor: colors['neutral-bg2'],
-    },
-    tabHeaderContainer: {
-      backgroundColor: colors['neutral-bg2'],
-      shadowColor: 'transparent',
-      borderTopWidth: 0,
-      borderColor: colors['neutral-line'],
-      borderWidth: StyleSheet.hairlineWidth,
-      // ...makeDevOnlyStyle({ backgroundColor: 'transparent' }),
-      // ...makeDebugBorder('red'),
-    },
-    tabBar: {
-      height: ApprovalsLayouts.tabbarHeight,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: '500',
-      textTransform: 'none',
-    },
-    indicator: {
-      backgroundColor: colors['blue-default'],
-      height: 2,
-    },
-    netTabs: {
-      marginBottom: 18,
-    },
-    notFound: {
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '80%',
-    },
-    notFoundText: {
-      fontSize: 14,
-      lineHeight: 17,
-      color: colors['neutral-body'],
-      marginTop: 16,
-    },
-  });
-});
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  root: {
+    // backgroundColor: colors2024['neutral-bg-2'],
+  },
+  verticalContainer: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  title: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 24,
+  },
+  tabContainer: {
+    // backgroundColor: colors2024['neutral-bg-2'],
+  },
+  tabHeaderContainer: {
+    shadowColor: 'transparent',
+    borderTopWidth: 0,
+    borderColor: colors2024['neutral-line'],
+  },
+  tabBar: {
+    height: ApprovalsLayouts.tabbarHeight,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderBottomWidth: 0.5,
+    borderColor: colors2024['neutral-line'],
+  },
+  tabBarWrap: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    textTransform: 'none',
+  },
+  indicator: {
+    backgroundColor: colors2024['brand-default'],
+    height: 4,
+    borderRadius: 100,
+  },
+  netTabs: {
+    marginBottom: 18,
+  },
+  notFound: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '80%',
+  },
+  notFoundText: {
+    fontSize: 14,
+    lineHeight: 17,
+    color: colors2024['neutral-body'],
+    marginTop: 16,
+  },
+}));

@@ -182,8 +182,8 @@ function MainListBlocks() {
   ) as {
     finishGoToScreen: (AddressNavigatorParamList['SetPassword2024'] &
       object)['finishGoToScreen'];
-    title: string;
-    hideProgress: boolean;
+    title?: string;
+    hideProgress?: boolean;
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
     isFirstImportPassword?: boolean;

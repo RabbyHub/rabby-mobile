@@ -17,10 +17,39 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
-import { apisWalletConnect } from '@/core/apis';
 import { useDappsViewConfig } from '@/screens/Dapps/hooks/useDappView';
 import { formatTimeReadable } from '@/utils/time';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { getKeyring } from '@/core/apis/keyring';
+import { keyringService } from '@/core/services';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
+
+async function importWalletConnectAddress({
+  address,
+  brandName,
+  realBrandName,
+  realBrandUrl,
+}: {
+  address: string;
+  brandName: string;
+  realBrandName?: string;
+  realBrandUrl?: string;
+}) {
+  const keyring = await getKeyring<MockWalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  keyring.setAccountToAdd({
+    address,
+    brandName,
+    realBrandName,
+    realBrandUrl,
+  });
+
+  await keyringService.addNewAccount(keyring as any);
+  return;
+}
 
 const devUIPreviewScreenModalVisibleAtom = atom(false);
 export function useUIDevWipModalVisiable() {
@@ -61,19 +90,19 @@ export default function DevUIWipModal({
   const navigation = useRabbyAppNavigation();
 
   const handleAddWalletConnectAddresses = React.useCallback(() => {
-    apisWalletConnect.importAddress({
+    importWalletConnectAddress({
       address: '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85',
       brandName: 'MetaMask',
     });
-    apisWalletConnect.importAddress({
+    importWalletConnectAddress({
       address: '0x12F5DF67c01050482E182ed51F962b873F1AcDF4',
       brandName: 'Bitget',
     });
-    apisWalletConnect.importAddress({
+    importWalletConnectAddress({
       address: '0x5eF0CfAe4e0a2f7BcC50e4A4e0a2f7BcC50e4A4e',
       brandName: 'TP',
     });
-    apisWalletConnect.importAddress({
+    importWalletConnectAddress({
       address: '0xdc7b8245Cc165d7994646e063077F5F1a5D9d461',
       brandName: 'Rainbow',
     });

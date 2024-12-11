@@ -318,6 +318,7 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
       ListHeaderComponent={renderHeaderComponent}
       ListFooterComponent={isFetchingNextPage ? <ActivityIndicator /> : null}
       style={styles.list}
+      showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.listContainer}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}

@@ -45,12 +45,11 @@ export function DappsScreen(): JSX.Element {
 
   type OpenUrlAsDappOptions = Pick<
     Parameters<typeof openUrlAsDapp>[1] & object,
-    'useLatestWebViewId'
+    'forceReopen'
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
       openUrlAsDapp(url, {
-        useLatestWebViewId: true,
         ...options,
         showSheetModalFirst: true,
       });
@@ -192,7 +191,9 @@ export function DappsScreen(): JSX.Element {
               }}
               chain={searchState.state.chain}
               onFavoritePress={handleFavoriteDapp}
-              onOpenURL={handleOpenURL}
+              onOpenURL={(newUrl: string) =>
+                handleOpenURL(newUrl, { forceReopen: true })
+              }
               currentDapp={searchState.currentDapp}
               currentURL={searchState.currentURL}
               searchText={searchState.state.searchText}

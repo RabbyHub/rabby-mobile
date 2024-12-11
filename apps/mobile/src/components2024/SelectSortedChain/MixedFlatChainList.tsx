@@ -1,5 +1,10 @@
 import React from 'react';
-import { View, SectionList } from 'react-native';
+import {
+  View,
+  SectionList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from 'react-native';
 
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -10,6 +15,7 @@ export default function MixedFlatChainList({
   style,
   value,
   onChange,
+  onScrollBeginDrag,
   matteredList = [],
   unmatteredList = [],
   supportChains,
@@ -20,6 +26,9 @@ export default function MixedFlatChainList({
   matteredList?: Chain[];
   unmatteredList?: Chain[];
   supportChains?: CHAINS_ENUM[];
+  onScrollBeginDrag?:
+    | ((event: NativeSyntheticEvent<NativeScrollEvent>) => void)
+    | undefined;
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
 }) {
   const { styles } = useTheme2024({ getStyle });
@@ -40,6 +49,7 @@ export default function MixedFlatChainList({
   return (
     <SectionList<Chain>
       sections={sections}
+      onScrollBeginDrag={onScrollBeginDrag}
       style={[styles.chainListContainer, style]}
       keyExtractor={(item, idx) => `${item.enum}-${idx}`}
       renderItem={({ item, index, section }) => {

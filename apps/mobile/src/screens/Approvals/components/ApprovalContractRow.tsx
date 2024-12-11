@@ -1,18 +1,19 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import {
-  createGetStyles,
+  createGetStyles2024,
   makeDebugBorder,
   makeTriangleStyle,
 } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   useFocusedApprovalOnApprovals,
   type ContractApprovalItem,
   useRevokeContractSpenders,
+  useApprovalsPage,
 } from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
@@ -24,12 +25,18 @@ import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { parseApprovalSpenderSelection } from '../utils';
-import { RcIconInfoCC } from '@/assets/icons/common';
-import { Tip } from '@/components';
+import RcIconWarning from '@/assets2024/icons/common/warning.svg';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { HighlightText } from '@/components2024/HighlightText';
 
 export const ContractFloorLayouts = {
   floorHeader: { paddingTop: 0 },
-  floor2: { marginTop: 17 },
+  floor2: { marginTop: 16 },
   floor3: { marginTop: 16 },
 };
 
@@ -37,7 +44,7 @@ function RightTouchableView({
   children,
   ...props
 }: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getCardStyles);
+  const { styles } = useTheme2024({ getStyle: getCardStyles });
 
   return (
     <TouchableView
@@ -51,15 +58,12 @@ function RightTouchableView({
 function CardProto({
   style,
   contract,
-  onPressArea,
 }: {
   contract: ContractApprovalItem;
-  onPressArea?: (ctx: {
-    type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
-    contract: ContractApprovalItem;
-  }) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getCardStyles);
+  const { styles, colors, colors2024 } = useTheme2024({
+    getStyle: getCardStyles,
+  });
   const { t } = useTranslation();
 
   const { contractRevokeMap, onSelectAllContractApprovals } =
@@ -156,6 +160,8 @@ function CardProto({
     [contract.risk_level],
   );
 
+  const { searchKw } = useApprovalsPage();
+
   const contractUsdText = useMemo(
     () =>
       bizNumberUtils.formatUsdValue(
@@ -166,14 +172,26 @@ function CardProto({
 
   const isTreatedAsSelected = isSelectedAll || isSelectedPartial;
 
+  useEffect(() => {
+    let id;
+    if (risky && contract && contract.list?.length) {
+      id = setTimeout(() => {
+        onSelectAllContractApprovals(contract, true, 'final');
+      }, 0);
+    }
+    return () => {
+      if (id) {
+        clearTimeout(id);
+      }
+      if (risky && contract && contract.list?.length) {
+        onSelectAllContractApprovals(contract, false, 'final');
+      }
+    };
+  }, [contract, onSelectAllContractApprovals, risky, searchKw]);
+
   return (
     <TouchableView
-      style={[
-        styles.container,
-        contract?.risk_alert ? styles.containerWithRisky : {},
-        isTreatedAsSelected && styles.selectedContainer,
-        style,
-      ]}
+      style={[styles.container, risky && styles.riskContainer, style]}
       onPress={() => {
         onSelectAllContractApprovals(contract, !isSelectedAll, 'final');
       }}>
@@ -181,6 +199,12 @@ function CardProto({
       <View
         style={[styles.contractItemFloor, ContractFloorLayouts.floorHeader]}>
         <View style={styles.floorLeft}>
+          <SelectionCheckbox
+            isSelectedAll={isSelectedAll}
+            isSelectedPartial={isSelectedPartial}
+            style={styles.contractCheckbox}
+            size={24}
+          />
           {chainLogoUrl ? (
             <ChainIconImage
               containerStyle={styles.chainIcon}
@@ -191,25 +215,26 @@ function CardProto({
             <RcIconUnknown style={styles.chainIcon} />
           )}
           <View style={styles.addrContractWrapper}>
-            <Text
+            <HighlightText
               style={styles.contractAddrText}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {ellipsisAddress(contract.id)}
-            </Text>
-            <Text
-              style={[styles.contractName]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
-              ({contract.name})
-            </Text>
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              searchWords={[searchKw]}
+              textToHighlight={ellipsisAddress(contract.id)}
+            />
+            <HighlightText
+              style={styles.contractName}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              searchWords={[searchKw]}
+              textToHighlight={`(${contract.name})`}
+            />
+            <CopyAddressIcon
+              address={contract.id}
+              style={{ marginLeft: 2 }}
+              color={colors2024['neutral-foot']}
+            />
           </View>
-          <SelectionCheckbox
-            isSelectedAll={isSelectedAll}
-            isSelectedPartial={isSelectedPartial}
-            style={styles.contractCheckbox}
-          />
         </View>
         <RightTouchableView
           style={styles.rightOps}
@@ -221,19 +246,19 @@ function CardProto({
           <RcIconRightEntryMiniCC
             width={14}
             height={14}
-            color={colors['neutral-foot']}
+            color={colors2024['neutral-foot']}
           />
         </RightTouchableView>
       </View>
 
       {risky && (
-        <View style={[styles.contractItemFloor, { marginTop: 7 }]}>
+        <View style={[styles.contractItemFloor, styles.riskRow]}>
           <View style={[styles.riskyTip]}>
-            <RcIconInfoCC
-              width={14}
-              height={14}
-              color={colors['neutral-title2']}
-              style={{ marginRight: 6 }}
+            <RcIconWarning
+              width={11}
+              height={11}
+              color={colors2024['red-default']}
+              style={{ marginRight: 3 }}
             />
             <Text style={styles.riskyTipText}>{contract.risk_alert}</Text>
 
@@ -251,40 +276,54 @@ function CardProto({
             )}
           </Text>
         </View>
-        <Tip
-          // {...(!trustValueEvalutation.isRisky && { isVisible: false })}
-          contentStyle={[styles.riskyAlertTooltipContent]}
-          content={
-            <View style={[styles.riskyAlertTooltipInner]}>
-              {trustValueEvalutation.isDanger && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
+        <TouchableOpacity
+          onPress={() => {
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              titleStyle: styles.modalTitle,
+              sectionStyle: styles.section,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              title: trustValueEvalutation.isDanger
+                ? t(
                     'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueDanger',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {trustValueEvalutation.isWarning && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
+                  )
+                : trustValueEvalutation.isWarning
+                ? t(
                     'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueWarning',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {!trustValueEvalutation.isRisky && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  The contract trust value : {contractUsdText}
-                  {'\n'}
-                </Text>
-              )}
-              <Text style={styles.riskyAlertTooltipText}>
-                {t(
-                  'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
-                )}
-              </Text>
-            </View>
-          }>
+                  )
+                : t(
+                    'page.approvals.tableConfig.byContracts.columnTip.normalTrustValueDanger',
+                    {
+                      contractUsdText,
+                    },
+                  ),
+              sections: [
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
+                  ),
+                },
+              ],
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>
+                    {t(
+                      'page.approvals.tableConfig.byContracts.columnTip.button',
+                    )}
+                  </Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={trustValueEvalutation.finalTextStyle}>
             {contractUsdText}
           </Text>
@@ -297,7 +336,7 @@ function CardProto({
               trustValueEvalutation.finalUnderlineStyle,
             ]}
           />
-        </Tip>
+        </TouchableOpacity>
       </View>
 
       {/* floor 3 */}
@@ -309,41 +348,75 @@ function CardProto({
             )}
           </Text>
         </View>
-        <Tip
-          // {...(!revokeTrendsEvaluation.isRisky && { isVisible: false })}
-          placement="top"
-          contentStyle={[
-            styles.riskyAlertTooltipContent,
-            !revokeTrendsEvaluation.isRisky &&
-              styles.riskyAlertTooltipContentForSafeRevokeTrend,
-          ]}
-          content={
-            <View style={styles.riskyAlertTooltipInner}>
-              {revokeTrendsEvaluation.isDanger && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              {revokeTrendsEvaluation.isWarning && (
-                <Text style={styles.riskyAlertTooltipText}>
-                  {t(
-                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
-                  )}
-                  {'\n'}
-                </Text>
-              )}
-              <Text style={styles.riskyAlertTooltipText}>
-                Newly approved users(24h):{' '}
-                {contract.$riskAboutValues.approve_user_count}
-                {'\n'}
-                Recent revokes(24h):{' '}
-                {contract.$riskAboutValues.revoke_user_count}
-              </Text>
-            </View>
-          }>
+        <TouchableOpacity
+          onPress={() => {
+            const hasRisk =
+              revokeTrendsEvaluation.isDanger ||
+              revokeTrendsEvaluation.isWarning;
+            const modalId = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.DESCRIPTION,
+              titleStyle: styles.modalTitle,
+              sectionStyle: styles.section,
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: [hasRisk ? '47%' : '34%'],
+                enableContentPanningGesture: true,
+                enablePanDownToClose: true,
+              },
+              // TODO: is text correct from BD ?
+              title: revokeTrendsEvaluation.isDanger
+                ? t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeDangerTitle',
+                  )
+                : revokeTrendsEvaluation.isWarning
+                ? t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeWarningTitle',
+                  )
+                : '',
+              sections: [
+                {
+                  description: revokeTrendsEvaluation.isDanger
+                    ? t(
+                        'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
+                      )
+                    : revokeTrendsEvaluation.isWarning
+                    ? t(
+                        'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
+                      )
+                    : '',
+                },
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeNewApproved',
+                    {
+                      count: contract.$riskAboutValues.approve_user_count,
+                    },
+                  ),
+                },
+                {
+                  description: t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeRecenet',
+                    {
+                      count: contract.$riskAboutValues.revoke_user_count,
+                    },
+                  ),
+                },
+              ].filter(i => !!i.description),
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>
+                    {t(
+                      'page.approvals.tableConfig.byContracts.columnTip.button',
+                    )}
+                  </Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
+            });
+          }}>
           <Text style={revokeTrendsEvaluation.finalTextStyle}>
             {contract.$riskAboutValues.revoke_user_count}
           </Text>
@@ -357,38 +430,61 @@ function CardProto({
             ]}
             innerBg={!isTreatedAsSelected ? undefined : colors['blue-light1']}
           />
-        </Tip>
+        </TouchableOpacity>
       </View>
     </TouchableView>
   );
 }
 
-export const getCardStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+export const getCardStyles = createGetStyles2024(ctx => {
+  const { colors2024 } = ctx;
+  const selectableStyles = getSelectableContainerStyle(ctx);
 
   return {
     container: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card1'],
+      borderRadius: 24,
+      backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      paddingVertical: 10,
-      height: ApprovalsLayouts.contractRowHeight,
+      paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
       width: '100%',
-      padding: ApprovalsLayouts.contractCardPadding,
+      shadowColor: colors2024['neutral-black'],
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.06,
+      shadowRadius: 60,
+      // elevation: 4,
+      // box-shadow: 0px 4px 60px 0px rgba(0, 0, 0, 0.06);
+
       ...selectableStyles.container,
     },
-    containerWithRisky: {
-      height: ApprovalsLayouts.contractRowHeightWithRiskAlert,
+    riskContainer: {
+      backgroundColor: colors2024['red-light-1'],
+      borderColor: colors2024['red-light-2'],
+      shadowColor: colors2024['red-default'],
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.06,
+      shadowRadius: 60,
     },
     selectedContainer: {
       ...selectableStyles.selectedContainer,
     },
     contractItemFloor: {
       flexDirection: 'row',
+      paddingHorizontal: 16,
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
+    },
+    riskRow: {
+      marginTop: 7,
+      paddingHorizontal: 0,
+      justifyContent: 'center',
     },
     floorLeft: {
       flexDirection: 'row',
@@ -405,28 +501,33 @@ export const getCardStyles = createGetStyles(colors => {
     },
     riskyTip: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
-      borderRadius: 6,
-      padding: 8,
-      backgroundColor: colors['red-default'],
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 12,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+      textAlign: 'center',
+      backgroundColor: colors2024['red-light-2'],
       position: 'relative',
     },
     riskyTipArrow: {
       position: 'absolute',
-      left: '20%',
-      top: -7,
+      left: '30%',
+      top: -6,
       ...makeTriangleStyle({
         dir: 'up',
-        size: 12,
-        color: colors['red-default'],
+        size: 6,
+        color: colors2024['red-light-2'],
       }),
       borderTopWidth: 0,
-      borderLeftWidth: 12,
-      borderRightWidth: 12,
+      borderLeftWidth: 6,
+      borderRightWidth: 6,
     },
     riskyTipText: {
-      color: colors['neutral-title2'],
+      color: colors2024['red-default'],
+      fontSize: 12,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     addrContractWrapper: {
       flexShrink: 1,
@@ -435,31 +536,40 @@ export const getCardStyles = createGetStyles(colors => {
       justifyContent: 'flex-start',
     },
     contractAddrText: {
-      color: colors['neutral-title1'],
-      fontSize: 16,
-      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+    highlightText: {
+      color: colors2024['brand-default'],
     },
     contractName: {
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-foot'],
       fontSize: 14,
+      lineHeight: 18,
       fontWeight: '400',
-      marginLeft: 6,
-      maxWidth: 100,
+      fontFamily: 'SF Pro Rounded',
+      maxWidth: 80,
     },
     contractNameInDetailModal: {
       maxWidth: 80,
     },
     contractCheckbox: {
-      marginLeft: 6,
+      marginRight: 6,
     },
     rightOps: {
       flexShrink: 0,
     },
     entryText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors['neutral-title1'],
       marginRight: 2,
+
+      color: colors2024['neutral-title-1'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     approvalsCount: {
       fontSize: 14,
@@ -470,8 +580,11 @@ export const getCardStyles = createGetStyles(colors => {
       alignItems: 'center',
     },
     floorLabel: {
-      color: colors['neutral-body'],
-      fontSize: 15,
+      color: colors2024['neutral-secondary'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     riskyAlertTooltipContent: {
       borderRadius: 2,
@@ -489,28 +602,40 @@ export const getCardStyles = createGetStyles(colors => {
       paddingVertical: 8,
       paddingHorizontal: 12,
     },
-    riskyAlertTooltipText: {
-      color: colors['neutral-title2'],
-      fontSize: 13,
-      fontWeight: '400',
-    },
     floorValue: {
-      color: colors['neutral-title1'],
-      fontSize: 15,
-      fontWeight: '600',
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
       position: 'relative',
     },
     floorValueWarn: {
-      color: colors['orange-default'],
+      color: colors2024['orange-default'],
     },
     floorValueDanger: {
-      color: colors['red-default'],
+      color: colors2024['red-default'],
     },
     floorValueUnderlineDefault: {
-      borderColor: colors['neutral-line'],
+      borderColor: 'transparent',
     },
     chainIcon: {
       marginRight: 6,
+    },
+    modalNextButtonText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '700',
+      lineHeight: 24,
+      textAlign: 'center',
+      backgroundColor: colors2024['brand-default'],
+      color: colors2024['neutral-InvertHighlight'],
+    },
+    modalTitle: {
+      marginTop: 12,
+    },
+    section: {
+      marginTop: 20,
     },
   };
 });

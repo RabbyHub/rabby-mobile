@@ -1,5 +1,5 @@
-import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024, useThemeStyles } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { Text, View, ViewStyle, StyleSheet } from 'react-native';
 
 export function SimulateUnderline({
@@ -8,7 +8,7 @@ export function SimulateUnderline({
 }: RNViewProps & {
   innerBg?: ViewStyle['backgroundColor'];
 }) {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View {...props} style={[styles.outer, props.style]}>
@@ -19,25 +19,25 @@ export function SimulateUnderline({
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     outer: {
       height: 1,
       width: '100%',
       borderRadius: 1,
       borderWidth: 1,
-      borderColor: colors['red-default'],
+      borderColor: colors2024['red-default'],
       borderStyle: 'dashed',
       // backgroundColor: 'trasparent',
       zIndex: 0,
     },
     inner: {
       position: 'absolute',
-      left: 0,
+      left: -1,
       bottom: 0,
-      width: '100%',
+      width: '110%',
       height: 1,
-      backgroundColor: 'white',
+      backgroundColor: colors2024['neutral-bg-2'],
       zIndex: 1,
     },
   };

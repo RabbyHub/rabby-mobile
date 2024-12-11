@@ -30,7 +30,6 @@ function HomeScreen(): JSX.Element {
       headerTitle: () => (
         <HomeScreen.HeaderArea key={currentAccount?.address} />
       ),
-      headerTitleAlign: 'left',
     });
   }, [currentAccount?.address, navigation, setNavigationOptions]);
 

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import {
   DEFAULT_NAVBAR_FONT_SIZE,
@@ -48,6 +48,7 @@ import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
 import { AddressNavigatorParamList } from '@/navigation-type';
+import { ApprovalAddressListScreen } from '@/screens/Address/ApprovalAddressListScreen';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -70,13 +71,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 20,
   },
 }));
-
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
 
 export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
@@ -109,6 +103,18 @@ export function AddressNavigator() {
             headerTitleStyle: styles.headerTitleText,
             // eslint-disable-next-line react/no-unstable-nested-components
             headerRight: () => <AddressListScreenButton type="address" />,
+          },
+        ])}
+      />
+      <AddressStack.Screen
+        name={RootNames.ApprovalAddressList}
+        component={ApprovalAddressListScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: strings('page.approvalsAddressList.title'),
+            title: strings('page.approvalsAddressList.title'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
           },
         ])}
       />

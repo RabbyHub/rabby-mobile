@@ -4,7 +4,7 @@ const isAndroid = Platform.OS === 'android';
 
 const riskyTipHeight = 32;
 const riskyTipArrowOffset = 14;
-const contractRowHeight = 123;
+const contractRowHeight = 122;
 const contractCardHeight = 133;
 
 export const ApprovalsLayouts = {
@@ -15,7 +15,7 @@ export const ApprovalsLayouts = {
   bottomSheetConfirmAreaHeight: isAndroid ? 100 : 120,
 
   searchBarMarginOffset: 16,
-  searchBarHeight: 48,
+  searchBarHeight: 46,
 
   contractRowHeight,
   contractRowHeightWithRiskAlert:
@@ -25,12 +25,14 @@ export const ApprovalsLayouts = {
   contractCardHeightWithRiskAlert:
     contractCardHeight + riskyTipHeight + riskyTipArrowOffset,
   contractCardPadding: 16,
+  contractCardPaddingVertical: 16,
+  contractCardPaddingHorizontal: 24,
 
-  assetsItemHeight: 60,
+  assetsItemHeight: 72,
   assetsItemPadding: 16,
 
   listFooterComponentHeight: 56,
-  innerContainerHorizontalOffset: 20,
+  innerContainerHorizontalOffset: 16,
 
   get riskAlertTooltipMaxWidth() {
     return (
