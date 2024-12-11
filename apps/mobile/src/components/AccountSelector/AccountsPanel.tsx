@@ -26,6 +26,8 @@ import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
 import { AccountPannelSectionTitle } from '@/constant/newStyle';
+import { useTranslation } from 'react-i18next';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;
@@ -168,10 +170,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: 30,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: ctx.colors2024['neutral-line'],
-      backgroundColor: ctx.colors2024['neutral-bg-3'],
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 24,
       height: SIZES.itemH,
     },
@@ -345,6 +344,7 @@ export function AccountsPanelInSheetModal({
   );
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
     React.useState(!isGasAccount && !isReceive);
+  const { t } = useTranslation();
 
   // combine data for a entire Flatlist
   const combinedData = [
@@ -369,13 +369,7 @@ export function AccountsPanelInSheetModal({
     (title: AccountPannelSectionTitle) => {
       switch (title) {
         case AccountPannelSectionTitle.MyAddresses:
-          return (
-            <>
-              {!isGasAccount && (
-                <Text style={styles.sectionTitle}>My Addresses</Text>
-              )}
-            </>
-          );
+          return null;
         case AccountPannelSectionTitle.SafeAddresses:
           return (
             !!safeAddresses.length &&
@@ -383,7 +377,9 @@ export function AccountsPanelInSheetModal({
               <>
                 <View style={{ height: 18 }} />
                 <SectionCollapsableNav
-                  title="Imported Safe Addresses"
+                  title={t(
+                    'page.addressDetail.addressListScreen.importSafeAddress',
+                  )}
                   isCollapsed={safeAddressNavCollapsed}
                   onCollapsedChange={nextVal => {
                     setSafeAddressNavCollapsed(nextVal);
@@ -401,7 +397,9 @@ export function AccountsPanelInSheetModal({
               <>
                 <View style={{ height: 18 }} />
                 <SectionCollapsableNav
-                  title="Imported Watch-only Addresses"
+                  title={t(
+                    'page.addressDetail.addressListScreen.importWatchAddress',
+                  )}
                   isCollapsed={watchAddressNavCollapsed}
                   onCollapsedChange={nextVal => {
                     setWatchAddressNavCollapsed(nextVal);
@@ -417,10 +415,10 @@ export function AccountsPanelInSheetModal({
       }
     },
     [
+      t,
       isGasAccount,
       safeAddressNavCollapsed,
       scrollToBottom,
-      styles.sectionTitle,
       watchAddresses,
       safeAddresses,
       watchAddressNavCollapsed,
@@ -464,15 +462,17 @@ export function AccountsPanelInSheetModal({
                   data={combinedItem.data}
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => (
-                    <AddressItemInSheetModal
-                      key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-                      addressItemProps={{ account: item }}
-                      isPinned={isPinnedAccount(item)}
-                      onPressAccount={onSelectAccount}
-                      showCopyAndQR={!isGasAccount}
-                      defaultPressAction={defaultPressItemAction}
-                      style={[index > 0 && styles.addressItemTopGap]}
-                    />
+                    <AddressItemShadowView>
+                      <AddressItemInSheetModal
+                        key={`${item.address}-${item.type}-${item.brandName}-${index}`}
+                        addressItemProps={{ account: item }}
+                        isPinned={isPinnedAccount(item)}
+                        onPressAccount={onSelectAccount}
+                        showCopyAndQR={!isGasAccount}
+                        defaultPressAction={defaultPressItemAction}
+                        style={[index > 0 && styles.addressItemTopGap]}
+                      />
+                    </AddressItemShadowView>
                   )}
                   keyExtractor={(account, index) =>
                     `account-${account.address}-${account.brandName}-${index}`
@@ -522,7 +522,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     sectionTitleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
       // paddingLeft: 4,
     },
     sectionTitle: {

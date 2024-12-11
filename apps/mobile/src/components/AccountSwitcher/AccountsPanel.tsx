@@ -23,6 +23,7 @@ import { LinearGradientContainer } from '@/components2024/ScreenContainer/Linear
 import { AddressItemInPanel, AddressItemSizes } from './AddressItemInPanel';
 import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
+import { useTranslation } from 'react-i18next';
 
 const SectionCollapsableNav = function ({
   isCollapsed = false,
@@ -165,6 +166,8 @@ AccountSwitcherAopProps<{
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleUseAllAccountsOnScene, toggleSceneVisible]);
 
+  const { t } = useTranslation();
+
   return (
     <LinearGradientContainer
       type="linear"
@@ -176,7 +179,6 @@ AccountSwitcherAopProps<{
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContentContainer}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>My Addresses</Text>
             <View style={styles.addressListContainer}>
               {isSceneSupportAllAccounts && (
                 <UseAllAccountsItemInPanel
@@ -211,7 +213,9 @@ AccountSwitcherAopProps<{
           {!!safeAddresses.length && (
             <View style={[styles.section, { marginTop: 18 }]}>
               <SectionCollapsableNav
-                title="Imported Safe Addresses"
+                title={t(
+                  'page.addressDetail.addressListScreen.importSafeAddress',
+                )}
                 isCollapsed={navsCollapsed.safe}
                 onCollapsedChange={nextVal => {
                   changeCollapsed('safe', nextVal);
@@ -243,7 +247,9 @@ AccountSwitcherAopProps<{
           {!!watchAddresses.length && (
             <View style={[styles.section, { marginTop: 18 }]}>
               <SectionCollapsableNav
-                title="Imported Watch-only Addresses"
+                title={t(
+                  'page.addressDetail.addressListScreen.importWatchAddress',
+                )}
                 isCollapsed={navsCollapsed.watch}
                 onCollapsedChange={nextVal => {
                   changeCollapsed('watch', nextVal);

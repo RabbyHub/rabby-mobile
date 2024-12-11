@@ -144,7 +144,7 @@ export const ImportSafeAddressScreen = () => {
         keyboardShouldPersistTaps="handled">
         <View style={styles.titleContainer}>
           <RcSafeLogo width={80} height={80} style={styles.logo} />
-          <Text style={styles.title}>Add Safe address</Text>
+          <Text style={styles.title}>{t('page.importSafe.title')}</Text>
         </View>
         <View style={styles.inputContainer}>
           <TextInput

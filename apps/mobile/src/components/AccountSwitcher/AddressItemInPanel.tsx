@@ -7,6 +7,7 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import RcIconCorrectCC from './icons/correct-cc.svg';
 import { Account } from '@/core/services/preference';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
@@ -47,57 +48,59 @@ export function AddressItemInPanel({
   }, [account, proponPressAddress]);
 
   return (
-    <TouchableOpacity
-      style={StyleSheet.flatten([
-        styles.addressItemContainer,
-        style,
-        isCurrent && styles.addressItemContainerCurrent,
-        isPressing && styles.containerPressing,
-      ])}
-      activeOpacity={1}
-      onPressIn={() => setIsPressing(true)}
-      onPressOut={() => setIsPressing(false)}
-      onPress={onPressAddress}>
-      <AddressItem {...addressItemProps}>
-        {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
-          return (
-            <View style={styles.addressItemInner}>
-              <WalletIcon style={styles.walletIcon} />
-              <View style={styles.centerInfo}>
-                <View style={styles.nameAndAdderss}>
-                  <WalletName style={styles.addressAliasName} />
-                  {isPinned && (
-                    <View style={styles.pinnedWrapper}>
-                      {/* <ICONS_COMMON_2024.RcPinCC
-                        color={styles.pinText.color}
-                        width={15}
-                        height={15}
-                      /> */}
-                      <Text style={styles.pinText}>Pin</Text>
-                    </View>
+    <AddressItemShadowView>
+      <TouchableOpacity
+        style={StyleSheet.flatten([
+          styles.addressItemContainer,
+          style,
+          isCurrent && styles.addressItemContainerCurrent,
+          isPressing && styles.containerPressing,
+        ])}
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        onPress={onPressAddress}>
+        <AddressItem {...addressItemProps}>
+          {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
+            return (
+              <View style={styles.addressItemInner}>
+                <WalletIcon style={styles.walletIcon} />
+                <View style={styles.centerInfo}>
+                  <View style={styles.nameAndAdderss}>
+                    <WalletName style={styles.addressAliasName} />
+                    {isPinned && (
+                      <View style={styles.pinnedWrapper}>
+                        <ICONS_COMMON_2024.RcPinCC
+                          color={styles.pinText.color}
+                          width={15}
+                          height={15}
+                        />
+                        <Text style={styles.pinText}>Pin</Text>
+                      </View>
+                    )}
+                  </View>
+                  <WalletBalance
+                    style={[
+                      styles.addressUsdValue,
+                      isCurrent && styles.addressUsdValueCurrent,
+                    ]}
+                  />
+                </View>
+                <View style={styles.rightArea}>
+                  {isCurrent && (
+                    <RcIconCorrectCC
+                      color={colors2024['green-default']}
+                      width={16}
+                      height={16}
+                    />
                   )}
                 </View>
-                <WalletBalance
-                  style={[
-                    styles.addressUsdValue,
-                    isCurrent && styles.addressUsdValueCurrent,
-                  ]}
-                />
               </View>
-              <View style={styles.rightArea}>
-                {isCurrent && (
-                  <RcIconCorrectCC
-                    color={colors2024['green-default']}
-                    width={16}
-                    height={16}
-                  />
-                )}
-              </View>
-            </View>
-          );
-        }}
-      </AddressItem>
-    </TouchableOpacity>
+            );
+          }}
+        </AddressItem>
+      </TouchableOpacity>
+    </AddressItemShadowView>
   );
 }
 
@@ -109,10 +112,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: 30,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: ctx.colors2024['neutral-line'],
-      backgroundColor: ctx.colors2024['neutral-bg-3'],
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 24,
       height: AddressItemSizes.itemH,
     },
