@@ -2,7 +2,6 @@ import { Connect } from './Connect';
 import { SignText } from './SignText';
 import { SignTypedData } from './SignTypedData';
 import { SignTx } from './SignTx/SignTx';
-import { WatchAddressWaiting } from './WatchAddressWaiting';
 import { LedgerHardwareWaiting } from './LedgerHardwareWaiting/LedgerHardwareWaiting';
 import { OneKeyHardwareWaiting } from './OneKeyHardwareWaiting/OneKeyHardwareWaiting';
 import { KeystoneHardwareWaiting } from './KeystoneHardwareWaiting/KeystoneHardwareWaiting';
@@ -17,7 +16,6 @@ export const ApprovalComponent = {
   SignText,
   SignTypedData,
   SignTx,
-  WatchAddressWaiting,
   LedgerHardwareWaiting,
   OneKeyHardwareWaiting,
   KeystoneHardwareWaiting,

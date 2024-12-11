@@ -12,7 +12,6 @@ import React, { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { AddressViewer } from '../AddressViewer';
-import { CommonSignal } from '../WalletConnect/SessionSignal';
 
 interface AccountItemProps {
   account: KeyringAccountWithAlias;
@@ -80,11 +79,6 @@ export const AccountSelectItem = ({
           width={styles.walletLogo.width}
           height={styles.walletLogo.height}
           style={styles.walletLogo}
-        />
-        <CommonSignal
-          type={account.type}
-          brandName={account.brandName}
-          address={account.address}
         />
       </View>
       <View style={styles.main}>
