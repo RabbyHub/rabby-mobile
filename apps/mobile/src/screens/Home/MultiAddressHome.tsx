@@ -34,6 +34,7 @@ import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
+import RcIconVectorCC from '@/assets2024/icons/home/IconVectorCC.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
@@ -58,6 +59,18 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+  usePinAddresses,
+} from '@/hooks/account';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { toast } from '@/components2024/Toast';
+import { sortAccountsByBalance } from '@/utils/account';
+import { parseInt } from 'lodash';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -128,6 +141,15 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
+
+  const { pinAddresses } = usePinAddresses({
+    disableAutoFetch: true,
+  });
+  const { switchAccount } = useCurrentAccount();
+  const { accounts, fetchAccounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
@@ -277,6 +299,25 @@ function MultiAddressHome(): JSX.Element {
     return num >= 1000000000;
   }, [balanceAccounts]);
 
+  const totalBalance = useMemo(() => {
+    const num = balanceAccounts.reduce(
+      (sum, item) => sum + (Number(item.balance) || 0),
+      0,
+    );
+    return num;
+  }, [balanceAccounts]);
+
+  const calcPinPercent = useCallback(
+    (balance: number) => {
+      let percent = 0;
+      if (balance && totalBalance) {
+        percent = Math.floor((balance / totalBalance) * 100);
+      }
+      return `${percent}%`;
+    },
+    [totalBalance],
+  );
+
   const totalBalanceUsd = useMemo(() => {
     const num = balanceAccounts.reduce(
       (sum, item) => sum + (Number(item.balance) || 0),
@@ -394,6 +435,44 @@ function MultiAddressHome(): JSX.Element {
     [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
   );
 
+  const pinAddressesfirstFour = React.useMemo(() => {
+    const restAccounts = [...accounts];
+    let highlightedAccounts: typeof accounts = [];
+
+    pinAddresses.forEach(highlighted => {
+      const idx = restAccounts.findIndex(
+        account =>
+          isSameAddress(account.address, highlighted.address) &&
+          account.brandName === highlighted.brandName,
+      );
+      if (idx > -1) {
+        highlightedAccounts.push(restAccounts[idx]);
+      }
+    });
+    highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
+    return highlightedAccounts
+      .slice(0, 4)
+      .concat(new Array(4 - highlightedAccounts.length).fill(null)); // fill null to keep 4 items
+  }, [accounts, pinAddresses]);
+
+  const handleClickPinAccount = useCallback(
+    (pinItem: KeyringAccountWithAlias) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+
+      switchAccount(pinItem);
+      navigation.dispatch(
+        StackActions.push(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {},
+        }),
+      );
+    },
+    [switchAccount, navigation],
+  );
+
   return (
     <NormalScreenContainer2024
       type="linear"
@@ -447,6 +526,51 @@ function MultiAddressHome(): JSX.Element {
               <RcIconSmallArrow />
             </TouchableOpacity>
           </View>
+          {pinAddressesfirstFour.length > 0 && (
+            <>
+              <View style={[styles.menuHeader, styles.pinHeader]}>
+                <View style={styles.pinBox}>
+                  <RcIconVectorCC color={colors2024['neutral-title-1']} />
+                  <Text style={styles.headerText}>
+                    {t('page.nextComponent.multiAddressHome.pin')}
+                  </Text>
+                </View>
+                <View />
+              </View>
+              <View style={[styles.pinGrid]}>
+                {pinAddressesfirstFour.map((item, index) => {
+                  return item ? (
+                    <TouchableOpacity
+                      style={StyleSheet.flatten([styles.pinGridItem])}
+                      key={index}
+                      onPress={e => {
+                        handleClickPinAccount(item);
+                        matomoRequestEvent({
+                          category: 'Click_Pin',
+                          action: `Click_${index}`,
+                        });
+                      }}>
+                      <WalletIcon
+                        type={item.brandName}
+                        width={18}
+                        height={18}
+                        borderRadius={5}
+                      />
+                      <Text style={styles.gridText}>
+                        {calcPinPercent(item.balance || 0)}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View
+                      style={StyleSheet.flatten([
+                        styles.pinGridItem,
+                        styles.emptyItem,
+                      ])}></View>
+                  );
+                })}
+              </View>
+            </>
+          )}
           <View style={styles.menuHeader}>
             <Text style={styles.headerText}>
               {t('page.nextComponent.multiAddressHome.services')}
@@ -555,7 +679,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   usdText: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: '900',
     textAlign: 'left',
     color: colors2024['neutral-title-1'],
     lineHeight: 42,
@@ -566,7 +690,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 14,
     borderRadius: 94,
-    backgroundColor: colors2024['brand-default'],
+    backgroundColor: isLight ? '#131416' : colors2024['brand-default'],
     shadowColor: colors2024['brand-light-1'],
     shadowOffset: { width: 0, height: 9.411 },
     shadowOpacity: 0.1,
@@ -587,6 +711,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
+  pinBox: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   menuHeader: {
     height: 30,
     flexDirection: 'row',
@@ -594,7 +724,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     paddingHorizontal: 4,
     marginHorizontal: 4,
-    marginVertical: 12,
+    margin: 12,
+  },
+  pinHeader: {
+    marginTop: -8,
   },
   gridText: {
     color: colors2024['neutral-body'],
@@ -624,6 +757,35 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
   },
+  pinGrid: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    borderRadius: 8,
+    gap: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    width: '100%',
+    marginBottom: 20,
+  },
+  emptyItem: {
+    backgroundColor: 'transparent',
+  },
+  pinGridItem: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 10,
+    flexShrink: 0,
+    flex: 1,
+    // padding: 10,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 46,
+    gap: 8,
+    position: 'relative',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -632,6 +794,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
+    marginBottom: 20,
   },
   gridItem: {
     borderWidth: 1,
