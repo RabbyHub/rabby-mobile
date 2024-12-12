@@ -432,7 +432,7 @@ function MultiAddressHome(): JSX.Element {
     [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
   );
 
-  const pinAddressesfirstFour = React.useMemo(() => {
+  const pinAccounts = React.useMemo(() => {
     const restAccounts = [...accounts];
     let highlightedAccounts: typeof accounts = [];
 
@@ -447,10 +447,12 @@ function MultiAddressHome(): JSX.Element {
       }
     });
     highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
-    return highlightedAccounts
-      .slice(0, 4)
-      .concat(new Array(4 - highlightedAccounts.length).fill(null)); // fill null to keep 4 items
+    return highlightedAccounts.slice(0, 4);
   }, [accounts, pinAddresses]);
+
+  const pinAccountsFirstFour = React.useMemo(() => {
+    return pinAccounts.concat(new Array(4 - pinAccounts.length).fill(null)); // fill null to keep 4 items
+  }, [pinAccounts]);
 
   const handleClickPinAccount = useCallback(
     (pinItem: KeyringAccountWithAlias) => {
@@ -523,7 +525,7 @@ function MultiAddressHome(): JSX.Element {
               <RcIconSmallArrow />
             </TouchableOpacity>
           </View>
-          {pinAddressesfirstFour.length > 0 && (
+          {pinAccounts.length > 0 && (
             <>
               <View style={[styles.menuHeader, styles.pinHeader]}>
                 <View style={styles.pinBox}>
@@ -535,7 +537,7 @@ function MultiAddressHome(): JSX.Element {
                 <View />
               </View>
               <View style={[styles.pinGrid]}>
-                {pinAddressesfirstFour.map((item, index) => {
+                {pinAccountsFirstFour.map((item, index) => {
                   return item ? (
                     <TouchableOpacity
                       style={StyleSheet.flatten([styles.pinGridItem])}

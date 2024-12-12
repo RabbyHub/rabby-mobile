@@ -220,8 +220,8 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
 
     pinnedWrapper: {
       flexShrink: 0,
-      width: 33,
-      height: 26,
+      paddingHorizontal: 6,
+      paddingVertical: 4,
       marginLeft: 4,
       borderRadius: 8,
       flexDirection: 'row',
