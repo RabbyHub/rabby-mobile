@@ -2385,6 +2385,9 @@
     },
     "approvalsAddressList": {
       "title": "Approvals"
+    },
+    "receiveAddressList": {
+      "title": "Select Receive Address"
     }
   },
   "component": {

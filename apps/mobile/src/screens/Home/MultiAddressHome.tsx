@@ -39,18 +39,12 @@ import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { transactionHistoryService } from '@/core/services';
-import { useMemoizedFn, useMount } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -319,8 +313,7 @@ function MultiAddressHome(): JSX.Element {
     return '$' + splitNumberByStep((num || 0).toFixed(2));
   }, [balanceAccounts]);
 
-  const { toggleUseAllAccountsOnScene, switchSceneCurrentAccount } =
-    useSwitchSceneCurrentAccount();
+  const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
 
   const handleClickMenu = useCallback(
     (title: MultiHomeFeatTitle) => {
@@ -338,32 +331,12 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Receive:
-          const selectAddressModalId = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.SELECT_ACCOUNT_THEN,
-            modalTitle: 'Select Receive Address',
-            onDone: async selectedAccount => {
-              removeGlobalBottomSheetModal2024(selectAddressModalId);
-              await switchSceneCurrentAccount('Receive', selectedAccount);
-              const id = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-                value: CHAINS_ENUM.ETH,
-                onChange: (v: CHAINS_ENUM) => {
-                  removeGlobalBottomSheetModal2024(id);
-                  navigation.dispatch(
-                    StackActions.push(RootNames.StackTransaction, {
-                      screen: RootNames.Receive,
-                      params: {
-                        chainEnum: v,
-                      },
-                    }),
-                  );
-                },
-                onClose: () => {
-                  removeGlobalBottomSheetModal2024(id);
-                },
-              });
-            },
-          });
+          navigation.dispatch(
+            StackActions.push(RootNames.StackAddress, {
+              screen: RootNames.ReceiveAddressList,
+              params: {},
+            }),
+          );
 
           break;
         case MultiHomeFeatTitle.Swap:
@@ -425,7 +398,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
+    [navigation, toggleUseAllAccountsOnScene],
   );
 
   const handleClickPinAccount = useCallback(
