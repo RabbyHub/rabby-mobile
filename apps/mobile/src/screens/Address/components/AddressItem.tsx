@@ -173,7 +173,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         <AddressItemInner2024
           isPressing={isCurrentAccount || isPressing}
           account={account}
-          pinned={pinned}
         />
       </TouchableOpacity>
     </ContextMenuView>
