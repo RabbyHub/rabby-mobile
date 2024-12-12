@@ -67,10 +67,7 @@ import {
 } from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { toast } from '@/components2024/Toast';
 import { sortAccountsByBalance } from '@/utils/account';
-import { parseInt } from 'lodash';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -543,7 +540,7 @@ function MultiAddressHome(): JSX.Element {
                     <TouchableOpacity
                       style={StyleSheet.flatten([styles.pinGridItem])}
                       key={index}
-                      onPress={e => {
+                      onPress={() => {
                         handleClickPinAccount(item);
                         matomoRequestEvent({
                           category: 'Click_Pin',
@@ -562,10 +559,12 @@ function MultiAddressHome(): JSX.Element {
                     </TouchableOpacity>
                   ) : (
                     <View
+                      key={index}
                       style={StyleSheet.flatten([
                         styles.pinGridItem,
                         styles.emptyItem,
-                      ])}></View>
+                      ])}
+                    />
                   );
                 })}
               </View>
