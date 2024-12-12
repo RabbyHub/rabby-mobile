@@ -13,23 +13,21 @@ import {
 import { DappsScreen } from '@/screens/Dapps/DappsScreen';
 import SettingsScreen from '../Settings/Settings';
 
-import {
-  RootNavigatorParamsList,
-  RootStackParamsList,
-} from '@/navigation-type';
+import { HomeNavigatorParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles } from '@/utils/styles';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsStub';
-import createCustomNativeStackNavigator from '@/utils/CustomNativeStackNavigator';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
+import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-const RootStack = createCustomNativeStackNavigator<RootNavigatorParamsList>();
+// const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
+const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
 const isIOS = Platform.OS === 'ios';
 
@@ -52,12 +50,9 @@ const getStyles = createGetStyles(colors => ({
   },
 }));
 
-export default function RootScreenNavigator() {
+export function HomeScreenNavigator() {
   const colors = useThemeColors();
   const { mergeScreenOptions } = useStackScreenConfig();
-
-  const { systembarOffsetBottom } = useSafeSizes();
-  const tabbarHeight = ScreenLayouts.bottomBarHeight + systembarOffsetBottom;
 
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');
@@ -65,30 +60,33 @@ export default function RootScreenNavigator() {
 
   return (
     <>
-      <RootStack.Navigator
-        screenOptions={mergeScreenOptions({
-          gestureEnabled: false,
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: 'transparent',
-          },
-          // headerShadowVisible: true,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            color: colors['neutral-title-1'],
-            fontWeight: '500',
-            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-          },
-          // headerTransparent: true,
-        })}>
-        <RootStack.Screen
+      <HomeHiddenTabStack.Navigator
+        screenOptions={
+          /* mergeScreenOptions */ {
+            // gestureEnabled: false,
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+            // headerShadowVisible: true,
+            headerTintColor: colors['neutral-title-1'],
+            headerTitleStyle: {
+              color: colors['neutral-title-1'],
+              fontWeight: '500',
+              fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+            },
+            // headerTransparent: true,
+          }
+        }
+        tabBar={() => null}>
+        <HomeHiddenTabStack.Screen
           name={RootNames.Home}
           component={MultiAddressHome}
-          options={mergeScreenOptions({
+          options={{
             headerShown: false,
-          })}
+          }}
         />
-        <RootStack.Screen
+        <HomeHiddenTabStack.Screen
           name={RootNames.Dapps}
           component={DappsScreen}
           options={{
@@ -101,25 +99,45 @@ export default function RootScreenNavigator() {
             headerShown: false,
           }}
         />
-        <RootStack.Screen
+        <HomeHiddenTabStack.Screen
           name={RootNames.Settings}
           component={SettingsScreen}
           options={useMemo(
-            () =>
-              mergeScreenOptions({
-                headerTitle: () => (
-                  <I18nRouteScreenTitle
-                    i18nTitle={({ t }) => t('screens.settings.screenTitle')}
-                  />
-                ),
-                gestureEnabled: false,
-                headerTitleAlign: 'center',
-                headerTintColor: colors['neutral-title-1'],
-              }),
-            [colors, mergeScreenOptions],
+            () => /* mergeScreenOptions */ ({
+              headerTitle: () => (
+                <I18nRouteScreenTitle
+                  i18nTitle={({ t }) => t('screens.settings.screenTitle')}
+                />
+              ),
+              gestureEnabled: false,
+              headerTitleAlign: 'center',
+              headerTintColor: colors['neutral-title-1'],
+            }),
+            [colors],
           )}
         />
-      </RootStack.Navigator>
+
+        <HomeHiddenTabStack.Screen
+          name={RootNames.DappWebViewStubOnHome}
+          component={DappWebViewStubScreen}
+          options={{
+            title: '',
+            headerShadowVisible: false,
+            headerShown: false,
+            // tabBarStyle: { height: 0, display: 'none' },
+            // tabBarButton(props) {
+            //   return null;
+            // },
+            // animation: 'slide_from_bottom',
+            // animationDuration: 500,
+            // animationTypeForReplace: 'push',
+            // header: (headerProps) => {
+            //   // return <DappWebViewStubScreen.Header />
+            //   return null;
+            // }
+          }}
+        />
+      </HomeHiddenTabStack.Navigator>
 
       <BiometricsStubModal />
 

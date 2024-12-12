@@ -28,7 +28,7 @@ import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
 
-import RootScreenNavigator from './screens/Navigators/rootNavigator';
+import { HomeScreenNavigator } from './screens/Navigators/rootNavigator';
 
 import usePrevious from 'ahooks/lib/usePrevious';
 import {
@@ -56,7 +56,6 @@ import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import UnlockScreen from './screens/Unlock/Unlock';
 import { SingleAddressNavigator } from './screens/Navigators/SingleAddressNavigator';
-// import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -185,13 +184,13 @@ export default function AppNavigation({
             component={GetStartedNavigator}
           />
           <RootStack.Screen
-            name={RootNames.SingleAddressStack}
-            component={SingleAddressNavigator}
+            name={RootNames.StackRoot}
+            component={HomeScreenNavigator}
+            options={RootOptions}
           />
           <RootStack.Screen
-            name={RootNames.StackRoot}
-            component={RootScreenNavigator}
-            options={RootOptions}
+            name={RootNames.SingleAddressStack}
+            component={SingleAddressNavigator}
           />
           <RootStack.Screen
             name={RootNames.Unlock}

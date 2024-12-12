@@ -60,7 +60,6 @@ export const RootNames = {
 
   StackBottom: 'StackBottom',
   Home: 'Home',
-  // MultiAddressHome: 'MultiAddressHome',
   Points: 'Points',
 
   Dapps: 'Dapps',
@@ -150,6 +149,8 @@ export const RootNames = {
 
   SingleAddressStack: 'SingleAddressStack',
   SingleAddressHome: 'SingleAddressHome',
+
+  DappWebViewStubOnHome: 'DappWebViewStubOnHome',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -197,7 +198,7 @@ function makeScreenSpecConfig() {
     const bg1Default2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg-1'],
+      androidStatusBarBg: colors2024['neutral-bg1'],
     };
 
     const bg2DefaultConf = <ScreenStatusBarConf>{
@@ -230,13 +231,18 @@ function makeScreenSpecConfig() {
       '@openeddapp': {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: colors['neutral-bg-1'],
+        androidStatusBarBg: colors['neutral-bg1'],
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,
       NewUserGetStarted2024: bg1DefaultConf,
 
       Home: bg1DefaultConf,
+      DappWebViewStubOnHome: {
+        barStyle: adaptiveStatusBarStyle,
+        iosStatusBarStyle: adaptiveIosStatusBarStyle,
+        androidStatusBarBg: colors['neutral-bg1'],
+      },
       MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
       MultiAddressHistory: bg1Default2024Conf,
@@ -348,7 +354,7 @@ export function makeHeadersPresets({
     },
     withBgCard1_2024: {
       headerStyle: {
-        backgroundColor: colors2024?.['neutral-bg-1'],
+        backgroundColor: colors2024?.['neutral-bg1'],
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],

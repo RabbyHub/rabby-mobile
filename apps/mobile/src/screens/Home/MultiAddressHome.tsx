@@ -58,6 +58,7 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
+import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -173,6 +174,10 @@ function MultiAddressHome(): JSX.Element {
       title: MultiHomeFeatTitle.GasAccount,
       icon: RcIconGasAccount,
     },
+    __DEV__ && {
+      title: MultiHomeFeatTitle.TEST_DAPP,
+      icon: RcIconDapps,
+    },
     {
       title: MultiHomeFeatTitle.Dapps,
       icon: RcIconDapps,
@@ -185,7 +190,12 @@ function MultiAddressHome(): JSX.Element {
     //   title: MultiHomeFeatTitle.Points,
     //   icon: RcIconPoints,
     // },
-  ];
+  ].filter(Boolean) as {
+    title: MultiHomeFeatTitle;
+    icon: React.FC<import('react-native-svg').SvgProps>;
+    badge?: number;
+  }[];
+
   useEffect(() => {
     if (pendingTxCount) {
       Animated.loop(
@@ -288,6 +298,8 @@ function MultiAddressHome(): JSX.Element {
   const { toggleUseAllAccountsOnScene, switchSceneCurrentAccount } =
     useSwitchSceneCurrentAccount();
 
+  const { openUrlAsDapp } = useDappWebViewScreen();
+
   const handleClickMenu = useCallback(
     (title: MultiHomeFeatTitle) => {
       trigger('impactLight', {
@@ -378,20 +390,27 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Ecosystem:
-          // navigation.dispatch(
-          //   StackActions.push(RootNames.StackRoot, {
-          //     screen: RootNames.Dapps,
-          //     params: {},
-          //   }),
-          // );
+        case MultiHomeFeatTitle.TEST_DAPP:
+          openUrlAsDapp('https://metamask.github.io/test-dapp/', {
+            forceReopen: true,
+          });
+          navigation.navigate(RootNames.StackRoot, {
+            screen: RootNames.DappWebViewStubOnHome,
+            params: {},
+          });
           break;
-
+        case MultiHomeFeatTitle.Ecosystem:
+          break;
         default:
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
+    [
+      navigation,
+      toggleUseAllAccountsOnScene,
+      switchSceneCurrentAccount,
+      openUrlAsDapp,
+    ],
   );
 
   return (

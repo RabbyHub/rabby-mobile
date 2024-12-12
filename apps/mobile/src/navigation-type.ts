@@ -11,7 +11,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
  */
 
 export type RootStackParamsList = {
-  [RootNames.StackRoot]?: NavigatorScreenParams<RootNavigatorParamsList>;
+  [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -27,7 +27,11 @@ export type RootStackParamsList = {
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
 };
 
-export type RootNavigatorParamsList = {
+/**
+ * @description we mock modal-like views as a stub navigator, which was implemented
+ * based on the react-navigation's bottom tab navigator.
+ */
+export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
@@ -35,6 +39,7 @@ export type RootNavigatorParamsList = {
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
+  [RootNames.DappWebViewStubOnHome]?: {};
 };
 
 type GetStartedNavigatorParamsList = {
@@ -53,7 +58,6 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
-  // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
     useCurrentSeed?: boolean;

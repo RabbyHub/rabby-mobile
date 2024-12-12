@@ -30,7 +30,7 @@ type CurrentAddressProps = NativeStackScreenProps<
 export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
   const { accounts } = useAccounts();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { openUrlAsDapp } = useOpenDappView();
+  // const { openUrlAsDapp } = useOpenDappView();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const navState = useNavigationState(
@@ -41,15 +41,15 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
       }
     | undefined;
 
-  React.useEffect(() => {
-    return () => {
-      if (navState?.backToDappOnClose) {
-        openUrlAsDapp(navState?.backToDappOnClose, {
-          showSheetModalFirst: false,
-        });
-      }
-    };
-  }, [navState, openUrlAsDapp]);
+  // React.useEffect(() => {
+  //   return () => {
+  //     if (navState?.backToDappOnClose) {
+  //       openUrlAsDapp(navState?.backToDappOnClose, {
+  //         showSheetModalFirst: false,
+  //       });
+  //     }
+  //   };
+  // }, [navState, openUrlAsDapp]);
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
