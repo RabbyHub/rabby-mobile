@@ -1,7 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  usePinAddresses,
+} from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -57,6 +61,25 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
   }, [account, onSelect, switchAccount]);
 
+  const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
+    disableAutoFetch: true,
+  });
+  const pinned = useMemo(
+    () =>
+      pinAddresses.some(e =>
+        addressUtils.isSameAddress(e.address, account.address),
+      ),
+    [pinAddresses, account],
+  );
+
+  const handlePinned = useCallback(() => {
+    togglePinAddressAsync({
+      address: account.address,
+      brandName: account.brandName,
+      nextPinned: !pinned,
+    });
+  }, [togglePinAddressAsync, account.address, account.brandName, pinned]);
+
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActions = React.useMemo(() => {
     return [
@@ -71,7 +94,17 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           editAliasName.show(account);
         },
       },
-
+      {
+        title: pinned ? 'UnPin' : 'Pin',
+        icon: pinned
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+        androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
+        key: 'pin',
+        action() {
+          handlePinned();
+        },
+      },
       {
         title: 'Address Details',
         icon: isDarkTheme
@@ -96,7 +129,15 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         },
       },
     ] as MenuAction[];
-  }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
+  }, [
+    isDarkTheme,
+    editAliasName,
+    account,
+    showAddressDetail,
+    removeAccount,
+    pinned,
+    handlePinned,
+  ]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (
@@ -132,6 +173,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         <AddressItemInner2024
           isPressing={isCurrentAccount || isPressing}
           account={account}
+          pinned={pinned}
         />
       </TouchableOpacity>
     </ContextMenuView>

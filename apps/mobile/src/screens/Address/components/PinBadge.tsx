@@ -11,7 +11,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 8,
     backgroundColor: colors2024['brand-light-1'],
     flexDirection: 'row',
-    width: 52,
+    width: 33,
   },
   text: {
     fontSize: 14,
@@ -27,7 +27,7 @@ export const PinBadge = () => {
 
   return (
     <View style={styles.root}>
-      <PinSVG width={15} height={15} color={colors2024['brand-default']} />
+      {/* <PinSVG width={15} height={15} color={colors2024['brand-default']} /> */}
       <Text style={styles.text}>Pin</Text>
     </View>
   );

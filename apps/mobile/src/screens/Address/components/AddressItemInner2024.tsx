@@ -82,20 +82,11 @@ interface AddressItemProps {
   style?: StyleProp<ViewStyle>;
   hiddenArrow?: boolean;
   isPressing?: boolean;
+  pinned?: boolean;
 }
 export const AddressItemInner2024 = (props: AddressItemProps) => {
-  const { account, style, hiddenArrow, isPressing } = props;
+  const { account, style, hiddenArrow, isPressing, pinned } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { pinAddresses } = usePinAddresses({
-    disableAutoFetch: true,
-  });
-  const pinned = useMemo(
-    () =>
-      pinAddresses.some(e =>
-        addressUtils.isSameAddress(e.address, account.address),
-      ),
-    [pinAddresses, account],
-  );
 
   return (
     <Card
