@@ -11,7 +11,7 @@ import { redirectToAddAddressEntry } from '@/utils/navigation';
 
 export const useNoLongerSupports = () => {
   const { accounts } = useAccounts({
-    disableAutoFetch: true,
+    disableAutoFetch: false,
   });
   const modalIdRef = React.useRef<MODAL_ID>();
   const removeAccount = useRemoveAccount();
