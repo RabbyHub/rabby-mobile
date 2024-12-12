@@ -19,8 +19,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
-import RcIconCopy from '@/assets2024/icons/address/copy.svg';
-import RcIconQR from '@/assets2024/icons/address/qr.svg';
+import { RcIconCopy, RcIconQR } from './icons';
 import { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
@@ -210,6 +209,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       fontSize: 17,
       fontStyle: 'normal',
       fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
       lineHeight: 22,
       flexShrink: 1,
     },
