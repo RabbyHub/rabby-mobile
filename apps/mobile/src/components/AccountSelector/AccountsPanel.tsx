@@ -28,6 +28,7 @@ import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
 import { AccountPannelSectionTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { ellipsisAddress } from '@/utils/address';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;
@@ -64,6 +65,7 @@ function AddressItemInSheetModal({
   isCurrent,
   isPinned,
   showCopyAndQR,
+  replaceNameWithAliasAddress,
   defaultPressAction = showCopyAndQR ? 'copy' : 'asPress',
   onPressAccount: proponPressAddress,
 }: {
@@ -71,6 +73,7 @@ function AddressItemInSheetModal({
   isCurrent?: boolean;
   isPinned?: boolean;
   showCopyAndQR?: boolean;
+  replaceNameWithAliasAddress?: boolean;
   defaultPressAction?: 'copy' | 'asPress';
   onPressAccount?: (account: Account) => void;
 } & RNViewProps) {
@@ -115,7 +118,13 @@ function AddressItemInSheetModal({
               <WalletIcon style={styles.walletIcon} />
               <View style={styles.centerInfo}>
                 <View style={styles.nameAndAdderss}>
-                  <WalletName style={styles.addressAliasName} />
+                  {replaceNameWithAliasAddress ? (
+                    <Text style={styles.addressAliasName}>
+                      {ellipsisAddress(account.address)}
+                    </Text>
+                  ) : (
+                    <WalletName style={styles.addressAliasName} />
+                  )}
                   {isPinned && (
                     <View style={styles.pinnedWrapper}>
                       {/* <ICONS_COMMON_2024.RcPinCC
@@ -180,6 +189,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     addressItemInner: {
       flexDirection: 'row',
       height: 52,
+      alignItems: 'center',
       width: '100%',
     },
     walletIcon: { marginRight: 12 },
@@ -395,7 +405,7 @@ export function AccountsPanelInSheetModal({
             !!watchAddresses.length &&
             !isGasAccount && (
               <>
-                <View style={{ height: 18 }} />
+                <View style={{ height: 30 }} />
                 <SectionCollapsableNav
                   title={t(
                     'page.addressDetail.addressListScreen.importWatchAddress',
@@ -468,6 +478,7 @@ export function AccountsPanelInSheetModal({
                         addressItemProps={{ account: item }}
                         isPinned={isPinnedAccount(item)}
                         onPressAccount={onSelectAccount}
+                        replaceNameWithAliasAddress={isReceive}
                         showCopyAndQR={!isGasAccount}
                         defaultPressAction={defaultPressItemAction}
                         style={[index > 0 && styles.addressItemTopGap]}

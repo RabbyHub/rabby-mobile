@@ -1999,7 +1999,7 @@
       },
       "addressListScreen": {
         "importSafeAddress": "Imported Safe Addresses",
-        "importWatchAddress": "Imported watch-only Addresses"
+        "importWatchAddress": "Imported Watch-only Addresses"
       }
     },
     "preferMetamaskDapps": {

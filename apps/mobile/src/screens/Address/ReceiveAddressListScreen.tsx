@@ -73,6 +73,8 @@ export function ReceiveAddressListScreen(): JSX.Element {
 const getStyle = createGetStyles2024(() => ({
   accountRoot: {
     backgroundColor: 'transparent',
-    maxHeight: '85%',
+    paddingBottom: 56,
+    height: '100%',
+    maxHeight: '100%',
   },
 }));
