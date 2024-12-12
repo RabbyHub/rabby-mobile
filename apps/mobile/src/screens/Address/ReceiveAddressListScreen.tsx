@@ -16,6 +16,7 @@ import { StackActions } from '@react-navigation/native';
 
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { CHAINS_ENUM } from '@debank/common';
+import { useTranslation } from 'react-i18next';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -26,13 +27,13 @@ export function ReceiveAddressListScreen(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
+  const { t } = useTranslation();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-
   const handleSelect = async account => {
     await switchSceneCurrentAccount('Receive', account);
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-      value: CHAINS_ENUM.ETH,
+      titleText: t('page.receiveAddressList.selectChainTitle'),
       onChange: (v: CHAINS_ENUM) => {
         removeGlobalBottomSheetModal2024(id);
         navigation.dispatch(

@@ -2387,7 +2387,8 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Receive Address"
+      "title": "Select Receive Address",
+      "selectChainTitle": "Select Chain"
     }
   },
   "component": {
