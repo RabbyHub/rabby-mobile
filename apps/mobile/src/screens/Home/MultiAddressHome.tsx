@@ -68,6 +68,8 @@ import {
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { sortAccountsByBalance } from '@/utils/account';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import useHomePinAddress from './hooks/useHomePinAddress';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -230,6 +232,8 @@ function MultiAddressHome(): JSX.Element {
     cacheTime: 5 * 60 * 1000, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
+
+  const { pinAccountsFirstFour, isShowPin } = useHomePinAddress();
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
@@ -432,28 +436,6 @@ function MultiAddressHome(): JSX.Element {
     [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
   );
 
-  const pinAccounts = React.useMemo(() => {
-    const restAccounts = [...accounts];
-    let highlightedAccounts: typeof accounts = [];
-
-    pinAddresses.forEach(highlighted => {
-      const idx = restAccounts.findIndex(
-        account =>
-          isSameAddress(account.address, highlighted.address) &&
-          account.brandName === highlighted.brandName,
-      );
-      if (idx > -1) {
-        highlightedAccounts.push(restAccounts[idx]);
-      }
-    });
-    highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
-    return highlightedAccounts.slice(0, 4);
-  }, [accounts, pinAddresses]);
-
-  const pinAccountsFirstFour = React.useMemo(() => {
-    return pinAccounts.concat(new Array(4 - pinAccounts.length).fill(null)); // fill null to keep 4 items
-  }, [pinAccounts]);
-
   const handleClickPinAccount = useCallback(
     (pinItem: KeyringAccountWithAlias) => {
       trigger('impactLight', {
@@ -525,7 +507,7 @@ function MultiAddressHome(): JSX.Element {
               <RcIconSmallArrow />
             </TouchableOpacity>
           </View>
-          {pinAccounts.length > 0 && (
+          {isShowPin && (
             <>
               <View style={[styles.menuHeader, styles.pinHeader]}>
                 <View style={styles.pinBox}>
