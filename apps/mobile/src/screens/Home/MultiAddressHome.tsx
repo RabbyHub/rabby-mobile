@@ -66,10 +66,8 @@ import {
   usePinAddresses,
 } from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortAccountsByBalance } from '@/utils/account';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import useHomePinAddress from './hooks/useHomePinAddress';
+import { ThemeColors2024 } from '@/constant/theme';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -673,7 +671,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 14,
     borderRadius: 94,
-    backgroundColor: isLight ? '#131416' : colors2024['brand-default'],
+    backgroundColor: isLight
+      ? ThemeColors2024.dark['neutral-bg-1']
+      : colors2024['brand-default'],
     shadowColor: colors2024['brand-light-1'],
     shadowOffset: { width: 0, height: 9.411 },
     shadowOpacity: 0.1,
