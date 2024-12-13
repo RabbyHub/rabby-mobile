@@ -314,7 +314,7 @@ const SectionCollapsableNav = function ({
       <RcCaretDownCC
         style={[
           { marginLeft: 4 },
-          !isCollapsed && { transform: [{ rotate: '180deg' }] },
+          isCollapsed && { transform: [{ rotate: '180deg' }] },
         ]}
         width={18}
         height={18}
