@@ -86,7 +86,11 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       {
         title: pinned ? 'UnPin' : 'Pin',
         icon: pinned
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
         androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
         key: 'pin',
