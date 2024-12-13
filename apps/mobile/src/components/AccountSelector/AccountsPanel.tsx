@@ -472,7 +472,8 @@ export function AccountsPanelInSheetModal({
                   data={combinedItem.data}
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => (
-                    <AddressItemShadowView>
+                    <AddressItemShadowView
+                      style={[index > 0 && styles.addressItemTopGap]}>
                       <AddressItemInSheetModal
                         key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                         addressItemProps={{ account: item }}
@@ -481,7 +482,6 @@ export function AccountsPanelInSheetModal({
                         replaceNameWithAliasAddress={isReceive}
                         showCopyAndQR={!isGasAccount}
                         defaultPressAction={defaultPressItemAction}
-                        style={[index > 0 && styles.addressItemTopGap]}
                       />
                     </AddressItemShadowView>
                   )}

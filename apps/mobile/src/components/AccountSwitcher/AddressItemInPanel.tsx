@@ -48,11 +48,10 @@ export function AddressItemInPanel({
   }, [account, proponPressAddress]);
 
   return (
-    <AddressItemShadowView>
+    <AddressItemShadowView style={style}>
       <TouchableOpacity
         style={StyleSheet.flatten([
           styles.addressItemContainer,
-          style,
           isCurrent && styles.addressItemContainerCurrent,
           isPressing && styles.containerPressing,
         ])}
