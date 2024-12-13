@@ -3,7 +3,6 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { Account } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { sortBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
@@ -15,6 +14,7 @@ import { Button } from '../Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { AccountSelectItem } from './AccountSelectItem';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
+import { Account } from '@/core/services/preference';
 
 interface AccountSelectDrawerProps {
   onChange(account: Account): void;

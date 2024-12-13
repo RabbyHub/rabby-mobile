@@ -361,6 +361,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         KEYRING_TYPE.HdKeyring,
         KEYRING_CLASS.HARDWARE.LEDGER,
       ].includes((currentAccount?.type || '') as any) &&
+      !receiveToken?.low_credit_score &&
       !isSlippageHigh &&
       !isSlippageLow &&
       !showLoss

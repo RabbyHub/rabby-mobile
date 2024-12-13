@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
 import { findChainByServerID } from '@/utils/chain';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { BridgeAggregator } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtomValue } from 'jotai';
 
@@ -23,8 +24,14 @@ const bridgeSupportedChainsAtom = atom(
 );
 
 bridgeSupportedChainsAtom.onMount = setAtom => {
-  openapi.getBridgeSupportChain().then(s => {
-    setAtom(s.map(e => findChainByServerID(e)?.enum! || e));
+  openapi.getBridgeSupportChainV2().then(chains => {
+    if (chains.length) {
+      const mappings = Object.values(CHAINS).reduce((acc, chain) => {
+        acc[chain.serverId] = chain.enum;
+        return acc;
+      }, {} as Record<string, CHAINS_ENUM>);
+      setAtom(chains.map(item => mappings[item]));
+    }
   });
 };
 

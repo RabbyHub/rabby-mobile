@@ -13,7 +13,6 @@ import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HardwareDeviceList } from './components/HardwareDeviceList';
-import { WalletConnectList } from './components/WalletConnectList';
 import { WalletHeadline } from './components/WalletHeadline';
 import { WalletItem } from './components/WalletItem';
 import { ImportAddressList } from './components/ImportAddressList';
@@ -42,9 +41,6 @@ function MainListBlocks() {
       )}
       <View style={styles.section}>
         <HardwareDeviceList />
-      </View>
-      <View style={styles.section}>
-        <WalletConnectList />
       </View>
       <View style={styles.section}>
         <WalletHeadline Icon={RcBuilding}>Institutional Wallets</WalletHeadline>

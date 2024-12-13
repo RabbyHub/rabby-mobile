@@ -10,7 +10,7 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import { SvgProps } from 'react-native-svg';
 
-import { RcIconCopyCC } from '@/assets/icons/common';
+import RcIconCopyCC from '@/assets2024/icons/address/mcopy.svg';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { toast } from '@/components2024/Toast';

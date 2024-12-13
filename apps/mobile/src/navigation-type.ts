@@ -62,12 +62,19 @@ type TestKitsNavigatorParamsList = {
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
-  [RootNames.CreateNewAddress]?: {};
+  [RootNames.CreateNewAddress]?: {
+    noSetupPassword?: boolean;
+    useCurrentSeed?: boolean;
+    mnemonics?: string;
+    title?: string;
+    accounts?: string[];
+  };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
       | typeof RootNames.ImportSuccess2024
       | typeof RootNames.ImportMnemonic2024
+      | typeof RootNames.CreateChooseBackup
       | typeof RootNames.ImportPrivateKey2024;
     title?: string;
     hideProgress?: boolean;
@@ -79,7 +86,9 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportWatchAddress2024]?: {};
   [RootNames.CreateSelectOnCurrentSeed]?: {};
   [RootNames.CreateSelectMethod]?: {};
-  [RootNames.CreateChooseBackup]?: {};
+  [RootNames.CreateChooseBackup]?: {
+    delaySetPassword?: boolean;
+  };
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {
@@ -147,6 +156,7 @@ export type AddressNavigatorParamList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
   [RootNames.SafeAddressList]?: {};
+  [RootNames.ApprovalAddressList]?: {};
 };
 
 export type AccountNavigatorParamList = {

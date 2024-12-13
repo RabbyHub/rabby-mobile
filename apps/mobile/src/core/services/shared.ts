@@ -18,7 +18,6 @@ import { WhitelistService } from './whitelist';
 import { SessionService } from './session';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
-import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KeyringService } from '@rabby-wallet/service-keyring';
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
@@ -35,12 +34,13 @@ export { customRPCService } from './customRPCService';
 import { BridgeService } from './bridge';
 import { GasAccountService } from './gasAccount';
 import { BrowserHistoryService } from './browserHistoryService';
+import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
 
 const keyringState = normalizeKeyringState().keyringData;
 
 // TODO: add other keyring classes
 const keyringClasses = [
-  WalletConnectKeyring,
+  MockWalletConnectKeyring,
   WatchKeyring,
   LedgerKeyring,
   KeystoneKeyring,

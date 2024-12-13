@@ -8,12 +8,13 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { BridgeTxHistory } from './BridgeHistory';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import { View } from 'react-native';
-import { RcIconSwapHistory } from '@/assets/icons/swap';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+// import { RcIconSwapHistory } from '@/assets/icons/swap';
+import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import PendingTx from './PendingTx';
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     flexDirection: 'row',
     gap: 20,
@@ -26,8 +27,7 @@ const getStyles = createGetStyles(colors => ({
 }));
 
 export const BridgeHeader = () => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
 
   const feePopupVisible = useSettingVisible();
   const setFeePopupVisible = useSetSettingVisible();
@@ -55,7 +55,7 @@ export const BridgeHeader = () => {
           {loadingNumber ? (
             <PendingTx number={loadingNumber} onClick={openHistory} />
           ) : (
-            <RcIconSwapHistory style={styles.icon} />
+            <RcIconSwapHistory color={colors2024['neutral-body']} />
           )}
         </TouchableView>
       </View>

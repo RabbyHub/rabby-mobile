@@ -9,3 +9,4 @@ export { default as RcIconRightEntryCC } from './icon-right-entry-cc.svg';
 export { default as RcIconRightEntryMiniCC } from './icon-right-entry-mini-cc.svg';
 
 export { default as RcIconNotMatchedCC } from '@/assets/icons/common/not-matched-cc.svg';
+export { default as RcIconPartChecked } from './partChecked.svg';

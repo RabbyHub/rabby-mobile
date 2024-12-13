@@ -1,4 +1,4 @@
-import { TouchableOpacity, View } from 'react-native';
+import { Keyboard, TouchableOpacity, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   createGetStyles2024,
@@ -16,7 +16,7 @@ import {
   getAccountsPanelInModalMaxHeight,
 } from './AccountsPanel';
 import AutoLockView from '../AutoLockView';
-import { useCallback, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect } from 'react';
 import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -50,7 +50,15 @@ export function AccountSwitcherModal({
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleSceneVisible]);
 
-  if (!isVisible) return null;
+  useEffect(() => {
+    if (isVisible) {
+      Keyboard.dismiss();
+    }
+  }, [isVisible]);
+
+  if (!isVisible) {
+    return null;
+  }
 
   const absoluteStyle = {
     top: topValue + ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
@@ -150,7 +158,9 @@ export function AccountSwitcherModalInDappWebView({
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleSceneVisible]);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   const absoluteStyle = IS_ANDROID
     ? {
@@ -182,7 +192,9 @@ export function AccountSwitcherModalInDappWebView({
         <AccountsPanelInModal
           forScene={forScene}
           onSwitchSceneAccount={async ctx => {
-            if (!activeDappId) return;
+            if (!activeDappId) {
+              return;
+            }
             setDappCurrentAccount(activeDappId, ctx.sceneAccount);
             await ctx.switchAction();
           }}

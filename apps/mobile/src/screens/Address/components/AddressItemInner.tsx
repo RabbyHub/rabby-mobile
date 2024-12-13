@@ -20,7 +20,6 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { splitNumberByStep } from '@/utils/number';
-import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { makeDebugBorder } from '@/utils/styles';
@@ -109,11 +108,6 @@ export const AddressItemInner = (props: AddressItemProps) => {
           width={styles.walletLogo.width}
           height={styles.walletLogo.height}
           style={styles.walletLogo}
-        />
-        <CommonSignal
-          address={wallet.address}
-          brandName={wallet.brandName}
-          type={wallet.type}
         />
       </View>
       <View style={styles.centerInner}>
