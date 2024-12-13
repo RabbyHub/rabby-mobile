@@ -1,0 +1,272 @@
+import { last } from 'lodash';
+import React from 'react';
+import { Text, View } from 'react-native';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { Button } from '@/components2024/Button';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { RootNames } from '@/constant/layout';
+import { openapi } from '@/core/request';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
+import { AbstractPortfolioToken } from '@/screens/home/types';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { findChain } from '@/utils/chain';
+import { createGetStyles2024 } from '@/utils/styles';
+import { abstractTokenToTokenItem } from '@/utils/token';
+import { CHAINS_ENUM } from '@debank/common';
+import {
+  TxDisplayItem,
+  TxHistoryResult,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { useNavigationState } from '@react-navigation/native';
+import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
+import { useTranslation } from 'react-i18next';
+import { HistoryDisplayItem } from '../Transaction/MultiAddressHistory';
+import { TokenDetailHeaderArea } from './components/HeaderArea';
+import { HistoryList } from './components/HistoryList';
+import { TokenBalanceArea } from './components/TokenBalanceArea';
+import { TokenPriceChart } from './components/TokenPriceChart';
+
+const PAGE_COUNT = 50;
+
+export const TokenDetailScreen = () => {
+  const { token, account } = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
+  ) as {
+    token: AbstractPortfolioToken;
+    account: KeyringAccountWithAlias;
+  };
+
+  const { colors2024, styles } = useTheme2024({
+    getStyle,
+  });
+
+  const isTestnet = false;
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { currentAccount } = useCurrentAccount();
+  const finalAccount = account || currentAccount;
+
+  const { data: tokenWithAmount } = useRequest(
+    async () => {
+      if (!finalAccount || !token || token.amount) {
+        return token;
+      }
+
+      const res = await openapi.getToken(
+        finalAccount.address,
+        token.chain,
+        token._tokenId,
+      );
+      return ensureAbstractPortfolioToken({
+        ...abstractTokenToTokenItem(token),
+        usd_value: res?.usd_value,
+        amount: res?.amount,
+      });
+    },
+    {
+      refreshDeps: [token, finalAccount],
+    },
+  );
+
+  type LoadData = {
+    earliest?: TxDisplayItem['time_at'] | undefined;
+    tokenId?: AbstractPortfolioToken['_tokenId'] | null;
+    list: HistoryDisplayItem[];
+  };
+  const {
+    data: latestData,
+    loading,
+    loadingMore,
+    loadMore,
+    reloadAsync,
+  } = useInfiniteScroll<LoadData>(
+    async currentData => {
+      const lastEarliestTime =
+        currentData?.earliest ?? last(currentData?.list)?.time_at;
+      const tickResult: LoadData = {
+        earliest: lastEarliestTime ?? undefined,
+        tokenId: token?._tokenId,
+        list: [],
+      };
+
+      if (!token || isTestnet) {
+        return tickResult;
+      }
+
+      try {
+        const res: TxHistoryResult = await openapi.listTxHisotry({
+          id: finalAccount?.address,
+          chain_id: token?.chain,
+          start_time: lastEarliestTime ?? undefined,
+          page_count: PAGE_COUNT,
+          token_id: token?._tokenId,
+        });
+        const { project_dict, cate_dict, token_dict, history_list: list } = res;
+        // descendent order by time_at
+        const displayList: TxDisplayItem[] = list
+          .map(item => ({
+            ...item,
+            projectDict: project_dict,
+            cateDict: cate_dict,
+            tokenDict: token_dict,
+          }))
+          .sort((v1, v2) => v2.time_at - v1.time_at);
+
+        tickResult.earliest = last(displayList)?.time_at;
+
+        tickResult.list = !lastEarliestTime
+          ? displayList
+          : // find out the items that are earlier than the earliest item in current list
+            displayList.filter(
+              item => !item.time_at || item.time_at <= lastEarliestTime,
+            );
+
+        return tickResult;
+      } catch (error) {
+        console.error(error);
+        return tickResult;
+      }
+    },
+    {
+      // manual: true,
+      reloadDeps: [token, token?._tokenId, isTestnet],
+      isNoMore: d => {
+        if (isTestnet) {
+          return true;
+        }
+        return !d?.earliest || (d?.list.length || 0) < PAGE_COUNT;
+      },
+    },
+  );
+
+  const isFirstLoading = loading && !latestData?.list?.length;
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: () => (
+        <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
+      ),
+      headerTitleAlign: 'left',
+    });
+  }, [currentAccount?.address, setNavigationOptions, token]);
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  const handleSend = useMemoizedFn(async () => {
+    const chain = findChain({
+      serverId: token.chain,
+    });
+    await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.Send,
+      params: {
+        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+        tokenId: token?._tokenId,
+      },
+    });
+  });
+
+  const handleSwap = useMemoizedFn(async () => {
+    const chain = findChain({
+      serverId: token.chain,
+    });
+    await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.Swap,
+      params: {
+        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+        tokenId: token?._tokenId,
+      },
+    });
+  });
+
+  const { t } = useTranslation();
+
+  if (!finalAccount) {
+    return null;
+  }
+
+  return (
+    <NormalScreenContainer2024 type="bg1" style={styles.root}>
+      <HistoryList
+        ListHeaderComponent={
+          <>
+            <View>
+              <TokenPriceChart token={token} />
+              <View style={styles.divider} />
+              <TokenBalanceArea
+                account={finalAccount}
+                token={tokenWithAmount || token}
+              />
+            </View>
+            <View style={styles.historyHeader}>
+              <Text style={styles.historyTitle}>
+                {t('page.tokenDetail.transactions')}
+              </Text>
+            </View>
+          </>
+        }
+        list={latestData?.list || []}
+        loading={isFirstLoading}
+        loadingMore={loadingMore}
+        refreshLoading={loading}
+        loadMore={loadMore}
+      />
+      <View style={styles.buttonGroup}>
+        <Button
+          title={t('page.tokenDetail.action.swap')}
+          containerStyle={styles.btnContainer}
+          onPress={handleSwap}
+        />
+        <View style={styles.btnGap} />
+
+        <Button
+          title={t('page.tokenDetail.action.send')}
+          containerStyle={styles.btnContainer}
+          type="ghost"
+          onPress={handleSend}
+        />
+      </View>
+    </NormalScreenContainer2024>
+  );
+};
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  return {
+    root: {},
+
+    divider: {
+      marginHorizontal: 20,
+      backgroundColor: colors2024['neutral-line'],
+      height: 1,
+    },
+    historyTitle: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '800',
+    },
+    historyHeader: {
+      marginBottom: 16,
+      paddingHorizontal: 20,
+    },
+    buttonGroup: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      paddingBottom: 32,
+    },
+
+    btnContainer: {
+      flex: 1,
+    },
+
+    btnGap: {
+      width: 10,
+    },
+  };
+});

@@ -34,6 +34,9 @@ import { PositionLoader } from './Skeleton';
 import { TokenWalletFooter } from './TokenWalletFooter';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { Account } from '@/core/services/preference';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { findChain } from '@/utils/chain';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -229,9 +232,21 @@ export const TokenWallet = ({
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      openTokenDetailPopup(token);
+      if (
+        findChain({
+          serverId: token.chain,
+        })?.isTestnet
+      ) {
+        openTokenDetailPopup(token);
+      } else {
+        navigate(RootNames.TokenDetail, {
+          token: token,
+          // todo fix ts
+          account: currentAccount as any,
+        });
+      }
     },
-    [openTokenDetailPopup],
+    [currentAccount, openTokenDetailPopup],
   );
 
   const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);

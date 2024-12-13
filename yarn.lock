@@ -6663,6 +6663,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/rabby-api@npm:0.9.4-alpha.0":
+  version: 0.9.4-alpha.0
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.4-alpha.0"
+  dependencies:
+    "@rabby-wallet/rabby-sign": 0.4.0
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: ef4c204138fbe7f5ac8d2456aa77b765d34cfc6e6dfd14fb6bdd367d0696bd8f3a418347d04ddd3f04f733f32f5b70692ecf739e0ab295f0df39f466bde1f240
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.8.5
   resolution: "@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch::version=0.8.5&hash=51205e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
@@ -28765,7 +28782,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
-    "@rabby-wallet/rabby-api": 0.8.5
+    "@rabby-wallet/rabby-api": 0.9.4-alpha.0
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.0
     "@rabby-wallet/rabby-swap": 0.0.42

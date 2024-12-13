@@ -1,3 +1,4 @@
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
@@ -5,6 +6,7 @@ import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { AbstractPortfolioToken } from './screens/Home/types';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -26,6 +28,11 @@ export type RootStackParamsList = {
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
+  // todo
+  [RootNames.TokenDetail]: {
+    token: AbstractPortfolioToken;
+    account?: KeyringAccountWithAlias;
+  };
 };
 
 export type RootNavigatorParamsList = {
