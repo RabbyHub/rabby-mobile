@@ -24,6 +24,7 @@ import { AddressItemInPanel, AddressItemSizes } from './AddressItemInPanel';
 import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const SectionCollapsableNav = function ({
   isCollapsed = false,
@@ -204,14 +205,17 @@ AccountSwitcherAopProps<{
                     isCurrent={isCurrent}
                     isPinned={isPinnedAccount(account)}
                     onPressAddress={handlePressAccount}
-                    style={[index > 0 && styles.addressItemTopGap]}
+                    style={[
+                      styles.addressItem,
+                      index > 0 && styles.addressItemTopGap,
+                    ]}
                   />
                 );
               })}
             </View>
           </View>
           {!!safeAddresses.length && (
-            <View style={[styles.section, { marginTop: 18 }]}>
+            <View style={[styles.section, { marginTop: 30 }]}>
               <SectionCollapsableNav
                 title={t(
                   'page.addressDetail.addressListScreen.importSafeAddress',
@@ -236,7 +240,10 @@ AccountSwitcherAopProps<{
                         isCurrent={isCurrent}
                         isPinned={false}
                         onPressAddress={handlePressAccount}
-                        style={[index > 0 && styles.addressItemTopGap]}
+                        style={[
+                          styles.addressItem,
+                          index > 0 && styles.addressItemTopGap,
+                        ]}
                       />
                     );
                   })}
@@ -245,7 +252,7 @@ AccountSwitcherAopProps<{
             </View>
           )}
           {!!watchAddresses.length && (
-            <View style={[styles.section, { marginTop: 18 }]}>
+            <View style={[styles.section, { marginTop: 30 }]}>
               <SectionCollapsableNav
                 title={t(
                   'page.addressDetail.addressListScreen.importWatchAddress',
@@ -270,7 +277,10 @@ AccountSwitcherAopProps<{
                         isCurrent={isCurrent}
                         isPinned={false}
                         onPressAddress={handlePressAccount}
-                        style={[index > 0 && styles.addressItemTopGap]}
+                        style={[
+                          styles.addressItem,
+                          index > 0 && styles.addressItemTopGap,
+                        ]}
                       />
                     );
                   })}
@@ -321,7 +331,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     sectionTitleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
     },
     sectionTitle: {
       fontFamily: 'SF Pro Rounded',
@@ -336,6 +346,13 @@ const getPanelStyle = createGetStyles2024(ctx => {
       // maxHeight: SIZES.myAddressesAreaVisiableH,
       width: '100%',
     },
+    addressItem: !IS_ANDROID
+      ? {}
+      : {
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: ctx.colors2024['neutral-line'],
+        },
     addressItemTopGap: {
       marginTop: AddressItemSizes.itemGap,
     },
