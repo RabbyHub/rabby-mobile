@@ -84,17 +84,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'Edit Name',
-        icon: isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
-        androidIconName: 'ic_rabby_menu_edit',
-        key: 'edit',
-        action() {
-          editAliasName.show(account);
-        },
-      },
-      {
         title: pinned ? 'UnPin' : 'Pin',
         icon: pinned
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
@@ -103,6 +92,17 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         key: 'pin',
         action() {
           handlePinned();
+        },
+      },
+      {
+        title: 'Edit Name',
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+        androidIconName: 'ic_rabby_menu_edit',
+        key: 'edit',
+        action() {
+          editAliasName.show(account);
         },
       },
       {
