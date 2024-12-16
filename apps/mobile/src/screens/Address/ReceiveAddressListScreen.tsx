@@ -54,12 +54,7 @@ export function ReceiveAddressListScreen(): JSX.Element {
   return (
     <NormalScreenContainer2024
       type="linear"
-      linearProp={{
-        colors: [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']],
-        locations: [0.2072, 0.3181],
-        start: { x: 0.5, y: 0 },
-        end: { x: 0.5, y: 1 },
-      }}>
+      overwriteStyle={styles.overwriteStyle}>
       <AccountsPanelInSheetModal
         containerStyle={styles.accountRoot}
         onSelectAccount={handleSelect}
@@ -71,7 +66,11 @@ export function ReceiveAddressListScreen(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(() => ({
+  overwriteStyle: {
+    paddingTop: 76,
+  },
   accountRoot: {
+    paddingTop: 0,
     backgroundColor: 'transparent',
     paddingBottom: 56,
     height: '100%',

@@ -10,7 +10,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.03,
     shadowRadius: 10,
     elevation: 8,
   },

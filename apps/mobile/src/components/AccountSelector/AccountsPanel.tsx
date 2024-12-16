@@ -2,7 +2,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
-  ScrollView,
   FlatList,
   StyleProp,
   StyleSheet,
@@ -14,8 +13,6 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
-import TouchableView from '../Touchable/TouchableView';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
@@ -28,6 +25,7 @@ import { AccountPannelSectionTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { ellipsisAddress } from '@/utils/address';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;
@@ -181,6 +179,8 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 24,
       height: SIZES.itemH,
+      borderWidth: IS_ANDROID ? 1 : 0,
+      borderColor: ctx.colors2024['neutral-line'],
     },
     addressItemContainerCurrent: {
       backgroundColor: ctx.colors2024['brand-light-1'],

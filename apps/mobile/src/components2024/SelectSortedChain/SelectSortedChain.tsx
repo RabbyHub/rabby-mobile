@@ -223,7 +223,7 @@ export default function SelectSortedChain({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: '100%',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 32,
   },
