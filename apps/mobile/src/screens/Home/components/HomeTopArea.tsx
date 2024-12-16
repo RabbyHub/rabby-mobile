@@ -224,6 +224,10 @@ export const HomeTopArea = () => {
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
           titleText: t('page.receiveAddressList.selectChainTitle'),
+          bottomSheetModalProps: {
+            enableContentPanningGesture: true,
+            enablePanDownToClose: true,
+          },
           onChange: (v: CHAINS_ENUM) => {
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
