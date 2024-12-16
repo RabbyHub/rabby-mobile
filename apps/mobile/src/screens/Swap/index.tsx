@@ -22,6 +22,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
   StackActions,
+  useIsFocused,
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
@@ -404,6 +405,25 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   const scrollToEnd = () => {
     keyboardAwareRef.current?.scrollToEnd(true);
   };
+
+  const lowCreditInit = useRef(false);
+
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (!isFocused) {
+      lowCreditInit.current = false;
+    } else if (
+      receiveToken &&
+      receiveToken?.low_credit_score &&
+      !lowCreditInit.current
+    ) {
+      setLowCreditToken(receiveToken);
+      setLowCreditVisible(true);
+      lowCreditInit.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused]);
 
   return (
     <NormalScreenContainer2024 type="bg1">
