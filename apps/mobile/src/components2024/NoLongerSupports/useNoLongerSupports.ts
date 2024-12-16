@@ -57,6 +57,6 @@ export const useNoLongerSupports = () => {
           removeGlobalBottomSheetModal2024(modalIdRef.current);
         },
       });
-    }, 0);
+    }, 100);
   }, [accounts, removeWalletConnect]);
 };
