@@ -422,8 +422,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       setLowCreditVisible(true);
       lowCreditInit.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
+  }, [isFocused, receiveToken, setLowCreditToken, setLowCreditVisible]);
 
   return (
     <NormalScreenContainer2024 type="bg1">
