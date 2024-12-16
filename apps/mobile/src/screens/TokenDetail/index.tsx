@@ -1,6 +1,3 @@
-import { last } from 'lodash';
-import React from 'react';
-import { Text, View } from 'react-native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -19,9 +16,12 @@ import {
   TxDisplayItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
+import { last } from 'lodash';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
 import { HistoryDisplayItem } from '../Transaction/MultiAddressHistory';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { HistoryList } from './components/HistoryList';
@@ -31,14 +31,19 @@ import { TokenPriceChart } from './components/TokenPriceChart';
 const PAGE_COUNT = 50;
 
 export const TokenDetailScreen = () => {
-  const { token, account } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
-  ) as {
+  const route = useRoute();
+  const { token, account } = (route.params || {}) as {
     token: AbstractPortfolioToken;
     account: KeyringAccountWithAlias;
   };
+  // const { token, account } = useNavigationState(
+  //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
+  // ) as {
+  //   token: AbstractPortfolioToken;
+  //   account: KeyringAccountWithAlias;
+  // };
 
-  const { colors2024, styles } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
@@ -82,6 +87,7 @@ export const TokenDetailScreen = () => {
     reloadAsync,
   } = useInfiniteScroll<LoadData>(
     async currentData => {
+      const address = finalAccount?.address;
       const lastEarliestTime =
         currentData?.earliest ?? last(currentData?.list)?.time_at;
       const tickResult: LoadData = {
@@ -103,13 +109,15 @@ export const TokenDetailScreen = () => {
           token_id: token?._tokenId,
         });
         const { project_dict, cate_dict, token_dict, history_list: list } = res;
-        // descendent order by time_at
-        const displayList: TxDisplayItem[] = list
+        const displayList: HistoryDisplayItem[] = list
           .map(item => ({
             ...item,
             projectDict: project_dict,
             cateDict: cate_dict,
             tokenDict: token_dict,
+            account: finalAccount,
+            address,
+            key: `${address}_${item.chain}_${item.id}`,
           }))
           .sort((v1, v2) => v2.time_at - v1.time_at);
 

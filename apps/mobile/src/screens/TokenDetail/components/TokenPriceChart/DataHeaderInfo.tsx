@@ -7,7 +7,11 @@ import { last } from 'lodash';
 import React from 'react';
 import { Text, View } from 'react-native';
 import AnimateableText from 'react-native-animateable-text';
-import { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
+import {
+  useAnimatedProps,
+  useAnimatedStyle,
+  useDerivedValue,
+} from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 
 export const DataHeaderInfo = ({
@@ -37,6 +41,12 @@ export const DataHeaderInfo = ({
       : currentBalance;
   }, [data, currentBalance, currentIndex.value]);
 
+  const usdValueAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: usdValue.value,
+    };
+  });
+
   const percentChange = useDerivedValue(() => {
     return data?.[currentIndex?.value]?.changePercent !== undefined
       ? `${data?.[currentIndex?.value]?.isLoss ? '-' : '+'}${
@@ -46,6 +56,12 @@ export const DataHeaderInfo = ({
       ? `${currentIsLoss ? '-' : '+'}${currentPercentChange}`
       : '';
   }, [data, currentIsLoss, currentPercentChange, currentIndex]);
+
+  const percentChangeAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: percentChange.value,
+    };
+  });
 
   const lossStyleProps = useAnimatedStyle(() => {
     if (data?.[currentIndex?.value]) {
@@ -66,16 +82,20 @@ export const DataHeaderInfo = ({
     };
   }, [currentIsLoss, data, currentIndex, colors, styles, isLoading]);
 
-  // console.log('isLoading', isLoading, usdValue.value, percentChange.value);
-
   return (
     <>
       <View style={styles.wrapper}>
         <View style={styles.balanceChangeWrapper}>
           {!isLoading ? (
             <>
-              <AnimateableText style={styles.usdValue} text={usdValue} />
-              <AnimateableText style={lossStyleProps} text={percentChange} />
+              <AnimateableText
+                style={styles.usdValue}
+                animatedProps={usdValueAnimatedProps}
+              />
+              <AnimateableText
+                style={lossStyleProps}
+                animatedProps={percentChangeAnimatedProps}
+              />
             </>
           ) : (
             <>

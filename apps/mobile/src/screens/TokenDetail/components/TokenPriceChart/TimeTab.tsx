@@ -1,4 +1,5 @@
 import { toast } from '@/components/Toast';
+import { ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { Tab } from '@rneui/base';
@@ -84,7 +85,7 @@ export const TimeTab = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   listContainer: {
     width: '100%',
     display: 'flex',
@@ -105,9 +106,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
   },
   itemActive: {
-    // todo
-    // backgroundColor: colors2024['neutral-bg-1'],
-    backgroundColor: '#131416',
+    backgroundColor: isLight
+      ? ThemeColors2024.dark['neutral-bg-1']
+      : ThemeColors2024.light['neutral-bg-1'],
     paddingHorizontal: 13.5,
     paddingVertical: 5,
     borderRadius: 120,

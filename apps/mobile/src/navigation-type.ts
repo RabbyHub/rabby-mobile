@@ -28,7 +28,6 @@ export type RootStackParamsList = {
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
-  // todo
   [RootNames.TokenDetail]: {
     token: AbstractPortfolioToken;
     account?: KeyringAccountWithAlias;

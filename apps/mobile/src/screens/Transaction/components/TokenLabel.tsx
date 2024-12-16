@@ -13,6 +13,8 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { useNavigation } from '@react-navigation/native';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 export default function TokenLabel({
   token,
@@ -37,6 +39,7 @@ export default function TokenLabel({
   )) {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
+  const navigation = useRabbyAppNavigation();
 
   const symbolName = useMemo(() => {
     const symbol = isNft ? '' : getTokenSymbol(token);
@@ -72,7 +75,7 @@ export default function TokenLabel({
           //   setTokenDetailAddress(address);
           // }
           // openTokenDetailPopup(token as TokenItem);
-          navigate(RootNames.TokenDetail, {
+          navigation.push(RootNames.TokenDetail, {
             token: ensureAbstractPortfolioToken(token),
             account: address,
           });
