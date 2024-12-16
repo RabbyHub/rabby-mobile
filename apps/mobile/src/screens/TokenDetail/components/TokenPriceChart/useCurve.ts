@@ -1,11 +1,10 @@
 import { openapi } from '@/core/request';
 import { numFormat } from '@/utils/math';
-import { formatUsdValue } from '@/utils/number';
+import { formatPrice } from '@/utils/number';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { findLastIndex } from 'lodash';
 
-// todo
 export type CurvePoint = {
   value: number;
   netWorth: string;
@@ -35,8 +34,9 @@ export const use24hCurveData = ({
 
           return {
             value: item.price || 0,
-            netWorth: item.price ? formatUsdValue(item.price) : '$0',
-            change: numFormat(Math.abs(change), 0, '$'),
+            netWorth: item.price ? '$' + formatPrice(item.price) : '$0',
+            // change: numFormat(Math.abs(change), 0, '$'),
+            change: '$' + formatPrice(Math.abs(change)),
             isLoss: change < 0,
             changePercent:
               data[0].price === 0
@@ -99,8 +99,9 @@ export const formatTokenDateCurve = (
 
       return {
         value: item.price || 0,
-        netWorth: item.price ? formatUsdValue(item.price) : '$0',
-        change: numFormat(Math.abs(change), 0, '$'),
+        netWorth: item.price ? '$' + formatPrice(item.price) : '$0',
+        // change: numFormat(Math.abs(change), 0, '$'),
+        change: '$' + formatPrice(Math.abs(change)),
         isLoss: change < 0,
         changePercent:
           startData.value === 0

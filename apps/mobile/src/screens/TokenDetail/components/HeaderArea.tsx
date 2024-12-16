@@ -73,13 +73,18 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
       </View>
       <View style={styles.contract}>
         <ChainIconImage
-          size={24}
+          size={12}
           chainServerId={token.chain}
           isShowRPCStatus={true}
         />
         {!isContractToken && nativeTokenChainName ? (
           <>
-            <Text style={[styles.address]}>{nativeTokenChainName}</Text>
+            <Text
+              style={[styles.address]}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {nativeTokenChainName}
+            </Text>
           </>
         ) : (
           <>

@@ -239,6 +239,12 @@ export const TokenWallet = ({
       ) {
         openTokenDetailPopup(token);
       } else {
+        toggleShowSheetModal('smallTokenModalRef', false);
+        setCustomState({
+          isShowCustomPopup: false,
+          isShowBlockedPopup: false,
+          isShowCustomTestnetPopup: false,
+        });
         navigate(RootNames.TokenDetail, {
           token: token,
           // todo fix ts
@@ -246,7 +252,12 @@ export const TokenWallet = ({
         });
       }
     },
-    [currentAccount, openTokenDetailPopup],
+    [
+      currentAccount,
+      openTokenDetailPopup,
+      toggleShowSheetModal,
+      setCustomState,
+    ],
   );
 
   const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);

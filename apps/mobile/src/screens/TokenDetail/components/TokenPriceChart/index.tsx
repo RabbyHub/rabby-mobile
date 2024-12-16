@@ -1,6 +1,6 @@
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { formatUsdValue } from '@/utils/number';
+import { formatPrice, formatUsdValue } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
 import dayjs from 'dayjs';
@@ -97,7 +97,7 @@ export function TokenPriceChart(props: Props) {
   const currentInfo = useMemo(() => {
     return {
       date: dayjs().format(DATE_FORMATTER),
-      balance: formatUsdValue(token.price || 0),
+      balance: '$' + formatPrice(token.price || 0),
       isLoss: !!data?.isLoss,
       percent: percent,
     };

@@ -19,16 +19,19 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import { last } from 'lodash';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { HistoryDisplayItem } from '../Transaction/MultiAddressHistory';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { HistoryList } from './components/HistoryList';
 import { TokenBalanceArea } from './components/TokenBalanceArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
+import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
-const PAGE_COUNT = 50;
+const PAGE_COUNT = 10;
+const isAndroid = Platform.OS === 'android';
 
 export const TokenDetailScreen = () => {
   const route = useRoute();
@@ -46,6 +49,8 @@ export const TokenDetailScreen = () => {
   const { styles } = useTheme2024({
     getStyle,
   });
+
+  const { safeOffBottom } = useSafeSizes();
 
   const isTestnet = false;
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -191,6 +196,12 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
+  const tokenSupportSwap = useMemo(() => {
+    const tokenChain = findChain({ serverId: token?.chain })?.enum;
+
+    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
+  }, [token]);
+
   if (!finalAccount) {
     return null;
   }
@@ -221,11 +232,16 @@ export const TokenDetailScreen = () => {
         refreshLoading={loading}
         loadMore={loadMore}
       />
-      <View style={styles.buttonGroup}>
+      <View
+        style={[
+          styles.buttonGroup,
+          isAndroid && { paddingBottom: 20 + safeOffBottom },
+        ]}>
         <Button
           title={t('page.tokenDetail.action.swap')}
           containerStyle={styles.btnContainer}
           onPress={handleSwap}
+          disabled={!tokenSupportSwap}
         />
         <View style={styles.btnGap} />
 
@@ -265,8 +281,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: 20,
-      paddingBottom: 32,
+      paddingTop: 20,
+      paddingHorizontal: 20,
+      paddingBottom: 56,
     },
 
     btnContainer: {

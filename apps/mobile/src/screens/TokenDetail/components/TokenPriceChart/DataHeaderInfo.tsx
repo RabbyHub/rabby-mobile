@@ -13,6 +13,7 @@ import {
   useDerivedValue,
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
+import { LoadingLinear } from './LoadingLinear';
 
 export const DataHeaderInfo = ({
   currentPercentChange,
@@ -99,8 +100,18 @@ export const DataHeaderInfo = ({
             </>
           ) : (
             <>
-              <Skeleton width={181} height={42} style={styles.skeleton} />
-              <Skeleton width={71} height={22} style={styles.skeleton} />
+              <Skeleton
+                width={181}
+                height={42}
+                style={styles.skeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+              <Skeleton
+                width={71}
+                height={22}
+                style={styles.skeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
             </>
           )}
         </View>
@@ -173,5 +184,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-2'],
   },
 }));

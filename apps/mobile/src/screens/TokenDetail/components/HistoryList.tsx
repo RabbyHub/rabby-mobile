@@ -39,6 +39,7 @@ export const HistoryList = ({
           projectDict={item.projectDict}
           cateDict={item.cateDict}
           tokenDict={item.tokenDict || {}}
+          style={styles.historyItemInner}
         />
       </View>
     );
@@ -119,5 +120,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   historyItem: {
     paddingHorizontal: 20,
+  },
+  historyItemInner: {
+    borderRadius: 20,
   },
 }));
