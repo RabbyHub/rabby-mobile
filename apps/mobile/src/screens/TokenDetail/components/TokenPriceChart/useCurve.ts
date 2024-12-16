@@ -1,5 +1,4 @@
 import { openapi } from '@/core/request';
-import { numFormat } from '@/utils/math';
 import { formatPrice } from '@/utils/number';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
@@ -42,7 +41,7 @@ export const use24hCurveData = ({
               data[0].price === 0
                 ? `${item.price === 0 ? '0' : '100.00'}%`
                 : `${(Math.abs(change * 100) / data[0].price).toFixed(2)}%`,
-            timestamp: item[0],
+            timestamp: item.time_at * 1000,
             dateString: dayjs.unix(item.time_at).format('MM DD, YYYY'),
           };
         }) || [];
@@ -107,7 +106,7 @@ export const formatTokenDateCurve = (
           startData.value === 0
             ? `${item.price === 0 ? '0' : '100.00'}%`
             : `${(Math.abs(change * 100) / startData.value).toFixed(2)}%`,
-        timestamp: item[0],
+        timestamp: dayjs(item.date_at).valueOf(),
         dateString: dayjs(item.date_at).format('MM DD, YYYY'),
       };
     }) || [];

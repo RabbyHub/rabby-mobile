@@ -1,7 +1,7 @@
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { formatPrice, formatUsdValue } from '@/utils/number';
-import { createGetStyles } from '@/utils/styles';
+import { formatPrice } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -34,7 +34,7 @@ interface Props {
 }
 export function TokenPriceChart(props: Props) {
   const { token } = props;
-  const { colors, styles } = useThemeStyles(getStyles);
+  const { colors2024, styles } = useTheme2024({ getStyle });
 
   const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
   const [ready, setReady] = useState(false);
@@ -92,7 +92,9 @@ export function TokenPriceChart(props: Props) {
     };
   }, [data]);
 
-  const pathColor = isUp ? colors['green-default'] : colors['red-default'];
+  const pathColor = isUp
+    ? colors2024['green-default']
+    : colors2024['red-default'];
 
   const currentInfo = useMemo(() => {
     return {
@@ -164,7 +166,7 @@ function Chart({
   pathColor: string;
   xOffset: SharedValue<number>;
 }) {
-  const { colors, styles } = useThemeStyles(getStyles);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
     <LineChart.Provider data={data}>
@@ -194,17 +196,36 @@ function Chart({
               width={2}>
               <LineChart.Gradient color={pathColor} />
             </LineChart.Path>
-            <LineChart.CursorLine color={colors['neutral-line']} />
+            <LineChart.CursorLine color={colors2024['neutral-line']} />
             <LineChart.CursorCrosshair
               color={pathColor}
               outerSize={12}
-              size={8}
-            />
+              size={8}>
+              <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
+                <LineChart.DatetimeText
+                  style={styles.dateTime}
+                  format={({ value }: { value: number }) => {
+                    'worklet';
+                    // due to the nature of reanimated worklets, you cannot define functions that run on the React Native JS thread.
+                    if (value === -1) {
+                      return '';
+                    }
+                    const date = new Date(value);
+
+                    const DD = String(date.getDate()).padStart(2, '0');
+                    const MM = String(date.getMonth() + 1).padStart(2, '0');
+                    const HH = String(date.getHours()).padStart(2, '0');
+                    const mm = String(date.getMinutes()).padStart(2, '0');
+                    return `${MM} ${DD} ${HH}:${mm}`;
+                  }}
+                />
+              </LineChart.Tooltip>
+            </LineChart.CursorCrosshair>
             <Mask xOffset={xOffset} />
           </LineChart>
         </>
       ) : (
-        <View style={{ height: 115 }}></View>
+        <View style={styles.empty} />
       )}
     </LineChart.Provider>
   );
@@ -235,11 +256,11 @@ const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
 
   return <Animated.View style={styles} />;
 };
-
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   chart: {
     position: 'relative',
     marginHorizontal: 16,
+    // backgroundColor: '#440000',
   },
   timeTabWrapper: {
     paddingTop: 7,
@@ -254,9 +275,20 @@ const getStyles = createGetStyles(colors => ({
   },
   xText: {
     fontSize: 13,
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
   hidden: {
     display: 'none',
+  },
+  dateTime: {
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    paddingTop: 0,
+  },
+  empty: {
+    height: 115,
   },
 }));
