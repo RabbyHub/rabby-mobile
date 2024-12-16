@@ -161,10 +161,11 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
 
     pinnedWrapper: {
       flexShrink: 0,
-      paddingHorizontal: 6,
-      paddingVertical: 4,
       marginLeft: 4,
-      borderRadius: 8,
+      borderRadius: 6,
+      width: 33,
+      height: 20,
+      flexWrap: 'nowrap',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

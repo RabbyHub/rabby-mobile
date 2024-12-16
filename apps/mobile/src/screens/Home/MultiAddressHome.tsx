@@ -138,14 +138,7 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
-
-  const { pinAddresses } = usePinAddresses({
-    disableAutoFetch: true,
-  });
   const { switchAccount } = useCurrentAccount();
-  const { accounts, fetchAccounts } = useAccounts({
-    disableAutoFetch: true,
-  });
 
   const { width } = Dimensions.get('window');
   const itemWidth =
@@ -535,7 +528,7 @@ function MultiAddressHome(): JSX.Element {
                         height={18}
                         borderRadius={5}
                       />
-                      <Text style={styles.gridText}>
+                      <Text style={styles.pinGridText}>
                         {calcPinPercent(item.balance || 0)}
                       </Text>
                     </TouchableOpacity>
@@ -711,6 +704,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   pinHeader: {
     marginTop: -8,
+  },
+  pinGridText: {
+    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
   },
   gridText: {
     color: colors2024['neutral-body'],
