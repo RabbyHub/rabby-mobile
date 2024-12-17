@@ -5,6 +5,7 @@ import { keyringService, preferenceService } from '@/core/services';
 import { KEYRING_CLASS, KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export interface balanceAccountType {
   address: string;
@@ -79,7 +80,7 @@ export default function useAccountsBalance(opts?: {
         uniqueList.map(({ address, type, brandName }) => {
           const account = address.toLowerCase();
           const cacheData = preferenceService.getAddressBalance(account);
-          if (uniqueList.find(i => i.address.toLowerCase() === account)) {
+          if (uniqueList.find(o => isSameAddress(o.address, account))) {
             cacheBalancesArr.push({
               address: account,
               balance: cacheData?.total_usd_value || 0,
@@ -107,11 +108,7 @@ export default function useAccountsBalance(opts?: {
                 const resData = await apiBalance.getAddressBalance(account, {
                   force: true,
                 });
-                if (
-                  uniqueList.find(
-                    item => item.address.toLowerCase() === account,
-                  )
-                ) {
+                if (uniqueList.find(o => isSameAddress(o.address, account))) {
                   queueBalanceArr.push({
                     address: account,
                     balance: resData?.total_usd_value || 0,
@@ -123,11 +120,7 @@ export default function useAccountsBalance(opts?: {
                 console.log('fetchTotalBalance  error', e);
                 // api fetch error fallback get from cache store
                 const cacheData = preferenceService.getAddressBalance(account);
-                if (
-                  uniqueList.find(
-                    item => item.address.toLowerCase() === account,
-                  )
-                ) {
+                if (uniqueList.find(o => isSameAddress(o.address, account))) {
                   queueBalanceArr.push({
                     address: account,
                     balance: cacheData?.total_usd_value || 0,
