@@ -282,7 +282,7 @@ export const SeedPhrase: React.FC<Props> = ({
     [words, shuffleCount],
   );
 
-  console.log(
+  console.debug(
     'verfiy word: ',
     words[shuffledNumbers[0] - 1],
     words[shuffledNumbers[1] - 1],

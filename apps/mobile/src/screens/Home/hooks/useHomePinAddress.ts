@@ -1,21 +1,30 @@
 import React from 'react';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useAccounts, usePinAddresses } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  usePinAddresses,
+} from '@/hooks/account';
 import { sortAccountsByBalance } from '@/utils/account';
+import { balanceAccountType } from '@/hooks/useAccountsBalance';
 
-export default function useHomePinAddress() {
+export default function useHomePinAddress(
+  balanceAccounts: balanceAccountType[],
+) {
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
   });
 
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
+  // const { accounts } = useAccounts({
+  //   disableAutoFetch: true,
+  // });
 
   const pinAccounts = React.useMemo(() => {
-    const restAccounts = [...accounts];
-    let highlightedAccounts: typeof accounts = [];
+    // const restAccounts =
+    //   balanceAccounts.length > 0 ? balanceAccounts : accounts;
+    const restAccounts = balanceAccounts;
+    let highlightedAccounts: balanceAccountType[] = [];
 
     pinAddresses.forEach(highlighted => {
       const idx = restAccounts.findIndex(
@@ -27,12 +36,15 @@ export default function useHomePinAddress() {
           account.type !== KEYRING_CLASS.WALLETCONNECT,
       );
       if (idx > -1) {
-        highlightedAccounts.push(restAccounts[idx]);
+        highlightedAccounts.push({
+          ...restAccounts[idx],
+          balance: restAccounts[idx].balance ?? 0,
+        });
       }
     });
     highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
     return highlightedAccounts.slice(0, 4);
-  }, [accounts, pinAddresses]);
+  }, [balanceAccounts, pinAddresses]);
 
   const pinAccountsFirstFour = React.useMemo(() => {
     return pinAccounts.concat(new Array(4 - pinAccounts.length).fill(null)); // fill null to keep 4 items

@@ -224,7 +224,8 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
-  const { pinAccountsFirstFour, isShowPin } = useHomePinAddress();
+  const { pinAccountsFirstFour, isShowPin } =
+    useHomePinAddress(balanceAccounts);
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
