@@ -208,7 +208,7 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.ImportSuccess2024;
       }
     | {
-        actionAfterSetup: 'onSettings';
+        actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
         actionType: 'setBiometrics' | 'setAutoLockTime';
       };

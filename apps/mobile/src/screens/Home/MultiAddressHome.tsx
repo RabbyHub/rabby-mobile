@@ -106,12 +106,10 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       </View>
       <TouchableWithoutFeedback
         onPress={() => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackRoot, {
-              screen: RootNames.Settings,
-              params: {},
-            }),
-          );
+          navigation.navigate(RootNames.StackRoot, {
+            screen: RootNames.Settings,
+            params: {},
+          });
 
           matomoRequestEvent({
             category: 'Click_Header',

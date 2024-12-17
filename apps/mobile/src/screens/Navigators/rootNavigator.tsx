@@ -21,7 +21,7 @@ import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/App
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsStub';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
-import { useStackScreenConfig } from '@/hooks/navigation';
+import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -52,7 +52,7 @@ const getStyles = createGetStyles(colors => ({
 
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
-  const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeBottomTabOptions2024 } = useBottomTabScreenConfig();
 
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');
@@ -102,19 +102,20 @@ export function HomeScreenNavigator() {
         <HomeHiddenTabStack.Screen
           name={RootNames.Settings}
           component={SettingsScreen}
-          options={useMemo(
-            () => /* mergeScreenOptions */ ({
+          options={mergeBottomTabOptions2024([
+            {
               headerTitle: () => (
                 <I18nRouteScreenTitle
                   i18nTitle={({ t }) => t('screens.settings.screenTitle')}
                 />
               ),
-              gestureEnabled: false,
+              headerLeftContainerStyle: {
+                paddingLeft: 20,
+              },
               headerTitleAlign: 'center',
               headerTintColor: colors['neutral-title-1'],
-            }),
-            [colors],
-          )}
+            },
+          ])}
         />
 
         <HomeHiddenTabStack.Screen
