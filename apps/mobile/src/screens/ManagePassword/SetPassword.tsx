@@ -130,7 +130,7 @@ function useSetupPasswordForm() {
               }
               break;
             }
-            case 'onSettings': {
+            case 'testkits:fromSettings': {
               // updateSetPasswordFirst({ isOnSettingsWaiting: false });
               if (navParams.actionType === 'setBiometrics') {
                 sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
@@ -138,7 +138,7 @@ function useSetupPasswordForm() {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
               navigation.dispatch(
-                StackActions.push(RootNames.SingleAddressStack, {
+                StackActions.push(RootNames.StackRoot, {
                   screen: RootNames.Settings,
                   params: {},
                 }),

@@ -16,7 +16,7 @@ import {
   getAccountsPanelInModalMaxHeight,
 } from './AccountsPanel';
 import AutoLockView from '../AutoLockView';
-import { useCallback, useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -135,8 +135,10 @@ const getModalStyle = createGetStyles2024(ctx => {
 export function AccountSwitcherModalInDappWebView({
   activeDappId,
   forScene,
+  __IS_IN_SHEET_MODAL__ = false,
 }: AccountSwitcherAopProps<{
   activeDappId?: DappInfo['origin'];
+  __IS_IN_SHEET_MODAL__?: boolean;
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -158,22 +160,30 @@ export function AccountSwitcherModalInDappWebView({
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleSceneVisible]);
 
+  const absoluteStyle = useMemo(() => {
+    if (__IS_IN_SHEET_MODAL__) {
+      return {
+        top: IS_ANDROID
+          ? ScreenLayouts2.dappWebViewControlHeaderHeight -
+            /* I don't know how it make sense but it's proper */
+            8
+          : topValue + ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
+        maxHeight: Math.floor(offScreen.modalBackgroundHeight),
+      };
+    }
+    return {
+      top: IS_ANDROID
+        ? ScreenLayouts2.dappWebViewControlHeaderHeight -
+          /* I don't know how it make sense but it's proper */
+          8
+        : ScreenLayouts2.dappWebViewControlHeaderHeight,
+      maxHeight: Math.floor(offScreen.modalBackgroundHeight),
+    };
+  }, [__IS_IN_SHEET_MODAL__, topValue, offScreen.modalBackgroundHeight]);
+
   if (!isVisible) {
     return null;
   }
-
-  const absoluteStyle = IS_ANDROID
-    ? {
-        top:
-          ScreenLayouts2.dappWebViewControlHeaderHeight -
-          /* I don't know how it make sense but it's proper */
-          8,
-        maxHeight: Math.floor(offScreen.modalBackgroundHeight),
-      }
-    : {
-        top: topValue + ScreenWithAccountSwitcherLayouts.screenHeaderHeight,
-        maxHeight: Math.floor(offScreen.modalBackgroundHeight),
-      };
 
   return (
     <AutoLockView

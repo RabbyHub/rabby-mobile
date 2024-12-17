@@ -14,7 +14,7 @@ import { AbstractPortfolioToken } from './screens/Home/types';
  */
 
 export type RootStackParamsList = {
-  [RootNames.StackRoot]?: NavigatorScreenParams<RootNavigatorParamsList>;
+  [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -34,7 +34,11 @@ export type RootStackParamsList = {
   };
 };
 
-export type RootNavigatorParamsList = {
+/**
+ * @description we mock modal-like views as a stub navigator, which was implemented
+ * based on the react-navigation's bottom tab navigator.
+ */
+export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
@@ -42,6 +46,7 @@ export type RootNavigatorParamsList = {
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
+  [RootNames.DappWebViewStubOnHome]?: {};
 };
 
 type GetStartedNavigatorParamsList = {
@@ -203,7 +208,7 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.ImportSuccess2024;
       }
     | {
-        actionAfterSetup: 'onSettings';
+        actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
         actionType: 'setBiometrics' | 'setAutoLockTime';
       };
