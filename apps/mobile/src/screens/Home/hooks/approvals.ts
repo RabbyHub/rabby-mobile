@@ -95,7 +95,6 @@ export const useApprovalsCount = () => {
       if (!displayAccounts.length) {
         return;
       }
-      console.log('🔍 CUSTOM_LOGGER:=>: getAllApprovalCount');
       displayAccounts.forEach(item => {
         queue.add(async () => {
           try {
@@ -171,7 +170,6 @@ export const useApprovalAlertCounts = () => {
       if (alertInfo.loading) {
         return;
       }
-      console.log('🔍 CUSTOM_LOGGER:=>: get alerts info');
       const address2count = {};
       let total = 0;
       setAlertInfo(pre => ({
@@ -204,7 +202,6 @@ export const useApprovalAlertCounts = () => {
 
       await waitQueueFinished(alertQueue);
 
-      console.log('🔍 CUSTOM_LOGGER:=>: total)', total);
       setAlertInfo({
         total,
         address2count,
