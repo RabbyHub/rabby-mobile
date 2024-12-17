@@ -60,10 +60,12 @@ export const AddressItemInner = (props: AddressItemProps) => {
   });
   const pinned = useMemo(
     () =>
-      pinAddresses.some(e =>
-        addressUtils.isSameAddress(e.address, wallet.address),
+      pinAddresses.some(
+        e =>
+          addressUtils.isSameAddress(e.address, wallet.address) &&
+          e.brandName === wallet.brandName,
       ),
-    [pinAddresses, wallet.address],
+    [pinAddresses, wallet],
   );
 
   const WalletIcon = useMemo(() => {
