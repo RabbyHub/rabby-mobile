@@ -110,7 +110,7 @@ export const useStackScreenConfig = () => {
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
             style={styles.backButtonStyle}
-            hitSlop={hitSlop}
+            hitSlop={24}
             onPress={navBack}>
             <RcIconHeaderBack
               width={24}

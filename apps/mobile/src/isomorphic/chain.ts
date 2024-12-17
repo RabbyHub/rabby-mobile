@@ -118,5 +118,6 @@ export function supportedChainToChain(item: SupportedChain): Chain {
     eip: {
       '1559': item.eip_1559,
     },
+    severity: item.severity,
   };
 }

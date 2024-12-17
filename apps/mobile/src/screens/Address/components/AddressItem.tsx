@@ -19,6 +19,7 @@ import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAl
 import { useAddressDetailModal } from '../useAddressDetailModal';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { trigger } from 'react-native-haptic-feedback';
+import { AddressItemShadowView } from './AddressItemShadowView';
 
 const { isSameAddress } = addressUtils;
 
@@ -26,8 +27,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     borderRadius: 30,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-3'],
   },
   rootPressing: {
@@ -160,27 +159,29 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         menuActions: menuActions,
       }}
       triggerProps={{ action: 'longPress' }}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
-        style={StyleSheet.flatten([
-          styles.root,
-          isPressing && styles.rootPressing,
-        ])}
-        delayLongPress={200} // long press delay
-        onPress={onDetail}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}>
-        <AddressItemInner2024
-          isPressing={isCurrentAccount || isPressing}
-          account={account}
-        />
-      </TouchableOpacity>
+      <AddressItemShadowView>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPressIn={() => setIsPressing(true)}
+          onPressOut={() => setIsPressing(false)}
+          style={StyleSheet.flatten([
+            styles.root,
+            isPressing && styles.rootPressing,
+          ])}
+          delayLongPress={200} // long press delay
+          onPress={onDetail}
+          onLongPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}>
+          <AddressItemInner2024
+            isPressing={isCurrentAccount || isPressing}
+            account={account}
+          />
+        </TouchableOpacity>
+      </AddressItemShadowView>
     </ContextMenuView>
   );
 };

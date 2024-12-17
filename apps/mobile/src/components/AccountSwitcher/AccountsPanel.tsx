@@ -23,6 +23,8 @@ import { LinearGradientContainer } from '@/components2024/ScreenContainer/Linear
 import { AddressItemInPanel, AddressItemSizes } from './AddressItemInPanel';
 import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
+import { useTranslation } from 'react-i18next';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const SectionCollapsableNav = function ({
   isCollapsed = false,
@@ -165,6 +167,8 @@ AccountSwitcherAopProps<{
     toggleSceneVisible(forScene, false);
   }, [forScene, toggleUseAllAccountsOnScene, toggleSceneVisible]);
 
+  const { t } = useTranslation();
+
   return (
     <LinearGradientContainer
       type="linear"
@@ -176,7 +180,6 @@ AccountSwitcherAopProps<{
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContentContainer}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>My Addresses</Text>
             <View style={styles.addressListContainer}>
               {isSceneSupportAllAccounts && (
                 <UseAllAccountsItemInPanel
@@ -202,16 +205,21 @@ AccountSwitcherAopProps<{
                     isCurrent={isCurrent}
                     isPinned={isPinnedAccount(account)}
                     onPressAddress={handlePressAccount}
-                    style={[index > 0 && styles.addressItemTopGap]}
+                    style={[
+                      styles.addressItem,
+                      index > 0 && styles.addressItemTopGap,
+                    ]}
                   />
                 );
               })}
             </View>
           </View>
           {!!safeAddresses.length && (
-            <View style={[styles.section, { marginTop: 18 }]}>
+            <View style={[styles.section, { marginTop: 30 }]}>
               <SectionCollapsableNav
-                title="Imported Safe Addresses"
+                title={t(
+                  'page.addressDetail.addressListScreen.importSafeAddress',
+                )}
                 isCollapsed={navsCollapsed.safe}
                 onCollapsedChange={nextVal => {
                   changeCollapsed('safe', nextVal);
@@ -232,7 +240,10 @@ AccountSwitcherAopProps<{
                         isCurrent={isCurrent}
                         isPinned={false}
                         onPressAddress={handlePressAccount}
-                        style={[index > 0 && styles.addressItemTopGap]}
+                        style={[
+                          styles.addressItem,
+                          index > 0 && styles.addressItemTopGap,
+                        ]}
                       />
                     );
                   })}
@@ -241,9 +252,11 @@ AccountSwitcherAopProps<{
             </View>
           )}
           {!!watchAddresses.length && (
-            <View style={[styles.section, { marginTop: 18 }]}>
+            <View style={[styles.section, { marginTop: 30 }]}>
               <SectionCollapsableNav
-                title="Imported Watch-only Addresses"
+                title={t(
+                  'page.addressDetail.addressListScreen.importWatchAddress',
+                )}
                 isCollapsed={navsCollapsed.watch}
                 onCollapsedChange={nextVal => {
                   changeCollapsed('watch', nextVal);
@@ -264,7 +277,10 @@ AccountSwitcherAopProps<{
                         isCurrent={isCurrent}
                         isPinned={false}
                         onPressAddress={handlePressAccount}
-                        style={[index > 0 && styles.addressItemTopGap]}
+                        style={[
+                          styles.addressItem,
+                          index > 0 && styles.addressItemTopGap,
+                        ]}
                       />
                     );
                   })}
@@ -315,7 +331,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     sectionTitleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
     },
     sectionTitle: {
       fontFamily: 'SF Pro Rounded',
@@ -330,6 +346,13 @@ const getPanelStyle = createGetStyles2024(ctx => {
       // maxHeight: SIZES.myAddressesAreaVisiableH,
       width: '100%',
     },
+    addressItem: !IS_ANDROID
+      ? {}
+      : {
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: ctx.colors2024['neutral-line'],
+        },
     addressItemTopGap: {
       marginTop: AddressItemSizes.itemGap,
     },

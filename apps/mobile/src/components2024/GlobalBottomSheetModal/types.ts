@@ -5,7 +5,6 @@ import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 import type { AuthenticationModalProps } from '@/components/AuthenticationModal/AuthenticationModal';
 import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
-import type { SelectAccountThenProps } from '../SelectAccountThen';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -48,7 +47,6 @@ export enum MODAL_NAMES {
   'ADDRESS_DETAIL' = 'ADDRESS_DETAIL',
   'IMPORT_MORE_ADDRESS' = 'IMPORT_MORE_ADDRESS',
   'NO_LONGER_SUPPORTS' = 'NO_LONGER_SUPPORTS',
-  'SELECT_ACCOUNT_THEN' = 'SELECT_ACCOUNT_THEN',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -88,7 +86,6 @@ export type MODAL_CREATE_PARAMS = {
     typeof import('../Descriptions').Descriptions
   >;
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
-  [MODAL_NAMES.SELECT_ACCOUNT_THEN]: SelectAccountThenProps;
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;

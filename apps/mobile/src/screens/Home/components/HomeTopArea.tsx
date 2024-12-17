@@ -223,7 +223,11 @@ export const HomeTopArea = () => {
         await switchSceneCurrentAccount('Receive', currentAccount);
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-          value: CHAINS_ENUM.ETH,
+          titleText: t('page.receiveAddressList.selectChainTitle'),
+          bottomSheetModalProps: {
+            enableContentPanningGesture: false,
+            enablePanDownToClose: true,
+          },
           onChange: (v: CHAINS_ENUM) => {
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {

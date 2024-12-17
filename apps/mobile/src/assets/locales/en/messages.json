@@ -1990,7 +1990,17 @@
       "manage-addresses-under-this-seed-phrase": "Add address from this seed phrase",
       "safeModuleAddress": "Safe Module Address",
       "coboSafeErrorModule": "Address has expired, please delete and import the address again.",
-      "importedDelegatedAddress": "Imported Delegated address"
+      "importedDelegatedAddress": "Imported Delegated address",
+      "safeAddressListScreen": {
+        "addSafeAddress": "Add Safe Addresses"
+      },
+      "watchAddressListScreen": {
+        "addWatchAddress": "Add Watch-Only Addresses"
+      },
+      "addressListScreen": {
+        "importSafeAddress": "Imported Safe Addresses",
+        "importWatchAddress": "Imported Watch-only Addresses"
+      }
     },
     "preferMetamaskDapps": {
       "title": "MetaMask Preferred Dapps",
@@ -2375,6 +2385,10 @@
     },
     "approvalsAddressList": {
       "title": "Approvals"
+    },
+    "receiveAddressList": {
+      "title": "Select Receive Address",
+      "selectChainTitle": "Select Chain"
     }
   },
   "component": {
