@@ -2365,6 +2365,13 @@
         "desc": "Please switch to your login address."
       }
     },
+    "tokenDetail": {
+      "transactions": "Transactions",
+      "action": {
+        "swap": "Swap",
+        "send": "Send"
+      }
+    },
     "approvalsAddressList": {
       "title": "Approvals"
     }

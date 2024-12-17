@@ -150,6 +150,8 @@ export const RootNames = {
 
   SingleAddressStack: 'SingleAddressStack',
   SingleAddressHome: 'SingleAddressHome',
+
+  TokenDetail: 'TokenDetail',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
