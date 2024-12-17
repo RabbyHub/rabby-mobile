@@ -299,7 +299,7 @@ const flowContext = flow
 
               Sentry.captureException(e);
               if (isSignApproval(approvalType)) {
-                eventBus.emit(EVENTS.broadcastToUI, payload);
+                eventBus.emit(payload.method, payload.params);
               } else if (__DEV__) {
                 console.error(e);
               }
