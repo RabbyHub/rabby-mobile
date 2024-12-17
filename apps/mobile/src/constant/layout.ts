@@ -152,6 +152,7 @@ export const RootNames = {
   SingleAddressHome: 'SingleAddressHome',
 
   TokenDetail: 'TokenDetail',
+  ReceiveAddressList: 'ReceiveAddressList',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

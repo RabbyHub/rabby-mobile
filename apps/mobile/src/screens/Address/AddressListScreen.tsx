@@ -13,6 +13,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { useSortAddressList } from './useSortAddressList';
 import { AddressEmptyContainer } from './components/AddressEmptyContainer';
+import { useTranslation } from 'react-i18next';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -69,6 +70,7 @@ export function AddressListScreen(): JSX.Element {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
+  const { t } = useTranslation();
 
   useFocusEffect(
     // keep same with multi address home
@@ -91,25 +93,22 @@ export function AddressListScreen(): JSX.Element {
           </View>
         )}
         ListEmptyComponent={AddressEmptyContainer}
-        ListHeaderComponent={
-          <View style={styles.headline}>
-            <Text style={styles.headlineText}>
-              My addresses ({list?.length})
-            </Text>
-          </View>
-        }
         ListFooterComponent={
           <View style={styles.footer}>
             {hasSafeAddress && (
               <OtherAddressNav
                 onPress={onGotoSafeAddress}
-                text={'Imported Safe addresses'}
+                text={t(
+                  'page.addressDetail.addressListScreen.importSafeAddress',
+                )}
               />
             )}
             {hasWatchAddress && (
               <OtherAddressNav
                 onPress={onGotoWatchAddress}
-                text={'Imported watch-only addresses'}
+                text={t(
+                  'page.addressDetail.addressListScreen.importWatchAddress',
+                )}
               />
             )}
             <View style={styles.footerGap} />
@@ -135,8 +134,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   listContainer: {
     flex: 1,
     paddingHorizontal: 16,
-    gap: 12,
+    paddingTop: 16,
   },
+
   itemGap: {
     marginBottom: 12,
   },
@@ -149,6 +149,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   arrow: {
     marginTop: 2,

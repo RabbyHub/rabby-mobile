@@ -60,6 +60,7 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
+  [RootNames.ReceiveAddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;

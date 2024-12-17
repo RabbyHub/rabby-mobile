@@ -22,6 +22,7 @@ import { RcIconAddCircle } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -144,26 +145,28 @@ export default function SelectSortedChain({
 
   return (
     <AutoLockView style={styles.container}>
-      {titleText && <Text style={styles.titleText}>{titleText}</Text>}
-      {isShowTestnet && !hideMainnetTab ? (
-        <NetSwitchTabs
-          value={selectedTab}
-          onTabChange={onTabChange}
-          style={styles.netSwitchTabs}
+      <BottomSheetHandlableView>
+        {titleText && <Text style={styles.titleText}>{titleText}</Text>}
+        {isShowTestnet && !hideMainnetTab ? (
+          <NetSwitchTabs
+            value={selectedTab}
+            onTabChange={onTabChange}
+            style={styles.netSwitchTabs}
+          />
+        ) : null}
+        <Input
+          leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
+          containerStyle={[styles.containerOfInput, styles.innerBlock]}
+          inputContainerStyle={styles.inputContainerStyle}
+          style={styles.inputText}
+          placeholderTextColor={colors2024['neutral-info']}
+          placeholder="Search chain"
+          value={search}
+          onChangeText={text => {
+            setSearch(text);
+          }}
         />
-      ) : null}
-      <Input
-        leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
-        containerStyle={[styles.containerOfInput, styles.innerBlock]}
-        inputContainerStyle={styles.inputContainerStyle}
-        style={styles.inputText}
-        placeholderTextColor={colors2024['neutral-info']}
-        placeholder="Search chain"
-        value={search}
-        onChangeText={text => {
-          setSearch(text);
-        }}
-      />
+      </BottomSheetHandlableView>
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (
         <View style={[styles.chainListWrapper, styles.emptyDataWrapper]}>
@@ -223,15 +226,15 @@ export default function SelectSortedChain({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: '100%',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 32,
   },
   titleText: {
-    marginBottom: 24,
+    marginBottom: 20,
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
@@ -261,6 +264,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 7,
     fontSize: 17,
     fontWeight: '400',
+    paddingTop: 0,
+    paddingBottom: 0,
     fontFamily: 'SF Pro Rounded',
   },
 

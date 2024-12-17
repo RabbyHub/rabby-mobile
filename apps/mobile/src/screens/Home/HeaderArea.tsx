@@ -13,6 +13,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useNavigation } from '@react-navigation/native';
 
 export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -37,28 +38,37 @@ export default function HomeHeaderArea() {
     [currentAccount?.address],
   );
 
+  const nav = useNavigation();
+  const goBack = useCallback(() => {
+    nav.goBack();
+  }, [nav]);
+
   return (
     <View style={styles.container}>
       <View style={styles.innerBox}>
-        <TouchableView style={styles.touchBox} onPress={handleCopyAddress}>
+        <View style={styles.touchBox}>
           <View style={styles.accountBox}>
             <View className="relative">
-              <WalletIcon
-                type={currentAccount?.type as KEYRING_TYPE}
-                width={styles.walletIcon.width}
-                height={styles.walletIcon.height}
-                style={styles.walletIcon}
-              />
+              <TouchableOpacity hitSlop={24} onPress={goBack}>
+                <WalletIcon
+                  type={currentAccount?.type as KEYRING_TYPE}
+                  width={styles.walletIcon.width}
+                  height={styles.walletIcon.height}
+                  style={styles.walletIcon}
+                />
+              </TouchableOpacity>
             </View>
+          </View>
+          <TouchableOpacity style={styles.touchBox} onPress={handleCopyAddress}>
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
               style={styles.titleText}>
               {name}
             </Text>
-          </View>
-          <RcIconCopy style={styles.copy} />
-        </TouchableView>
+            <RcIconCopy style={styles.copy} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

@@ -43,7 +43,6 @@ import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { BackgroundComponent } from './BackgroundComponent';
 import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { SelectAccountThen } from '../SelectAccountThen/index';
 import { Dimensions } from 'react-native';
 import { AppColors2024Variants } from '@/constant/theme';
 
@@ -89,7 +88,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
-  [MODAL_NAMES.SELECT_ACCOUNT_THEN]: ['85%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -132,7 +130,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: NoLongerSupports,
-  [MODAL_NAMES.SELECT_ACCOUNT_THEN]: SelectAccountThen,
 };
 
 export function makeBottomSheetProps({

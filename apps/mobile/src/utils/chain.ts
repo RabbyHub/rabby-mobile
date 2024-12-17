@@ -249,9 +249,11 @@ export function varyAndSortChainItems(deps: {
 
   const _all = (
     (netTabKey === 'testnet' ? testnetList : mainnetList) || mainnetList
-  ).sort((a: { name: string }, b: { name: any }) =>
-    a.name.localeCompare(b.name),
-  );
+  )
+    .sort((a: { name: string }, b: { name: any }) =>
+      a.name.localeCompare(b.name),
+    )
+    .sort((a, b) => a.severity - b.severity);
 
   _all.forEach((item: Chain) => {
     const inPinned = pinned.find(pinnedEnum => pinnedEnum === item.enum);
