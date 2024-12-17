@@ -1424,6 +1424,7 @@
         "hardwareWallet": "Hardware Wallet"
       },
       "multiAddressHome": {
+        "pin": "Pin",
         "services": "Services",
         "totalBalance": "Total Balance"
       }
@@ -2363,6 +2364,13 @@
       "switchLoginAddressBeforeDeposit": {
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
+      }
+    },
+    "tokenDetail": {
+      "transactions": "Transactions",
+      "action": {
+        "swap": "Swap",
+        "send": "Send"
       }
     },
     "approvalsAddressList": {

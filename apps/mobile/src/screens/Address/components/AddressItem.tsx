@@ -1,7 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  usePinAddresses,
+} from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -57,11 +61,47 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
   }, [account, onSelect, switchAccount]);
 
+  const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
+    disableAutoFetch: true,
+  });
+  const pinned = useMemo(
+    () =>
+      pinAddresses.some(
+        e =>
+          addressUtils.isSameAddress(e.address, account.address) &&
+          e.brandName === account.brandName,
+      ),
+    [pinAddresses, account],
+  );
+
+  const handlePinned = useCallback(() => {
+    togglePinAddressAsync({
+      address: account.address,
+      brandName: account.brandName,
+      nextPinned: !pinned,
+    });
+  }, [togglePinAddressAsync, account.address, account.brandName, pinned]);
+
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'Edit Name',
+        title: pinned ? 'UnPin' : 'Pin',
+        icon: pinned
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+        androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
+        key: 'pin',
+        action() {
+          handlePinned();
+        },
+      },
+      {
+        title: 'Edit',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
@@ -71,9 +111,8 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           editAliasName.show(account);
         },
       },
-
       {
-        title: 'Address Details',
+        title: 'Details',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
@@ -96,7 +135,15 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         },
       },
     ] as MenuAction[];
-  }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
+  }, [
+    isDarkTheme,
+    editAliasName,
+    account,
+    showAddressDetail,
+    removeAccount,
+    pinned,
+    handlePinned,
+  ]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (

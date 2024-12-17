@@ -151,6 +151,7 @@ export const RootNames = {
   SingleAddressHome: 'SingleAddressHome',
 
   DappWebViewStubOnHome: 'DappWebViewStubOnHome',
+  TokenDetail: 'TokenDetail',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -201,6 +202,12 @@ function makeScreenSpecConfig() {
       androidStatusBarBg: colors2024['neutral-bg1'],
     };
 
+    const transparentDefault2024Conf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: 'transparent',
+    };
+
     const bg2DefaultConf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
@@ -226,7 +233,7 @@ function makeScreenSpecConfig() {
     };
 
     const themeSpecs = <ThemeType>{
-      '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      '@default': bg1Default2024Conf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
         barStyle: adaptiveStatusBarStyle,
@@ -237,13 +244,14 @@ function makeScreenSpecConfig() {
       GetStartedScreen2024: bg1DefaultConf,
       NewUserGetStarted2024: bg1DefaultConf,
 
-      Home: bg1DefaultConf,
+      Home: transparentDefault2024Conf,
       DappWebViewStubOnHome: {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: colors['neutral-bg1'],
       },
       MultiAddressHome: bg1Default2024Conf,
+      // MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
       MultiAddressHistory: bg1Default2024Conf,
 
@@ -258,16 +266,25 @@ function makeScreenSpecConfig() {
       ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
-
+      Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      SingleAddressHome: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,
       MultiSend: bg1Default2024Conf,
       Swap: bg1Default2024Conf,
       MultiSwap: bg1Default2024Conf,
+      Bridge: bg1Default2024Conf,
+      MultiBridge: bg1Default2024Conf,
       // Receive: blueLightConf,
+      AddressList: bg1Default2024Conf,
+      SafeAddressList: bg1Default2024Conf,
+      WatchAddressList: bg1Default2024Conf,
+      ApprovalAddressList: bg1Default2024Conf,
 
       GnosisTransactionQueue: card2DefaultConf,
 
-      Approvals: bg2DefaultConf,
+      Approvals: bg1Default2024Conf,
 
       SetPassword: blueLightConf,
       SetPassword2024: bg1Default2024Conf,

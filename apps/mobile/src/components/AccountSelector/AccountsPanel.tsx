@@ -116,11 +116,11 @@ function AddressItemInSheetModal({
                   <WalletName style={styles.addressAliasName} />
                   {isPinned && (
                     <View style={styles.pinnedWrapper}>
-                      <ICONS_COMMON_2024.RcPinCC
+                      {/* <ICONS_COMMON_2024.RcPinCC
                         color={styles.pinText.color}
                         width={15}
                         height={15}
-                      />
+                      /> */}
                       <Text style={styles.pinText}>Pin</Text>
                     </View>
                   )}
@@ -220,14 +220,17 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
 
     pinnedWrapper: {
       flexShrink: 0,
-      width: 52,
-      height: 26,
+      // paddingHorizontal: 6,
+      // paddingVertical: 4,
+      width: 33,
+      height: 20,
       marginLeft: 4,
-      borderRadius: 8,
+      borderRadius: 6,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: ctx.colors2024['brand-light-1'],
+      flexWrap: 'nowrap',
     },
     pinText: {
       color: ctx.colors2024['brand-default'],
