@@ -66,8 +66,10 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   });
   const pinned = useMemo(
     () =>
-      pinAddresses.some(e =>
-        addressUtils.isSameAddress(e.address, account.address),
+      pinAddresses.some(
+        e =>
+          addressUtils.isSameAddress(e.address, account.address) &&
+          e.brandName === account.brandName,
       ),
     [pinAddresses, account],
   );
