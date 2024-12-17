@@ -314,7 +314,7 @@ const SectionCollapsableNav = function ({
       <RcCaretDownCC
         style={[
           { marginLeft: 4 },
-          !isCollapsed && { transform: [{ rotate: '180deg' }] },
+          isCollapsed && { transform: [{ rotate: '180deg' }] },
         ]}
         width={18}
         height={18}
@@ -472,7 +472,8 @@ export function AccountsPanelInSheetModal({
                   data={combinedItem.data}
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => (
-                    <AddressItemShadowView>
+                    <AddressItemShadowView
+                      style={[index > 0 && styles.addressItemTopGap]}>
                       <AddressItemInSheetModal
                         key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                         addressItemProps={{ account: item }}
@@ -481,7 +482,6 @@ export function AccountsPanelInSheetModal({
                         replaceNameWithAliasAddress={isReceive}
                         showCopyAndQR={!isGasAccount}
                         defaultPressAction={defaultPressItemAction}
-                        style={[index > 0 && styles.addressItemTopGap]}
                       />
                     </AddressItemShadowView>
                   )}
