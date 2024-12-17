@@ -59,9 +59,9 @@ export const TokenDetailScreen = () => {
 
   const { data: tokenWithAmount } = useRequest(
     async () => {
-      if (!finalAccount || !token || token.amount) {
-        return token;
-      }
+      // if (!finalAccount || !token || token.amount) {
+      //   return token;
+      // }
 
       const res = await openapi.getToken(
         finalAccount.address,
@@ -71,6 +71,7 @@ export const TokenDetailScreen = () => {
       return ensureAbstractPortfolioToken({
         ...abstractTokenToTokenItem(token),
         usd_value: res?.usd_value,
+        price: res?.price,
         amount: res?.amount,
       });
     },
@@ -212,7 +213,7 @@ export const TokenDetailScreen = () => {
         ListHeaderComponent={
           <>
             <View>
-              <TokenPriceChart token={token} />
+              <TokenPriceChart token={tokenWithAmount || token} />
               <View style={styles.divider} />
               <TokenBalanceArea
                 account={finalAccount}

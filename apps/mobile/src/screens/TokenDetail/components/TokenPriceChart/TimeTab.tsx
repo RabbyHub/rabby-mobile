@@ -1,11 +1,8 @@
-import { toast } from '@/components/Toast';
 import { ThemeColors2024 } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import { Tab } from '@rneui/base';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
-import { Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export type TabKey = (typeof TIME_TAB_LIST)[number]['key'];
@@ -102,7 +99,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   activeText: {
-    color: colors2024['neutral-InvertHighlight'],
+    color: isLight ? '#fff' : '#192945',
     fontWeight: '700',
   },
   itemActive: {
