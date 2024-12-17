@@ -1,10 +1,13 @@
 import React from 'react';
-import { View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   shadowView: {
+    borderWidth: 1,
+    borderRadius: 30,
+    borderColor: colors2024['neutral-line'],
     shadowColor: colors2024['neutral-black'],
     shadowOffset: {
       width: 0,
@@ -18,10 +21,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface Props {
   children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AddressItemShadowView = (props: Props) => {
   const { styles } = useTheme2024({ getStyle });
 
-  return <View style={styles.shadowView}>{props.children}</View>;
+  return (
+    <View style={StyleSheet.flatten([styles.shadowView, props.style])}>
+      {props.children}
+    </View>
+  );
 };
