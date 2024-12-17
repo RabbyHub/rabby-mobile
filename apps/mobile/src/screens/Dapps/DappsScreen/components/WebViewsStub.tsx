@@ -506,6 +506,7 @@ export function OpenedDappWebViewStub() {
           <AccountSwitcherModalInDappWebView
             forScene="@ActiveDappWebViewModal"
             activeDappId={finalActiveDappId}
+            __IS_IN_SHEET_MODAL__
           />
         )}
       </AutoLockView>
