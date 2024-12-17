@@ -69,11 +69,6 @@ export function AddressItemInPanel({
                     <WalletName style={styles.addressAliasName} />
                     {isPinned && (
                       <View style={styles.pinnedWrapper}>
-                        <ICONS_COMMON_2024.RcPinCC
-                          color={styles.pinText.color}
-                          width={15}
-                          height={15}
-                        />
                         <Text style={styles.pinText}>Pin</Text>
                       </View>
                     )}

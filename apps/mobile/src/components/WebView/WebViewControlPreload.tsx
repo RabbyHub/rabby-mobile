@@ -54,6 +54,7 @@ function getTouchHtml(inPageScript: string = '') {
 
 const firstTouchedAtom = atom(!isAndroid);
 /**
+ * @deprecated
  * @description set this component on the top level of App's navigation context
  * to trigger inPageWeb3 script passed to `injectedJavaScriptBeforeContentLoaded` property
  * of react-native-webview

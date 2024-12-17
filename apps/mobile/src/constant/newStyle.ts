@@ -7,6 +7,8 @@ export enum MultiHomeFeatTitle {
   Approvals = 'Approvals',
   GasAccount = 'GasAccount',
   Dapps = 'Dapps',
+  /** @deprecated */
+  TEST_DAPP = 'TEST_DAPP',
   Ecosystem = 'Ecosystem',
   Points = 'Rabby Points',
 }

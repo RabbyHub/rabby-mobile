@@ -32,6 +32,7 @@ import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
 import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
 import { useIsForceAllowScreenshot } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
+import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -180,6 +181,68 @@ export const useStackScreenConfig = () => {
 
   return { mergeScreenOptions, mergeScreenOptions2024 };
 };
+
+export function useBottomTabScreenConfig() {
+  const { colors, colors2024 } = useTheme2024();
+
+  const navBack = useCallback(() => {
+    const navigation = navigationRef.current;
+    if (navigation?.canGoBack()) {
+      navigation.goBack();
+    } else if (navigation) {
+      resetNavigationTo(navigation, 'Home');
+    }
+  }, []);
+
+  const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
+  const mergeBottomTabOptions2024 = useCallback(
+    (optsList: Partial<BottomTabNavigationOptions>[] = [], options?: any) => {
+      const bottomTabOptions: BottomTabNavigationOptions = {
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: 'transparent',
+        },
+        headerTransparent: true,
+        headerTitleStyle: {
+          ...(headerPresets.onlyTitle.headerTitleStyle as object),
+          color: colors2024['neutral-title-1'],
+          fontWeight: '800',
+          fontFamily: 'SF Pro Rounded',
+          fontSize: 20,
+        },
+        headerTintColor: colors2024['neutral-title-1'],
+        headerLeft: ({ tintColor }) => (
+          <CustomTouchableOpacity
+            style={styles.backButtonStyle}
+            hitSlop={hitSlop}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={tintColor || colors2024['neutral-body']}
+            />
+          </CustomTouchableOpacity>
+        ),
+      };
+
+      const result = merge(
+        {},
+        bottomTabOptions,
+        ...optsList.map(x => ({ ...x })),
+      ) as BottomTabNavigationOptions;
+
+      result.headerTitleStyle =
+        cleanSpecialSoloWeightFont(result.headerTitleStyle as any) ||
+        result.headerTitleStyle;
+
+      return result;
+    },
+    [headerPresets, colors2024, navBack],
+  );
+
+  return { mergeBottomTabOptions2024 };
+}
 
 const styles = StyleSheet.create({
   backButtonStyle: {

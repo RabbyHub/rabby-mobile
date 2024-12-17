@@ -18,7 +18,7 @@ import {
 import { DappFavoriteSection } from '../components/DappFavoriteSection/index';
 import { DappHistorySection } from '../components/DappHistorySection';
 import { DappSearchSection } from '../components/DappSearchSection';
-import { useOpenDappView } from '../hooks/useDappView';
+import { useDappWebViewScreen } from '../hooks/useDappWebViewScreen';
 import { useSearchDapps } from '../hooks/useSearchDapps';
 import LinearGradient from 'react-native-linear-gradient';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -34,7 +34,7 @@ export function DappsScreen(): JSX.Element {
     removeBrowserHistory,
     disconnectDapp,
   } = useDappsHome();
-  const { openUrlAsDapp } = useOpenDappView();
+  const { openUrlAsDapp } = useDappWebViewScreen();
 
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -49,10 +49,7 @@ export function DappsScreen(): JSX.Element {
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
-        ...options,
-        showSheetModalFirst: true,
-      });
+      openUrlAsDapp(url, options);
       setBrowserHistory(safeGetOrigin(url));
       Keyboard.dismiss();
     },

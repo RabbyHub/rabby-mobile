@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import WebView from 'react-native-webview';
 
-import { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { Text } from '../../Text';
@@ -18,7 +17,6 @@ import { ScreenLayouts2 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { RcIconCloseDapp } from './icons';
-import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { WebViewActions, WebViewState, useWebViewControl } from '../hooks';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
@@ -31,7 +29,6 @@ import { BottomNavControl2, BottomNavControlCbCtx } from './Widgets';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles2024 } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
-import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { IS_ANDROID } from '@/core/native/utils';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '../utils';
@@ -55,24 +52,6 @@ function convertToWebviewUrl(dappOrigin: string) {
 
   return stringUtils.ensurePrefix(dappOrigin, 'https://');
 }
-
-const renderBackdrop = (props: BottomSheetBackdropProps) => {
-  return (
-    <RefreshAutoLockBottomSheetBackdrop
-      {...props}
-      // leave here for debug
-      style={[
-        props.style,
-        {
-          borderWidth: 1,
-          borderColor: 'red',
-        },
-      ]}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-    />
-  );
-};
 
 type DappWebViewControlProps = {
   dappOrigin: string;
@@ -219,9 +198,6 @@ const DappWebViewControl2 = React.forwardRef<
       };
     }, [dappOrigin, latestUrl]);
 
-    const { sheetModalRef: webviewNavRef, toggleShowSheetModal } =
-      useSheetModal();
-
     React.useImperativeHandle(
       ref,
       () => ({
@@ -234,8 +210,8 @@ const DappWebViewControl2 = React.forwardRef<
     );
 
     const handlePressCloseDefault = useCallback(() => {
-      toggleShowSheetModal(true);
-    }, [toggleShowSheetModal]);
+      console.debug('handlePressCloseDefault: implement close dapp');
+    }, []);
 
     const handlePressHeaderLeftClose = useCallback(() => {
       if (typeof onPressHeaderLeftClose === 'function') {
