@@ -225,7 +225,7 @@ export const HomeTopArea = () => {
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
           titleText: t('page.receiveAddressList.selectChainTitle'),
           bottomSheetModalProps: {
-            enableContentPanningGesture: true,
+            enableContentPanningGesture: false,
             enablePanDownToClose: true,
           },
           onChange: (v: CHAINS_ENUM) => {

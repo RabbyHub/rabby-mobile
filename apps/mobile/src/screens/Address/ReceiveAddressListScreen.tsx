@@ -34,7 +34,7 @@ export function ReceiveAddressListScreen(): JSX.Element {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_SORTED_CHAIN,
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
       titleText: t('page.receiveAddressList.selectChainTitle'),
