@@ -11,8 +11,7 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import { requestKeyring } from '@/core/apis/keyring';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
-import { wordlist } from '@scure/bip39/wordlists/english';
-import * as bip39 from '@scure/bip39';
+import * as bip39 from 'react-native-quick-bip39';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -192,13 +191,13 @@ export const ImportSeedPhraseScreen2024 = () => {
           });
         } else {
           try {
-            bip39.mnemonicToEntropy(mnemonics?.trim(), wordlist);
+            bip39.mnemonicToEntropy(mnemonics?.trim(), bip39.wordlists.english);
           } catch (e) {
             if ((e as any).message.includes('Unknown letter:')) {
               let errorWords: string[] = [];
               mnemonics.split(/\s+/).forEach(word => {
                 let v = word?.trim();
-                if (v && !wordlist.includes(v)) {
+                if (v && !bip39.wordlists.english.includes(v)) {
                   errorWords.push(v);
                 }
               });

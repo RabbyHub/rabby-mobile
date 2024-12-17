@@ -1,0 +1,41 @@
+diff --git a/dist/index.js b/dist/index.js
+index fd317674caba8bba044ea5fd24c8a67fad859ad8..0a66313a7062e9e478d202c0b0669ce023d5b4f0 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2371,8 +2371,7 @@ __export(eth_hd_keyring_exports, {
+ module.exports = __toCommonJS(eth_hd_keyring_exports);
+ var import_hdkey = require("ethereum-cryptography/hdkey");
+ var import_eth_simple_keyring = __toESM(require("@rabby-wallet/eth-simple-keyring"));
+-var bip39 = __toESM(require("@scure/bip39"));
+-var import_english = require("@scure/bip39/wordlists/english");
++var bip39 = __toESM(require("react-native-quick-bip39"));
+ var sigUtil = __toESM(require("eth-sig-util"));
+ var import_util = require("@ethereumjs/util");
+ var import_slip39 = __toESM(require_slip392());
+@@ -2469,7 +2468,7 @@ var _HdKeyring = class _HdKeyring extends import_eth_simple_keyring.default {
+   }
+   addAccounts(numberOfAccounts = 1) {
+     if (!this.hdWallet) {
+-      this.initFromMnemonic(bip39.generateMnemonic(import_english.wordlist));
++      this.initFromMnemonic(bip39.generateMnemonic(bip39.wordlists.english));
+     }
+     let count = numberOfAccounts;
+     let currentIdx = 0;
+@@ -2612,7 +2611,7 @@ var _HdKeyring = class _HdKeyring extends import_eth_simple_keyring.default {
+     return (0, import_util.bytesToHex)((0, import_util.publicToAddress)(publicKey, true)).toLowerCase();
+   }
+   generateMnemonic() {
+-    return bip39.generateMnemonic(import_english.wordlist);
++    return bip39.generateMnemonic(bip39.wordlists.english);
+   }
+   setHdPath(hdPath = HD_PATH_BASE["BIP44" /* BIP44 */]) {
+     this.hdPath = hdPath;
+@@ -2690,7 +2689,7 @@ var _HdKeyring = class _HdKeyring extends import_eth_simple_keyring.default {
+     if (this.checkMnemonicIsSlip39(mnemonic)) {
+       return true;
+     }
+-    return bip39.validateMnemonic(mnemonic, import_english.wordlist);
++    return bip39.validateMnemonic(mnemonic, bip39.wordlists.english);
+   }
+ };
+ _HdKeyring.type = type;

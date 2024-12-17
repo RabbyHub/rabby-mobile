@@ -50,6 +50,31 @@
       "yarn workspace dev-console-cra lint:commit:fix"
     ]
   },
+  "resolutions": {
+    "@debank/common@0.3.58": "patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch",
+    "@debank/common@^0.3.54": "patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch",
+    "@keystonehq/bc-ur-registry@^0.5.0-alpha.4": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
+    "@keystonehq/bc-ur-registry@^0.6.0": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
+    "@ledgerhq/hw-app-eth@^6.40.0": "patch:@ledgerhq/hw-app-eth@npm%3A6.40.2#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.40.2-ffdc4add8c.patch",
+    "@ledgerhq/hw-transport@^6.31.4": "patch:@ledgerhq/hw-transport@npm%3A6.31.4#./.yarn/patches/@ledgerhq-hw-transport-npm-6.31.4-b439e9a1f8.patch",
+    "@metamask/eth-sig-util@5.1.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",
+    "@metamask/eth-sig-util@^4.0.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",
+    "@metamask/eth-sig-util@^5.0.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",
+    "@onekeyfe/hd-transport-react-native@^1.0.10": "patch:@onekeyfe/hd-transport-react-native@npm%3A1.0.10#./.yarn/patches/@onekeyfe-hd-transport-react-native-npm-1.0.10-09c8057879.patch",
+    "@rabby-wallet/rabby-api@0.7.25": "patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch",
+    "@rabby-wallet/rabby-api@0.8.5": "patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch",
+    "@react-native-menu/menu@1.1.3": "patch:@react-native-menu/menu@npm%3A1.1.3#./.yarn/patches/@react-native-menu-menu-npm-1.1.3-6b0ecb2e6c.patch",
+    "eth-rpc-errors@^4.0.2": "patch:eth-rpc-errors@npm%3A4.0.3#./.yarn/patches/eth-rpc-errors-npm-4.0.3-d154190eb6.patch",
+    "eth-rpc-errors@^4.0.3": "patch:eth-rpc-errors@npm%3A4.0.3#./.yarn/patches/eth-rpc-errors-npm-4.0.3-d154190eb6.patch",
+    "nativewind@^2.0.11": "patch:nativewind@npm%3A2.0.11#./.yarn/patches/nativewind-npm-2.0.11-dc2ccf9fb5.patch",
+    "react-native-fs@^2.20.0": "patch:react-native-fs@npm%3A2.20.0#./.yarn/patches/react-native-fs-npm-2.20.0-a38fe24051.patch",
+    "react-native-keychain@8.0.0": "patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch",
+    "react-native-mmkv@^2.12.2": "patch:react-native-mmkv@npm%3A2.12.2#./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch",
+    "react-native-webview@13.10.5": "patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch",
+    "react-use@17.4.2": "patch:react-use@npm%3A17.4.2#./.yarn/patches/react-use-npm-17.4.2-d0e8220eaa.patch",
+    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
+    "@rabby-wallet/eth-hd-keyring@4.3.1": "patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch"
+  },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
     "@debank/common": "^0.3.54",
@@ -110,34 +135,5 @@
       "ethereumjs-util>ethereum-cryptography>secp256k1": true,
       "simple-git-hooks": false
     }
-  },
-  "resolutions": {
-    "@debank/common@^0.3.54": "patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch",
-    "@debank/common@0.3.58": "patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch",
-    "@metamask/eth-sig-util@5.1.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",
-    "@metamask/eth-sig-util@^4.0.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",
-    "@metamask/eth-sig-util@^5.0.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",
-    "@onekeyfe/hd-transport-react-native@^1.0.10": "patch:@onekeyfe/hd-transport-react-native@npm%3A1.0.10#./.yarn/patches/@onekeyfe-hd-transport-react-native-npm-1.0.10-09c8057879.patch",
-    "@rabby-wallet/rabby-api@0.7.25": "patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch",
-    "@rabby-wallet/rabby-api@0.8.5": "patch:@rabby-wallet/rabby-api@npm%3A0.8.5#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.8.5-b09d6e3f2f.patch",
-    "@react-native-menu/menu@1.1.3": "patch:@react-native-menu/menu@npm%3A1.1.3#./.yarn/patches/@react-native-menu-menu-npm-1.1.3-6b0ecb2e6c.patch",
-    "eth-rpc-errors@^4.0.3": "patch:eth-rpc-errors@npm%3A4.0.3#./.yarn/patches/eth-rpc-errors-npm-4.0.3-d154190eb6.patch",
-    "eth-rpc-errors@^4.0.2": "patch:eth-rpc-errors@npm%3A4.0.3#./.yarn/patches/eth-rpc-errors-npm-4.0.3-d154190eb6.patch",
-    "nativewind@^2.0.11": "patch:nativewind@npm%3A2.0.11#./.yarn/patches/nativewind-npm-2.0.11-dc2ccf9fb5.patch",
-    "react-native-fs@^2.20.0": "patch:react-native-fs@npm%3A2.20.0#./.yarn/patches/react-native-fs-npm-2.20.0-a38fe24051.patch",
-    "react-native-keychain@8.0.0": "patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch",
-    "react-native-mmkv@^2.12.2": "patch:react-native-mmkv@npm%3A2.12.2#./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch",
-    "react-native-webview@13.10.5": "patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch",
-    "react-use@17.4.2": "patch:react-use@npm%3A17.4.2#./.yarn/patches/react-use-npm-17.4.2-d0e8220eaa.patch",
-    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
-    "@keystonehq/bc-ur-registry@^0.6.0": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
-    "@keystonehq/bc-ur-registry@^0.5.0-alpha.4": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
-    "@ledgerhq/hw-app-eth@^6.40.0": "patch:@ledgerhq/hw-app-eth@npm%3A6.40.2#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.40.2-ffdc4add8c.patch",
-    "@ledgerhq/hw-transport@^6.31.4": "patch:@ledgerhq/hw-transport@npm%3A6.31.4#./.yarn/patches/@ledgerhq-hw-transport-npm-6.31.4-b439e9a1f8.patch",
-    "@scure/bip39@^1.3.0": "patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch",
-    "@scure/bip39@1.2.2": "patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch",
-    "@scure/bip39@1.2.1": "patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch",
-    "@scure/bip39@^1.2.1": "patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch",
-    "@scure/bip39@1.3.0": "patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch"
   }
 }
