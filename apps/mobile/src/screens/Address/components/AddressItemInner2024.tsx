@@ -86,6 +86,7 @@ interface AddressItemProps {
 export const AddressItemInner2024 = (props: AddressItemProps) => {
   const { account, style, hiddenArrow, isPressing } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
+
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
   });

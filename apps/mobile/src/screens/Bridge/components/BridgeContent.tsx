@@ -681,6 +681,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         }}
         onReject={() => {
           setIsShowSign(false);
+          refresh(e => e + 1);
           mutateTxs([]);
         }}
         onResolve={() => {

@@ -1424,6 +1424,7 @@
         "hardwareWallet": "Hardware Wallet"
       },
       "multiAddressHome": {
+        "pin": "Pin",
         "services": "Services",
         "totalBalance": "Total Balance"
       }

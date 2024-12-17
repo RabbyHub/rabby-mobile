@@ -281,13 +281,6 @@ export const SeedPhrase: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [words, shuffleCount],
   );
-
-  console.log(
-    'verfiy word: ',
-    words[shuffledNumbers[0] - 1],
-    words[shuffledNumbers[1] - 1],
-    words[shuffledNumbers[2] - 1],
-  );
   const onSelect = useCallback(
     (index: number) => {
       if (isHidden) {
@@ -369,7 +362,7 @@ export const SeedPhrase: React.FC<Props> = ({
           },
         });
       } catch (e) {
-        console.log('addMnemonicKeyringAndGotoSuccessScreen error', e);
+        console.log('addMnemonicKeyringAndGotoSuccessScreen error');
       } finally {
         setLoading(false);
         toastHide();

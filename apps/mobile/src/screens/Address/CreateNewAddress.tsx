@@ -105,7 +105,6 @@ function MainListBlocks() {
     }
     const words = seedPhrase.split(' ');
     const address = accountsToCreate?.[0].address;
-    console.log('requestKeyring res ', accountsToCreate, address, seedPhrase);
     setNewAddress(address);
     return {
       seedPhrase,

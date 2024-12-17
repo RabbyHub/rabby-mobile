@@ -241,15 +241,60 @@ export const useBridge = () => {
   //     getRecommendToChain(firstEnum);
   //   },
   // });
+
+  const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
   const initChainByCache = useCallback(async () => {
+    initIdRef.current += 1;
+    const currentFetchId = initIdRef.current;
     const { firstChain } = await fetchOrderedChainList({
       supportChains: supportedChains,
     });
+    if (initIdRef.current !== currentFetchId) {
+      return;
+    }
+    const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
     setAmount('');
-    switchFromChain(firstChain?.enum || CHAINS_ENUM.ETH);
-    getRecommendToChain(firstChain?.enum || CHAINS_ENUM.ETH);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchOrderedChainList]);
+    switchFromChain(firstChainEnum);
+    const getRemoteRecommendChain = async () => {
+      if (initIdRef.current === currentFetchId) {
+        const data = await openapi.getRecommendBridgeToChain({
+          from_chain_id: findChainByEnum(firstChainEnum)!.serverId,
+        });
+        initIdRef.current === currentFetchId &&
+          switchToChain(findChainByServerID(data.to_chain_id)?.enum);
+      }
+    };
+    if (userAddress) {
+      const latestTx = await openapi.getBridgeHistoryList({
+        user_addr: userAddress,
+        start: 0,
+        limit: 1,
+      });
+      if (initIdRef.current !== currentFetchId) {
+        return;
+      }
+      const latestToToken = latestTx?.history_list?.[0]?.to_token;
+      if (latestToToken) {
+        const lastBridgeChain = findChainByServerID(latestToToken.chain);
+        if (lastBridgeChain && lastBridgeChain.enum !== firstChainEnum) {
+          switchToChain(lastBridgeChain.enum);
+          setToToken(latestToToken);
+        } else {
+          await getRemoteRecommendChain();
+        }
+      } else {
+        await getRemoteRecommendChain();
+      }
+    }
+  }, [
+    fetchOrderedChainList,
+    userAddress,
+    setAmount,
+    supportedChains,
+    setToToken,
+    switchFromChain,
+    switchToChain,
+  ]);
 
   useEffect(() => {
     initChainByCache();
