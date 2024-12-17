@@ -68,11 +68,11 @@ export function AddressItemInPanel({
                   <WalletName style={styles.addressAliasName} />
                   {isPinned && (
                     <View style={styles.pinnedWrapper}>
-                      <ICONS_COMMON_2024.RcPinCC
+                      {/* <ICONS_COMMON_2024.RcPinCC
                         color={styles.pinText.color}
                         width={15}
                         height={15}
-                      />
+                      /> */}
                       <Text style={styles.pinText}>Pin</Text>
                     </View>
                   )}
@@ -161,10 +161,11 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
 
     pinnedWrapper: {
       flexShrink: 0,
-      width: 52,
-      height: 26,
       marginLeft: 4,
-      borderRadius: 8,
+      borderRadius: 6,
+      width: 33,
+      height: 20,
+      flexWrap: 'nowrap',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

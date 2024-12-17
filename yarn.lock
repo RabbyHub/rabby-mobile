@@ -6123,7 +6123,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.9.3-beta.2
+    "@rabby-wallet/rabby-api": 0.9.4
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
@@ -6479,9 +6479,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.3-beta.2":
-  version: 0.9.3-beta.2
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.3-beta.2"
+"@rabby-wallet/rabby-api@npm:0.9.4":
+  version: 0.9.4
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.4"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -6492,7 +6492,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: a6ffb174a5a759fbdd9966fad4c148212cbd80c34b2b2b2191354281cafcdc39bf31b60c7128776cac4cdf6e6d0e46f49d2b3f808c6e5e64cdf48d33e17cbea6
+  checksum: 2b604c18df44a2a606c7210ba165fda8926e6163e29f6a9b49e6323e131a14df5b107d69fc22ddbbbeb21895ac81928768faecffcdb07fd0705c724ff5b4ec9e
   languageName: node
   linkType: hard
 
@@ -6525,9 +6525,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.42":
-  version: 0.0.42
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.42"
+"@rabby-wallet/rabby-swap@npm:0.0.43":
+  version: 0.0.43
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.43"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -6536,7 +6536,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: a36df31438948089a6c493ddf6d1209dd1d3304b42c511a5c553082f89226cb041b3e90dbe64a522f4b7c66cb2d37f7171e79a382c269faf8b184454dccb44bb
+  checksum: 57b82556ccd0365704e9254e547904de2e0b15bb52d5df32abe3acc21d43caa83a0660da6f9755929f0ebef9bda4f4d0c7e20669b36ee2f7d9da312324a6297b
   languageName: node
   linkType: hard
 
@@ -27490,10 +27490,10 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
-    "@rabby-wallet/rabby-api": 0.9.3-beta.2
+    "@rabby-wallet/rabby-api": 0.9.4
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.0
-    "@rabby-wallet/rabby-swap": 0.0.42
+    "@rabby-wallet/rabby-swap": 0.0.43
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-async-storage/async-storage": ^1.21.0

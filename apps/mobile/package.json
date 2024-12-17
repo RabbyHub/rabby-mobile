@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "repository": {
     "type": "git",
@@ -65,10 +65,10 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.8",
-    "@rabby-wallet/rabby-api": "0.9.3-beta.2",
+    "@rabby-wallet/rabby-api": "0.9.4",
     "@rabby-wallet/rabby-security-engine": "2.0.7",
     "@rabby-wallet/rabby-sign-bvm": "0.1.0",
-    "@rabby-wallet/rabby-swap": "0.0.42",
+    "@rabby-wallet/rabby-swap": "0.0.43",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
     "@react-native-async-storage/async-storage": "^1.21.0",

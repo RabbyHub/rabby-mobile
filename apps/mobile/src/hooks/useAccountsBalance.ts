@@ -2,13 +2,16 @@ import { useRef, useState } from 'react';
 import { atom, useAtom } from 'jotai';
 import { apiBalance } from '@/core/apis';
 import { keyringService, preferenceService } from '@/core/services';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
-interface balanceAccountType {
+export interface balanceAccountType {
   address: string;
   balance: number;
+  type: KeyringTypeName;
+  brandName: string;
 }
 
 const waitQueueFinished = (q: PQueue) => {
@@ -57,14 +60,13 @@ export default function useAccountsBalance(opts?: {
 
         const list = await keyringService.getAllVisibleAccountsArray();
 
-        const formatList = list
-          .filter(
-            a =>
-              a.type !== KEYRING_CLASS.WATCH &&
-              a.type !== KEYRING_CLASS.GNOSIS &&
-              a.type !== KEYRING_CLASS.WALLETCONNECT,
-          )
-          .map(a => a.address.toLowerCase());
+        const formatList = list.filter(
+          a =>
+            a.type !== KEYRING_CLASS.WATCH &&
+            a.type !== KEYRING_CLASS.GNOSIS &&
+            a.type !== KEYRING_CLASS.WALLETCONNECT,
+        );
+        // .map(a => a.address.toLowerCase());
 
         setAccountsLength(formatList.length);
 
@@ -75,12 +77,15 @@ export default function useAccountsBalance(opts?: {
           : formatList;
 
         // deault first get from cache store
-        uniqueList.map(account => {
+        uniqueList.map(({ address, type, brandName }) => {
+          const account = address.toLowerCase();
           const cacheData = preferenceService.getAddressBalance(account);
-          if (uniqueList.includes(account)) {
+          if (uniqueList.find(o => isSameAddress(o.address, account))) {
             cacheBalancesArr.push({
               address: account,
               balance: cacheData?.total_usd_value || 0,
+              type,
+              brandName,
             });
           }
         });
@@ -95,27 +100,32 @@ export default function useAccountsBalance(opts?: {
             intervalCap: 10,
           });
           for (let i = 0; i < uniqueList.length; i++) {
-            const account = uniqueList[i];
+            const { type, address, brandName } = uniqueList[i];
+            const account = address.toLowerCase();
             // batch fetch by queue
             queue.add(async () => {
               try {
                 const resData = await apiBalance.getAddressBalance(account, {
                   force: true,
                 });
-                if (uniqueList.includes(account)) {
+                if (uniqueList.find(o => isSameAddress(o.address, account))) {
                   queueBalanceArr.push({
                     address: account,
                     balance: resData?.total_usd_value || 0,
+                    type,
+                    brandName,
                   });
                 }
               } catch (e) {
                 console.log('fetchTotalBalance  error', e);
                 // api fetch error fallback get from cache store
                 const cacheData = preferenceService.getAddressBalance(account);
-                if (uniqueList.includes(account)) {
+                if (uniqueList.find(o => isSameAddress(o.address, account))) {
                   queueBalanceArr.push({
                     address: account,
                     balance: cacheData?.total_usd_value || 0,
+                    type,
+                    brandName,
                   });
                 }
               }
