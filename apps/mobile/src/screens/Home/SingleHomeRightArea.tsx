@@ -29,11 +29,11 @@ const historyHitSlop = {
   right: 4,
 };
 
-export const RightMore: React.FC<HeaderButtonProps> = ({}) => {
+export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
   const { currentAccount } = useCurrentAccount();
   const showAddressDetail = useAddressDetailModal();
   const { styles, colors, colors2024 } = useTheme2024();
-  const [pendingTxCount, setPendingTxCount] = useState(2);
+  const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { navigation } = useSafeSetNavigationOptions();
 
@@ -44,7 +44,7 @@ export const RightMore: React.FC<HeaderButtonProps> = ({}) => {
     const addresses = [currentAccount.address];
     const { pendingsLength } =
       transactionHistoryService.getPendingsAddresses(addresses);
-    setPendingTxCount(2);
+    setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [currentAccount]);
@@ -66,22 +66,22 @@ export const RightMore: React.FC<HeaderButtonProps> = ({}) => {
 
   const openHistory = useCallback(async () => {
     // setHistoryVisible(true);
-    // await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    toggleUseAllAccountsOnScene('MultiHistory', false);
+    await switchSceneCurrentAccount('History', currentAccount);
+    // toggleUseAllAccountsOnScene('MultiHistory', false);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.History,
         params: {},
       }),
     );
-  }, [navigation, toggleUseAllAccountsOnScene]);
+  }, [navigation, switchSceneCurrentAccount, currentAccount]);
 
   return (
     <>
       <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
         <View style={{ marginRight: 18 }}>
-          {2 ? (
-            <PendingTx number={2} onClick={openHistory} />
+          {pendingTxCount ? (
+            <PendingTx number={pendingTxCount} onClick={openHistory} />
           ) : (
             <RcIconSwapHistory color={colors2024['neutral-body']} />
           )}

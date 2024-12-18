@@ -99,7 +99,6 @@ export const RootNames = {
   MultiSwap: 'MultiSwap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
-  /** @deprecated */
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   MultiAddressHistory: 'MultiAddressHistory',
@@ -200,7 +199,7 @@ function makeScreenSpecConfig() {
     const bg1Default2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg1'],
+      androidStatusBarBg: colors2024['neutral-bg-1'],
     };
 
     const transparentDefault2024Conf = <ScreenStatusBarConf>{
@@ -254,6 +253,7 @@ function makeScreenSpecConfig() {
       MultiAddressHome: bg1Default2024Conf,
       // MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
+      History: bg1Default2024Conf,
       MultiAddressHistory: bg1Default2024Conf,
 
       // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
@@ -268,7 +268,7 @@ function makeScreenSpecConfig() {
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
       Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      SingleAddressHome: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      SingleAddressHome: bg1Default2024Conf,
       Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,
