@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { useTokens } from './token';
+import { useTokens2024 } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useSafeState } from '@/hooks/useSafeState';
 
@@ -35,7 +35,7 @@ export const useQueryProjects = (
     customizeTokens,
     blockedTokens,
     testnetTokens,
-  } = useTokens(userAddr, historyTime, visible, 0, undefined, isTestnet);
+  } = useTokens2024(userAddr, historyTime, visible, 0, undefined, isTestnet);
 
   const {
     data: portfolios,
