@@ -1,5 +1,5 @@
 diff --git a/dist/index.js b/dist/index.js
-index fd317674caba8bba044ea5fd24c8a67fad859ad8..0a66313a7062e9e478d202c0b0669ce023d5b4f0 100644
+index fd317674caba8bba044ea5fd24c8a67fad859ad8..799ca9a154f06d558383e9f2537216d33d418f17 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -2371,8 +2371,7 @@ __export(eth_hd_keyring_exports, {
@@ -17,7 +17,7 @@ index fd317674caba8bba044ea5fd24c8a67fad859ad8..0a66313a7062e9e478d202c0b0669ce0
    addAccounts(numberOfAccounts = 1) {
      if (!this.hdWallet) {
 -      this.initFromMnemonic(bip39.generateMnemonic(import_english.wordlist));
-+      this.initFromMnemonic(bip39.generateMnemonic(bip39.wordlists.english));
++      this.initFromMnemonic(bip39.generateMnemonic());
      }
      let count = numberOfAccounts;
      let currentIdx = 0;
@@ -26,7 +26,7 @@ index fd317674caba8bba044ea5fd24c8a67fad859ad8..0a66313a7062e9e478d202c0b0669ce0
    }
    generateMnemonic() {
 -    return bip39.generateMnemonic(import_english.wordlist);
-+    return bip39.generateMnemonic(bip39.wordlists.english);
++    return bip39.generateMnemonic();
    }
    setHdPath(hdPath = HD_PATH_BASE["BIP44" /* BIP44 */]) {
      this.hdPath = hdPath;

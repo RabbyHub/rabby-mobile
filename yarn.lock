@@ -6172,7 +6172,7 @@ __metadata:
 
 "@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 4.3.1
-  resolution: "@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::version=4.3.1&hash=8efe41&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::version=4.3.1&hash=691efc&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@ethereumjs/util": ^9.0.0
     "@metamask/eth-sig-util": ^4.0.0
@@ -6181,7 +6181,7 @@ __metadata:
     eth-sig-util: ^3.0.1
     ethereum-cryptography: ^2.1.2
     slip39: ^0.1.9
-  checksum: b9115887e7802005c85ab806af10687abb170af89978a10d79e37327c30976d837e735396858cf5d40f0bbb5699b91c42f6a10411698129ae1da9ac28d6bea3b
+  checksum: b12015b3e5e7925dc56811ae3521d4e4b88438208b1dfe3ee6ecd568576ed9261b11516fea064ec229a4bae949621851b3033346f1c92645f518fb92e5999a84
   languageName: node
   linkType: hard
 
