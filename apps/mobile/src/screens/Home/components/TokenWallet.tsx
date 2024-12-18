@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
@@ -16,10 +16,8 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSheetModals } from '@/hooks/useSheetModal';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { AbstractPortfolioToken } from '../types';
 import { PositionLoader } from './Skeleton';
@@ -292,17 +290,6 @@ export const TokenWallet = ({
   );
 };
 const getStyles = createGetStyles2024(ctx => ({
-  handlableHead: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 1,
-    marginBottom: 2,
-  },
-  titleText: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontSize: 20,
-    fontWeight: '600',
-  },
   bgContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
@@ -355,10 +342,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
   },
-  tokenRowChange: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
   tokenRowUsdValueWrap: {
     flexShrink: 0,
     justifyContent: 'flex-end',
@@ -399,11 +382,5 @@ const getStyles = createGetStyles2024(ctx => ({
   arrow: {
     width: 14,
     height: 14,
-  },
-
-  // modal
-  scrollView: {
-    height: 150,
-    marginBottom: 15,
   },
 }));
