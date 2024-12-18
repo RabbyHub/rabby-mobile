@@ -23,15 +23,12 @@ import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { NFTDetailPopupInner } from '../NftDetail/PopupInner';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 type ItemProps = {
   item: NFTItem;
@@ -54,31 +51,32 @@ const Item = ({ item, lastCountMark, collectionName }: ItemProps) => {
   const navigation = useRabbyAppNavigation();
 
   const handleNFTPress = useCallback(() => {
-    const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.NFT_DETAIL,
-      bottomSheetModalProps: {
-        footerComponent: () => (
-          <NFTDetailPopupInner.FooterComponent
-            onPressSend={() => {
-              removeGlobalBottomSheetModal(id);
+    // const id = createGlobalBottomSheetModal({
+    //   name: MODAL_NAMES.NFT_DETAIL,
+    //   bottomSheetModalProps: {
+    //     footerComponent: () => (
+    //       <NFTDetailPopupInner.FooterComponent
+    //         onPressSend={() => {
+    //           removeGlobalBottomSheetModal(id);
 
-              navigation.push(RootNames.StackTransaction, {
-                screen: RootNames.SendNFT,
-                params: {
-                  collectionName,
-                  nftItem: item,
-                },
-              });
-            }}
-            token={item}
-            collectionName={collectionName}
-          />
-        ),
-      },
-      token: item,
-      collectionName,
-    });
-  }, [item, collectionName, navigation]);
+    //           navigation.push(RootNames.StackTransaction, {
+    //             screen: RootNames.SendNFT,
+    //             params: {
+    //               collectionName,
+    //               nftItem: item,
+    //             },
+    //           });
+    //         }}
+    //         token={item}
+    //         collectionName={collectionName}
+    //       />
+    //     ),
+    //   },
+    //   token: item,
+    //   collectionName,
+    // });
+    navigate(RootNames.NftDetail, { token: item, collectionName });
+  }, [item, collectionName]);
 
   const numberDisplay = useMemo(() => {
     let v = abbreviateNumber(item.amount || 0);

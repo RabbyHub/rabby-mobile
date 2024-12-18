@@ -103,7 +103,7 @@ export const TokenList = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const headers = [name, 'AMOUNT', 'USD VALUE'];
+  const headers = [name, 'amount', 'USD Value'];
 
   const _tokens: TokenItem[] = useMemo(() => {
     return (tokens ?? [])
@@ -303,7 +303,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   portfolioDesc: {
     marginLeft: 8,
@@ -314,11 +314,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
   },
   portfolioNetWorth: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     textAlign: 'right',
+    lineHeight: 18,
   },
   tokenRowChange: {
     fontSize: 10,
@@ -330,6 +331,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   // tokenlist
   tokenList: {
     marginTop: 8,
+    // marginHorizontal: 4,
   },
   tokenRow: {
     flexDirection: 'row',
@@ -343,6 +345,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 18,
   },
   tokenListHeader: {
+    // paddingHorizontal: 2,
+    paddingLeft: 4,
     flexBasis: '35%',
     flexGrow: 1,
     fontSize: 14,
@@ -354,16 +358,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenListCol: {
     flexBasis: '35%',
     flexGrow: 1,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
   },
   tokenListColText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
   },
   tokenListSymbol: {
     flexDirection: 'row',
@@ -373,10 +377,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenListSymbolText: {
     paddingLeft: 8,
     paddingRight: 4,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
     flexShrink: 1,
   },
   alignRight: {
