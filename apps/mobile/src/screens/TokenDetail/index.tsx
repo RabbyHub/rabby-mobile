@@ -5,7 +5,7 @@ import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain } from '@/utils/chain';
@@ -29,10 +29,97 @@ import { TokenBalanceArea } from './components/TokenBalanceArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
+import { RcIconMore } from '@/assets/icons/home';
+import { trigger } from 'react-native-haptic-feedback';
+import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
 
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+export const RightMore: React.FC<HeaderButtonProps> = ({}) => {
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+  const pinned = false;
+  const togglePinned = () => {
+    // TODO:
+  };
+
+  const fold = false;
+  const toggleFold = () => {
+    // TODO:
+  };
+
+  const inclueBalance = true;
+  const toggleIncludeBalance = () => {
+    // TODO:
+  };
+  const menuActions = React.useMemo(() => {
+    return [
+      {
+        title: fold ? 'UnFold' : 'Fold',
+        icon: fold
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        androidIconName: 'ic_rabby_menu_edit',
+        key: 'fold',
+        action() {
+          toggleFold();
+        },
+      },
+      {
+        title: pinned ? 'UnPin' : 'Pin',
+        icon: pinned
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+        androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
+        key: 'pin',
+        action() {
+          togglePinned();
+        },
+      },
+      {
+        title: inclueBalance ? 'Exclude Balance' : 'Include Balance',
+        icon: inclueBalance
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png'),
+        key: 'balance',
+        androidIconName: 'ic_rabby_menu_more',
+        action() {
+          toggleIncludeBalance();
+        },
+      },
+    ] as MenuAction[];
+  }, [pinned, isDarkTheme, fold, inclueBalance]);
+  const onPress = () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
+
+  return (
+    <DropDownMenuView
+      menuConfig={{
+        menuActions: menuActions,
+      }}
+      triggerProps={{ action: 'press' }}>
+      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+        <RcIconMore width={24} height={24} />
+      </CustomTouchableOpacity>
+    </DropDownMenuView>
+  );
+};
 export const TokenDetailScreen = () => {
   const route = useRoute();
   const { token, account } = (route.params || {}) as {
