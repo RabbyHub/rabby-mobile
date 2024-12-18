@@ -25,6 +25,7 @@ export type RootStackParamsList = {
   [RootNames.StackFavoriteDapps]: NavigatorScreenParams<FavoriteDappsNavigatorParamList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
+  [RootNames.DeFiDetail]?: {};
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;

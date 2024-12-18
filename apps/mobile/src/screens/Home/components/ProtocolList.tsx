@@ -1,11 +1,4 @@
-import React, {
-  useMemo,
-  useCallback,
-  memo,
-  useRef,
-  useState,
-  useEffect,
-} from 'react';
+import React, { useMemo, useCallback, memo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -31,6 +24,8 @@ import { Text } from '@/components';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { createGetStyles2024 } from '@/utils/styles';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 // 已支持的模板
 const TemplateDict = {
@@ -64,7 +59,7 @@ type ProtocolListProps = {
   onRefresh(): void;
 };
 
-const MemoItem = memo(
+export const MemoItem = memo(
   ({ item }: { item: AbstractPortfolio }) => {
     const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -120,20 +115,25 @@ const _ProtocolList = ({
     new Set<string>(),
   );
 
-  const handleToggle = useCallback((title: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  const handleToggle = useCallback(
+    (title: string, data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
-    setExpandedSections(prev => {
-      // Using Set here but you can use an array too
-      const next = new Set(prev);
-      if (next.has(title)) {
-        next.delete(title);
-      } else {
-        next.add(title);
-      }
-      return next;
-    });
-  }, []);
+      setExpandedSections(prev => {
+        // Using Set here but you can use an array too
+        const next = new Set(prev);
+        if (next.has(title)) {
+          next.delete(title);
+        } else {
+          next.add(title);
+        }
+        return next;
+      });
+
+      navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
+    },
+    [],
+  );
 
   const renderItem = useCallback(
     ({
@@ -158,7 +158,9 @@ const _ProtocolList = ({
     ({ section }: { section: SectionListData<AbstractPortfolio> }) => {
       return (
         <ProjectTitle
-          onPress={() => handleToggle(section.key!)}
+          onPress={() =>
+            handleToggle(section.key!, section.portfolio, [...section.data])
+          }
           data={section.portfolio}
           isExpanded={expandedSections.has(section.key!)}
         />
@@ -303,11 +305,14 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'right',
   },
   portfolioCard: {
-    marginBottom: 8,
-    padding: 12,
+    marginBottom: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     marginHorizontal: 20,
-    borderRadius: 6,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    borderRadius: 12,
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderWidth: 1,
+    borderColor: ctx.colors2024['neutral-line'],
   },
   arrowButton: {
     width: 20,

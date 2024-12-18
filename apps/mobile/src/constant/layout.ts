@@ -123,6 +123,7 @@ export const RootNames = {
   ImportSafeAddress2024: 'ImportSafeAddress2024',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
+  DeFiDetail: 'DeFiDetail',
   CreateNewAddress: 'CreateNewAddress',
   CreateSelectOnCurrentSeed: 'CreateSelectOnCurrentSeed',
   SetPassword2024: 'SetPassword2024',
