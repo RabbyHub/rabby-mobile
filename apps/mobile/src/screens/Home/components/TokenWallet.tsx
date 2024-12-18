@@ -58,7 +58,6 @@ const TokenRow = memo(
     style,
     logoSize,
     logoStyle,
-    onSmallTokenPress,
     onTokenPress,
   }: {
     data: AbstractPortfolioToken;
@@ -66,7 +65,6 @@ const TokenRow = memo(
     logoStyle?: ViewStyle;
     logoSize?: number;
     showHistory?: boolean;
-    onSmallTokenPress?(token: AbstractPortfolioToken): void;
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -89,12 +87,8 @@ const TokenRow = memo(
     );
 
     const onPressToken = useCallback(() => {
-      if (data?.id === SMALL_TOKEN_ID) {
-        return onSmallTokenPress?.(data);
-      } else {
-        return onTokenPress?.(data);
-      }
-    }, [data, onSmallTokenPress, onTokenPress]);
+      return onTokenPress?.(data);
+    }, [data, onTokenPress]);
 
     return (
       <TouchableOpacity
@@ -193,23 +187,12 @@ export const TokenWallet = ({
   }, [isPortfoliosLoading, tokens]);
 
   const {
-    sheetModalRefs: { smallTokenModalRef },
-    toggleShowSheetModal,
-  } = useSheetModals({
-    smallTokenModalRef: useRef<BottomSheetModal>(null),
-  });
-
-  const {
     sheetModalRef: tokenDetailModalRef,
     openTokenDetailPopup,
     cleanFocusingToken,
     focusingToken,
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
-
-  const handleOpenSmallToken = React.useCallback(() => {
-    smallTokenModalRef?.current?.present();
-  }, [smallTokenModalRef]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -220,7 +203,6 @@ export const TokenWallet = ({
       ) {
         openTokenDetailPopup(token);
       } else {
-        toggleShowSheetModal('smallTokenModalRef', false);
         navigate(RootNames.TokenDetail, {
           token: token,
           // todo fix ts
@@ -228,7 +210,7 @@ export const TokenWallet = ({
         });
       }
     },
-    [currentAccount, openTokenDetailPopup, toggleShowSheetModal],
+    [currentAccount, openTokenDetailPopup],
   );
 
   const renderItem = useCallback(
@@ -237,13 +219,12 @@ export const TokenWallet = ({
         <TokenRow
           data={item}
           showHistory={showHistory}
-          onSmallTokenPress={handleOpenSmallToken}
           onTokenPress={handleOpenTokenDetail}
           logoSize={40}
         />
       );
     },
-    [showHistory, handleOpenSmallToken, handleOpenTokenDetail],
+    [showHistory, handleOpenTokenDetail],
   );
 
   const keyExtractor = useCallback(
@@ -303,9 +284,6 @@ export const TokenWallet = ({
           cleanFocusingToken({ noNeedCloseModal: true });
         }}
         onTriggerDismissFromInternal={ctx => {
-          if (ctx?.reason === 'redirect-to') {
-            toggleShowSheetModal('smallTokenModalRef', false);
-          }
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
         }}
