@@ -133,10 +133,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     async (index: number) => {
       const res =
         params.type === KEYRING_TYPE.HdKeyring
-          ? await apiKeyring.requestKeyring(
-              KEYRING_TYPE.HdKeyring,
-              'getAddresses',
-              params?.keyringId ?? null,
+          ? await getMnemonicKeyring()?.getAddresses(
               index,
               index + stepCountRef.current,
             )
@@ -171,7 +168,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         });
       }
     },
-    [apiHD, params?.keyringId, params.type],
+    [apiHD, getMnemonicKeyring, params.type],
   );
 
   const handleLoadAddress = React.useCallback(async () => {
@@ -384,9 +381,22 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
       },
-      ...(params.type ? { keyringId: params.keyringId } : {}),
+      ...(params.type
+        ? {
+            keyringId: params.keyringId,
+            mnemonics: params.mnemonics,
+            passphrase: params.passphrase,
+          }
+        : {}),
     });
-  }, [params.brand, params.keyringId, params.type, settingModalName]);
+  }, [
+    params.brand,
+    params.keyringId,
+    params.mnemonics,
+    params.passphrase,
+    params.type,
+    settingModalName,
+  ]);
 
   return (
     <View style={styles.root}>
