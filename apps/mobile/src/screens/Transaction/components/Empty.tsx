@@ -3,23 +3,31 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ViewProps } from 'react-native';
 
-export const Empty = () => {
+export const Empty = ({
+  style,
+  isShowDesc = true,
+}: {
+  style?: ViewProps['style'];
+  isShowDesc?: boolean;
+}) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.empty}>
         <RcIconEmpty style={styles.image} />
         <Text style={styles.title}>
           {t('page.activities.signedTx.empty.title')}
         </Text>
-        <Text style={styles.desc}>
-          {t('page.activities.signedTx.empty.desc')}
-        </Text>
+        {isShowDesc ? (
+          <Text style={styles.desc}>
+            {t('page.activities.signedTx.empty.desc')}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

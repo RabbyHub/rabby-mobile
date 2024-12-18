@@ -1,3 +1,4 @@
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
@@ -5,13 +6,15 @@ import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { AbstractPortfolioToken } from './screens/Home/types';
+
 /**
  * Learn more about using TypeScript with React Navigation:
  * https://reactnavigation.org/docs/typescript/
  */
 
 export type RootStackParamsList = {
-  [RootNames.StackRoot]?: NavigatorScreenParams<RootNavigatorParamsList>;
+  [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -25,9 +28,17 @@ export type RootStackParamsList = {
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
+  [RootNames.TokenDetail]: {
+    token: AbstractPortfolioToken;
+    account?: KeyringAccountWithAlias;
+  };
 };
 
-export type RootNavigatorParamsList = {
+/**
+ * @description we mock modal-like views as a stub navigator, which was implemented
+ * based on the react-navigation's bottom tab navigator.
+ */
+export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
@@ -35,6 +46,7 @@ export type RootNavigatorParamsList = {
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
+  [RootNames.DappWebViewStubOnHome]?: {};
 };
 
 type GetStartedNavigatorParamsList = {
@@ -53,6 +65,7 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
+  [RootNames.ReceiveAddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
@@ -195,7 +208,7 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.ImportSuccess2024;
       }
     | {
-        actionAfterSetup: 'onSettings';
+        actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
         actionType: 'setBiometrics' | 'setAutoLockTime';
       };

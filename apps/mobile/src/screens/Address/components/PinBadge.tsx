@@ -5,13 +5,17 @@ import { Text, View } from 'react-native';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    gap: 4,
-    borderRadius: 8,
+    // paddingHorizontal: 6,
+    // paddingVertical: 4,
+    // gap: 4,
+    borderRadius: 6,
     backgroundColor: colors2024['brand-light-1'],
     flexDirection: 'row',
-    width: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 33,
+    height: 20,
+    flexWrap: 'nowrap',
   },
   text: {
     fontSize: 14,
@@ -27,8 +31,10 @@ export const PinBadge = () => {
 
   return (
     <View style={styles.root}>
-      <PinSVG width={15} height={15} color={colors2024['brand-default']} />
-      <Text style={styles.text}>Pin</Text>
+      {/* <PinSVG width={15} height={15} color={colors2024['brand-default']} /> */}
+      <Text style={styles.text} numberOfLines={1}>
+        Pin
+      </Text>
     </View>
   );
 };

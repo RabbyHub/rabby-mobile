@@ -10,6 +10,11 @@ import { Text } from 'react-native';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { useNFTDetailSheetModalOnHistory } from '@/screens/NftDetail/hooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { useNavigation } from '@react-navigation/native';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 export default function TokenLabel({
   token,
@@ -34,6 +39,7 @@ export default function TokenLabel({
   )) {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
+  const navigation = useRabbyAppNavigation();
 
   const symbolName = useMemo(() => {
     const symbol = isNft ? '' : getTokenSymbol(token);
@@ -65,10 +71,14 @@ export default function TokenLabel({
         if (isNft) {
           handlePressNftToken(token, { needSendButton: isMyOwn });
         } else {
-          if (address) {
-            setTokenDetailAddress(address);
-          }
-          openTokenDetailPopup(token as TokenItem);
+          // if (address) {
+          //   setTokenDetailAddress(address);
+          // }
+          // openTokenDetailPopup(token as TokenItem);
+          navigation.push(RootNames.TokenDetail, {
+            token: ensureAbstractPortfolioToken(token),
+            account: address,
+          });
         }
       }}
       disabled={disableClickToken}

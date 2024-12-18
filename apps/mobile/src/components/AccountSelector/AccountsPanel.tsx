@@ -2,7 +2,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
-  ScrollView,
   FlatList,
   StyleProp,
   StyleSheet,
@@ -14,18 +13,19 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
-import TouchableView from '../Touchable/TouchableView';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
-import RcIconCopy from '@/assets2024/icons/address/copy.svg';
-import RcIconQR from '@/assets2024/icons/address/qr.svg';
+import { RcIconCopy, RcIconQR } from './icons';
 import { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
 import { AccountPannelSectionTitle } from '@/constant/newStyle';
+import { useTranslation } from 'react-i18next';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { ellipsisAddress } from '@/utils/address';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;
@@ -62,6 +62,7 @@ function AddressItemInSheetModal({
   isCurrent,
   isPinned,
   showCopyAndQR,
+  replaceNameWithAliasAddress,
   defaultPressAction = showCopyAndQR ? 'copy' : 'asPress',
   onPressAccount: proponPressAddress,
 }: {
@@ -69,6 +70,7 @@ function AddressItemInSheetModal({
   isCurrent?: boolean;
   isPinned?: boolean;
   showCopyAndQR?: boolean;
+  replaceNameWithAliasAddress?: boolean;
   defaultPressAction?: 'copy' | 'asPress';
   onPressAccount?: (account: Account) => void;
 } & RNViewProps) {
@@ -113,14 +115,20 @@ function AddressItemInSheetModal({
               <WalletIcon style={styles.walletIcon} />
               <View style={styles.centerInfo}>
                 <View style={styles.nameAndAdderss}>
-                  <WalletName style={styles.addressAliasName} />
+                  {replaceNameWithAliasAddress ? (
+                    <Text style={styles.addressAliasName}>
+                      {ellipsisAddress(account.address)}
+                    </Text>
+                  ) : (
+                    <WalletName style={styles.addressAliasName} />
+                  )}
                   {isPinned && (
                     <View style={styles.pinnedWrapper}>
-                      <ICONS_COMMON_2024.RcPinCC
+                      {/* <ICONS_COMMON_2024.RcPinCC
                         color={styles.pinText.color}
                         width={15}
                         height={15}
-                      />
+                      /> */}
                       <Text style={styles.pinText}>Pin</Text>
                     </View>
                   )}
@@ -168,12 +176,11 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: 30,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: ctx.colors2024['neutral-line'],
-      backgroundColor: ctx.colors2024['neutral-bg-3'],
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 24,
       height: SIZES.itemH,
+      borderWidth: IS_ANDROID ? 1 : 0,
+      borderColor: ctx.colors2024['neutral-line'],
     },
     addressItemContainerCurrent: {
       backgroundColor: ctx.colors2024['brand-light-1'],
@@ -181,6 +188,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     addressItemInner: {
       flexDirection: 'row',
       height: 52,
+      alignItems: 'center',
       width: '100%',
     },
     walletIcon: { marginRight: 12 },
@@ -201,6 +209,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       fontSize: 17,
       fontStyle: 'normal',
       fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
       lineHeight: 22,
       flexShrink: 1,
     },
@@ -220,14 +229,17 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
 
     pinnedWrapper: {
       flexShrink: 0,
-      width: 52,
-      height: 26,
+      // paddingHorizontal: 6,
+      // paddingVertical: 4,
+      width: 33,
+      height: 20,
       marginLeft: 4,
-      borderRadius: 8,
+      borderRadius: 6,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: ctx.colors2024['brand-light-1'],
+      flexWrap: 'nowrap',
     },
     pinText: {
       color: ctx.colors2024['brand-default'],
@@ -302,7 +314,7 @@ const SectionCollapsableNav = function ({
       <RcCaretDownCC
         style={[
           { marginLeft: 4 },
-          !isCollapsed && { transform: [{ rotate: '180deg' }] },
+          isCollapsed && { transform: [{ rotate: '180deg' }] },
         ]}
         width={18}
         height={18}
@@ -342,6 +354,7 @@ export function AccountsPanelInSheetModal({
   );
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
     React.useState(!isGasAccount && !isReceive);
+  const { t } = useTranslation();
 
   // combine data for a entire Flatlist
   const combinedData = [
@@ -366,13 +379,7 @@ export function AccountsPanelInSheetModal({
     (title: AccountPannelSectionTitle) => {
       switch (title) {
         case AccountPannelSectionTitle.MyAddresses:
-          return (
-            <>
-              {!isGasAccount && (
-                <Text style={styles.sectionTitle}>My Addresses</Text>
-              )}
-            </>
-          );
+          return null;
         case AccountPannelSectionTitle.SafeAddresses:
           return (
             !!safeAddresses.length &&
@@ -380,7 +387,9 @@ export function AccountsPanelInSheetModal({
               <>
                 <View style={{ height: 18 }} />
                 <SectionCollapsableNav
-                  title="Imported Safe Addresses"
+                  title={t(
+                    'page.addressDetail.addressListScreen.importSafeAddress',
+                  )}
                   isCollapsed={safeAddressNavCollapsed}
                   onCollapsedChange={nextVal => {
                     setSafeAddressNavCollapsed(nextVal);
@@ -396,9 +405,11 @@ export function AccountsPanelInSheetModal({
             !!watchAddresses.length &&
             !isGasAccount && (
               <>
-                <View style={{ height: 18 }} />
+                <View style={{ height: 30 }} />
                 <SectionCollapsableNav
-                  title="Imported Watch-only Addresses"
+                  title={t(
+                    'page.addressDetail.addressListScreen.importWatchAddress',
+                  )}
                   isCollapsed={watchAddressNavCollapsed}
                   onCollapsedChange={nextVal => {
                     setWatchAddressNavCollapsed(nextVal);
@@ -414,10 +425,10 @@ export function AccountsPanelInSheetModal({
       }
     },
     [
+      t,
       isGasAccount,
       safeAddressNavCollapsed,
       scrollToBottom,
-      styles.sectionTitle,
       watchAddresses,
       safeAddresses,
       watchAddressNavCollapsed,
@@ -461,15 +472,18 @@ export function AccountsPanelInSheetModal({
                   data={combinedItem.data}
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => (
-                    <AddressItemInSheetModal
-                      key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-                      addressItemProps={{ account: item }}
-                      isPinned={isPinnedAccount(item)}
-                      onPressAccount={onSelectAccount}
-                      showCopyAndQR={!isGasAccount}
-                      defaultPressAction={defaultPressItemAction}
-                      style={[index > 0 && styles.addressItemTopGap]}
-                    />
+                    <AddressItemShadowView
+                      style={[index > 0 && styles.addressItemTopGap]}>
+                      <AddressItemInSheetModal
+                        key={`${item.address}-${item.type}-${item.brandName}-${index}`}
+                        addressItemProps={{ account: item }}
+                        isPinned={isPinnedAccount(item)}
+                        onPressAccount={onSelectAccount}
+                        replaceNameWithAliasAddress={isReceive}
+                        showCopyAndQR={!isGasAccount}
+                        defaultPressAction={defaultPressItemAction}
+                      />
+                    </AddressItemShadowView>
                   )}
                   keyExtractor={(account, index) =>
                     `account-${account.address}-${account.brandName}-${index}`
@@ -519,7 +533,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     sectionTitleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
       // paddingLeft: 4,
     },
     sectionTitle: {

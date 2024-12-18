@@ -49,6 +49,9 @@ import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { ApprovalAddressListScreen } from '@/screens/Address/ApprovalAddressListScreen';
+import { useAccounts } from '@/hooks/account';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { ReceiveAddressListScreen } from '../Address/ReceiveAddressListScreen';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -76,6 +79,17 @@ export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
 
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+  const mainAddressCount = React.useMemo(
+    () =>
+      [...accounts].filter(
+        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+      ).length,
+    [accounts],
+  );
+
   return (
     <AddressStack.Navigator
       screenOptions={mergeScreenOptions({
@@ -97,12 +111,26 @@ export function AddressNavigator() {
         component={AddressListScreen}
         options={mergeScreenOptions2024([
           {
-            headerTitle: 'Address',
+            headerTitle: `${mainAddressCount} ${
+              mainAddressCount > 1 ? 'Addresses' : 'Address'
+            }`,
             title: 'Address',
             headerTintColor: colors2024['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
             // eslint-disable-next-line react/no-unstable-nested-components
             headerRight: () => <AddressListScreenButton type="address" />,
+          },
+        ])}
+      />
+      <AddressStack.Screen
+        name={RootNames.ReceiveAddressList}
+        component={ReceiveAddressListScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: strings('page.receiveAddressList.title'),
+            title: strings('page.receiveAddressList.title'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
           },
         ])}
       />

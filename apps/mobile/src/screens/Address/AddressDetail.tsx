@@ -120,10 +120,12 @@ export const AddressInfo = (props: AddressInfoProps) => {
   const { pinAddresses, togglePinAddressAsync } = usePinAddresses();
   const pinned = useMemo(
     () =>
-      pinAddresses.some(e =>
-        addressUtils.isSameAddress(e.address, account.address),
+      pinAddresses.some(
+        e =>
+          addressUtils.isSameAddress(e.address, account.address) &&
+          e.brandName === account.brandName,
       ),
-    [account.address, pinAddresses],
+    [account, pinAddresses],
   );
 
   const setPinned = useCallback(

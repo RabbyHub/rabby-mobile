@@ -63,6 +63,7 @@ export const useCustomRPCStatus = (chainEnum?: CHAINS_ENUM) => {
       return isAvailable ? 'success' : 'error';
     },
     {
+      manual: !chainEnum || !hasCustomRPC,
       refreshDeps: [chainEnum, hasCustomRPC],
       onSuccess: status => {
         if (!chainEnum) {

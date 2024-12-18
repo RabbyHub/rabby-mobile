@@ -63,6 +63,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   listContainer: {
     flex: 1,
     paddingHorizontal: 16,
+    paddingTop: 16,
   },
   itemGap: {
     marginBottom: 12,
