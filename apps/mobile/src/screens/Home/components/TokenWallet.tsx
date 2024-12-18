@@ -15,24 +15,14 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import AutoLockView from '@/components/AutoLockView';
-import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useSetState } from 'ahooks';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { useMergeSmallTokens } from '../hooks/useMergeSmallTokens';
 import { AbstractPortfolioToken } from '../types';
-import { AddMainnetCustomTokenPopup } from './AddMainnetCustomTokenPopup';
-import { AddTestnetCustomTokenPopup } from './AddTestnetCustomTokenPopup';
-import { BlockedTokenListPopup } from './BlockedTokenListPopup';
-import { CustomTokenListPopup } from './CustomTokenListPopup';
 import { PositionLoader } from './Skeleton';
-import { TokenWalletFooter } from './TokenWalletFooter';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { Account } from '@/core/services/preference';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -202,15 +192,6 @@ export const TokenWallet = ({
     }
   }, [isPortfoliosLoading, tokens]);
 
-  const [customState, setCustomState] = useSetState({
-    isTestnet: false,
-    isShowMainnetAddPopup: false,
-    isShowTestnetAddPopup: false,
-    isShowBlockedPopup: false,
-    isShowCustomPopup: false,
-    isShowCustomTestnetPopup: false,
-  });
-
   const {
     sheetModalRefs: { smallTokenModalRef },
     toggleShowSheetModal,
@@ -240,11 +221,6 @@ export const TokenWallet = ({
         openTokenDetailPopup(token);
       } else {
         toggleShowSheetModal('smallTokenModalRef', false);
-        setCustomState({
-          isShowCustomPopup: false,
-          isShowBlockedPopup: false,
-          isShowCustomTestnetPopup: false,
-        });
         navigate(RootNames.TokenDetail, {
           token: token,
           // todo fix ts
@@ -252,15 +228,8 @@ export const TokenWallet = ({
         });
       }
     },
-    [
-      currentAccount,
-      openTokenDetailPopup,
-      toggleShowSheetModal,
-      setCustomState,
-    ],
+    [currentAccount, openTokenDetailPopup, toggleShowSheetModal],
   );
-
-  const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);
 
   const renderItem = useCallback(
     ({ item }: { item: AbstractPortfolioToken }) => {
@@ -293,34 +262,6 @@ export const TokenWallet = ({
     [],
   );
 
-  const tokenWalletFooterList = useMemo(() => {
-    return [
-      {
-        type: 'custom' as const,
-        label: t('page.dashboard.assets.table.customizeTokens', {
-          count: customizeTokens?.length || 0,
-        }),
-      },
-      {
-        type: 'blocked' as const,
-        label: t('page.dashboard.assets.table.blockedTokens', {
-          count: blockedTokens?.length || 0,
-        }),
-      },
-      {
-        type: 'customTestnet' as const,
-        label: t('page.dashboard.assets.table.testnetTokens', {
-          count: testnetTokens?.length || 0,
-        }),
-      },
-    ];
-  }, [
-    t,
-    customizeTokens?.length,
-    blockedTokens?.length,
-    testnetTokens?.length,
-  ]);
-
   const ListEmptyComponent = useMemo(() => {
     return isTokensLoading ? (
       <PositionLoader space={8} />
@@ -333,23 +274,9 @@ export const TokenWallet = ({
     <>
       <Tabs.FlatList
         ListHeaderComponent={<View style={{ height: 12 }} />}
-        ListFooterComponent={
-          isTokensLoading || refreshing ? null : (
-            <TokenWalletFooter
-              onPress={type => {
-                setCustomState({
-                  isShowBlockedPopup: type === 'blocked',
-                  isShowCustomPopup: type === 'custom',
-                  isShowCustomTestnetPopup: type === 'customTestnet',
-                });
-              }}
-              list={tokenWalletFooterList}
-            />
-          )
-        }
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        data={mainTokens}
+        data={tokens}
         getItemLayout={getItemLayout}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
@@ -366,28 +293,6 @@ export const TokenWallet = ({
           />
         }
       />
-      <AppBottomSheetModal
-        enableContentPanningGesture={false}
-        ref={smallTokenModalRef}
-        snapPoints={['80%']}>
-        <AutoLockView as="BottomSheetView" style={{ flex: 1, height: '100%' }}>
-          <BottomSheetFlatList
-            renderItem={renderItem}
-            ListHeaderComponent={
-              <BottomSheetHandlableView style={styles.handlableHead}>
-                <Text style={styles.titleText}>
-                  {t('page.dashboard.assets.table.lowValueAssets', {
-                    count: smallTokens?.length || 0,
-                  })}
-                </Text>
-              </BottomSheetHandlableView>
-            }
-            keyExtractor={keyExtractor}
-            data={smallTokens}
-            style={styles.scrollView}
-          />
-        </AutoLockView>
-      </AppBottomSheetModal>
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         nextTxRedirectAccount={currentAccount}
@@ -400,73 +305,10 @@ export const TokenWallet = ({
         onTriggerDismissFromInternal={ctx => {
           if (ctx?.reason === 'redirect-to') {
             toggleShowSheetModal('smallTokenModalRef', false);
-            setCustomState({
-              isShowCustomPopup: false,
-              isShowBlockedPopup: false,
-              isShowCustomTestnetPopup: false,
-            });
           }
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
         }}
-      />
-      <CustomTokenListPopup
-        tokens={customizeTokens}
-        visible={customState.isShowCustomPopup}
-        isTestnet={false}
-        onTokenPress={handleOpenTokenDetail}
-        onClose={() => {
-          setCustomState({
-            isShowCustomPopup: false,
-          });
-        }}
-        onAddTokenPress={() => {
-          setCustomState({
-            isShowMainnetAddPopup: true,
-          });
-        }}
-      />
-      <CustomTokenListPopup
-        tokens={testnetTokens}
-        visible={customState.isShowCustomTestnetPopup}
-        isTestnet={true}
-        onTokenPress={handleOpenTokenDetail}
-        onClose={() => {
-          setCustomState({
-            isShowCustomTestnetPopup: false,
-          });
-        }}
-        onAddTokenPress={() => {
-          setCustomState({
-            isShowTestnetAddPopup: true,
-          });
-        }}
-      />
-      <AddMainnetCustomTokenPopup
-        visible={customState.isShowMainnetAddPopup}
-        onClose={() => {
-          setCustomState({
-            isShowMainnetAddPopup: false,
-          });
-        }}
-      />
-      <AddTestnetCustomTokenPopup
-        visible={customState.isShowTestnetAddPopup}
-        onClose={() => {
-          setCustomState({
-            isShowTestnetAddPopup: false,
-          });
-        }}
-      />
-      <BlockedTokenListPopup
-        tokens={blockedTokens}
-        visible={customState.isShowBlockedPopup}
-        onClose={() => {
-          setCustomState({
-            isShowBlockedPopup: false,
-          });
-        }}
-        onTokenPress={handleOpenTokenDetail}
       />
     </>
   );
@@ -487,7 +329,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   tokenRowWrap: {
-    height: 72,
+    height: 68,
     width: '100%',
     paddingHorizontal: 20,
     flexGrow: 1,
