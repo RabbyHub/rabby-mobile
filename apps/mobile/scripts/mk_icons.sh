@@ -50,6 +50,22 @@ mk_ios_icons() {
     # App Store
     1024 1024 "1x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
 
+    ## AppIconRegression.appiconset
+    # iPhone Notification
+    40 40 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    60 60 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    # iPhone Settings
+    58 58 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    87 87 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    # iPhone Spotlight
+    80 80 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    120 120 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    # iPhone App
+    120 120 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    180 180 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    # App Store
+    1024 1024 "1x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+
     ## LaunchScreen.imageset
     91 79 "1x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
     182 158 "2x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset

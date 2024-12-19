@@ -74,7 +74,7 @@ const androidPackageName = (
       )
 ) as `com.debank.rabbymobile${AndroidIdSuffx}`;
 
-type IosIdSuffix = '' | '-debug';
+type IosIdSuffix = '' | '-debug' | '-regression';
 
 export const PROD_APPLICATION_ID:
   | typeof androidPackageName
@@ -102,7 +102,7 @@ const FirebaseWebClientIds = {
 export const FIREBASE_WEBCLIENT_ID =
   Platform.select({
     android: FirebaseWebClientIds[realAndroidPackageName],
-    ios: FirebaseWebClientIds[realAndroidPackageName],
+    ios: FirebaseWebClientIds[APPLICATION_ID],
   }) || FirebaseWebClientIds[realAndroidPackageName];
 
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
