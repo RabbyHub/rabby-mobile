@@ -33,7 +33,7 @@ import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useFindChain } from '@/hooks/useFindChain';
-import { convertSmallTokenList } from '@/screens/Home/hooks/useMergeSmallTokens';
+import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
 
 function useLoadTokenList({

@@ -28,7 +28,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { convertSmallTokenList } from '@/screens/Home/hooks/useMergeSmallTokens';
+import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
 
 interface TokenSelectProps {
