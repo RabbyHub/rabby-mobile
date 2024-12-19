@@ -59,12 +59,20 @@ interface IFetchHistory {
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
     q.on('empty', () => {
-      if (q.pending <= 0) resolve(null);
+      if (q.pending <= 0) {
+        resolve(null);
+      }
     });
   });
 };
 
-function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
+function History({
+  isTestnet = false,
+  isForMultipleAdderss,
+}: {
+  isTestnet?: boolean;
+  isForMultipleAdderss: boolean;
+}): JSX.Element {
   const { accounts } = useMyAccounts();
   const unionAccounts = useMemo(() => {
     return unionBy(accounts, account => account.address.toLowerCase());
@@ -81,7 +89,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
     finalSceneCurrentAccount,
     sceneCurrentAccountDepKey,
   } = useSceneAccountInfo({
-    forScene: 'MultiHistory',
+    forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
 
   const batchFetchData = async () => {
@@ -180,7 +188,9 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
       : [finalSceneCurrentAccount];
     for (let i = 0; i < accountList.length; i++) {
       const account = accountList[i];
-      if (!account) continue;
+      if (!account) {
+        continue;
+      }
       const addr = account.address.toLowerCase();
       const localTxs = await fetchLocalTx(addr);
       list.push(...localTxs);
@@ -271,7 +281,9 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   const displayList = useMemo(() => {
     return allTxHistory
       .filter(tx => {
-        if (isSceneUsingAllAccounts) return true;
+        if (isSceneUsingAllAccounts) {
+          return true;
+        }
         return isSameAddress(
           finalSceneCurrentAccount?.address || '',
           tx.address,
@@ -309,6 +321,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
                 addresses: isSceneUsingAllAccounts
                   ? unionAccounts
                   : [finalSceneCurrentAccount],
+                isForMultipleAdderss,
               },
             });
           }}
@@ -323,6 +336,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
         loading={isFirstLoading}
         loadingMore={loadingMore}
         refreshLoading={loading}
+        isForMultipleAdderss={isForMultipleAdderss}
         loadMore={loadMore}
         onRefresh={refresh}
       />
@@ -330,7 +344,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   );
 }
 
-const HistoryScreen = () => {
+const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   const {
     sheetModalRef: tokenDetailModalRef,
     cleanFocusingToken,
@@ -346,13 +360,15 @@ const HistoryScreen = () => {
 
   return (
     <NormalScreenContainer2024 type="bg1">
-      <AccountSwitcherModal
-        forScene="MultiHistory"
-        inScreen
-        panelLinearGradientProps={{ type: 'bg1' }}
-      />
+      {isForMultipleAdderss && (
+        <AccountSwitcherModal
+          forScene="MultiHistory"
+          inScreen
+          panelLinearGradientProps={{ type: 'bg1' }}
+        />
+      )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
-      <History isTestnet={false} />
+      <History isTestnet={false} isForMultipleAdderss={isForMultipleAdderss} />
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
@@ -376,7 +392,7 @@ const HistoryScreen = () => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   link: {
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 8,
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 6,
     paddingHorizontal: 12,
@@ -410,5 +426,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 16,
   },
 }));
+
+const ForSingleAddress = () => {
+  // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+  //   forScene: 'MakeTransactionAbout',
+  // });
+
+  return <HistoryScreen isForMultipleAdderss={false} />;
+};
+
+HistoryScreen.ForSingleAddress = ForSingleAddress;
 
 export default HistoryScreen;

@@ -36,12 +36,12 @@ export default React.memo(
         <Supplements data={supplements} />
         <TokenList
           tokens={portfolio.detail.supply_token_list}
-          name="SUPPLIED"
+          name="supplied"
         />
-        <TokenList tokens={portfolio.detail.reward_token_list} name="REWARDS" />
+        <TokenList tokens={portfolio.detail.reward_token_list} name="rewards" />
         <TokenList
           tokens={portfolio.detail.borrow_token_list}
-          name="BORROWED"
+          name="borrowed"
         />
       </Card>
     );

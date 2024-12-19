@@ -117,6 +117,25 @@ export default function TransactionNavigator() {
         }}
       />
       <TransactionStack.Screen
+        name={RootNames.History}
+        component={MultiAddressHistory.ForSingleAddress}
+        options={{
+          title: 'Transactions',
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="History"
+                titleText={ctx.children}
+                disableSwitch
+              />
+            );
+          },
+          headerStyle: {
+            backgroundColor: colors2024?.['neutral-bg-1'],
+          },
+        }}
+      />
+      <TransactionStack.Screen
         name={RootNames.HistoryFilterScam}
         component={HistoryFilterScamScreen}
         options={mergeScreenOptions({
