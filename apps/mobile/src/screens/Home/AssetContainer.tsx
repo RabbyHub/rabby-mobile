@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import { SectionList } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -28,6 +28,7 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 
 import { TokenRow, DefiRow, NftRow } from './components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { HomeTopArea } from './components/HomeTopArea';
 interface Props {
   onRefresh(): void;
 }
@@ -207,9 +208,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       <SectionList
         sections={sections}
         renderItem={renderItem}
-        ListHeaderComponent={<View style={{ height: 12 }} />}
+        ListHeaderComponent={() => <HomeTopArea />}
         showsVerticalScrollIndicator={false}
-        windowSize={2}
         contentContainerStyle={styles.bgContainer}
         // TODO: 统一id，token nft defi
         keyExtractor={item => `${item.chain}/${item.symbol}/${item.id}`}
@@ -248,52 +248,5 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
-  container: {
-    marginTop: -10,
-    width: '100%',
-    paddingBottom: 18,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    overflow: 'hidden',
-  },
-  headerContainer: {
-    backgroundColor: 'transparent',
-    shadowColor: 'transparent',
-  },
-  tabBarWrap: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    paddingTop: 18,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  tabList: {
-    display: 'flex',
-    width: '100%',
-    gap: 12,
-  },
-  tabBar: {
-    borderRadius: 120,
-    height: 36,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  label: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-    textTransform: 'none',
-  },
-  indicator: {
-    display: 'none',
-  },
-  activeTab: {
-    backgroundColor: 'rgba(19, 20, 22, 1)',
-  },
-  activeLabelStyle: {
-    fontWeight: '700',
   },
 }));

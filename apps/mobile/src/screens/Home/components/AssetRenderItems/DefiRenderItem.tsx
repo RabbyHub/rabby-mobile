@@ -64,9 +64,8 @@ const DefiRenderEntryItem = ({
 };
 
 const getStyles = createGetStyles2024(ctx => ({
-  //projectTitle
   projectHeader: {
-    marginHorizontal: 20,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     justifyContent: 'space-between',
     height: ASSETS_ITEM_HEIGHT,
@@ -103,7 +102,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 20,
+    paddingHorizontal: 4,
     height: ASSETS_ITEM_HEIGHT,
   },
   symbol: {

@@ -14,7 +14,7 @@ import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { SMALL_TOKEN_ID } from '@/utils/token';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
@@ -195,7 +195,14 @@ const TokenRow = memo(
     ]);
     if (data.id === SMALL_TOKEN_ID) {
       return (
-        <View style={StyleSheet.flatten([styles.tokenRowWrap, style])}>
+        <View
+          style={StyleSheet.flatten([
+            styles.tokenRowWrap,
+            {
+              paddingHorizontal: 0,
+            },
+            style,
+          ])}>
           <View style={styles.tokenRowTokenWrap}>
             <View style={styles.tokenRowTokenInner}>
               <TouchableOpacity
@@ -312,7 +319,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
     height: ASSETS_ITEM_HEIGHT,
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 4,
     flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -327,6 +334,8 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     display: 'flex',
     flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'flex-start',
     gap: 4,
   },
   tokenSymbol: {
@@ -335,7 +344,6 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    flex: 1,
     // ...makeDebugBorder(),
   },
   tokenRowLogo: {

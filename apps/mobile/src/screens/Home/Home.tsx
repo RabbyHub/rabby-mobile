@@ -3,7 +3,6 @@ import { SafeAreaView } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
 
-import { HomeTopArea } from './components/HomeTopArea';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,7 +28,6 @@ function HomeScreen(): JSX.Element {
   return (
     <NormalScreenContainer2024 type="bg1" style={styles.rootScreenContainer}>
       <SafeAreaView style={styles.safeView}>
-        <HomeTopArea />
         <AssetContainer onRefresh={triggerUpdate} />
       </SafeAreaView>
     </NormalScreenContainer2024>
@@ -43,7 +41,6 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 16,
   },
   safeView: {
-    borderRadius: 24,
     flex: 1,
     width: '100%',
     overflow: 'hidden',
