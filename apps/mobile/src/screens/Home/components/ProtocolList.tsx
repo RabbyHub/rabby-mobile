@@ -16,12 +16,10 @@ import {
   AbstractPortfolio,
 } from '../types';
 import PortfolioTemplate from '../portfolios';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from './Skeleton';
-import { AppColorsVariants } from '@/constant/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
-import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { createGetStyles2024 } from '@/utils/styles';
 import { navigate } from '@/utils/navigation';
@@ -111,62 +109,24 @@ const _ProtocolList = ({
     [portfolios],
   );
 
-  const [expandedSections, setExpandedSections] = React.useState(
-    new Set<string>(),
-  );
-
   const handleToggle = useCallback(
-    (title: string, data: AbstractProject, itemList: AbstractPortfolio[]) => {
+    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-
-      setExpandedSections(prev => {
-        // Using Set here but you can use an array too
-        const next = new Set(prev);
-        if (next.has(title)) {
-          next.delete(title);
-        } else {
-          next.add(title);
-        }
-        return next;
-      });
-
       navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
     },
     [],
-  );
-
-  const renderItem = useCallback(
-    ({
-      item,
-      section: { key },
-    }: {
-      item: AbstractPortfolio;
-      section: SectionListData<AbstractPortfolio>;
-    }) => {
-      const isExpanded = expandedSections.has(key!);
-
-      if (!isExpanded) {
-        return null;
-      }
-
-      return <MemoItem item={item} />;
-    },
-    [expandedSections],
   );
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: SectionListData<AbstractPortfolio> }) => {
       return (
         <ProjectTitle
-          onPress={() =>
-            handleToggle(section.key!, section.portfolio, [...section.data])
-          }
+          onPress={() => handleToggle(section.portfolio, [...section.data])}
           data={section.portfolio}
-          isExpanded={expandedSections.has(section.key!)}
         />
       );
     },
-    [expandedSections, handleToggle],
+    [handleToggle],
   );
 
   const ListEmptyComponent = useMemo(() => {
@@ -185,9 +145,8 @@ const _ProtocolList = ({
     <Tabs.SectionList
       ref={ref}
       {...rest}
-      extraData={expandedSections}
       sections={sectionList}
-      renderItem={renderItem}
+      renderItem={() => null}
       renderSectionHeader={renderSectionHeader}
       keyExtractor={item => item.id}
       ListEmptyComponent={ListEmptyComponent}
@@ -214,11 +173,9 @@ export const ProtocolList = memo(_ProtocolList);
 const ProjectTitle = ({
   data,
   onPress,
-  isExpanded,
 }: {
   data: AbstractProject;
   onPress?: () => void;
-  isExpanded?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -238,19 +195,8 @@ const ProjectTitle = ({
         </View>
         <View style={styles.projectHeaderUsd}>
           <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-          <ArrowDownCC
-            style={[
-              styles.arrowButton,
-              {
-                transform: isExpanded
-                  ? [{ rotate: '180deg' }]
-                  : [{ rotate: '0deg' }],
-              },
-            ]}
-          />
         </View>
       </TouchableOpacity>
-      {isExpanded ? null : <View style={styles.separator} />}
     </View>
   );
 };

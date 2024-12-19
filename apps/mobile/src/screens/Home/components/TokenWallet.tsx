@@ -260,7 +260,6 @@ const TokenRow = memo(
         <TouchableOpacity
           style={StyleSheet.flatten([styles.tokenRowWrap, style])}
           delayLongPress={200}
-          activeOpacity={1}
           onLongPress={() => {
             trigger('impactLight', {
               enableVibrateFallback: true,
