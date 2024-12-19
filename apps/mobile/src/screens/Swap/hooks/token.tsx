@@ -35,7 +35,9 @@ const useTokenInfo = ({
   defaultToken?: TokenItem;
 }) => {
   const refreshId = useAtomValue(refreshIdAtom);
-  const [token, setToken] = useState<TokenItem | undefined>(defaultToken);
+  const [token, setToken] = useState<
+    (TokenItem & { tokenId?: string }) | undefined
+  >(defaultToken);
 
   const { value, loading, error } = useAsync(async () => {
     if (userAddress && token?.id && chain) {
@@ -44,7 +46,7 @@ const useTokenInfo = ({
         findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
         token.id,
       );
-      return data;
+      return { ...data, tokenId: token.id };
     }
   }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str, chain]);
 

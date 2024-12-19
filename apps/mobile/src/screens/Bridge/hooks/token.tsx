@@ -79,7 +79,7 @@ const useToken = (type: 'from' | 'to') => {
 
   const [chain, setChain] = useState<CHAINS_ENUM>();
 
-  const [token, setToken] = useState<TokenItem>();
+  const [token, setToken] = useState<TokenItem & { tokenId?: string }>();
 
   const switchChain: (changeChain?: CHAINS_ENUM, resetToken?: boolean) => void =
     useCallback(
@@ -570,7 +570,6 @@ export const useBridge = () => {
           }
         }
       }
-      console.log('getQuoteList set quote undefined');
       setSelectedBridgeQuote(undefined);
     }, [
       inSufficient,
