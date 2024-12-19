@@ -7,7 +7,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
 import { chunk } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -23,10 +23,7 @@ import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { NFTDetailPopupInner } from '../NftDetail/PopupInner';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 
@@ -48,33 +45,7 @@ const detailWidth = (width - 90) / 5;
 const Item = ({ item, lastCountMark, collectionName }: ItemProps) => {
   const { styles } = useTheme2024({ getStyle });
 
-  const navigation = useRabbyAppNavigation();
-
   const handleNFTPress = useCallback(() => {
-    // const id = createGlobalBottomSheetModal({
-    //   name: MODAL_NAMES.NFT_DETAIL,
-    //   bottomSheetModalProps: {
-    //     footerComponent: () => (
-    //       <NFTDetailPopupInner.FooterComponent
-    //         onPressSend={() => {
-    //           removeGlobalBottomSheetModal(id);
-
-    //           navigation.push(RootNames.StackTransaction, {
-    //             screen: RootNames.SendNFT,
-    //             params: {
-    //               collectionName,
-    //               nftItem: item,
-    //             },
-    //           });
-    //         }}
-    //         token={item}
-    //         collectionName={collectionName}
-    //       />
-    //     ),
-    //   },
-    //   token: item,
-    //   collectionName,
-    // });
     navigate(RootNames.NftDetail, { token: item, collectionName });
   }, [item, collectionName]);
 
