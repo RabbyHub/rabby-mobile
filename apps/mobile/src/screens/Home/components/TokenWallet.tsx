@@ -39,6 +39,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { PinBadge } from '@/screens/Address/components/PinBadge';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -232,6 +233,35 @@ const TokenRow = memo(
       address,
       refreshTags,
     ]);
+    if (data.id === SMALL_TOKEN_ID) {
+      return (
+        <View style={StyleSheet.flatten([styles.tokenRowWrap, style])}>
+          <View style={styles.tokenRowTokenWrap}>
+            <View style={styles.tokenRowTokenInner}>
+              <TouchableOpacity
+                onPress={onPressToken}
+                style={styles.tokenRowTokenInnerSmallToken}>
+                <Text style={styles.actionText}>{fold ? 'All' : 'Less'}</Text>
+                {fold ? (
+                  <RcUnFoldCC
+                    style={styles.arrow}
+                    color={colors2024['neutral-secondary']}
+                  />
+                ) : (
+                  <RcFoldCC
+                    style={styles.arrow}
+                    color={colors2024['neutral-secondary']}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.tokenRowUsdValueWrap}>
+            <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <ContextMenuView
@@ -250,42 +280,24 @@ const TokenRow = memo(
           }}
           onPress={onPressToken}>
           <View style={styles.tokenRowTokenWrap}>
-            {data?.id === SMALL_TOKEN_ID ? null : (
-              <AssetAvatar
-                logo={data?.logo_url}
-                chain={data?.chain}
-                style={mediaStyle}
-                size={logoSize}
-                chainSize={16}
-              />
-            )}
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={16}
+            />
             <View style={styles.tokenRowTokenInner}>
-              {data.id === SMALL_TOKEN_ID ? (
-                <View style={styles.tokenRowTokenInnerSmallToken}>
-                  <Text style={styles.actionText}>{fold ? 'All' : 'Less'}</Text>
-                  {fold ? (
-                    <RcUnFoldCC
-                      style={styles.arrow}
-                      color={colors2024['neutral-secondary']}
-                    />
-                  ) : (
-                    <RcFoldCC
-                      style={styles.arrow}
-                      color={colors2024['neutral-secondary']}
-                    />
-                  )}
-                </View>
-              ) : (
+              <View style={styles.tokenHeader}>
                 <Text
-                  style={StyleSheet.flatten([
-                    styles.tokenSymbol,
-                    data._isPined && styles.pin,
-                  ])}
+                  style={StyleSheet.flatten([styles.tokenSymbol])}
                   numberOfLines={1}
                   ellipsizeMode="tail">
                   {data.symbol}
                 </Text>
-              )}
+                {data._isPined && <PinBadge />}
+              </View>
+
               {data._priceStr ? (
                 <Text style={styles.amountStr} numberOfLines={1}>
                   {`${data._amountStr} ${data.symbol}`}
@@ -486,18 +498,20 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     maxWidth: '70%',
   },
+  tokenHeader: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 4,
+  },
   tokenSymbol: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    width: '100%',
+    flex: 1,
     // ...makeDebugBorder(),
-  },
-  pin: {
-    // TODO: remove
-    color: 'red',
   },
   tokenRowLogo: {
     marginRight: 12,
