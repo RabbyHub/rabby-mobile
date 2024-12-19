@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
-import { RcArrowRight2CC } from '@/assets/icons/common';
+import RcFoldCC from '@/assets2024/icons/common/fold.svg';
+import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
+import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -25,6 +27,18 @@ import { Account } from '@/core/services/preference';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { findChain } from '@/utils/chain';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
+import { preferenceService } from '@/core/services';
+import { useRefreshTags } from '../hooks/token';
+import { trigger } from 'react-native-haptic-feedback';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -34,15 +48,19 @@ const formatPercentage = (x: number) => {
   return `${x >= 0 ? '+' : ''}${percentage}%`;
 };
 
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+
 const ITEM_HEIGHT = 68;
 
 type TokenWalletProps = {
   currentAccount?: Account | null;
-  tokens?: AbstractPortfolioToken[];
-  testnetTokens?: AbstractPortfolioToken[];
-  customizeTokens?: AbstractPortfolioToken[];
-  blockedTokens?: AbstractPortfolioToken[];
-  showHistory?: boolean;
+  unfoldTokens?: AbstractPortfolioToken[];
+  foldTokens?: AbstractPortfolioToken[];
   isTokensLoading?: boolean;
   hasTokens?: boolean;
   refreshPositions(): void;
@@ -56,13 +74,16 @@ const TokenRow = memo(
     style,
     logoSize,
     logoStyle,
+    fold,
+    address,
     onTokenPress,
   }: {
     data: AbstractPortfolioToken;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
+    fold?: boolean;
     logoSize?: number;
-    showHistory?: boolean;
+    address?: string;
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -87,89 +108,232 @@ const TokenRow = memo(
     const onPressToken = useCallback(() => {
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
+    const isDarkTheme = useGetBinaryMode() === 'dark';
+    const { refreshTags } = useRefreshTags();
+
+    const handleShowExcludeTips = () => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: 'title',
+        sections: [
+          {
+            description: 'xxxx',
+          },
+        ],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['45%'],
+        },
+        nextButtonProps: {
+          title: <Text style={styles.modalNextButtonText}>I Got It.</Text>,
+          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    };
+
+    const menuActions = React.useMemo(() => {
+      return [
+        {
+          title: data._isFold ? 'UnFold' : 'Fold',
+          icon: data._isFold
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+          androidIconName: 'ic_rabby_menu_edit',
+          key: 'fold',
+          action() {
+            if (!address) {
+              return;
+            }
+            if (data._isFold) {
+              preferenceService.manualUnFoldToken(address, {
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+            } else {
+              preferenceService.manualFoldToken(address, {
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+            }
+            refreshTags(address);
+          },
+        },
+        {
+          title: data._isPined ? 'UnPin' : 'Pin',
+          icon: data._isPined
+            ? isDarkTheme
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+            : isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+          androidIconName: data._isPined
+            ? 'ic_rabby_menu_un_pin'
+            : 'ic_rabby_menu_pin',
+          key: 'pin',
+          action() {
+            if (!address) {
+              return;
+            }
+            if (data._isPined) {
+              preferenceService.removePinedToken(address, {
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+            } else {
+              preferenceService.pinToken(address, {
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+            }
+            refreshTags(address);
+          },
+        },
+        {
+          title: data._isExcludeBalance ? 'Include Balance' : 'Exclude Balance',
+          icon: data._isExcludeBalance
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
+          key: 'balance',
+          androidIconName: 'ic_rabby_menu_more',
+          action() {
+            if (!address) {
+              return;
+            }
+            if (data._isExcludeBalance) {
+              preferenceService.includeBalanceToken(address, {
+                id: data._tokenId,
+                chainid: data.chain,
+                type: 'token',
+              });
+            } else {
+              preferenceService.excludeBalance(address, {
+                id: data._tokenId,
+                chainid: data.chain,
+                type: 'token',
+              });
+            }
+            refreshTags(address);
+          },
+        },
+      ] as MenuAction[];
+    }, [
+      data._isFold,
+      data._isPined,
+      data._isExcludeBalance,
+      data._tokenId,
+      data.chain,
+      isDarkTheme,
+      address,
+      refreshTags,
+    ]);
 
     return (
-      <TouchableOpacity
-        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-        onPress={onPressToken}>
-        <View style={styles.tokenRowTokenWrap}>
-          {data?.id === SMALL_TOKEN_ID ? (
-            <Image
-              source={require('@/assets/icons/assets/small-token.png')}
-              style={styles.smallTokenRowLogo}
-            />
-          ) : (
-            <AssetAvatar
-              logo={data?.logo_url}
-              chain={data?.chain}
-              style={mediaStyle}
-              size={logoSize}
-              chainSize={16}
-            />
-          )}
-          <View style={styles.tokenRowTokenInner}>
-            {data.id === SMALL_TOKEN_ID ? (
-              <View style={styles.tokenRowTokenInnerSmallToken}>
+      <ContextMenuView
+        menuConfig={{
+          menuActions: menuActions,
+        }}
+        triggerProps={{ action: 'longPress' }}>
+        <TouchableOpacity
+          style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+          delayLongPress={200}
+          onLongPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}
+          onPress={onPressToken}>
+          <View style={styles.tokenRowTokenWrap}>
+            {data?.id === SMALL_TOKEN_ID ? null : (
+              <AssetAvatar
+                logo={data?.logo_url}
+                chain={data?.chain}
+                style={mediaStyle}
+                size={logoSize}
+                chainSize={16}
+              />
+            )}
+            <View style={styles.tokenRowTokenInner}>
+              {data.id === SMALL_TOKEN_ID ? (
+                <View style={styles.tokenRowTokenInnerSmallToken}>
+                  <Text style={styles.actionText}>{fold ? 'All' : 'Less'}</Text>
+                  {fold ? (
+                    <RcUnFoldCC
+                      style={styles.arrow}
+                      color={colors2024['neutral-secondary']}
+                    />
+                  ) : (
+                    <RcFoldCC
+                      style={styles.arrow}
+                      color={colors2024['neutral-secondary']}
+                    />
+                  )}
+                </View>
+              ) : (
                 <Text
                   style={StyleSheet.flatten([
                     styles.tokenSymbol,
-                    styles.smallTokenSymbol,
+                    data._isPined && styles.pin,
                   ])}
                   numberOfLines={1}
                   ellipsizeMode="tail">
                   {data.symbol}
                 </Text>
-                <RcArrowRight2CC
-                  style={styles.arrow}
-                  color={colors2024['neutral-body']}
+              )}
+              {data._priceStr ? (
+                <Text style={styles.amountStr} numberOfLines={1}>
+                  {`${data._amountStr} ${data.symbol}`}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.tokenRowUsdValueWrap}>
+            <Text
+              style={[
+                data._amountStr
+                  ? styles.tokenRowAmount
+                  : styles.tokenRowUsdValue,
+                data._isExcludeBalance && styles.exclude,
+              ]}>
+              {data._usdValueStr}
+            </Text>
+            {data._isExcludeBalance ? (
+              <TouchableOpacity
+                hitSlop={hitSlop}
+                onPress={handleShowExcludeTips}>
+                <RcTipCC
+                  style={styles.tips}
+                  color={colors2024['neutral-info']}
                 />
-              </View>
-            ) : (
+              </TouchableOpacity>
+            ) : data._amountStr ? (
               <Text
-                style={StyleSheet.flatten([styles.tokenSymbol])}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {data.symbol}
-              </Text>
-            )}
-            {data._priceStr ? (
-              <Text style={styles.amountStr} numberOfLines={1}>
-                {`${data._amountStr} ${data.symbol}`}
+                style={StyleSheet.compose(styles.percent, {
+                  color: percentColor,
+                })}>
+                {formatPercentage(data.price_24h_change || 0)}
               </Text>
             ) : null}
           </View>
-        </View>
-
-        <View style={styles.tokenRowUsdValueWrap}>
-          <Text
-            style={
-              data._amountStr ? styles.tokenRowAmount : styles.tokenRowUsdValue
-            }>
-            {data._usdValueStr}
-          </Text>
-          {data._amountStr ? (
-            <Text
-              style={StyleSheet.compose(styles.percent, {
-                color: percentColor,
-              })}>
-              {formatPercentage(data.price_24h_change || 0)}
-            </Text>
-          ) : null}
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </ContextMenuView>
     );
   },
 );
 
 export const TokenWallet = ({
   currentAccount,
-  tokens,
-  testnetTokens,
-  customizeTokens,
-  blockedTokens,
-  showHistory,
   isTokensLoading,
   hasTokens,
+  foldTokens,
+  unfoldTokens,
   refreshPositions,
   isPortfoliosLoading,
   onRefresh,
@@ -177,12 +341,13 @@ export const TokenWallet = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const refreshing = useMemo(() => {
-    if ((tokens?.length || 0) > 0) {
+    if ((unfoldTokens?.length || 0) > 0) {
       return isPortfoliosLoading;
     } else {
       return false;
     }
-  }, [isPortfoliosLoading, tokens]);
+  }, [isPortfoliosLoading, unfoldTokens]);
+  const [fold, setFold] = useState(true);
 
   const {
     sheetModalRef: tokenDetailModalRef,
@@ -194,6 +359,10 @@ export const TokenWallet = ({
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
+      if (token.id === SMALL_TOKEN_ID) {
+        setFold(pre => !pre);
+        return;
+      }
       if (
         findChain({
           serverId: token.chain,
@@ -201,6 +370,12 @@ export const TokenWallet = ({
       ) {
         openTokenDetailPopup(token);
       } else {
+        console.log('🔍 CUSTOM_LOGGER:=>: handleOpenTokenDetail)', {
+          pin: token._isPined,
+          fold: token._isFold,
+          exclude: token._isExcludeBalance,
+          PinIndex: token._pinIndex,
+        });
         navigate(RootNames.TokenDetail, {
           token: token,
           // todo fix ts
@@ -216,13 +391,14 @@ export const TokenWallet = ({
       return (
         <TokenRow
           data={item}
-          showHistory={showHistory}
           onTokenPress={handleOpenTokenDetail}
+          fold={fold}
+          address={currentAccount?.address}
           logoSize={40}
         />
       );
     },
-    [showHistory, handleOpenTokenDetail],
+    [currentAccount?.address, fold, handleOpenTokenDetail],
   );
 
   const keyExtractor = useCallback(
@@ -255,7 +431,10 @@ export const TokenWallet = ({
         ListHeaderComponent={<View style={{ height: 12 }} />}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        data={tokens}
+        data={[
+          ...(unfoldTokens || []),
+          ...(foldTokens?.slice(0, fold ? 1 : undefined) || []),
+        ]}
         getItemLayout={getItemLayout}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
@@ -316,6 +495,10 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     // ...makeDebugBorder(),
   },
+  pin: {
+    // TODO: remove
+    color: 'red',
+  },
   tokenRowLogo: {
     marginRight: 12,
   },
@@ -331,8 +514,19 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInnerSmallToken: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    height: 36,
+    width: 100,
+    justifyContent: 'center',
+    borderRadius: 100,
     display: 'flex',
+  },
+  actionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-body'],
   },
   amountStr: {
     marginTop: 2,
@@ -356,13 +550,20 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
+  exclude: {
+    color: ctx.colors2024['neutral-info'],
+  },
   tokenRowUsdValue: {
     textAlign: 'right',
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
+    color: ctx.colors2024['neutral-foot'],
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
+  },
+  tips: {
+    width: 14,
+    height: 14,
   },
   percent: {
     textAlign: 'right',
@@ -380,7 +581,16 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 'auto',
   },
   arrow: {
-    width: 14,
-    height: 14,
+    width: 10,
+    height: 8,
+  },
+  modalNextButtonText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-InvertHighlight'],
+    backgroundColor: ctx.colors2024['brand-default'],
   },
 }));

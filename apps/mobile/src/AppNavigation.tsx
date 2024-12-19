@@ -56,7 +56,7 @@ import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import UnlockScreen from './screens/Unlock/Unlock';
 import { SingleAddressNavigator } from './screens/Navigators/SingleAddressNavigator';
-import { TokenDetailScreen, RightMore } from './screens/TokenDetail';
+import { TokenDetailScreen } from './screens/TokenDetail';
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
@@ -274,7 +274,6 @@ export default function AppNavigation({
               headerShown: true,
               headerTitleAlign: 'left',
               headerTitle: '',
-              headerRight: RightMore,
               headerStyle: {
                 // backgroundColor: colors['neutral-bg-2'],
                 backgroundColor: 'transparent',
