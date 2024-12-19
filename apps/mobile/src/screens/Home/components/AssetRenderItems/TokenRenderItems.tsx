@@ -15,13 +15,13 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
-import { AbstractPortfolioToken } from '../types';
+import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
   MenuAction,
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { preferenceService } from '@/core/services';
-import { useRefreshTags } from '../hooks/token';
+import { useRefreshTags } from '../../hooks/token';
 import { trigger } from 'react-native-haptic-feedback';
 import {
   createGlobalBottomSheetModal2024,
@@ -46,7 +46,7 @@ const hitSlop = {
   right: 10,
 };
 
-export const TokenRow = memo(
+const TokenRow = memo(
   ({
     data,
     style,
@@ -304,6 +304,8 @@ export const TokenRow = memo(
     );
   },
 );
+
+export default TokenRow;
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
