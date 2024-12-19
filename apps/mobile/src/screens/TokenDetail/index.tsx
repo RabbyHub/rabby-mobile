@@ -16,6 +16,7 @@ import {
   TxDisplayItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import { last } from 'lodash';
@@ -30,10 +31,10 @@ import { TokenPriceChart } from './components/TokenPriceChart';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
 import { RcIconMore } from '@/assets/icons/home';
 import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
+import { useRefreshTags } from '../Home/hooks/token';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
@@ -44,63 +45,94 @@ const hitSlop = {
   left: 10,
   right: 10,
 };
-export const RightMore: React.FC<HeaderButtonProps> = ({}) => {
+export const RightMore: React.FC<{
+  token: AbstractPortfolioToken;
+  address: string;
+}> = ({ token, address }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const pinned = false;
-  const togglePinned = () => {
-    // TODO:
-  };
+  const { refreshTags } = useRefreshTags();
 
-  const fold = false;
-  const toggleFold = () => {
-    // TODO:
-  };
-
-  const inclueBalance = true;
-  const toggleIncludeBalance = () => {
-    // TODO:
-  };
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: fold ? 'UnFold' : 'Fold',
-        icon: fold
+        title: token._isFold ? 'UnFold' : 'Fold',
+        icon: token._isFold
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
         androidIconName: 'ic_rabby_menu_edit',
         key: 'fold',
         action() {
-          toggleFold();
+          if (token._isFold) {
+            preferenceService.manualUnFoldToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+          } else {
+            preferenceService.manualFoldToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+          }
+          token._isFold = !token._isFold;
+          refreshTags(address);
         },
       },
       {
-        title: pinned ? 'UnPin' : 'Pin',
-        icon: pinned
+        title: token._isPined ? 'UnPin' : 'Pin',
+        icon: token._isPined
           ? isDarkTheme
             ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
             : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
           : isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-        androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
+        androidIconName: token._isPined
+          ? 'ic_rabby_menu_un_pin'
+          : 'ic_rabby_menu_pin',
         key: 'pin',
         action() {
-          togglePinned();
+          if (token._isPined) {
+            preferenceService.removePinedToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+          } else {
+            preferenceService.pinToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+          }
+          token._isPined = !token._isPined;
+          refreshTags(address);
         },
       },
       {
-        title: inclueBalance ? 'Exclude Balance' : 'Include Balance',
-        icon: inclueBalance
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png'),
+        title: token._isExcludeBalance ? 'Include Balance' : 'Exclude Balance',
+        icon: token._isExcludeBalance
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
         key: 'balance',
         androidIconName: 'ic_rabby_menu_more',
         action() {
-          toggleIncludeBalance();
+          if (token._isExcludeBalance) {
+            preferenceService.includeBalanceToken(address, {
+              id: token._tokenId,
+              chainid: token.chain,
+              type: 'token',
+            });
+          } else {
+            preferenceService.excludeBalance(address, {
+              id: token._tokenId,
+              chainid: token.chain,
+              type: 'token',
+            });
+          }
+          token._isExcludeBalance = !token._isExcludeBalance;
+          refreshTags(address);
         },
       },
     ] as MenuAction[];
-  }, [pinned, isDarkTheme, fold, inclueBalance]);
+  }, [token, isDarkTheme, refreshTags, address]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -248,9 +280,17 @@ export const TokenDetailScreen = () => {
       headerTitle: () => (
         <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
       ),
+      headerRight: () => (
+        <RightMore token={token} address={finalAccount.address} />
+      ),
       headerTitleAlign: 'left',
     });
-  }, [currentAccount?.address, setNavigationOptions, token]);
+  }, [
+    currentAccount?.address,
+    finalAccount.address,
+    setNavigationOptions,
+    token,
+  ]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 

@@ -32,9 +32,7 @@ export const useQueryProjects = (
     hasValue: hasTokens,
     updateData: updateTokens,
     walletProject,
-    customizeTokens,
-    blockedTokens,
-    testnetTokens,
+    // testnetTokens,
   } = useTokens2024(userAddr, historyTime, visible, 0, undefined, isTestnet);
 
   const {
@@ -74,10 +72,7 @@ export const useQueryProjects = (
     hasTokens,
     hasPortfolios,
     tokens,
-    customizeTokens,
-    blockedTokens,
     portfolios,
     walletProject,
-    testnetTokens,
   };
 };
