@@ -29,10 +29,8 @@ function HomeScreen(): JSX.Element {
   return (
     <NormalScreenContainer2024 type="bg1" style={styles.rootScreenContainer}>
       <SafeAreaView style={styles.safeView}>
-        <AssetContainer
-          renderHeader={() => <HomeTopArea />}
-          onRefresh={triggerUpdate}
-        />
+        <HomeTopArea />
+        <AssetContainer onRefresh={triggerUpdate} />
       </SafeAreaView>
     </NormalScreenContainer2024>
   );
