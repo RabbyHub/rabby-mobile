@@ -1,38 +1,27 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
 
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { EmptyHolder } from '@/components/EmptyHolder';
-import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { SMALL_TOKEN_ID } from '@/utils/token';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { RefreshControl } from 'react-native-gesture-handler';
-import { AbstractPortfolioToken } from '../types';
-import { PositionLoader } from './Skeleton';
-import { Account } from '@/core/services/preference';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
-import { findChain } from '@/utils/chain';
+import { createGetStyles2024 } from '@/utils/styles';
+import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
   MenuAction,
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { preferenceService } from '@/core/services';
-import { useRefreshTags } from '../hooks/token';
+import { useRefreshTags } from '../../hooks/token';
 import { trigger } from 'react-native-haptic-feedback';
 import {
   createGlobalBottomSheetModal2024,
@@ -40,6 +29,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { PinBadge } from '@/screens/Address/components/PinBadge';
+import { toast } from '@/components2024/Toast';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -54,19 +44,6 @@ const hitSlop = {
   bottom: 10,
   left: 10,
   right: 10,
-};
-
-const ITEM_HEIGHT = 68;
-
-type TokenWalletProps = {
-  currentAccount?: Account | null;
-  unfoldTokens?: AbstractPortfolioToken[];
-  foldTokens?: AbstractPortfolioToken[];
-  isTokensLoading?: boolean;
-  hasTokens?: boolean;
-  refreshPositions(): void;
-  isPortfoliosLoading: boolean;
-  onRefresh(): void;
 };
 
 const TokenRow = memo(
@@ -88,6 +65,7 @@ const TokenRow = memo(
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
     const percentColor = useMemo(() => {
       if (
         !data?.price_24h_change ||
@@ -115,20 +93,20 @@ const TokenRow = memo(
     const handleShowExcludeTips = () => {
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.DESCRIPTION,
-        title: 'title',
-        sections: [
-          {
-            description: 'xxxx',
-          },
-        ],
+        title: t('page.tokenDetail.excludeBalanceTips'),
+        sections: [],
         bottomSheetModalProps: {
           enableContentPanningGesture: true,
           enablePanDownToClose: true,
           enableDismissOnClose: true,
-          snapPoints: ['45%'],
+          snapPoints: ['40%'],
         },
         nextButtonProps: {
-          title: <Text style={styles.modalNextButtonText}>I Got It.</Text>,
+          title: (
+            <Text style={styles.modalNextButtonText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
           titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
           onPress: () => {
             removeGlobalBottomSheetModal2024(modalId);
@@ -140,7 +118,9 @@ const TokenRow = memo(
     const menuActions = React.useMemo(() => {
       return [
         {
-          title: data._isFold ? 'UnFold' : 'Fold',
+          title: data._isFold
+            ? t('page.tokenDetail.action.unfold')
+            : t('page.tokenDetail.action.fold'),
           icon: data._isFold
             ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
             : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
@@ -155,17 +135,21 @@ const TokenRow = memo(
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
+              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
             } else {
               preferenceService.manualFoldToken(address, {
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
+              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
             }
             refreshTags(address);
           },
         },
         {
-          title: data._isPined ? 'UnPin' : 'Pin',
+          title: data._isPined
+            ? t('page.tokenDetail.action.unpin')
+            : t('page.tokenDetail.action.pin'),
           icon: data._isPined
             ? isDarkTheme
               ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
@@ -186,38 +170,13 @@ const TokenRow = memo(
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
+              toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
             } else {
               preferenceService.pinToken(address, {
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
-            }
-            refreshTags(address);
-          },
-        },
-        {
-          title: data._isExcludeBalance ? 'Include Balance' : 'Exclude Balance',
-          icon: data._isExcludeBalance
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
-          key: 'balance',
-          androidIconName: 'ic_rabby_menu_more',
-          action() {
-            if (!address) {
-              return;
-            }
-            if (data._isExcludeBalance) {
-              preferenceService.includeBalanceToken(address, {
-                id: data._tokenId,
-                chainid: data.chain,
-                type: 'token',
-              });
-            } else {
-              preferenceService.excludeBalance(address, {
-                id: data._tokenId,
-                chainid: data.chain,
-                type: 'token',
-              });
+              toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
             refreshTags(address);
           },
@@ -226,9 +185,9 @@ const TokenRow = memo(
     }, [
       data._isFold,
       data._isPined,
-      data._isExcludeBalance,
       data._tokenId,
       data.chain,
+      t,
       isDarkTheme,
       address,
       refreshTags,
@@ -241,7 +200,11 @@ const TokenRow = memo(
               <TouchableOpacity
                 onPress={onPressToken}
                 style={styles.tokenRowTokenInnerSmallToken}>
-                <Text style={styles.actionText}>{fold ? 'All' : 'Less'}</Text>
+                <Text style={styles.actionText}>
+                  {fold
+                    ? t('page.tokenDetail.action.all')
+                    : t('page.tokenDetail.action.less')}
+                </Text>
                 {fold ? (
                   <RcUnFoldCC
                     style={styles.arrow}
@@ -268,6 +231,7 @@ const TokenRow = memo(
         menuConfig={{
           menuActions: menuActions,
         }}
+        preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>
         <TouchableOpacity
           style={StyleSheet.flatten([styles.tokenRowWrap, style])}
@@ -316,7 +280,7 @@ const TokenRow = memo(
               ]}>
               {data._usdValueStr}
             </Text>
-            {data._isExcludeBalance ? (
+            {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
               <TouchableOpacity
                 hitSlop={hitSlop}
                 onPress={handleShowExcludeTips}>
@@ -328,6 +292,7 @@ const TokenRow = memo(
             ) : data._amountStr ? (
               <Text
                 style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance ? styles.exclude : {}),
                   color: percentColor,
                 })}>
                 {formatPercentage(data.price_24h_change || 0)}
@@ -340,150 +305,9 @@ const TokenRow = memo(
   },
 );
 
-export const TokenWallet = ({
-  currentAccount,
-  isTokensLoading,
-  hasTokens,
-  foldTokens,
-  unfoldTokens,
-  refreshPositions,
-  isPortfoliosLoading,
-  onRefresh,
-}: TokenWalletProps) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
-  const refreshing = useMemo(() => {
-    if ((unfoldTokens?.length || 0) > 0) {
-      return isPortfoliosLoading;
-    } else {
-      return false;
-    }
-  }, [isPortfoliosLoading, unfoldTokens]);
-  const [fold, setFold] = useState(true);
+export default TokenRow;
 
-  const {
-    sheetModalRef: tokenDetailModalRef,
-    openTokenDetailPopup,
-    cleanFocusingToken,
-    focusingToken,
-    isTestnetToken,
-  } = useGeneralTokenDetailSheetModal();
-
-  const handleOpenTokenDetail = React.useCallback(
-    (token: AbstractPortfolioToken) => {
-      if (token.id === SMALL_TOKEN_ID) {
-        setFold(pre => !pre);
-        return;
-      }
-      if (
-        findChain({
-          serverId: token.chain,
-        })?.isTestnet
-      ) {
-        openTokenDetailPopup(token);
-      } else {
-        console.log('🔍 CUSTOM_LOGGER:=>: handleOpenTokenDetail)', {
-          pin: token._isPined,
-          fold: token._isFold,
-          exclude: token._isExcludeBalance,
-          PinIndex: token._pinIndex,
-        });
-        navigate(RootNames.TokenDetail, {
-          token: token,
-          // todo fix ts
-          account: currentAccount as any,
-        });
-      }
-    },
-    [currentAccount, openTokenDetailPopup],
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: AbstractPortfolioToken }) => {
-      return (
-        <TokenRow
-          data={item}
-          onTokenPress={handleOpenTokenDetail}
-          fold={fold}
-          address={currentAccount?.address}
-          logoSize={40}
-        />
-      );
-    },
-    [currentAccount?.address, fold, handleOpenTokenDetail],
-  );
-
-  const keyExtractor = useCallback(
-    (item: AbstractPortfolioToken, idx: number) => {
-      return `${item.chain}/${item.symbol}/${item.id}/${idx}`;
-    },
-    [],
-  );
-
-  const getItemLayout = useCallback(
-    (_data: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
-
-  const ListEmptyComponent = useMemo(() => {
-    return isTokensLoading ? (
-      <PositionLoader space={8} />
-    ) : hasTokens ? null : (
-      <EmptyHolder text="No Tokens" type="protocol" />
-    );
-  }, [isTokensLoading, hasTokens]);
-
-  return (
-    <>
-      <Tabs.FlatList
-        ListHeaderComponent={<View style={{ height: 12 }} />}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        data={[
-          ...(unfoldTokens || []),
-          ...(foldTokens?.slice(0, fold ? 1 : undefined) || []),
-        ]}
-        getItemLayout={getItemLayout}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={ListEmptyComponent}
-        windowSize={2}
-        contentContainerStyle={styles.bgContainer}
-        refreshControl={
-          <RefreshControl
-            style={styles.bgContainer}
-            onRefresh={() => {
-              refreshPositions();
-              onRefresh();
-            }}
-            refreshing={refreshing}
-          />
-        }
-      />
-      <BottomSheetModalTokenDetail
-        __shouldSwitchSceneAccountBeforeRedirect__
-        nextTxRedirectAccount={currentAccount}
-        ref={tokenDetailModalRef}
-        token={focusingToken}
-        isTestnet={isTestnetToken}
-        onDismiss={() => {
-          cleanFocusingToken({ noNeedCloseModal: true });
-        }}
-        onTriggerDismissFromInternal={ctx => {
-          // toggleShowSheetModal('tokenDetailModalRef', false);
-          cleanFocusingToken();
-        }}
-      />
-    </>
-  );
-};
 const getStyles = createGetStyles2024(ctx => ({
-  bgContainer: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
   tokenRowWrap: {
     height: 68,
     width: '100%',
@@ -531,7 +355,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     height: 36,
-    width: 100,
+    width: 120,
     justifyContent: 'center',
     borderRadius: 100,
     display: 'flex',
