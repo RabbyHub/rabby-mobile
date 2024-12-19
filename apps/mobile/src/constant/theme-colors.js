@@ -176,7 +176,7 @@ const themeColorsNext2024 = {
     'neutral-body': 'rgba(211, 216, 224, 1)',
     'neutral-foot': 'rgba(186, 190, 197, 1)',
     'neutral-secondary': 'rgba(113, 115, 128, 1)',
-    'neutral-info': 'rgba(63, 63, 70, 1)',
+    'neutral-info': 'rgba(86, 87, 95, 1)',
     'neutral-InvertHighlight': 'rgba(255, 255, 255, 1)',
     'neutral-black': 'rgba(0, 0, 0, 1)',
   },

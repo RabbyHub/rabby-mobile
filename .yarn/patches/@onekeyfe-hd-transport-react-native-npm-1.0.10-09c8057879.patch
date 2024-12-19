@@ -1,0 +1,100 @@
+diff --git a/dist/BleTransport.d.ts b/dist/BleTransport.d.ts
+index 4bec2f7dad1418b7230e6dcd2a5e82d90278867e..c122b7d4bee421537b0312a6e5a7d27f1a42940b 100644
+--- a/dist/BleTransport.d.ts
++++ b/dist/BleTransport.d.ts
+@@ -1,4 +1,4 @@
+-import { Device, Characteristic } from '@onekeyfe/react-native-ble-plx';
++import { Device, Characteristic } from 'react-native-ble-plx';
+ export default class BleTransport {
+     id: string;
+     device: Device;
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index b144d68479c852a884a38ca474e7ff12d787f708..12a535d3114ac956ba53a06a47b2c669eff378a0 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -1,6 +1,6 @@
+ import * as transport from '@onekeyfe/hd-transport';
+ import transport__default from '@onekeyfe/hd-transport';
+-import { BleManager, Device, Characteristic } from '@onekeyfe/react-native-ble-plx';
++import { BleManager, Device, Characteristic } from 'react-native-ble-plx';
+ import { Deferred } from '@onekeyfe/hd-shared';
+ import EventEmitter from 'events';
+ 
+diff --git a/dist/index.js b/dist/index.js
+index 84a93ec7a479c56b4bf69ed96d07646da7032e2a..64341f1f0f19660ccbec602dc9e74b7f79f3bff1 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2,7 +2,7 @@
+ 
+ var reactNative = require('react-native');
+ var buffer = require('buffer');
+-var reactNativeBlePlx = require('@onekeyfe/react-native-ble-plx');
++var reactNativeBlePlx = require('react-native-ble-plx');
+ var ByteBuffer = require('bytebuffer');
+ var transport = require('@onekeyfe/hd-transport');
+ var hdShared = require('@onekeyfe/hd-shared');
+@@ -172,8 +172,9 @@ class BleTransport {
+ const { check, buildBuffers, receiveOne, parseConfigure } = transport__default["default"];
+ const transportCache = {};
+ let connectOptions = {
++    autoConnect: false,
+     requestMTU: 256,
+-    timeout: 3000,
++    // timeout: 3000,
+     refreshGatt: 'OnConnected',
+ };
+ const tryToGetConfiguration = (device) => {
+diff --git a/dist/types.d.ts b/dist/types.d.ts
+index 3dfc80d054bde5cf7cbf92260ef8f43dc26453ce..cadf4265aab7532ad06b8b777ae8851e2070b4f9 100644
+--- a/dist/types.d.ts
++++ b/dist/types.d.ts
+@@ -1,4 +1,4 @@
+-export type { BleManager as BlePlxManager } from '@onekeyfe/react-native-ble-plx';
++export type { BleManager as BlePlxManager } from 'react-native-ble-plx';
+ export type TransportOptions = {
+     scanTimeout?: number;
+ };
+diff --git a/src/BleTransport.ts b/src/BleTransport.ts
+index 110fcc0fde726802e7b71c8c88109c595a68d309..954d5ec64da5788215ef23225f90633ee3475018 100644
+--- a/src/BleTransport.ts
++++ b/src/BleTransport.ts
+@@ -1,4 +1,4 @@
+-import { Device, Characteristic } from '@onekeyfe/react-native-ble-plx';
++import { Device, Characteristic } from 'react-native-ble-plx';
+ 
+ export default class BleTransport {
+   id: string;
+diff --git a/src/index.ts b/src/index.ts
+index 39a288c3d644f7df12d94544cbed0561c48a2091..f96b606de282f9a41cc12de62d92680390112810 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -6,7 +6,7 @@ import {
+   BleErrorCode,
+   Characteristic,
+   ScanMode,
+-} from '@onekeyfe/react-native-ble-plx';
++} from 'react-native-ble-plx';
+ import ByteBuffer from 'bytebuffer';
+ import transport, { COMMON_HEADER_SIZE, LogBlockCommand } from '@onekeyfe/hd-transport';
+ import { createDeferred, Deferred, ERRORS, HardwareErrorCode } from '@onekeyfe/hd-shared';
+@@ -30,8 +30,9 @@ const { check, buildBuffers, receiveOne, parseConfigure } = transport;
+ const transportCache: Record<string, any> = {};
+ 
+ let connectOptions: Record<string, unknown> = {
++  autoConnect: false,
+   requestMTU: 256,
+-  timeout: 3000,
++  // timeout: 3000,
+   refreshGatt: 'OnConnected',
+ };
+ 
+diff --git a/src/types.ts b/src/types.ts
+index a9c4d8bfd839401103924bd29736560657702328..b5a933b14ed607678b7d908cab372a8b1018c785 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -1,4 +1,4 @@
+-export type { BleManager as BlePlxManager } from '@onekeyfe/react-native-ble-plx';
++export type { BleManager as BlePlxManager } from 'react-native-ble-plx';
+ 
+ export type TransportOptions = {
+   scanTimeout?: number;

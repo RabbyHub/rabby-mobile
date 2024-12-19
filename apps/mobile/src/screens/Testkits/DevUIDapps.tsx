@@ -120,7 +120,7 @@ function DevUIDapps() {
               containerStyle={{ marginBottom: 12 }}
               onPress={() => {
                 openUrlAsDapp(url, {
-                  useLatestWebViewId: false,
+                  forceReopen: true,
                   showSheetModalFirst: false,
                 });
               }}

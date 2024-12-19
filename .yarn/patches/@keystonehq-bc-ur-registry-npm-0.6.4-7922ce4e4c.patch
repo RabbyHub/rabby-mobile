@@ -1,0 +1,13 @@
+diff --git a/dist/CryptoAccount.js b/dist/CryptoAccount.js
+index 8e7bd5de863a0554bdef5339a0e94f19093ed588..c14f90f70a3da8b85f2db005233fff2b51f10a67 100644
+--- a/dist/CryptoAccount.js
++++ b/dist/CryptoAccount.js
+@@ -1,7 +1,7 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.CryptoAccount = void 0;
+-const _1 = require(".");
++const _1 = require("./index");
+ const lib_1 = require("./lib");
+ const RegistryItem_1 = require("./RegistryItem");
+ const RegistryType_1 = require("./RegistryType");

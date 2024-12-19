@@ -1,0 +1,26 @@
+diff --git a/lib/services/ledger/contracts.js b/lib/services/ledger/contracts.js
+index 713d3a32c9aad00dfdf2ffa8a24a57230af2a3e0..79f8f75f3c1677dd1e9f857829ad15cce05b7dae 100644
+--- a/lib/services/ledger/contracts.js
++++ b/lib/services/ledger/contracts.js
+@@ -25,7 +25,7 @@ const loadInfosForContractMethod = (contractAddress, selector, chainId, userLoad
+     if (pluginBaseURL) {
+         const url = `${pluginBaseURL}/plugins/ethereum.json`;
+         data = yield axios_1.default
+-            .get(`${pluginBaseURL}/plugins/ethereum.json`)
++            .get(`${pluginBaseURL}/plugins/ethereum.json`, { timeout: 5000 })
+             .then(r => r.data)
+             .catch(e => {
+             (0, logs_1.log)("error", "could not fetch from " + url + ": " + String(e));
+diff --git a/lib/services/ledger/erc20.js b/lib/services/ledger/erc20.js
+index 8fdedf8037b2684ab6d48fd279a0c014b074b676..201f1ae2d9a2f28ec63e27c839b3c7158fc0320d 100644
+--- a/lib/services/ledger/erc20.js
++++ b/lib/services/ledger/erc20.js
+@@ -27,7 +27,7 @@ const findERC20SignaturesInfo = (userLoadConfig, chainId) => __awaiter(void 0, v
+         return null;
+     const url = `${cryptoassetsBaseURL}/evm/${chainId}/erc20-signatures.json`;
+     const blob = yield axios_1.default
+-        .get(url)
++        .get(url, { timeout: 5000 })
+         .then(({ data }) => {
+         if (!data || typeof data !== "string") {
+             throw new Error(`ERC20 signatures for chainId ${chainId} file is malformed ${url}`);

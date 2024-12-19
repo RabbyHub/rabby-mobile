@@ -20,7 +20,6 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { splitNumberByStep } from '@/utils/number';
-import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { makeDebugBorder } from '@/utils/styles';
@@ -61,10 +60,12 @@ export const AddressItemInner = (props: AddressItemProps) => {
   });
   const pinned = useMemo(
     () =>
-      pinAddresses.some(e =>
-        addressUtils.isSameAddress(e.address, wallet.address),
+      pinAddresses.some(
+        e =>
+          addressUtils.isSameAddress(e.address, wallet.address) &&
+          e.brandName === wallet.brandName,
       ),
-    [pinAddresses, wallet.address],
+    [pinAddresses, wallet],
   );
 
   const WalletIcon = useMemo(() => {
@@ -109,11 +110,6 @@ export const AddressItemInner = (props: AddressItemProps) => {
           width={styles.walletLogo.width}
           height={styles.walletLogo.height}
           style={styles.walletLogo}
-        />
-        <CommonSignal
-          address={wallet.address}
-          brandName={wallet.brandName}
-          type={wallet.type}
         />
       </View>
       <View style={styles.centerInner}>

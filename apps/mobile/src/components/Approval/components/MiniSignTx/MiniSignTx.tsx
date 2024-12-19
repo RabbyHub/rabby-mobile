@@ -281,6 +281,7 @@ const MiniSignTx = ({
     isCancel,
     isSend,
     isSwap,
+    isBridge,
     swapPreferMEVGuarded,
     isViewGnosisSafe,
     reqId,
@@ -680,7 +681,11 @@ const MiniSignTx = ({
         // use cached gasPrice if exist
         customGasPrice = lastTimeGas.gasPrice;
       }
-      if (isSpeedUp || isCancel || ((isSend || isSwap) && txs[0].gasPrice)) {
+      if (
+        isSpeedUp ||
+        isCancel ||
+        ((isSend || isSwap || isBridge) && txs[0].gasPrice)
+      ) {
         // use gasPrice set by dapp when it's a speedup or cancel tx
         customGasPrice = parseInt(txs[0].gasPrice!);
       }
@@ -689,7 +694,7 @@ const MiniSignTx = ({
       let gas: GasLevel | null = null;
 
       if (
-        ((isSend || isSwap) && customGasPrice) ||
+        ((isSend || isSwap || isBridge) && customGasPrice) ||
         isSpeedUp ||
         isCancel ||
         lastTimeGas?.lastTimeSelect === 'gasPrice'

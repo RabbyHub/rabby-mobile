@@ -5,15 +5,14 @@ import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
   BottomSheetSectionList,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
   ApprovalAssetsItem,
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import { MiniButton } from '@/components/Button';
 import ApprovalCardAsset from './ApprovalCardAsset';
 import { InModalApprovalAssetRow } from './InModalApprovalAssetRow';
@@ -22,7 +21,6 @@ import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
-import { ModalLayouts } from '@/constant/layout';
 import AutoLockView from '@/components/AutoLockView';
 
 export default function BottomSheetApprovalAsset({
@@ -48,9 +46,9 @@ export default function BottomSheetApprovalAsset({
     [assetFocusingRevokeMap],
   );
 
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
 
-  const { fallList, simulateLoadNext, isFetchingNextPage, isReachTheEnd } =
+  const { fallList, simulateLoadNext, isFetchingNextPage } =
     usePsudoPagination<ApprovalAssetsItem>(focusedAssetApproval?.list || [], {
       pageSize: 20,
     });
@@ -76,12 +74,8 @@ export default function BottomSheetApprovalAsset({
     SectionListProps<ApprovalAssetsItem>['renderItem'] & object
   >(
     ({ item, section: _, index }) => {
-      const isFirstItem = index === 0;
-
       return (
-        <View
-          key={`${item.$assetParent?.chain}-${item.id}-${index}`}
-          style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
+        <View key={`${item.$assetParent?.chain}-${item.id}-${index}`}>
           <InModalApprovalAssetRow
             approval={focusedAssetApproval!}
             spender={item}
@@ -118,7 +112,7 @@ export default function BottomSheetApprovalAsset({
         return (
           <BottomSheetModalFooterButton
             title={[
-              `Confirm`,
+              'Confirm',
               confirmingAssetsCount && ` (${confirmingAssetsCount})`,
             ]
               .filter(Boolean)
@@ -132,7 +126,7 @@ export default function BottomSheetApprovalAsset({
           />
         );
       }}
-      snapPoints={[ModalLayouts.defaultHeightPercentText]}
+      snapPoints={['90%']}
       bottomInset={1}>
       {focusedAssetApproval && (
         <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
@@ -145,6 +139,7 @@ export default function BottomSheetApprovalAsset({
               </Text>
               <MiniButton
                 disabled={!focusedAssetApproval?.list.length}
+                style={styles.miniBtn}
                 onPress={() =>
                   onSelectAllAsset(
                     focusedAssetApproval!,
@@ -161,9 +156,11 @@ export default function BottomSheetApprovalAsset({
             initialNumToRender={4}
             maxToRenderPerBatch={20}
             ListFooterComponent={
-              <View style={styles.listFooterContainer}>
-                {isFetchingNextPage ? <ActivityIndicator /> : null}
-              </View>
+              sectionList.length >= 20 ? (
+                <View style={styles.listFooterContainer}>
+                  {isFetchingNextPage ? <ActivityIndicator /> : null}
+                </View>
+              ) : null
             }
             style={[styles.scrollableView, styles.scrollableArea]}
             contentContainerStyle={styles.listContainer}
@@ -181,17 +178,19 @@ export default function BottomSheetApprovalAsset({
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     sheetModalContainer: {
       paddingVertical: 0,
       flexDirection: 'column',
+      overflow: 'hidden',
+      borderRadius: 32,
     },
     handle: {
       height: 20,
     },
     bg: {
-      backgroundColor: colors['neutral-bg2'],
+      backgroundColor: colors2024['neutral-bg-1'],
     },
     bodyContainer: {
       paddingVertical: 8,
@@ -204,16 +203,20 @@ const getStyles = createGetStyles(colors => {
       flexShrink: 0,
     },
     listHeadOps: {
-      marginTop: 16,
+      marginTop: 30,
       width: '100%',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     listHeadText: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: '400',
+      color: colors2024['neutral-foot'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    miniBtn: {
+      backgroundColor: 'transparent',
     },
     scrollableArea: {
       flexShrink: 1,
@@ -227,23 +230,18 @@ const getStyles = createGetStyles(colors => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
+      borderRadius: 24,
+      borderWidth: 1,
+      overflow: 'hidden',
+      borderColor: colors2024['neutral-line'],
     },
     listFooterContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors2024['neutral-bg-1'],
       height: ApprovalsLayouts.listFooterComponentHeight,
       // ...makeDebugBorder('green'),
-    },
-
-    title: {
-      fontSize: 20,
-      lineHeight: 23,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      marginBottom: 16,
-      paddingTop: 24,
-      textAlign: 'center',
     },
   };
 });

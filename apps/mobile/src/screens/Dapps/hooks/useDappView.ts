@@ -64,12 +64,12 @@ export type OpenedDappItem = {
   lastOpenWebViewId?: string | null;
 };
 const DAPPS_VIEW_LIMIT = {
-  maxCount: 3,
+  maxCount: 1,
   // 30days
   expireDuration: 3 * 86400 * 1e3,
 };
 const DAPPS_VIEW_LIMIT_SHORT = {
-  maxCount: 3,
+  maxCount: 1,
   // 5 mins
   expireDuration: 5 * 60 * 1e3,
 };
@@ -148,7 +148,7 @@ export function useDappsViewConfig() {
  */
 const useDappLastUsedAccount = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+  const { computeFinalSceneAccount } = useSceneAccountInfo({
     forScene: '@ActiveDappWebViewModal',
   });
 
@@ -156,9 +156,12 @@ const useDappLastUsedAccount = () => {
     (dapp: DappInfo) => {
       if (!dapp.currentAccount) return;
 
-      switchSceneCurrentAccount('@ActiveDappWebViewModal', dapp.currentAccount);
+      switchSceneCurrentAccount(
+        '@ActiveDappWebViewModal',
+        computeFinalSceneAccount(dapp.currentAccount),
+      );
     },
-    [switchSceneCurrentAccount],
+    [switchSceneCurrentAccount, computeFinalSceneAccount],
   );
 
   const inactivate = useCallback(() => {
@@ -166,7 +169,6 @@ const useDappLastUsedAccount = () => {
   }, [switchSceneCurrentAccount]);
 
   return {
-    finalSceneCurrentAccount,
     activate,
     inactivate,
   };
@@ -308,14 +310,16 @@ export function useOpenDappView() {
          * @deprecated
          */
         showSheetModalFirst?: boolean;
-        useLatestWebViewId?: boolean;
+        forceReopen?: boolean;
       },
     ) => {
       const {
         isActiveDapp = true,
         showSheetModalFirst = false,
-        useLatestWebViewId = false,
+        forceReopen = false,
       } = options || {};
+      let useLatestWebViewId = true;
+      if (forceReopen) useLatestWebViewId = false;
 
       const item =
         typeof dappUrl === 'string'
@@ -354,10 +358,14 @@ export function useOpenDappView() {
 
       syncBasicDappInfo(item.origin);
 
-      const $openParams = {
-        ...item.$openParams,
-        initialUrl: item.$openParams?.initialUrl || newUrl,
-      };
+      const needTriggerWebViewReload =
+        forceReopen || item.$openParams?.initialUrl !== newUrl;
+
+      const $openParams = { ...item.$openParams };
+      if (needTriggerWebViewReload) {
+        $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
+        item.$openParams = $openParams;
+      }
 
       setOpenedOriginsDapps(prev => {
         const itemIdx = prev.findIndex(

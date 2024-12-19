@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
-import { Text, TouchableOpacity } from 'react-native';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Easing, Text, TouchableOpacity } from 'react-native';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import RcPending from '@/assets2024/icons/home/pending.svg';
 import { Spin } from '@/screens/TransactionRecord/components/Spin';
+import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
+import { Animated } from 'react-native';
 
 export const PendingTx = ({
   number,
@@ -11,23 +14,50 @@ export const PendingTx = ({
   number: number | string;
   onClick?: () => void;
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1600,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    ).start();
+  }, [spinValue]);
 
   return (
     <TouchableOpacity style={styles.container} onPress={onClick}>
-      <Spin color={colors['blue-default']} style={styles.icon} />
+      <Animated.View
+        style={{
+          transform: [{ rotate: spin }],
+        }}>
+        <RcPending width={16} height={16} />
+      </Animated.View>
       <Text style={styles.number}>{number}</Text>
+      <RcIconOrangeArrow />
     </TouchableOpacity>
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   container: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    borderRadius: 100,
     alignItems: 'center',
+    backgroundColor: colors2024['orange-light-4'],
+    borderColor: colors2024['orange-disable'],
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderWidth: 1,
+    gap: 0,
   },
   icon: {
     width: 20,
@@ -37,8 +67,12 @@ const getStyles = createGetStyles(colors => ({
     top: 0,
   },
   number: {
-    fontSize: 13,
-    color: colors['blue-default'],
+    marginLeft: 2,
+    color: colors2024['orange-default'],
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

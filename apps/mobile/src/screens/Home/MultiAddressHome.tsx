@@ -14,6 +14,8 @@ import {
   TouchableWithoutFeedback,
   RefreshControl,
   ScrollView,
+  Dimensions,
+  StyleSheet,
 } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
@@ -32,82 +34,43 @@ import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
+import RcIconVectorCC from '@/assets2024/icons/home/IconVectorCC.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
+import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconEcosystem from '@/assets2024/icons/home/IconEcosystem.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { Skeleton } from '@rneui/base';
 import { transactionHistoryService } from '@/core/services';
-import { eventBus, EVENTS } from '@/utils/events';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useMemoizedFn, useMount } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
 import { resetNavigationTo } from '@/hooks/navigation';
-import { useGasAccountInfo } from '../GasAccount/hooks';
-
-const MENU_ARR = [
-  {
-    title: MultiHomeFeatTitle.Swap,
-    icon: RcIconSwap,
-  },
-  {
-    title: MultiHomeFeatTitle.Send,
-    icon: RcIconSend,
-  },
-  {
-    title: MultiHomeFeatTitle.Receive,
-    icon: RcIconReceive,
-  },
-  {
-    title: MultiHomeFeatTitle.Bridge,
-    icon: RcIconBridge,
-  },
-  {
-    title: MultiHomeFeatTitle.History,
-    icon: RcIconHistory,
-  },
-  // {
-  //   title: MultiHomeFeatTitle.Approvals,
-  //   icon: RcIconApprovals,
-  // },
-  {
-    title: MultiHomeFeatTitle.GasAccount,
-    icon: RcIconGasAccount,
-  },
-  {
-    title: MultiHomeFeatTitle.Dapps,
-    icon: RcIconDapps,
-  },
-  // {
-  //   title: MultiHomeFeatTitle.Ecosystem,
-  //   icon: RcIconEcosystem,
-  // },
-  // {
-  //   title: MultiHomeFeatTitle.Points,
-  //   icon: RcIconPoints,
-  // },
-];
+import { navigate } from '@/utils/navigation';
+import { useApprovalAlertCounts } from './hooks/approvals';
+import { BadgeText } from './components/HomeTopArea';
+import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+  usePinAddresses,
+} from '@/hooks/account';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import useHomePinAddress from './hooks/useHomePinAddress';
+import { ThemeColors2024 } from '@/constant/theme';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
-  const { safeOffHeader, safeTop } = useSafeSizes();
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
+
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -143,12 +106,10 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       </View>
       <TouchableWithoutFeedback
         onPress={() => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackRoot, {
-              screen: RootNames.Settings,
-              params: {},
-            }),
-          );
+          navigation.navigate(RootNames.StackRoot, {
+            screen: RootNames.Settings,
+            params: {},
+          });
 
           matomoRequestEvent({
             category: 'Click_Header',
@@ -161,19 +122,84 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   );
 }
 
+const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
+const ITEM_GRID_GAP = 12;
+
 function MultiAddressHome(): JSX.Element {
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { value } = useGasAccountInfo(); // for gas account remove acount listener
-  const { styles, colors, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
+  const { switchAccount } = useCurrentAccount();
+
+  const { width } = Dimensions.get('window');
+  const itemWidth =
+    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+  const {
+    alertInfo,
+    forceUpdate,
+    triggerUpdate: triggerUpdateAlert,
+  } = useApprovalAlertCounts();
+
+  const MENU_ARR = [
+    {
+      title: MultiHomeFeatTitle.Swap,
+      icon: RcIconSwap,
+    },
+    {
+      title: MultiHomeFeatTitle.Send,
+      icon: RcIconSend,
+    },
+    {
+      title: MultiHomeFeatTitle.Receive,
+      icon: RcIconReceive,
+    },
+    {
+      title: MultiHomeFeatTitle.Bridge,
+      icon: RcIconBridge,
+    },
+    {
+      title: MultiHomeFeatTitle.History,
+      icon: RcIconHistory,
+    },
+    {
+      title: MultiHomeFeatTitle.Approvals,
+      icon: RcIconApprovals,
+      badge: alertInfo.total,
+    },
+    {
+      title: MultiHomeFeatTitle.GasAccount,
+      icon: RcIconGasAccount,
+    },
+    __DEV__ && {
+      title: MultiHomeFeatTitle.TEST_DAPP,
+      icon: RcIconDapps,
+    },
+    {
+      title: MultiHomeFeatTitle.Dapps,
+      icon: RcIconDapps,
+    },
+    // {
+    //   title: MultiHomeFeatTitle.Ecosystem,
+    //   icon: RcIconEcosystem,
+    // },
+    // {
+    //   title: MultiHomeFeatTitle.Points,
+    //   icon: RcIconPoints,
+    // },
+  ].filter(Boolean) as {
+    title: MultiHomeFeatTitle;
+    icon: React.FC<import('react-native-svg').SvgProps>;
+    badge?: number;
+  }[];
+
   useEffect(() => {
     if (pendingTxCount) {
       Animated.loop(
@@ -200,23 +226,19 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
+  const { pinAccountsFirstFour, isShowPin } =
+    useHomePinAddress(balanceAccounts);
+
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
     if (!addresses.length) {
       return;
     }
-    const { pendingsLength, pendings } =
+    const { pendingsLength } =
       transactionHistoryService.getPendingsAddresses(addresses);
-    console.debug('fetchHistory :', balanceCacheAccounts, pendings);
     setPendingTxCount(pendingsLength);
-    if (pendingsLength) {
-      if (!timeRef.current) {
-        timeRef.current = setInterval(fetchHistory, 5000);
-      }
-    } else {
-      timeRef.current && clearInterval(timeRef.current);
-      timeRef.current = null;
-    }
+    timeRef.current && clearInterval(timeRef.current);
+    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [balanceCacheAccounts]);
 
   const detectHasAccounts = useMemoizedFn(async () => {
@@ -245,7 +267,7 @@ function MultiAddressHome(): JSX.Element {
         const { redirectAction } = await detectHasAccounts();
         if (redirectAction) {
           redirectAction();
-        } else if (!timeRef.current) {
+        } else {
           fetchHistory();
         }
       })();
@@ -255,12 +277,14 @@ function MultiAddressHome(): JSX.Element {
   useFocusEffect(
     useCallback(() => {
       triggerUpdate();
-    }, [triggerUpdate]),
+      triggerUpdateAlert();
+    }, [triggerUpdate, triggerUpdateAlert]),
   );
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
-  }, [triggerUpdate]);
+    forceUpdate();
+  }, [forceUpdate, triggerUpdate]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -270,6 +294,25 @@ function MultiAddressHome(): JSX.Element {
     return num >= 1000000000;
   }, [balanceAccounts]);
 
+  const totalBalance = useMemo(() => {
+    const num = balanceAccounts.reduce(
+      (sum, item) => sum + (Number(item.balance) || 0),
+      0,
+    );
+    return num;
+  }, [balanceAccounts]);
+
+  const calcPinPercent = useCallback(
+    (balance: number) => {
+      let percent = 0;
+      if (balance && totalBalance) {
+        percent = Math.floor((balance / totalBalance) * 100);
+      }
+      return `${percent}%`;
+    },
+    [totalBalance],
+  );
+
   const totalBalanceUsd = useMemo(() => {
     const num = balanceAccounts.reduce(
       (sum, item) => sum + (Number(item.balance) || 0),
@@ -278,8 +321,9 @@ function MultiAddressHome(): JSX.Element {
     return '$' + splitNumberByStep((num || 0).toFixed(2));
   }, [balanceAccounts]);
 
-  const { toggleUseAllAccountsOnScene, switchSceneCurrentAccount } =
-    useSwitchSceneCurrentAccount();
+  const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
+
+  const { openUrlAsDapp } = useDappWebViewScreen();
 
   const handleClickMenu = useCallback(
     (title: MultiHomeFeatTitle) => {
@@ -297,32 +341,12 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Receive:
-          const selectAddressModalId = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.SELECT_ACCOUNT_THEN,
-            modalTitle: 'Select Receive Address',
-            onDone: async selectedAccount => {
-              removeGlobalBottomSheetModal2024(selectAddressModalId);
-              await switchSceneCurrentAccount('Receive', selectedAccount);
-              const id = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-                value: CHAINS_ENUM.ETH,
-                onChange: (v: CHAINS_ENUM) => {
-                  removeGlobalBottomSheetModal2024(id);
-                  navigation.dispatch(
-                    StackActions.push(RootNames.StackTransaction, {
-                      screen: RootNames.Receive,
-                      params: {
-                        chainEnum: v,
-                      },
-                    }),
-                  );
-                },
-                onClose: () => {
-                  removeGlobalBottomSheetModal2024(id);
-                },
-              });
-            },
-          });
+          navigation.dispatch(
+            StackActions.push(RootNames.StackAddress, {
+              screen: RootNames.ReceiveAddressList,
+              params: {},
+            }),
+          );
 
           break;
         case MultiHomeFeatTitle.Swap:
@@ -350,11 +374,11 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        // case MultiHomeFeatTitle.Approvals:
-        //   navigation.push(RootNames.StackTransaction, {
-        //     screen: RootNames.Approvals,
-        //   });
-        //   break;
+        case MultiHomeFeatTitle.Approvals:
+          navigate(RootNames.StackAddress, {
+            screen: RootNames.ApprovalAddressList,
+          });
+          break;
         case MultiHomeFeatTitle.GasAccount:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
@@ -371,20 +395,40 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Ecosystem:
-          // navigation.dispatch(
-          //   StackActions.push(RootNames.StackRoot, {
-          //     screen: RootNames.Dapps,
-          //     params: {},
-          //   }),
-          // );
+        case MultiHomeFeatTitle.TEST_DAPP:
+          openUrlAsDapp('https://metamask.github.io/test-dapp/', {
+            forceReopen: true,
+          });
+          navigation.navigate(RootNames.StackRoot, {
+            screen: RootNames.DappWebViewStubOnHome,
+            params: {},
+          });
           break;
-
+        case MultiHomeFeatTitle.Ecosystem:
+          break;
         default:
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene, switchSceneCurrentAccount],
+    [navigation, toggleUseAllAccountsOnScene, openUrlAsDapp],
+  );
+
+  const handleClickPinAccount = useCallback(
+    (pinItem: KeyringAccountWithAlias) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+
+      switchAccount(pinItem);
+      navigation.dispatch(
+        StackActions.push(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {},
+        }),
+      );
+    },
+    [switchAccount, navigation],
   );
 
   return (
@@ -440,6 +484,53 @@ function MultiAddressHome(): JSX.Element {
               <RcIconSmallArrow />
             </TouchableOpacity>
           </View>
+          {isShowPin && (
+            <>
+              <View style={[styles.menuHeader, styles.pinHeader]}>
+                <View style={styles.pinBox}>
+                  <RcIconVectorCC color={colors2024['neutral-title-1']} />
+                  <Text style={styles.headerText}>
+                    {t('page.nextComponent.multiAddressHome.pin')}
+                  </Text>
+                </View>
+                <View />
+              </View>
+              <View style={[styles.pinGrid]}>
+                {pinAccountsFirstFour.map((item, index) => {
+                  return item ? (
+                    <TouchableOpacity
+                      style={StyleSheet.flatten([styles.pinGridItem])}
+                      key={index}
+                      onPress={() => {
+                        handleClickPinAccount(item);
+                        matomoRequestEvent({
+                          category: 'Click_Pin',
+                          action: `Click_${index}`,
+                        });
+                      }}>
+                      <WalletIcon
+                        type={item.brandName}
+                        width={18}
+                        height={18}
+                        borderRadius={5}
+                      />
+                      <Text style={styles.pinGridText}>
+                        {calcPinPercent(item.balance || 0)}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View
+                      key={index}
+                      style={StyleSheet.flatten([
+                        styles.pinGridItem,
+                        styles.emptyItem,
+                      ])}
+                    />
+                  );
+                })}
+              </View>
+            </>
+          )}
           <View style={styles.menuHeader}>
             <Text style={styles.headerText}>
               {t('page.nextComponent.multiAddressHome.services')}
@@ -465,7 +556,10 @@ function MultiAddressHome(): JSX.Element {
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity
-                  style={styles.gridItem}
+                  style={StyleSheet.flatten([
+                    styles.gridItem,
+                    { width: itemWidth },
+                  ])}
                   key={index}
                   onPress={e => {
                     handleClickMenu(el.title);
@@ -474,7 +568,12 @@ function MultiAddressHome(): JSX.Element {
                       action: `Click_${el.title}`,
                     });
                   }}>
-                  <el.icon />
+                  <View style={styles.iconWrapper}>
+                    <el.icon />
+                    {!!el.badge && el.badge > 0 && (
+                      <BadgeText count={el.badge} style={styles.badgeStyle} />
+                    )}
+                  </View>
                   <Text style={styles.gridText}>
                     {el.title === MultiHomeFeatTitle.Dapps && IS_IOS
                       ? 'Websites'
@@ -492,7 +591,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   paddingContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     flex: 1,
     flexGrow: 1,
   },
@@ -540,7 +639,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   usdText: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: '900',
     textAlign: 'left',
     color: colors2024['neutral-title-1'],
     lineHeight: 42,
@@ -551,7 +650,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 14,
     borderRadius: 94,
-    backgroundColor: colors2024['brand-default'],
+    backgroundColor: isLight
+      ? ThemeColors2024.dark['neutral-bg-1']
+      : colors2024['brand-default'],
     shadowColor: colors2024['brand-light-1'],
     shadowOffset: { width: 0, height: 9.411 },
     shadowOpacity: 0.1,
@@ -572,6 +673,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
+  pinBox: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   menuHeader: {
     height: 30,
     flexDirection: 'row',
@@ -579,7 +686,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     paddingHorizontal: 4,
     marginHorizontal: 4,
-    marginVertical: 12,
+    margin: 12,
+  },
+  pinHeader: {
+    marginTop: -8,
+  },
+  pinGridText: {
+    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
   },
   gridText: {
     color: colors2024['neutral-body'],
@@ -589,6 +707,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
   },
+  iconWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  badgeStyle: {
+    width: 20,
+    height: 20,
+    lineHeight: 20,
+  },
   headerText: {
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
@@ -597,14 +727,44 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
   },
+  pinGrid: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    borderRadius: 8,
+    gap: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    width: '100%',
+    marginBottom: 20,
+  },
+  emptyItem: {
+    backgroundColor: 'transparent',
+  },
+  pinGridItem: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 10,
+    flexShrink: 0,
+    flex: 1,
+    // padding: 10,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 46,
+    gap: 8,
+    position: 'relative',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderRadius: 8,
-    gap: 12,
+    gap: ITEM_GRID_GAP,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
+    marginBottom: 20,
   },
   gridItem: {
     borderWidth: 1,
@@ -612,7 +772,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    width: '48%',
+    width: '48%', // default
     minWidth: 0,
     borderRadius: 18,
     flexShrink: 0,
@@ -622,6 +782,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     height: 100,
     gap: 12,
+    position: 'relative',
   },
   pendingContainer: {
     flexDirection: 'row',

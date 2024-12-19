@@ -60,7 +60,6 @@ export const RootNames = {
 
   StackBottom: 'StackBottom',
   Home: 'Home',
-  // MultiAddressHome: 'MultiAddressHome',
   Points: 'Points',
 
   Dapps: 'Dapps',
@@ -113,6 +112,7 @@ export const RootNames = {
 
   StackAddress: 'StackAddress',
   AddressList: 'AddressList',
+  ApprovalAddressList: 'ApprovalAddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
   ImportSuccess: 'ImportSuccess',
@@ -149,6 +149,10 @@ export const RootNames = {
 
   SingleAddressStack: 'SingleAddressStack',
   SingleAddressHome: 'SingleAddressHome',
+
+  DappWebViewStubOnHome: 'DappWebViewStubOnHome',
+  TokenDetail: 'TokenDetail',
+  ReceiveAddressList: 'ReceiveAddressList',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -196,7 +200,13 @@ function makeScreenSpecConfig() {
     const bg1Default2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg-1'],
+      androidStatusBarBg: colors2024['neutral-bg1'],
+    };
+
+    const transparentDefault2024Conf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: 'transparent',
     };
 
     const bg2DefaultConf = <ScreenStatusBarConf>{
@@ -224,19 +234,25 @@ function makeScreenSpecConfig() {
     };
 
     const themeSpecs = <ThemeType>{
-      '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      '@default': bg1Default2024Conf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: colors['neutral-bg-1'],
+        androidStatusBarBg: colors['neutral-bg1'],
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,
       NewUserGetStarted2024: bg1DefaultConf,
 
-      Home: bg1DefaultConf,
+      Home: transparentDefault2024Conf,
+      DappWebViewStubOnHome: {
+        barStyle: adaptiveStatusBarStyle,
+        iosStatusBarStyle: adaptiveIosStatusBarStyle,
+        androidStatusBarBg: colors['neutral-bg1'],
+      },
       MultiAddressHome: bg1Default2024Conf,
+      // MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
       MultiAddressHistory: bg1Default2024Conf,
 
@@ -251,16 +267,25 @@ function makeScreenSpecConfig() {
       ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
-
+      Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      SingleAddressHome: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,
       MultiSend: bg1Default2024Conf,
       Swap: bg1Default2024Conf,
       MultiSwap: bg1Default2024Conf,
+      Bridge: bg1Default2024Conf,
+      MultiBridge: bg1Default2024Conf,
       // Receive: blueLightConf,
+      AddressList: bg1Default2024Conf,
+      SafeAddressList: bg1Default2024Conf,
+      WatchAddressList: bg1Default2024Conf,
+      ApprovalAddressList: bg1Default2024Conf,
 
       GnosisTransactionQueue: card2DefaultConf,
 
-      Approvals: bg2DefaultConf,
+      Approvals: bg1Default2024Conf,
 
       SetPassword: blueLightConf,
       SetPassword2024: bg1Default2024Conf,
@@ -347,7 +372,7 @@ export function makeHeadersPresets({
     },
     withBgCard1_2024: {
       headerStyle: {
-        backgroundColor: colors2024?.['neutral-bg-1'],
+        backgroundColor: colors2024?.['neutral-bg1'],
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],

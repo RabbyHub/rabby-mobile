@@ -58,6 +58,7 @@ export interface TestnetChain extends TestnetChainBase {
   logo: string;
   whiteLogo?: string;
   needEstimateGas?: boolean;
+  severity: number;
 }
 
 export interface CustomTestnetTokenBase {
@@ -694,6 +695,7 @@ export const createTestnetChain = (chain: TestnetChainBase): TestnetChain => {
       1559: false,
     },
     isTestnet: true,
+    severity: 0,
   };
 };
 

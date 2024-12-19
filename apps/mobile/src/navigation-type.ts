@@ -1,3 +1,4 @@
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
@@ -5,6 +6,7 @@ import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { AbstractPortfolioToken } from './screens/Home/types';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -12,7 +14,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
  */
 
 export type RootStackParamsList = {
-  [RootNames.StackRoot]?: NavigatorScreenParams<RootNavigatorParamsList>;
+  [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -26,9 +28,17 @@ export type RootStackParamsList = {
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
+  [RootNames.TokenDetail]: {
+    token: AbstractPortfolioToken;
+    account?: KeyringAccountWithAlias;
+  };
 };
 
-export type RootNavigatorParamsList = {
+/**
+ * @description we mock modal-like views as a stub navigator, which was implemented
+ * based on the react-navigation's bottom tab navigator.
+ */
+export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
@@ -36,6 +46,7 @@ export type RootNavigatorParamsList = {
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
+  [RootNames.DappWebViewStubOnHome]?: {};
 };
 
 type GetStartedNavigatorParamsList = {
@@ -54,13 +65,21 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
+  [RootNames.ReceiveAddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
-  [RootNames.CreateNewAddress]?: {};
+  [RootNames.CreateNewAddress]?: {
+    noSetupPassword?: boolean;
+    useCurrentSeed?: boolean;
+    mnemonics?: string;
+    title?: string;
+    accounts?: string[];
+  };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
       | typeof RootNames.ImportSuccess2024
       | typeof RootNames.ImportMnemonic2024
+      | typeof RootNames.CreateChooseBackup
       | typeof RootNames.ImportPrivateKey2024;
     title?: string;
     hideProgress?: boolean;
@@ -72,7 +91,9 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportWatchAddress2024]?: {};
   [RootNames.CreateSelectOnCurrentSeed]?: {};
   [RootNames.CreateSelectMethod]?: {};
-  [RootNames.CreateChooseBackup]?: {};
+  [RootNames.CreateChooseBackup]?: {
+    delaySetPassword?: boolean;
+  };
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {
@@ -140,6 +161,7 @@ export type AddressNavigatorParamList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
   [RootNames.SafeAddressList]?: {};
+  [RootNames.ApprovalAddressList]?: {};
 };
 
 export type AccountNavigatorParamList = {
@@ -186,7 +208,7 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.ImportSuccess2024;
       }
     | {
-        actionAfterSetup: 'onSettings';
+        actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
         actionType: 'setBiometrics' | 'setAutoLockTime';
       };

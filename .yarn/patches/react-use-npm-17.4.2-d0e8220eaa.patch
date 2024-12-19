@@ -1,0 +1,28 @@
+diff --git a/esm/index.js b/esm/index.js
+index 62b69356b712d7d5ecc94c197e1519c58fdb8167..a412b8e6164b9e464ada4a2391a7590186fdec7d 100644
+--- a/esm/index.js
++++ b/esm/index.js
+@@ -13,7 +13,7 @@ export { default as useClickAway } from './useClickAway';
+ export { default as useCookie } from './useCookie';
+ export { default as useCopyToClipboard } from './useCopyToClipboard';
+ export { default as useCounter } from './useCounter';
+-export { default as useCss } from './useCss';
++// export { default as useCss } from './useCss';
+ export { default as useCustomCompareEffect } from './useCustomCompareEffect';
+ export { default as useDebounce } from './useDebounce';
+ export { default as useDeepCompareEffect } from './useDeepCompareEffect';
+diff --git a/lib/index.js b/lib/index.js
+index 355970590ad052a0d988ce08aac22fd274ad216d..d37501ba55380b1a2460c18beed01a88e48be5cf 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -36,8 +36,8 @@ var useCopyToClipboard_1 = require("./useCopyToClipboard");
+ Object.defineProperty(exports, "useCopyToClipboard", { enumerable: true, get: function () { return __importDefault(useCopyToClipboard_1).default; } });
+ var useCounter_1 = require("./useCounter");
+ Object.defineProperty(exports, "useCounter", { enumerable: true, get: function () { return __importDefault(useCounter_1).default; } });
+-var useCss_1 = require("./useCss");
+-Object.defineProperty(exports, "useCss", { enumerable: true, get: function () { return __importDefault(useCss_1).default; } });
++// var useCss_1 = require("./useCss");
++// Object.defineProperty(exports, "useCss", { enumerable: true, get: function () { return __importDefault(useCss_1).default; } });
+ var useCustomCompareEffect_1 = require("./useCustomCompareEffect");
+ Object.defineProperty(exports, "useCustomCompareEffect", { enumerable: true, get: function () { return __importDefault(useCustomCompareEffect_1).default; } });
+ var useDebounce_1 = require("./useDebounce");

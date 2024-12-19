@@ -1,7 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  usePinAddresses,
+} from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -15,6 +19,7 @@ import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAl
 import { useAddressDetailModal } from '../useAddressDetailModal';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { trigger } from 'react-native-haptic-feedback';
+import { AddressItemShadowView } from './AddressItemShadowView';
 
 const { isSameAddress } = addressUtils;
 
@@ -22,8 +27,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     borderRadius: 30,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-3'],
   },
   rootPressing: {
@@ -57,11 +60,47 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
   }, [account, onSelect, switchAccount]);
 
+  const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
+    disableAutoFetch: true,
+  });
+  const pinned = useMemo(
+    () =>
+      pinAddresses.some(
+        e =>
+          addressUtils.isSameAddress(e.address, account.address) &&
+          e.brandName === account.brandName,
+      ),
+    [pinAddresses, account],
+  );
+
+  const handlePinned = useCallback(() => {
+    togglePinAddressAsync({
+      address: account.address,
+      brandName: account.brandName,
+      nextPinned: !pinned,
+    });
+  }, [togglePinAddressAsync, account.address, account.brandName, pinned]);
+
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'Edit Name',
+        title: pinned ? 'UnPin' : 'Pin',
+        icon: pinned
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+        androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
+        key: 'pin',
+        action() {
+          handlePinned();
+        },
+      },
+      {
+        title: 'Edit',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
@@ -71,9 +110,8 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           editAliasName.show(account);
         },
       },
-
       {
-        title: 'Address Details',
+        title: 'Details',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
@@ -96,7 +134,15 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         },
       },
     ] as MenuAction[];
-  }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
+  }, [
+    isDarkTheme,
+    editAliasName,
+    account,
+    showAddressDetail,
+    removeAccount,
+    pinned,
+    handlePinned,
+  ]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (
@@ -113,27 +159,29 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         menuActions: menuActions,
       }}
       triggerProps={{ action: 'longPress' }}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
-        style={StyleSheet.flatten([
-          styles.root,
-          isPressing && styles.rootPressing,
-        ])}
-        delayLongPress={200} // long press delay
-        onPress={onDetail}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}>
-        <AddressItemInner2024
-          isPressing={isCurrentAccount || isPressing}
-          account={account}
-        />
-      </TouchableOpacity>
+      <AddressItemShadowView>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPressIn={() => setIsPressing(true)}
+          onPressOut={() => setIsPressing(false)}
+          style={StyleSheet.flatten([
+            styles.root,
+            isPressing && styles.rootPressing,
+          ])}
+          delayLongPress={200} // long press delay
+          onPress={onDetail}
+          onLongPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}>
+          <AddressItemInner2024
+            isPressing={isCurrentAccount || isPressing}
+            account={account}
+          />
+        </TouchableOpacity>
+      </AddressItemShadowView>
     </ContextMenuView>
   );
 };

@@ -10,13 +10,15 @@ import {
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar, Tip } from '@/components';
 import { QuoteLogo } from './QuoteLogo';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconGasCC from '@/assets/icons/swap/gas-cc.svg';
+import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
+import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import RcIconInfoCC from '@/assets/icons/swap/info-outline-cc.svg';
-const ImgLock = require('@/assets/icons/swap/lock.svg');
+// const ImgLock = require('@/assets/icons/swap/lock.svg');
 
 interface QuoteItemProps extends SelectedBridgeQuote {
   payAmount: string;
@@ -25,9 +27,7 @@ interface QuoteItemProps extends SelectedBridgeQuote {
   isBestQuote?: boolean;
   bestQuoteUsd: string;
   sortIncludeGasFee: boolean;
-  setSelectedBridgeQuote?: React.Dispatch<
-    React.SetStateAction<SelectedBridgeQuote | undefined>
-  >;
+  setSelectedBridgeQuote?: (quote?: SelectedBridgeQuote) => void;
   onlyShow?: boolean;
   loading?: boolean;
   inSufficient?: boolean;
@@ -44,8 +44,7 @@ export const bridgeQuoteEstimatedValueBn = (
 };
 
 export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const openBridgeQuote = useSetQuoteVisible();
 
@@ -109,7 +108,11 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           </Text>
           {props.shouldApproveToken && (
             <Tip content={t('page.bridge.need-to-approve-token-before-bridge')}>
-              <Image source={ImgLock} style={styles.icon} />
+              <RcIconLock
+                color={colors2024['neutral-foot']}
+                style={styles.icon}
+              />
+              {/* <Image source={RcIconLock} style={styles.icon} /> */}
             </Tip>
           )}
         </View>
@@ -147,6 +150,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           <Text
             style={[styles.estimatedValueText, { flex: 1 }]}
             numberOfLines={1}>
+            {'≈ '}
             {formatUsdValue(
               new BigNumber(props.to_token_amount)
                 .times(props.receiveToken.price)
@@ -158,10 +162,11 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
               e.stopPropagation();
               openFeePopup(true);
             }}>
-            <RcIconInfoCC
+            <RcIcHelp color={colors2024['neutral-info']} />
+            {/* <RcIconInfoCC
               style={styles.infoIcon}
               color={colors['neutral-foot']}
-            />
+            /> */}
           </TouchableOpacity>
         </View>
       </View>
@@ -184,31 +189,33 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     flexDirection: 'column',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: 24,
     padding: 16,
     paddingTop: 20,
-    height: 88,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    height: 116,
   },
   enabledAggregator: {},
   onlyShow: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
     height: 'auto',
     padding: 0,
     paddingTop: 0,
   },
   insufficient: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors['neutral-line'],
   },
   normal: {
-    backgroundColor: colors['neutral-card1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors['neutral-line'],
   },
   topRow: {
     flexDirection: 'row',
@@ -271,7 +278,7 @@ const getStyles = createGetStyles(colors => ({
   estimatedValueSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 2,
     flexShrink: 1,
     justifyContent: 'flex-end',
   },
@@ -289,27 +296,32 @@ const getStyles = createGetStyles(colors => ({
   badge: {
     position: 'absolute',
     top: -1,
-    left: -1,
-    borderTopLeftRadius: 4,
-    borderBottomRightRadius: 4,
+    left: 24,
+    borderRadius: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 4,
   },
   bestBadge: {
-    backgroundColor: colors['green-light'],
+    backgroundColor: colors2024['green-light-4'],
   },
   diffBadge: {
-    backgroundColor: colors['red-light'],
+    backgroundColor: colors2024['red-light-1'],
   },
 
   bestQuoteText: {
     fontSize: 12,
-    fontWeight: '500',
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
     color: colors['green-default'],
   },
   otherQuoteText: {
     fontSize: 12,
-    fontWeight: '500',
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
     color: colors['red-default'],
   },
 }));

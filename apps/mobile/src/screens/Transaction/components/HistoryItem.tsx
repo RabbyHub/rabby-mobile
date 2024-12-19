@@ -3,7 +3,7 @@ import { numberWithCommasIsLtOne } from '@/utils/number';
 import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { Text, View } from 'react-native';
+import { StyleProp, Text, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
 import { TxId } from './TxId';
 import { TxInterAddressExplain } from './TxInterAddressExplain';
@@ -12,18 +12,24 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
 type HistoryItemProps = {
+  style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export const HistoryItem = React.memo(
-  ({ data, cateDict, projectDict, tokenDict }: HistoryItemProps) => {
+  ({ data, cateDict, projectDict, tokenDict, style }: HistoryItemProps) => {
     const isFailed = data.tx?.status === 0;
     const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
     const { styles } = useTheme2024({ getStyle });
 
     return (
-      <View style={[styles.card, isFailed || isScam ? styles.cardGray : null]}>
+      <View
+        style={[
+          styles.card,
+          style,
+          isFailed || isScam ? styles.cardGray : null,
+        ]}>
         <View style={styles.cardHeader}>
           {isScam ? (
             <View style={styles.scamContainer}>

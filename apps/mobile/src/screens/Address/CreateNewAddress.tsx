@@ -58,7 +58,7 @@ function MainListBlocks() {
         useCurrentSeed?: boolean;
         mnemonics?: string;
         title?: string;
-        accounts: string[]; // current active addrees
+        accounts?: string[]; // current active addrees
       }
     | undefined;
 
@@ -86,7 +86,7 @@ function MainListBlocks() {
       for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
         console.log('requestKeyring res find count', i);
         const res = await api?.getAddresses(i, i + 1);
-        const idx = currentAddressArr.findIndex(
+        const idx = currentAddressArr?.findIndex(
           item => item === res?.[0].address,
         );
         if (idx === -1) {
@@ -105,7 +105,6 @@ function MainListBlocks() {
     }
     const words = seedPhrase.split(' ');
     const address = accountsToCreate?.[0].address;
-    console.log('requestKeyring res ', accountsToCreate, address, seedPhrase);
     setNewAddress(address);
     return {
       seedPhrase,

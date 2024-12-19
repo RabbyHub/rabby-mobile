@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Keyboard, Text, View } from 'react-native';
 
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
@@ -22,6 +22,7 @@ import { RcIconAddCircle } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -103,6 +104,8 @@ export type SelectSortedChainProps = {
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   hideTestnetTab?: boolean;
   hideMainnetTab?: boolean;
+  titleText?: string;
+  excludeChains?: CHAINS_ENUM[];
   onClose?: () => void;
 };
 export default function SelectSortedChain({
@@ -113,39 +116,57 @@ export default function SelectSortedChain({
   hideTestnetTab = false,
   hideMainnetTab = false,
   onClose,
+  excludeChains,
+  titleText,
 }: RNViewProps & SelectSortedChainProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
     hideTestnetTab,
   });
-  const { search, setSearch, matteredList, unmatteredList } =
-    useChainSeletorList({
-      // set undefined to allow all main chains
-      supportChains: supportChains,
-      netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
-    });
+  const {
+    search,
+    setSearch,
+    matteredList: _matteredList,
+    unmatteredList: _unmatteredList,
+  } = useChainSeletorList({
+    // set undefined to allow all main chains
+    supportChains: supportChains,
+    netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
+  });
+
+  const [matteredList, unmatteredList] = useMemo(() => {
+    if (excludeChains?.length) {
+      return [_matteredList, _unmatteredList].map(chains =>
+        chains.filter(e => !excludeChains.includes(e.enum)),
+      );
+    }
+    return [_matteredList, _unmatteredList];
+  }, [excludeChains, _matteredList, _unmatteredList]);
 
   return (
     <AutoLockView style={styles.container}>
-      {isShowTestnet && !hideMainnetTab ? (
-        <NetSwitchTabs
-          value={selectedTab}
-          onTabChange={onTabChange}
-          style={styles.netSwitchTabs}
+      <BottomSheetHandlableView>
+        {titleText && <Text style={styles.titleText}>{titleText}</Text>}
+        {isShowTestnet && !hideMainnetTab ? (
+          <NetSwitchTabs
+            value={selectedTab}
+            onTabChange={onTabChange}
+            style={styles.netSwitchTabs}
+          />
+        ) : null}
+        <Input
+          leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
+          containerStyle={[styles.containerOfInput, styles.innerBlock]}
+          inputContainerStyle={styles.inputContainerStyle}
+          style={styles.inputText}
+          placeholderTextColor={colors2024['neutral-info']}
+          placeholder="Search chain"
+          value={search}
+          onChangeText={text => {
+            setSearch(text);
+          }}
         />
-      ) : null}
-      <Input
-        leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
-        containerStyle={[styles.containerOfInput, styles.innerBlock]}
-        inputContainerStyle={styles.inputContainerStyle}
-        style={styles.inputText}
-        placeholderTextColor={colors2024['neutral-info']}
-        placeholder="Search chain"
-        value={search}
-        onChangeText={text => {
-          setSearch(text);
-        }}
-      />
+      </BottomSheetHandlableView>
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (
         <View style={[styles.chainListWrapper, styles.emptyDataWrapper]}>
@@ -164,6 +185,9 @@ export default function SelectSortedChain({
       ) : (
         <View style={[styles.chainListWrapper]}>
           <MixedFlatChainList
+            onScrollBeginDrag={() => {
+              Keyboard.dismiss();
+            }}
             style={styles.innerBlock}
             matteredList={matteredList}
             unmatteredList={unmatteredList}
@@ -202,9 +226,18 @@ export default function SelectSortedChain({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: '100%',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 32,
+  },
+  titleText: {
+    marginBottom: 20,
+    color: colors2024['neutral-title-1'],
+    fontSize: 20,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   netSwitchTabs: {
     marginBottom: 20,
@@ -231,6 +264,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 7,
     fontSize: 17,
     fontWeight: '400',
+    paddingTop: 0,
+    paddingBottom: 0,
     fontFamily: 'SF Pro Rounded',
   },
 

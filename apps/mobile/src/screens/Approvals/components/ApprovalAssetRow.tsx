@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { View, Text, Dimensions } from 'react-native';
 
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
+  useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
@@ -18,6 +18,7 @@ import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
 import { parseApprovalSpenderSelection } from '../utils';
+import { HighlightText } from '@/components2024/HighlightText';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -29,7 +30,9 @@ function RightTouchableView({
   children,
   ...props
 }: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
+  const { styles } = useTheme2024({
+    getStyle: getAssetsApprovalRowStyles,
+  });
 
   return (
     <TouchableView
@@ -45,10 +48,13 @@ function AssetsApprovalRowProto({
 }: {
   assetApproval: AssetApprovalItem;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
-  const { t } = useTranslation();
+  const { colors, styles, colors2024 } = useTheme2024({
+    getStyle: getAssetsApprovalRowStyles,
+  });
 
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
+
+  const { searchKw } = useApprovalsPage();
 
   const { assetRevokeMap, onSelectAllAsset } = useRevokeAssetSpenders();
   const { isSelectedAll, isSelectedPartial } = React.useMemo(() => {
@@ -105,34 +111,40 @@ function AssetsApprovalRowProto({
       {/* floor 1 */}
       <View style={[styles.itemFloor, ContractFloorLayouts.floor1]}>
         <View style={styles.floorLeft}>
-          {assetApproval?.logo_url ? (
-            <AssetAvatar
-              style={styles.chainIcon}
-              logo={assetApproval?.logo_url}
-              logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-              chain={assetApproval?.chain}
-              chainIconPosition="tr"
-              size={28}
-              chainSize={16}
-            />
-          ) : (
-            <RcIconUnknown width={28} height={28} style={styles.chainIcon} />
-          )}
+          <SelectionCheckbox
+            isSelectedAll={isSelectedAll}
+            isSelectedPartial={isSelectedPartial}
+            style={styles.contractCheckbox}
+            size={24}
+          />
           <View style={styles.basicInfo}>
             <View style={styles.basicInfoF1}>
-              <Text
+              {assetApproval?.logo_url ? (
+                <AssetAvatar
+                  style={styles.chainIcon}
+                  logo={assetApproval?.logo_url}
+                  logoStyle={{ backgroundColor: colors['neutral-foot'] }}
+                  chain={assetApproval?.chain}
+                  chainIconPosition="tr"
+                  size={40}
+                  chainSize={16}
+                />
+              ) : (
+                <RcIconUnknown
+                  width={40}
+                  height={40}
+                  style={styles.chainIcon}
+                />
+              )}
+              <HighlightText
                 style={[
                   styles.assetNameText,
                   { flexShrink: 1, maxWidth: '85%' },
                 ]}
-                ellipsizeMode="tail"
-                numberOfLines={1}>
-                {approvalInfo.floor1Text}
-              </Text>
-              <SelectionCheckbox
-                isSelectedAll={isSelectedAll}
-                isSelectedPartial={isSelectedPartial}
-                style={styles.contractCheckbox}
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                searchWords={[searchKw]}
+                textToHighlight={approvalInfo.floor1Text}
               />
             </View>
             {approvalInfo.hasFloor2 && (
@@ -155,7 +167,7 @@ function AssetsApprovalRowProto({
             style={{ marginLeft: 4, top: 1 }}
             width={16}
             height={16}
-            color={colors['neutral-foot']}
+            color={colors2024['neutral-foot']}
           />
         </RightTouchableView>
       </View>
@@ -163,26 +175,23 @@ function AssetsApprovalRowProto({
   );
 }
 
-export const getAssetsApprovalRowStyles = createGetStyles(colors => {
-  const selectableStyles = getSelectableContainerStyle(colors);
+export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
+  const { colors, colors2024 } = ctx;
 
   return {
     container: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      paddingVertical: 10,
       height: ApprovalsLayouts.assetsItemHeight,
       width: '100%',
       padding: ApprovalsLayouts.assetsItemPadding,
       maxWidth:
         Dimensions.get('window').width -
         ApprovalsLayouts.innerContainerHorizontalOffset * 2,
-      ...selectableStyles.container,
     },
     selectedContainer: {
-      ...selectableStyles.selectedContainer,
+      backgroundColor: colors2024['brand-light-1'],
     },
     itemFloor: {
       flexDirection: 'row',
@@ -226,9 +235,11 @@ export const getAssetsApprovalRowStyles = createGetStyles(colors => {
       // ...makeDebugBorder('pink')
     },
     entryText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors['neutral-title1'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-body'],
     },
     rowCenter: {
       flexDirection: 'row',
@@ -253,9 +264,13 @@ export const getAssetsApprovalRowStyles = createGetStyles(colors => {
     },
     chainIcon: { marginRight: 12 },
     assetNameText: {
-      color: colors['neutral-title1'],
+      color: colors2024['neutral-title-1'],
       fontSize: 16,
-      fontWeight: '600',
+      lineHeight: 20,
+      fontWeight: '700',
+    },
+    highlightText: {
+      color: colors2024['brand-default'],
     },
     contractName: {
       color: colors['neutral-foot'],
@@ -263,7 +278,7 @@ export const getAssetsApprovalRowStyles = createGetStyles(colors => {
       marginLeft: 6,
     },
     contractCheckbox: {
-      marginLeft: 6,
+      marginRight: 12,
       width: 20,
       height: 20,
     },

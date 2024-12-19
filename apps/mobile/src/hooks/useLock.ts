@@ -276,7 +276,7 @@ export function useSetPasswordFirst() {
         actionAfterSetup: 'backScreen';
       })['replaceScreen'];
       onSettingsAction?: (SettingNavigatorParamList['SetPassword'] & {
-        actionAfterSetup: 'onSettings';
+        actionAfterSetup: 'testkits:fromSettings';
       })['actionType'];
     }) => {
       if (!APP_FEATURE_SWITCH.customizePassword) return false;
@@ -297,7 +297,7 @@ export function useSetPasswordFirst() {
         navigation.push(RootNames.StackSettings, {
           screen: RootNames.SetPassword,
           params: {
-            actionAfterSetup: 'onSettings',
+            actionAfterSetup: 'testkits:fromSettings',
             actionType: onSettingsAction,
           },
         });

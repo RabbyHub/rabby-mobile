@@ -1,0 +1,22 @@
+diff --git a/dist/expo-snack.d.ts b/dist/expo-snack.d.ts
+index 998a7f5d35b546d6bf3f8adfb402a23e09778ec6..d1cd65868facf094e46d689966322ea2091c12ed 100644
+--- a/dist/expo-snack.d.ts
++++ b/dist/expo-snack.d.ts
+@@ -1,3 +1,3 @@
+-import { ComponentType } from "react";
++import { ComponentType, ComponentProps } from "react";
+ import { Config } from "tailwindcss";
+-export declare function withExpoSnack(Component: ComponentType, theme?: Config["theme"]): () => JSX.Element;
++export declare function withExpoSnack<T = any>(Component: ComponentType<T>, theme?: Config["theme"]): (props: T) => JSX.Element;
+diff --git a/dist/expo-snack.js b/dist/expo-snack.js
+index 928c4e7988a660129a8f9279a12134cd64e57da8..06ddec2b66a7da16c2499885bb8a598d2865e124 100644
+--- a/dist/expo-snack.js
++++ b/dist/expo-snack.js
+@@ -49,6 +49,6 @@ function withExpoSnack(Component, theme = {}) {
+             default: "native",
+         });
+     }
+-    return () => ((0, jsx_runtime_1.jsx)(ExpoSnackWrapper, { children: (0, jsx_runtime_1.jsx)(Component, {}) }));
++    return (props) => ((0, jsx_runtime_1.jsx)(ExpoSnackWrapper, { children: (0, jsx_runtime_1.jsx)(Component, props) }));
+ }
+ exports.withExpoSnack = withExpoSnack;

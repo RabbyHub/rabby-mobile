@@ -54,8 +54,8 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     contactService.removeAlias(account.address);
     whitelistService.removeWhitelist(account.address);
     transactionHistoryService.removeList(account.address);
-    preferenceService.removePinAddress(account);
   }
+  preferenceService.removePinAddress(account);
 
   const currentAccount = getCurrentAccount();
 

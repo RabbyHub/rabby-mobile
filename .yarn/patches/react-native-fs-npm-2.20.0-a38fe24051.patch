@@ -1,0 +1,11 @@
+diff --git a/android/src/main/AndroidManifest.xml b/android/src/main/AndroidManifest.xml
+index 6e54f6595b282c8a1169790b785f03e83c9a2077..71b43e0abb8eee6305b113fa84732e1120cb5295 100644
+--- a/android/src/main/AndroidManifest.xml
++++ b/android/src/main/AndroidManifest.xml
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     package="com.rnfs" >
+-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++<!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> -->
+ </manifest>

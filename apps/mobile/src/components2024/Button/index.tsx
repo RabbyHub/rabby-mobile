@@ -36,6 +36,7 @@ export type ButtonProps = Omit<
       TouchableComponent?: typeof React.Component;
       ViewComponent?: typeof React.Component;
       disabled?: boolean;
+      disabledTitleStyle?: StyleProp<TextStyle>;
       disableTrigger?: boolean;
       noShadow?: boolean;
       icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
@@ -55,6 +56,7 @@ export const Button = ({
   loadingStyle,
   noShadow = false,
   disabled = false,
+  disabledTitleStyle,
   icon,
   ViewComponent = View,
   disableTrigger,
@@ -112,8 +114,15 @@ export const Button = ({
       { color: currentColor },
       styles.title,
       passedTitleStyle,
+      disabled && disabledTitleStyle,
     ]);
-  }, [styles.title, currentColor, passedTitleStyle]);
+  }, [
+    currentColor,
+    styles.title,
+    passedTitleStyle,
+    disabled,
+    disabledTitleStyle,
+  ]);
 
   const innerStyle = useMemo(() => {
     const isDisabled = disabled;

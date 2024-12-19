@@ -1,0 +1,18 @@
+diff --git a/dist/classes.js b/dist/classes.js
+index f71061a82419ec9db9c08c847a85f55ce1f98274..107485363c1ee29218bb5fde75b40b27ebcab6fc 100644
+--- a/dist/classes.js
++++ b/dist/classes.js
+@@ -32,9 +32,10 @@ class EthereumRpcError extends Error {
+         if (this.data !== undefined) {
+             serialized.data = this.data;
+         }
+-        if (this.stack) {
+-            serialized.stack = this.stack;
+-        }
++        // access Error.stack cause crash on React Native 0.72.x
++        // if (this.stack) {
++        //     serialized.stack = this.stack;
++        // }
+         return serialized;
+     }
+     /**

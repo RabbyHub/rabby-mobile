@@ -3,7 +3,7 @@ import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import {
   DEFAULT_NAVBAR_FONT_SIZE,
@@ -48,6 +48,10 @@ import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
 import { AddressNavigatorParamList } from '@/navigation-type';
+import { ApprovalAddressListScreen } from '@/screens/Address/ApprovalAddressListScreen';
+import { useAccounts } from '@/hooks/account';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { ReceiveAddressListScreen } from '../Address/ReceiveAddressListScreen';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -71,16 +75,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
-
 export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
+
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+  const mainAddressCount = React.useMemo(
+    () =>
+      [...accounts].filter(
+        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+      ).length,
+    [accounts],
+  );
 
   return (
     <AddressStack.Navigator
@@ -103,12 +111,38 @@ export function AddressNavigator() {
         component={AddressListScreen}
         options={mergeScreenOptions2024([
           {
-            headerTitle: 'Address',
+            headerTitle: `${mainAddressCount} ${
+              mainAddressCount > 1 ? 'Addresses' : 'Address'
+            }`,
             title: 'Address',
             headerTintColor: colors2024['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
             // eslint-disable-next-line react/no-unstable-nested-components
             headerRight: () => <AddressListScreenButton type="address" />,
+          },
+        ])}
+      />
+      <AddressStack.Screen
+        name={RootNames.ReceiveAddressList}
+        component={ReceiveAddressListScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: strings('page.receiveAddressList.title'),
+            title: strings('page.receiveAddressList.title'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          },
+        ])}
+      />
+      <AddressStack.Screen
+        name={RootNames.ApprovalAddressList}
+        component={ApprovalAddressListScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: strings('page.approvalsAddressList.title'),
+            title: strings('page.approvalsAddressList.title'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
           },
         ])}
       />

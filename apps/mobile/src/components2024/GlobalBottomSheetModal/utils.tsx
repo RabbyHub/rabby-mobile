@@ -33,7 +33,6 @@ import { AddAddressSelectMethod } from '@/components/AddAddressSelectMethod';
 import { SeedPhraseManualBackup } from '@/components2024/SeedPhraseManualBackup';
 import { SeedPhraseRestoreFromCloud } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
 import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen';
-import { WalletConnectConnection } from '@/components/CommonPopup/WalletConnectConnection';
 import { Descriptions } from '@/components2024/Descriptions';
 import React from 'react';
 import { RestoreFromCloud2024 } from '@/screens/RestoreFromCloud/RestoreFromCloud2024';
@@ -44,7 +43,6 @@ import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { BackgroundComponent } from './BackgroundComponent';
 import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { SelectAccountThen } from '../SelectAccountThen/index';
 import { Dimensions } from 'react-native';
 import { AppColors2024Variants } from '@/constant/theme';
 
@@ -83,7 +81,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
-  [MODAL_NAMES.WALLET_CONNECT]: [300],
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [410],
   [MODAL_NAMES.DESCRIPTION]: [674],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
@@ -91,7 +88,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
-  [MODAL_NAMES.SELECT_ACCOUNT_THEN]: ['85%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -122,7 +118,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]:
     SeedPhraseRestoreFromCloud2024,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,
-  [MODAL_NAMES.WALLET_CONNECT]: WalletConnectConnection,
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
   [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,
@@ -135,7 +130,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: NoLongerSupports,
-  [MODAL_NAMES.SELECT_ACCOUNT_THEN]: SelectAccountThen,
 };
 
 export function makeBottomSheetProps({

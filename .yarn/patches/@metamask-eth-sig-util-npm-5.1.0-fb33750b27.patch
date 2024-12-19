@@ -1,0 +1,22 @@
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 48ddf59be50e021b2c2187ef80dd4d5ca10c5a56..58c9ae7faddc84afe016e98b2ce789076d666545 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -1,4 +1,5 @@
+ export * from './personal-sign';
+ export * from './sign-typed-data';
+ export * from './encryption';
++export * from './ethereumjs-abi-utils';
+ export { concatSig, normalize } from './utils';
+diff --git a/dist/index.js b/dist/index.js
+index 2eaf99fe658277646309a1df55920dc10db80e39..e395c18b2996331e413f1dc11a7cb23fecaf7421 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -18,6 +18,7 @@ exports.normalize = exports.concatSig = void 0;
+ __exportStar(require("./personal-sign"), exports);
+ __exportStar(require("./sign-typed-data"), exports);
+ __exportStar(require("./encryption"), exports);
++__exportStar(require("./ethereumjs-abi-utils"), exports);
+ var utils_1 = require("./utils");
+ Object.defineProperty(exports, "concatSig", { enumerable: true, get: function () { return utils_1.concatSig; } });
+ Object.defineProperty(exports, "normalize", { enumerable: true, get: function () { return utils_1.normalize; } });

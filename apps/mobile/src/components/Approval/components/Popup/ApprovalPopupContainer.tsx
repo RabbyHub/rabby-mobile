@@ -12,7 +12,6 @@ import ConnectWirelessSVG from '@/assets/icons/approval/connect-wireless.svg';
 import ConnectQRCodeSVG from '@/assets/icons/approval/connect-qrcode.svg';
 import ConnectKeystoneSVG from '@/assets/icons/approval/connect-keystone.svg';
 import ConnectOneKeySVG from '@/assets/icons/approval/connect-onekey.svg';
-import ConnectWalletConnectSVG from '@/assets/icons/approval/connect-walletconnect.svg';
 import { FooterDoneButton } from './FooterDoneButton';
 import { Dots } from './Dots';
 import { noop } from 'lodash';
@@ -136,8 +135,6 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return ConnectWirelessSVG;
       case 'privatekey':
         return;
-      case 'walletconnect':
-        return ConnectWalletConnectSVG;
       case 'ble':
         return ConnectBleSVG;
       case 'ledger':

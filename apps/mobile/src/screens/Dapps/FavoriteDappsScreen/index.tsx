@@ -8,7 +8,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { DappCardList } from '../components/DappCardList';
-import { useOpenDappView } from '../hooks/useDappView';
+import { useDappWebViewScreen } from '../hooks/useDappWebViewScreen';
 import { Text } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
@@ -32,7 +32,7 @@ export function FavoriteDappsScreen(): JSX.Element {
   }, [setNavigationOptions, getHeaderTitle, title]);
 
   const { setBrowserHistory, updateFavorite } = useDappsHome();
-  const { openUrlAsDapp } = useOpenDappView();
+  const { openUrlAsDapp } = useDappWebViewScreen();
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -40,15 +40,11 @@ export function FavoriteDappsScreen(): JSX.Element {
 
   type OpenUrlAsDappOptions = Pick<
     Parameters<typeof openUrlAsDapp>[1] & object,
-    'useLatestWebViewId'
+    'forceReopen'
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
-        useLatestWebViewId: true,
-        ...options,
-        showSheetModalFirst: true,
-      });
+      openUrlAsDapp(url, options);
       setBrowserHistory(safeGetOrigin(url));
     },
   );

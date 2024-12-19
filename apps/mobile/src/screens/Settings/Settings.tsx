@@ -31,6 +31,7 @@ import {
   RcGoogleDrive,
   RcGoogleSignout,
   RcCode,
+  RcI18n,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -132,6 +133,9 @@ import DevUIPlaygroundModal, {
 import DevUIWipModal, {
   useUIDevWipModalVisiable,
 } from './sheetModals/DevUIWip';
+import CurrentLanguageSelectorModal, {
+  useCurrentLanguageModalVisible,
+} from './sheetModals/LanguageSelector';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -477,11 +481,8 @@ function DevSettingsBlocks() {
   const { colors, colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const navigation = useRabbyAppNavigation();
 
-  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
-    useManagePasswordOnSettings();
-
   const {
-    computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
+    computed: { isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -491,23 +492,17 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  const { startBiometricsVerification, abortBiometricsVerification } =
-    useVerifyByBiometrics();
-
   const { forceAllowScreenshot } = useIsForceAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
-
-  const disabledBiometrics =
-    !couldSetupBiometrics ||
-    !hasSetupCustomPassword ||
-    !APP_FEATURE_SWITCH.biometricsAuth;
 
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
+  const { currentLangLabel, setCurrentLanguageModalVisible } =
+    useCurrentLanguageModalVisible();
 
   const { setCloudDriveTestItemModalVisible } =
     useCloudDriveTestItemModalVisible();
@@ -528,6 +523,20 @@ function DevSettingsBlocks() {
               rightNode: (
                 <Text style={{ color: colors['neutral-body'] }}>
                   {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+                </Text>
+              ),
+              // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Current Language',
+              icon: RcI18n,
+              onPress: () => {
+                setCurrentLanguageModalVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {currentLangLabel}
                 </Text>
               ),
               // TODO: only show in non-production mode
@@ -710,6 +719,8 @@ function DevSettingsBlocks() {
           </Block>
         );
       })}
+
+      <CurrentLanguageSelectorModal />
 
       <DevForceLocalVersionSelector />
 

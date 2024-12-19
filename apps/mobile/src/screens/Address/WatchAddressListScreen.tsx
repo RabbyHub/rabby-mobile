@@ -4,6 +4,7 @@ import { CommonAddressList } from './CommonAddressList';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useTranslation } from 'react-i18next';
 
 export function WatchAddressListScreen(): JSX.Element {
   const handlePress = () => {
@@ -11,12 +12,15 @@ export function WatchAddressListScreen(): JSX.Element {
       screen: RootNames.ImportWatchAddress2024,
     });
   };
+  const { t } = useTranslation();
 
   return (
     <NormalScreenContainer2024>
       <CommonAddressList
         type={KEYRING_CLASS.WATCH}
-        footerButtonText="Add Watch-Only Addresses"
+        footerButtonText={t(
+          'page.addressDetail.watchAddressListScreen.addWatchAddress',
+        )}
         footerButtonPress={handlePress}
       />
     </NormalScreenContainer2024>
