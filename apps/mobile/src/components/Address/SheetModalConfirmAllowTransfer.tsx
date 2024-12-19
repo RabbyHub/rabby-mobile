@@ -84,7 +84,9 @@ export function ModalConfirmAllowTransfer({
     disableAutoFetch: true,
   });
 
-  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
+  const { isUseCustomPwd, isUseBuiltinPwd } = useLoadLockInfo({
+    autoFetch: true,
+  });
   const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
 
   const handleCancel = useCallback(() => {
@@ -122,8 +124,17 @@ export function ModalConfirmAllowTransfer({
         toast.show(error?.message);
         return false;
       }
+    } else if (isUseBuiltinPwd) {
+      onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
     }
-  }, [isUseCustomPwd, formik, onValidatedPassword]);
+  }, [
+    isUseCustomPwd,
+    isUseBuiltinPwd,
+    formik,
+    onValidatedPassword,
+    onFinished,
+    confirmToAddToWhitelist,
+  ]);
 
   const {
     currentAuthType,
