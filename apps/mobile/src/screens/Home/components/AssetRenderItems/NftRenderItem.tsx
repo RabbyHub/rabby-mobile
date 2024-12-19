@@ -93,6 +93,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 4,
     height: ASSETS_ITEM_HEIGHT,
   },
   main: {
@@ -135,7 +136,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 20,
+    paddingHorizontal: 4,
     height: ASSETS_ITEM_HEIGHT,
   },
   symbol: {
