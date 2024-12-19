@@ -34,6 +34,7 @@ import { NumericInput } from '../Form/NumbericInput';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useFindChain } from '@/hooks/useFindChain';
 import { convertSmallTokenList } from '@/screens/Home/hooks/useMergeSmallTokens';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 function useLoadTokenList({
   externalChainServerId,
@@ -329,7 +330,7 @@ export const TokenAmountInput = React.forwardRef<
                   style={[styles.rightTokenSymbol]}
                   ellipsizeMode="tail"
                   numberOfLines={1}>
-                  {getTokenSymbol(token)}
+                  {ellipsisOverflowedText(getTokenSymbol(token), 5)}
                 </Text>
               </View>
               <View style={styles.rightArrow}>

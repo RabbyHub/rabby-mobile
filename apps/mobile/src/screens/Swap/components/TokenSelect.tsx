@@ -29,6 +29,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { convertSmallTokenList } from '@/screens/Home/hooks/useMergeSmallTokens';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -234,7 +235,7 @@ const TokenSelect = ({
                   chainSize={0}
                 />
                 <Text numberOfLines={1} style={styles.tokenSymbol}>
-                  {getTokenSymbol(token)}
+                  {ellipsisOverflowedText(getTokenSymbol(token), 5)}
                 </Text>
               </View>
               <RcIconSwapBottomArrow />
