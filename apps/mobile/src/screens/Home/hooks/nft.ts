@@ -1,20 +1,18 @@
 import { openapi } from '@/core/request';
-import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useEffect, useState } from 'react';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-export const useQueryNft = (addr: string) => {
+export const useQueryNft = (addr?: string) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [list, setList] = useState<CollectionList[]>([]);
+  const preAddressRef = useRef<string>();
+  const [list, setList] = useState<NFTItem[]>([]);
 
   const fetchData = useCallback(async (id: string) => {
     try {
       setIsLoading(true);
-      const collections = await openapi.collectionList({
-        id,
-        isAll: false,
-      });
-
-      setList(collections);
+      const ntfs = await openapi.listNFT(id, true, true);
+      preAddressRef.current = id;
+      setList(ntfs);
     } catch (e) {
       console.error(e);
     } finally {
@@ -29,10 +27,15 @@ export const useQueryNft = (addr: string) => {
   };
 
   useEffect(() => {
+    if (addr !== preAddressRef.current) {
+      preAddressRef.current = addr;
+      setList([]);
+    }
     if (addr) {
       fetchData(addr);
     }
-  }, [addr, fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addr]);
 
   return {
     isLoading,

@@ -2,7 +2,8 @@ import BigNumber from 'bignumber.js';
 import { AbstractPortfolioToken } from '../types';
 import { SMALL_TOKEN_ID, DEFI_ID, NFT_ID } from '@/utils/token';
 import { formatNetworth } from '@/utils/math';
-import { DisplayedProject } from '../utils/project';
+import { DisplayedProject } from './project';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const SMALL_TOKEN = {
   id: SMALL_TOKEN_ID,
@@ -42,6 +43,22 @@ export const convertDefiAssets = (portfolios: DisplayedProject[]) => {
           _usdValueStr: formatNetworth(tokensTotalValue),
         } as unknown as DisplayedProject[],
         ...portfolios,
+      ]
+    : [];
+};
+
+export const convertNFTAssets = (nfts: NFTItem[]) => {
+  let total = 0;
+  nfts.forEach(nft => {
+    total += nft.amount;
+  });
+  return nfts?.length
+    ? [
+        {
+          id: NFT_ID,
+          amount: total,
+        } as unknown as NFTItem[],
+        ...nfts,
       ]
     : [];
 };

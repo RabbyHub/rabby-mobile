@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, Text, View } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -11,32 +11,26 @@ import useSortToken from './hooks/useSortTokens';
 import {
   convertDefiAssets,
   convertSmallTokenList,
-} from './hooks/useMergeSmallTokens';
+  convertNFTAssets,
+} from './utils/converAssets';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
 } from './types';
-import { DEFI_ID, SMALL_TOKEN_ID } from '@/utils/token';
+import { DEFI_ID, NFT_ID, SMALL_TOKEN_ID } from '@/utils/token';
 import { findChain } from '@/utils/chain';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { RootNames } from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
 
-import { TokenRow, DefiRow } from './components/AssetRenderItems';
+import { TokenRow, DefiRow, NftRow } from './components/AssetRenderItems';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 interface Props {
   onRefresh(): void;
 }
-
-const ITEM_HEIGHT = 68;
-
-const NFTAsset = ({ item }) => (
-  <View>
-    <Text>{item.name}</Text>
-  </View>
-);
 
 export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -44,14 +38,15 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { currentAccount } = useCurrentAccount();
   const {
     tokens,
-    isTokensLoading,
-    hasTokens,
     refreshPositions,
-    isPortfoliosLoading,
     portfolios,
-    hasPortfolios,
+    nftList,
+    loading,
+    refreshing,
+    hasAssets,
   } = useQueryProjects(currentAccount?.address, false, true);
   const sortTokens = useSortToken(tokens);
+
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
@@ -87,7 +82,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     },
     {
       type: 'nft',
-      data: [],
+      data: convertNFTAssets(nftList)?.slice(0, foldNft ? 1 : undefined) || [],
     },
   ];
 
@@ -124,7 +119,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
       console.log('🔍 CUSTOM_LOGGER:=>: data)', data.id);
       if (data.id === DEFI_ID) {
-        console.log('🔍 CUSTOM_LOGGER:=>: setFoldDefi)', 11);
         setFoldDefi(pre => !pre);
         return;
       }
@@ -133,20 +127,23 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     [],
   );
 
-  // TODO: 兼容token nft defi
+  const handlePressNft = (item: NFTItem) => {
+    console.log('🔍 CUSTOM_LOGGER:=>: item)', item.collection);
+    if (item.id === NFT_ID) {
+      setFoldNft(pre => !pre);
+      return;
+    }
+    navigate(RootNames.NftDetail, { token: item });
+  };
+
+  // TODO: 空状态文案
   const ListEmptyComponent = useMemo(() => {
-    return isTokensLoading || isPortfoliosLoading ? (
+    return loading ? (
       <PositionLoader space={8} />
-    ) : hasTokens && hasPortfolios && sortTokens.length > 0 ? null : (
-      <EmptyHolder text="No Tokens" type="protocol" />
+    ) : hasAssets ? null : (
+      <EmptyHolder text="No Assets" type="protocol" />
     );
-  }, [
-    isTokensLoading,
-    isPortfoliosLoading,
-    hasTokens,
-    hasPortfolios,
-    sortTokens.length,
-  ]);
+  }, [loading, hasAssets]);
 
   const renderItem = ({ item, section }) => {
     switch (section.type) {
@@ -171,7 +168,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           />
         );
       case 'nft':
-        return <NFTAsset item={item} />;
+        return (
+          <NftRow
+            item={item}
+            fold={foldNft}
+            onPress={() => handlePressNft(item)}
+          />
+        );
       case 'defi':
         return (
           <DefiRow
@@ -187,23 +190,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }
   };
 
-  // TODO: 兼容token nft defi
-  const refreshing = useMemo(() => {
-    if ((sortTokens?.length || 0) > 0) {
-      return !!isPortfoliosLoading;
-    } else if ((portfolios?.length || 0) > 0) {
-      return !!isPortfoliosLoading;
-    } else {
-      return false;
-    }
-  }, [isPortfoliosLoading, portfolios?.length, sortTokens?.length]);
-  const renderSectionHeader = ({ section }) => <Text>{section.type}</Text>;
-
-  // TODO: 统一token ntf defi
   const getItemLayout = useCallback(
     (_data: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
+      length: ASSETS_ITEM_HEIGHT,
+      offset: ASSETS_ITEM_HEIGHT * index,
       index,
     }),
     [],
@@ -221,10 +211,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         showsVerticalScrollIndicator={false}
         windowSize={2}
         contentContainerStyle={styles.bgContainer}
-        renderSectionHeader={renderSectionHeader}
         // TODO: 统一id，token nft defi
-        // token: `${item.chain}/${item.symbol}/${item.id}/${idx}`
-        keyExtractor={item => item.id}
+        keyExtractor={item => `${item.chain}/${item.symbol}/${item.id}`}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}

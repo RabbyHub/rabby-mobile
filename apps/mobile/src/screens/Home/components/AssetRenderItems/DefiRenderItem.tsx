@@ -8,6 +8,7 @@ import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DEFI_ID } from '@/utils/token';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 
 const DefiRenderEntryItem = ({
   data,
@@ -43,24 +44,22 @@ const DefiRenderEntryItem = ({
     );
   }
   return (
-    <View>
-      <TouchableOpacity onPress={onPress} style={[styles.projectHeader]}>
-        <View style={styles.projectHeaderName}>
-          <AssetAvatar
-            logo={data?.logo}
-            size={40}
-            chain={data?.chain}
-            chainSize={16}
-          />
-          <Text style={styles.projectName} numberOfLines={1}>
-            {data?.name}
-          </Text>
-        </View>
-        <View style={styles.projectHeaderUsd}>
-          <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity onPress={onPress} style={[styles.projectHeader]}>
+      <View style={styles.projectHeaderName}>
+        <AssetAvatar
+          logo={data?.logo}
+          size={40}
+          chain={data?.chain}
+          chainSize={16}
+        />
+        <Text style={styles.projectName} numberOfLines={1}>
+          {data?.name}
+        </Text>
+      </View>
+      <View style={styles.projectHeaderUsd}>
+        <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -70,7 +69,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 68,
+    height: ASSETS_ITEM_HEIGHT,
     alignItems: 'center',
   },
   projectHeaderName: {
@@ -105,6 +104,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 20,
+    height: ASSETS_ITEM_HEIGHT,
   },
   symbol: {
     fontSize: 22,

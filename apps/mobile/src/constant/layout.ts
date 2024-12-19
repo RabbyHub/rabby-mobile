@@ -23,6 +23,7 @@ export const ScreenLayouts = {
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
+export const ASSETS_ITEM_HEIGHT = 68;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
