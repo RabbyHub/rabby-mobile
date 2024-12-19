@@ -626,7 +626,6 @@ export const useTokens2024 = (
 
     setLoading(true);
     log('======Start-Tokens======', userAddr);
-    console.log('🔍 CUSTOM_LOGGER:=>: loadProcess)');
     let _data = produce(walletProject, draft => {
       draft.netWorth = 0;
       draft._netWorth = '$0';
@@ -642,7 +641,6 @@ export const useTokens2024 = (
     setData(_data);
     const snapshot = await queryTokensCache(userAddr, isTestnet);
 
-    console.log('🔍 CUSTOM_LOGGER:=>: getUserTokenSettings)');
     const tokenSettings =
       (await preferenceService.getUserTokenSettings(userAddr)) || {};
 
@@ -674,7 +672,6 @@ export const useTokens2024 = (
       });
       setLoading(false);
     }
-    console.log('🔍 CUSTOM_LOGGER:=>: setLoading)', 1);
 
     const tokenRes = await batchQueryTokens(userAddr, chainServerId, isTestnet);
 
@@ -705,7 +702,6 @@ export const useTokens2024 = (
         list: [...filterDisplayToken2024(_tokens, chainServerId)],
       };
     });
-    console.log('🔍 CUSTOM_LOGGER:=>: setLoading)', 2);
 
     await loadCustomTestnetTokens();
 

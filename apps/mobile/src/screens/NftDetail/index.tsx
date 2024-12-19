@@ -50,12 +50,12 @@ export const NFTDetailScreen = () => {
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { token, collectionName } = useNavigationState(
+  const { token } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
   ) as {
     token: NFTItem;
-    collectionName: string;
   };
+  const collectionName = token?.collection?.name || '';
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (

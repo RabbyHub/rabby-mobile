@@ -30,6 +30,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { PinBadge } from '@/screens/Address/components/PinBadge';
 import { toast } from '@/components2024/Toast';
+import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -309,7 +310,7 @@ export default TokenRow;
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
-    height: 68,
+    height: ASSETS_ITEM_HEIGHT,
     width: '100%',
     paddingHorizontal: 20,
     flexGrow: 1,

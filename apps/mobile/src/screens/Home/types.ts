@@ -62,6 +62,10 @@ export type AbstractPortfolioToken = PortfolioItemToken & {
   _amountChangeUsdValueStr?: string;
   _usdValueChangePercent?: string;
   _realUsdValueChange?: number;
+  _isPined?: boolean;
+  _isFold?: boolean;
+  _isExcludeBalance?: boolean;
+  _pinIndex?: number;
 };
 
 export type PortfolioProject = {
