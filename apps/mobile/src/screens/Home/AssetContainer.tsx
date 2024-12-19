@@ -8,9 +8,16 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
-import { convertSmallTokenList } from './hooks/useMergeSmallTokens';
-import { AbstractPortfolioToken } from './types';
-import { SMALL_TOKEN_ID } from '@/utils/token';
+import {
+  convertDefiAssets,
+  convertSmallTokenList,
+} from './hooks/useMergeSmallTokens';
+import {
+  AbstractPortfolio,
+  AbstractPortfolioToken,
+  AbstractProject,
+} from './types';
+import { DEFI_ID, SMALL_TOKEN_ID } from '@/utils/token';
 import { findChain } from '@/utils/chain';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { RootNames } from '@/constant/layout';
@@ -18,7 +25,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
 
-import { TokenRow } from './components/AssetRenderItems';
+import { TokenRow, DefiRow } from './components/AssetRenderItems';
 interface Props {
   onRefresh(): void;
 }
@@ -28,13 +35,6 @@ const ITEM_HEIGHT = 68;
 const NFTAsset = ({ item }) => (
   <View>
     <Text>{item.name}</Text>
-  </View>
-);
-
-const DefiAsset = ({ item }) => (
-  <View>
-    <Text>{item.protocol}</Text>
-    <Text>{item.value}</Text>
   </View>
 );
 
@@ -48,9 +48,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     hasTokens,
     refreshPositions,
     isPortfoliosLoading,
+    portfolios,
+    hasPortfolios,
   } = useQueryProjects(currentAccount?.address, false, true);
   const sortTokens = useSortToken(tokens);
-  const [fold, setFold] = useState(true);
+  const [foldHideList, setFoldHideList] = useState(true);
+  const [foldDefi, setFoldDefi] = useState(true);
+  const [foldNft, setFoldNft] = useState(true);
 
   const {
     sheetModalRef: tokenDetailModalRef,
@@ -70,15 +74,19 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       data:
         convertSmallTokenList(sortTokens.filter(i => i._isFold))?.slice(
           0,
-          fold ? 1 : undefined,
+          foldHideList ? 1 : undefined,
+        ) || [],
+    },
+    {
+      type: 'defi',
+      data:
+        convertDefiAssets(portfolios || [])?.slice(
+          0,
+          foldDefi ? 1 : undefined,
         ) || [],
     },
     {
       type: 'nft',
-      data: [],
-    },
-    {
-      type: 'defi',
       data: [],
     },
   ];
@@ -86,7 +94,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
       if (token.id === SMALL_TOKEN_ID) {
-        setFold(pre => !pre);
+        setFoldHideList(pre => !pre);
         return;
       }
       if (
@@ -112,13 +120,33 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     [currentAccount, openTokenDetailPopup],
   );
 
+  const handleOpenDefiDetail = useCallback(
+    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      console.log('🔍 CUSTOM_LOGGER:=>: data)', data.id);
+      if (data.id === DEFI_ID) {
+        console.log('🔍 CUSTOM_LOGGER:=>: setFoldDefi)', 11);
+        setFoldDefi(pre => !pre);
+        return;
+      }
+      navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
+    },
+    [],
+  );
+
+  // TODO: 兼容token nft defi
   const ListEmptyComponent = useMemo(() => {
-    return isTokensLoading ? (
+    return isTokensLoading || isPortfoliosLoading ? (
       <PositionLoader space={8} />
-    ) : hasTokens && sortTokens.length > 0 ? null : (
+    ) : hasTokens && hasPortfolios && sortTokens.length > 0 ? null : (
       <EmptyHolder text="No Tokens" type="protocol" />
     );
-  }, [isTokensLoading, hasTokens, sortTokens.length]);
+  }, [
+    isTokensLoading,
+    isPortfoliosLoading,
+    hasTokens,
+    hasPortfolios,
+    sortTokens.length,
+  ]);
 
   const renderItem = ({ item, section }) => {
     switch (section.type) {
@@ -127,7 +155,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            fold={fold}
+            fold={foldHideList}
             address={currentAccount?.address}
             logoSize={40}
           />
@@ -137,7 +165,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            fold={fold}
+            fold={foldHideList}
             address={currentAccount?.address}
             logoSize={40}
           />
@@ -145,19 +173,30 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'nft':
         return <NFTAsset item={item} />;
       case 'defi':
-        return <DefiAsset item={item} />;
+        return (
+          <DefiRow
+            data={item}
+            fold={foldDefi}
+            onPress={() =>
+              handleOpenDefiDetail(item, [...(item._portfolios || [])])
+            }
+          />
+        );
       default:
         return null;
     }
   };
 
+  // TODO: 兼容token nft defi
   const refreshing = useMemo(() => {
     if ((sortTokens?.length || 0) > 0) {
+      return !!isPortfoliosLoading;
+    } else if ((portfolios?.length || 0) > 0) {
       return !!isPortfoliosLoading;
     } else {
       return false;
     }
-  }, [isPortfoliosLoading, sortTokens]);
+  }, [isPortfoliosLoading, portfolios?.length, sortTokens?.length]);
   const renderSectionHeader = ({ section }) => <Text>{section.type}</Text>;
 
   // TODO: 统一token ntf defi
@@ -188,6 +227,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         keyExtractor={item => item.id}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
+        stickySectionHeadersEnabled={false}
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}

@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { trigger } from 'react-native-haptic-feedback';
 import { navigate } from '@/utils/navigation';
-import { MemoItem } from '../Home/components/ProtocolList';
+import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import {
   AbstractPortfolio,
