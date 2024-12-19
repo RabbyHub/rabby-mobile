@@ -35,6 +35,7 @@ import { RcIconMore } from '@/assets/icons/home';
 import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useRefreshTags } from '../Home/hooks/token';
+import { toast } from '@/components2024/Toast';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
@@ -51,11 +52,14 @@ export const RightMore: React.FC<{
 }> = ({ token, address }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { refreshTags } = useRefreshTags();
+  const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: token._isFold ? 'UnFold' : 'Fold',
+        title: token._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
         icon: token._isFold
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
@@ -67,18 +71,22 @@ export const RightMore: React.FC<{
               tokenId: token._tokenId,
               chainId: token.chain,
             });
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
           } else {
             preferenceService.manualFoldToken(address, {
               tokenId: token._tokenId,
               chainId: token.chain,
             });
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
           refreshTags(address);
         },
       },
       {
-        title: token._isPined ? 'UnPin' : 'Pin',
+        title: token._isPined
+          ? t('page.tokenDetail.action.unpin')
+          : t('page.tokenDetail.action.pin'),
         icon: token._isPined
           ? isDarkTheme
             ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
@@ -96,18 +104,22 @@ export const RightMore: React.FC<{
               tokenId: token._tokenId,
               chainId: token.chain,
             });
+            toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
           } else {
             preferenceService.pinToken(address, {
               tokenId: token._tokenId,
               chainId: token.chain,
             });
+            toast.success(t('page.tokenDetail.actionsTips.pin_success'));
           }
           token._isPined = !token._isPined;
           refreshTags(address);
         },
       },
       {
-        title: token._isExcludeBalance ? 'Include Balance' : 'Exclude Balance',
+        title: token._isExcludeBalance
+          ? t('page.tokenDetail.action.includeBalance')
+          : t('page.tokenDetail.action.excludeBalance'),
         icon: token._isExcludeBalance
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
@@ -120,19 +132,25 @@ export const RightMore: React.FC<{
               chainid: token.chain,
               type: 'token',
             });
+            toast.success(
+              t('page.tokenDetail.actionsTips.includeBalance_success'),
+            );
           } else {
             preferenceService.excludeBalance(address, {
               id: token._tokenId,
               chainid: token.chain,
               type: 'token',
             });
+            toast.success(
+              t('page.tokenDetail.actionsTips.excludeBalance_success'),
+            );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
           refreshTags(address);
         },
       },
     ] as MenuAction[];
-  }, [token, isDarkTheme, refreshTags, address]);
+  }, [token, t, isDarkTheme, refreshTags, address]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
