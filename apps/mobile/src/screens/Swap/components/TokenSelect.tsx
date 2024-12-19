@@ -5,7 +5,7 @@ import React, {
   ComponentProps,
   useMemo,
 } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -14,7 +14,11 @@ import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
 import { useCurrentAccount } from '@/hooks/account';
-import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
+import {
+  abstractTokenToTokenItem,
+  getTokenSymbol,
+  SMALL_TOKEN_ID,
+} from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -24,6 +28,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { convertSmallTokenList } from '@/screens/Home/hooks/useMergeSmallTokens';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -54,7 +59,7 @@ const TokenSelect = ({
   onTokenChange,
   chainId,
   excludeTokens = defaultExcludeTokens,
-  type = 'default',
+  type = 'send',
   placeholder,
   hideChainIcon = true,
   value,
@@ -62,6 +67,7 @@ const TokenSelect = ({
   tokenRender,
   useSwapTokenList = false,
 }: TokenSelectProps) => {
+  const [fold, setFold] = useState(true);
   const [queryConds, setQueryConds] = useState({
     keyword: '',
     chainServerId: chainId,
@@ -74,7 +80,7 @@ const TokenSelect = ({
   const { currentAccount } = useCurrentAccount();
 
   // when no any queryConds
-  const { tokens: allTokens, isLoading: isLoadingAllTokens } = useTokens(
+  const { tokens: _allTokens, isLoading: isLoadingAllTokens } = useTokens(
     useSwapTokenList ? undefined : currentAccount?.address,
     undefined,
     tokenSelectorVisible,
@@ -99,11 +105,23 @@ const TokenSelect = ({
       tokenSelectorVisible,
     ]);
 
+  const allTokens = useSortToken(_allTokens);
+
+  // const allTokens = useMemo(() => {
+  //   const foldTokens = convertSmallTokenList(_allTokens.filter(i => i._isFold));
+  //   const unfoldTokens = _allTokens.filter(i => !i._isFold);
+
+  //   return [
+  //     ...(unfoldTokens || []),
+  //     ...(foldTokens?.slice(0, fold ? 1 : undefined) || []),
+  //   ];
+  // }, [_allTokens, fold]);
+
   const allDisplayTokens = useMemo(() => {
     if (useSwapTokenList) {
       return swapTokenList || [];
     }
-    return allTokens.map(abstractTokenToTokenItem);
+    return allTokens.filter(i => !i._isFold).map(abstractTokenToTokenItem);
   }, [allTokens, swapTokenList, useSwapTokenList]);
 
   const { isLoading: isSearchLoading, list: searchedTokenByQuery } =
@@ -133,6 +151,22 @@ const TokenSelect = ({
       },
     ).filter(e => !excludeTokens.includes(e.id));
   }, [allDisplayTokens, searchedTokenByQuery, excludeTokens, queryConds]);
+
+  const isFromModalType = useMemo(
+    () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
+    [type],
+  );
+
+  const foldTokensList = useMemo(() => {
+    if (!isFromModalType) {
+      return [];
+    }
+
+    const list = convertSmallTokenList(allTokens.filter(i => i._isFold)).map(
+      abstractTokenToTokenItem,
+    );
+    return list.filter(e => !excludeTokens.includes(e.id));
+  }, [allTokens, excludeTokens, isFromModalType]);
 
   const displayTokenList = useSortToken(availableToken);
 
@@ -187,8 +221,9 @@ const TokenSelect = ({
 
   return (
     <>
-      <TouchableView onPress={handleSelectToken}>
-        <View style={styles.wrapper}>
+      <TouchableOpacity onPress={handleSelectToken}>
+        <View
+          style={type === 'bridgeFrom' ? styles.bridgeWrapper : styles.wrapper}>
           {token ? (
             <>
               <View style={styles.token}>
@@ -213,17 +248,25 @@ const TokenSelect = ({
             </>
           )}
         </View>
-      </TouchableView>
+      </TouchableOpacity>
 
       <TokenSelectorSheetModal
         visible={tokenSelectorVisible}
         list={displayTokenList}
+        foldTokensList={foldTokensList}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
         type={type}
+        selectToken={token}
         placeholder={placeholder}
+        headerTitle={
+          <View style={styles.headerBox}>
+            <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
+            <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
+          </View>
+        }
         chainServerId={queryConds.chainServerId}
         disabledTips={'Not supported'}
         supportChains={SWAP_SUPPORT_CHAINS}
@@ -243,8 +286,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  bridgeWrapper: {
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-line'],
+    padding: 4,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   token: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -255,7 +306,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-    flex: 1,
+  },
+  headerBox: {
+    // paddingHorizontal: 16,
+    // height: 48,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    // borderTopWidth: 0,
+    backgroundColor: colors2024['neutral-bg-1'],
+    // borderBottomWidth: 0.5,
+    marginHorizontal: 24,
+  },
+  headerBoxText: {
+    fontSize: 17,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
   },
   selectText: {
     fontSize: 16,

@@ -140,7 +140,9 @@ export const getTokenName = async (
 };
 
 export const ellipsisTokenSymbol = (text: string, length = 6) => {
-  if (text?.length <= length) return text;
+  if (text?.length <= length) {
+    return text;
+  }
 
   const regexp = new RegExp(`^(.{${length}})(.*)$`);
   return text?.replace(regexp, '$1...');
@@ -179,6 +181,13 @@ export const abstractTokenToTokenItem = (
     time_at: token.time_at,
     price_24h_change: token.price_24h_change,
     low_credit_score: token?.low_credit_score,
+    isFakerFoldRow: token?.id === SMALL_TOKEN_ID,
+    smallTokenAllUsdValue:
+      token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
+    isPined: token?._isPined,
+    isFold: token?._isFold,
+    // _isExcludeBalance: token?.isExcludeBalance,
+    pinIndex: token?._pinIndex,
   };
 };
 

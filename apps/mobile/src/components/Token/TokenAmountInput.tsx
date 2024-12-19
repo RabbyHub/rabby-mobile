@@ -33,6 +33,7 @@ import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useFindChain } from '@/hooks/useFindChain';
+import { convertSmallTokenList } from '@/screens/Home/hooks/useMergeSmallTokens';
 
 function useLoadTokenList({
   externalChainServerId,
@@ -97,7 +98,7 @@ function useLoadTokenList({
     });
 
   const allDisplayTokens = useMemo(() => {
-    return allTokens.map(abstractTokenToTokenItem);
+    return allTokens.filter(i => !i._isFold).map(abstractTokenToTokenItem);
   }, [allTokens]);
 
   const { isLoading: isSearchLoading, list: searchedTokenByQuery } =
@@ -127,6 +128,13 @@ function useLoadTokenList({
 
   const { sortedList: displayTokenList } = useSortTokenPure(availableToken);
 
+  const foldTokensList = useMemo(() => {
+    const list = convertSmallTokenList(allTokens.filter(i => i._isFold)).map(
+      abstractTokenToTokenItem,
+    );
+    return list.filter(e => !excludeTokens.includes(e.id));
+  }, [allTokens, excludeTokens]);
+
   const isListLoading = useMemo(() => {
     if (isTestnet) {
       return isSearchTestnetLoading;
@@ -154,6 +162,7 @@ function useLoadTokenList({
 
   return {
     allDisplayTokens,
+    foldTokensList,
     isLoadingAllTokens,
 
     displayTokenList,
@@ -215,7 +224,6 @@ export const TokenAmountInput = React.forwardRef<
       inlinePrize,
       excludeTokens = [],
       style,
-      type = 'default',
       placeholder,
     },
     ref,
@@ -227,6 +235,7 @@ export const TokenAmountInput = React.forwardRef<
     const {
       isListLoading,
       displayTokenList,
+      foldTokensList,
 
       tokenInputRef,
 
@@ -333,11 +342,13 @@ export const TokenAmountInput = React.forwardRef<
         <TokenSelectorSheetModal
           visible={tokenSelectorVisible}
           list={isTestnet ? testnetTokenList : displayTokenList}
+          foldTokensList={foldTokensList}
           onConfirm={handleCurrentTokenChange}
           onCancel={handleTokenSelectorClose}
           onSearch={handleSearchTokens}
           isLoading={isListLoading}
-          type={type}
+          type={'send'}
+          selectToken={token}
           placeholder={placeholder}
           chainServerId={chainServerId}
         />
