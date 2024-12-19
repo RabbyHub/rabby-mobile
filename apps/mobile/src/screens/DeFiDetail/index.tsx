@@ -57,15 +57,15 @@ export const RightMore: React.FC<{
         action() {
           if (token._isExcludeBalance) {
             preferenceService.includeBalanceToken(address, {
-              id: token._tokenId,
+              id: token.id,
               chainid: token.chain,
-              type: 'token',
+              type: 'defi',
             });
           } else {
             preferenceService.excludeBalance(address, {
-              id: token._tokenId,
+              id: token.id,
               chainid: token.chain,
-              type: 'token',
+              type: 'defi',
             });
           }
           token._isExcludeBalance = !token._isExcludeBalance;

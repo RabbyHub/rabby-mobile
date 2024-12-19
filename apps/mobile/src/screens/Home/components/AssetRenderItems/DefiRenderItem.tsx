@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 
 import { AbstractProject } from '../../types';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,6 +9,20 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { DEFI_ID } from '@/utils/token';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import RcTipCC from '@/assets2024/icons/common/tips.svg';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { useTranslation } from 'react-i18next';
+
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
 
 const DefiRenderEntryItem = ({
   data,
@@ -20,6 +34,32 @@ const DefiRenderEntryItem = ({
   onPress?: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  const handleShowExcludeTips = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.DESCRIPTION,
+      title: t('page.tokenDetail.excludeBalanceTips'),
+      sections: [],
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        snapPoints: ['40%'],
+      },
+      nextButtonProps: {
+        title: (
+          <Text style={styles.modalNextButtonText}>
+            {t('page.tokenDetail.excludeBalanceTipsButton')}
+          </Text>
+        ),
+        titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+        onPress: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+      },
+    });
+  };
 
   if (data.id === DEFI_ID) {
     return (
@@ -57,7 +97,18 @@ const DefiRenderEntryItem = ({
         </Text>
       </View>
       <View style={styles.projectHeaderUsd}>
-        <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
+        <Text
+          style={[
+            styles.projectHeaderNetWorth,
+            data._isExcludeBalance && styles.exclude,
+          ]}>
+          {data._netWorth}
+        </Text>
+        {data._isExcludeBalance && data._netWorth && (
+          <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
+            <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -84,11 +135,11 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   projectHeaderUsd: {
-    alignSelf: 'flex-end',
+    justifyContent: 'center',
     flexShrink: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     height: 68,
+    gap: 4,
   },
   projectHeaderNetWorth: {
     color: ctx.colors2024['neutral-title-1'],
@@ -96,6 +147,13 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
+  },
+  exclude: {
+    color: ctx.colors2024['neutral-info'],
+  },
+  tips: {
+    width: 14,
+    height: 14,
   },
   headerWrapper: {
     display: 'flex',
@@ -127,6 +185,15 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   arrow: {},
+  modalNextButtonText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-InvertHighlight'],
+    backgroundColor: ctx.colors2024['brand-default'],
+  },
 }));
 
 export default DefiRenderEntryItem;

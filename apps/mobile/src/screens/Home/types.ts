@@ -29,6 +29,7 @@ export interface AbstractProject {
   _netWorthChange: string;
   _netWorthChangePercent: string;
   _intNetworth: string;
+  _isExcludeBalance?: boolean;
 }
 
 export interface AbstractPortfolio {
