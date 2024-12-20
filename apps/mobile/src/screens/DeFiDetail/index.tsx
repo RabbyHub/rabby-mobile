@@ -55,7 +55,9 @@ export const RightMore: React.FC<{
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
         key: 'balance',
-        androidIconName: 'ic_rabby_menu_more',
+        androidIconName: token._isExcludeBalance
+          ? 'ic_rabby_menu_include_balance'
+          : 'ic_rabby_menu_exclude_balance',
         action() {
           if (token._isExcludeBalance) {
             preferenceService.includeBalanceToken(address, {

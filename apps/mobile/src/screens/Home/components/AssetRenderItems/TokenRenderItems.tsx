@@ -129,7 +129,9 @@ const TokenRow = memo(
             : isDarkTheme
             ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
             : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-          androidIconName: 'ic_rabby_menu_edit',
+          androidIconName: data._isFold
+            ? 'ic_rabby_menu_unfold'
+            : 'ic_rabby_menu_fold',
           key: 'fold',
           action() {
             if (!address) {
