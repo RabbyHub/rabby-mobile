@@ -73,8 +73,8 @@ const DefiRenderEntryItem = ({
               styles.arrow,
               {
                 transform: fold
-                  ? [{ rotate: '270deg' }]
-                  : [{ rotate: '90deg' }],
+                  ? [{ rotate: '90deg' }]
+                  : [{ rotate: '270deg' }],
               },
             ]}
             color={colors2024['neutral-title-1']}
