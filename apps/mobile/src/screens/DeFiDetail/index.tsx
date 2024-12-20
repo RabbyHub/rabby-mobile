@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { trigger } from 'react-native-haptic-feedback';
 import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
+import { toast } from '@/components2024/Toast';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
@@ -65,12 +66,18 @@ export const RightMore: React.FC<{
               chainid: token.chain,
               type: 'defi',
             });
+            toast.success(
+              t('page.tokenDetail.actionsTips.includeBalance_success'),
+            );
           } else {
             preferenceService.excludeBalance(address, {
               id: token.id,
               chainid: token.chain,
               type: 'defi',
             });
+            toast.success(
+              t('page.tokenDetail.actionsTips.excludeBalance_success'),
+            );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
           refreshTags(address);
