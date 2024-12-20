@@ -28,9 +28,19 @@ import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 
+/**
+ * need password to decrypt the field in keyring
+ */
+// partial KeyringTypeName
+const PROTECTED_KEYRING_FIELD: Partial<Record<KeyringTypeName, string[]>> = {
+  [KEYRING_TYPE.SimpleKeyring]: ['privateKeys'],
+  [KEYRING_TYPE.HdKeyring]: ['mnemonic', 'passphrase'],
+};
+
 type KeyringState = {
   booted?: string;
   vault?: string;
+  unencryptedKeyringData?: KeyringSerializedData[];
 };
 
 type MemStoreState = {
@@ -80,9 +90,12 @@ export class KeyringService extends RNEventEmitter {
   #password: string | null = null;
 
   private readonly encryptor: EncryptorAdapter;
+
   private readonly contactService?: ContactBookService;
-  private onSetAddressAlias?: OnSetAddressAlias;
-  private onCreateKeyring?: OnCreateKeyring;
+
+  private readonly onSetAddressAlias?: OnSetAddressAlias;
+
+  private readonly onCreateKeyring?: OnCreateKeyring;
 
   constructor(
     options?: KeyringServiceOptions & {
@@ -119,6 +132,28 @@ export class KeyringService extends RNEventEmitter {
     this.store = new ObservableStore({
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
+      unencryptedKeyringData: initState.unencryptedKeyringData || undefined,
+    });
+
+    if (initState.unencryptedKeyringData) {
+      this.#restoreUnencryptedKeyringData(initState.unencryptedKeyringData);
+    }
+  }
+
+  #restoreUnencryptedKeyringData(
+    unencryptedKeyringData?: KeyringSerializedData[],
+  ) {
+    if (!unencryptedKeyringData) {
+      return;
+    }
+
+    // eslint-disable-next-line no-void
+    void Promise.all(
+      unencryptedKeyringData.map(data => {
+        return this.restoreKeyring(data);
+      }),
+    ).then((result: KeyringInstance[]) => {
+      this.keyrings = result;
     });
   }
 
@@ -166,7 +201,6 @@ export class KeyringService extends RNEventEmitter {
 
   /**
    * @description on no keyrings stored, force reset password
-   *
    * @param newPassword
    */
   async resetPassword(newPassword: string) {
@@ -709,7 +743,7 @@ export class KeyringService extends RNEventEmitter {
       );
     }
 
-    return Promise.all(
+    const serializedKeyrings = await Promise.all(
       this.keyrings.map(async keyring => {
         return Promise.all([keyring.type, keyring.serialize()]).then(
           serializedKeyringArray => {
@@ -717,21 +751,31 @@ export class KeyringService extends RNEventEmitter {
             return {
               type: serializedKeyringArray[0],
               data: serializedKeyringArray[1],
-            };
+            } as KeyringSerializedData;
           },
         );
       }),
-    )
-      .then(serializedKeyrings => {
-        return this.encryptor.encrypt(
-          this.#password as string,
-          serializedKeyrings as unknown as Buffer,
-        );
-      })
-      .then(encryptedString => {
-        this.store.updateState({ vault: encryptedString });
-        return true;
-      });
+    );
+
+    const unencryptedKeyringData = serializedKeyrings.map(({ type, data }) => {
+      const protectedFields = PROTECTED_KEYRING_FIELD[type];
+      const newData = { ...data };
+      if (protectedFields) {
+        protectedFields.forEach(field => {
+          delete newData[field];
+        });
+      }
+      return { type, data: newData };
+    });
+
+    const encryptedString = await this.encryptor.encrypt(
+      this.#password as string,
+      serializedKeyrings as unknown as Buffer,
+    );
+
+    this.store.updateState({ vault: encryptedString, unencryptedKeyringData });
+
+    return true;
   }
 
   /**
@@ -1023,10 +1067,7 @@ export class KeyringService extends RNEventEmitter {
     return bip39.generateMnemonic(wordlist);
   }
 
-  async generatePreMnemonic(options?: {
-    /** @default {true} */
-    persist?: boolean;
-  }): Promise<string> {
+  async generatePreMnemonic(): Promise<string> {
     if (!this.#password) {
       throw new Error('background.error.unlock');
     }
@@ -1112,6 +1153,10 @@ export class KeyringService extends RNEventEmitter {
         ...keryings.map(item => (item as any).index),
         keryings.length - 1,
       ) + 1;
+  }
+
+  DEV_GET_UNENCRYPTED_KEYRING_DATA() {
+    return this.store.getState().unencryptedKeyringData;
   }
 }
 /* eslint-enable jsdoc/check-tag-names */
