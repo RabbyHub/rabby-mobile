@@ -123,7 +123,11 @@ const TokenRow = memo(
             ? t('page.tokenDetail.action.unfold')
             : t('page.tokenDetail.action.fold'),
           icon: data._isFold
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+            ? isDarkTheme
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+            : isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
             : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
           androidIconName: 'ic_rabby_menu_edit',
           key: 'fold',

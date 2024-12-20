@@ -1,9 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import dayjs from 'dayjs';
-import { StyleSheet, View, ScrollView } from 'react-native';
-import BigNumber from 'bignumber.js';
-import { getCHAIN_ID_LIST } from '@/constant/projectLists';
-import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
+import { View, ScrollView } from 'react-native';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
 import { RootNames } from '@/constant/layout';
@@ -12,11 +9,8 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Button } from '@/components2024/Button';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { trigger } from 'react-native-haptic-feedback';
-import { navigate } from '@/utils/navigation';
 import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import {
@@ -44,13 +38,21 @@ export const RightMore: React.FC<{
   address: string;
 }> = ({ token, address }) => {
   const { refreshTags } = useRefreshTags();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+  const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: token._isExcludeBalance ? 'Include Balance' : 'Exclude Balance',
+        title: token._isExcludeBalance
+          ? t('page.tokenDetail.action.includeBalance')
+          : t('page.tokenDetail.action.excludeBalance'),
         icon: token._isExcludeBalance
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
         key: 'balance',
         androidIconName: 'ic_rabby_menu_more',
@@ -73,7 +75,7 @@ export const RightMore: React.FC<{
         },
       },
     ] as MenuAction[];
-  }, [token, refreshTags, address]);
+  }, [token, t, isDarkTheme, refreshTags, address]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -95,9 +97,7 @@ export const RightMore: React.FC<{
 };
 
 export const DeFiDetailScreen = () => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const { currentAccount } = useCurrentAccount();
   const { data, portfolioList, account } = useNavigationState(
@@ -177,7 +177,7 @@ export const DeFiDetailScreen = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scrollContainer: {
     flex: 1,
     width: '100%',
