@@ -63,25 +63,12 @@ const filterDisplayToken = (
   });
 };
 
-const filterDisplayToken2024 = (
-  tokens: AbstractPortfolioToken[],
-  chainServerId?: string,
-) => {
-  if (chainServerId) {
-    return tokens.filter(token => {
-      return (
-        findChain({
-          serverId: token.chain,
-        }) && token.chain === chainServerId
-      );
+const filterDisplayToken2024 = (tokens: AbstractPortfolioToken[]) => {
+  return tokens.filter(token => {
+    return findChain({
+      serverId: token.chain,
     });
-  } else {
-    return tokens.filter(token => {
-      return findChain({
-        serverId: token.chain,
-      });
-    });
-  }
+  });
 };
 
 export const mainnetTokensAtom = atom({
@@ -667,7 +654,7 @@ export const useTokens2024 = (
       setMainnetTokens(prev => {
         return {
           ...prev,
-          list: filterDisplayToken2024(_tokens, chainServerId),
+          list: filterDisplayToken2024(_tokens),
         };
       });
       setLoading(false);
@@ -699,7 +686,7 @@ export const useTokens2024 = (
     setMainnetTokens(prev => {
       return {
         ...prev,
-        list: [...filterDisplayToken2024(_tokens, chainServerId)],
+        list: [...filterDisplayToken2024(_tokens)],
       };
     });
 

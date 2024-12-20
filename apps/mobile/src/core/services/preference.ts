@@ -822,6 +822,6 @@ export class PreferenceService {
   /** =========toggle include or exclude token end =========== */
 
   getUserTokenSettings = async (address: string) => {
-    return this.store.tokenManageSettingMap[address.toLowerCase()];
+    return this.store.tokenManageSettingMap[address.toLowerCase()] || {};
   };
 }

@@ -108,16 +108,6 @@ const TokenSelect = ({
 
   const allTokens = useSortToken(_allTokens);
 
-  // const allTokens = useMemo(() => {
-  //   const foldTokens = convertSmallTokenList(_allTokens.filter(i => i._isFold));
-  //   const unfoldTokens = _allTokens.filter(i => !i._isFold);
-
-  //   return [
-  //     ...(unfoldTokens || []),
-  //     ...(foldTokens?.slice(0, fold ? 1 : undefined) || []),
-  //   ];
-  // }, [_allTokens, fold]);
-
   const allDisplayTokens = useMemo(() => {
     if (useSwapTokenList) {
       return swapTokenList || [];
@@ -163,11 +153,11 @@ const TokenSelect = ({
       return [];
     }
 
-    const list = convertSmallTokenList(allTokens.filter(i => i._isFold)).map(
-      abstractTokenToTokenItem,
-    );
+    const list = convertSmallTokenList(
+      allTokens.filter(i => i._isFold && i.chain === queryConds.chainServerId),
+    ).map(abstractTokenToTokenItem);
     return list.filter(e => !excludeTokens.includes(e.id));
-  }, [allTokens, excludeTokens, isFromModalType]);
+  }, [allTokens, excludeTokens, isFromModalType, queryConds.chainServerId]);
 
   const displayTokenList = useSortToken(availableToken);
 
