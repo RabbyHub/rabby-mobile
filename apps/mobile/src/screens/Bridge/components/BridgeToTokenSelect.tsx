@@ -206,7 +206,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   headerBox: {
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     height: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -216,10 +216,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // borderTopWidth: 0,
     backgroundColor: colors2024['neutral-bg-1'],
     // borderBottomWidth: 0.5,
-    borderWidth: 1,
+    // borderWidth: 1,
     marginHorizontal: 24,
     // borderTopColor: 'transparent',
-    borderColor: colors2024['neutral-line'],
+    // borderColor: colors2024['neutral-line'],
   },
   headerBoxText: {
     fontSize: 17,
