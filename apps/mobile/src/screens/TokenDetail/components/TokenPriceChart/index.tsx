@@ -99,7 +99,7 @@ export function TokenPriceChart(props: Props) {
   const currentInfo = useMemo(() => {
     return {
       date: dayjs().format(DATE_FORMATTER),
-      balance: '$' + formatPrice(token.price || 0),
+      balance: '$' + formatPrice(token.price || 0, 8),
       isLoss: !!data?.isLoss,
       percent: percent,
     };
