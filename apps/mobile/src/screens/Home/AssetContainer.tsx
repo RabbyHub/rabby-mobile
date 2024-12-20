@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -138,14 +138,26 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     navigate(RootNames.NftDetail, { token: item });
   };
 
-  // TODO: 空状态文案
   const ListEmptyComponent = useMemo(() => {
     return loading ? (
       <PositionLoader space={8} />
     ) : hasAssets ? null : (
-      <EmptyHolder text="No Assets" type="protocol" />
+      <View style={styles.emptyHolder}>
+        <EmptyHolder
+          imgStyle={styles.emptyImg}
+          textStyle={styles.emptyText}
+          text="No Assets"
+          type="default"
+        />
+      </View>
     );
-  }, [loading, hasAssets]);
+  }, [
+    loading,
+    hasAssets,
+    styles.emptyHolder,
+    styles.emptyImg,
+    styles.emptyText,
+  ]);
 
   const renderItem = ({ item, section }) => {
     switch (section.type) {
@@ -207,7 +219,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   return (
     <>
       <SectionList
-        sections={sections}
+        sections={sections.filter(i => i.data.length)}
         renderItem={renderItem}
         ListHeaderComponent={() => <HomeTopArea />}
         showsVerticalScrollIndicator={false}
@@ -250,5 +262,20 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  emptyHolder: {
+    marginTop: 65,
+  },
+  emptyImg: {
+    width: 160,
+    height: 117,
+  },
+  emptyText: {
+    marginTop: 21,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-info'],
   },
 }));
