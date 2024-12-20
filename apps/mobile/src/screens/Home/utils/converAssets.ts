@@ -12,7 +12,10 @@ const SMALL_TOKEN = {
 } as AbstractPortfolioToken;
 export const convertSmallTokenList = (tokens?: AbstractPortfolioToken[]) => {
   const tokensTotalValue = tokens
-    ?.reduce((acc, item) => acc.plus(item._usdValue || 0), new BigNumber(0))
+    ?.reduce(
+      (acc, item) => acc.plus(item._isExcludeBalance ? 0 : item._usdValue || 0),
+      new BigNumber(0),
+    )
     .toNumber();
   return tokens?.length
     ? [
@@ -28,12 +31,15 @@ export const convertSmallTokenList = (tokens?: AbstractPortfolioToken[]) => {
 export const convertDefiAssets = (portfolios: DisplayedProject[]) => {
   let tokensTotalValue = 0;
   portfolios.forEach(portfolio => {
-    tokensTotalValue += portfolio._portfolios
-      ?.reduce(
-        (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
-        new BigNumber(0),
-      )
-      .toNumber();
+    // portfolio._isExcludeBalance
+    tokensTotalValue += portfolio._isExcludeBalance
+      ? 0
+      : portfolio._portfolios
+          ?.reduce(
+            (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
+            new BigNumber(0),
+          )
+          .toNumber();
   });
   return portfolios?.length
     ? [
