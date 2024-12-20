@@ -130,11 +130,11 @@ function useLoadTokenList({
   const { sortedList: displayTokenList } = useSortTokenPure(availableToken);
 
   const foldTokensList = useMemo(() => {
-    const list = convertSmallTokenList(allTokens.filter(i => i._isFold)).map(
-      abstractTokenToTokenItem,
-    );
+    const list = convertSmallTokenList(
+      allTokens.filter(i => i._isFold && i.chain === chainServerId),
+    ).map(abstractTokenToTokenItem);
     return list.filter(e => !excludeTokens.includes(e.id));
-  }, [allTokens, excludeTokens]);
+  }, [allTokens, excludeTokens, chainServerId]);
 
   const isListLoading = useMemo(() => {
     if (isTestnet) {
