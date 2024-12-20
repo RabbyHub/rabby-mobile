@@ -290,7 +290,9 @@ const TokenRow = memo(
                 data._amountStr
                   ? styles.tokenRowAmount
                   : styles.tokenRowUsdValue,
-                data._isExcludeBalance && styles.exclude,
+                data._isExcludeBalance &&
+                  (data._usdValue || 0) > 0 &&
+                  styles.exclude,
               ]}>
               {data._usdValueStr}
             </Text>
@@ -306,7 +308,9 @@ const TokenRow = memo(
             ) : data._amountStr ? (
               <Text
                 style={StyleSheet.compose(styles.percent, {
-                  ...(data._isExcludeBalance ? styles.exclude : {}),
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
                   color: percentColor,
                 })}>
                 {formatPercentage(data.price_24h_change || 0)}
