@@ -364,7 +364,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     height: 36,
-    width: 120,
+    width: 100,
     justifyContent: 'center',
     borderRadius: 100,
     display: 'flex',
