@@ -433,7 +433,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           <View style={[styles.titleArea, styles.internalBlock]}>
             <BottomSheetHandlableView>
               <Text style={[styles.modalTitle, styles.modalMainTitle]}>
-                Select a token
+                {t('page.swap.select-token')}
               </Text>
             </BottomSheetHandlableView>
 
