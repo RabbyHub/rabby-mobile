@@ -534,8 +534,7 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingTop: 24,
     paddingBottom: 26,
-    paddingRight: 16,
-    paddingLeft: 18,
+    paddingHorizontal: 8,
     marginTop: 12,
     marginBottom: 12,
     borderRadius: 24,
