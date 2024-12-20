@@ -61,7 +61,11 @@ export const RightMore: React.FC<{
           ? t('page.tokenDetail.action.unfold')
           : t('page.tokenDetail.action.fold'),
         icon: token._isFold
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
         androidIconName: 'ic_rabby_menu_edit',
         key: 'fold',
@@ -121,7 +125,11 @@ export const RightMore: React.FC<{
           ? t('page.tokenDetail.action.includeBalance')
           : t('page.tokenDetail.action.excludeBalance'),
         icon: token._isExcludeBalance
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
         key: 'balance',
         androidIconName: 'ic_rabby_menu_more',
