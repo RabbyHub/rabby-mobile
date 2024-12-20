@@ -187,7 +187,7 @@ export const abstractTokenToTokenItem = (
       token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
     isPined: token?._isPined,
     isFold: token?._isFold,
-    // _isExcludeBalance: token?.isExcludeBalance,
+    isExcludeBalance: token?._isExcludeBalance,
     pinIndex: token?._pinIndex,
   };
 };

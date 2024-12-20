@@ -30,7 +30,6 @@ import { AssetAvatar } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
-
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
@@ -159,8 +158,6 @@ const TokenSelect = ({
     return list.filter(e => !excludeTokens.includes(e.id));
   }, [allTokens, excludeTokens, isFromModalType, queryConds.chainServerId]);
 
-  const displayTokenList = useSortToken(availableToken);
-
   const isListLoading = queryConds.keyword
     ? isSearchLoading
     : useSwapTokenList
@@ -232,7 +229,11 @@ const TokenSelect = ({
             </>
           ) : (
             <>
-              <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
+              <Text style={styles.selectText}>
+                {type === 'bridgeFrom'
+                  ? t('page.bridge.Select')
+                  : t('page.swap.select-token')}
+              </Text>
               <RcIconSwapBottomArrow />
             </>
           )}
@@ -241,7 +242,7 @@ const TokenSelect = ({
 
       <TokenSelectorSheetModal
         visible={tokenSelectorVisible}
-        list={displayTokenList}
+        list={availableToken}
         foldTokensList={foldTokensList}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}

@@ -11,6 +11,7 @@ import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
 } from '@gorhom/bottom-sheet';
+import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
@@ -41,11 +42,24 @@ import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { PinBadge } from '@/screens/Address/components/PinBadge';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { useMemoizedFn } from 'ahooks';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
 
 const ITEM_HEIGHT = 72;
+
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
 
 interface SearchCallbackCtx {
   chainServerId?: Chain['serverId'] | null;
@@ -119,6 +133,31 @@ export const TokenSelectorSheetModal = React.forwardRef<
         setFold(true);
       }
     }, [visible, toggleShowSheetModal]);
+
+    const handleShowExcludeTips = useMemoizedFn(() => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: t('page.tokenDetail.excludeBalanceTips'),
+        sections: [],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['40%'],
+        },
+        nextButtonProps: {
+          title: (
+            <Text style={styles.modalNextButtonText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    });
 
     const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -288,6 +327,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           !!supportChains?.length &&
           currentChainItem &&
           !supportChains.includes(currentChainItem.enum);
+
+        const isExcludeBalanceShowTips =
+          token.$origin.isExcludeBalance &&
+          isFromModalType &&
+          (token._netWorth || 0) > 0;
+
         if (token.$origin.isFakerFoldRow) {
           return (
             <View style={StyleSheet.flatten([styles.tokenRowWrap])}>
@@ -389,9 +434,26 @@ export const TokenSelectorSheetModal = React.forwardRef<
               </View>
             ) : (
               <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                <Text style={styles.tokenHeaderAmount}>{token._amount}</Text>
+                <Text
+                  style={[
+                    styles.tokenHeaderAmount,
+                    isExcludeBalanceShowTips && styles.textSecondary,
+                  ]}>
+                  {token._amount}
+                </Text>
                 <Text style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
-                  {token._netWorthStr}
+                  {isExcludeBalanceShowTips ? (
+                    <TouchableOpacity
+                      hitSlop={hitSlop}
+                      onPress={handleShowExcludeTips}>
+                      <RcTipCC
+                        style={styles.tips}
+                        color={colors2024['neutral-info']}
+                      />
+                    </TouchableOpacity>
+                  ) : (
+                    token._netWorthStr
+                  )}
                 </Text>
               </View>
             )}
@@ -399,6 +461,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         );
       },
       [
+        handleShowExcludeTips,
+        isFromModalType,
         isLoading,
         supportChains,
         disabledTips,
@@ -511,7 +575,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     tokenRowUsdValue: {
       textAlign: 'right',
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-title-1'],
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '500',
@@ -651,6 +715,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       // borderWidth: 1,
       // borderColor: 'blue',
     },
+    tips: {
+      width: 14,
+      height: 14,
+    },
     tokenItemDisabled: { opacity: 0.5 },
     tokenLeft: {
       flexDirection: 'row',
@@ -694,6 +762,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',
     },
+    textSecondary: {
+      color: colors2024['neutral-secondary'],
+    },
     isSelected: {
       backgroundColor: colors2024['brand-light-1'],
       marginHorizontal: 12,
@@ -716,6 +787,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 22,
       fontSize: 17,
       color: colors2024['neutral-title-1'],
+    },
+    modalNextButtonText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '700',
+      lineHeight: 24,
+      textAlign: 'center',
+      color: colors2024['neutral-InvertHighlight'],
+      backgroundColor: colors2024['brand-default'],
     },
   };
 });
