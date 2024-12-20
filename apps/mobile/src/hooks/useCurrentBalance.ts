@@ -81,7 +81,6 @@ export default function useCurrentBalance(
     } catch (e) {
       setBalanceLoading(false);
       try {
-        // TODO: FIX 405
         const { error_code, err_chain_ids } = JSON.parse((e as Error).message);
         if (error_code === 2) {
           const chainNames = err_chain_ids.map((serverId: string) => {

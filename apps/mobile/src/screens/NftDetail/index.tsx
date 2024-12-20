@@ -55,7 +55,7 @@ export const NFTDetailScreen = () => {
   ) as {
     token: NFTItem;
   };
-  const collectionName = token?.collection?.name || '';
+  const collectionName = token.contract_name || token?.collection?.name || '';
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
