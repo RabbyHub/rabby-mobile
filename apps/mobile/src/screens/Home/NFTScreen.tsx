@@ -201,11 +201,14 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
     fallList: sectionList,
     simulateLoadNext: goToNextSectionList,
     isFetchingNextPage,
+    isReachTheEnd,
   } = usePsudoPagination(fullSectionList, { pageSize: 8 });
 
   const onEndReached = useCallback(() => {
-    goToNextSectionList();
-  }, [goToNextSectionList]);
+    if (!isReachTheEnd) {
+      goToNextSectionList();
+    }
+  }, [goToNextSectionList, isReachTheEnd]);
 
   const renderItem: Exclude<
     SectionListProps<NFTItem[], { collection?: CollectionList }>['renderItem'],
