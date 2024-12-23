@@ -21,12 +21,12 @@ export const TIME_TAB_LIST = [
   {
     label: '1 Month',
     key: '1M' as const,
-    value: [dayjs().add(-30, 'd'), dayjs()],
+    value: [dayjs().add(-1, 'month'), dayjs()],
   },
   {
     label: '1 Year',
     key: '1Y' as const,
-    value: [dayjs().add(-90, 'd'), dayjs()],
+    value: [dayjs().add(-1, 'year'), dayjs()],
   },
   {
     label: 'Max',

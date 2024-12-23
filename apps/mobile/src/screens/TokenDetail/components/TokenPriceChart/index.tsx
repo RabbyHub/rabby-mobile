@@ -52,7 +52,7 @@ export function TokenPriceChart(props: Props) {
 
   const timeMachMapping = useMemo(() => {
     let result = {} as Record<
-      Exclude<TabKey, '24h' | '1W'>,
+      Exclude<TabKey, '24h'>,
       ReturnType<typeof formatTokenDateCurve>
     >;
     TIME_TAB_LIST.forEach(e => {
