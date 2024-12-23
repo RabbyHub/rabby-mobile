@@ -130,7 +130,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   );
 
   const handlePressNft = (item: NFTItem) => {
-    console.log('🔍 CUSTOM_LOGGER:=>: item)', item.collection);
+    console.log('🔍 CUSTOM_LOGGER:=>: item)', item);
     if (item.id === NFT_ID) {
       setFoldNft(pre => !pre);
       return;
@@ -226,7 +226,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         contentContainerStyle={styles.bgContainer}
         // TODO: 统一id，token nft defi
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
-        windowSize={5}
+        windowSize={10}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}

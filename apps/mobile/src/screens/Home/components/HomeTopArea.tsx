@@ -533,10 +533,8 @@ const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingTop: 24,
-    paddingBottom: 26,
+    paddingBottom: 20,
     paddingHorizontal: 8,
-    marginTop: 12,
-    marginBottom: 12,
     borderRadius: 24,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     overflow: 'hidden',

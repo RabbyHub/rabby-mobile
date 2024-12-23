@@ -61,9 +61,9 @@ const NftRow = ({
             ])}>
             <Media
               failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
-              type={item?.content_type as MEDIA_TYPE}
-              src={isSvgURL ? '' : item?.content}
-              thumbnail={isSvgURL ? '' : item?.content}
+              type="image_url"
+              src={isSvgURL ? '' : item?.thumbnail_url}
+              thumbnail={isSvgURL ? '' : item?.thumbnail_url}
               mediaStyle={styles.images}
               style={styles.images}
               playIconSize={36}

@@ -3,7 +3,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const useQueryNft = (addr?: string) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const preAddressRef = useRef<string>();
   const [list, setList] = useState<NFTItem[]>([]);
 
