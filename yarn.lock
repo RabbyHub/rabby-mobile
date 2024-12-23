@@ -6506,10 +6506,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-sign-bvm@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@rabby-wallet/rabby-sign-bvm@npm:0.1.0"
-  checksum: 9a3881225058962c7d8b4a8bf07bd5fc909d71411c8c9f0db2d3efa3911c6d0e57c84f88f9e3fe37dcd0a282025a1912af19e3ced3667bb8076f1c74025c75d4
+"@rabby-wallet/rabby-sign-bvm@npm:0.1.1-alpha.0":
+  version: 0.1.1-alpha.0
+  resolution: "@rabby-wallet/rabby-sign-bvm@npm:0.1.1-alpha.0"
+  checksum: 7898924a866252f6bb637f82874a4ca511f27d0813485072c6682a1d352eed79d2c753f291f40e65711cc65b7d88bfb89cc82f46a02fb792fc357fdf7cb25d68
   languageName: node
   linkType: hard
 
@@ -27492,7 +27492,7 @@ __metadata:
     "@rabby-wallet/rabby-action": 0.1.8
     "@rabby-wallet/rabby-api": 0.9.4
     "@rabby-wallet/rabby-security-engine": 2.0.7
-    "@rabby-wallet/rabby-sign-bvm": 0.1.0
+    "@rabby-wallet/rabby-sign-bvm": 0.1.1-alpha.0
     "@rabby-wallet/rabby-swap": 0.0.43
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
