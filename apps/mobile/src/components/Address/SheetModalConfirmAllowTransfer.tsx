@@ -125,6 +125,9 @@ export function ModalConfirmAllowTransfer({
         return false;
       }
     } else if (isUseBuiltinPwd) {
+      if (toAddr && confirmToAddToWhitelist) {
+        await addWhitelist(toAddr, { hasValidated: true });
+      }
       onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
     }
   }, [
@@ -132,8 +135,10 @@ export function ModalConfirmAllowTransfer({
     isUseBuiltinPwd,
     formik,
     onValidatedPassword,
-    onFinished,
+    toAddr,
     confirmToAddToWhitelist,
+    onFinished,
+    addWhitelist,
   ]);
 
   const {
