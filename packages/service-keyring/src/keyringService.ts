@@ -28,14 +28,10 @@ import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 
-/**
- * need password to decrypt the field in keyring
- */
-// partial KeyringTypeName
-const PROTECTED_KEYRING_FIELD: Partial<Record<KeyringTypeName, string[]>> = {
-  [KEYRING_TYPE.SimpleKeyring]: ['privateKeys'],
-  [KEYRING_TYPE.HdKeyring]: ['mnemonic', 'passphrase'],
-};
+const UNENCRYPTED_IGNORE_KEYRING = [
+  KEYRING_TYPE.SimpleKeyring,
+  KEYRING_TYPE.HdKeyring,
+];
 
 type KeyringState = {
   booted?: string;
@@ -133,27 +129,6 @@ export class KeyringService extends RNEventEmitter {
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
       unencryptedKeyringData: initState.unencryptedKeyringData || undefined,
-    });
-
-    if (initState.unencryptedKeyringData) {
-      this.#restoreUnencryptedKeyringData(initState.unencryptedKeyringData);
-    }
-  }
-
-  #restoreUnencryptedKeyringData(
-    unencryptedKeyringData?: KeyringSerializedData[],
-  ) {
-    if (!unencryptedKeyringData) {
-      return;
-    }
-
-    // eslint-disable-next-line no-void
-    void Promise.all(
-      unencryptedKeyringData.map(data => {
-        return this.restoreKeyring(data);
-      }),
-    ).then((result: KeyringInstance[]) => {
-      this.keyrings = result;
     });
   }
 
@@ -404,6 +379,11 @@ export class KeyringService extends RNEventEmitter {
     } finally {
       this.setUnlocked();
       this._isSubmittingPassword = false;
+    }
+
+    // force store unencrypted keyring data if not exist
+    if (!this.store.getState().unencryptedKeyringData) {
+      await this.persistAllKeyrings();
     }
 
     return this.fullUpdate();
@@ -757,16 +737,14 @@ export class KeyringService extends RNEventEmitter {
       }),
     );
 
-    const unencryptedKeyringData = serializedKeyrings.map(({ type, data }) => {
-      const protectedFields = PROTECTED_KEYRING_FIELD[type];
-      const newData = { ...data };
-      if (protectedFields) {
-        protectedFields.forEach(field => {
-          delete newData[field];
-        });
-      }
-      return { type, data: newData };
-    });
+    const unencryptedKeyringData = serializedKeyrings
+      .map(({ type, data }) => {
+        if (!UNENCRYPTED_IGNORE_KEYRING.includes(type as any)) {
+          return { type, data };
+        }
+        return undefined;
+      })
+      .filter(Boolean) as KeyringSerializedData[];
 
     const encryptedString = await this.encryptor.encrypt(
       this.#password as string,
