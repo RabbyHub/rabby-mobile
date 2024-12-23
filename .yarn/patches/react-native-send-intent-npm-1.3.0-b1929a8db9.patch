@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 438626019547de7d0df79575dc1eb770eeb165c0..0350996c19036be0ec33420eece885d8062d03e0 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -9,6 +9,7 @@ def _minSdkVersion = _ext.has('minSdkVersion') ? _ext.minSdkVersion : 16;
+ def _targetSdkVersion = _ext.has('targetSdkVersion') ? _ext.targetSdkVersion : 22;
+
+ android {
++    namespace 'com.burnweb.rnsendintent'
+     compileSdkVersion _compileSdkVersion
+     buildToolsVersion _buildToolsVersion
+

@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index c1dca206f034a6ffa660715a300facaab33fa436..4859e66340d46441a2e0c40b9758c73a0db34cb4 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -23,6 +23,7 @@ def getExtValue(rootProject,key,defaultValue ) {
+ }
+ 
+ android {
++    namespace 'com.masteratul.exceptionhandler'
+     compileSdkVersion getExtValue(rootProject,'compileSdkVersion',23)
+     buildToolsVersion getExtValue(rootProject,'buildToolsVersion', "23.0.1")
+ 

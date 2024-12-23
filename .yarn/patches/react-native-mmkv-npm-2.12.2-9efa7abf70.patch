@@ -1,3 +1,30 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index d91238762ab58c649b262f1135588b765db235b8..c971238b22e5bd026d1343fbbc82e0f7515b445b 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -20,7 +20,7 @@ buildscript {
+ 
+ def resolveBuildType() {
+     Gradle gradle = getGradle()
+-    String tskReqStr = gradle.getStartParameter().getTaskRequests()['args'].toString()
++    def tskReqStr = gradle.getStartParameter().getTaskRequests()['args'].toString()
+ 
+     return tskReqStr.contains('Release') ? 'release' : 'debug'
+ }
+@@ -53,9 +53,10 @@ repositories {
+ 
+ android {
+   compileSdkVersion safeExtGet("compileSdkVersion", 28)
+-  if (agpVersionMajor >= 7) {
+-    namespace = "com.reactnativemmkv"
+-  }
++  // if (agpVersionMajor >= 7) {
++  //   namespace = "com.reactnativemmkv"
++  // }
++  namespace "com.reactnativemmkv"
+ 
+   if (agpVersionMajor >= 8) {
+       buildFeatures {
 diff --git a/android/src/main/cpp/MmkvHostObject.cpp b/android/src/main/cpp/MmkvHostObject.cpp
 index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..ce8da605bb28830cfb50c099eaa4dd42bba2ae6a 100644
 --- a/android/src/main/cpp/MmkvHostObject.cpp

@@ -1,3 +1,15 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index ce6b4f107c44c80a7101eac44f134b9e744f7e5d..0ef554b8d6387494e8f92b85f296a5ecd1baa647 100755
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -17,6 +17,7 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ android {
++  namespace 'com.oblador.keychain'
+   compileSdkVersion safeExtGet('compileSdkVersion', 30)
+   buildToolsVersion safeExtGet('buildToolsVersion', '30.0.2')
+ 
 diff --git a/android/src/main/java/com/oblador/keychain/KeychainModule.java b/android/src/main/java/com/oblador/keychain/KeychainModule.java
 index 6ca68cb043c1d3b8396fe08abbe21ef859fd4159..4c71995628930b663166d5f0f375fce85f01586b 100644
 --- a/android/src/main/java/com/oblador/keychain/KeychainModule.java

@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 5400528c91eff59ed7b480bc10cf1688f4326f14..986a25afa0688c82511f795be418911b16ab045b 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -7,6 +7,7 @@ def DEFAULT_TARGET_SDK_VERSION = 26
+ def DEFAULT_MIN_SDK_VERSION = 16
+ 
+ android {
++    namespace 'io.xogus.reactnative.versioncheck'
+     compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
+     buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
+ 

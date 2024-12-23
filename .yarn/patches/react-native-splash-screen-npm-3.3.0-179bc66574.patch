@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index baef1a9ca0751a359b075ba2bdd7bef79226d93d..f497d6030d94222fb58943325977eba55a13b59c 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -10,6 +10,7 @@ def DEFAULT_TARGET_SDK_VERSION              = 26
+ def DEFAULT_SUPPORT_LIB_VERSION             = "26.1.0"
+ 
+ android {
++    namespace 'org.devio.rn.splashscreen'
+     compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
+     buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
+ 

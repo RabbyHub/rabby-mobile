@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 5b21cd59c40a5754f5d19c77e2a0eb0229925911..0393562ae7e63772ae5b732309d74e6a208ec742 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -20,6 +20,7 @@ buildscript {
+ apply plugin: 'com.android.library'
+ 
+ android {
++    namespace 'com.dylanvann.fastimage'
+     compileSdkVersion safeExtGet('compileSdkVersion', 28)
+     buildToolsVersion safeExtGet('buildToolsVersion', '28.0.3')
+     defaultConfig {

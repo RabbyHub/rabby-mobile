@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index e3aacde27907a94692c8ae9beec9d3d0ed897f5e..b05c5a4183cb9d088ffd196cbd327a4c065f333b 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -20,6 +20,7 @@ buildscript {
+ apply plugin: 'com.android.library'
+ 
+ android {
++    namespace 'com.BV.LinearGradient'
+     compileSdkVersion safeExtGet('compileSdkVersion', 31).toInteger()
+     defaultConfig {
+         minSdkVersion safeExtGet('minSdkVersion', 21)

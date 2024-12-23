@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index c3fa67ee00908d63704ca76664b358d117f220ef..8e13687a67d5ce86e690e098e36680bd74589b91 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -28,6 +28,7 @@ def getExtOrIntegerDefault(name) {
+ }
+ 
+ android {
++  namespace 'com.reactnativecommunity.blurview'
+   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
+ 
+   defaultConfig {

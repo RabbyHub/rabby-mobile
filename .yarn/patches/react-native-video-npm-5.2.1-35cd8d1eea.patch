@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 1c52da90205d5e0e64490000d509c78a0b9236cf..ce46bbfe889809cbc56c02e19e80bbbb474b4e4d 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -5,6 +5,7 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ android {
++    namespace 'com.brentvatne.react'
+     compileSdkVersion safeExtGet('compileSdkVersion', 28)
+     buildToolsVersion safeExtGet('buildToolsVersion', '28.0.3')
+ 

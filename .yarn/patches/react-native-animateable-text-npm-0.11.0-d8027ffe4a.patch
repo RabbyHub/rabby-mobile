@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 7a48e72293b5b3900ac618b7c942884d6084121e..deae1b8f3f9f4a0bedc1316299f1dbb1a525bedd 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -26,6 +26,7 @@ def getExtOrIntegerDefault(name) {
+ }
+ 
+ android {
++  namespace 'com.reactnativereanimatedtext'
+   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
+   buildToolsVersion getExtOrDefault('buildToolsVersion')
+   defaultConfig {

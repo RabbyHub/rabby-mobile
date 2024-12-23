@@ -2,6 +2,8 @@
 
 buildscript {
     ext {
+        kotlin_version = '1.8.22'
+        androidGradlePluginVersion= '8.2.2'
         buildToolsVersion = "34.0.0"
         minSdkVersion = 30
         compileSdkVersion = 34
@@ -20,7 +22,8 @@ buildscript {
         maven { url "https://maven.aliyun.com/repository/central" }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:$androidGradlePluginVersion")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("com.google.gms:google-services:4.4.0")
     }
@@ -35,6 +38,19 @@ allprojects {
         google()  // Google's Maven repository
         maven { url 'https://www.jitpack.io' }
     }
+    // fix 3rd dependencies which is not compatible with Android Gradle Plugin >= 8.x :start
+    subprojects {
+        afterEvaluate { project ->
+            if (project.hasProperty('android')) {
+                project.android {
+                    if (namespace == null) {
+                        namespace project.group
+                    }
+                }
+            }
+        }
+    }
+    // fix 3rd dependencies which is not compatible with Android Gradle Plugin >= 8.x :end
 }
 
 configurations.all {

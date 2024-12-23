@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 9bfe598e5ad191ccd125a9022d036af8e28662f2..3d1ada3d104b909252a5f3e992b6b19fd35a90a8 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -31,6 +31,7 @@ def DEFAULT_MIN_SDK_VERSION = 16
+ def DEFAULT_TARGET_SDK_VERSION = 28
+ 
+ android {
++    namespace 'com.tectiv3.aes'
+     compileSdkVersion safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
+     buildToolsVersion safeExtGet('buildToolsVersion', DEFAULT_BUILD_TOOLS_VERSION)
+     defaultConfig {

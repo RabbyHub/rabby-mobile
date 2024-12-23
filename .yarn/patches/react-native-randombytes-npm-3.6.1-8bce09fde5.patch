@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index bffb084531f27a9a11ed2420270c7917b7d1be6c..bc8121e699f14f4cbe82fce4efa86c9e21af4531 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -5,6 +5,7 @@ def safeExtGet(prop, fallback) {
+ apply plugin: 'com.android.library'
+ 
+ android {
++    namespace 'com.bitgo.randombytes'
+     compileSdkVersion safeExtGet('compileSdkVersion', 26)
+     buildToolsVersion safeExtGet('buildToolsVersion', '26.0.2')
+ 

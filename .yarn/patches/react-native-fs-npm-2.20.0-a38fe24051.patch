@@ -1,3 +1,15 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index ddef857feaf56cd07a0cd61996ba3a9e3526a201..09c1a63b4489113c045428d29684e27b98c88dca 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -15,6 +15,7 @@ buildscript {
+ apply plugin: 'com.android.library'
+ 
+ android {
++    namespace 'com.rnfs'
+     compileSdkVersion safeExtGet('compileSdkVersion', 26)
+     buildToolsVersion safeExtGet('buildToolsVersion', '26.0.3')
+ 
 diff --git a/android/src/main/AndroidManifest.xml b/android/src/main/AndroidManifest.xml
 index 6e54f6595b282c8a1169790b785f03e83c9a2077..71b43e0abb8eee6305b113fa84732e1120cb5295 100644
 --- a/android/src/main/AndroidManifest.xml

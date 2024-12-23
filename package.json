@@ -133,6 +133,21 @@
     "@keystonehq/bc-ur-registry@^0.6.0": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
     "@keystonehq/bc-ur-registry@^0.5.0-alpha.4": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
     "@ledgerhq/hw-app-eth@^6.40.0": "patch:@ledgerhq/hw-app-eth@npm%3A6.40.2#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.40.2-ffdc4add8c.patch",
-    "@ledgerhq/hw-transport@^6.31.4": "patch:@ledgerhq/hw-transport@npm%3A6.31.4#./.yarn/patches/@ledgerhq-hw-transport-npm-6.31.4-b439e9a1f8.patch"
+    "@ledgerhq/hw-transport@^6.31.4": "patch:@ledgerhq/hw-transport@npm%3A6.31.4#./.yarn/patches/@ledgerhq-hw-transport-npm-6.31.4-b439e9a1f8.patch",
+    "react-native-aes-crypto@^3.0.1": "patch:react-native-aes-crypto@npm%3A3.0.1#./.yarn/patches/react-native-aes-crypto-npm-3.0.1-0ef90112a5.patch",
+    "react-native-animateable-text@0.11.0": "patch:react-native-animateable-text@npm%3A0.11.0#./.yarn/patches/react-native-animateable-text-npm-0.11.0-d8027ffe4a.patch",
+    "react-native-ble-manager@8": "patch:react-native-ble-manager@npm%3A8.8.0#./.yarn/patches/react-native-ble-manager-npm-8.8.0-30e561626b.patch",
+    "react-native-ble-manager@^8.1.0": "patch:react-native-ble-manager@npm%3A8.8.0#./.yarn/patches/react-native-ble-manager-npm-8.8.0-30e561626b.patch",
+    "@react-native-community/blur@^4.3.2": "patch:@react-native-community/blur@npm%3A4.3.2#./.yarn/patches/@react-native-community-blur-npm-4.3.2-25966065c8.patch",
+    "react-native-exception-handler@^2.10.10": "patch:react-native-exception-handler@npm%3A2.10.10#./.yarn/patches/react-native-exception-handler-npm-2.10.10-a9b07c434c.patch",
+    "react-native-fast-image@^8.6.3": "patch:react-native-fast-image@npm%3A8.6.3#./.yarn/patches/react-native-fast-image-npm-8.6.3-03ee2d23c0.patch",
+    "react-native-inappbrowser-reborn@^3.7.0": "patch:react-native-inappbrowser-reborn@npm%3A3.7.0#./.yarn/patches/react-native-inappbrowser-reborn-npm-3.7.0-c1f75a1e4a.patch",
+    "react-native-linear-gradient@^2.8.3": "patch:react-native-linear-gradient@npm%3A2.8.3#./.yarn/patches/react-native-linear-gradient-npm-2.8.3-8ca7fc056c.patch",
+    "react-native-version-check@^3.4.7": "patch:react-native-version-check@npm%3A3.4.7#./.yarn/patches/react-native-version-check-npm-3.4.7-8f00d91b71.patch",
+    "react-native-video@^5.2.1": "patch:react-native-video@npm%3A5.2.1#./.yarn/patches/react-native-video-npm-5.2.1-35cd8d1eea.patch",
+    "react-native-splash-screen@^3.3.0": "patch:react-native-splash-screen@npm%3A3.3.0#./.yarn/patches/react-native-splash-screen-npm-3.3.0-179bc66574.patch",
+    "react-native-send-intent@^1.3.0": "patch:react-native-send-intent@npm%3A1.3.0#./.yarn/patches/react-native-send-intent-npm-1.3.0-b1929a8db9.patch",
+    "react-native-randombytes@^3.6.1": "patch:react-native-randombytes@npm%3A3.6.1#./.yarn/patches/react-native-randombytes-npm-3.6.1-40d82507e7.patch",
+    "react-native-randombytes@^3.5.1": "patch:react-native-randombytes@npm%3A3.6.1#./.yarn/patches/react-native-randombytes-npm-3.6.1-40d82507e7.patch"
   }
 }

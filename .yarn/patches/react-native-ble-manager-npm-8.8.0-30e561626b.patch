@@ -1,0 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 0ced65d860a1707e823181c4d58e04042f3c77ec..26af1d5fe0d7208602d10b6dbd79fc97ee7b0afe 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -20,6 +20,7 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ android {
++	namespace 'it.innove'
+ 	compileSdkVersion safeExtGet("compileSdkVersion", 30)
+ 	
+ 	compileOptions {
