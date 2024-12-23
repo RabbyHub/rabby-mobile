@@ -212,7 +212,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <View
             style={{
-              height: ASSETS_ITEM_HEIGHT,
+              height: 0,
               // backgroundColor: 'transparent',
             }}
           />
@@ -259,16 +259,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        windowSize={5}
+        windowSize={10}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={true}
-        ListHeaderComponentStyle={{
-          marginBottom: -ASSETS_ITEM_HEIGHT,
-        }}
+        stickySectionHeadersEnabled={!foldDefi || !foldNft || !foldHideList}
         renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl
