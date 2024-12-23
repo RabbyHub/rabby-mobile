@@ -1,4 +1,5 @@
 import { openapi } from '@/core/request';
+import { patchCurveData } from '@/utils/curve';
 import { formatPrice } from '@/utils/number';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
@@ -17,50 +18,46 @@ export type CurvePoint = {
 export const use24hCurveData = ({
   tokenId,
   serverId,
+  days,
 }: {
   tokenId: string;
   serverId: string;
+  days: 1 | 7;
 }) => {
   return useRequest(
     async () => {
-      const data = await openapi.getToken24hPrice({
+      let _data = await openapi.getTokenPriceCurve({
         chain_id: serverId,
         id: tokenId,
+        days,
       });
-      const list =
-        data.map(item => {
-          const change = item.price - data[0].price;
-
+      const start =
+        days === 1
+          ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
+          : dayjs().add(-7, 'days').add(1, 'hour').valueOf();
+      const step = days === 1 ? 5 * 60 * 1000 : 60 * 60 * 1000;
+      const data = patchCurveData(
+        _data.map(item => {
           return {
-            value: item.price || 0,
-            netWorth: item.price ? '$' + formatPrice(item.price) : '$0',
-            // change: numFormat(Math.abs(change), 0, '$'),
-            change: '$' + formatPrice(Math.abs(change)),
-            isLoss: change < 0,
-            changePercent:
-              data[0].price === 0
-                ? `${item.price === 0 ? '0' : '100.00'}%`
-                : `${(Math.abs(change * 100) / data[0].price).toFixed(2)}%`,
-            timestamp: item.time_at * 1000,
-            dateString: dayjs.unix(item.time_at).format('MM DD, YYYY'),
+            timestamp: dayjs.unix(item.time_at).valueOf(),
+            price: item.price,
           };
-        }) || [];
-      const endNetWorth = list.length ? list[list.length - 1]?.value : 0;
-      const assetsChange = endNetWorth - (list[0]?.value || 0);
-      return {
-        list,
-        isLoss: assetsChange < 0,
-      };
+        }),
+        start,
+        step,
+      );
+
+      return formatTokenDateCurve([0, dayjs().unix()], data);
     },
     {
-      refreshDeps: [tokenId, serverId],
+      refreshDeps: [tokenId, serverId, days],
     },
   );
 };
 
 export const formatTokenDateCurve = (
   range: number[],
-  data: { date_at: string; price: number }[],
+  data: { timestamp: number; price: number }[],
 ) => {
   if (!data?.length) {
     return {
@@ -71,11 +68,11 @@ export const formatTokenDateCurve = (
   }
 
   const startIdx = data.findIndex(
-    item => dayjs(item.date_at).unix() >= range[0],
+    item => dayjs(item.timestamp).unix() >= range[0],
   );
   const endIdx = findLastIndex(
     data,
-    item => dayjs(item.date_at).unix() <= range[1],
+    item => dayjs(item.timestamp).unix() <= range[1],
   );
   const list = data.slice(startIdx, endIdx + 1);
 
@@ -89,7 +86,7 @@ export const formatTokenDateCurve = (
 
   const startData = {
     value: list[0].price || 0,
-    timestamp: dayjs(list[0].date_at).valueOf(),
+    timestamp: dayjs(list[0].timestamp).valueOf(),
   };
 
   const result =
@@ -106,8 +103,8 @@ export const formatTokenDateCurve = (
           startData.value === 0
             ? `${item.price === 0 ? '0' : '100.00'}%`
             : `${(Math.abs(change * 100) / startData.value).toFixed(2)}%`,
-        timestamp: dayjs(item.date_at).valueOf(),
-        dateString: dayjs(item.date_at).format('MM DD, YYYY'),
+        timestamp: dayjs(item.timestamp).valueOf(),
+        dateString: dayjs(item.timestamp).format('MM DD, YYYY'),
       };
     }) || [];
 
@@ -132,11 +129,20 @@ export const useDateCurveData = ({
 }) => {
   return useRequest(
     async () => {
-      const data = await openapi.getTokenDatePrice({
+      const _data = await openapi.getTokenDatePrice({
         chain_id: serverId,
         id: tokenId,
       });
-      return data;
+      return patchCurveData(
+        _data.map(item => {
+          return {
+            timestamp: dayjs(item.date_at).valueOf(),
+            price: item.price,
+          };
+        }),
+        dayjs().startOf('day').add(-1, 'year').valueOf(),
+        24 * 60 * 60 * 1000,
+      );
     },
     {
       refreshDeps: [tokenId, serverId],

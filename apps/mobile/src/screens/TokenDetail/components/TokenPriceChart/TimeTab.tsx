@@ -28,11 +28,6 @@ export const TIME_TAB_LIST = [
     key: '1Y' as const,
     value: [dayjs().add(-1, 'year'), dayjs()],
   },
-  {
-    label: 'Max',
-    key: 'Max' as const,
-    value: [0, dayjs()],
-  },
 ].map(item => {
   const v0 = item.value[0];
   const v1 = item.value[1];
@@ -46,7 +41,7 @@ export const TIME_TAB_LIST = [
   };
 });
 
-export const REAL_TIME_TAB_LIST = ['24h'];
+export const REAL_TIME_TAB_LIST: TabKey[] = ['24h', '1W'];
 
 export const TimeTab = ({
   activeKey,

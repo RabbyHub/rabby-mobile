@@ -25,7 +25,7 @@ import {
 
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
-const isRealTimeKey = (key: string) => REAL_TIME_TAB_LIST.includes(key);
+const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
 
 const winInfo = Dimensions.get('window');
 
@@ -41,6 +41,7 @@ export function TokenPriceChart(props: Props) {
   const { data: realTimeData, loading: curveLoading } = use24hCurveData({
     tokenId: token._tokenId,
     serverId: token.chain,
+    days: activeKey === '24h' ? 1 : 7,
   });
   const { data: dateCurveData, loading: timeMachineLoading } = useDateCurveData(
     {
@@ -52,7 +53,7 @@ export function TokenPriceChart(props: Props) {
 
   const timeMachMapping = useMemo(() => {
     let result = {} as Record<
-      Exclude<TabKey, '24h'>,
+      Exclude<TabKey, '24h' | '1W'>,
       ReturnType<typeof formatTokenDateCurve>
     >;
     TIME_TAB_LIST.forEach(e => {
@@ -204,7 +205,7 @@ function Chart({
               <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
                 <LineChart.DatetimeText
                   style={styles.dateTime}
-                  format={({ value, ...args }) => {
+                  format={({ value }) => {
                     'worklet';
                     // due to the nature of reanimated worklets, you cannot define functions that run on the React Native JS thread.
                     if (value === -1) {
@@ -217,7 +218,7 @@ function Chart({
                     const DD = String(date.getDate()).padStart(2, '0');
                     const HH = String(date.getHours()).padStart(2, '0');
                     const mm = String(date.getMinutes()).padStart(2, '0');
-                    if (activeKey === '24h') {
+                    if (activeKey === '24h' || activeKey === '1W') {
                       return `${MM} ${DD}, ${HH}:${mm}`;
                     }
                     return `${MM} ${DD}, ${YYYY}`;
