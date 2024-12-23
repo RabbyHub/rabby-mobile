@@ -2405,7 +2405,7 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Receive Address",
+      "title": "Select Recipient Address",
       "selectChainTitle": "Select Chain"
     }
   },

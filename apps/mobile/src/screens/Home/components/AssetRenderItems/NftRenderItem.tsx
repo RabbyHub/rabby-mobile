@@ -20,7 +20,7 @@ export const NftRow = ({
   const { styles } = useTheme2024({ getStyle });
 
   const chain = getCHAIN_ID_LIST().get(item.chain);
-  const iconUri = chain?.nativeTokenLogo;
+  const iconUri = chain?.logo;
   const isSvgURL = item?.content?.endsWith('.svg');
 
   return (

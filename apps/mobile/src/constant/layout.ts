@@ -258,6 +258,7 @@ function makeScreenSpecConfig() {
       History: bg1Default2024Conf,
       MultiAddressHistory: bg1Default2024Conf,
 
+      SendNFT: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
 

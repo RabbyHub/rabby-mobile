@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
+import FastImage from 'react-native-fast-image';
 
 const ListItem = (props: {
   title: string;
@@ -55,18 +56,42 @@ export const NFTDetailScreen = () => {
   ) as {
     token: NFTItem;
   };
+  const chain = getCHAIN_ID_LIST().get(token.chain);
+  const isSvgURL = token?.content?.endsWith('.svg');
+  const iconUri = chain?.logo;
   const collectionName = token.contract_name || token?.collection?.name || '';
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
       <View style={styles.headerArea}>
-        <AssetAvatar
-          logo={token?.content}
-          logoStyle={styles.assetIcon}
-          size={40}
-          chain={token?.chain}
-          chainSize={16}
-        />
+        <View style={styles.avator}>
+          <View
+            style={StyleSheet.flatten([
+              styles.imagesView,
+              {
+                width: 40,
+                height: 40,
+              },
+            ])}>
+            <Media
+              failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
+              type="image_url"
+              src={isSvgURL ? '' : token?.thumbnail_url}
+              thumbnail={isSvgURL ? '' : token?.thumbnail_url}
+              mediaStyle={styles.imagesAvatar}
+              style={styles.imagesAvatar}
+              playIconSize={36}
+            />
+          </View>
+          {iconUri ? (
+            <FastImage
+              source={{
+                uri: iconUri,
+              }}
+              style={styles.chainIcon}
+            />
+          ) : null}
+        </View>
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
           {/* {token?.name} */}
           {ellipsisOverflowedText(token?.name, 20)}
@@ -185,6 +210,13 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   btnTitle: {
     color: colors['neutral-title-2'],
   },
+  imagesView: {
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 0,
+  },
   headerArea: {
     width: '100%',
     height: 'auto',
@@ -215,6 +247,25 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     borderRadius: 16,
     // width: '100%',
     // height: 'auto',
+  },
+  avator: {
+    width: 40,
+    height: 40,
+    borderColor: 'red',
+    position: 'relative',
+  },
+  chainIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 16,
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+  },
+  imagesAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
   images: {
     width: '100%',

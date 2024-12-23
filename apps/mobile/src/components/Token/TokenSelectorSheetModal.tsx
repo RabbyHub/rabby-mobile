@@ -6,6 +6,7 @@ import {
   Keyboard,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -48,6 +49,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { useMemoizedFn } from 'ahooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -92,6 +94,8 @@ export interface TokenSelectorProps {
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
 };
+
+const isAndroid = Platform.OS === 'android';
 
 type TokenSelectorInst = {};
 export const TokenSelectorSheetModal = React.forwardRef<
@@ -158,6 +162,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
         },
       });
     });
+
+    const { bottom } = useSafeAreaInsets();
+
+    const androidBottomOffset = isAndroid ? bottom : 0;
 
     const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -493,7 +501,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           colors: colors2024,
         })}
         backdropComponent={renderBackdrop}>
-        <AutoLockView as="BottomSheetView" style={styles.container}>
+        <AutoLockView
+          as="BottomSheetView"
+          style={[styles.container, { paddingBottom: androidBottomOffset }]}>
           <View style={[styles.titleArea, styles.internalBlock]}>
             <BottomSheetHandlableView>
               <Text style={[styles.modalTitle, styles.modalMainTitle]}>
