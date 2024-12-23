@@ -13,11 +13,6 @@ export const getTokenSettings = async (address: string) => {
       ?.map(item => `${item.chainid}:${item.id}`) || [];
   const excluded_protocol_ids =
     excludeDefiAndTokens?.filter(i => i.type === 'defi').map(i => i.id) || [];
-  // console.log('🔍 CUSTOM_LOGGER:=>: getTokenSettings)', {
-  //   included_token_uuids,
-  //   excluded_token_uuids,
-  //   excluded_protocol_ids,
-  // });
   return {
     included_token_uuids,
     excluded_token_uuids,

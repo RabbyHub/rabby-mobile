@@ -106,13 +106,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       ) {
         openTokenDetailPopup(token);
       } else {
-        console.log('🔍 CUSTOM_LOGGER:=>: handleOpenTokenDetail)', {
-          id: `${token.chain}:${token._tokenId}`,
-          pin: token._isPined,
-          fold: token._isFold,
-          exclude: token._isExcludeBalance,
-          PinIndex: token._pinIndex,
-        });
         navigate(RootNames.TokenDetail, {
           token: token,
           // todo fix ts
@@ -125,7 +118,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      console.log('🔍 CUSTOM_LOGGER:=>: defi id)', data.id);
       if (data.id === DEFI_ID) {
         setFoldDefi(pre => !pre);
         return;
@@ -136,7 +128,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   );
 
   const handlePressNft = (item: NFTItem) => {
-    console.log('🔍 CUSTOM_LOGGER:=>: item)', item);
     if (item.id === NFT_ID) {
       setFoldNft(pre => !pre);
       return;
@@ -272,7 +263,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
-              console.log('🔍 CUSTOM_LOGGER:=>: onRefresh)');
               refreshPositions();
               onRefresh();
             }}
