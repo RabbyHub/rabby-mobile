@@ -38,8 +38,8 @@ const hitSlop = {
 export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   address: string;
-  refreshBalbance: () => void;
-}> = ({ token, address, refreshBalbance }) => {
+  refreshBalance: () => void;
+}> = ({ token, address, refreshBalance }) => {
   const { refreshTags } = useRefreshTags();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
@@ -83,11 +83,11 @@ export const RightMore: React.FC<{
           }
           token._isExcludeBalance = !token._isExcludeBalance;
           refreshTags(address);
-          refreshBalbance();
+          refreshBalance();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, address, refreshBalbance]);
+  }, [token, t, isDarkTheme, refreshTags, address, refreshBalance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -172,9 +172,7 @@ export const DeFiDetailScreen = () => {
       <RightMore
         token={data}
         address={finalAccount.address}
-        refreshBalbance={() => {
-          triggerUpdate;
-        }}
+        refreshBalance={triggerUpdate}
       />
     );
   });
