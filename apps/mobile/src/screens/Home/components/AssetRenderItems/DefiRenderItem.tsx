@@ -6,7 +6,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
-import { DEFI_ID } from '@/utils/token';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
@@ -24,13 +23,11 @@ const hitSlop = {
   right: 10,
 };
 
-const DefiRenderEntryItem = ({
+export const DefiRow = ({
   data,
   onPress,
-  fold,
 }: {
   data: AbstractProject;
-  fold?: boolean;
   onPress?: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -61,28 +58,6 @@ const DefiRenderEntryItem = ({
     });
   };
 
-  if (data.id === DEFI_ID) {
-    return (
-      <View style={styles.headerWrapper}>
-        <Text style={styles.symbol}>Defi</Text>
-        <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
-          {/* TODO: fix ts */}
-          <Text style={styles.totalUsd}>{data._usdValueStr || 0}</Text>
-          <ArrowRightSVG
-            style={[
-              styles.arrow,
-              {
-                transform: fold
-                  ? [{ rotate: '90deg' }]
-                  : [{ rotate: '270deg' }],
-              },
-            ]}
-            color={colors2024['neutral-title-1']}
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  }
   return (
     <TouchableOpacity onPress={onPress} style={[styles.projectHeader]}>
       <View style={styles.projectHeaderName}>
@@ -113,7 +88,34 @@ const DefiRenderEntryItem = ({
     </TouchableOpacity>
   );
 };
-
+export const DefiSectionHeader = ({
+  usdStr,
+  onPress,
+  fold,
+}: {
+  usdStr: string;
+  fold?: boolean;
+  onPress?: () => void;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  return (
+    <View style={styles.headerWrapper}>
+      <Text style={styles.symbol}>Defi</Text>
+      <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
+        <Text style={styles.totalUsd}>{usdStr}</Text>
+        <ArrowRightSVG
+          style={[
+            styles.arrow,
+            {
+              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
+            },
+          ]}
+          color={colors2024['neutral-title-1']}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
 const getStyles = createGetStyles2024(ctx => ({
   projectHeader: {
     paddingHorizontal: 4,
@@ -162,6 +164,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     paddingHorizontal: 4,
     height: ASSETS_ITEM_HEIGHT,
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   symbol: {
     fontSize: 22,
@@ -195,5 +198,3 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['brand-default'],
   },
 }));
-
-export default DefiRenderEntryItem;

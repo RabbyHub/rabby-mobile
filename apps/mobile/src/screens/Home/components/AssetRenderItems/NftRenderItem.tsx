@@ -6,47 +6,23 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
-import { NFT_ID } from '@/utils/token';
 import { IconDefaultNFT } from '@/assets/icons/nft';
-import { MEDIA_TYPE, Media } from '@/components/Media';
+import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 
-const NftRow = ({
+export const NftRow = ({
   item,
   onPress,
-  fold,
 }: {
   item: NFTItem;
-  fold?: boolean;
   onPress: () => void;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const chain = getCHAIN_ID_LIST().get(item.chain);
   const iconUri = chain?.nativeTokenLogo;
   const isSvgURL = item?.content?.endsWith('.svg');
 
-  if (item.id === NFT_ID) {
-    return (
-      <View style={styles.headerWrapper}>
-        <Text style={styles.symbol}>NFT</Text>
-        <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
-          <Text style={styles.totalAmount}>{item.amount}</Text>
-          <ArrowRightSVG
-            style={[
-              styles.arrow,
-              {
-                transform: fold
-                  ? [{ rotate: '90deg' }]
-                  : [{ rotate: '270deg' }],
-              },
-            ]}
-            color={colors2024['neutral-title-1']}
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  }
   return (
     <TouchableOpacity onPress={onPress} style={styles.wrpper}>
       <View style={styles.main}>
@@ -87,7 +63,34 @@ const NftRow = ({
   );
 };
 
-export default NftRow;
+export const NftSectionHeader = ({
+  amount,
+  onPress,
+  fold,
+}: {
+  amount: number;
+  fold?: boolean;
+  onPress: () => void;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  return (
+    <View style={styles.headerWrapper}>
+      <Text style={styles.symbol}>NFT</Text>
+      <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
+        <Text style={styles.totalAmount}>{amount}</Text>
+        <ArrowRightSVG
+          style={[
+            styles.arrow,
+            {
+              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
+            },
+          ]}
+          color={colors2024['neutral-title-1']}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrpper: {
@@ -142,6 +145,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 4,
+    backgroundColor: colors2024['neutral-bg-1'],
     height: ASSETS_ITEM_HEIGHT,
   },
   symbol: {

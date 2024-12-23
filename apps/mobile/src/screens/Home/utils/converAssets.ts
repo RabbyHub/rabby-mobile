@@ -28,7 +28,17 @@ export const convertSmallTokenList = (tokens?: AbstractPortfolioToken[]) => {
       ]
     : [];
 };
-export const convertDefiAssets = (portfolios: DisplayedProject[]) => {
+export const getTotalFoldToken = (tokens?: AbstractPortfolioToken[]) => {
+  const tokensTotalValue = tokens
+    ?.reduce(
+      (acc, item) => acc.plus(item._isExcludeBalance ? 0 : item._usdValue || 0),
+      new BigNumber(0),
+    )
+    .toNumber();
+  return formatNetworth(tokensTotalValue);
+};
+
+export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
   let tokensTotalValue = 0;
   portfolios.forEach(portfolio => {
     // portfolio._isExcludeBalance
@@ -41,30 +51,13 @@ export const convertDefiAssets = (portfolios: DisplayedProject[]) => {
           )
           .toNumber();
   });
-  return portfolios?.length
-    ? [
-        {
-          id: DEFI_ID,
-          _usdValue: tokensTotalValue,
-          _usdValueStr: formatNetworth(tokensTotalValue),
-        } as unknown as DisplayedProject[],
-        ...portfolios,
-      ]
-    : [];
+  return formatNetworth(tokensTotalValue);
 };
 
-export const convertNFTAssets = (nfts: NFTItem[]) => {
+export const getAllNftCount = (nfts: NFTItem[]) => {
   let total = 0;
   nfts.forEach(nft => {
     total += nft.amount;
   });
-  return nfts?.length
-    ? [
-        {
-          id: NFT_ID,
-          amount: total,
-        } as unknown as NFTItem[],
-        ...nfts,
-      ]
-    : [];
+  return total;
 };

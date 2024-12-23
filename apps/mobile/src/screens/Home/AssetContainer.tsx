@@ -4,14 +4,14 @@ import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
 import {
-  convertDefiAssets,
-  convertSmallTokenList,
-  convertNFTAssets,
+  getTotalFoldToken,
+  getAllDefiCount,
+  getAllNftCount,
 } from './utils/converAssets';
 import {
   AbstractPortfolio,
@@ -26,7 +26,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
 
-import { TokenRow, DefiRow, NftRow } from './components/AssetRenderItems';
+import {
+  TokenRow,
+  DefiRow,
+  NftRow,
+  TokenRowSectionHeader,
+  DefiSectionHeader,
+  NftSectionHeader,
+} from './components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HomeTopArea } from './components/HomeTopArea';
 interface Props {
@@ -60,32 +67,27 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
 
-  const sections = [
-    {
-      type: 'unfold_token',
-      data: sortTokens.filter(i => !i._isFold),
-    },
-    {
-      type: 'fold_token',
-      data:
-        convertSmallTokenList(sortTokens.filter(i => i._isFold))?.slice(
-          0,
-          foldHideList ? 1 : undefined,
-        ) || [],
-    },
-    {
-      type: 'defi',
-      data:
-        convertDefiAssets(portfolios || [])?.slice(
-          0,
-          foldDefi ? 1 : undefined,
-        ) || [],
-    },
-    {
-      type: 'nft',
-      data: convertNFTAssets(nftList)?.slice(0, foldNft ? 1 : undefined) || [],
-    },
-  ];
+  const sections = useMemo(
+    () => [
+      {
+        type: 'unfold_token',
+        data: sortTokens.filter(i => !i._isFold),
+      },
+      {
+        type: 'fold_token',
+        data: foldHideList ? [] : sortTokens.filter(i => i._isFold),
+      },
+      {
+        type: 'defi',
+        data: foldDefi ? [] : portfolios || [],
+      },
+      {
+        type: 'nft',
+        data: foldNft ? [] : nftList || [],
+      },
+    ],
+    [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens],
+  );
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -166,7 +168,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            fold={foldHideList}
             address={currentAccount?.address}
             logoSize={40}
           />
@@ -176,24 +177,16 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            fold={foldHideList}
             address={currentAccount?.address}
             logoSize={40}
           />
         );
       case 'nft':
-        return (
-          <NftRow
-            item={item}
-            fold={foldNft}
-            onPress={() => handlePressNft(item)}
-          />
-        );
+        return <NftRow item={item} onPress={() => handlePressNft(item)} />;
       case 'defi':
         return (
           <DefiRow
             data={item}
-            fold={foldDefi}
             onPress={() =>
               handleOpenDefiDetail(item, [...(item._portfolios || [])])
             }
@@ -201,6 +194,47 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         );
       default:
         return null;
+    }
+  };
+
+  const renderSectionHeader = ({ section }) => {
+    switch (section.type) {
+      case 'fold_token':
+        return (
+          <TokenRowSectionHeader
+            usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+            fold={foldHideList}
+            onPressFold={() => setFoldHideList(pre => !pre)}
+          />
+        );
+      case 'unfold_token':
+        // TODO: tmp unnormal solve
+        return (
+          <View
+            style={{
+              height: ASSETS_ITEM_HEIGHT,
+              // backgroundColor: 'transparent',
+            }}
+          />
+        );
+      case 'defi':
+        return (
+          <DefiSectionHeader
+            usdStr={getAllDefiCount(portfolios || [])}
+            fold={foldDefi}
+            onPress={() => setFoldDefi(pre => !pre)}
+          />
+        );
+      case 'nft':
+        return (
+          <NftSectionHeader
+            amount={getAllNftCount(nftList || [])}
+            fold={foldNft}
+            onPress={() => setFoldNft(pre => !pre)}
+          />
+        );
+      default:
+        return <View style={{ height: 0 }} />;
     }
   };
 
@@ -219,17 +253,23 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   return (
     <>
       <SectionList
-        sections={sections.filter(i => i.data.length)}
+        sections={sections}
         renderItem={renderItem}
         ListHeaderComponent={() => <HomeTopArea />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
-        // TODO: 统一id，token nft defi
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
-        windowSize={10}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={false}
+        stickySectionHeadersEnabled={true}
+        ListHeaderComponentStyle={{
+          marginBottom: -ASSETS_ITEM_HEIGHT,
+        }}
+        renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
@@ -251,8 +291,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         onDismiss={() => {
           cleanFocusingToken({ noNeedCloseModal: true });
         }}
-        onTriggerDismissFromInternal={ctx => {
-          // toggleShowSheetModal('tokenDetailModalRef', false);
+        onTriggerDismissFromInternal={() => {
           cleanFocusingToken();
         }}
       />

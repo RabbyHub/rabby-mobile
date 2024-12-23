@@ -13,8 +13,7 @@ import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { SMALL_TOKEN_ID } from '@/utils/token';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
@@ -47,13 +46,12 @@ const hitSlop = {
   right: 10,
 };
 
-const TokenRow = memo(
+export const TokenRow = memo(
   ({
     data,
     style,
     logoSize,
     logoStyle,
-    fold,
     address,
     onTokenPress,
   }: {
@@ -199,46 +197,6 @@ const TokenRow = memo(
       address,
       refreshTags,
     ]);
-    if (data.id === SMALL_TOKEN_ID) {
-      return (
-        <View
-          style={StyleSheet.flatten([
-            styles.tokenRowWrap,
-            {
-              paddingHorizontal: 0,
-            },
-            style,
-          ])}>
-          <View style={styles.tokenRowTokenWrap}>
-            <View style={styles.tokenRowTokenInner}>
-              <TouchableOpacity
-                onPress={onPressToken}
-                style={styles.tokenRowTokenInnerSmallToken}>
-                <Text style={styles.actionText}>
-                  {fold
-                    ? t('page.tokenDetail.action.all')
-                    : t('page.tokenDetail.action.less')}
-                </Text>
-                {fold ? (
-                  <RcUnFoldCC
-                    style={styles.arrow}
-                    color={colors2024['neutral-secondary']}
-                  />
-                ) : (
-                  <RcFoldCC
-                    style={styles.arrow}
-                    color={colors2024['neutral-secondary']}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.tokenRowUsdValueWrap}>
-            <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
-          </View>
-        </View>
-      );
-    }
 
     return (
       <ContextMenuView
@@ -323,7 +281,50 @@ const TokenRow = memo(
   },
 );
 
-export default TokenRow;
+export const TokenRowSectionHeader = ({
+  usdStr,
+  fold,
+  onPressFold,
+}: {
+  usdStr: string;
+  fold?: boolean;
+  onPressFold?(): void;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.tokenSectionHeader}>
+      <View style={styles.tokenRowTokenWrap}>
+        <View style={styles.tokenRowTokenInner}>
+          <TouchableOpacity
+            onPress={onPressFold}
+            style={styles.tokenRowTokenInnerSmallToken}>
+            <Text style={styles.actionText}>
+              {fold
+                ? t('page.tokenDetail.action.all')
+                : t('page.tokenDetail.action.less')}
+            </Text>
+            {fold ? (
+              <RcUnFoldCC
+                style={styles.arrow}
+                color={colors2024['neutral-secondary']}
+              />
+            ) : (
+              <RcFoldCC
+                style={styles.arrow}
+                color={colors2024['neutral-secondary']}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.tokenRowUsdValueWrap}>
+        <Text style={styles.tokenRowUsdValue}>{usdStr}</Text>
+      </View>
+    </View>
+  );
+};
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
@@ -334,6 +335,13 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  tokenSectionHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: ASSETS_ITEM_HEIGHT,
   },
   tokenRowTokenWrap: {
     flexShrink: 1,
