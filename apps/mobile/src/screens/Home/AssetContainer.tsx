@@ -71,18 +71,22 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     () => [
       {
         type: 'unfold_token',
+        originData: sortTokens.filter(i => !i._isFold),
         data: sortTokens.filter(i => !i._isFold),
       },
       {
         type: 'fold_token',
+        originData: sortTokens.filter(i => i._isFold),
         data: foldHideList ? [] : sortTokens.filter(i => i._isFold),
       },
       {
         type: 'defi',
+        originData: portfolios,
         data: foldDefi ? [] : portfolios || [],
       },
       {
         type: 'nft',
+        originData: nftList,
         data: foldNft ? [] : nftList || [],
       },
     ],
@@ -253,7 +257,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   return (
     <>
       <SectionList
-        sections={sections}
+        sections={sections.filter(i => !!i.originData?.length)}
         renderItem={renderItem}
         ListHeaderComponent={() => <HomeTopArea />}
         showsVerticalScrollIndicator={false}
