@@ -36,6 +36,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useRefreshTags } from '../Home/hooks/token';
 import { toast } from '@/components2024/Toast';
+import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
@@ -49,7 +50,8 @@ const hitSlop = {
 export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   address: string;
-}> = ({ token, address }) => {
+  triggerUpdate: () => void;
+}> = ({ token, address, triggerUpdate }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { refreshTags } = useRefreshTags();
   const { t } = useTranslation();
@@ -159,10 +161,11 @@ export const RightMore: React.FC<{
           }
           token._isExcludeBalance = !token._isExcludeBalance;
           refreshTags(address);
+          triggerUpdate();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, address]);
+  }, [token, t, isDarkTheme, refreshTags, address, triggerUpdate]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -302,6 +305,7 @@ export const TokenDetailScreen = () => {
       },
     },
   );
+  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
   const isFirstLoading = loading && !latestData?.list?.length;
 
@@ -311,7 +315,11 @@ export const TokenDetailScreen = () => {
         <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
       ),
       headerRight: () => (
-        <RightMore token={token} address={finalAccount.address} />
+        <RightMore
+          token={token}
+          address={finalAccount.address}
+          triggerUpdate={triggerUpdate}
+        />
       ),
       headerTitleAlign: 'left',
     });
@@ -320,6 +328,7 @@ export const TokenDetailScreen = () => {
     finalAccount.address,
     setNavigationOptions,
     token,
+    triggerUpdate,
   ]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();

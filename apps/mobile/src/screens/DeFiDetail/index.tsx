@@ -26,6 +26,7 @@ import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useRefreshTags } from '../Home/hooks/token';
 import { preferenceService } from '@/core/services';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 
 const hitSlop = {
   top: 10,
@@ -37,7 +38,8 @@ const hitSlop = {
 export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   address: string;
-}> = ({ token, address }) => {
+  refreshBalbance: () => void;
+}> = ({ token, address, refreshBalbance }) => {
   const { refreshTags } = useRefreshTags();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
@@ -81,10 +83,11 @@ export const RightMore: React.FC<{
           }
           token._isExcludeBalance = !token._isExcludeBalance;
           refreshTags(address);
+          refreshBalbance();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, address]);
+  }, [token, t, isDarkTheme, refreshTags, address, refreshBalbance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -116,6 +119,8 @@ export const DeFiDetailScreen = () => {
     account: KeyringAccountWithAlias;
     portfolioList: AbstractPortfolio[];
   };
+  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
+
   const finalAccount = useMemo(
     () => account || currentAccount,
     [account, currentAccount],
@@ -163,7 +168,15 @@ export const DeFiDetailScreen = () => {
   });
 
   const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore token={data} address={finalAccount.address} />;
+    return (
+      <RightMore
+        token={data}
+        address={finalAccount.address}
+        refreshBalbance={() => {
+          triggerUpdate;
+        }}
+      />
+    );
   });
 
   React.useEffect(() => {

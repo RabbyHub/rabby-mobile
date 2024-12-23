@@ -249,6 +249,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }),
     [],
   );
+  const header = useCallback(() => <HomeTopArea />, []);
   if (!currentAccount?.address) {
     return null;
   }
@@ -258,7 +259,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       <SectionList
         sections={sections.filter(i => !!i.originData?.length)}
         renderItem={renderItem}
-        ListHeaderComponent={() => <HomeTopArea />}
+        ListHeaderComponent={header}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
