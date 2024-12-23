@@ -225,7 +225,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
         // TODO: 统一id，token nft defi
-        keyExtractor={item => `${item.chain}/${item.symbol}/${item.id}`}
+        keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
+        windowSize={5}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}

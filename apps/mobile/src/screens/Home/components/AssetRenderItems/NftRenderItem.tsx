@@ -78,7 +78,9 @@ const NftRow = ({
             />
           ) : null}
         </View>
-        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
+          {item.name}
+        </Text>
       </View>
       <Text style={styles.amount}>{item.amount}</Text>
     </TouchableOpacity>
@@ -94,6 +96,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 4,
+    gap: 12,
     height: ASSETS_ITEM_HEIGHT,
   },
   main: {
@@ -101,6 +104,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
+    flex: 1,
     gap: 12,
   },
   avator: {
@@ -123,6 +127,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   amount: {
     fontSize: 16,
