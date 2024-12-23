@@ -217,7 +217,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <View
             style={{
               height: 0,
-              // backgroundColor: 'transparent',
             }}
           />
         );
