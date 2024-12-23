@@ -121,7 +121,7 @@ export const tagTokenList = (
       ) {
         return false;
       }
-      if (!i.is_core || (i._usdValue || 0) <= 1) {
+      if (!i.is_core || (i._usdValue || 0) < 1) {
         return true;
       }
       return false;
