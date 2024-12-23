@@ -13,5 +13,8 @@ module.exports = {
         ios: null,
       },
     },
+    'react-native-quick-crypto': { platforms: { android: null } },
+    'react-native-quick-base64': { platforms: { android: null } },
+    'react-native-quick-bip39': { platforms: { android: null } },
   },
 };

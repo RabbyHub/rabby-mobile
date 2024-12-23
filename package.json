@@ -135,5 +135,8 @@
       "ethereumjs-util>ethereum-cryptography>secp256k1": true,
       "simple-git-hooks": false
     }
+  },
+  "react-native222": {
+    "crypto": "react-native-quick-crypto"
   }
 }
