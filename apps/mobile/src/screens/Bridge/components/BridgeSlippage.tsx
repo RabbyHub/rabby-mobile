@@ -20,6 +20,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Input } from '@rneui/base';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
+import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 
 const SLIPPAGE = ['0.5', '1'];
 
@@ -115,7 +116,8 @@ export const BridgeSlippage = (props: SlippageProps) => {
   }, [isHigh, isLow, recommendValue, setRecommendValue, t]);
 
   const onInputChange = useCallback(
-    (text: string) => {
+    (input: string) => {
+      const text = formatSpeicalAmount(input);
       setAutoSlippage(false);
       setIsCustomSlippage(true);
       if (/^\d*(\.\d*)?$/.test(text)) {
