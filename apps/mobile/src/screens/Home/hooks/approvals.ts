@@ -130,7 +130,6 @@ const appprovalsAlertAtom = atom<IApprovalsAlert>({
   loading: false,
 });
 let lastTimeStamps = 0;
-const cacheTime = 10 * 60 * 1000;
 
 const alertQueue = new PQueue({
   interval: 1000,
@@ -138,7 +137,7 @@ const alertQueue = new PQueue({
   concurrency: 10,
 });
 
-export const useApprovalAlertCounts = () => {
+export const useApprovalAlertCounts = (cacheTime: number) => {
   const [alertInfo, setAlertInfo] = useAtom(appprovalsAlertAtom);
   const { accounts } = useAccounts({
     disableAutoFetch: true,

@@ -151,6 +151,9 @@ export default function useAccountsBalance(opts?: {
       'triggerUpdate  fetchTotalBalance',
       isForceFetchFromApi ? 'from_api' : 'from_cache',
     );
+    if (forceFromApi) {
+      lastTimeStamps.current = Date.now();
+    }
     fetchTotalBalance(isForceFetchFromApi ? 'from_api' : 'from_cache');
   });
 

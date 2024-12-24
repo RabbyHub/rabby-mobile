@@ -124,6 +124,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 
 const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
 const ITEM_GRID_GAP = 12;
+const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -146,7 +147,7 @@ function MultiAddressHome(): JSX.Element {
     alertInfo,
     forceUpdate,
     triggerUpdate: triggerUpdateAlert,
-  } = useApprovalAlertCounts();
+  } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
 
   const MENU_ARR = [
     {
@@ -222,7 +223,7 @@ function MultiAddressHome(): JSX.Element {
     balanceLoading,
     accountsLength,
   } = useAccountsBalance({
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
