@@ -778,7 +778,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-debug";
 				PRODUCT_NAME = RabbyMobile;
-        "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileDevelopment;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileDevelopment;
 				RABBY_MOBILE_DISPLAY_NAME = "Debug Rabby";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
