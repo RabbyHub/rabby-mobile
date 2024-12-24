@@ -20,6 +20,7 @@ type Props = {
     menuTitle?: string;
     menuActions: MenuAction[];
   };
+  preViewBorderRadius?: number;
   children: React.ReactElement;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
 } & ContextMenuContentProps;
@@ -31,12 +32,13 @@ export const ContextMenuView: React.FC<Props> = ({
   alignOffset = 5,
   avoidCollisions = true,
   triggerProps,
+  preViewBorderRadius = 30,
 }) => {
   return (
     <ContextMenu.Root
       __unsafeIosProps={{
         previewConfig: {
-          borderRadius: 30,
+          borderRadius: preViewBorderRadius,
         },
       }}>
       <ContextMenu.Trigger {...triggerProps} isAnchoredToRight>

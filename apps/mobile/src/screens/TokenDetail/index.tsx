@@ -5,7 +5,7 @@ import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain } from '@/utils/chain';
@@ -16,6 +16,7 @@ import {
   TxDisplayItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import { last } from 'lodash';
@@ -29,10 +30,161 @@ import { TokenBalanceArea } from './components/TokenBalanceArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { RcIconMore } from '@/assets/icons/home';
+import { trigger } from 'react-native-haptic-feedback';
+import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
+import { useRefreshTags } from '../Home/hooks/token';
+import { toast } from '@/components2024/Toast';
+import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
 
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+export const RightMore: React.FC<{
+  token: AbstractPortfolioToken;
+  address: string;
+  triggerUpdate: () => void;
+}> = ({ token, address, triggerUpdate }) => {
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+  const { refreshTags } = useRefreshTags();
+  const { t } = useTranslation();
+
+  const menuActions = React.useMemo(() => {
+    return [
+      {
+        title: token._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: token._isFold
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        androidIconName: token._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (token._isFold) {
+            preferenceService.manualUnFoldToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+          } else {
+            preferenceService.manualFoldToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+          }
+          token._isFold = !token._isFold;
+          refreshTags(address);
+        },
+      },
+      {
+        title: token._isPined
+          ? t('page.tokenDetail.action.unpin')
+          : t('page.tokenDetail.action.pin'),
+        icon: token._isPined
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+        androidIconName: token._isPined
+          ? 'ic_rabby_menu_un_pin'
+          : 'ic_rabby_menu_pin',
+        key: 'pin',
+        action() {
+          if (token._isPined) {
+            preferenceService.removePinedToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
+          } else {
+            preferenceService.pinToken(address, {
+              tokenId: token._tokenId,
+              chainId: token.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.pin_success'));
+          }
+          token._isPined = !token._isPined;
+          refreshTags(address);
+        },
+      },
+      {
+        title: token._isExcludeBalance
+          ? t('page.tokenDetail.action.includeBalance')
+          : t('page.tokenDetail.action.excludeBalance'),
+        icon: token._isExcludeBalance
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
+        key: 'balance',
+        androidIconName: token._isExcludeBalance
+          ? 'ic_rabby_menu_include_balance'
+          : 'ic_rabby_menu_exclude_balance',
+        action() {
+          if (token._isExcludeBalance) {
+            preferenceService.includeBalanceToken(address, {
+              id: token._tokenId,
+              chainid: token.chain,
+              type: 'token',
+            });
+            toast.success(
+              t('page.tokenDetail.actionsTips.includeBalance_success'),
+            );
+          } else {
+            preferenceService.excludeBalance(address, {
+              id: token._tokenId,
+              chainid: token.chain,
+              type: 'token',
+            });
+            toast.success(
+              t('page.tokenDetail.actionsTips.excludeBalance_success'),
+            );
+          }
+          token._isExcludeBalance = !token._isExcludeBalance;
+          refreshTags(address);
+          triggerUpdate();
+        },
+      },
+    ] as MenuAction[];
+  }, [token, t, isDarkTheme, refreshTags, address, triggerUpdate]);
+  const onPress = () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
+
+  return (
+    <DropDownMenuView
+      menuConfig={{
+        menuActions: menuActions,
+      }}
+      triggerProps={{ action: 'press' }}>
+      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+        <RcIconMore width={24} height={24} />
+      </CustomTouchableOpacity>
+    </DropDownMenuView>
+  );
+};
 export const TokenDetailScreen = () => {
   const route = useRoute();
   const { token, account } = (route.params || {}) as {
@@ -153,6 +305,7 @@ export const TokenDetailScreen = () => {
       },
     },
   );
+  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
   const isFirstLoading = loading && !latestData?.list?.length;
 
@@ -161,9 +314,22 @@ export const TokenDetailScreen = () => {
       headerTitle: () => (
         <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
       ),
+      headerRight: () => (
+        <RightMore
+          token={token}
+          address={finalAccount.address}
+          triggerUpdate={triggerUpdate}
+        />
+      ),
       headerTitleAlign: 'left',
     });
-  }, [currentAccount?.address, setNavigationOptions, token]);
+  }, [
+    currentAccount?.address,
+    finalAccount.address,
+    setNavigationOptions,
+    token,
+    triggerUpdate,
+  ]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 

@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
-import { useThemeColors } from '@/hooks/theme';
-import { Text } from '@/components';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { AssetAvatar, Text } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
@@ -13,6 +13,16 @@ import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { createGetStyles2024 } from '@/utils/styles';
+import { Button } from '@/components2024/Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { navigate } from '@/utils/navigation';
+import { useMemoizedFn } from 'ahooks';
+import FastImage from 'react-native-fast-image';
 
 const ListItem = (props: {
   title: string;
@@ -20,8 +30,8 @@ const ListItem = (props: {
   showBorderTop?: boolean;
 }) => {
   const { title, value, showBorderTop } = props;
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
   return (
     <View style={[styles.listItem, showBorderTop && styles.borderTop]}>
       <View style={styles.left}>
@@ -37,18 +47,69 @@ const ListItem = (props: {
 };
 
 export const NFTDetailScreen = () => {
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
-  const { token, collectionName } = useNavigationState(
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+  const { bottom } = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { token } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
   ) as {
     token: NFTItem;
-    collectionName: string;
   };
+  const chain = getCHAIN_ID_LIST().get(token.chain);
+  const isSvgURL = token?.content?.endsWith('.svg');
+  const iconUri = chain?.logo;
+  const collectionName = token.contract_name || token?.collection?.name || '';
+
+  const TokenDetailHeaderArea = useMemoizedFn(() => {
+    return (
+      <View style={styles.headerArea}>
+        <View style={styles.avator}>
+          <View
+            style={StyleSheet.flatten([
+              styles.imagesView,
+              {
+                width: 40,
+                height: 40,
+              },
+            ])}>
+            <Media
+              failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
+              type="image_url"
+              src={isSvgURL ? '' : token?.thumbnail_url}
+              thumbnail={isSvgURL ? '' : token?.thumbnail_url}
+              mediaStyle={styles.imagesAvatar}
+              style={styles.imagesAvatar}
+              playIconSize={36}
+            />
+          </View>
+          {iconUri ? (
+            <FastImage
+              source={{
+                uri: iconUri,
+              }}
+              style={styles.chainIcon}
+            />
+          ) : null}
+        </View>
+        <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
+          {/* {token?.name} */}
+          {ellipsisOverflowedText(token?.name, 20)}
+        </Text>
+      </View>
+    );
+  });
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: TokenDetailHeaderArea,
+      headerTitleAlign: 'center',
+    });
+  }, [TokenDetailHeaderArea, setNavigationOptions]);
 
   const price = useMemo(() => {
     if (token?.usd_price) {
-      return new BigNumber(token?.usd_price).toFormat(2, 4);
+      return `$${new BigNumber(token?.usd_price).toFormat(2, 4)}`;
     }
     return 'Unable to get price';
   }, [token?.usd_price]);
@@ -56,131 +117,230 @@ export const NFTDetailScreen = () => {
   const date = useMemo(
     () =>
       token?.pay_token?.time_at
-        ? dayjs(token?.pay_token?.time_at * 1000).format('YYYY / MM / DD')
+        ? dayjs(token?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
         : 'Unable to get Date',
 
     [token?.pay_token?.time_at],
   );
 
+  const handleSend = useCallback(() => {
+    navigate(RootNames.StackTransaction, {
+      screen: RootNames.SendNFT,
+      params: {
+        collectionName,
+        nftItem: token,
+      },
+    });
+  }, [collectionName, token]);
+
   return (
-    <NormalScreenContainer>
-      <Media
-        failedPlaceholder={<IconDefaultNFT width={'100%'} height={390} />}
-        type={token?.content_type}
-        src={token?.content}
-        style={styles.images}
-        mediaStyle={styles.images}
-        playable={true}
-        poster={token?.content}
-      />
-      <View style={styles.bottom}>
-        <View style={styles.titleView}>
-          <Text style={styles.title}>
-            {token?.name || 'Unable to get NFT name'}
-          </Text>
-          {token?.amount > 1 ? (
-            <View style={styles.subtitle}>
-              <IconNumberNFT color={colors['neutral-title-1']} width={15} />
-              <View>
-                <Text style={styles.numbernft}>
-                  {'Number of NFTs '}{' '}
-                  <Text
-                    style={{
-                      color: colors['neutral-title-1'],
-                    }}>
-                    {token.amount}
-                  </Text>
-                </Text>
-              </View>
-            </View>
-          ) : null}
-        </View>
-        <ListItem title="Last Price" value={price} showBorderTop />
-        <ListItem title="Collection" value={collectionName} />
-        <ListItem
-          title="Chain"
-          value={getCHAIN_ID_LIST().get(token?.chain || CHAINS_ENUM.ETH)?.name}
+    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
+      <ScrollView style={styles.scrollContainer}>
+        <Media
+          failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
+          type={token?.content_type}
+          src={token?.content}
+          style={styles.images}
+          mediaStyle={styles.innerImages}
+          playable={true}
+          poster={token?.content}
         />
-        <ListItem title="Purchase Date" value={date} />
+        <View style={styles.bottom}>
+          <View style={styles.titleView}>
+            <Text style={styles.title} numberOfLines={1}>
+              {token?.name || 'Unable to get NFT name'}
+            </Text>
+            {token?.amount > 1 ? (
+              <View style={styles.subtitle}>
+                <IconNumberNFT color={colors['neutral-title-1']} width={15} />
+                <View>
+                  <Text style={styles.numbernft}>
+                    {'Number of NFTs '}{' '}
+                    <Text
+                      style={{
+                        color: colors['neutral-title-1'],
+                      }}>
+                      {token.amount}
+                    </Text>
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
+          <ListItem title="Collection" value={collectionName} showBorderTop />
+          <ListItem
+            title="Chain"
+            value={
+              getCHAIN_ID_LIST().get(token?.chain || CHAINS_ENUM.ETH)?.name
+            }
+          />
+          <ListItem title="Purchase Date" value={date} />
+          <ListItem title="Last Price" value={price} />
+        </View>
+      </ScrollView>
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            paddingBottom: Math.max(bottom, 50),
+          },
+        ]}>
+        <Button
+          onPress={handleSend}
+          title={t('page.sendNFT.sendButton')}
+          titleStyle={styles.btnTitle}
+        />
       </View>
-    </NormalScreenContainer>
+    </NormalScreenContainer2024>
   );
 };
 
-const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors['neutral-bg-1'],
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-    },
-    images: {
-      width: '100%',
-      height: 375,
-      borderRadius: 0,
-      resizeMode: 'cover',
-    },
-    titleView: {
-      paddingTop: 24,
-      paddingBottom: 26,
-      width: '100%',
-    },
-    title: {
-      color: colors['neutral-title-1'],
-      fontSize: 25,
-      fontWeight: '700',
-    },
-    subtitle: {
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      marginTop: 16,
-    },
-    numbernft: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      lineHeight: 17,
-      marginLeft: 8,
-    },
-    listItem: {
-      flexDirection: 'row',
-      paddingTop: 24,
-      justifyContent: 'space-between',
-    },
-    price: {
-      color: colors['neutral-title-1'],
-      fontSize: 15,
-      fontWeight: '600',
-    },
-    value: {
-      color: colors['neutral-title-1'],
-      fontSize: 15,
-      fontWeight: '600',
-      alignSelf: 'flex-end',
-      alignItems: 'flex-end',
-      alignContent: 'flex-end',
-      maxWidth: 227,
-      marginLeft: 24,
-      textAlign: 'right',
-    },
-    borderTop: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['neutral-line'],
-    },
-    bottom: {
-      paddingHorizontal: 20,
-      width: '100%',
-    },
-    left: {
-      alignSelf: 'flex-start',
-    },
-    right: {
-      alignItems: 'flex-end',
-      justifyContent: 'flex-end',
-      alignSelf: 'flex-end',
-      flexWrap: 'wrap',
-      alignContent: 'flex-end',
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
+  scrollContainer: {
+    flex: 1,
+    width: '100%',
+    marginTop: 8,
+    // backgroundColor: colors2024['neutral-bg-4'],
+  },
+  buttonContainer: {
+    height: 140,
+    width: '100%',
+    padding: 20,
+  },
+  btnTitle: {
+    color: colors['neutral-title-2'],
+  },
+  imagesView: {
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 0,
+  },
+  headerArea: {
+    width: '100%',
+    height: 'auto',
+    marginLeft: 8,
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  assetIcon: {
+    borderRadius: 8,
+  },
+  tokenSymbol: {
+    flexShrink: 1,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    flexWrap: 'nowrap',
+  },
+  container: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  innerImages: {
+    borderRadius: 16,
+    // width: '100%',
+    // height: 'auto',
+  },
+  avator: {
+    width: 40,
+    height: 40,
+    borderColor: 'red',
+    position: 'relative',
+  },
+  chainIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 16,
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+  },
+  imagesAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  images: {
+    width: '100%',
+    height: 360,
+    // flex: 1,
+    paddingHorizontal: 16,
+    borderRadius: 0,
+    resizeMode: 'cover',
+  },
+  titleView: {
+    paddingTop: 16,
+    paddingBottom: 16,
+    width: '100%',
+  },
+  title: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+  subtitle: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  numbernft: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+    lineHeight: 17,
+    marginLeft: 8,
+  },
+  listItem: {
+    flexDirection: 'row',
+    paddingTop: 16,
+    justifyContent: 'space-between',
+  },
+  price: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  value: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    alignSelf: 'flex-end',
+    alignItems: 'flex-end',
+    alignContent: 'flex-end',
+    maxWidth: 227,
+    marginLeft: 24,
+    textAlign: 'right',
+  },
+  borderTop: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors['neutral-line'],
+  },
+  bottom: {
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  left: {
+    alignSelf: 'flex-start',
+  },
+  right: {
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    alignSelf: 'flex-end',
+    flexWrap: 'wrap',
+    alignContent: 'flex-end',
+  },
+}));

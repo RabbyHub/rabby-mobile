@@ -1,16 +1,10 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { SafeAreaView } from 'react-native';
 import HeaderArea from './HeaderArea';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { AssetContainer } from './AssetContainer';
 
-import { HomeTopArea } from './components/HomeTopArea';
-import { useMemoizedFn } from 'ahooks';
-import { keyringService } from '@/core/services';
-import { RootNames } from '@/constant/layout';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -18,7 +12,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { currentAccount } = useCurrentAccount({
@@ -27,37 +21,14 @@ function HomeScreen(): JSX.Element {
 
   React.useEffect(() => {
     setNavigationOptions({
-      headerTitle: () => (
-        <HomeScreen.HeaderArea key={currentAccount?.address} />
-      ),
+      headerTitle: () => <HomeScreen.HeaderArea />,
     });
   }, [currentAccount?.address, navigation, setNavigationOptions]);
 
-  const init = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (!accounts?.length) {
-      navigation.dispatch(
-        StackActions.replace(RootNames.StackGetStarted, {
-          screen: RootNames.GetStartedScreen2024,
-        }),
-      );
-    }
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      init();
-    }, [init]),
-  );
-
   return (
     <NormalScreenContainer2024 type="bg1" style={styles.rootScreenContainer}>
-      {/* <ScreenSpecificStatusBar screenName={RootNames.Home} /> */}
       <SafeAreaView style={styles.safeView}>
-        <AssetContainer
-          renderHeader={() => <HomeTopArea />}
-          onRefresh={triggerUpdate}
-        />
+        <AssetContainer onRefresh={triggerUpdate} />
       </SafeAreaView>
     </NormalScreenContainer2024>
   );
@@ -70,8 +41,8 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 16,
   },
   safeView: {
-    borderRadius: 24,
     flex: 1,
+    paddingBottom: 56,
     width: '100%',
     overflow: 'hidden',
   },
