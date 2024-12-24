@@ -45,6 +45,11 @@ module.exports = {
           '@': './src',
           'styled-components/native': 'styled-components/native',
           'styled-components': 'styled-components/native',
+
+          // 'crypto': 'react-native-quick-crypto',
+          // // 'stream': 'stream-browserify',
+          // 'stream': 'readable-stream',
+          // 'buffer': '@craftzdog/react-native-buffer',
         },
       },
     ],
