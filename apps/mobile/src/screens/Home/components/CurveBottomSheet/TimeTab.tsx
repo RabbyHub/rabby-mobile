@@ -17,22 +17,17 @@ export const TIME_TAB_LIST = [
   {
     label: '1W',
     key: '1W' as const,
-    value: [dayjs().add(-7, 'd'), dayjs()],
+    value: [dayjs().add(-7, 'days'), dayjs()],
   },
   {
     label: '1M',
     key: '1M' as const,
-    value: [dayjs().add(-30, 'd'), dayjs()],
+    value: [dayjs().add(-1, 'month'), dayjs()],
   },
   {
     label: '1Y',
     key: '1Y' as const,
-    value: [dayjs().add(-90, 'd'), dayjs()],
-  },
-  {
-    label: 'Max',
-    key: 'Max' as const,
-    value: [0, dayjs()],
+    value: [dayjs().add(-1, 'year'), dayjs()],
   },
 ].map(item => {
   const v0 = item.value[0];
