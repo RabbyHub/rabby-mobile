@@ -17,7 +17,9 @@ import { toast } from '@/components2024/Toast';
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
     q.on('empty', () => {
-      if (q.pending <= 0) resolve(null);
+      if (q.pending <= 0) {
+        resolve(null);
+      }
     });
   });
 };
@@ -25,7 +27,12 @@ const waitQueueFinished = (q: PQueue) => {
 function HistoryFilterScamScreen({
   route,
 }: {
-  route?: { params: { addresses: KeyringAccountWithAlias[] } };
+  route?: {
+    params: {
+      addresses: KeyringAccountWithAlias[];
+      isForMultipleAdderss: boolean;
+    };
+  };
 }): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
@@ -120,7 +127,11 @@ function HistoryFilterScamScreen({
             Loading may take a moment, and data delays are possible
           </Text>
         ) : null}
-        <HistoryList loading={loading} list={data?.list} />
+        <HistoryList
+          loading={loading}
+          list={data?.list}
+          isForMultipleAdderss={route?.params.isForMultipleAdderss}
+        />
       </View>
     </NormalScreenContainer2024>
   );

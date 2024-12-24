@@ -9,6 +9,7 @@ import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '../types';
+import { ITokenSetting } from '@/core/services/preference';
 
 export const queryTokensCache = async (user_id: string, isTestnet = false) => {
   return requestOpenApiWithChainId(
@@ -88,6 +89,75 @@ export const sortWalletTokens = (wallet: DisplayedProject) => {
   return wallet._portfolios
     .flatMap(x => x._tokenList)
     .sort((m, n) => (n._usdValue || 0) - (m._usdValue || 0));
+};
+
+export const tagTokenList = (
+  tokens: AbstractPortfolioToken[],
+  tokenSetting: ITokenSetting,
+) => {
+  const {
+    pinedQueue = [],
+    includeDefiAndTokens = [],
+    excludeDefiAndTokens = [],
+    foldTokens = [],
+    unfoldTokens = [],
+  } = tokenSetting;
+
+  return tokens.map(i => {
+    const pinIndex = pinedQueue.findIndex(
+      x => x.chainId === i.chain && x.tokenId === i._tokenId,
+    );
+    const isPin = pinIndex !== -1;
+    const isFold = (() => {
+      if (
+        foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
+      ) {
+        return true;
+      }
+      if (
+        unfoldTokens.some(
+          x => x.chainId === i.chain && x.tokenId === i._tokenId,
+        )
+      ) {
+        return false;
+      }
+      if (!i.is_core || (i._usdValue || 0) < 1) {
+        return true;
+      }
+      return false;
+    })();
+
+    const isExcludeBalance = (() => {
+      if (
+        excludeDefiAndTokens.some(
+          x =>
+            x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
+        )
+      ) {
+        return true;
+      }
+      if (
+        includeDefiAndTokens.some(
+          x =>
+            x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
+        )
+      ) {
+        return false;
+      }
+      if (!i.is_core) {
+        return true;
+      }
+      return false;
+    })();
+
+    return {
+      ...i,
+      _isPined: isPin,
+      _isFold: isFold,
+      _isExcludeBalance: isExcludeBalance,
+      _pinIndex: pinIndex,
+    };
+  });
 };
 
 export const ensureAbstractPortfolioToken = (

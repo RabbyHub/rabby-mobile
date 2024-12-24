@@ -27,6 +27,7 @@ import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
+import { DeFiDetailScreen } from './screens/DeFiDetail';
 
 import { HomeScreenNavigator } from './screens/Navigators/rootNavigator';
 
@@ -255,15 +256,25 @@ export default function AppNavigation({
             name={RootNames.NftDetail}
             component={NFTDetailScreen}
             options={mergeScreenOptions({
-              title: 'NFT Detail',
-              headerShadowVisible: false,
               headerShown: true,
+              headerTitleAlign: 'center',
+              headerTitle: '',
               headerStyle: {
-                backgroundColor: '#fff',
+                // backgroundColor: colors['neutral-bg-2'],
+                backgroundColor: 'transparent',
               },
-              headerTitleStyle: {
-                color: colors['neutral-title-1'],
-                fontWeight: 'normal',
+            })}
+          />
+          <RootStack.Screen
+            name={RootNames.DeFiDetail}
+            component={DeFiDetailScreen}
+            options={mergeScreenOptions({
+              headerShown: true,
+              headerTitleAlign: 'center',
+              headerTitle: 'DeFi Detail',
+              headerLeft: () => null,
+              headerStyle: {
+                backgroundColor: 'transparent',
               },
             })}
           />

@@ -10,13 +10,13 @@
 ## Pull certificates
 # bundle exec fastlane match --readonly
 # [CONFIGURATION=development] bundle exec fastlane match --readonly
-# CONFIGURATION=release [TYPE=appstore] bundle exec fastlane match --readonly
-# CONFIGURATION=release TYPE=adhoc bundle exec fastlane match --readonly
+# CONFIGURATION=release [TYPE=adhoc] bundle exec fastlane match --readonly
+# CONFIGURATION=release TYPE=appstore bundle exec fastlane match --readonly
 
 ## Create, update certificates
 # [CONFIGURATION=development] bundle exec fastlane match --readonly
-# CONFIGURATION=release [TYPE=appstore] bundle exec fastlane match --readonly
-# CONFIGURATION=release TYPE=adhoc bundle exec fastlane match --readonly
+# CONFIGURATION=release [TYPE=adhoc] bundle exec fastlane match --readonly
+# CONFIGURATION=release TYPE=appstore bundle exec fastlane match --readonly
 
 ## self-hosted certificates' storage repo for debank frontend group
 ## use https:// if basic MATCH_GIT_BASIC_AUTHORIZATION environment variable setup
@@ -43,6 +43,8 @@ case ENV["CONFIGURATION"]
     ENV["CONFIGURATION"] = "release"
   when "debug", "dev", "development"
     ENV["CONFIGURATION"] = "debug"
+  when "reg", "regression"
+    ENV["CONFIGURATION"] = "regression"
   else
     ENV["CONFIGURATION"] = "debug"
 end
@@ -51,20 +53,20 @@ if ENV["CONFIGURATION"] == "debug"
     profile_name = "RabbyMobileDevelopment"
     run_type = "development"
     app_identifiers = ["com.debank.rabby-mobile-debug"]
-elsif ENV["CONFIGURATION"] == "release"
+else
   if ENV["TYPE"] == nil
     ENV["TYPE"] = "adhoc"
   end
 
-  app_identifiers = ["com.debank.rabby-mobile"]
-
   case ENV["TYPE"]
     when "adhoc"
       run_type = "adhoc"
-      profile_name = "RabbyMobileAdHoc"
+      profile_name = "RabbyMobileAdHocRegression"
+      app_identifiers = ["com.debank.rabby-mobile-regression"]
     when "appstore"
       run_type = "appstore"
       profile_name = "RabbyMobileAppStore"
+      app_identifiers = ["com.debank.rabby-mobile"]
     else
       print("Invalid ENV[\"TYPE\"] value" + ENV["TYPE"])
   end

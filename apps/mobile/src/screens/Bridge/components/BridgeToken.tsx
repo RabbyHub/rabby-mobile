@@ -28,7 +28,6 @@ import { ChainInfo } from './ChainInfo';
 // import TokenSelect from '@/ui/component/TokenSelect';
 // import BridgeToTokenSelect from './BridgeToTokenSelect';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
-import BridgeFromTokenSelect from './BridgeFromTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
@@ -208,13 +207,13 @@ const BridgeToken = ({
                 placeholder={t('page.swap.search-by-name-address')}
               />
             ) : (
-              <BridgeFromTokenSelect
+              <TokenSelect
                 // fromChainId={fromChainId!}
                 // fromTokenId={fromTokenId!}
                 token={token}
                 onTokenChange={onChangeToken}
                 chainId={chainObj?.serverId!}
-                type={'from'}
+                type={'bridgeFrom'}
                 placeholder={t('page.swap.search-by-name-address')}
               />
             )}

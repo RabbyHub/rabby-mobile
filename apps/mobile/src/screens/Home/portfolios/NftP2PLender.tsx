@@ -24,11 +24,11 @@ export default React.memo(
         <TokenList nfts={portfolio?.detail?.nft_list} name="LENT AGAINST" />
         <TokenList
           tokens={portfolio?.detail?.supply_token_list}
-          name="SUPPLIED"
+          name="supplied"
         />
         <TokenList
           tokens={portfolio?.detail?.reward_token_list}
-          name="REWARDS"
+          name="rewards"
         />
       </Card>
     );

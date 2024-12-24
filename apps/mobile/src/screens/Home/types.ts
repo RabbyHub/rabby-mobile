@@ -29,6 +29,7 @@ export interface AbstractProject {
   _netWorthChange: string;
   _netWorthChangePercent: string;
   _intNetworth: string;
+  _isExcludeBalance?: boolean;
 }
 
 export interface AbstractPortfolio {
@@ -62,6 +63,10 @@ export type AbstractPortfolioToken = PortfolioItemToken & {
   _amountChangeUsdValueStr?: string;
   _usdValueChangePercent?: string;
   _realUsdValueChange?: number;
+  _isPined?: boolean;
+  _isFold?: boolean;
+  _isExcludeBalance?: boolean;
+  _pinIndex?: number;
 };
 
 export type PortfolioProject = {

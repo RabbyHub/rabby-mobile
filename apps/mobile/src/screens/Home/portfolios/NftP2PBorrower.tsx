@@ -21,14 +21,14 @@ export default React.memo(
     return (
       <Card style={style} shadow>
         <PortfolioHeader data={data} name={name} showDescription />
-        <TokenList nfts={portfolio?.detail?.supply_nft_list} name="SUPPLIED" />
+        <TokenList nfts={portfolio?.detail?.supply_nft_list} name="supplied" />
         <TokenList
           tokens={portfolio?.detail?.borrow_token_list}
-          name="BORROWED"
+          name="borrowed"
         />
         <TokenList
           tokens={portfolio?.detail?.reward_token_list}
-          name="REWARDS"
+          name="rewards"
         />
       </Card>
     );

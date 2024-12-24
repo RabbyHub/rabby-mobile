@@ -17,10 +17,9 @@ import type {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import type { ContactBookService } from '@rabby-wallet/service-address';
-import * as bip39 from '@scure/bip39';
-import { wordlist } from '@scure/bip39/wordlists/english';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
+import * as bip39 from 'react-native-quick-bip39';
 
 import type { KeyringClassType, KeyringInstance } from './types';
 import { keyringSdks } from './types';
@@ -1020,7 +1019,7 @@ export class KeyringService extends RNEventEmitter {
    * Mnemonic Phrase
    */
   generateMnemonic(): string {
-    return bip39.generateMnemonic(wordlist);
+    return bip39.generateMnemonic();
   }
 
   async generatePreMnemonic(options?: {
@@ -1067,7 +1066,7 @@ export class KeyringService extends RNEventEmitter {
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
   createKeyringWithMnemonics(seed: string): Promise<any> {
-    if (!bip39.validateMnemonic(seed, wordlist)) {
+    if (!bip39.validateMnemonic(seed, bip39.wordlists.english)) {
       return Promise.reject(new Error('background.error.invalidMnemonic'));
     }
 

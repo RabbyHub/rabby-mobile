@@ -167,6 +167,21 @@ android {
         }
       }
     }
+    // packagingOptions {
+    //   jniLibs {
+    //     pickFirsts += [
+    //       'lib/**/libssl.so',
+    //       'lib/**/libcrypto.so'
+    //     ]
+    //   }
+    // }
+}
+
+androidComponents {
+  onVariants(selector().withBuildType("debug")) {
+    // packaging.jniLibs.pickFirsts.add('lib/**/libssl.so')
+    packaging.jniLibs.pickFirsts.add('lib/**/libcrypto.so')
+  }
 }
 
 dependencies {

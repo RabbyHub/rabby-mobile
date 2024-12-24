@@ -3,6 +3,7 @@ import { preferenceService, keyringService } from '../services';
 import { openapi, testOpenapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
+import { getTokenSettings } from '@/utils/getTokenSettings';
 
 const getTotalBalanceCached = cached(async address => {
   const addresses = await keyringService.getAllAddresses();
@@ -13,13 +14,23 @@ const getTotalBalanceCached = cached(async address => {
   if (filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))) {
     core = true;
   }
-  const data = await openapi.getTotalBalance(address, core);
+  const tokenSetting = await getTokenSettings(address);
+  const data = await openapi.getTotalBalanceV2({
+    address,
+    isCore: core,
+    ...tokenSetting,
+  });
   preferenceService.updateAddressBalance(address, data);
   return data;
 }, 5000);
 
 const getTestnetTotalBalanceCached = cached(async address => {
-  const testnetData = await testOpenapi.getTotalBalance(address);
+  const tokenSetting = await getTokenSettings(address);
+  const testnetData = await testOpenapi.getTotalBalanceV2({
+    address,
+    isCore: false,
+    ...tokenSetting,
+  });
   preferenceService.updateTestnetAddressBalance(address, testnetData);
   return testnetData;
 }, 5000);
