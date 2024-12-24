@@ -89,7 +89,7 @@ export const formatNumber = (
 };
 
 export const formatPrice = (price: string | number, len = 4) => {
-  if ((price as number) >= 0.001) {
+  if ((price as number) >= 0.01) {
     return formatNumber(price);
   }
   if ((price as number) < 0.00001) {
