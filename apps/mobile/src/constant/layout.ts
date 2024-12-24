@@ -194,13 +194,13 @@ function makeScreenSpecConfig() {
     const bg1DefaultConf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors['neutral-bg1'],
+      androidStatusBarBg: colors['neutral-bg-1'],
     };
 
     const bg1Default2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg1'],
+      androidStatusBarBg: colors2024['neutral-bg-1'],
     };
 
     const transparentDefault2024Conf = <ScreenStatusBarConf>{
@@ -239,7 +239,7 @@ function makeScreenSpecConfig() {
       '@openeddapp': {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: colors['neutral-bg1'],
+        androidStatusBarBg: colors['neutral-bg-1'],
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,
@@ -249,14 +249,14 @@ function makeScreenSpecConfig() {
       DappWebViewStubOnHome: {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: colors['neutral-bg1'],
+        androidStatusBarBg: colors['neutral-bg-1'],
       },
       MultiAddressHome: bg1Default2024Conf,
       // MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
       MultiAddressHistory: bg1Default2024Conf,
 
-      // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      Dapps: bg1Default2024Conf,
       // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
 
       // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
@@ -372,7 +372,7 @@ export function makeHeadersPresets({
     },
     withBgCard1_2024: {
       headerStyle: {
-        backgroundColor: colors2024?.['neutral-bg1'],
+        backgroundColor: colors2024?.['neutral-bg-1'],
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
