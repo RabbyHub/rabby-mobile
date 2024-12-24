@@ -63,6 +63,7 @@ import {
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
+import { useAppState } from '@react-native-community/hooks';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -133,6 +134,7 @@ function MultiAddressHome(): JSX.Element {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { switchAccount } = useCurrentAccount();
+  const appState = useAppState();
 
   const { width } = Dimensions.get('window');
   const itemWidth =
@@ -277,9 +279,11 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      triggerUpdate();
-      triggerUpdateAlert();
-    }, [triggerUpdate, triggerUpdateAlert]),
+      if (appState === 'active') {
+        triggerUpdate();
+        triggerUpdateAlert();
+      }
+    }, [triggerUpdate, triggerUpdateAlert, appState]),
   );
 
   const onRefresh = useCallback(() => {
