@@ -92,12 +92,14 @@ export const HistoryList = ({
   list,
   localTxList,
   onRefresh,
+  isForMultipleAdderss = true,
 }: {
   localTxList?: TransactionGroup[];
   list?: (HistoryDisplayItem | TransactionGroup)[];
   loading?: boolean;
   loadingMore?: boolean;
   refreshLoading?: boolean;
+  isForMultipleAdderss?: boolean;
   loadMore?: () => void;
   onRefresh?: () => void;
 }) => {
@@ -112,11 +114,17 @@ export const HistoryList = ({
       return (
         <>
           {item.isDateStart ? (
-            <Text style={styles.date}>
+            <Text
+              style={[
+                styles.date,
+                !isForMultipleAdderss && styles.marginBottom,
+              ]}>
               {formatTimestamp(item.data.time_at * 1000)}
             </Text>
           ) : null}
-          {item.isFirst ? <AddressInfo account={item.data.account} /> : null}
+          {item.isFirst && isForMultipleAdderss ? (
+            <AddressInfo account={item.data.account} />
+          ) : null}
           <HistoryItem
             data={item.data}
             projectDict={item.data.projectDict}
@@ -208,11 +216,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     marginLeft: 4,
   },
+  marginBottom: {
+    marginBottom: 12,
+  },
   date: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontWeight: '700',
-    paddingLeft: 12,
+    // paddingLeft: 0,
+    marginTop: 12,
     marginBottom: 20,
     color: colors2024['neutral-title-1'],
     lineHeight: 22,

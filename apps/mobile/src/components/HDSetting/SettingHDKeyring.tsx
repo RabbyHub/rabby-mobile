@@ -2,16 +2,14 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MainContainer, settingAtom } from './MainContainer';
-import { requestKeyring } from '@/core/apis/keyring';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
+import { apiMnemonic } from '@/core/apis';
 
 export const SettingHDKeyring: React.FC<{
   onDone: () => void;
   mnemonics: string;
   passphrase: string;
-  keyringId: number;
-}> = ({ onDone, keyringId }) => {
+}> = ({ onDone, mnemonics, passphrase }) => {
   const { t } = useTranslation();
   const [setting, setSetting] = useAtom(settingAtom);
 
@@ -45,19 +43,30 @@ export const SettingHDKeyring: React.FC<{
     [t],
   );
 
+  const mnemonicKeyringRef = React.useRef<
+    ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
+  >(undefined);
+  const getMnemonicKeyring = React.useCallback(() => {
+    if (mnemonics) {
+      if (!mnemonicKeyringRef.current) {
+        mnemonicKeyringRef.current = apiMnemonic.getKeyringByMnemonic(
+          mnemonics!,
+          passphrase!,
+        );
+      }
+      return mnemonicKeyringRef.current;
+    }
+    return undefined;
+  }, [mnemonics, passphrase]);
+
   const handleConfirm = React.useCallback(
     async value => {
-      await requestKeyring(
-        KEYRING_CLASS.MNEMONIC,
-        'setHDPathType',
-        keyringId || null,
-        value.hdPath,
-      );
-
+      const keyring = await getMnemonicKeyring();
+      await keyring?.setHDPathType(value.hdPath);
       setSetting(value);
       onDone?.();
     },
-    [keyringId, onDone, setSetting],
+    [getMnemonicKeyring, onDone, setSetting],
   );
 
   return (

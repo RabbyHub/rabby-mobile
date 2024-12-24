@@ -9,13 +9,16 @@ platform :ios do
       use_automatic_signing: false,
       sdk: "iphoneos*",
       path: './ios/RabbyMobile.xcodeproj',
-      profile_name: opts[:profile_name],
-      bundle_identifier: "com.debank.rabby-mobile",
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegression' : 'RabbyMobileAppStore',
+      bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
     )
 
-    ENV['CONFIGURATION'] = 'release'
+    ENV['CONFIGURATION'] = opts[:type] == 'adhoc' ? 'Regression' : 'Release'
+
     match(
       type: opts[:type],
+      app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegression' : 'RabbyMobileAppStore',
       readonly: true,
       shallow_clone: true,
       verbose: false,
@@ -25,12 +28,12 @@ platform :ios do
 
   desc "Release for the iOS adhoc"
   lane :adhoc do
-    prepare_apple_sign(type: 'adhoc', profile_name: "RabbyMobileAdHoc")
+    prepare_apple_sign(type: 'adhoc', profile_name: "RabbyMobileAdHocRegression")
 
     gym(
-      scheme: 'RabbyMobile',
+      scheme: 'RabbyMobileRegression',
       workspace: './ios/RabbyMobile.xcworkspace',
-      configuration: 'Release',
+      configuration: 'Regression',
       output_directory: "./ios/Package/adhoc",
       build_path: "./ios/Package/adhoc",
       destination: "generic/platform=iOS",
@@ -44,9 +47,9 @@ platform :ios do
       export_options: {
         method: 'ad-hoc',
         signingStyle: 'manual',
-        # provisioningProfiles: {
-        #   "com.debank.rabby-mobile": "RabbyMobileAdHoc"
-        # }
+        provisioningProfiles: {
+          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegression"
+        },
         manifest: {
           appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
           displayImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_57x57@57w.png",
@@ -80,6 +83,7 @@ platform :ios do
           method: "app-store",
           signingStyle: 'manual',
           provisioningProfiles: {
+            "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegression",
             "com.debank.rabby-mobile": "RabbyMobileAppStore"
           }
         })

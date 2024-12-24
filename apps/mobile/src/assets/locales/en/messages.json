@@ -966,7 +966,7 @@
       "select-chain": "Select Chain",
       "no-quote-found": "No quote found. Please try other token pairs.",
       "token": "Token",
-      "value": "Value",
+      "value": "Balance",
       "liquidity": "Liquidity",
       "no-quote": "No Quote",
       "title": "Bridge",
@@ -2380,14 +2380,32 @@
       "transactions": "Transactions",
       "action": {
         "swap": "Swap",
-        "send": "Send"
-      }
+        "send": "Send",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "fold": "Fold",
+        "unfold": "Unfold",
+        "less": "Less",
+        "all": "All",
+        "includeBalance": "Include in Balance",
+        "excludeBalance": "Exclude from Balance"
+      },
+      "actionsTips": {
+        "pin_success": "Pinned successfully",
+        "unpin_success": "Unpinned successfully",
+        "includeBalance_success": "Included in balance",
+        "excludeBalance_success": "Excluded from balance",
+        "fold_success": "Folded successfully",
+        "unfold_success": "Unfolded successfully"
+      },
+      "excludeBalanceTips": "This asset is excluded from your total balance for accuracy. You can tap it to view details and include it if preferred.",
+      "excludeBalanceTipsButton": "I Got It."
     },
     "approvalsAddressList": {
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Receive Address",
+      "title": "Select Recipient Address",
       "selectChainTitle": "Select Chain"
     }
   },

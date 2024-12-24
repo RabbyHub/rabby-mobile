@@ -50,7 +50,7 @@ import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-function makeDefaultToken(): TokenItem {
+function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
     id: 'eth',
     chain: 'eth',
@@ -840,7 +840,7 @@ export function useSendTokenForm() {
           tokenItem: result,
           currentAddress,
         });
-        putChainToken({ currentToken: result });
+        putChainToken({ currentToken: { ...result, tokenId: id } });
       }
       putScreenState({ isLoading: false });
 

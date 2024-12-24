@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,6 +20,7 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMemoizedFn } from 'ahooks';
 
+const screenWidth = Dimensions.get('window').width;
 interface Props {
   token: AbstractPortfolioToken;
 }
@@ -59,67 +60,78 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
     }, [token]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.token}>
-        <AssetAvatar
-          logo={token?.logo_url}
-          // style={mediaStyle}
-          size={35}
-          chainSize={16}
-        />
-        <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
-          {ellipsisOverflowedText(getTokenSymbol(token), 8)}
-        </Text>
-      </View>
-      <View style={styles.contract}>
-        <ChainIconImage
-          size={12}
-          chainServerId={token.chain}
-          isShowRPCStatus={true}
-        />
-        {!isContractToken && nativeTokenChainName ? (
-          <>
-            <Text
-              style={[styles.address]}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {nativeTokenChainName}
-            </Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.address} numberOfLines={1} ellipsizeMode="tail">
-              {ellipsisAddress(tokenAddress)}
-            </Text>
-            <TouchableOpacity onPress={handleCopyAddress}>
-              <RcIconCopyRegularCC
-                style={styles.icon}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconJump}
-              onPress={() => {
-                openTxExternalUrl({
-                  chain: chainItem,
-                  address: tokenAddress,
-                });
-              }}>
-              <RcIconExternalLinkCC
-                style={styles.icon}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </>
-        )}
+    <View style={styles.root}>
+      <View style={styles.container}>
+        <View style={styles.token}>
+          <AssetAvatar
+            logo={token?.logo_url}
+            // style={mediaStyle}
+            size={35}
+            chainSize={16}
+          />
+          <Text
+            style={styles.tokenSymbol}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {ellipsisOverflowedText(getTokenSymbol(token), 6)}
+          </Text>
+        </View>
+        <View style={styles.contract}>
+          <ChainIconImage
+            size={12}
+            chainServerId={token.chain}
+            isShowRPCStatus={true}
+          />
+          {!isContractToken && nativeTokenChainName ? (
+            <>
+              <Text
+                style={[styles.address]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {nativeTokenChainName}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text
+                style={styles.address}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {ellipsisAddress(tokenAddress)}
+              </Text>
+              <TouchableOpacity onPress={handleCopyAddress}>
+                <RcIconCopyRegularCC
+                  style={styles.icon}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconJump}
+                onPress={() => {
+                  openTxExternalUrl({
+                    chain: chainItem,
+                    address: tokenAddress,
+                  });
+                }}>
+                <RcIconExternalLinkCC
+                  style={styles.icon}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </View>
     </View>
   );
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  container: {
+  root: {
     width: '100%',
+  },
+  container: {
+    width: screenWidth - 130,
     marginLeft: 0,
     display: 'flex',
     flexDirection: 'row',

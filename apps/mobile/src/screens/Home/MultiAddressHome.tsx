@@ -178,10 +178,10 @@ function MultiAddressHome(): JSX.Element {
       title: MultiHomeFeatTitle.GasAccount,
       icon: RcIconGasAccount,
     },
-    __DEV__ && {
-      title: MultiHomeFeatTitle.TEST_DAPP,
-      icon: RcIconDapps,
-    },
+    // __DEV__ && {
+    //   title: MultiHomeFeatTitle.TEST_DAPP,
+    //   icon: RcIconDapps,
+    // },
     {
       title: MultiHomeFeatTitle.Dapps,
       icon: RcIconDapps,
@@ -388,12 +388,10 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Dapps:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackRoot, {
-              screen: RootNames.Dapps,
-              params: {},
-            }),
-          );
+          navigation.navigate(RootNames.StackRoot, {
+            screen: RootNames.Dapps,
+            params: {},
+          });
           break;
         case MultiHomeFeatTitle.TEST_DAPP:
           openUrlAsDapp('https://metamask.github.io/test-dapp/', {

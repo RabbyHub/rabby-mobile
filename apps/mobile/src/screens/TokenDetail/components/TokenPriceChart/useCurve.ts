@@ -95,9 +95,9 @@ export const formatTokenDateCurve = (
 
       return {
         value: item.price || 0,
-        netWorth: item.price ? '$' + formatPrice(item.price) : '$0',
+        netWorth: item.price ? '$' + formatPrice(item.price, 8) : '$0',
         // change: numFormat(Math.abs(change), 0, '$'),
-        change: '$' + formatPrice(Math.abs(change)),
+        change: '$' + formatPrice(Math.abs(change), 8),
         isLoss: change < 0,
         changePercent:
           startData.value === 0

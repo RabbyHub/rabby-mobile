@@ -1,159 +1,309 @@
+import React, { useCallback, useMemo, useState } from 'react';
+import { SectionList, View } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
+
 import { useCurrentAccount } from '@/hooks/account';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import React, { useState } from 'react';
-import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { navigate } from '@/utils/navigation';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
+import { useQueryProjects } from './hooks';
+import useSortToken from './hooks/useSortTokens';
 import {
-  Tabs,
-  CollapsibleProps,
-  MaterialTabBar,
-  MaterialTabItem,
-} from 'react-native-collapsible-tab-view';
-import { DefiScreen } from './DefiScreen';
-import { NFTScreen } from './NFTScreen';
-import { TokenScreen } from './TokenScreen';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+  getTotalFoldToken,
+  getAllDefiCount,
+  getAllNftCount,
+} from './utils/converAssets';
+import {
+  AbstractPortfolio,
+  AbstractPortfolioToken,
+  AbstractProject,
+} from './types';
+import { DEFI_ID, NFT_ID, SMALL_TOKEN_ID } from '@/utils/token';
+import { findChain } from '@/utils/chain';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
+import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
+import { PositionLoader } from './components/Skeleton';
+import { EmptyHolder } from '@/components/EmptyHolder';
 
-const isAndroid = Platform.OS === 'android';
-
+import {
+  TokenRow,
+  DefiRow,
+  NftRow,
+  TokenRowSectionHeader,
+  DefiSectionHeader,
+  NftSectionHeader,
+} from './components/AssetRenderItems';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { HomeTopArea } from './components/HomeTopArea';
 interface Props {
-  renderHeader: CollapsibleProps['renderHeader'];
   onRefresh(): void;
 }
 
-export const AssetContainer: React.FC<Props> = ({
-  renderHeader,
-  onRefresh,
-}) => {
+export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
   const { currentAccount } = useCurrentAccount();
-  const [activeTab, setActiveTab] = useState('token');
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isDark = useGetBinaryMode() === 'dark';
-  const { width } = useWindowDimensions();
+  const {
+    tokens,
+    refreshPositions,
+    portfolios,
+    nftList,
+    loading,
+    refreshing,
+    hasAssets,
+  } = useQueryProjects(currentAccount?.address, false, true);
+  const sortTokens = useSortToken(tokens);
 
-  const renderTabItem = React.useCallback(
-    (props: any) => (
-      <MaterialTabItem
-        {...(isAndroid && {
-          pressColor: 'transparent',
-        })}
-        {...props}
-        labelStyle={StyleSheet.flatten([
-          props.labelStyle,
-          activeTab === props.name ? styles.activeLabelStyle : {},
-        ])}
-        style={StyleSheet.flatten([
-          props.style,
-          activeTab === props.name && {
-            backgroundColor: isDark ? '#FFF' : '#192945',
-          },
-        ])}
-      />
-    ),
-    [activeTab, isDark, styles.activeLabelStyle],
-  );
+  const [foldHideList, setFoldHideList] = useState(true);
+  const [foldDefi, setFoldDefi] = useState(true);
+  const [foldNft, setFoldNft] = useState(true);
 
-  const renderTabBar = React.useCallback(
-    (props: any) => (
-      <MaterialTabBar
-        {...props}
-        scrollEnabled={false}
-        style={styles.tabBarWrap}
-        contentContainerStyle={styles.tabList}
-        tabStyle={styles.tabBar}
-        indicatorStyle={styles.indicator}
-        TabItemComponent={renderTabItem}
-        activeColor={isDark ? '#192945' : '#FFF'}
-        inactiveColor={colors2024['neutral-foot']}
-        labelStyle={styles.label}
-      />
-    ),
-    [
-      colors2024,
-      isDark,
-      renderTabItem,
-      styles.indicator,
-      styles.label,
-      styles.tabBar,
-      styles.tabBarWrap,
-      styles.tabList,
+  const {
+    sheetModalRef: tokenDetailModalRef,
+    openTokenDetailPopup,
+    cleanFocusingToken,
+    focusingToken,
+    isTestnetToken,
+  } = useGeneralTokenDetailSheetModal();
+
+  const sections = useMemo(
+    () => [
+      {
+        type: 'unfold_token',
+        originData: sortTokens.filter(i => !i._isFold),
+        data: sortTokens.filter(i => !i._isFold),
+      },
+      {
+        type: 'fold_token',
+        originData: sortTokens.filter(i => i._isFold),
+        data: foldHideList ? [] : sortTokens.filter(i => i._isFold),
+      },
+      {
+        type: 'defi',
+        originData: portfolios,
+        data: foldDefi ? [] : portfolios || [],
+      },
+      {
+        type: 'nft',
+        originData: nftList,
+        data: foldNft ? [] : nftList || [],
+      },
     ],
+    [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens],
   );
 
+  const handleOpenTokenDetail = React.useCallback(
+    (token: AbstractPortfolioToken) => {
+      if (token.id === SMALL_TOKEN_ID) {
+        setFoldHideList(pre => !pre);
+        return;
+      }
+      if (
+        findChain({
+          serverId: token.chain,
+        })?.isTestnet
+      ) {
+        openTokenDetailPopup(token);
+      } else {
+        navigate(RootNames.TokenDetail, {
+          token: token,
+          // todo fix ts
+          account: currentAccount as any,
+        });
+      }
+    },
+    [currentAccount, openTokenDetailPopup],
+  );
+
+  const handleOpenDefiDetail = useCallback(
+    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      if (data.id === DEFI_ID) {
+        setFoldDefi(pre => !pre);
+        return;
+      }
+      navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
+    },
+    [],
+  );
+
+  const handlePressNft = (item: NFTItem) => {
+    if (item.id === NFT_ID) {
+      setFoldNft(pre => !pre);
+      return;
+    }
+    navigate(RootNames.NftDetail, { token: item });
+  };
+
+  const ListEmptyComponent = useMemo(() => {
+    return loading ? (
+      <PositionLoader space={8} />
+    ) : hasAssets ? null : (
+      <View style={styles.emptyHolder}>
+        <EmptyHolder
+          imgStyle={styles.emptyImg}
+          textStyle={styles.emptyText}
+          text="No Assets"
+          type="default"
+        />
+      </View>
+    );
+  }, [
+    loading,
+    hasAssets,
+    styles.emptyHolder,
+    styles.emptyImg,
+    styles.emptyText,
+  ]);
+
+  const renderItem = ({ item, section }) => {
+    switch (section.type) {
+      case 'unfold_token':
+        return (
+          <TokenRow
+            data={item}
+            onTokenPress={handleOpenTokenDetail}
+            address={currentAccount?.address}
+            logoSize={40}
+          />
+        );
+      case 'fold_token':
+        return (
+          <TokenRow
+            data={item}
+            onTokenPress={handleOpenTokenDetail}
+            address={currentAccount?.address}
+            logoSize={40}
+          />
+        );
+      case 'nft':
+        return <NftRow item={item} onPress={() => handlePressNft(item)} />;
+      case 'defi':
+        return (
+          <DefiRow
+            data={item}
+            onPress={() =>
+              handleOpenDefiDetail(item, [...(item._portfolios || [])])
+            }
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderSectionHeader = ({ section }) => {
+    switch (section.type) {
+      case 'fold_token':
+        return (
+          <TokenRowSectionHeader
+            usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+            fold={foldHideList}
+            onPressFold={() => setFoldHideList(pre => !pre)}
+          />
+        );
+      case 'unfold_token':
+        // TODO: tmp unnormal solve
+        return (
+          <View
+            style={{
+              height: 0,
+            }}
+          />
+        );
+      case 'defi':
+        return (
+          <DefiSectionHeader
+            usdStr={getAllDefiCount(portfolios || [])}
+            fold={foldDefi}
+            onPress={() => setFoldDefi(pre => !pre)}
+          />
+        );
+      case 'nft':
+        return (
+          <NftSectionHeader
+            amount={getAllNftCount(nftList || [])}
+            fold={foldNft}
+            onPress={() => setFoldNft(pre => !pre)}
+          />
+        );
+      default:
+        return <View style={{ height: 0 }} />;
+    }
+  };
+
+  const getItemLayout = useCallback(
+    (_data: any, index: number) => ({
+      length: ASSETS_ITEM_HEIGHT,
+      offset: ASSETS_ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+  const header = useCallback(() => <HomeTopArea />, []);
   if (!currentAccount?.address) {
     return null;
   }
 
   return (
-    <Tabs.Container
-      lazy
-      width={width - 32}
-      containerStyle={styles.container}
-      renderTabBar={renderTabBar}
-      headerContainerStyle={styles.headerContainer}
-      minHeaderHeight={10}
-      onTabChange={tab => {
-        setActiveTab(tab.tabName);
-      }}
-      renderHeader={renderHeader}>
-      <Tabs.Tab label="Token" name="token">
-        <TokenScreen onRefresh={onRefresh} />
-      </Tabs.Tab>
-      <Tabs.Tab label="DeFi" name="defi">
-        <DefiScreen onRefresh={onRefresh} />
-      </Tabs.Tab>
-      <Tabs.Tab label="NFT" name="nft">
-        <NFTScreen onRefresh={onRefresh} />
-      </Tabs.Tab>
-    </Tabs.Container>
+    <>
+      <SectionList
+        sections={sections.filter(i => !!i.originData?.length)}
+        renderItem={renderItem}
+        ListHeaderComponent={header}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.bgContainer}
+        keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
+        windowSize={10}
+        getItemLayout={getItemLayout}
+        ListEmptyComponent={ListEmptyComponent}
+        stickySectionHeadersEnabled={!foldDefi || !foldNft || !foldHideList}
+        renderSectionHeader={renderSectionHeader}
+        refreshControl={
+          <RefreshControl
+            style={styles.bgContainer}
+            onRefresh={() => {
+              refreshPositions();
+              onRefresh();
+            }}
+            refreshing={refreshing}
+          />
+        }
+      />
+      <BottomSheetModalTokenDetail
+        __shouldSwitchSceneAccountBeforeRedirect__
+        nextTxRedirectAccount={currentAccount}
+        ref={tokenDetailModalRef}
+        token={focusingToken}
+        isTestnet={isTestnetToken}
+        onDismiss={() => {
+          cleanFocusingToken({ noNeedCloseModal: true });
+        }}
+        onTriggerDismissFromInternal={() => {
+          cleanFocusingToken();
+        }}
+      />
+    </>
   );
 };
 
 const getStyles = createGetStyles2024(ctx => ({
-  container: {
-    marginTop: -10,
-    width: '100%',
-    paddingBottom: 18,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    overflow: 'hidden',
-  },
-  headerContainer: {
-    backgroundColor: 'transparent',
-    shadowColor: 'transparent',
-  },
-  tabBarWrap: {
+  bgContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    paddingTop: 18,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-    width: '100%',
   },
-  tabList: {
-    display: 'flex',
-    width: '100%',
-    gap: 12,
+  emptyHolder: {
+    marginTop: 65,
   },
-  tabBar: {
-    borderRadius: 120,
-    height: 36,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  emptyImg: {
+    width: 160,
+    height: 117,
   },
-  label: {
+  emptyText: {
+    marginTop: 21,
     fontSize: 16,
     lineHeight: 20,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-    textTransform: 'none',
-  },
-  indicator: {
-    display: 'none',
-  },
-  activeTab: {
-    backgroundColor: 'rgba(19, 20, 22, 1)',
-  },
-  activeLabelStyle: {
-    fontWeight: '700',
+    color: ctx.colors2024['neutral-info'],
   },
 }));

@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
 import { Account } from './type';
+import { getTokenSettings } from '@/utils/getTokenSettings';
 
 // cached chains, balance, firstTxTime
 const cachedAccountInfo = new Map<string, Account>();
@@ -16,7 +17,12 @@ export const getAccountBalance = async (
   }
 
   try {
-    const res = await openapi.getTotalBalance(address);
+    const tokenSetting = await getTokenSettings(address);
+    const res = await openapi.getTotalBalanceV2({
+      address,
+      isCore: false,
+      ...tokenSetting,
+    });
 
     cachedAccountInfo.set(address, {
       address,
@@ -53,7 +59,12 @@ export const fetchAccountsInfo = async (accounts: Account[]) => {
 
       try {
         // get balance from api
-        const res = await openapi.getTotalBalance(account.address);
+        const tokenSetting = await getTokenSettings(account.address);
+        const res = await openapi.getTotalBalanceV2({
+          address: account.address,
+          isCore: false,
+          ...tokenSetting,
+        });
         balance = res.total_usd_value;
       } catch (e) {
         console.error('ignore getTotalBalance error', e);
