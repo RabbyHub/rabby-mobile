@@ -1,4 +1,5 @@
 import { openapi } from '@/core/request';
+import { patchCurveData } from '@/utils/curve';
 import { formatUsdValue } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -94,7 +95,29 @@ export const useCurve = (
   const fetch = useCallback(
     async (addr: string, force = false) => {
       const curve = await openapi.getNetCurve(addr, days);
-      setData(curve);
+      const start =
+        days === CurveDayType.DAY
+          ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
+          : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
+      const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
+      const result = patchCurveData(
+        curve.map(item => {
+          return {
+            timestamp: item.timestamp * 1000,
+            price: item.usd_value,
+          };
+        }),
+        start,
+        step,
+      );
+      setData(
+        result.map(item => {
+          return {
+            timestamp: dayjs(item.timestamp).unix(),
+            usd_value: item.price,
+          };
+        }),
+      );
       setIsLoading(false);
     },
     [days],

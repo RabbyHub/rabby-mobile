@@ -20,10 +20,33 @@ import {
 } from '../utils/portfolio';
 import { DisplayedProject } from '../utils/project';
 import { produce } from '@/core/utils/produce';
+import { ITokenSetting } from '@/core/services/preference';
+import { preferenceService } from '@/core/services';
 
 const chunkSize = 5;
 const { isSameAddress } = addressUtils;
+const tagProfiles = (
+  profiles: DisplayedProject[],
+  tokenSetting: ITokenSetting,
+): DisplayedProject[] => {
+  const { includeDefiAndTokens = [], excludeDefiAndTokens = [] } = tokenSetting;
 
+  return profiles.map(i => {
+    const isExcludeBalance = (() => {
+      if (excludeDefiAndTokens.some(x => x.id === i.id && x.type === 'defi')) {
+        return true;
+      }
+      if (includeDefiAndTokens.some(x => x.id === i.id && x.type === 'defi')) {
+        return false;
+      }
+      return false;
+    })();
+
+    return Object.assign(i, {
+      _isExcludeBalance: isExcludeBalance,
+    });
+  });
+};
 export const log = (...args: any) => {
   // console.log(...args);
 };
@@ -132,7 +155,8 @@ export const usePortfolios = (
     const snapshotData = Object.values(list)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    setData(snapshotData);
+    const tokenSetting = await preferenceService.getUserTokenSettings(userAddr);
+    setData(tagProfiles(snapshotData, tokenSetting));
     setNetWorth(snapshotNetWorth);
 
     const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
@@ -187,7 +211,7 @@ export const usePortfolios = (
     realtimeData = Object.values(projectDict.current)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    setData(realtimeData);
+    setData(tagProfiles(realtimeData, tokenSetting));
 
     setNetWorth(realtimeData.reduce((m, n) => m + n.netWorth, 0));
     setLoading(false);
@@ -251,7 +275,8 @@ export const usePortfolios = (
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
 
-    setData(historyList);
+    const tokenSetting = await preferenceService.getUserTokenSettings(userAddr);
+    setData(tagProfiles(historyList, tokenSetting));
 
     // 可能有获取失败的，也需要通过 priceChange 来算大概的变化
     const notSuportHistoryProjects = realtimeIds.current.filter(
@@ -306,7 +331,7 @@ export const usePortfolios = (
     const priceProjects = Object.values(projectDict.current!)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    setData(priceProjects);
+    setData(tagProfiles(priceProjects, tokenSetting));
     // setPortfolioChangeLoading(false);
   };
 

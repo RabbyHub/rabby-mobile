@@ -107,7 +107,9 @@ const BridgeShowMore = ({
           <>
             <View style={styles.lossInfo}>
               <View style={styles.flexRow}>
-                <Text>{t('page.bridge.price-impact')}</Text>
+                <Text style={styles.impactText}>
+                  {t('page.bridge.price-impact')}
+                </Text>
                 <TouchableOpacity
                   style={styles.diffBox}
                   onPress={() => setLossImpactOpen(i => !i)}>
@@ -292,6 +294,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     color: colors2024['red-default'],
     marginRight: 4,
+  },
+  impactText: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
   },
   diffBox: {
     flexDirection: 'row',

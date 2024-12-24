@@ -58,7 +58,20 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
       return b.amount * b.price - a.amount * a.price;
     });
     sortByChainBalance(others).then(list => {
-      setResult([...hasUsdValue, ...hasAmount, ...list]);
+      setResult(
+        [...hasUsdValue, ...hasAmount, ...list].sort((a, b) => {
+          if (a._isPined && b._isPined) {
+            return a._pinIndex! - b._pinIndex!;
+          }
+          if (a._isPined) {
+            return -1;
+          }
+          if (b._isPined) {
+            return 1;
+          }
+          return 0;
+        }),
+      );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [list]);

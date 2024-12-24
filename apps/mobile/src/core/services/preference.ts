@@ -53,6 +53,30 @@ export type IPinAddress = {
   brandName: Account['brandName'];
   address: Account['address'];
 };
+
+export type IManageToken = {
+  chainId: string;
+  tokenId: string;
+};
+
+export type IDefiOrToken = {
+  id: string;
+  chainid: string;
+  type: 'token' | 'defi';
+};
+
+export type ITokenSetting = {
+  pinedQueue?: IManageToken[]; // maual always true
+  foldTokens?: IManageToken[];
+  unfoldTokens?: IManageToken[];
+  includeDefiAndTokens?: IDefiOrToken[];
+  excludeDefiAndTokens?: IDefiOrToken[];
+};
+
+export interface ITokenManageSettingMap {
+  [address: string]: ITokenSetting;
+}
+
 export interface PreferenceStore {
   currentAccount: Account | undefined | null;
   balanceMap: {
@@ -75,6 +99,7 @@ export interface PreferenceStore {
   sendEnableTime?: number;
   customizedToken?: Token[];
   blockedToken?: Token[];
+  tokenManageSettingMap: ITokenManageSettingMap;
   collectionStarred?: Token[];
   /**
    * auto lock time in minutes
@@ -158,6 +183,7 @@ export class PreferenceService {
           isInvited: false,
           lastUsedAccount: undefined,
           tempCurrentAccount: undefined,
+          tokenManageSettingMap: {},
         },
       },
       {
@@ -580,5 +606,222 @@ export class PreferenceService {
       ...this.store.addressSortStore,
       [key]: value,
     };
+  };
+
+  /** =========toggle pinToken start =========== */
+  pinToken = (_address: string, token: IManageToken) => {
+    const address = _address.toLowerCase();
+    const preMap = this.store.tokenManageSettingMap;
+    const preSetting = preMap[address];
+    if (!preSetting) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          pinedQueue: [token],
+        },
+      };
+      return;
+    }
+    const pinedQueue = preSetting.pinedQueue || [];
+    const exist = pinedQueue.find(
+      item => item.chainId === token.chainId && item.tokenId === token.tokenId,
+    );
+    if (!exist) {
+      const nextQueue = [token, ...pinedQueue];
+      const nextMap = {
+        ...preMap,
+        [address]: {
+          ...preSetting,
+          pinedQueue: nextQueue,
+        },
+      };
+      this.store.tokenManageSettingMap = nextMap;
+      this.manualUnFoldToken(address, token, nextMap);
+    }
+  };
+  removePinedToken = (
+    _address: string,
+    token: IManageToken,
+    prePassMap?: ITokenManageSettingMap,
+  ) => {
+    const address = _address.toLowerCase();
+    const preMap = prePassMap || this.store.tokenManageSettingMap;
+    const preSetting = preMap[address];
+    const pinedQueue = this.store.tokenManageSettingMap[address]?.pinedQueue;
+    if (pinedQueue) {
+      const exist = pinedQueue.find(
+        item =>
+          item.chainId === token.chainId && item.tokenId === token.tokenId,
+      );
+      if (exist) {
+        const nextPinQueue = pinedQueue.filter(
+          item =>
+            item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+        );
+        this.store.tokenManageSettingMap = {
+          ...preMap,
+          [address]: {
+            ...preSetting,
+            pinedQueue: nextPinQueue,
+          },
+        };
+      }
+    }
+  };
+
+  /** =========toggle pinToken end =========== */
+
+  /** =========toggle fold token start =========== */
+  manualFoldToken = (_address: string, token: IManageToken) => {
+    const address = _address.toLowerCase();
+    const preMap = this.store.tokenManageSettingMap;
+    const preSetting = preMap[address];
+    if (!preSetting) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          foldTokens: [token],
+        },
+      };
+      return;
+    }
+    const preFoldedTokens = preSetting?.foldTokens || [];
+    const preUnFoldedToken = preSetting.unfoldTokens || [];
+
+    const exist = preFoldedTokens.find(
+      item => item.chainId === token.chainId && item.tokenId === token.tokenId,
+    );
+    if (!exist) {
+      const nextMap = {
+        ...preMap,
+        [address]: {
+          ...preSetting,
+          foldTokens: [...preFoldedTokens, token],
+          unfoldTokens: preUnFoldedToken.filter(
+            item =>
+              item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+          ),
+        },
+      };
+      this.store.tokenManageSettingMap = nextMap;
+      this.removePinedToken(address, token, nextMap);
+    }
+  };
+  manualUnFoldToken = (
+    _address: string,
+    token: IManageToken,
+    prePassMap?: ITokenManageSettingMap,
+  ) => {
+    const address = _address.toLowerCase();
+    const preMap = prePassMap || this.store.tokenManageSettingMap;
+    const preSetting = preMap[address];
+    if (!preSetting) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          unfoldTokens: [token],
+        },
+      };
+      return;
+    }
+    const preFoldedTokens = preSetting?.foldTokens || [];
+    const preUnFoldedToken = preSetting.unfoldTokens || [];
+
+    const exist = preUnFoldedToken.find(
+      item => item.chainId === token.chainId && item.tokenId === token.tokenId,
+    );
+    if (!exist) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          ...preSetting,
+          unfoldTokens: [...preUnFoldedToken, token],
+          foldTokens: preFoldedTokens.filter(
+            item =>
+              item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+          ),
+        },
+      };
+    }
+  };
+  /** =========toggle fold token end =========== */
+
+  /** =========toggle include or exclude token start =========== */
+  includeBalanceToken = (_address: string, item: IDefiOrToken) => {
+    const address = _address.toLowerCase();
+    const preMap = this.store.tokenManageSettingMap;
+    const preSetting = preMap[address];
+    if (!preSetting) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          includeDefiAndTokens: [item],
+        },
+      };
+      return;
+    }
+    const preIncludeDefiAndToken = preSetting?.includeDefiAndTokens || [];
+    const preExcludeDefiAndToken = preSetting?.excludeDefiAndTokens || [];
+
+    const exist = preIncludeDefiAndToken.find(
+      i =>
+        i.chainid === item.chainid && i.id === item.id && i.type === item.type,
+    );
+    if (!exist) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          ...preSetting,
+          includeDefiAndTokens: [...preIncludeDefiAndToken, item],
+          excludeDefiAndTokens: preExcludeDefiAndToken.filter(
+            i =>
+              i.chainid !== item.chainid ||
+              i.id !== item.id ||
+              i.type !== item.type,
+          ),
+        },
+      };
+    }
+  };
+  excludeBalance = (_address: string, item: IDefiOrToken) => {
+    const address = _address.toLowerCase();
+    const preMap = this.store.tokenManageSettingMap;
+    const preSetting = preMap[address];
+    if (!preSetting) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          excludeDefiAndTokens: [item],
+        },
+      };
+      return;
+    }
+    const preIncludeDefiAndToken = preSetting?.includeDefiAndTokens || [];
+    const preExcludeDefiAndToken = preSetting?.excludeDefiAndTokens || [];
+
+    const exist = preExcludeDefiAndToken.find(
+      i =>
+        i.chainid === item.chainid && i.id === item.id && i.type === item.type,
+    );
+    if (!exist) {
+      this.store.tokenManageSettingMap = {
+        ...preMap,
+        [address]: {
+          ...preSetting,
+          excludeDefiAndTokens: [...preExcludeDefiAndToken, item],
+          includeDefiAndTokens: preIncludeDefiAndToken.filter(
+            i =>
+              i.chainid !== item.chainid ||
+              i.id !== item.id ||
+              i.type !== item.type,
+          ),
+        },
+      };
+    }
+  };
+  /** =========toggle include or exclude token end =========== */
+
+  getUserTokenSettings = async (address: string) => {
+    return this.store.tokenManageSettingMap[address.toLowerCase()] || {};
   };
 }

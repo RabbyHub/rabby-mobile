@@ -26,6 +26,7 @@ import { AssetAvatar } from '@/components';
 import { useBridgeSupportedChains } from '../hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -129,7 +130,7 @@ const TokenSelect = ({
                 chainSize={0}
               />
               <Text numberOfLines={1} style={styles.tokenSymbol}>
-                {getTokenSymbol(token)}
+                {ellipsisOverflowedText(getTokenSymbol(token), 5)}
               </Text>
             </View>
             <RcIconSwapBottomArrow />
@@ -150,7 +151,7 @@ const TokenSelect = ({
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
         hideChainFilter={true}
-        value={token}
+        selectToken={token}
         headerTitle={
           <View style={styles.headerBox}>
             <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
@@ -205,7 +206,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   headerBox: {
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     height: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -215,10 +216,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // borderTopWidth: 0,
     backgroundColor: colors2024['neutral-bg-1'],
     // borderBottomWidth: 0.5,
-    borderWidth: 1,
+    // borderWidth: 1,
     marginHorizontal: 24,
     // borderTopColor: 'transparent',
-    borderColor: colors2024['neutral-line'],
+    // borderColor: colors2024['neutral-line'],
   },
   headerBoxText: {
     fontSize: 17,

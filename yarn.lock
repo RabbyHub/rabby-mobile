@@ -2024,6 +2024,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@craftzdog/react-native-buffer@npm:^6.0.5":
+  version: 6.0.5
+  resolution: "@craftzdog/react-native-buffer@npm:6.0.5"
+  dependencies:
+    ieee754: ^1.2.1
+    react-native-quick-base64: ^2.0.5
+  checksum: 921b8bc7f84778e355e81e475792399276d611a346a7e51b6266a45cf4aa82194beb3a8106af796ed143d958c8476070c59e3720c0eec0a3c31e368fbb08b350
+  languageName: node
+  linkType: hard
+
 "@cspotcode/source-map-support@npm:^0.8.0":
   version: 0.8.1
   resolution: "@cspotcode/source-map-support@npm:0.8.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40cspotcode%2Fsource-map-support%2F-%2Fsource-map-support-0.8.1.tgz"
@@ -5722,7 +5732,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:1.3.3":
+"@noble/hashes@npm:1.3.3, @noble/hashes@npm:~1.3.0":
   version: 1.3.3
   resolution: "@noble/hashes@npm:1.3.3"
   checksum: 8a6496d1c0c64797339bc694ad06cdfaa0f9e56cd0c3f68ae3666cfb153a791a55deb0af9c653c7ed2db64d537aa3e3054629740d2f2338bb1dcb7ab60cd205b
@@ -5736,10 +5746,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:^1.3.1, @noble/hashes@npm:~1.3.0, @noble/hashes@npm:~1.3.1, @noble/hashes@npm:~1.3.2":
+"@noble/hashes@npm:^1.3.1, @noble/hashes@npm:~1.3.1, @noble/hashes@npm:~1.3.2":
   version: 1.3.3
   resolution: "@noble/hashes@npm:1.3.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40noble%2Fhashes%2F-%2Fhashes-1.3.3.tgz"
   checksum: 8a6496d1c0c64797339bc694ad06cdfaa0f9e56cd0c3f68ae3666cfb153a791a55deb0af9c653c7ed2db64d537aa3e3054629740d2f2338bb1dcb7ab60cd205b
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:~1.6.0":
+  version: 1.6.1
+  resolution: "@noble/hashes@npm:1.6.1"
+  checksum: 57c62f65ee217c0293b4321b547792aa6d79812bfe70a7d62dc83e0f936cc677b14ed981b4e88cf8fdad37cd6d3a0cbd3bd0908b0728adc9daf066e678be8901
   languageName: node
   linkType: hard
 
@@ -6123,7 +6140,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.9.4
+    "@rabby-wallet/rabby-api": 0.9.6
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
@@ -6150,6 +6167,21 @@ __metadata:
     ethereum-cryptography: ^2.1.2
     slip39: ^0.1.9
   checksum: 21f2d6cdb63990a08b184074c1eec2d91f5409c59ba0c74a2d2b31f98a44cde973368bf230449c1c695c8d033e159aaf80bc95b22dc84f2b9308726436e5c1a2
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 4.3.1
+  resolution: "@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::version=4.3.1&hash=691efc&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@ethereumjs/util": ^9.0.0
+    "@metamask/eth-sig-util": ^4.0.0
+    "@rabby-wallet/eth-simple-keyring": ^5.0.1
+    "@scure/bip39": ^1.2.1
+    eth-sig-util: ^3.0.1
+    ethereum-cryptography: ^2.1.2
+    slip39: ^0.1.9
+  checksum: b12015b3e5e7925dc56811ae3521d4e4b88438208b1dfe3ee6ecd568576ed9261b11516fea064ec229a4bae949621851b3033346f1c92645f518fb92e5999a84
   languageName: node
   linkType: hard
 
@@ -6479,9 +6511,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.4":
-  version: 0.9.4
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.4"
+"@rabby-wallet/rabby-api@npm:0.9.6":
+  version: 0.9.6
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.6"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -6492,7 +6524,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 2b604c18df44a2a606c7210ba165fda8926e6163e29f6a9b49e6323e131a14df5b107d69fc22ddbbbeb21895ac81928768faecffcdb07fd0705c724ff5b4ec9e
+  checksum: af86a7f3137ad4b864c7f2682cbb2efc96e7d4d3a9b43c47788e4b4ee9317ed3a6d55c76a6ff742011ee8b3b4d7ea6b072c95d8e84bece5610bf039d110f754c
   languageName: node
   linkType: hard
 
@@ -6620,7 +6652,6 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
-    "@scure/bip39": ^1.3.0
     "@types/jest": ^27.4.1
     "@types/readable-stream": ^4.0.10
     "@types/sinon": ^9.0.10
@@ -6629,6 +6660,7 @@ __metadata:
     ethereumjs-wallet: ^1.0.2
     jest: ^27.5.1
     loglevel: ^1.8.1
+    react-native-quick-bip39: 0.0.9
     sinon: ^9.2.4
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
@@ -7947,6 +7979,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/base@npm:~1.2.1":
+  version: 1.2.1
+  resolution: "@scure/base@npm:1.2.1"
+  checksum: 061e04e4f6ed7bada6cdad4c799e6a82f30dda3f4008895bdb2e556f333f9b41f44dc067d25c064357ed6c012ea9c8be1e7927caf8a083af865b8de27b52370c
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:1.3.1":
   version: 1.3.1
   resolution: "@scure/bip32@npm:1.3.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40scure%2Fbip32%2F-%2Fbip32-1.3.1.tgz"
@@ -7993,7 +8032,7 @@ __metadata:
 
 "@scure/bip39@npm:1.2.1":
   version: 1.2.1
-  resolution: "@scure/bip39@npm:1.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40scure%2Fbip39%2F-%2Fbip39-1.2.1.tgz"
+  resolution: "@scure/bip39@npm:1.2.1"
   dependencies:
     "@noble/hashes": ~1.3.0
     "@scure/base": ~1.1.0
@@ -8011,13 +8050,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/bip39@npm:1.3.0, @scure/bip39@npm:^1.2.1, @scure/bip39@npm:^1.3.0":
+"@scure/bip39@npm:1.3.0":
   version: 1.3.0
   resolution: "@scure/bip39@npm:1.3.0"
   dependencies:
     "@noble/hashes": ~1.4.0
     "@scure/base": ~1.1.6
   checksum: dbb0b27df753eb6c6380010b25cc9a9ea31f9cb08864fc51e69e5880ff7e2b8f85b72caea1f1f28af165e83b72c48dd38617e43fc632779d025b50ba32ea759e
+  languageName: node
+  linkType: hard
+
+"@scure/bip39@npm:^1.2.1":
+  version: 1.5.0
+  resolution: "@scure/bip39@npm:1.5.0"
+  dependencies:
+    "@noble/hashes": ~1.6.0
+    "@scure/base": ~1.2.1
+  checksum: 03d1888f5d0d514eebc5c3adc1e071d225963d434fcf789abea5ef2c8b4b99f3ad9ebee8a597c0c13d5415e6b2b380f55f61560c1643cd871961ab91cbcf5122
   languageName: node
   linkType: hard
 
@@ -27490,7 +27539,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
-    "@rabby-wallet/rabby-api": 0.9.4
+    "@rabby-wallet/rabby-api": 0.9.6
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.0
     "@rabby-wallet/rabby-swap": 0.0.43
@@ -27515,7 +27564,6 @@ __metadata:
     "@rematch/core": ^2.2.0
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
-    "@scure/bip39": ^1.3.0
     "@sentry/react-native": 5.31.0
     "@tsconfig/react-native": ^3.0.0
     "@types/highlight-words-core": 1.2.3
@@ -27602,6 +27650,8 @@ __metadata:
     react-native-pager-view: ^6.2.3
     react-native-permissions: ^4.1.2
     react-native-qrcode-svg: ^6.2.0
+    react-native-quick-bip39: 0.0.9
+    react-native-quick-crypto: 0.7.10
     react-native-randombytes: ^3.6.1
     react-native-reanimated: ^3.6.1
     react-native-root-toast: ^3.5.1
@@ -28368,6 +28418,60 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-quick-base64@npm:^2.0.5":
+  version: 2.1.2
+  resolution: "react-native-quick-base64@npm:2.1.2"
+  dependencies:
+    base64-js: ^1.5.1
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 46f3b26f48b26978686b0c043336220d681e6a02af5abcf3eb4ab7b9216251d1eb2fac5c559e984d963e93f54bd9f323651daac09762196815558abbd551729b
+  languageName: node
+  linkType: hard
+
+"react-native-quick-bip39@npm:0.0.9":
+  version: 0.0.9
+  resolution: "react-native-quick-bip39@npm:0.0.9"
+  dependencies:
+    "@craftzdog/react-native-buffer": ^6.0.5
+    react-native-quick-crypto: ^0.7.7
+  checksum: 1beb61bcf124fda8d803baaee18b9ca3f8aa6cf14dc18ed168c4c5e7f75095dc0edd619fd72049b40e7456d07cd90ee611b4e2071dcbeb1bcc64a2260c47727f
+  languageName: node
+  linkType: hard
+
+"react-native-quick-crypto@npm:0.7.10":
+  version: 0.7.10
+  resolution: "react-native-quick-crypto@npm:0.7.10"
+  dependencies:
+    "@craftzdog/react-native-buffer": ^6.0.5
+    events: ^3.3.0
+    readable-stream: ^4.5.2
+    string_decoder: ^1.3.0
+    util: ^0.12.5
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 45d936f25434ef2ef2e78172e56bb405dac6310aabfd3a25e7ca6b4ae5cf2621b0385db67a09ad6f1cc946f12fcc3026c159d7dd9e640f051420324064312034
+  languageName: node
+  linkType: hard
+
+"react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.7.10
+  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch::version=0.7.10&hash=87f7c6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@craftzdog/react-native-buffer": ^6.0.5
+    events: ^3.3.0
+    readable-stream: ^4.5.2
+    string_decoder: ^1.3.0
+    util: ^0.12.5
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 3b35dc42dd5cad48906f603c50b181b0ff6e92886979d028a52abad21b56c1c29f8b04bc2e6e2e45eef72c0de1ab00aa5bcaa127be0e841dfa18c7d70cb99239
+  languageName: node
+  linkType: hard
+
 "react-native-randombytes@npm:^3.5.1, react-native-randombytes@npm:^3.6.1":
   version: 3.6.1
   resolution: "react-native-randombytes@npm:3.6.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-randombytes%2F-%2Freact-native-randombytes-3.6.1.tgz"
@@ -29078,6 +29182,19 @@ __metadata:
 "readable-stream@npm:^3.6.2 || ^4.4.2, readable-stream@npm:^4.5.1":
   version: 4.5.2
   resolution: "readable-stream@npm:4.5.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-4.5.2.tgz"
+  dependencies:
+    abort-controller: ^3.0.0
+    buffer: ^6.0.3
+    events: ^3.3.0
+    process: ^0.11.10
+    string_decoder: ^1.3.0
+  checksum: c4030ccff010b83e4f33289c535f7830190773e274b3fcb6e2541475070bdfd69c98001c3b0cb78763fc00c8b62f514d96c2b10a8bd35d5ce45203a25fa1d33a
+  languageName: node
+  linkType: hard
+
+"readable-stream@npm:^4.5.2":
+  version: 4.5.2
+  resolution: "readable-stream@npm:4.5.2"
   dependencies:
     abort-controller: ^3.0.0
     buffer: ^6.0.3

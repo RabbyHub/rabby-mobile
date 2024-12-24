@@ -3,6 +3,7 @@ import { openapi } from '@/core/request';
 import { useCurrentAccount } from '@/hooks/account';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { CurveDayType, useCurve } from '@/hooks/useCurve';
+import { patchCurveData } from '@/utils/curve';
 import { numFormat } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import { CHAINS_LIST } from '@debank/common';
@@ -155,7 +156,22 @@ export const useTimeMachineData = (enabled = false) => {
 
   const { value, loading, retry } = useAsyncRetry(async () => {
     if (currentAccount?.address && cached && status?.status === 'finished') {
-      return openapi.getHistoryCurve(currentAccount?.address);
+      const res = await openapi.getHistoryCurve(currentAccount?.address);
+      if (res?.result?.data?.usd_value_list) {
+        res.result.data.usd_value_list = patchCurveData(
+          res.result.data.usd_value_list.map(item => {
+            return {
+              timestamp: item[0] * 1000,
+              price: item[1],
+            };
+          }),
+          dayjs().startOf('day').add(-1, 'year').valueOf(),
+          24 * 60 * 60 * 1000,
+        ).map(item => {
+          return [dayjs(item.timestamp).unix(), item.price];
+        });
+      }
+      return res;
     }
     return undefined;
   }, [currentAccount?.address, cached, status]);

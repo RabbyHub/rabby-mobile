@@ -1,7 +1,7 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-import { formatUsdValue } from '@/utils/number';
+import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import {
@@ -79,7 +79,7 @@ const useToken = (type: 'from' | 'to') => {
 
   const [chain, setChain] = useState<CHAINS_ENUM>();
 
-  const [token, setToken] = useState<TokenItem>();
+  const [token, setToken] = useState<TokenItem & { tokenId?: string }>();
 
   const switchChain: (changeChain?: CHAINS_ENUM, resetToken?: boolean) => void =
     useCallback(
@@ -300,7 +300,8 @@ export const useBridge = () => {
     initChainByCache();
   }, [initChainByCache]);
 
-  const handleAmountChange = useCallback((v: string) => {
+  const handleAmountChange = useCallback((e: string) => {
+    const v = formatSpeicalAmount(e);
     if (!/^\d*(\.\d*)?$/.test(v)) {
       return;
     }
@@ -570,7 +571,6 @@ export const useBridge = () => {
           }
         }
       }
-      console.log('getQuoteList set quote undefined');
       setSelectedBridgeQuote(undefined);
     }, [
       inSufficient,

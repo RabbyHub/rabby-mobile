@@ -1,12 +1,7 @@
-import { AbstractPortfolio } from './../types';
-import { preferenceService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import { useAtom } from 'jotai';
 import { AbstractPortfolioToken } from '../types';
-import { mainnetTokensAtom, testnetTokensAtom } from './token';
-import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
-import { DisplayedToken } from '../utils/project';
+import { testnetTokensAtom } from './token';
 import { apiCustomTestnet } from '@/core/apis';
 import { findChain } from '@/utils/chain';
 

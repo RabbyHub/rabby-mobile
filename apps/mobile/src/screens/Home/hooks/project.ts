@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { useTokens } from './token';
+import { useTokens2024 } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useSafeState } from '@/hooks/useSafeState';
+import { useQueryNft } from './nft';
 
 const Cache_Timeout = 5 * 60;
 
@@ -32,10 +33,8 @@ export const useQueryProjects = (
     hasValue: hasTokens,
     updateData: updateTokens,
     walletProject,
-    customizeTokens,
-    blockedTokens,
-    testnetTokens,
-  } = useTokens(userAddr, historyTime, visible, 0, undefined, isTestnet);
+    // testnetTokens,
+  } = useTokens2024(userAddr, historyTime, visible, 0, undefined, isTestnet);
 
   const {
     data: portfolios,
@@ -45,17 +44,25 @@ export const useQueryProjects = (
     updateData: updatePortfolio,
   } = usePortfolios(userAddr, historyTime, visible, isTestnet);
 
+  const {
+    list: nftList,
+    isLoading: nftListLoading,
+    reload: reloadNftList,
+  } = useQueryNft(userAddr);
+
   const refreshPositions = useCallback(() => {
     if (!isTokensLoading && !isPortfoliosLoading) {
       updatePortfolio();
       updateTokens();
+      reloadNftList();
       setTime(dayjs().subtract(1, 'day'));
     }
   }, [
-    updatePortfolio,
-    updateTokens,
     isTokensLoading,
     isPortfoliosLoading,
+    updatePortfolio,
+    updateTokens,
+    reloadNftList,
     setTime,
   ]);
 
@@ -63,6 +70,29 @@ export const useQueryProjects = (
     () => tokenNetWorth + portfolioNetWorth!,
     [tokenNetWorth, portfolioNetWorth],
   );
+
+  const refreshingToken = useMemo(() => {
+    if ((tokens?.length || 0) > 0) {
+      return !!isTokensLoading;
+    } else {
+      return false;
+    }
+  }, [isTokensLoading, tokens?.length]);
+  const refreshingDefi = useMemo(() => {
+    if ((portfolios?.length || 0) > 0) {
+      return !!isPortfoliosLoading;
+    } else {
+      return false;
+    }
+  }, [portfolios?.length, isPortfoliosLoading]);
+
+  const refreshingNft = useMemo(() => {
+    if ((nftList?.length || 0) > 0) {
+      return !!nftListLoading;
+    } else {
+      return false;
+    }
+  }, [nftList?.length, nftListLoading]);
 
   return {
     tokenNetWorth,
@@ -74,10 +104,13 @@ export const useQueryProjects = (
     hasTokens,
     hasPortfolios,
     tokens,
-    customizeTokens,
-    blockedTokens,
     portfolios,
     walletProject,
-    testnetTokens,
+    nftList,
+    nftListLoading,
+    reloadNftList,
+    loading: isTokensLoading || isPortfoliosLoading || nftListLoading,
+    refreshing: refreshingToken || refreshingDefi || refreshingNft,
+    hasAssets: !!tokens.length || !!portfolios?.length || !!nftList.length,
   };
 };

@@ -88,17 +88,17 @@ export const formatNumber = (
   return n.toFormat(decimal, format);
 };
 
-export const formatPrice = (price: string | number) => {
-  if ((price as number) >= 1) {
+export const formatPrice = (price: string | number, len = 4) => {
+  if ((price as number) >= 0.001) {
     return formatNumber(price);
   }
   if ((price as number) < 0.00001) {
     if (price.toString().length > 10) {
-      return Number(price).toExponential(4);
+      return Number(price).toExponential(len);
     }
     return price.toString();
   }
-  return formatNumber(price, 4);
+  return formatNumber(price, len);
 };
 
 export const intToHex = (n: number) => {
