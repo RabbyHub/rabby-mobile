@@ -69,14 +69,13 @@ export default function TokenLabel({
         if (disableClickToken) return;
 
         if (isNft) {
-          navigate(RootNames.NftDetail, { token });
-          // handlePressNftToken(token, { needSendButton: isMyOwn });
+          handlePressNftToken(token, { needSendButton: isMyOwn });
         } else {
           // if (address) {
           //   setTokenDetailAddress(address);
           // }
           // openTokenDetailPopup(token as TokenItem);
-          navigate(RootNames.TokenDetail, {
+          navigation.push(RootNames.TokenDetail, {
             token: ensureAbstractPortfolioToken(token),
             account: address,
           });
