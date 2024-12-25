@@ -167,14 +167,16 @@ android {
         }
       }
     }
-    // packagingOptions {
-    //   jniLibs {
-    //     pickFirsts += [
-    //       'lib/**/libssl.so',
-    //       'lib/**/libcrypto.so'
-    //     ]
-    //   }
-    // }
+    packagingOptions {
+      // Make sure libjsc.so does not packed in APK
+      exclude "**/libjsc.so"
+      // jniLibs {
+      //   pickFirsts += [
+      //     'lib/**/libssl.so',
+      //     'lib/**/libcrypto.so'
+      //   ]
+      // }
+    }
 }
 
 androidComponents {

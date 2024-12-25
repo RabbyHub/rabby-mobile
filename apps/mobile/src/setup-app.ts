@@ -4,6 +4,11 @@ import {
   setNativeExceptionHandler,
 } from 'react-native-exception-handler';
 import { initSentry } from './core/sentry';
+
+if (__DEV__) {
+  console.debug(`V8 version is ${global._v8runtime().version}`);
+}
+
 setJSExceptionHandler((error, isFatal) => {
   console.debug('setJSExceptionHandler:: error');
   console.log(error);

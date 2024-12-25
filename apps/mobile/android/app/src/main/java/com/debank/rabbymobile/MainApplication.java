@@ -5,10 +5,14 @@ import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
+import com.facebook.react.bridge.JavaScriptExecutorFactory;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
+import com.facebook.react.modules.systeminfo.AndroidInfoHelpers;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
+
+import io.csie.kudo.reactnative.v8.executor.V8ExecutorFactory;
 
 import com.facebook.react.views.text.ReactFontManager;
 import com.facebook.react.modules.network.OkHttpClientProvider;
@@ -47,6 +51,16 @@ public class MainApplication extends Application implements ReactApplication {
     @Override
     protected Boolean isHermesEnabled() {
       return BuildConfig.IS_HERMES_ENABLED;
+    }
+
+
+    @Override
+    protected JavaScriptExecutorFactory getJavaScriptExecutorFactory() {
+      return new V8ExecutorFactory(
+          getApplicationContext(),
+          getPackageName(),
+          AndroidInfoHelpers.getFriendlyDeviceName(),
+          getUseDeveloperSupport());
     }
   };
 
