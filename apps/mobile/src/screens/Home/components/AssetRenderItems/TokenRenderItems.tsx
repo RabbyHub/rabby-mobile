@@ -27,6 +27,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { PinBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -62,7 +63,7 @@ export const TokenRow = memo(
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
-    const [showContextMenu, setShowContextMenu] = React.useState(false);
+    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
     const percentColor = useMemo(() => {
       if (
         !data?.price_24h_change ||
@@ -110,83 +111,86 @@ export const TokenRow = memo(
       });
     };
 
-    const children = (
-      <View style={StyleSheet.flatten([styles.tokenRowWrap, style])}>
-        <View style={styles.tokenRowTokenWrap}>
-          <AssetAvatar
-            logo={data?.logo_url}
-            chain={data?.chain}
-            style={mediaStyle}
-            size={logoSize}
-            chainSize={16}
-          />
-          <View style={styles.tokenRowTokenInner}>
-            <View style={styles.tokenHeader}>
-              <Text
-                style={StyleSheet.flatten([styles.tokenSymbol])}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {data.symbol}
-              </Text>
-              {data._isPined && <PinBadge />}
-            </View>
+    return (
+      <ContextMenuView
+        menuConfig={{
+          menuActions: showContextMenu ? menuActions : [],
+        }}
+        preViewBorderRadius={12}
+        triggerProps={{ action: 'longPress' }}>
+        <TouchableOpacity
+          style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+          delayLongPress={200}
+          onLongPress={() => {
+            setShowContextMenu(true);
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}
+          onPress={onPressToken}>
+          <View style={styles.tokenRowTokenWrap}>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={16}
+            />
+            <View style={styles.tokenRowTokenInner}>
+              <View style={styles.tokenHeader}>
+                <Text
+                  style={StyleSheet.flatten([styles.tokenSymbol])}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {data.symbol}
+                </Text>
+                {data._isPined && <PinBadge />}
+              </View>
 
-            {data._priceStr ? (
-              <Text style={styles.amountStr} numberOfLines={1}>
-                {`${data._amountStr} ${data.symbol}`}
+              {data._priceStr ? (
+                <Text style={styles.amountStr} numberOfLines={1}>
+                  {`${data._amountStr} ${data.symbol}`}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.tokenRowUsdValueWrap}>
+            <Text
+              style={[
+                data._amountStr
+                  ? styles.tokenRowAmount
+                  : styles.tokenRowUsdValue,
+                data._isExcludeBalance &&
+                  (data._usdValue || 0) > 0 &&
+                  styles.exclude,
+              ]}>
+              {data._usdValueStr}
+            </Text>
+            {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
+              <TouchableOpacity
+                hitSlop={hitSlop}
+                onPress={handleShowExcludeTips}>
+                <RcTipCC
+                  style={styles.tips}
+                  color={colors2024['neutral-info']}
+                />
+              </TouchableOpacity>
+            ) : data._amountStr ? (
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(data.price_24h_change || 0)}
               </Text>
             ) : null}
           </View>
-        </View>
-
-        <View style={styles.tokenRowUsdValueWrap}>
-          <Text
-            style={[
-              data._amountStr ? styles.tokenRowAmount : styles.tokenRowUsdValue,
-              data._isExcludeBalance &&
-                (data._usdValue || 0) > 0 &&
-                styles.exclude,
-            ]}>
-            {data._usdValueStr}
-          </Text>
-          {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
-            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
-              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
-            </TouchableOpacity>
-          ) : data._amountStr ? (
-            <Text
-              style={StyleSheet.compose(styles.percent, {
-                ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                  ? styles.exclude
-                  : {}),
-                color: percentColor,
-              })}>
-              {formatPercentage(data.price_24h_change || 0)}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-    );
-    return (
-      <TouchableOpacity
-        delayLongPress={200}
-        onLongPress={() => {
-          setShowContextMenu(true);
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}
-        onPress={onPressToken}>
-        <ContextMenuView
-          menuConfig={{
-            menuActions: showContextMenu ? menuActions : [],
-          }}
-          preViewBorderRadius={12}
-          triggerProps={{ action: 'longPress' }}>
-          {children}
-        </ContextMenuView>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </ContextMenuView>
     );
   },
 );
