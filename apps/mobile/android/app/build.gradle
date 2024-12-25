@@ -209,6 +209,8 @@ dependencies {
 
     implementation project(':react-native-splash-screen')
     // implementation project(':isudaji_react-native-install-apk')
+
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
