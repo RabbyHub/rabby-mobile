@@ -14,7 +14,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigationState } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, View, TouchableWithoutFeedback } from 'react-native';
+import { Modal, Text, View, Pressable } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import IconMCopy from '@/assets2024/icons/address/mcopy.svg';
@@ -147,11 +147,13 @@ function ReceiveScreen(): JSX.Element {
               </Text>
             </View>
 
-            <TouchableWithoutFeedback onPress={handleCopy}>
+            <Pressable
+              style={styles.addressDetailContainer}
+              onPress={handleCopy}>
               <Text style={styles.qrCardAddress}>
                 {account?.address} <IconMCopy width={17} height={17} />
               </Text>
-            </TouchableWithoutFeedback>
+            </Pressable>
           </View>
         </View>
 
@@ -226,6 +228,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   qrCodePlaceholder: {
     width: 190,
     height: 190,
+  },
+  addressDetailContainer: {
+    width: '100%',
   },
   qrCardAddress: {
     width: '100%',
