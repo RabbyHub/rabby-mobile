@@ -22,6 +22,7 @@ import { useDebounceFn, useRequest } from 'ahooks';
 import { GasLevelType } from '@/components/ReserveGasPopup';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { useSlippageStore } from './slippage';
+import { apiProvider } from '@/core/apis';
 
 const { isSameAddress } = addressUtils;
 
@@ -253,7 +254,9 @@ export const useTokenPair = (userAddress: string) => {
   const { value: gasList } = useAsync(() => {
     gasPriceRef.current = undefined;
     setGasLevel('normal');
-    return openapi.gasMarket(chainInfo.serverId);
+    return apiProvider.gasMarketV2({
+      chainId: chainInfo.serverId,
+    });
   }, [chainInfo?.serverId]);
 
   const [reserveGasOpen, setReserveGasOpen] = useState(false);
