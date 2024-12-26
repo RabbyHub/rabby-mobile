@@ -75,7 +75,8 @@
     "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
     "@rabby-wallet/eth-hd-keyring@4.3.1": "patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch",
     "react-native-quick-crypto@^0.7.7": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
-    "react-native-quick-crypto@0.7.10": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch"
+    "react-native-quick-crypto@0.7.10": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
+    "react-native-v8@^2.5.1": "patch:react-native-v8@npm%3A2.5.1#./.yarn/patches/react-native-v8-npm-2.5.1-215a8641f3.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",

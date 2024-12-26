@@ -1,0 +1,14 @@
+diff --git a/src/v8runtime/JSIV8ValueConverter.cpp b/src/v8runtime/JSIV8ValueConverter.cpp
+index df5594068195f6c8fdfeab27800e5df629aee73e..158ac9264f09f7443f0f7ad12d851de7aac4f5c4 100644
+--- a/src/v8runtime/JSIV8ValueConverter.cpp
++++ b/src/v8runtime/JSIV8ValueConverter.cpp
+@@ -66,6 +66,9 @@ v8::Local<v8::Value> JSIV8ValueConverter::ToV8Value(
+   } else if (value.isObject()) {
+     return scopedHandle.Escape(ToV8Object(
+         runtime, std::move(value.getObject(const_cast<V8Runtime &>(runtime)))));
++  } else if (value.isSymbol()) {
++    return scopedHandle.Escape(ToV8Symbol(
++        runtime, std::move(value.getSymbol(const_cast<V8Runtime &>(runtime)))));
+   } else {
+     // What are you?
+     std::abort();

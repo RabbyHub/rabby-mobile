@@ -28569,7 +28569,7 @@ __metadata:
 
 "react-native-reanimated@npm:^3.6.1":
   version: 3.6.1
-  resolution: "react-native-reanimated@npm:3.6.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-reanimated%2F-%2Freact-native-reanimated-3.6.1.tgz"
+  resolution: "react-native-reanimated@npm:3.6.1"
   dependencies:
     "@babel/plugin-transform-object-assign": ^7.16.7
     "@babel/preset-typescript": ^7.16.7
@@ -28724,7 +28724,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-v8@npm:^2.5.1":
+"react-native-v8@npm:2.5.1":
   version: 2.5.1
   resolution: "react-native-v8@npm:2.5.1"
   dependencies:
@@ -28735,6 +28735,20 @@ __metadata:
     expo:
       optional: true
   checksum: a54759bc783c6fe4672495006b62c0907d95d4e0e9a7455369d380004583ad41c7e82f383c4a476c639823c0f6c40dc16ee0ac8d1cbaf12efb4ae1155b08d871
+  languageName: node
+  linkType: hard
+
+"react-native-v8@patch:react-native-v8@npm%3A2.5.1#./.yarn/patches/react-native-v8-npm-2.5.1-215a8641f3.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 2.5.1
+  resolution: "react-native-v8@patch:react-native-v8@npm%3A2.5.1#./.yarn/patches/react-native-v8-npm-2.5.1-215a8641f3.patch::version=2.5.1&hash=4ea2bf&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    semver: ^7.6.2
+  peerDependencies:
+    expo: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: e0cb42392aa6bc0868547c48cea7eb7b9264428f474610c87069436ac81d81fbaeb826949d28c52e93ab689f4e4031dacb730a9f37b52f629728730900a77fb7
   languageName: node
   linkType: hard
 
