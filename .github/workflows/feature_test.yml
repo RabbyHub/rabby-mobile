@@ -1,10 +1,6 @@
 name: Feature Test
 
 on:
-  # push:
-  #   branches:
-  #     - feat/*
-  # workflow_call:
   workflow_dispatch:
     inputs:
       REALLY_UPLOAD:
@@ -14,7 +10,14 @@ on:
       SENTRY_DISABLE_AUTO_UPLOAD:
         required: false
         type: boolean
-        default: false
+        default: true
+      macos_machine_location:
+        required: true
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
 
 defaults:
   run:
@@ -25,13 +28,15 @@ jobs:
     name: Build
     strategy:
       matrix:
-        host:
-          - macOS
-          - Linux
+        include:
+          - host: macOS
+            machine_loc: ${{ inputs.macos_machine_location }}
+          - host: Linux
+            machine_loc: mobile
     runs-on:
       - self-hosted
-      - mobile
       - ${{ matrix.host }}
+      - ${{ matrix.machine_loc }}
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
 
@@ -93,10 +98,18 @@ jobs:
           if [ "$OS_TYPE" == "Linux" ]; then
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
-            security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
+            if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
+              export SENTRY_DISABLE_AUTO_UPLOAD=true
+            else
+              RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
+            fi
+            security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
             # cd ios && bundle install && bundle exec pod install --deployment;
             # cd ../;
             ./scripts/deploy-ios-adhoc.sh
+
+            # cleanup packager
+            ps axo pid,command | grep -E 'launchPackager\.command' | grep -v grep | awk '{print $1}' | xargs kill -9; > /dev/null 2>&1
           fi
 
         env:
@@ -110,6 +123,7 @@ jobs:
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+          INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           CONFIGURATION: release
