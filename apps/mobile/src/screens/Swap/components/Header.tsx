@@ -1,7 +1,6 @@
-import TouchableView from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import {
   usePollSwapPendingNumber,
   useSwapTxHistoryVisible,
@@ -24,13 +23,13 @@ export const SwapHeader = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableView onPress={openSwapHistory}>
+      <TouchableOpacity onPress={openSwapHistory}>
         {loadingNumber ? (
           <PendingTx number={loadingNumber} onClick={openSwapHistory} />
         ) : (
           <RcIconSwapHistory style={styles.icon} />
         )}
-      </TouchableView>
+      </TouchableOpacity>
       <SwapTxHistory />
     </View>
   );
