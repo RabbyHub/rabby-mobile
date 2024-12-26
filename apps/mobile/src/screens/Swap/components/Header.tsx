@@ -1,15 +1,20 @@
-import { RcIconSwapHistory } from '@/assets/icons/swap';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import { useTheme2024 } from '@/hooks/theme';
+import React from 'react';
 import { View } from 'react-native';
-import { useSwapTxHistoryVisible } from '../hooks/history';
+import {
+  usePollSwapPendingNumber,
+  useSwapTxHistoryVisible,
+} from '../hooks/history';
 import { SwapTxHistory } from './SwapTxHistory';
+import PendingTx from '@/screens/Bridge/components/PendingTx';
+import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const SwapHeader = () => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
+
+  const loadingNumber = usePollSwapPendingNumber(5000);
 
   const { setVisible } = useSwapTxHistoryVisible();
 
@@ -20,14 +25,18 @@ export const SwapHeader = () => {
   return (
     <View style={styles.container}>
       <TouchableView onPress={openSwapHistory}>
-        <RcIconSwapHistory style={styles.icon} />
+        {loadingNumber ? (
+          <PendingTx number={loadingNumber} />
+        ) : (
+          <RcIconSwapHistory style={styles.icon} />
+        )}
       </TouchableView>
       <SwapTxHistory />
     </View>
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(() => ({
   container: {
     flexDirection: 'row',
     gap: 20,

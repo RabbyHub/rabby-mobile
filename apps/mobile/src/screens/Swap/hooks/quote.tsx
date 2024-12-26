@@ -346,36 +346,33 @@ export const useQuoteMethods = () => {
           toToken: receiveToken.id,
         });
 
-        const data = await pRetry(
-          () =>
-            getQuote(
-              isSwapWrapToken(payToken.id, receiveToken.id, chain)
-                ? DEX_ENUM.WRAPTOKEN
-                : dexId,
-              {
-                fromToken: payToken.id,
-                toToken: receiveToken.id,
-                feeAddress: SWAP_FEE_ADDRESS,
-                fromTokenDecimals: payToken.decimals,
-                amount: new BigNumber(payAmount)
-                  .times(10 ** payToken.decimals)
-                  .toFixed(0, 1),
-                userAddress,
-                slippage: Number(slippage),
-                feeRate:
-                  feeAfterDiscount === '0' && isOpenOcean
-                    ? undefined
-                    : Number(feeAfterDiscount) || 0,
-                chain,
-                gasPrice,
-                fee: true,
-              },
-              walletOpenapi,
-            ),
-          {
-            retries: 1,
-          },
-        );
+        const getData = () =>
+          getQuote(
+            isSwapWrapToken(payToken.id, receiveToken.id, chain)
+              ? DEX_ENUM.WRAPTOKEN
+              : dexId,
+            {
+              fromToken: payToken.id,
+              toToken: receiveToken.id,
+              feeAddress: SWAP_FEE_ADDRESS,
+              fromTokenDecimals: payToken.decimals,
+              amount: new BigNumber(payAmount)
+                .times(10 ** payToken.decimals)
+                .toFixed(0, 1),
+              userAddress,
+              slippage: Number(slippage),
+              feeRate:
+                feeAfterDiscount === '0' && isOpenOcean
+                  ? undefined
+                  : Number(feeAfterDiscount) || 0,
+              chain,
+              gasPrice,
+              fee: true,
+            },
+            walletOpenapi,
+          );
+
+        const data = await getData();
 
         stats.report('swapQuoteResult', {
           dex: dexId,

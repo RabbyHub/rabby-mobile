@@ -1,29 +1,10 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import {
-  useAggregatorsList,
-  useBridgeSupportedChains,
-  useQuoteVisible,
-  useSetQuoteVisible,
-  useSetRefreshId,
-  useTokenPair,
-} from '../hooks';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useQuoteVisible, useSetQuoteVisible, useSetRefreshId } from '../hooks';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
@@ -46,14 +27,11 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum } from '@/utils/chain';
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
 import { ReserveGasPopup } from '@/components/ReserveGasPopup';
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { tokenAmountBn } from '@/screens/Swap/utils';
+import { CHAINS_ENUM } from '@debank/common';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -599,6 +577,14 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               isCustomSlippage={isCustomSlippage}
               setAutoSlippage={setAutoSlippage}
               setIsCustomSlippage={setIsCustomSlippage}
+              type="bridge"
+              isBestQuote={
+                !!bestQuoteId &&
+                !!selectedBridgeQuote &&
+                bestQuoteId?.aggregatorId ===
+                  selectedBridgeQuote.aggregator.id &&
+                bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
+              }
             />
           )}
           {noQuote && (

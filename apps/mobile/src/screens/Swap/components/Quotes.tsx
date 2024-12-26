@@ -6,8 +6,8 @@ import {
 import { AppBottomSheetModal } from '@/components';
 import { Radio } from '@/components/Radio';
 import { DEX_WITH_WRAP } from '@/constant/swap';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -16,28 +16,25 @@ import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Animated,
+  Easing,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
-import {
-  TDexQuoteData,
-  useSwapSettings,
-  useSwapSupportedDexList,
-  useSwapViewDexIdList,
-} from '../hooks';
+import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
 import {
   DexQuoteItem as DexQuoteItemOld,
   QuoteItemProps as QuoteItemPropsOld,
-} from './QuoteItemOld';
-import { SwapRefreshBtn } from './SwapRefreshBtn';
+} from './QuoteItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import LinearGradient from 'react-native-linear-gradient';
+import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 
 interface QuotesProps
   extends Omit<
@@ -294,7 +291,7 @@ export const Quotes = ({
 };
 
 export const QuoteList = (props: QuotesProps) => {
-  const { visible, onClose } = props;
+  const { visible, onClose, loading } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
 
   const refresh = useSetAtom(refreshIdAtom);
@@ -315,97 +312,140 @@ export const QuoteList = (props: QuotesProps) => {
     }
   }, [visible]);
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const {
+    styles,
+    colors2024, // colors
+    isLight,
+  } = useTheme2024({ getStyle });
 
-  const [supportDexList] = useSwapSupportedDexList();
-  const supportDexListLength = supportDexList.length;
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
-  const { height: screenHeight } = useWindowDimensions();
-  const { bottom } = useSafeAreaInsets();
-
-  const height = useMemo(() => {
-    return Math.min(
-      screenHeight * 0.8,
-      80 + bottom + 100 * supportDexListLength,
-    );
-  }, [screenHeight, supportDexListLength, bottom]);
-
-  const snapPoints = useMemo(() => [height], [height]);
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ).start();
+    } else {
+      spinValue.resetAnimation();
+    }
+  }, [loading, spinValue]);
 
   return (
     <AppBottomSheetModal
-      snapPoints={snapPoints}
+      snapPoints={['90%']}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
       handleStyle={styles.bottomBg}
       backgroundStyle={styles.bottomBg}>
-      <BottomSheetScrollView style={styles.flex1}>
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        locations={[0.0745, 0.2242]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ flex: 1 }}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>
-            {t('page.swap.the-following-swap-rates-are-found')}
+            {t('page.bridge.the-following-bridge-route-are-found')}
           </Text>
-          <SwapRefreshBtn onPress={refreshQuote} />
+          <TouchableOpacity onPress={refreshQuote} style={styles.refreshBox}>
+            <Animated.View
+              style={{
+                transform: [{ rotate: spin }],
+                marginRight: 4,
+              }}>
+              <RcIconLoading />
+            </Animated.View>
+            <Text style={styles.refreshContent}>{t('global.refresh')}</Text>
+          </TouchableOpacity>
+          {/* <SwapRefreshBtn onPress={refreshQuote} /> */}
+        </View>
 
+        <BottomSheetScrollView style={styles.flex1}>
+          <Quotes {...props} />
+          <View style={{ height: 120 }} />
+        </BottomSheetScrollView>
+
+        <LinearGradient
+          colors={
+            isLight
+              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
+              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
+          }
+          locations={[0.6393, 1]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 0, y: 0 }}
+          style={styles.floatBottom}>
           <Radio
             checked={!!sortIncludeGasFee}
             onPress={() => setSwapSortIncludeGasFee(!sortIncludeGasFee)}
             title={t('page.swap.sort-with-gas')}
-            checkedIcon={<RcIconSwapChecked width={16} height={16} />}
-            uncheckedIcon={<RcIconSwapUnchecked width={16} height={16} />}
+            checkedIcon={<RcIconSwapChecked width={24} height={24} />}
+            uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
             textStyle={styles.refreshText}
             right={true}
             containerStyle={styles.radioContainer}
           />
-        </View>
-        <Quotes {...props} />
-      </BottomSheetScrollView>
+        </LinearGradient>
+      </LinearGradient>
     </AppBottomSheetModal>
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
-    backgroundColor: colors['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingLeft: 20,
+    justifyContent: 'space-between',
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    marginBottom: 12,
     alignSelf: 'stretch',
     gap: 3,
   },
 
-  headerText: {
+  refreshBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  refreshContent: {
     fontSize: 14,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
+  },
+
+  headerText: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   refreshText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors['neutral-body'],
-    marginLeft: 4,
-  },
-  edit: {
-    color: colors['blue-default'],
-    fontSize: 13,
-    paddingLeft: 4,
-    textDecorationLine: 'underline',
-  },
-  cexTip: {
-    color: colors['neutral-foot'],
-    fontSize: 12,
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  cexList: {
-    borderRadius: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors['neutral-line'],
-    paddingHorizontal: 12,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    marginLeft: 8,
   },
 
   foot: {
@@ -415,13 +455,21 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
   },
 
-  footText: { color: colors['neutral-foot'], fontSize: 13 },
-
   flex1: {
     flex: 1,
   },
   radioContainer: {
     margin: 0,
     padding: 0,
+  },
+
+  floatBottom: {
+    width: '100%',
+    height: 130,
+    paddingTop: 40,
+    position: 'absolute',
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }));

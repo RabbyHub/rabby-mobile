@@ -5,7 +5,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
 import BigNumber from 'bignumber.js';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { QuoteLogo } from './QuoteLogo';
 
 import {
@@ -17,14 +17,15 @@ import {
   useSwapSettings,
 } from '../hooks';
 
-import { RcIconInfoCC } from '@/assets/icons/common';
-import { RcIconSwapGas, RcIconSwapGasRed } from '@/assets/icons/swap';
-import { AssetAvatar, Tip } from '@/components';
+import RcIconInfoCC from '@/assets2024/icons/bridge/IcHelp.svg';
+
+import { AssetAvatar } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useSwapBottomModalTips } from '../hooks/tip';
 
 const GAS_USE_AMOUNT_LIMIT = 2_000_000;
 
@@ -151,19 +152,29 @@ export const DexQuoteItem = (
         );
 
         bestQuotePercent = (
-          <Text
+          <View
             style={[
-              styles.percentText,
+              styles.percent,
               {
-                color: !isBestQuote
-                  ? colors2024['red-default']
-                  : colors2024['green-default'],
+                backgroundColor: !isBestQuote
+                  ? colors2024['red-light-1']
+                  : colors2024['green-light-2'],
               },
             ]}>
-            {isBestQuote
-              ? t('page.swap.best')
-              : `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
-          </Text>
+            <Text
+              style={[
+                styles.percentText,
+                {
+                  color: !isBestQuote
+                    ? colors2024['red-default']
+                    : colors2024['green-default'],
+                },
+              ]}>
+              {isBestQuote
+                ? t('page.swap.best')
+                : `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
+            </Text>
+          </View>
         );
       }
 
@@ -219,21 +230,13 @@ export const DexQuoteItem = (
       sortIncludeGasFee,
       bestQuoteGasUsd,
       styles.middleDefaultText,
+      styles.percent,
       styles.percentText,
       styles.failedTipText,
       isBestQuote,
       colors2024,
       t,
     ]);
-
-  const CheckIcon = useCallback(() => {
-    if (disabled || loading || !quote?.tx || !preExecResult?.swapPreExecTx) {
-      return null;
-    }
-    return <CheckedIcon />;
-  }, [disabled, loading, quote?.tx, preExecResult?.swapPreExecTx]);
-
-  const [inSufficientTapTip, setInSufficientTapTip] = useState(false);
 
   const gasFeeTooHight = useMemo(() => {
     return (
@@ -243,14 +246,64 @@ export const DexQuoteItem = (
     );
   }, [preExecResult, chain]);
 
+  const showTips = useSwapBottomModalTips();
+
+  const handleTips = useCallback(
+    (
+      key:
+        | 'inSufficient'
+        | 'gasFeeTooHight'
+        | 'approve'
+        | 'wrapToken'
+        | 'verified',
+    ) => {
+      let tips = '';
+
+      switch (key) {
+        case 'inSufficient':
+          tips = t('page.swap.insufficient-balance');
+          break;
+        case 'gasFeeTooHight':
+          tips = t('page.swap.gas-fee-too-high');
+          break;
+        case 'approve':
+          tips = t('page.swap.need-to-approve-token-before-swap');
+          break;
+        case 'wrapToken':
+          tips = t('page.swap.no-fees-for-wrap');
+          break;
+        case 'verified':
+          tips = t('page.swap.by-transaction-simulation-the-quote-is-valid');
+          break;
+        default:
+          break;
+      }
+
+      if (tips) {
+        showTips(tips);
+      }
+    },
+    [t, showTips],
+  );
+
+  const CheckIcon = useCallback(() => {
+    if (disabled || loading || !quote?.tx || !preExecResult?.swapPreExecTx) {
+      return null;
+    }
+    return (
+      <TouchableOpacity onPress={() => handleTips('verified')}>
+        <ImgVerified width={16} height={16} />
+      </TouchableOpacity>
+    );
+  }, [disabled, loading, quote?.tx, preExecResult?.swapPreExecTx, handleTips]);
+
   const handleClick = useCallback(() => {
     if (gasFeeTooHight) {
-      setInSufficientTapTip(true);
+      handleTips('gasFeeTooHight');
       return;
     }
 
     if (inSufficient) {
-      setInSufficientTapTip(true);
       return;
     }
     if (disabled) {
@@ -284,6 +337,7 @@ export const DexQuoteItem = (
     quote,
     preExecResult,
     openSwapQuote,
+    handleTips,
   ]);
 
   const isWrapToken = useMemo(
@@ -321,224 +375,169 @@ export const DexQuoteItem = (
   }
 
   return (
-    <Tip
-      content={
-        gasFeeTooHight
-          ? t('page.swap.Gas-fee-too-high')
-          : t('page.swap.insufficient-balance')
-      }
-      isVisible={!onlyShow && inSufficientTapTip}
-      onClose={() => setInSufficientTapTip(false)}
-      tooltipStyle={{
-        transform: [{ translateY: 20 }],
+    <TouchableOpacity
+      activeOpacity={inSufficient || gasFeeTooHight ? 1 : 0.2}
+      style={[
+        styles.dexContainer,
+        {
+          position: 'relative',
+          backgroundColor: !(disabled || inSufficient || gasFeeTooHight)
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-1'],
+          borderColor: !(disabled || inSufficient || gasFeeTooHight)
+            ? colors2024['neutral-line']
+            : colors2024['neutral-line'],
+          borderWidth: 1,
+        },
+        isErrorQuote && {
+          // height: 52,
+          borderWidth: 1,
+          paddingHorizontal: 16,
+          paddingTop: 14,
+          paddingBottom: 14,
+        },
+      ]}
+      onPress={() => {
+        if (onlyShow) {
+          onPress?.();
+          return;
+        }
+        handleClick();
       }}>
-      <TouchableOpacity
-        activeOpacity={inSufficient || gasFeeTooHight ? 1 : 0.2}
-        style={[
-          styles.dexContainer,
-          {
-            position: 'relative',
-            backgroundColor: !(disabled || inSufficient || gasFeeTooHight)
-              ? colors2024['neutral-card-1']
-              : 'transparent',
-            borderColor: !(disabled || inSufficient || gasFeeTooHight)
-              ? 'transparent'
-              : colors2024['neutral-line'],
-            borderWidth: !(disabled || inSufficient || gasFeeTooHight)
-              ? 0
-              : StyleSheet.hairlineWidth,
-          },
-          isErrorQuote && {
-            // height: 52,
-            borderWidth: StyleSheet.hairlineWidth,
-            paddingHorizontal: 16,
-            paddingTop: 14,
-            paddingBottom: 14,
-          },
-          onlyShow && styles.onlyShow,
-        ]}
-        onPress={() => {
-          if (onlyShow) {
-            onPress?.();
-            return;
-          }
-          handleClick();
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: disabled ? 0 : 10,
         }}>
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: disabled ? 0 : 10,
+            justifyContent: 'center',
+            gap: 8,
           }}>
-          <View
-            style={{
+          <QuoteLogo
+            loaded
+            logo={quoteProviderInfo.logo}
+            isLoading={isLoading}
+          />
+          <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
+          {!!preExecResult?.shouldApproveToken && (
+            <TouchableOpacity onPress={() => handleTips('approve')}>
+              <ImgLock width={16} height={16} />
+            </TouchableOpacity>
+          )}
+        </View>
+        {/* top left end */}
+
+        {/* top right */}
+        <View
+          style={[
+            {
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
               gap: 8,
-            }}>
-            <QuoteLogo
-              loaded
-              logo={quoteProviderInfo.logo}
-              isLoading={isLoading}
-            />
-            <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
-            {!!preExecResult?.shouldApproveToken && (
-              <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
-                <ImgLock width={16} height={16} />
-              </Tip>
-            )}
-          </View>
-          {/* top left end */}
+            },
+          ]}>
+          {!disabled && <AssetAvatar size={20} logo={receiveToken.logo_url} />}
+          {receiveOrErrorContent}
+          <CheckIcon />
+        </View>
+      </View>
 
-          {/* top right */}
-          <View
-            style={[
-              {
+      <View
+        style={
+          disabled
+            ? { display: 'none' }
+            : {
+                // flex: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 8,
-              },
-            ]}>
-            {!disabled && (
-              <AssetAvatar size={20} logo={receiveToken.logo_url} />
-            )}
-            {receiveOrErrorContent}
-            <CheckIcon />
-          </View>
-        </View>
-
+                justifyContent: 'space-between',
+              }
+        }>
         <View
-          style={
-            disabled
-              ? { display: 'none' }
-              : {
-                  // flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }
-          }>
-          <View
-            style={[
-              {
-                flexDirection: 'row',
-                gap: 4,
-                alignItems: 'center',
-                paddingLeft: 4,
-              },
-              gasFeeTooHight && {
-                backgroundColor: colors2024['red-light'],
-              },
-            ]}>
-            {!disabled && !inSufficient && (
-              <>
-                {gasFeeTooHight ? (
-                  <RcIconSwapGasRed
-                    viewBox="0 0 16 16"
-                    width={16}
-                    height={16}
-                  />
-                ) : (
-                  <RcIconSwapGas viewBox="0 0 16 16" width={16} height={16} />
-                )}
-                <Text
-                  style={[
-                    styles.gasUsd,
-                    gasFeeTooHight && { color: colors2024['red-default'] },
-                  ]}>
-                  {preExecResult?.gasUsd}
-                </Text>
-              </>
-            )}
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-            {disabled ? (
+          style={[
+            {
+              flexDirection: 'row',
+              gap: 4,
+              alignItems: 'center',
+              paddingLeft: 4,
+            },
+            gasFeeTooHight && {
+              backgroundColor: colors2024['red-light'],
+            },
+          ]}>
+          {!disabled && !inSufficient && (
+            <>
               <Text
-                style={{
-                  fontFamily: 'SF Pro Rounded',
-                }}>
-                {bestQuotePercent}
+                style={[
+                  styles.gasUsd,
+                  gasFeeTooHight && { color: colors2024['red-default'] },
+                ]}>
+                Gas: {preExecResult?.gasUsd}
               </Text>
-            ) : (
-              <>
-                <Text style={styles.receivedTokenUsd}>
-                  {isWrapToken
-                    ? `≈ ${receivedTokenUsd}`
-                    : t('page.swap.usd-after-fees', {
-                        usd: receivedTokenUsd,
-                      })}
-                </Text>
-                {isWrapToken ? (
-                  <Tip content={t('page.swap.no-fees-for-wrap')}>
-                    <RcIconInfoCC
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-foot']}
-                    />
-                  </Tip>
-                ) : (
-                  <TouchableOpacity
-                    hitSlop={10}
-                    onPress={() => {
-                      setIsShowRabbyFeePopup({
-                        visible: true,
-                        dexName: dexId,
-                        dexFeeDesc: quote?.dexFeeDesc || undefined,
-                      });
-                    }}>
-                    <RcIconInfoCC
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-foot']}
-                    />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
+            </>
+          )}
         </View>
-        {!disabled && !onlyShow ? (
-          <View
-            style={[
-              styles.bestQuotePercentContainer,
-              isBestQuote && styles.bestQuotePercentContainerIsBest,
-            ]}>
-            {bestQuotePercent}
-          </View>
-        ) : null}
-      </TouchableOpacity>
-    </Tip>
+
+        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+          {disabled ? (
+            <>{bestQuotePercent}</>
+          ) : (
+            <>
+              <Text style={styles.receivedTokenUsd}>
+                {isWrapToken
+                  ? `≈ ${receivedTokenUsd}`
+                  : t('page.swap.usd-after-fees', {
+                      usd: receivedTokenUsd,
+                    })}
+              </Text>
+              {isWrapToken ? (
+                <TouchableOpacity onPress={() => handleTips('wrapToken')}>
+                  <RcIconInfoCC color={colors2024['neutral-info']} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  hitSlop={10}
+                  onPress={() => {
+                    setIsShowRabbyFeePopup({
+                      visible: true,
+                      dexName: dexId,
+                      dexFeeDesc: quote?.dexFeeDesc || undefined,
+                    });
+                  }}>
+                  <RcIconInfoCC color={colors2024['neutral-info']} />
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+        </View>
+      </View>
+      {!disabled && !onlyShow ? (
+        <View
+          style={[
+            styles.bestQuotePercentContainer,
+            isBestQuote && styles.bestQuotePercentContainerIsBest,
+          ]}>
+          {bestQuotePercent}
+        </View>
+      ) : null}
+    </TouchableOpacity>
   );
 };
-export function CheckedIcon() {
-  const { t } = useTranslation();
-  return (
-    <Tip content={t('page.swap.by-transaction-simulation-the-quote-is-valid')}>
-      <ImgVerified width={16} height={16} />
-    </Tip>
-  );
-}
+
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dexContainer: {
     position: 'relative',
-    // borderWidth: StyleSheet.hairlineWidth,
     paddingLeft: 25,
     paddingRight: 17,
     paddingTop: 36,
     paddingBottom: 30,
     justifyContent: 'center',
-    borderRadius: 6,
-    shadowColor: 'rgba(0, 0, 0, 0.08)',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    // minHeight: 93,
+    borderRadius: 20,
   },
   onlyShow: {
     backgroundColor: 'transparent',
@@ -549,6 +548,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     shadowRadius: 0,
     borderWidth: 0,
     borderRadius: 0,
+  },
+  percent: {
+    marginLeft: 30,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
   },
   percentText: {
     fontSize: 12,
@@ -573,11 +579,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   gasUsd: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     fontSize: 14,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   receivedTokenUsd: {
     color: colors2024['neutral-foot'],

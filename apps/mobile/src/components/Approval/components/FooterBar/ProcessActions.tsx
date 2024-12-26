@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActionsContainer, Props } from './ActionsContainer';
 import { useTranslation } from 'react-i18next';
 import { Tip } from '@/components/Tip';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
+import { createGetStyles2024 } from '@/utils/styles';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -36,6 +37,33 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
+  button: {
+    width: 240,
+    height: 48,
+    borderColor: colors2024['brand-default'],
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: colors2024['blue-default'],
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  holdButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  spin: {
+    width: 16,
+    height: 16,
+  },
+}));
+
 export const ProcessActions: React.FC<Props> = ({
   onSubmit,
   onCancel,
@@ -47,11 +75,18 @@ export const ProcessActions: React.FC<Props> = ({
   gasLessThemeColor,
   isGasNotEnough,
   buttonIcon,
+  isMiniSignTx,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const oldStyles = React.useMemo(() => getStyles(colors), [colors]);
 
+  const { styles: styles2024 } = useTheme2024({ getStyle: getStyles2024 });
+
+  const styles = useMemo(
+    () => (isMiniSignTx ? styles2024 : oldStyles),
+    [isMiniSignTx, styles2024, oldStyles],
+  );
   const buttonIsPrimary = isPrimary || gasLess;
   const buttonText = submitText ?? t('page.signFooterBar.beginSigning');
   const buttonTextStyle = StyleSheet.flatten([
@@ -70,7 +105,7 @@ export const ProcessActions: React.FC<Props> = ({
   ]);
 
   return (
-    <ActionsContainer onCancel={onCancel}>
+    <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
       <View>
         <Tip
           // @ts-expect-error

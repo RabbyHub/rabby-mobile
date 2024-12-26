@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 
-import { uniqBy } from 'lodash';
+import { omit, uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
@@ -30,6 +30,12 @@ import { AssetAvatar } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { useSwapRecentToTokens } from '../hooks/recent';
+import { preferenceService } from '@/core/services';
+import {
+  ensureAbstractPortfolioToken,
+  tagTokenList,
+} from '@/screens/Home/utils/token';
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
@@ -206,6 +212,129 @@ const TokenSelect = ({
 
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+  const [recentToTokens] = useSwapRecentToTokens();
+
+  const recentDisplayToTokens = useMemo(() => {
+    if (type === 'swapTo' && queryConds.keyword.length < 1) {
+      return recentToTokens.filter(item => {
+        return item.chain === chainId && !excludeTokens?.includes(item.id);
+      });
+    }
+    return [];
+  }, [type, queryConds.keyword.length, recentToTokens, chainId, excludeTokens]);
+
+  const { value: tokenSettings } = useAsync(async () => {
+    if (currentAccount?.address) {
+      const data = await preferenceService.getUserTokenSettings(
+        currentAccount?.address,
+      );
+      return data || {};
+    }
+    return {};
+  });
+
+  const swapToHeader = useMemo(() => {
+    return (
+      <View
+        style={[
+          styles.headerBox,
+          recentDisplayToTokens ? { marginTop: 16 } : [],
+        ]}>
+        <Text style={styles.headerBoxText}>
+          {t('component.TokenSelector.hot')}
+        </Text>
+        <Text style={styles.headerBoxText}>
+          <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
+        </Text>
+      </View>
+    );
+  }, [styles.headerBox, styles.headerBoxText, t, recentDisplayToTokens]);
+
+  const headerTitle = useMemo(() => {
+    if (recentDisplayToTokens.length) {
+      return (
+        <View style={styles.headerBox}>
+          <Text style={styles.headerBoxText}>
+            {t('component.TokenSelector.bridge.token')}
+          </Text>
+          <Text style={styles.headerBoxText}>
+            {t('component.TokenSelector.recent')}
+          </Text>
+        </View>
+      );
+    }
+    if (type === 'swapTo') {
+      return swapToHeader;
+    }
+    return (
+      <View style={styles.headerBox}>
+        <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
+        <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
+      </View>
+    );
+  }, [
+    recentDisplayToTokens.length,
+    styles.headerBox,
+    styles.headerBoxText,
+    swapToHeader,
+    t,
+    type,
+  ]);
+
+  const list = useMemo(() => {
+    if (recentDisplayToTokens.length) {
+      if (tokenSettings) {
+        const { pinedQueue } = tokenSettings;
+        return [
+          ...recentDisplayToTokens.map(e => ({
+            ...omit(e, ['isPined', 'pinIndex']),
+            group: 'recent',
+          })),
+          {
+            id: 'swapTo header',
+            _chain: 'swapTo',
+            headerRender: () => swapToHeader,
+          },
+          ...availableToken
+            .map(e => ({
+              ...e,
+              isPined: pinedQueue?.some(
+                x => x.chainId === e.chain && x.tokenId === e.id,
+              ),
+              pinIndex: pinedQueue?.findIndex(
+                x => x.chainId === e.chain && x.tokenId === e.id,
+              ),
+            }))
+            .sort((a, b) => {
+              if (a.pinIndex && b.pinIndex) {
+                return a.pinIndex - b.pinIndex;
+              }
+              if (a.isPined) {
+                return -1;
+              }
+              if (b.isPined) {
+                return 1;
+              }
+              return 0;
+            }),
+        ] as TokenItem[];
+      }
+
+      return [
+        ...recentDisplayToTokens.map(e => ({
+          ...omit(e, ['isPined', 'pinIndex']),
+          group: 'recent',
+        })),
+        {
+          id: 'swapTo header',
+          _chain: 'swapTo',
+          headerRender: () => swapToHeader,
+        },
+        ...availableToken,
+      ] as TokenItem[];
+    }
+    return availableToken;
+  }, [availableToken, recentDisplayToTokens, swapToHeader, tokenSettings]);
 
   return (
     <>
@@ -229,11 +358,7 @@ const TokenSelect = ({
             </>
           ) : (
             <>
-              <Text style={styles.selectText}>
-                {type === 'bridgeFrom'
-                  ? t('page.bridge.Select')
-                  : t('page.swap.select-token')}
-              </Text>
+              <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
               <RcIconSwapBottomArrow />
             </>
           )}
@@ -242,7 +367,7 @@ const TokenSelect = ({
 
       <TokenSelectorSheetModal
         visible={tokenSelectorVisible}
-        list={availableToken}
+        list={list}
         foldTokensList={foldTokensList}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
@@ -251,27 +376,26 @@ const TokenSelect = ({
         type={type}
         selectToken={token}
         placeholder={placeholder}
-        headerTitle={
-          <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
-            <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
-          </View>
-        }
+        headerTitle={headerTitle}
         chainServerId={queryConds.chainServerId}
         disabledTips={'Not supported'}
         supportChains={SWAP_SUPPORT_CHAINS}
+        hideChainFilter={type === 'swapFrom' ? false : true}
       />
     </>
   );
 };
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
-    borderRadius: 100,
+    borderRadius: 12,
     // TODO: backgroundColor: colors2024['neutral-card-2'],
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingLeft: 16,
-    paddingRight: 12,
-    height: 60,
+    backgroundColor: colors2024['neutral-line'],
+    // backgroundColor: colors2024['neutral-bg-2'],
+
+    // paddingLeft: 16,
+    // paddingRight: 12,
+    padding: 4,
+    height: 34,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -280,7 +404,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
-    paddingHorizontal: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -318,8 +441,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   selectText: {
+    padding: 4,
+    paddingLeft: 12,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },

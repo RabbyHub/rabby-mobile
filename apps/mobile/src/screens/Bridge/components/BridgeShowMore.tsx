@@ -10,23 +10,20 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   Animated,
 } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
-import RcArrowDown from '@/assets/icons/bridge/down.svg';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-// import { BridgeSlippage } from './BridgeSlippage';
 import { BridgeSlippage } from './BridgeSlippage';
 import RcIconPolygon from '@/assets2024/icons/bridge/IconPolygon.svg';
-// import { tokenPriceImpact } from '../hooks';
 import { tokenPriceImpact } from '../hooks/token';
-import { AssetAvatar } from '@/components';
+import { AppSwitch, AssetAvatar, Tip } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 
 const BridgeShowMore = ({
   openQuotesList,
@@ -47,6 +44,13 @@ const BridgeShowMore = ({
   setIsCustomSlippage,
   open,
   setOpen,
+  type,
+  isWrapToken,
+  isBestQuote,
+  showMEVGuardedSwitch,
+  originPreferMEVGuarded,
+  switchPreferMEV,
+  recommendValue,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -64,18 +68,43 @@ const BridgeShowMore = ({
   slippageError?: boolean;
   autoSlippage: boolean;
   isCustomSlippage: boolean;
-  setAutoSlippage: Dispatch<SetStateAction<boolean>>;
-  setIsCustomSlippage: Dispatch<SetStateAction<boolean>>;
+  setAutoSlippage: (boolean: boolean) => void;
+  setIsCustomSlippage: (boolean: boolean) => void;
+  type: 'swap' | 'bridge';
+  /**
+   * for swap props
+   */
+  isWrapToken?: boolean;
+  isBestQuote: boolean;
+  showMEVGuardedSwitch?: boolean;
+  originPreferMEVGuarded?: boolean;
+  switchPreferMEV?: (b: boolean) => void;
+  recommendValue?: number;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
 
-  const data = useMemo(
-    () => tokenPriceImpact(fromToken, toToken, amount, toAmount),
-    [fromToken, toToken, amount, toAmount],
-  );
-
+  const data = useMemo(() => {
+    if (quoteLoading || (!sourceLogo && !sourceName)) {
+      return {
+        showLoss: false,
+        diff: '',
+        fromUsd: '',
+        toUsd: '',
+        lossUsd: '',
+      };
+    }
+    return tokenPriceImpact(fromToken, toToken, amount, toAmount);
+  }, [
+    fromToken,
+    toToken,
+    amount,
+    toAmount,
+    quoteLoading,
+    sourceLogo,
+    sourceName,
+  ]);
   useEffect(() => {
     if ((!quoteLoading && data?.showLoss) || slippageError) {
       setOpen(true);
@@ -154,11 +183,36 @@ const BridgeShowMore = ({
           {quoteLoading ? (
             <ActivityIndicator size="small" />
           ) : (
-            <TouchableOpacity onPress={openQuotesList} style={styles.flexRow}>
-              {sourceLogo && (
-                <Image source={{ uri: sourceLogo }} style={styles.sourceLogo} />
+            <TouchableOpacity
+              onPress={openQuotesList}
+              style={styles.quoteContainer}>
+              {isBestQuote && (
+                <View style={styles.bestView}>
+                  <Text style={styles.bestText}>{t('page.swap.best')}</Text>
+                </View>
               )}
-              <Text style={styles.sourceName}>{sourceName}</Text>
+              {sourceLogo && (
+                <Image
+                  source={
+                    typeof sourceLogo === 'string'
+                      ? { uri: sourceLogo }
+                      : sourceLogo
+                  }
+                  style={styles.sourceLogo}
+                />
+              )}
+              {sourceName && (
+                <Text style={styles.sourceName}>{sourceName}</Text>
+              )}
+              {sourceName || sourceLogo ? (
+                <RcIconBluePolygon
+                  style={styles.arrowIcon}
+                  color={colors2024['brand-default']}
+                />
+              ) : null}
+              {!sourceLogo && !sourceName ? (
+                <Text style={styles.noQuotePlaceholder}>-</Text>
+              ) : null}
             </TouchableOpacity>
           )}
         </ListItem>
@@ -171,7 +225,22 @@ const BridgeShowMore = ({
           isCustomSlippage={isCustomSlippage}
           setAutoSlippage={setAutoSlippage}
           setIsCustomSlippage={setIsCustomSlippage}
+          type={type}
+          isWrapToken={isWrapToken}
+          recommendValue={recommendValue}
         />
+
+        {showMEVGuardedSwitch && (
+          <ListItem style={{ marginTop: 20 }} name={t('page.swap.preferMEV')}>
+            <AppSwitch
+              value={originPreferMEVGuarded}
+              onValueChange={switchPreferMEV}
+              barHeight={22}
+              circleBorderInactiveColor={colors2024['neutral-bg-2']}
+              backgroundInactive={colors2024['neutral-bg-2']}
+            />
+          </ListItem>
+        )}
       </View>
     </View>
   );
@@ -316,7 +385,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 13,
     marginBottom: 8,
   },
-  listItem: { marginBottom: 8 },
+  listItem: { marginBottom: 20 },
   listItemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -326,8 +395,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sourceName: {
     color: colors2024['brand-default'],
     fontWeight: '500',
-    marginLeft: 8,
-    textDecorationLine: 'underline',
   },
   recommendFromToken: {
     // flexDirection: 'row',
@@ -392,6 +459,40 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     color: colors2024['neutral-bg-1'],
     marginRight: 4,
+  },
+
+  quoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  afterLabel: {
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
+  },
+  bestView: {
+    backgroundColor: colors2024['green-light-2'],
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 4,
+  },
+  bestText: {
+    color: colors2024['green-default'],
+    fontWeight: '700',
+    fontSize: 12,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    zIndex: 1,
+  },
+  noQuotePlaceholder: {
+    color: colors2024['neutral-foot'],
+    fontSize: 12,
+  },
+  arrowIcon: {
+    transform: [{ rotate: '-90deg' }],
   },
 }));
 

@@ -83,7 +83,7 @@ export const RabbyFeePopup = ({
 
   const snapPoints = useMemo(
     () => [
-      Math.min(type === 'swap' ? (hasSwapDexFee ? 694 : 668) : 620, height),
+      Math.min(type === 'swap' ? (hasSwapDexFee ? 740 : 700) : 620, height),
     ],
     [type, hasSwapDexFee, height],
   );
