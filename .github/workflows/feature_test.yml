@@ -11,7 +11,7 @@ on:
         required: false
         type: boolean
         default: true
-      machine_label:
+      macos_machine_location:
         required: true
         type: choice
         options:
@@ -30,13 +30,13 @@ jobs:
       matrix:
         include:
           - host: macOS
-            machine_label: ${{ inputs.machine_label }}
+            machine_loc: ${{ inputs.macos_machine_location }}
           - host: Linux
-            machine_label: mobile
+            machine_loc: mobile
     runs-on:
       - self-hosted
       - ${{ matrix.host }}
-      - ${{ matrix.machine_label }}
+      - ${{ matrix.machine_loc }}
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
 
@@ -98,7 +98,7 @@ jobs:
           if [ "$OS_TYPE" == "Linux" ]; then
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
-            if [ "$INPUT_MOBILE_SRC" == "mobile-local" ]; then
+            if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
             else
               RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
@@ -123,7 +123,7 @@ jobs:
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
-          INPUT_MOBILE_SRC: ${{ inputs.machine_label }}
+          INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           CONFIGURATION: release
