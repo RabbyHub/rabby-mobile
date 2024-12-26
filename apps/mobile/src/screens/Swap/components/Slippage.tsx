@@ -14,6 +14,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Input } from '@rneui/base';
 import { RcIconArrowUp } from '@/assets/icons/swap';
 import { useSlippageStore } from '../hooks';
+import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 
 const SLIPPAGE = ['0.1', '0.5'];
 
@@ -99,7 +100,8 @@ export const Slippage = (props: SlippageProps) => {
   }, [isHigh, isLow, recommendValue, setRecommendValue, t]);
 
   const onInputChange = useCallback(
-    (text: string) => {
+    (input: string) => {
+      const text = formatSpeicalAmount(input);
       if (/^\d*(\.\d*)?$/.test(text)) {
         onChange(Number(text) > 50 ? '50' : text);
       }
