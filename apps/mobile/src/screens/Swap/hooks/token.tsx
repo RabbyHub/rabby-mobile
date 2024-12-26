@@ -776,7 +776,7 @@ export const useTokenPair = (userAddress: string) => {
 };
 
 function getChainDefaultToken(chain: CHAINS_ENUM) {
-  const chainInfo = CHAINS[chain];
+  const chainInfo = findChainByEnum(chain) || CHAINS[chain];
   return {
     id: chainInfo.nativeTokenAddress,
     decimals: chainInfo.nativeTokenDecimals,
