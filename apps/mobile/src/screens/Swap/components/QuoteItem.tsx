@@ -555,6 +555,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 6,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
+    marginTop: -1,
   },
   percentText: {
     fontSize: 12,
