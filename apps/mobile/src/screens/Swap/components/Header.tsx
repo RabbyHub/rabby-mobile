@@ -26,7 +26,7 @@ export const SwapHeader = () => {
     <View style={styles.container}>
       <TouchableView onPress={openSwapHistory}>
         {loadingNumber ? (
-          <PendingTx number={loadingNumber} />
+          <PendingTx number={loadingNumber} onClick={openSwapHistory} />
         ) : (
           <RcIconSwapHistory style={styles.icon} />
         )}
