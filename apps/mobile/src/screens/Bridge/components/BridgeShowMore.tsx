@@ -24,6 +24,7 @@ import { AppSwitch, AssetAvatar, Tip } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
+import useDebounce from 'react-use/lib/useDebounce';
 
 const BridgeShowMore = ({
   openQuotesList,
@@ -82,7 +83,7 @@ const BridgeShowMore = ({
   recommendValue?: number;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
 
   const data = useMemo(() => {
@@ -105,11 +106,16 @@ const BridgeShowMore = ({
     sourceLogo,
     sourceName,
   ]);
-  useEffect(() => {
-    if ((!quoteLoading && data?.showLoss) || slippageError) {
-      setOpen(true);
-    }
-  }, [quoteLoading, data?.showLoss, setOpen, slippageError]);
+
+  useDebounce(
+    () => {
+      if ((!quoteLoading && data?.showLoss) || slippageError) {
+        setOpen(true);
+      }
+    },
+    50,
+    [quoteLoading, data?.showLoss, setOpen, slippageError],
+  );
 
   return (
     <View style={styles.container}>
@@ -178,7 +184,11 @@ const BridgeShowMore = ({
         )}
 
         <ListItem
-          name={t('page.bridge.showMore.source')}
+          name={
+            type === 'bridge'
+              ? t('page.bridge.showMore.source')
+              : t('page.swap.source')
+          }
           style={styles.listItem}>
           {quoteLoading ? (
             <ActivityIndicator size="small" />

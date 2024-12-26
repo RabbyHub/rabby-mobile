@@ -1,4 +1,4 @@
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { Modal, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 

@@ -3,20 +3,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View, Text } from 'react-native';
 
-export const BubbleWithText = ({
-  slide,
-  value,
-}: {
-  slide: number;
-  value: string;
-}) => {
+export const BubbleWithText = ({ slide }: { slide: number }) => {
   const { styles } = useTheme2024({ getStyle: getBubbleStyles });
 
   return (
     <View style={styles.container}>
       <View style={styles.bubble}>
         <Text style={styles.text} numberOfLines={1}>
-          {slide}% <Text style={styles.tokenText}>({value})</Text>
+          {slide}%
         </Text>
       </View>
       <View style={styles.arrowWrapper}>

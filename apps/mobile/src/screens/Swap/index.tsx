@@ -613,7 +613,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       <View
         style={[
           styles.buttonContainer,
-          isAndroid && { paddingBottom: 20 + safeOffBottom },
+          isAndroid && { paddingBottom: safeOffBottom },
         ]}>
         <Button
           onPress={() => {

@@ -238,6 +238,7 @@ export const useTokenPair = (userAddress: string) => {
         // setPayToken(undefined);
       }
       setPayAmount('');
+      setSlider(0);
       setActiveProvider(undefined);
     },
     [setActiveProvider, setPayToken, setReceiveToken],
@@ -265,6 +266,8 @@ export const useTokenPair = (userAddress: string) => {
   const exchangeToken = useCallback(() => {
     setPayToken(receiveToken);
     setReceiveToken(payToken);
+    setPayAmount('');
+    setSlider(0);
   }, [setPayToken, receiveToken, setReceiveToken, payToken]);
 
   if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
@@ -378,7 +381,6 @@ export const useTokenPair = (userAddress: string) => {
       if (id === fetchIdRef.current) {
         setQuotesList(e => {
           const index = e.findIndex(q => q.name === quote.name);
-
           const v: TDexQuoteData = { ...quote, loading: false };
           if (index === -1) {
             return [...e, v];
@@ -420,7 +422,7 @@ export const useTokenPair = (userAddress: string) => {
           receiveToken,
           slippage: slippage || '0.1',
           chain,
-          payAmount: payAmount,
+          payAmount,
           fee: feeRate,
           setQuote: setQuote(currentFetchId),
         }).finally(() => {
@@ -453,28 +455,61 @@ export const useTokenPair = (userAddress: string) => {
       !inSufficient
     ) {
       setQuoteLoading(true);
+
       setActiveProvider(undefined);
+      runGetAllQuotes();
+    } else {
+      setActiveProvider(undefined);
+      setQuoteLoading(false);
     }
-    runGetAllQuotes();
   }, [
-    setActiveProvider,
-    inSufficient,
-    setQuotesList,
-    setQuote,
-    refreshId,
     userAddress,
     payToken?.id,
     receiveToken?.id,
     chain,
-    payAmount,
     feeRate,
-    runGetAllQuotes,
+    inSufficient,
     receiveToken,
-    slippage,
+    payAmount,
+    runGetAllQuotes,
+    setActiveProvider,
+  ]);
+
+  const canUpdateActiveProvider = useMemo(() => {
+    if (
+      userAddress &&
+      payToken?.id &&
+      receiveToken?.id &&
+      receiveToken &&
+      chain &&
+      Number(payAmount) > 0 &&
+      feeRate &&
+      !inSufficient
+    ) {
+      return true;
+    }
+    return false;
+  }, [
+    chain,
+    feeRate,
+    inSufficient,
+    payAmount,
+    payToken?.id,
+    receiveToken,
+    userAddress,
   ]);
 
   useEffect(() => {
-    if (!quoteLoading && receiveToken && quoteList.every(q => !q.loading)) {
+    setQuotesList([]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+
+  useEffect(() => {
+    if (
+      !quoteLoading &&
+      receiveToken &&
+      canUpdateActiveProvider &&
+      quoteList.every((q, idx) => !q.loading)
+    ) {
       const sortIncludeGasFee = true;
       const sortedList = [
         ...(quoteList?.sort((a, b) => {
@@ -490,20 +525,18 @@ export const useTokenPair = (userAddress: string) => {
             if (!quote.preExecResult || !quote.preExecResult.isSdkPass) {
               return new BigNumber(Number.MIN_SAFE_INTEGER);
             }
+            const balanceChangeReceiveTokenAmount =
+              quote?.preExecResult.swapPreExecTx.balance_change.receive_token_list.find(
+                token => isSameAddress(token.id, receiveToken.id),
+              )?.amount || 0;
 
             if (sortIncludeGasFee) {
-              return new BigNumber(
-                quote?.preExecResult.swapPreExecTx.balance_change
-                  .receive_token_list?.[0]?.amount || 0,
-              )
+              return new BigNumber(balanceChangeReceiveTokenAmount)
                 .times(price)
                 .minus(quote?.preExecResult?.gasUsdValue || 0);
             }
 
-            return new BigNumber(
-              quote?.preExecResult.swapPreExecTx.balance_change
-                .receive_token_list?.[0]?.amount || 0,
-            ).times(price);
+            return new BigNumber(balanceChangeReceiveTokenAmount).times(price);
           };
           return getNumber(b).minus(getNumber(a)).toNumber();
         }) || []),
@@ -515,11 +548,9 @@ export const useTokenPair = (userAddress: string) => {
 
         setBestQuoteDex(bestQuote.name);
 
-        setActiveProvider(preItem =>
+        setActiveProvider(
           !bestQuote.preExecResult || !bestQuote.preExecResult.isSdkPass
             ? undefined
-            : preItem?.manualClick
-            ? preItem
             : {
                 name: bestQuote.name,
                 quote: bestQuote.data,
@@ -531,14 +562,22 @@ export const useTokenPair = (userAddress: string) => {
                 halfBetterRate: '',
                 quoteWarning: undefined,
                 actualReceiveAmount:
-                  preExecResult?.swapPreExecTx.balance_change
-                    .receive_token_list[0]?.amount || '',
+                  preExecResult?.swapPreExecTx.balance_change.receive_token_list.find(
+                    token => isSameAddress(token.id, receiveToken.id),
+                  )?.amount || '',
                 gasUsd: preExecResult?.gasUsd,
               },
         );
       }
     }
-  }, [quoteList, quoteLoading, receiveToken, inSufficient, setActiveProvider]);
+  }, [
+    quoteList,
+    quoteLoading,
+    receiveToken,
+    inSufficient,
+    setActiveProvider,
+    canUpdateActiveProvider,
+  ]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
@@ -659,6 +698,10 @@ export const useTokenPair = (userAddress: string) => {
           });
         }
 
+        if (syncAmount) {
+          setIsDraggingSlider(false);
+        }
+
         previousSlider.current = v;
 
         if (v === 100) {
@@ -668,10 +711,6 @@ export const useTokenPair = (userAddress: string) => {
         setPayAmount(
           new BigNumber(v).div(100).times(tokenAmountBn(payToken)).toString(10),
         );
-
-        if (syncAmount) {
-          setIsDraggingSlider(false);
-        }
       }
     },
     [handleSlider100, payToken],

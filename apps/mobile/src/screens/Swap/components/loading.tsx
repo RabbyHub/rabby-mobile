@@ -1,13 +1,10 @@
-import React, { SVGProps, useMemo } from 'react';
-import { QuoteLogo } from './QuoteLogo';
+import React, { useMemo } from 'react';
 import { useSwapSettings, useSwapSupportedDexList } from '../hooks';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { DEX } from '@/constant/swap';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { SvgXml, XmlProps } from 'react-native-svg';
-import { useTranslation } from 'react-i18next';
 
 type QuoteListLoadingProps = {
   fetchedList?: string[];

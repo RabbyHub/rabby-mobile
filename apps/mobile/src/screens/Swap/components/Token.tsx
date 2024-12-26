@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider, useRabbyFeeVisible } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -17,6 +17,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
 import {
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -31,9 +32,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { getTokenSymbol } from '@/utils/token';
 import { useSwapBottomModalTips } from '../hooks/tip';
 import { BubbleWithText } from './Slider';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -71,6 +72,16 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFrom = type === 'from';
+
+  const openTokenModalRef = useRef<{
+    openTokenModal: React.Dispatch<React.SetStateAction<boolean>>;
+  }>(null);
+
+  const handleTokenModalOpen = useCallback(() => {
+    if (!valueLoading && !currentQuote && !isFrom) {
+      openTokenModalRef?.current?.openTokenModal?.(true);
+    }
+  }, [currentQuote, isFrom, valueLoading]);
 
   const [balance, usdValue] = useMemo(() => {
     if (token) {
@@ -138,13 +149,13 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     () => ({
       display: showBubble.value ? 'flex' : 'none',
       position: 'absolute',
-      top: -60,
+      top: IS_ANDROID ? -72 : -60,
       left: 0,
       height: 70,
       width,
       transform: [
         {
-          translateX: 0 - width / 2 + 6,
+          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
         },
       ],
     }),
@@ -152,8 +163,11 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
   );
 
   const onSlidingStart = useCallback(() => {
+    if (!token || tokenAmountBn(token).lte(0)) {
+      return;
+    }
     showBubble.value = true;
-  }, [showBubble]);
+  }, [showBubble, token]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
@@ -176,7 +190,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
   }, [colors2024]);
 
   return (
-    <View style={styles.container}>
+    <Pressable style={styles.container} onPress={handleTokenModalOpen}>
       <View style={styles.top}>
         <Text style={styles.subTitle}>
           {isFrom ? t('page.swap.from') : t('page.swap.to')}
@@ -191,7 +205,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
               onSlidingComplete={onAfterChangeSlider}
               minimumValue={0}
               maximumValue={100}
-              disabled={!token}
+              disabled={!token || tokenAmountBn(token).lte(0)}
               minimumTrackTintColor={colors2024['brand-default']}
               maximumTrackTintColor={colors2024['neutral-line']}
               step={1}
@@ -209,19 +223,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
                       <View style={styles.innerThumb} />
 
                       <Animated.View style={sliderStyle}>
-                        <BubbleWithText
-                          value={
-                            token && slider && slider > 0
-                              ? formatTokenAmount(
-                                  tokenAmountBn(token)
-                                    .times(slider || 1)
-                                    .div(100)
-                                    .toString(10),
-                                ) + getTokenSymbol(token)
-                              : '0' + getTokenSymbol(token)
-                          }
-                          slide={slider || 0}
-                        />
+                        <BubbleWithText slide={slider || 0} />
                       </Animated.View>
                     </View>
                   </View>
@@ -240,6 +242,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             gap: 12,
           }}>
           <TokenSelect
+            ref={openTokenModalRef}
             token={token}
             onTokenChange={onTokenSelect}
             chainId={chainId}
@@ -267,6 +270,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             inputMode="decimal"
             placeholder="0"
             value={value}
+            scrollEnabled={true}
             placeholderTextColor={colors2024['neutral-info']}
             onChangeText={onInputChange}
             style={[
@@ -312,7 +316,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           )}
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
@@ -358,11 +362,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 28,
     fontWeight: '700',
-    lineHeight: 36,
     paddingLeft: 0,
     borderWidth: 0,
     flex: 1,
     textAlign: 'right',
+    padding: 0,
   },
 
   inSufficient: {
@@ -390,9 +394,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   balance: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '400',
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
   },
   usdValueContainer: {
     flexDirection: 'row',

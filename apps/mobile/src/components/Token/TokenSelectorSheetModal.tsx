@@ -220,7 +220,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [styles, t]);
 
     const displayList = useMemo(() => {
-      if (isBridgeTo || isSwapTo) {
+      if (isBridgeTo) {
         return list || [];
       }
 
@@ -259,10 +259,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
 
       return [...varied.natural, ...varied.disabled];
-    }, [list, supportChains, chainServerId, isBridgeTo, isSwapTo]);
+    }, [list, supportChains, chainServerId, isBridgeTo]);
 
     const isFromModalType = useMemo(
-      () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
+      () =>
+        type === 'swapFrom' ||
+        type === 'swapTo' ||
+        type === 'bridgeFrom' ||
+        type === 'send',
       [type],
     );
 
@@ -273,7 +277,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       ];
 
       const formatList = (allList ?? []).map(x => {
-        const _netWorth = isBridgeTo || isSwapTo ? 0 : x.amount * x.price || 0;
+        const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
 
         return {
           id: x.id,
@@ -293,14 +297,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return isFromModalType
         ? formatList
         : formatList.sort((m, n) => n._netWorth - m._netWorth);
-    }, [
-      displayList,
-      isBridgeTo,
-      isSwapTo,
-      foldTokensList,
-      fold,
-      isFromModalType,
-    ]);
+    }, [displayList, isBridgeTo, foldTokensList, fold, isFromModalType]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {
