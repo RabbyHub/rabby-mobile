@@ -630,10 +630,11 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
           }}
           title={btnText}
           disabled={
+            quoteLoading ||
             !payToken ||
             !receiveToken ||
-            !payAmount ||
-            Number(payAmount) === 0 ||
+            !amountAvailable ||
+            inSufficient ||
             !activeProvider
           }
         />
