@@ -130,13 +130,15 @@ export const TokenRow = memo(
           }}
           onPress={onPressToken}>
           <View style={styles.tokenRowTokenWrap}>
-            <AssetAvatar
-              logo={data?.logo_url}
-              chain={data?.chain}
-              style={mediaStyle}
-              size={logoSize}
-              chainSize={16}
-            />
+            <View>
+              <AssetAvatar
+                logo={data?.logo_url}
+                chain={data?.chain}
+                style={mediaStyle}
+                size={logoSize}
+                chainSize={16}
+              />
+            </View>
             <View style={styles.tokenRowTokenInner}>
               <View style={styles.tokenHeader}>
                 <Text
@@ -260,13 +262,15 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenWrap: {
     flexShrink: 1,
     flexDirection: 'row',
+    alignItems: 'center',
+    height: '100%',
     maxWidth: '70%',
   },
   tokenHeader: {
     width: '100%',
     display: 'flex',
     flexDirection: 'row',
-    flex: 1,
+    alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 4,
   },
@@ -289,6 +293,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
+    gap: 0,
   },
   tokenRowTokenInnerSmallToken: {
     flexDirection: 'row',

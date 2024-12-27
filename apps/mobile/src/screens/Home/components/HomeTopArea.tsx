@@ -468,6 +468,8 @@ export const HomeTopArea = () => {
                     ],
                   }}>
                   <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                     style={[
                       styles.actionText,
                       {
