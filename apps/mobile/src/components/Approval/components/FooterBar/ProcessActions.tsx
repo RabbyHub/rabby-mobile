@@ -46,7 +46,8 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 100,
   },
   buttonText: {
-    color: colors2024['neutral-InvertHighlight'],
+    // color: colors2024['neutral-InvertHighlight'],
+    color: colors2024['brand-default'],
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',

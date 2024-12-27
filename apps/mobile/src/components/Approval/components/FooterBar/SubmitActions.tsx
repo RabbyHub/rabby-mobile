@@ -152,7 +152,10 @@ export const SubmitActions: React.FC<Props> = ({
           }
         />
       ) : (
-        <View>
+        <View
+          style={{
+            flex: 1,
+          }}>
           {/* @ts-ignore */}
           <Tip content={enableTooltip ? tooltipContent : undefined}>
             <View style={styles.buttonWrapper}>
