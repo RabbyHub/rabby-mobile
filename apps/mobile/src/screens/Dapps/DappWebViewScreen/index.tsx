@@ -61,11 +61,22 @@ export function DappWebViewStubScreen() {
   const hideDappWebViewScreen = useCallback(
     (ctx?: DappWebViewHideContext) => {
       backToDappsScreen();
-      const { willClose } = collapseDappWebViewScreen(ctx);
-      if (!willClose) return;
-      clearActiveDappOrigin();
+
+      if (IS_ANDROID && ctx?.dappOrigin) {
+        closeOpenedDapp(ctx?.dappOrigin);
+        clearActiveDappOrigin();
+      } else {
+        const { willClose } = collapseDappWebViewScreen(ctx);
+        if (!willClose) return;
+        clearActiveDappOrigin();
+      }
     },
-    [collapseDappWebViewScreen, clearActiveDappOrigin, backToDappsScreen],
+    [
+      closeOpenedDapp,
+      collapseDappWebViewScreen,
+      clearActiveDappOrigin,
+      backToDappsScreen,
+    ],
   );
 
   useLayoutEffect(() => {
@@ -122,7 +133,7 @@ export function DappWebViewStubScreen() {
             // })
           },
         ]}>
-        {!openedDappItems.length && (
+        {!openedDappItems.length && !IS_ANDROID && (
           <SilentTouchableView
             style={{
               height: '100%',
