@@ -88,13 +88,28 @@ export const formatNumber = (
   return n.toFormat(decimal, format);
 };
 
+const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
+
 export const formatPrice = (price: string | number, len = 4) => {
   if ((price as number) >= 0.1) {
     return formatNumber(price);
   }
   if ((price as number) < 0.00001) {
     if (price.toString().length > 10) {
-      return Number(price).toExponential(len);
+      const s = new BigNumber(price).precision(4).toFormat();
+      const ss = s.replace(/^0.(0*)?(?:.*)/u, (_l, z: string) => {
+        const zeroLength = z.length;
+
+        const sub = `${zeroLength}`
+          .split('')
+          .map(x => Sub_Numbers[x as any])
+          .join('');
+
+        const end = s.slice(zeroLength + 2);
+        return `0.0${sub}${end}`;
+      });
+
+      return ss;
     }
     return price.toString();
   }
