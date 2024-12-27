@@ -230,6 +230,7 @@ function useSafeSizes() {
     containerPaddingBottom: safeSizes.containerPaddingBottom,
   };
 }
+/** @deprecated */
 export function OpenedDappWebViewStub() {
   const { colors, colors2024, styles } = useTheme2024({
     getStyle: getWebViewStubStyles,
