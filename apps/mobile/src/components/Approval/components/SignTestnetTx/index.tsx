@@ -689,7 +689,6 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
         <FooterBar
           Header={
             <GasSelectorHeader
-              tx={tx}
               disabled={false}
               isReady={isReady}
               gasLimit={gasLimit}

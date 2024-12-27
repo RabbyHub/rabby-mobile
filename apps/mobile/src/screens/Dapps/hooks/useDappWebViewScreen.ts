@@ -22,6 +22,7 @@ import { useRefState } from '@/hooks/common/useRefState';
 import { useDappsViewConfig } from './useDappView';
 import { getLatestNavigationName, navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -354,9 +355,14 @@ export function useDappWebViewScreen() {
 
   const removeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
-      setOpenedOriginsDapps(prev =>
-        prev.filter(item => item.origin !== dappOrigin),
-      );
+      if (IS_ANDROID) {
+        // dont keep the dapp in the stack on android
+        setOpenedOriginsDapps([]);
+      } else {
+        setOpenedOriginsDapps(prev =>
+          prev.filter(item => item.origin !== dappOrigin),
+        );
+      }
 
       if (activeDappOrigin === dappOrigin) {
         setActiveDappOrigin(null);
@@ -370,25 +376,14 @@ export function useDappWebViewScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setActiveDappOrigin]);
 
-  /** @deprecated */
-  const closeActiveOpenedDapp = useCallback(() => {
-    if (activeDappOrigin) {
-      removeOpenedDapp(activeDappOrigin);
-    }
-
-    collapseDappWebViewScreen();
-  }, [collapseDappWebViewScreen, removeOpenedDapp, activeDappOrigin]);
-
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
       removeOpenedDapp(dappOrigin);
       if (activeDappOrigin === dappOrigin) {
-        closeActiveOpenedDapp();
-      } else {
-        removeOpenedDapp(dappOrigin);
+        collapseDappWebViewScreen();
       }
     },
-    [activeDappOrigin, removeOpenedDapp, closeActiveOpenedDapp],
+    [removeOpenedDapp, activeDappOrigin, collapseDappWebViewScreen],
   );
 
   const originalInfo = useMemo(() => {

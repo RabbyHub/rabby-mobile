@@ -148,10 +148,7 @@ export const sendTransaction = async ({
   // get gas
   let normalGas = gasLevel;
   if (!normalGas) {
-    const gasMarket = await apiProvider.gasMarketV2({
-      chain,
-      tx,
-    });
+    const gasMarket = await openapi.gasMarket(chainServerId);
     normalGas = gasMarket.find(item => item.level === 'normal')!;
   }
 

@@ -9,7 +9,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import {
   Image,
   NativeSyntheticEvent,
@@ -61,7 +61,6 @@ import { default as RcIconGasAccountBlurCC } from '@/assets/icons/sign/tx/gas-ac
 import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-account-active.svg';
 import { SvgProps } from 'react-native-svg';
 import { RcIconInfoCC } from '@/assets/icons/common';
-import { apiProvider } from '@/core/apis';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -70,7 +69,6 @@ export interface GasSelectorResponse extends GasLevel {
 }
 
 interface GasSelectorProps {
-  tx: Tx;
   gasLimit: string | undefined;
   gas: {
     gasCostUsd: number | string | BigNumber;
@@ -175,7 +173,6 @@ export const GasSelectorHeader = ({
   gasMethod,
   gasAccountCost,
   onChangeGasMethod,
-  tx,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -230,11 +227,10 @@ export const GasSelectorHeader = ({
       if (chain?.isTestnet) {
         return null;
       }
-      const list = await apiProvider.gasMarketV2({
-        chain,
-        customGas: custom && custom > 0 ? custom : undefined,
-        tx,
-      });
+      const list = await openapi.gasMarket(
+        chain.serverId,
+        custom && custom > 0 ? custom : undefined,
+      );
       return list.find(item => item.level === 'custom')!;
     },
   );

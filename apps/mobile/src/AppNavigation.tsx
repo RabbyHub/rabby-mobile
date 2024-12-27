@@ -5,8 +5,8 @@ import {
   NavigationContainer,
 } from '@react-navigation/native';
 import React, { useCallback, useRef } from 'react';
-import { ColorSchemeName } from 'react-native';
-
+import { BackHandler, ColorSchemeName } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
@@ -59,6 +59,9 @@ import UnlockScreen from './screens/Unlock/Unlock';
 import { SingleAddressNavigator } from './screens/Navigators/SingleAddressNavigator';
 import { TokenDetailScreen } from './screens/TokenDetail';
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
+import { toast } from './components2024/Toast';
+import RNHelpers from './core/native/RNHelpers';
+import { IS_IOS } from './core/native/utils';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -72,6 +75,95 @@ const RootStackOptions = {
   animation: 'slide_from_right',
   headerShown: false,
 } as const;
+
+const REST_COUNTS = {
+  CANT_EXIT: 10,
+  ON_EXIT: -1,
+  PRE_EXIT: 0,
+};
+
+const backRestCountRef = {
+  current: REST_COUNTS.CANT_EXIT,
+  resetTimer: null as any,
+};
+function useGetSetBackRestCount() {
+  const getBackRestCount = useCallback(() => {
+    return backRestCountRef.current;
+  }, []);
+
+  const setBackRestCount = useCallback((value: number) => {
+    backRestCountRef.current = value;
+  }, []);
+
+  const setBackStage = useCallback(
+    (stage: (typeof REST_COUNTS)[keyof typeof REST_COUNTS]) => {
+      backRestCountRef.current = stage;
+      if (stage !== REST_COUNTS.CANT_EXIT) {
+        backRestCountRef.resetTimer = setTimeout(() => {
+          setBackRestCount(REST_COUNTS.CANT_EXIT);
+        }, 2500);
+      }
+    },
+    [setBackRestCount],
+  );
+
+  return {
+    getBackRestCount,
+    setBackStage,
+  };
+}
+
+function useDetermineExitAppOnPressBack() {
+  const { getBackRestCount, setBackStage } = useGetSetBackRestCount();
+
+  React.useEffect(() => {
+    /**
+     * in fact, BackHandler.addEventListener('hardwareBackPress', backAction) is not working on iOS,
+     * we just put it here for the sake of robustness.
+     */
+    if (IS_IOS) return;
+
+    const backAction = () => {
+      const restCount = getBackRestCount();
+      const navigationInst = navigationRef.current;
+      if (navigationInst && !navigationInst?.canGoBack()) {
+        if (restCount > REST_COUNTS.PRE_EXIT) {
+          toast.info('Press back 2 times to exit');
+          setBackStage(REST_COUNTS.PRE_EXIT);
+        } else if (restCount === REST_COUNTS.PRE_EXIT) {
+          toast.info('Press back again to exit');
+          setBackStage(REST_COUNTS.ON_EXIT);
+        } else if (restCount === REST_COUNTS.ON_EXIT) {
+          try {
+            RNHelpers.forceExitApp();
+            return true;
+          } catch (error) {
+            console.error(error);
+            Sentry.captureException(
+              new Error(`exit app failed, ${JSON.stringify(error)}`),
+            );
+            // BackHandler.exitApp();
+            return false;
+          }
+        }
+
+        return true;
+      } else {
+        setBackStage(REST_COUNTS.CANT_EXIT);
+      }
+
+      // not prevent by default
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [getBackRestCount, setBackStage]);
+}
 
 export default function AppNavigation({
   colorScheme,
@@ -148,6 +240,8 @@ export default function AppNavigation({
     },
     [onRouteChange],
   );
+
+  useDetermineExitAppOnPressBack();
 
   const previousRoute = usePrevious(routeNameRef.current);
   const isSlideFromGetStarted =

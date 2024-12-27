@@ -20,7 +20,6 @@ import { getTokenSymbol } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
 import { useSlippageStore } from './slippage';
-import { apiProvider } from '@/core/apis';
 import { useSwapRecentToTokens } from './recent';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
@@ -290,9 +289,7 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
-    });
+    return openapi.gasMarket(chainInfo.serverId);
   }, [chainInfo?.serverId]);
 
   const normalGasPrice = useMemo(

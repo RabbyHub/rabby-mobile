@@ -19,7 +19,6 @@ import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import { createGetStyles } from '@/utils/styles';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
-import { OpenedDappWebViewStub } from '../Dapps/DappsScreen/components/WebViewsStub';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
@@ -141,8 +140,6 @@ export function HomeScreenNavigator() {
       </HomeHiddenTabStack.Navigator>
 
       <BiometricsStubModal />
-
-      <OpenedDappWebViewStub />
 
       <ApprovalTokenDetailSheetModalStub />
 

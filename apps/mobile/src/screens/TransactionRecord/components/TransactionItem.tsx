@@ -29,7 +29,7 @@ import {
   useCurrentAccount,
 } from '@/hooks/account';
 import { TransactionAction } from './TransactionAction';
-import { apiCustomTestnet, apiProvider } from '@/core/apis';
+import { apiCustomTestnet } from '@/core/apis';
 import { useFindChain } from '@/hooks/useFindChain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -104,10 +104,7 @@ export const TransactionItem = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chain?.id!,
         })
-      : await apiProvider.gasMarketV2({
-          chain: chain!,
-          tx: originTx.rawTx,
-        });
+      : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
     try {
@@ -206,10 +203,7 @@ export const TransactionItem = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chain?.id!,
         })
-      : await apiProvider.gasMarketV2({
-          chain: chain!,
-          tx: maxGasTx.rawTx,
-        });
+      : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
     try {
       await sendRequest(
