@@ -34,6 +34,7 @@ import pRetry from 'p-retry';
 import React from 'react';
 import { useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
+import { apiProvider } from '@/core/apis';
 // import { verifySdk } from './verify';
 
 const { isSameAddress } = addressUtils;
@@ -181,7 +182,9 @@ export const useQuoteMethods = () => {
       });
       const lastTimeGas: ChainGas | null =
         await preferenceService.getLastTimeGasSelection(chainInfo.id);
-      const gasMarket = await walletOpenapi.gasMarket(chainInfo.serverId);
+      const gasMarket = await apiProvider.gasMarketV2({
+        chainId: chainInfo.serverId,
+      });
 
       let gasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
@@ -331,7 +334,9 @@ export const useQuoteMethods = () => {
       try {
         let gasPrice: number;
         if (isOpenOcean) {
-          const gasMarket = await walletOpenapi.gasMarket(chainInfo.serverId);
+          const gasMarket = await apiProvider.gasMarketV2({
+            chainId: chainInfo.serverId,
+          });
           gasPrice = gasMarket?.[1]?.price;
         }
         stats.report('swapRequestQuote', {

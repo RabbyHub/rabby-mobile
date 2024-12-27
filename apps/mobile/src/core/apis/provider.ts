@@ -1,9 +1,9 @@
 import { ethers } from 'ethers';
-import { omit } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 import { Common, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import { bytesToHex } from '@ethereumjs/util';
-import { CHAINS_ENUM } from '@/constant/chains';
+import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
@@ -15,6 +15,7 @@ import { t } from 'i18next';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
+import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 
 function buildTxParams(txMeta) {
   return {
@@ -277,4 +278,59 @@ export const ethSendTransaction = async (
 
     throw e;
   }
+};
+
+type gasMarketV2ParamsV2 = {
+  chain: Chain;
+  tx: Tx;
+  customGas?: number;
+};
+type gasMarketV2ParamsV1 = {
+  chainId: string;
+  customGas?: number;
+};
+export const gasMarketV2 = async (
+  _params: gasMarketV2ParamsV1 | gasMarketV2ParamsV2,
+) => {
+  let chainId: string;
+  let tx: Tx | undefined;
+  const params = cloneDeep(_params);
+
+  if ('tx' in params) {
+    if (params.tx.nonce === undefined) {
+      params.tx.nonce = await getRecommendNonce({
+        from: params.tx.from,
+        chainId: params.chain.id,
+      });
+    }
+
+    if (params.tx.gasPrice === undefined || params.tx.gasPrice === '') {
+      params.tx.gasPrice = '0x0';
+    }
+    if (params.tx.gas === undefined || params.tx.gas === '') {
+      params.tx.gas = '0x0';
+    }
+    if (params.tx.data === undefined || params.tx.data === '') {
+      params.tx.data = '0x';
+    }
+    chainId = params.chain.serverId;
+    tx = {
+      chainId: params.tx.chainId,
+      data: params.tx.data,
+      from: params.tx.from,
+      gas: params.tx.gas,
+      nonce: params.tx.nonce,
+      to: params.tx.to,
+      value: params.tx.value,
+      gasPrice: params.tx.gasPrice,
+    };
+  } else {
+    chainId = params.chainId;
+  }
+
+  return openapi.gasMarketV2({
+    customGas: params.customGas,
+    chainId,
+    tx,
+  });
 };

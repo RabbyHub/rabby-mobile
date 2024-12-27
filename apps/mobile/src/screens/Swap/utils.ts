@@ -27,6 +27,7 @@ import {
 import { formatUsdValue } from '@/utils/number';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { findChainByEnum } from '@/utils/chain';
+import { apiProvider } from '@/core/apis';
 
 const { isSameAddress } = addressUtils;
 
@@ -212,7 +213,15 @@ export const getPreExecResult = async ({
     chainId: chainInfo.id,
   });
 
-  const gasMarket = await walletOpenapi.gasMarket(chainInfo.serverId);
+  const gasMarket = await apiProvider.gasMarketV2({
+    chain: chainInfo,
+    tx: {
+      ...quote.tx,
+      nonce,
+      chainId: CHAINS[chain].id,
+      gas: '0x0',
+    },
+  });
   const gasPrice = gasMarket?.[1]?.price;
 
   let nextNonce = nonce;
@@ -390,9 +399,9 @@ export const getDexQuote = async ({
     const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
 
     if (isOpenOcean) {
-      const gasMarket = await walletOpenapi.gasMarket(
-        findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
-      );
+      const gasMarket = await apiProvider.gasMarketV2({
+        chainId: findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
+      });
       gasPrice = gasMarket?.[1]?.price;
     }
     const data = await pRetry(
