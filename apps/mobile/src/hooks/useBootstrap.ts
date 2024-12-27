@@ -153,11 +153,11 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 }
 
 const splashScreenVisibleRef = { current: true };
-const hideSplashScreen = () => {
-  if (!splashScreenVisibleRef.current) return;
-
-  SplashScreen.hide();
-  splashScreenVisibleRef.current = false;
+const hideSplashScreen = (forceHide = false) => {
+  if (splashScreenVisibleRef.current || forceHide) {
+    SplashScreen.hide();
+    splashScreenVisibleRef.current = false;
+  }
 };
 
 // export function useHideSplash() {
@@ -179,7 +179,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
     if (appNavigationReady) {
-      hideSplashScreen();
+      hideSplashScreen(true);
     }
   }, [appNavigationReady]);
 
@@ -199,7 +199,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
         setBootstrap({ couldRender: true });
       })
       .finally(() => {
-        setTimeout(hideSplashScreen, 1000);
+        setTimeout(() => hideSplashScreen(false), 1000);
       });
   }, [getTriedUnlock, setBootstrap, fetchBiometrics, rabbitCode]);
 
