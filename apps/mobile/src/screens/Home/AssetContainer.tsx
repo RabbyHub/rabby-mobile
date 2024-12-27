@@ -104,10 +104,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (token.id === SMALL_TOKEN_ID) {
-        setFoldHideList(pre => !pre);
-        return;
-      }
       if (
         findChain({
           serverId: token.chain,
@@ -127,20 +123,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      if (data.id === DEFI_ID) {
-        setFoldDefi(pre => !pre);
-        return;
-      }
       navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
     },
     [],
   );
 
   const handlePressNft = (item: NFTItem) => {
-    if (item.id === NFT_ID) {
-      setFoldNft(pre => !pre);
-      return;
-    }
     navigate(RootNames.NftDetail, { token: item });
   };
 
