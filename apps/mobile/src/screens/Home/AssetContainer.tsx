@@ -22,9 +22,10 @@ import { DEFI_ID, NFT_ID, SMALL_TOKEN_ID } from '@/utils/token';
 import { findChain } from '@/utils/chain';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 import {
   TokenRow,
@@ -36,6 +37,11 @@ import {
 } from './components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HomeTopArea } from './components/HomeTopArea';
+import { useTranslation } from 'react-i18next';
+import { useRefreshTags } from './hooks/token';
+import { preferenceService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
+
 interface Props {
   onRefresh(): void;
 }
@@ -66,18 +72,22 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     focusingToken,
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
+  const { t } = useTranslation();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const sections = useMemo(
-    () => [
+  const sections = useMemo(() => {
+    const unFoldList = sortTokens.filter(i => !i._isFold);
+    const foldList = sortTokens.filter(i => i._isFold);
+    return [
       {
         type: 'unfold_token',
-        originData: sortTokens.filter(i => !i._isFold),
-        data: sortTokens.filter(i => !i._isFold),
+        originData: unFoldList,
+        data: unFoldList,
       },
       {
         type: 'fold_token',
-        originData: sortTokens.filter(i => i._isFold),
-        data: foldHideList ? [] : sortTokens.filter(i => i._isFold),
+        originData: foldList,
+        data: foldHideList ? [] : foldList,
       },
       {
         type: 'defi',
@@ -89,16 +99,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         originData: nftList,
         data: foldNft ? [] : nftList || [],
       },
-    ],
-    [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens],
-  );
+    ];
+  }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (token.id === SMALL_TOKEN_ID) {
-        setFoldHideList(pre => !pre);
-        return;
-      }
       if (
         findChain({
           serverId: token.chain,
@@ -118,20 +123,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      if (data.id === DEFI_ID) {
-        setFoldDefi(pre => !pre);
-        return;
-      }
       navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
     },
     [],
   );
 
   const handlePressNft = (item: NFTItem) => {
-    if (item.id === NFT_ID) {
-      setFoldNft(pre => !pre);
-      return;
-    }
     navigate(RootNames.NftDetail, { token: item });
   };
 
@@ -155,6 +152,94 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     styles.emptyImg,
     styles.emptyText,
   ]);
+  const icons = React.useMemo(
+    () => ({
+      unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
+      unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
+      foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
+      foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+      pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png'),
+      pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+      unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
+      unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+    }),
+    [],
+  );
+
+  const getTokenMenuActions = (data: AbstractPortfolioToken): MenuAction[] => {
+    return [
+      {
+        title: data._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: data._isFold
+          ? isDarkTheme
+            ? icons.unfoldDark
+            : icons.unfoldLight
+          : isDarkTheme
+          ? icons.foldDark
+          : icons.foldLight,
+        androidIconName: data._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (!currentAccount?.address) {
+            return;
+          }
+          if (data._isFold) {
+            preferenceService.manualUnFoldToken(currentAccount.address, {
+              tokenId: data._tokenId,
+              chainId: data.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+          } else {
+            preferenceService.manualFoldToken(currentAccount.address, {
+              tokenId: data._tokenId,
+              chainId: data.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+          }
+          refreshTags(currentAccount?.address);
+        },
+      },
+      {
+        title: data._isPined
+          ? t('page.tokenDetail.action.unpin')
+          : t('page.tokenDetail.action.pin'),
+        icon: data._isPined
+          ? isDarkTheme
+            ? icons.unpinDark
+            : icons.unpinLight
+          : isDarkTheme
+          ? icons.pinDark
+          : icons.pinLight,
+        androidIconName: data._isPined
+          ? 'ic_rabby_menu_un_pin'
+          : 'ic_rabby_menu_pin',
+        key: 'pin',
+        action() {
+          if (!currentAccount?.address) {
+            return;
+          }
+          if (data._isPined) {
+            preferenceService.removePinedToken(currentAccount?.address, {
+              tokenId: data._tokenId,
+              chainId: data.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
+          } else {
+            preferenceService.pinToken(currentAccount?.address, {
+              tokenId: data._tokenId,
+              chainId: data.chain,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.pin_success'));
+          }
+          refreshTags(currentAccount?.address);
+        },
+      },
+    ];
+  };
 
   const renderItem = ({ item, section }) => {
     switch (section.type) {
@@ -163,7 +248,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            address={currentAccount?.address}
+            menuActions={getTokenMenuActions(item)}
             logoSize={40}
           />
         );
@@ -172,7 +257,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            address={currentAccount?.address}
+            menuActions={getTokenMenuActions(item)}
             logoSize={40}
           />
         );
@@ -191,6 +276,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return null;
     }
   };
+  const { refreshTags } = useRefreshTags();
 
   const renderSectionHeader = ({ section }) => {
     switch (section.type) {
@@ -200,15 +286,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
             fold={foldHideList}
             onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'unfold_token':
-        // TODO: tmp unnormal solve
-        return (
-          <View
-            style={{
-              height: 0,
-            }}
           />
         );
       case 'defi':
@@ -241,6 +318,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     [],
   );
   const header = useCallback(() => <HomeTopArea />, []);
+
   if (!currentAccount?.address) {
     return null;
   }

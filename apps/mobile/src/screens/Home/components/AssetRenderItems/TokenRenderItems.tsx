@@ -12,15 +12,13 @@ import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
   MenuAction,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { preferenceService } from '@/core/services';
-import { useRefreshTags } from '../../hooks/token';
 import { trigger } from 'react-native-haptic-feedback';
 import {
   createGlobalBottomSheetModal2024,
@@ -28,8 +26,8 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { PinBadge } from '@/screens/Address/components/PinBadge';
-import { toast } from '@/components2024/Toast';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -52,7 +50,7 @@ export const TokenRow = memo(
     style,
     logoSize,
     logoStyle,
-    address,
+    menuActions,
     onTokenPress,
   }: {
     data: AbstractPortfolioToken;
@@ -60,11 +58,12 @@ export const TokenRow = memo(
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
-    address?: string;
+    menuActions: MenuAction[];
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
+    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
     const percentColor = useMemo(() => {
       if (
         !data?.price_24h_change ||
@@ -86,8 +85,6 @@ export const TokenRow = memo(
     const onPressToken = useCallback(() => {
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
-    const isDarkTheme = useGetBinaryMode() === 'dark';
-    const { refreshTags } = useRefreshTags();
 
     const handleShowExcludeTips = () => {
       const modalId = createGlobalBottomSheetModal2024({
@@ -114,94 +111,10 @@ export const TokenRow = memo(
       });
     };
 
-    const menuActions = React.useMemo(() => {
-      return [
-        {
-          title: data._isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: data._isFold
-            ? isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
-            : isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-          androidIconName: data._isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (!address) {
-              return;
-            }
-            if (data._isFold) {
-              preferenceService.manualUnFoldToken(address, {
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-            } else {
-              preferenceService.manualFoldToken(address, {
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-            }
-            refreshTags(address);
-          },
-        },
-        {
-          title: data._isPined
-            ? t('page.tokenDetail.action.unpin')
-            : t('page.tokenDetail.action.pin'),
-          icon: data._isPined
-            ? isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
-            : isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-          androidIconName: data._isPined
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
-          key: 'pin',
-          action() {
-            if (!address) {
-              return;
-            }
-            if (data._isPined) {
-              preferenceService.removePinedToken(address, {
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
-            } else {
-              preferenceService.pinToken(address, {
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.pin_success'));
-            }
-            refreshTags(address);
-          },
-        },
-      ] as MenuAction[];
-    }, [
-      data._isFold,
-      data._isPined,
-      data._tokenId,
-      data.chain,
-      t,
-      isDarkTheme,
-      address,
-      refreshTags,
-    ]);
-
     return (
       <ContextMenuView
         menuConfig={{
-          menuActions: menuActions,
+          menuActions: showContextMenu ? menuActions : [],
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>
@@ -209,6 +122,7 @@ export const TokenRow = memo(
           style={StyleSheet.flatten([styles.tokenRowWrap, style])}
           delayLongPress={200}
           onLongPress={() => {
+            setShowContextMenu(true);
             trigger('impactLight', {
               enableVibrateFallback: true,
               ignoreAndroidSystemSettings: false,
@@ -216,13 +130,15 @@ export const TokenRow = memo(
           }}
           onPress={onPressToken}>
           <View style={styles.tokenRowTokenWrap}>
-            <AssetAvatar
-              logo={data?.logo_url}
-              chain={data?.chain}
-              style={mediaStyle}
-              size={logoSize}
-              chainSize={16}
-            />
+            <View>
+              <AssetAvatar
+                logo={data?.logo_url}
+                chain={data?.chain}
+                style={mediaStyle}
+                size={logoSize}
+                chainSize={16}
+              />
+            </View>
             <View style={styles.tokenRowTokenInner}>
               <View style={styles.tokenHeader}>
                 <Text
@@ -346,13 +262,15 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenWrap: {
     flexShrink: 1,
     flexDirection: 'row',
+    alignItems: 'center',
+    height: '100%',
     maxWidth: '70%',
   },
   tokenHeader: {
     width: '100%',
     display: 'flex',
     flexDirection: 'row',
-    flex: 1,
+    alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 4,
   },
@@ -375,6 +293,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
+    gap: 0,
   },
   tokenRowTokenInnerSmallToken: {
     flexDirection: 'row',

@@ -23,13 +23,11 @@ import { useContactAccounts } from '@/hooks/contact';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import BottomArea from './components/BottomArea';
 import { findChain } from '@/utils/chain';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 export default function SendNFT() {
   const { styles } = useThemeStyles(getStyles);
 
-  useLastUsedAccountInScreen();
   const navigation = useRabbyAppNavigation();
   const navParams = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SendNFT)?.params,
