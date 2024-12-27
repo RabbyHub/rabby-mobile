@@ -965,11 +965,10 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     chain: Chain,
     custom?: number,
   ): Promise<GasLevel[]> => {
-    const list = await apiProvider.gasMarketV2({
-      chain,
-      customGas: custom && custom > 0 ? custom : undefined,
-      tx,
-    });
+    const list = await openapi.gasMarket(
+      chain.serverId,
+      custom && custom > 0 ? custom : undefined,
+    );
     setGasList(list);
     return list;
   };
@@ -1487,7 +1486,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           <FooterBar
             Header={
               <GasSelectorHeader
-                tx={tx}
                 gasAccountCost={gasAccountCost}
                 gasMethod={gasMethod}
                 onChangeGasMethod={setGasMethod}

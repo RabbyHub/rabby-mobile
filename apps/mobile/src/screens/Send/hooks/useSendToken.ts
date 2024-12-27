@@ -14,7 +14,7 @@ import { EventEmitter } from 'events';
 import { customTestnetService, preferenceService } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi, testOpenapi } from '@/core/request';
 import { TFunction } from 'i18next';
@@ -298,13 +298,10 @@ function findInstanceLevel(gasList: GasLevel[]) {
     prev.price >= current.price ? prev : current,
   );
 }
-const fetchGasList = async (chainItem: Chain | null, params: Tx) => {
+const fetchGasList = async (chainItem: Chain | null) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
-    : await apiProvider.gasMarketV2({
-        chain: chainItem!,
-        tx: params,
-      });
+    : await openapi.gasMarket(chainItem?.serverId || '');
 
   return list;
 };
@@ -385,6 +382,37 @@ export function useSendTokenForm() {
     ...DF_SEND_TOKEN_FORM,
   });
 
+  useEffect(() => {
+    setFormValues(prev => {
+      return {
+        ...DF_SEND_TOKEN_FORM,
+        to: prev.to,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAccount?.type, currentAccount?.address]);
+
+  const { validationSchema } = useMemo(() => {
+    return {
+      validationSchema: makeSendTokenValidationSchema({ t }),
+    };
+  }, [t]);
+
+  const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
+    async () => fetchGasList(chainItem),
+    [chainItem, putScreenState],
+  );
+
+  if (__DEV__ && loadGasListError) {
+    console.error(loadGasListError);
+  }
+
+  useEffect(() => {
+    loadGasList().then(list => {
+      putScreenState({ gasList: list });
+    });
+  }, [loadGasList, putScreenState]);
+
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
@@ -396,15 +424,18 @@ export function useSendTokenForm() {
       };
     }, [isNativeToken, addressType]);
 
-  const getParams = useCallback(
-    ({
+  const handleSubmit = useCallback(
+    async ({
       to,
       amount,
       messageDataForSendToEoa,
       messageDataForContractCall,
     }: FormSendToken) => {
+      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
+
+      putScreenState({ isSubmitLoading: true });
       const chain = findChainByServerID(currentToken.chain)!;
-      const sendValue = new BigNumber(amount || 0)
+      const sendValue = new BigNumber(amount)
         .multipliedBy(10 ** currentToken.decimals)
         .decimalPlaces(0, BigNumber.ROUND_DOWN);
       const dataInput = [
@@ -422,10 +453,7 @@ export function useSendTokenForm() {
             },
           ] as any[],
         } as const,
-        [
-          to || '0x0000000000000000000000000000000000000000',
-          sendValue.toFixed(0),
-        ] as any[],
+        [to, sendValue.toFixed(0)] as any[],
       ] as const;
       const params: Record<string, any> = {
         chainId: chain.id,
@@ -453,73 +481,6 @@ export function useSendTokenForm() {
         }
 
         params.value = `0x${sendValue.toString(16)}`;
-      }
-
-      return params;
-    },
-    [
-      currentAccount,
-      currentToken.chain,
-      currentToken.decimals,
-      currentToken.id,
-      isNativeToken,
-      isShowMessageDataForContract,
-      isShowMessageDataForToken,
-      screenState,
-    ],
-  );
-
-  useEffect(() => {
-    setFormValues(prev => {
-      return {
-        ...DF_SEND_TOKEN_FORM,
-        to: prev.to,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAccount?.type, currentAccount?.address]);
-
-  const { validationSchema } = useMemo(() => {
-    return {
-      validationSchema: makeSendTokenValidationSchema({ t }),
-    };
-  }, [t]);
-
-  const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
-    async () => fetchGasList(chainItem, getParams(formValues) as Tx),
-    [chainItem, formValues, putScreenState],
-  );
-
-  if (__DEV__ && loadGasListError) {
-    console.error(loadGasListError);
-  }
-
-  useEffect(() => {
-    loadGasList().then(list => {
-      putScreenState({ gasList: list });
-    });
-  }, [loadGasList, putScreenState]);
-
-  const handleSubmit = useCallback(
-    async ({
-      to,
-      amount,
-      messageDataForSendToEoa,
-      messageDataForContractCall,
-    }: FormSendToken) => {
-      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
-      putScreenState({ isSubmitLoading: true });
-      const chain = findChain({
-        serverId: currentToken.chain,
-      })!;
-
-      const params = getParams({
-        to,
-        amount,
-        messageDataForSendToEoa,
-        messageDataForContractCall,
-      });
-      if (isNativeToken) {
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
           !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
@@ -608,11 +569,12 @@ export function useSendTokenForm() {
     [
       currentAccount,
       currentToken,
-      getParams,
       isNativeToken,
+      isShowMessageDataForContract,
       isShowMessageDataForToken,
       putScreenState,
       screenState.estimatedGas,
+      screenState.safeInfo?.nonce,
       screenState.selectedGasLevel?.price,
       screenState.showGasReserved,
     ],
