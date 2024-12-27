@@ -318,12 +318,15 @@ export const useTokenPair = (userAddress: string) => {
         const slider = v
           ? Number(
               new BigNumber(v || 0)
-                .div(tokenAmountBn(payToken))
+                .div(payToken?.amount ? tokenAmountBn(payToken) : 1)
                 .times(100)
                 .toFixed(0),
             )
           : 0;
         setSlider(slider < 0 ? 0 : slider > 100 ? 100 : slider);
+        if (!payToken?.amount) {
+          setSlider(0);
+        }
       }
       setUseGasPrice(false);
       setSwapUseSlider(false);
