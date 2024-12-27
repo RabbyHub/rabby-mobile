@@ -20,6 +20,7 @@ import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEX } from '@/constant/swap';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 const swapFee = [
   {
@@ -104,81 +105,85 @@ export const RabbyFeePopup = ({
       onDismiss={onClose}
       handleStyle={styles.sheetBg}
       backgroundStyle={styles.sheetBg}>
-      <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
-        <View style={styles.iconContainer}>
-          <RCIconRabbyWhite width={70} height={70} />
-        </View>
+      <BottomSheetScrollView>
+        <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
+          <View style={styles.iconContainer}>
+            <RCIconRabbyWhite width={70} height={70} />
+          </View>
 
-        <Text style={styles.title}>{t('page.swap.rabbyFee.title')}</Text>
+          <Text style={styles.title}>{t('page.swap.rabbyFee.title')}</Text>
 
-        <Text style={styles.description}>
-          {type === 'swap' ? (
-            t('page.swap.rabbyFee.swapDesc')
-          ) : (
-            // <Trans
-            //   t={t}
-            //   i18nKey="page.swap.rabbyFee.bridgeDesc"
-            //   // values={{ name: 'John' }}
-            //   components={{
-            //     0: <Text style={styles.highlightText} />,
-            //   }}
-            // />
-            <>
-              {
-                'Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a '
-              }
-              <Text style={styles.highlightText}>0.25% fee</Text>
-              {', which is automatically included in the quote.'}
-            </>
-          )}
-        </Text>
-
-        <View style={styles.header}>
-          <Text style={styles.headerText}>
-            {t('page.swap.rabbyFee.wallet')}
+          <Text style={styles.description}>
+            {type === 'swap' ? (
+              t('page.swap.rabbyFee.swapDesc')
+            ) : (
+              // <Trans
+              //   t={t}
+              //   i18nKey="page.swap.rabbyFee.bridgeDesc"
+              //   // values={{ name: 'John' }}
+              //   components={{
+              //     0: <Text style={styles.highlightText} />,
+              //   }}
+              // />
+              <>
+                {
+                  'Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a '
+                }
+                <Text style={styles.highlightText}>0.25% fee</Text>
+                {', which is automatically included in the quote.'}
+              </>
+            )}
           </Text>
-          <Text style={styles.headerText}>{t('page.swap.rabbyFee.rate')}</Text>
-        </View>
 
-        <View style={styles.listContainer}>
-          {fee[type].map((item, idx, list) => (
-            <View
-              key={item.name}
-              style={[
-                styles.listItem,
-                idx === list.length - 1 ? styles.noBorder : {},
-              ]}>
-              <View style={styles.itemLeft}>
-                <Image source={item.logo} style={styles.logo} />
+          <View style={styles.header}>
+            <Text style={styles.headerText}>
+              {t('page.swap.rabbyFee.wallet')}
+            </Text>
+            <Text style={styles.headerText}>
+              {t('page.swap.rabbyFee.rate')}
+            </Text>
+          </View>
+
+          <View style={styles.listContainer}>
+            {fee[type].map((item, idx, list) => (
+              <View
+                key={item.name}
+                style={[
+                  styles.listItem,
+                  idx === list.length - 1 ? styles.noBorder : {},
+                ]}>
+                <View style={styles.itemLeft}>
+                  <Image source={item.logo} style={styles.logo} />
+                  <Text
+                    style={[
+                      styles.itemText,
+                      item.name === 'Rabby Wallet' ? styles.highItem : {},
+                    ]}>
+                    {item.name}
+                  </Text>
+                </View>
                 <Text
                   style={[
                     styles.itemText,
                     item.name === 'Rabby Wallet' ? styles.highItem : {},
                   ]}>
-                  {item.name}
+                  {item.rate}
                 </Text>
               </View>
-              <Text
-                style={[
-                  styles.itemText,
-                  item.name === 'Rabby Wallet' ? styles.highItem : {},
-                ]}>
-                {item.rate}
-              </Text>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
 
-        <SwapAggregatorFee dexName={dexName} feeDexDesc={dexFeeDesc} />
+          <SwapAggregatorFee dexName={dexName} feeDexDesc={dexFeeDesc} />
 
-        <View style={styles.buttonContainer}>
-          <Button
-            type="primary"
-            onPress={onClose}
-            title={t('page.swap.rabbyFee.button')}
-          />
+          <View style={styles.buttonContainer}>
+            <Button
+              type="primary"
+              onPress={onClose}
+              title={t('page.swap.rabbyFee.button')}
+            />
+          </View>
         </View>
-      </View>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 };
@@ -341,6 +346,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flex: 1,
     justifyContent: 'flex-end',
     width: '100%',
-    marginBottom: 20,
+    marginVertical: 20,
   },
 }));

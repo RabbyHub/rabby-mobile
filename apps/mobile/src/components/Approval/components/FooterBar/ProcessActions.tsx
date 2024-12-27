@@ -39,16 +39,17 @@ const getStyles = (colors: AppColorsVariants) =>
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
-    width: 240,
-    height: 48,
+    width: 220,
+    height: 56,
     borderColor: colors2024['brand-default'],
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 100,
   },
   buttonText: {
-    color: colors2024['blue-default'],
-    fontSize: 15,
-    fontWeight: '500',
+    color: colors2024['neutral-InvertHighlight'],
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
   },
   disabled: {
     opacity: 0.5,
@@ -87,6 +88,7 @@ export const ProcessActions: React.FC<Props> = ({
     () => (isMiniSignTx ? styles2024 : oldStyles),
     [isMiniSignTx, styles2024, oldStyles],
   );
+
   const buttonIsPrimary = isPrimary || gasLess;
   const buttonText = submitText ?? t('page.signFooterBar.beginSigning');
   const buttonTextStyle = StyleSheet.flatten([

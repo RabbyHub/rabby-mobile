@@ -35,6 +35,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface QuotesProps
   extends Omit<
@@ -371,12 +372,11 @@ export const QuoteList = (props: QuotesProps) => {
             </Animated.View>
             <Text style={styles.refreshContent}>{t('global.refresh')}</Text>
           </TouchableOpacity>
-          {/* <SwapRefreshBtn onPress={refreshQuote} /> */}
         </View>
 
         <BottomSheetScrollView style={styles.flex1}>
           <Quotes {...props} />
-          <View style={{ height: 120 }} />
+          <View style={{ height: IS_ANDROID ? 140 : 120 }} />
         </BottomSheetScrollView>
 
         <LinearGradient
@@ -405,7 +405,7 @@ export const QuoteList = (props: QuotesProps) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bottomBg: {
     backgroundColor: colors2024['neutral-bg-1'],
   },

@@ -158,7 +158,7 @@ export const DexQuoteItem = (
               {
                 backgroundColor: !isBestQuote
                   ? colors2024['red-light-1']
-                  : colors2024['green-light-2'],
+                  : colors2024['green-light-4'],
               },
             ]}>
             <Text
@@ -555,7 +555,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 6,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    marginTop: -1,
   },
   percentText: {
     fontSize: 12,
@@ -630,15 +629,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bestQuotePercentContainer: {
     position: 'absolute',
-    top: 0,
+    top: -1,
     left: 0,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderTopLeftRadius: 4,
     borderBottomRightRadius: 4,
-    backgroundColor: colors2024['red-light'],
   },
-  bestQuotePercentContainerIsBest: {
-    backgroundColor: colors2024['green-light'],
-  },
+  bestQuotePercentContainerIsBest: {},
 }));

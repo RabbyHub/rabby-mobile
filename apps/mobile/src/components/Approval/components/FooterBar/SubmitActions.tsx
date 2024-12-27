@@ -60,7 +60,7 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 100,
   },
   buttonConfirm: {
-    width: 240,
+    width: 220,
     borderColor: colors2024['brand-default'],
     backgroundColor: colors2024['brand-default'],
   },

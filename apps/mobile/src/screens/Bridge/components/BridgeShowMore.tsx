@@ -1,10 +1,4 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -20,7 +14,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
 import RcIconPolygon from '@/assets2024/icons/bridge/IconPolygon.svg';
 import { tokenPriceImpact } from '../hooks/token';
-import { AppSwitch, AssetAvatar, Tip } from '@/components';
+import { AppSwitch, AssetAvatar } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
@@ -483,19 +477,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-body'],
   },
   bestView: {
-    backgroundColor: colors2024['green-light-2'],
+    backgroundColor: colors2024['green-light-4'],
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 6,
     marginRight: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bestText: {
     color: colors2024['green-default'],
     fontWeight: '700',
     fontSize: 12,
-    lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
-    zIndex: 1,
   },
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],

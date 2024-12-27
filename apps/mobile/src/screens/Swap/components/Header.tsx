@@ -11,7 +11,7 @@ import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 
 export const SwapHeader = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const loadingNumber = usePollSwapPendingNumber(5000);
 
@@ -27,7 +27,10 @@ export const SwapHeader = () => {
         {loadingNumber ? (
           <PendingTx number={loadingNumber} onClick={openSwapHistory} />
         ) : (
-          <RcIconSwapHistory style={styles.icon} />
+          <RcIconSwapHistory
+            style={styles.icon}
+            color={colors2024['neutral-body']}
+          />
         )}
       </TouchableOpacity>
       <SwapTxHistory />

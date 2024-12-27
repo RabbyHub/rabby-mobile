@@ -147,6 +147,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
   const sliderStyle = useAnimatedStyle(
     () => ({
+      opacity: showBubble.value ? 1 : 0,
       display: showBubble.value ? 'flex' : 'none',
       position: 'absolute',
       top: IS_ANDROID ? -72 : -60,
