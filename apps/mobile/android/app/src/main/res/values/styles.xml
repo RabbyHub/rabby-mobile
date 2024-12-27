@@ -9,10 +9,14 @@
         <!-- <item name="android:fontFamily">@font/sf_pro</item> -->
     </style>
     <style name="SplashScreenTheme" parent="SplashScreen_SplashTheme">
-        <item name="colorPrimaryDark">@color/status_bar_color</item>
+        <!-- <item name="android:statusBarColor">@color/primary</item> -->
+        <!-- Add the following line to set the default status bar text color for all the app  to be a light color (false) or a dark color (true) -->
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- <item name="android:windowBackground">@drawable/background_splash</item> -->
+        <!-- Prevents white screen from appearing when opening the app -->
+        <item name="android:windowDisablePreview">true</item>
     </style>
     <!-- <style name="SplashScreenThemeNotUsedNow" parent="Theme.AppCompat.Light.NoActionBar">
-      <item name="colorPrimaryDark">@color/status_bar_color</item>
       <item name="android:windowBackground">@drawable/background_splash</item>
       <item name="android:statusBarColor">@color/primary</item>
       <item name="android:navigationBarColor">@color/primary</item>

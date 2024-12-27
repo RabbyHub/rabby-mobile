@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/launchscreen_bg"
     android:orientation="vertical">
 
-    <!-- https://developer.android.com/reference/android/view/ViewGroup.MarginLayoutParams#attr_android%3alayout_marginBottom -->
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginTop="246sp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_launch_screen"
-        android:translationX="-1sp"
-        android:translationY="-40sp"
-        tools:ignore="ImageContrastCheck" />
+  <pl.droidsonroids.gif.GifImageView
+    android:id="@+id/gifImageView"
+    android:layout_width="389px"
+    android:layout_height="517px"
+    android:layout_centerInParent="true"
+    android:layout_marginTop="246sp"
+    android:scaleType="centerCrop"
+    android:src="@drawable/animated_logo"
+    android:translationX="-1sp"
+    android:translationY="-40sp"
+    app:loopCount="100"
+    tools:ignore="ImageContrastCheck" />
 
 </RelativeLayout>
