@@ -356,7 +356,7 @@
       "importedByLedger": "Imported by Ledger",
       "signAndSubmitButton": "Sign",
       "confirm": "Confirm",
-      "confirmWithPassword": "Confirm with Password",
+      "confirmWithPassword": "Confirm",
       "gasless": {
         "unavailable": "Gas Balance is not enough",
         "notEnough": "Gas balance is not enough",
@@ -394,8 +394,8 @@
         "requestFailedToSend": "Signing request failed to send"
       },
       "beginSigning": "Begin signing process",
-      "ledgerSign": "Sign with Ledger",
-      "oneKeySign": "Sign with OneKey",
+      "ledgerSign": "Sign",
+      "oneKeySign": "Sign",
       "privateKeySign": "Sign and Create",
       "addressTip": {
         "onekey": "OneKey address",
@@ -2323,7 +2323,7 @@
       "transactionSpeed": "Transaction Speed"
     },
     "miniSignFooterBar": {
-      "signWithLedger": "Sign with Ledger",
+      "signWithLedger": "Sign",
       "status": {
         "txCreated": "Transaction created",
         "txSigned": "Signed. Creating transaction",

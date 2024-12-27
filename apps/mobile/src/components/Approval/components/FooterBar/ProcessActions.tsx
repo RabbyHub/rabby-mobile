@@ -12,7 +12,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     button: {
-      width: 240,
       height: 48,
       borderColor: colors['blue-default'],
       borderWidth: 1,
@@ -39,7 +38,6 @@ const getStyles = (colors: AppColorsVariants) =>
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
-    width: 220,
     height: 56,
     borderColor: colors2024['brand-default'],
     borderWidth: 1,
@@ -109,7 +107,7 @@ export const ProcessActions: React.FC<Props> = ({
 
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
-      <View>
+      <View style={{ flex: 1 }}>
         <Tip
           // @ts-expect-error
           content={tooltipContent}>

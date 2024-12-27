@@ -25,7 +25,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 8,
     },
     buttonConfirm: {
-      width: 240,
+      width: 230,
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-default'],
       // borderColor: colord(colors['blue-default'])
