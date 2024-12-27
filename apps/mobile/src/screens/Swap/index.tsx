@@ -198,12 +198,12 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   });
 
   const btnText = useMemo(() => {
-    if (activeProvider?.shouldApproveToken) {
-      return t('page.swap.approve-swap');
-    }
-
     if (quoteLoading) {
       return t('page.swap.title');
+    }
+
+    if (activeProvider?.shouldApproveToken) {
+      return t('page.swap.approve-swap');
     }
 
     return t('page.swap.title');
