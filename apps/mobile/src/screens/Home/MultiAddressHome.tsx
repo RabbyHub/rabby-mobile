@@ -63,6 +63,7 @@ import {
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
+import { useAppState } from '@react-native-community/hooks';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -124,6 +125,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 
 const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
 const ITEM_GRID_GAP = 12;
+const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -132,6 +134,7 @@ function MultiAddressHome(): JSX.Element {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { switchAccount } = useCurrentAccount();
+  const appState = useAppState();
 
   const { width } = Dimensions.get('window');
   const itemWidth =
@@ -146,7 +149,7 @@ function MultiAddressHome(): JSX.Element {
     alertInfo,
     forceUpdate,
     triggerUpdate: triggerUpdateAlert,
-  } = useApprovalAlertCounts();
+  } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
 
   const MENU_ARR = [
     {
@@ -222,7 +225,7 @@ function MultiAddressHome(): JSX.Element {
     balanceLoading,
     accountsLength,
   } = useAccountsBalance({
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
@@ -276,9 +279,11 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      triggerUpdate();
-      triggerUpdateAlert();
-    }, [triggerUpdate, triggerUpdateAlert]),
+      if (appState === 'active') {
+        triggerUpdate();
+        triggerUpdateAlert();
+      }
+    }, [triggerUpdate, triggerUpdateAlert, appState]),
   );
 
   const onRefresh = useCallback(() => {
