@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import { SectionList, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { EmptyHolder } from '@/components/EmptyHolder';
@@ -17,11 +17,7 @@ import {
   AbstractPortfolioToken,
   AbstractProject,
 } from '@/screens/Home/types';
-import {
-  getAllDefiCount,
-  getAllNftCount,
-  getTotalFoldToken,
-} from '@/screens/Home/utils/converAssets';
+import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
 import { findChain } from '@/utils/chain';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -30,9 +26,7 @@ import { toast } from '@/components2024/Toast';
 import { preferenceService } from '@/core/services';
 import {
   DefiRow,
-  DefiSectionHeader,
   NftRow,
-  NftSectionHeader,
   TokenRow,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
@@ -60,8 +54,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
-  const [foldDefi, setFoldDefi] = useState(true);
-  const [foldNft, setFoldNft] = useState(true);
 
   const {
     sheetModalRef: tokenDetailModalRef,
@@ -90,15 +82,16 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       {
         type: 'defi',
         originData: portfolios,
-        data: foldDefi ? [] : portfolios || [],
+        data: portfolios,
       },
       {
         type: 'nft',
         originData: nftList,
-        data: foldNft ? [] : nftList || [],
+        data: [],
+        // data: nftList,
       },
     ];
-  }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
+  }, [foldHideList, nftList, portfolios, sortTokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -278,6 +271,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const renderSectionHeader = ({ section }) => {
     switch (section.type) {
+      case 'unfold_token':
+        return <Text style={styles.sectionHeader}>Token</Text>;
       case 'fold_token':
         return (
           <TokenRowSectionHeader
@@ -287,21 +282,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           />
         );
       case 'defi':
-        return (
-          <DefiSectionHeader
-            usdStr={getAllDefiCount(portfolios || [])}
-            fold={foldDefi}
-            onPress={() => setFoldDefi(pre => !pre)}
-          />
-        );
+        return <Text style={styles.sectionHeader}>Defi</Text>;
       case 'nft':
-        return (
-          <NftSectionHeader
-            amount={getAllNftCount(nftList || [])}
-            fold={foldNft}
-            onPress={() => setFoldNft(pre => !pre)}
-          />
-        );
+        return <Text style={styles.sectionHeader}>NFT</Text>;
       default:
         return <View style={{ height: 0 }} />;
     }
@@ -331,7 +314,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         windowSize={10}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={!foldDefi || !foldNft || !foldHideList}
+        stickySectionHeadersEnabled={!foldHideList}
         renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl
@@ -364,6 +347,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+    paddingHorizontal: 16,
   },
   emptyHolder: {
     marginTop: 65,
@@ -379,5 +363,14 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-info'],
+  },
+  sectionHeader: {
+    height: 50,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    lineHeight: 50,
   },
 }));

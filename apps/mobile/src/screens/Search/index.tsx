@@ -1,33 +1,22 @@
 import React, { useRef } from 'react';
 import { Keyboard, SafeAreaView, TouchableOpacity, View } from 'react-native';
-import HeaderArea from '../Home/HeaderArea';
-import { AssetContainer } from './components/AssetContainer';
 
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
-import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcNextLeftCC } from '@/assets/icons/common';
 import { NextSearchBar } from '@/components2024/SearchBar';
-import { IS_IOS } from '@/core/native/utils';
+
+import { AssetContainer } from './components/AssetContainer';
 
 function HomeScreen(): JSX.Element {
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
-  const { currentAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
   const inputRef = useRef<any>(null);
-
-  // React.useEffect(() => {
-  //   setNavigationOptions({
-  //     // headerTitle: () => <HomeScreen.HeaderArea />,
-  //   });
-  // }, [currentAccount?.address, navigation, setNavigationOptions]);
 
   return (
     <NormalScreenContainer2024
@@ -62,12 +51,8 @@ function HomeScreen(): JSX.Element {
   );
 }
 
-HomeScreen.HeaderArea = HeaderArea;
-
 const getStyles = createGetStyles2024(() => ({
-  rootScreenContainer: {
-    paddingHorizontal: 16,
-  },
+  rootScreenContainer: {},
   safeView: {
     flex: 1,
     paddingBottom: 56,
