@@ -479,14 +479,14 @@ const TokenSymbol = ({
   token: TokenItem;
   style?: TextStyle;
 }) => {
-  const { openTokenDetailPopup } = useTokenDetailSheetModalOnApprovals();
-  const handleClickTokenSymbol = useCallback(() => {
-    openTokenDetailPopup(token);
-  }, [openTokenDetailPopup, token]);
+  // const { openTokenDetailPopup } = useTokenDetailSheetModalOnApprovals();
+  // const handleClickTokenSymbol = useCallback(() => {
+  //   openTokenDetailPopup(token);
+  // }, [openTokenDetailPopup, token]);
 
   return (
     <Text
-      onPress={handleClickTokenSymbol}
+      // onPress={handleClickTokenSymbol}
       style={style}
       numberOfLines={1}
       ellipsizeMode="tail">
