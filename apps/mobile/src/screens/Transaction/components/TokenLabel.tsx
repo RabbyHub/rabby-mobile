@@ -10,7 +10,7 @@ import { Text } from 'react-native';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { useNFTDetailSheetModalOnHistory } from '@/screens/NftDetail/hooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { navigate } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
@@ -72,7 +72,7 @@ export default function TokenLabel({
           //   setTokenDetailAddress(address);
           // }
           // openTokenDetailPopup(token as TokenItem);
-          navigate(RootNames.TokenDetail, {
+          naviPush(RootNames.TokenDetail, {
             token: ensureAbstractPortfolioToken(token),
             account: address,
           });
