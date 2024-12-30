@@ -58,7 +58,7 @@ export const TokenRow = memo(
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
-    menuActions: MenuAction[];
+    menuActions?: MenuAction[];
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -114,7 +114,7 @@ export const TokenRow = memo(
     return (
       <ContextMenuView
         menuConfig={{
-          menuActions: showContextMenu ? menuActions : [],
+          menuActions: showContextMenu && menuActions ? menuActions : [],
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>

@@ -5,10 +5,9 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useCurrentAccount } from '@/hooks/account';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from '@/screens/Home/components/Skeleton';
 import { useQueryProjects } from '@/screens/Home/hooks';
 import useSortToken from '@/screens/Home/hooks/useSortTokens';
@@ -22,17 +21,13 @@ import { findChain } from '@/utils/chain';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import { toast } from '@/components2024/Toast';
-import { preferenceService } from '@/core/services';
 import {
   DefiRow,
   NftRow,
   TokenRow,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
-import { useRefreshTags } from '@/screens/Home/hooks/token';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   onRefresh(): void;
@@ -62,8 +57,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     focusingToken,
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
-  const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const sections = useMemo(() => {
     const unFoldList = sortTokens.filter(i => !i._isFold);
@@ -143,94 +136,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     styles.emptyImg,
     styles.emptyText,
   ]);
-  const icons = React.useMemo(
-    () => ({
-      unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-      unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-      foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-      foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-      pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png'),
-      pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-      unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
-      unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
-    }),
-    [],
-  );
-
-  const getTokenMenuActions = (data: AbstractPortfolioToken): MenuAction[] => {
-    return [
-      {
-        title: data._isFold
-          ? t('page.tokenDetail.action.unfold')
-          : t('page.tokenDetail.action.fold'),
-        icon: data._isFold
-          ? isDarkTheme
-            ? icons.unfoldDark
-            : icons.unfoldLight
-          : isDarkTheme
-          ? icons.foldDark
-          : icons.foldLight,
-        androidIconName: data._isFold
-          ? 'ic_rabby_menu_unfold'
-          : 'ic_rabby_menu_fold',
-        key: 'fold',
-        action() {
-          if (!currentAccount?.address) {
-            return;
-          }
-          if (data._isFold) {
-            preferenceService.manualUnFoldToken(currentAccount.address, {
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-          } else {
-            preferenceService.manualFoldToken(currentAccount.address, {
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-          }
-          refreshTags(currentAccount?.address);
-        },
-      },
-      {
-        title: data._isPined
-          ? t('page.tokenDetail.action.unpin')
-          : t('page.tokenDetail.action.pin'),
-        icon: data._isPined
-          ? isDarkTheme
-            ? icons.unpinDark
-            : icons.unpinLight
-          : isDarkTheme
-          ? icons.pinDark
-          : icons.pinLight,
-        androidIconName: data._isPined
-          ? 'ic_rabby_menu_un_pin'
-          : 'ic_rabby_menu_pin',
-        key: 'pin',
-        action() {
-          if (!currentAccount?.address) {
-            return;
-          }
-          if (data._isPined) {
-            preferenceService.removePinedToken(currentAccount?.address, {
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
-          } else {
-            preferenceService.pinToken(currentAccount?.address, {
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.pin_success'));
-          }
-          refreshTags(currentAccount?.address);
-        },
-      },
-    ];
-  };
 
   const renderItem = ({ item, section }) => {
     switch (section.type) {
@@ -239,7 +144,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            menuActions={getTokenMenuActions(item)}
             logoSize={40}
           />
         );
@@ -248,7 +152,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
-            menuActions={getTokenMenuActions(item)}
             logoSize={40}
           />
         );
@@ -267,7 +170,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return null;
     }
   };
-  const { refreshTags } = useRefreshTags();
 
   const renderSectionHeader = ({ section }) => {
     switch (section.type) {
