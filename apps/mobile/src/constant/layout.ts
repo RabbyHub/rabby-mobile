@@ -66,6 +66,7 @@ export const RootNames = {
   Dapps: 'Dapps',
   StackFavoriteDapps: 'StackFavoriteDapps',
   FavoriteDapps: 'FavoriteDapps',
+  Search: 'Search',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',

@@ -16,6 +16,7 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
@@ -54,16 +55,12 @@ import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
 import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-  usePinAddresses,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
+import { RcNextSearchCC } from '@/assets/icons/common';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -433,6 +430,12 @@ function MultiAddressHome(): JSX.Element {
     },
     [switchAccount, navigation],
   );
+  const handlePressSearch = () => {
+    navigation.navigate(RootNames.StackRoot, {
+      screen: RootNames.Search,
+      params: {},
+    });
+  };
 
   return (
     <NormalScreenContainer2024
@@ -587,6 +590,16 @@ function MultiAddressHome(): JSX.Element {
             })}
           </View>
         </ScrollView>
+        <Pressable onPress={handlePressSearch} style={styles.search}>
+          <RcNextSearchCC
+            width={20}
+            height={20}
+            color={colors2024['neutral-secondary']}
+          />
+          <Text style={styles.searchText}>
+            {t('page.dashboard.home.search')}
+          </Text>
+        </Pressable>
       </View>
     </NormalScreenContainer2024>
   );
@@ -768,6 +781,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     marginBottom: 20,
+    paddingBottom: 100,
   },
   gridItem: {
     borderWidth: 1,
@@ -804,6 +818,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+  },
+  search: {
+    position: 'absolute',
+    bottom: 43,
+    left: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    width: '100%',
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 60,
+    borderRadius: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    gap: 8,
+  },
+  searchText: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
 }));

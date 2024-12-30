@@ -2,44 +2,43 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-import { useCurrentAccount } from '@/hooks/account';
-import { navigate } from '@/utils/navigation';
-import { createGetStyles2024 } from '@/utils/styles';
+import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
-import { useQueryProjects } from './hooks';
-import useSortToken from './hooks/useSortTokens';
-import {
-  getTotalFoldToken,
-  getAllDefiCount,
-  getAllNftCount,
-} from './utils/converAssets';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
+import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
+import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
+import { useCurrentAccount } from '@/hooks/account';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { PositionLoader } from '@/screens/Home/components/Skeleton';
+import { useQueryProjects } from '@/screens/Home/hooks';
+import useSortToken from '@/screens/Home/hooks/useSortTokens';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
-} from './types';
-import { findChain } from '@/utils/chain';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { PositionLoader } from './components/Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
-
+} from '@/screens/Home/types';
 import {
-  TokenRow,
-  DefiRow,
-  NftRow,
-  TokenRowSectionHeader,
-  DefiSectionHeader,
-  NftSectionHeader,
-} from './components/AssetRenderItems';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { HomeTopArea } from './components/HomeTopArea';
-import { useTranslation } from 'react-i18next';
-import { useRefreshTags } from './hooks/token';
-import { preferenceService } from '@/core/services';
+  getAllDefiCount,
+  getAllNftCount,
+  getTotalFoldToken,
+} from '@/screens/Home/utils/converAssets';
+import { findChain } from '@/utils/chain';
+import { navigate } from '@/utils/navigation';
+import { createGetStyles2024 } from '@/utils/styles';
+
 import { toast } from '@/components2024/Toast';
+import { preferenceService } from '@/core/services';
+import {
+  DefiRow,
+  DefiSectionHeader,
+  NftRow,
+  NftSectionHeader,
+  TokenRow,
+  TokenRowSectionHeader,
+} from '@/screens/Home/components/AssetRenderItems';
+import { useRefreshTags } from '@/screens/Home/hooks/token';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onRefresh(): void;
@@ -316,7 +315,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }),
     [],
   );
-  const header = useCallback(() => <HomeTopArea />, []);
 
   if (!currentAccount?.address) {
     return null;
@@ -327,7 +325,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       <SectionList
         sections={sections.filter(i => !!i.originData?.length)}
         renderItem={renderItem}
-        ListHeaderComponent={header}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}

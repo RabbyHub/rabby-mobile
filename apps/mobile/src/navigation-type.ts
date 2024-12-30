@@ -44,6 +44,7 @@ export type HomeNavigatorParamsList = {
   /** @deprecated */
   [RootNames.Points]?: {};
   [RootNames.Dapps]?: {};
+  [RootNames.Search]?: {};
   [RootNames.Settings]?: {
     // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };

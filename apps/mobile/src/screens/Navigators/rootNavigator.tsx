@@ -1,53 +1,29 @@
+import React from 'react';
+import { Platform } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import 'react-native-gesture-handler';
-import { Platform, StyleProp, TextStyle } from 'react-native';
 
-import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
+import { useThemeColors } from '@/hooks/theme';
 
-import { Text } from '@/components';
-import {
-  DEFAULT_NAVBAR_FONT_SIZE,
-  RootNames,
-  ScreenLayouts,
-} from '@/constant/layout';
+import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 
 import { DappsScreen } from '@/screens/Dapps/DappsScreen';
 import SettingsScreen from '../Settings/Settings';
 
-import { HomeNavigatorParamsList } from '@/navigation-type';
-import React, { useMemo } from 'react';
-import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
-import { createGetStyles } from '@/utils/styles';
-import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
-import MultiAddressHome from '@/screens/Home/MultiAddressHome';
-import { useBottomTabScreenConfig } from '@/hooks/navigation';
+import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
+import { useBottomTabScreenConfig } from '@/hooks/navigation';
+import { HomeNavigatorParamsList } from '@/navigation-type';
+import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import SearchScreen from '../Search';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
 const isIOS = Platform.OS === 'ios';
-
-const getStyles = createGetStyles(colors => ({
-  settingsWrapper: {
-    position: 'relative',
-  },
-  actionIconReddot: {
-    width: 10,
-    height: 10,
-    position: 'absolute',
-
-    top: -1,
-    right: -1,
-    backgroundColor: colors['red-default'],
-    borderRadius: 8,
-  },
-  hideReddot: {
-    display: 'none',
-  },
-}));
 
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
@@ -94,6 +70,19 @@ export function HomeScreenNavigator() {
               fontWeight: '500',
             },
             headerTitle: 'Dapps',
+            headerTransparent: true,
+            headerShown: false,
+          }}
+        />
+        <HomeHiddenTabStack.Screen
+          name={RootNames.Search}
+          component={SearchScreen}
+          options={{
+            title: 'Search',
+            headerTitleStyle: {
+              fontWeight: '500',
+            },
+            headerTitle: 'Search',
             headerTransparent: true,
             headerShown: false,
           }}
