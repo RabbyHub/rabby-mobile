@@ -1,33 +1,21 @@
 import { useRef, useEffect } from 'react';
-import { Dayjs } from 'dayjs';
-
 import { AbstractPortfolioToken } from '../types';
 import { useSafeState } from '@/hooks/useSafeState';
 import { findChain } from '@/utils/chain';
-import {
-  PortfolioItem,
-  PortfolioItemToken,
-  TokenItem,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { preferenceService } from '@/core/services';
 import { atom, useAtom } from 'jotai';
-import { getMissedTokenPrice } from '../utils/portfolio';
-import { DisplayedToken, DisplayedProject } from '../utils/project';
+import { DisplayedProject } from '../utils/project';
 import {
   queryTokensCache,
   setWalletTokens,
   sortWalletTokens,
   tagTokenList,
   batchQueryTokens,
-  batchQueryHistoryTokens,
 } from '../utils/token';
 import { log } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
-import { apiCustomTestnet } from '@/core/apis';
-import { customTestnetTokenToTokenItem } from '@/utils/token';
-import { useRequest } from 'ahooks';
-import { useChainList } from '@/hooks/useChainList';
 
 export const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -45,8 +33,6 @@ const filterDisplayToken2024 = (tokens: AbstractPortfolioToken[]) => {
 
 export const mainnetTokensAtom = atom({
   list: [] as AbstractPortfolioToken[],
-  customize: [] as AbstractPortfolioToken[],
-  blocked: [] as AbstractPortfolioToken[],
 });
 export const testnetTokensAtom = atom({
   list: [] as AbstractPortfolioToken[],
@@ -54,7 +40,6 @@ export const testnetTokensAtom = atom({
 
 export const useTokens = (
   userAddr: string | undefined,
-  timeAt?: Dayjs,
   visible = true,
   updateNonce = 0,
   chainServerId?: string,
@@ -63,13 +48,9 @@ export const useTokens = (
   const abortProcess = useRef<AbortController>();
   const [data, setData] = useSafeState(walletProject);
   const [isLoading, setLoading] = useSafeState(true);
-  const historyTime = useRef<number>();
-  const historyLoad = useRef<boolean>(false);
   const [mainnetTokens, setMainnetTokens] = useAtom(mainnetTokensAtom);
-  const [testnetTokens, setTestnetTokens] = useAtom(testnetTokensAtom);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
-  const { testnetList } = useChainList();
 
   useEffect(() => {
     if (updateNonce === 0) {
@@ -112,47 +93,10 @@ export const useTokens = (
   }, [userAddr, visible, chainServerId]);
 
   useEffect(() => {
-    if (timeAt) {
-      historyTime.current = timeAt.unix();
-
-      if (!isLoading) {
-        loadHistory();
-      }
-    } else {
-      historyTime.current = 0;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeAt, isLoading]);
-
-  const { runAsync: loadCustomTestnetTokens } = useRequest(
-    async () => {
-      if (!userAddr) {
-        return;
-      }
-      return apiCustomTestnet
-        .getCustomTestnetTokenList({
-          address: userAddr,
-        })
-        .then(res => {
-          return res.map(item => {
-            const tokenItem = customTestnetTokenToTokenItem(item);
-            return new DisplayedToken(tokenItem) as AbstractPortfolioToken;
-          });
-        })
-        .catch(e => {
-          console.error(e);
-        });
-    },
-    {
-      onSuccess: tokens => {
-        if (tokens) {
-          setTestnetTokens({
-            list: tokens,
-          });
-        }
-      },
-    },
-  );
+    return () => {
+      abortProcess.current?.abort();
+    };
+  }, []);
 
   const loadProcess = async () => {
     if (!userAddr) {
@@ -162,7 +106,6 @@ export const useTokens = (
     // await dispatch.account.resetTokenList();
     const currentAbort = new AbortController();
     abortProcess.current = currentAbort;
-    historyLoad.current = false;
 
     setLoading(true);
     log('======Start-Tokens======', userAddr);
@@ -243,153 +186,15 @@ export const useTokens = (
       };
     });
 
-    await loadCustomTestnetTokens();
-
     setLoading(false);
-
-    loadHistory(_data, currentAbort);
-
     log('<<==Tokens-end==>>', userAddr);
   };
 
-  const loadHistory = async (
-    pre?: DisplayedProject,
-    currentAbort = new AbortController(),
-  ) => {
-    if (!historyTime.current || !userAddr || historyLoad.current) {
-      log('middle-tokens-end');
-      return;
-    }
-
-    abortProcess.current = currentAbort;
-    historyLoad.current = true;
-
-    let _data = pre || data!;
-
-    log('===token===batchhistory====', userAddr);
-    // setTokenChangeLoading(true);
-
-    if (currentAbort.signal.aborted || !_data?.netWorth) {
-      setLoading(false);
-      return;
-    }
-
-    const historyTokenRes = await batchQueryHistoryTokens(
-      userAddr,
-      historyTime.current,
-      isTestnet,
-    );
-
-    if (currentAbort.signal.aborted) {
-      setLoading(false);
-      return;
-    }
-
-    const historyPortfolios: PortfolioItem[] = [];
-
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings(userAddr)) || {};
-
-    historyTokenRes?.forEach(token => {
-      const chain = token.chain;
-      const index = historyPortfolios.findIndex(p => p.pool.id === chain);
-      if (index === -1) {
-        historyPortfolios.push({
-          pool: {
-            id: chain,
-          },
-          asset_token_list: [token as PortfolioItemToken],
-        } as PortfolioItem);
-      } else {
-        historyPortfolios[index].asset_token_list?.push(
-          token as PortfolioItemToken,
-        );
-      }
-    });
-
-    _data = produce(_data, draft => {
-      draft.patchHistory(historyPortfolios);
-    });
-
-    const tokenList = tagTokenList(sortWalletTokens(_data), tokenSettings);
-
-    setMainnetTokens(prev => {
-      return {
-        ...prev,
-        list: tokenList,
-      };
-    });
-    setData(_data);
-
-    if (currentAbort.signal.aborted) {
-      setLoading(false);
-      return;
-    }
-
-    const missedTokens = tokenList.reduce((m, n) => {
-      if (n._tokenId && !n._historyPatched) {
-        m[n.chain] = m[n.chain] || new Set();
-        m[n.chain].add(n._tokenId);
-      }
-
-      return m;
-    }, {} as Record<string, Set<string>>);
-
-    const priceDicts = await getMissedTokenPrice(
-      missedTokens,
-      historyTime.current,
-    );
-
-    if (currentAbort.signal.aborted || !priceDicts) {
-      setLoading(false);
-      return;
-    }
-
-    _data = produce(_data, draft => {
-      Object.entries(priceDicts).forEach(([c, dict]) => {
-        if (!draft._portfolioDict[c]._historyPatched) {
-          draft._portfolioDict[c].patchPrice(dict);
-          if (draft._portfolioDict[c].netWorthChange) {
-            draft.netWorthChange += draft._portfolioDict[c].netWorthChange;
-          }
-        }
-        draft.afterHistoryPatched();
-      });
-    }) as DisplayedProject;
-
-    if (currentAbort.signal.aborted) {
-      setLoading(false);
-      return;
-    }
-
-    setData(_data);
-
-    setMainnetTokens(prev => {
-      return {
-        ...prev,
-        list: tagTokenList(sortWalletTokens(_data), tokenSettings),
-      };
-    });
-  };
-
-  useEffect(() => {
-    return () => {
-      abortProcess.current?.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    loadCustomTestnetTokens();
-  }, [testnetList, loadCustomTestnetTokens]);
-
   return {
-    netWorth: data?.netWorth || 0,
     isLoading,
     tokens: mainnetTokens.list,
-    testnetTokens: testnetTokens.list,
-    hasValue: !!data?._portfolios?.length,
+    // testnetTokens: testnetTokens.list,
     updateData: loadProcess,
-    walletProject: data,
   };
 };
 

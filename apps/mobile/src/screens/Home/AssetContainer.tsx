@@ -57,7 +57,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loading,
     refreshing,
     hasAssets,
-  } = useQueryProjects(currentAccount?.address, false, true);
+  } = useQueryProjects(currentAccount?.address, true);
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
