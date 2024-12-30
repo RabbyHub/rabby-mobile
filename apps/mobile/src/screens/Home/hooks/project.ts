@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { useTokens2024 } from './token';
+import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useSafeState } from '@/hooks/useSafeState';
 import { useQueryNft } from './nft';
@@ -34,7 +34,7 @@ export const useQueryProjects = (
     updateData: updateTokens,
     walletProject,
     // testnetTokens,
-  } = useTokens2024(userAddr, historyTime, visible, 0, undefined, isTestnet);
+  } = useTokens(userAddr, historyTime, visible, 0, undefined, isTestnet);
 
   const {
     data: portfolios,
