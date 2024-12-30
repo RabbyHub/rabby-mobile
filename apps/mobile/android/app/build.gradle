@@ -90,7 +90,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 100046
-        versionName "0.5.3"
+        versionName "0.5.4"
     }
     splits {
         abi {
