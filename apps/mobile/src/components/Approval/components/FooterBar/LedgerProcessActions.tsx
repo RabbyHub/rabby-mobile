@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Props } from './ActionsContainer';
 import { ProcessActions } from './ProcessActions';
+import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 
 export const LedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
@@ -25,6 +26,7 @@ export const LedgerProcessActions: React.FC<Props> = props => {
       onSubmit={handleSubmit}
       submitText={t('page.signFooterBar.ledgerSign')}
       disabledProcess={disabledProcess}
+      buttonIcon={<LedgerSVG width={22} height={22} viewBox="0 0 28 28" />}
     />
   );
 };

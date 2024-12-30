@@ -1183,6 +1183,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
         source: params?.$ctx?.ga?.source || '',
         trigger: params?.$ctx?.ga?.trigger || '',
+        swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
       });
 
       matomoRequestEvent({

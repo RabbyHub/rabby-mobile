@@ -352,6 +352,9 @@ export const useBridge = () => {
   const fetchIdRef = useRef(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
+      fetchIdRef.current += 1;
+      const currentFetchId = fetchIdRef.current;
+
       if (
         !inSufficient &&
         userAddress &&
@@ -363,9 +366,6 @@ export const useBridge = () => {
         Number(amount) > 0 &&
         aggregatorsList.length > 0
       ) {
-        fetchIdRef.current += 1;
-        const currentFetchId = fetchIdRef.current;
-
         let isEmpty = false;
         const result: SelectedBridgeQuote[] = [];
 

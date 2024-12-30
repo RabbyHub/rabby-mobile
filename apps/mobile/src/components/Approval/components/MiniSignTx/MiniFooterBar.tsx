@@ -380,6 +380,7 @@ export const MiniFooterBar: React.FC<Props> = ({
         <View style={styles.actions}>
           {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
             <MiniLedgerAction
+              isMiniSignTx
               task={task}
               account={account}
               gasLess={useGasLess && !payGasByGasAccount}
@@ -407,6 +408,7 @@ export const MiniFooterBar: React.FC<Props> = ({
             />
           ) : (
             <MiniCommonAction
+              isMiniSignTx
               task={task}
               account={account}
               gasLess={useGasLess && !payGasByGasAccount}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Account } from '@/core/services/preference';
@@ -8,7 +8,8 @@ import { Button } from '@/components';
 import { StyleSheet, Text, View } from 'react-native';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -40,6 +41,36 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
+  button: {
+    height: 56,
+    borderColor: colors2024['brand-default'],
+    borderWidth: 1,
+    borderRadius: 100,
+  },
+  buttonText: {
+    color: colors2024['brand-default'],
+    fontSize: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  wrapper: {
+    position: 'relative',
+    flexDirection: 'row',
+    marginTop: 12,
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  cancelIcon: {
+    color: colors2024['brand-default'],
+  },
+}));
+
 export interface Props {
   onSubmit(): void;
   onCancel(): void;
@@ -55,11 +86,12 @@ export interface Props {
   gasLessThemeColor?: string;
   isGasNotEnough?: boolean;
   buttonIcon?: React.ReactNode;
+  isMiniSignTx?: boolean;
 }
 
 export const ActionsContainer: React.FC<
-  Pick<Props, 'onCancel' | 'children'>
-> = ({ children, onCancel }) => {
+  Pick<Props, 'onCancel' | 'children' | 'isMiniSignTx'>
+> = ({ children, onCancel, isMiniSignTx }) => {
   const { t } = useTranslation();
   const [displayBlockedRequestApproval, setDisplayBlockedRequestApproval] =
     React.useState(false);
@@ -89,12 +121,16 @@ export const ActionsContainer: React.FC<
   };
 
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const oldStyles = React.useMemo(() => getStyles(colors), [colors]);
 
+  const { styles: styles2024 } = useTheme2024({ getStyle: getStyles2024 });
+
+  const styles = useMemo(
+    () => (isMiniSignTx ? styles2024 : oldStyles),
+    [styles2024, oldStyles, isMiniSignTx],
+  );
   return (
     <View style={styles.wrapper}>
-      {children}
-
       <Button
         type="clear"
         containerStyle={{
@@ -113,6 +149,8 @@ export const ActionsContainer: React.FC<
           </View>
         }
       />
+
+      {children}
     </View>
   );
 };

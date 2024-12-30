@@ -16,6 +16,7 @@ import { default as RcIconSwapInfoCC } from './warning-cc.svg';
 import { default as RcIconSwapHiddenArrowCC } from './hidden-arrow-cc.svg';
 import { default as RcIconSwapReceiveInfoCC } from './info-outline-cc.svg';
 import { default as RcIconMaxButton } from './max-button.svg';
+import { default as RcIconWalletCC } from './wallet-cc.svg';
 
 export { RcIconSwitchQuoteCC, RcIconMaxButton };
 
@@ -105,3 +106,8 @@ export const RcIconSwapReceiveInfo = makeThemeIconFromCC(
     onDark: ThemeColors.dark['neutral-foot'],
   },
 );
+
+export const RcIconWallet = makeThemeIconFromCC(RcIconWalletCC, {
+  onLight: ThemeColors.light['neutral-foot'],
+  onDark: ThemeColors.dark['neutral-foot'],
+});

@@ -19,6 +19,7 @@ export type SwapServiceStore = {
   selectedFromToken?: TokenItem;
   selectedToToken?: TokenItem;
   preferMEVGuarded: boolean;
+  recentToTokens?: TokenItem[];
 
   /**
    * @deprecated
@@ -63,6 +64,7 @@ export class SwapService {
     tradeList: {} as SwapServiceStore['tradeList'],
     sortIncludeGasFee: false,
     preferMEVGuarded: false,
+    recentToTokens: [],
   };
   constructor(options?: StorageAdapaterOptions) {
     const storage = createPersistStore<SwapServiceStore>(
@@ -79,6 +81,7 @@ export class SwapService {
           tradeList: {} as SwapServiceStore['tradeList'],
           preferMEVGuarded: false,
           sortIncludeGasFee: true,
+          recentToTokens: [],
         },
       },
       {
@@ -295,5 +298,19 @@ export class SwapService {
 
   setSlippage = (slippage: string) => {
     this.store.slippage = slippage;
+  };
+
+  getRecentSwapToTokens = () => {
+    return this.store.recentToTokens || [];
+  };
+
+  setRecentSwapToToken = (token: TokenItem) => {
+    const recentToTokens = this.store.recentToTokens || [];
+    this.store.recentToTokens = [
+      token,
+      ...recentToTokens.filter(
+        item => item.id !== token.id || item.chain !== token.chain,
+      ),
+    ].slice(0, 5);
   };
 }
