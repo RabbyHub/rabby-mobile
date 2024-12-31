@@ -1,11 +1,4 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -22,9 +15,13 @@ import { Input } from '@rneui/base';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 
-const SLIPPAGE = ['0.5', '1'];
+const BRIDGE_SLIPPAGE = ['0.5', '1'];
 
-const MAX_SLIPPAGE = 10;
+const SWAP_SLIPPAGE = ['0.1', '0.5'];
+
+const BRIDGE_MAX_SLIPPAGE = 10;
+
+const SWAP_MAX_SLIPPAGE = 50;
 
 interface SlippageProps {
   value: string;
@@ -33,8 +30,10 @@ interface SlippageProps {
   recommendValue?: number;
   autoSlippage: boolean;
   isCustomSlippage: boolean;
-  setAutoSlippage: Dispatch<SetStateAction<boolean>>;
-  setIsCustomSlippage: Dispatch<SetStateAction<boolean>>;
+  setAutoSlippage: (boolean: boolean) => void;
+  setIsCustomSlippage: (boolean: boolean) => void;
+  type: 'swap' | 'bridge';
+  isWrapToken?: boolean;
 }
 
 const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
@@ -63,15 +62,37 @@ export const BridgeSlippage = (props: SlippageProps) => {
     setAutoSlippage,
     isCustomSlippage,
     setIsCustomSlippage,
+    type,
+    isWrapToken,
   } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
 
+  const [minimumSlippage, maximumSlippage] = useMemo(() => {
+    if (type === 'swap') {
+      return [0.1, 10];
+    }
+    return [0.2, 3];
+  }, [type]);
+
+  const SLIPPAGE = useMemo(() => {
+    if (type === 'swap') {
+      return SWAP_SLIPPAGE;
+    }
+    return BRIDGE_SLIPPAGE;
+  }, [type]);
+
+  const MAX_SLIPPAGE = useMemo(() => {
+    if (type === 'swap') {
+      return SWAP_MAX_SLIPPAGE;
+    }
+    return BRIDGE_MAX_SLIPPAGE;
+  }, [type]);
   const [isLow, isHigh] = useMemo(() => {
     return [
-      value?.trim() !== '' && Number(value || 0) < 0.2,
-      value?.trim() !== '' && Number(value || 0) > 3,
+      value?.trim() !== '' && Number(value || 0) < minimumSlippage,
+      value?.trim() !== '' && Number(value || 0) > maximumSlippage,
     ];
-  }, [value]);
+  }, [maximumSlippage, minimumSlippage, value]);
 
   const setRecommendValue = useCallback(() => {
     onChange(new BigNumber(recommendValue || 0).times(100).toString());
@@ -120,11 +141,12 @@ export const BridgeSlippage = (props: SlippageProps) => {
       const text = formatSpeicalAmount(input);
       setAutoSlippage(false);
       setIsCustomSlippage(true);
-      if (/^\d*(\.\d*)?$/.test(text)) {
+      const v = formatSpeicalAmount(text);
+      if (/^\d*(\.\d*)?$/.test(v)) {
         onChange(Number(text) > MAX_SLIPPAGE ? `${MAX_SLIPPAGE}` : text);
       }
     },
-    [onChange, setAutoSlippage, setIsCustomSlippage],
+    [MAX_SLIPPAGE, onChange, setAutoSlippage, setIsCustomSlippage],
   );
 
   useEffect(() => {
@@ -132,6 +154,17 @@ export const BridgeSlippage = (props: SlippageProps) => {
       setSlippageOpen(true);
     }
   }, [tips]);
+
+  if (type === 'swap' && isWrapToken) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
+        <Text style={styles.wrapSlippage}>
+          {t('page.swap.no-slippage-for-wrap')}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View>
@@ -168,7 +201,9 @@ export const BridgeSlippage = (props: SlippageProps) => {
                 setAutoSlippage(true);
                 setIsCustomSlippage(false);
               }}>
-              <Text style={styles.input}>{t('page.swap.Auto')}</Text>
+              <Text style={[styles.input, autoSlippage && styles.activeText]}>
+                {t('page.swap.Auto')}
+              </Text>
             </SlippageItem>
 
             {SLIPPAGE.map(e => (
@@ -180,7 +215,16 @@ export const BridgeSlippage = (props: SlippageProps) => {
                   setAutoSlippage(false);
                   onChange(e);
                 }}>
-                <Text style={styles.input}>{e}%</Text>
+                <Text
+                  style={[
+                    styles.input,
+                    !autoSlippage &&
+                      !isCustomSlippage &&
+                      e === value &&
+                      styles.activeText,
+                  ]}>
+                  {e}%
+                </Text>
               </SlippageItem>
             ))}
 
@@ -240,7 +284,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['brand-default'],
-    textDecorationLine: 'underline',
   },
   warning: {
     color: colors2024['red-default'],
@@ -300,5 +343,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     borderColor: colors2024['neutral-line'],
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  wrapSlippage: {
+    color: colors2024['neutral-foot'],
+    fontSize: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
+  activeText: {
+    color: colors2024['brand-default'],
   },
 }));

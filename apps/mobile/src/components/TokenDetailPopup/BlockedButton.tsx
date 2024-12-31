@@ -31,7 +31,7 @@ export const BlockedButton: React.FC<Props> = ({
         </Text>
       ) : null}
 
-      <View style={styles.switchLabel}>
+      {/* <View style={styles.switchLabel}>
         <AppSwitch
           value={!!selected}
           onValueChange={v => {
@@ -47,7 +47,7 @@ export const BlockedButton: React.FC<Props> = ({
         <Text style={styles.switchText}>
           {t('page.dashboard.tokenDetail.blocked')}
         </Text>
-      </View>
+      </View> */}
     </View>
   );
 };

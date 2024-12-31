@@ -38,6 +38,17 @@ export const navigate = ((...arg: any) => {
   }
 }) as typeof navigationRef.navigate;
 
+export function naviPush(name: any, pramas?: object) {
+  if (navigationRef.isReady()) {
+    // Perform navigation if the react navigation is ready to handle actions
+    navigationRef.dispatch(StackActions.push(name, pramas));
+  } else {
+    __DEV__ && console.warn('[naviPush] navigationRef is not ready');
+    // You can decide what to do if react navigation is not ready
+    // You can ignore this, or add these actions to a queue you can call later
+  }
+}
+
 export const replace = ((name: any, pramas?: object) => {
   if (navigationRef.isReady()) {
     // Perform navigation if the react navigation is ready to handle actions

@@ -384,7 +384,7 @@ export const GasLessAnimatedWrapper = (
 ) => {
   const colors = useThemeColors();
 
-  const logoXValue = useSharedValue(-10);
+  const logoXValue = useSharedValue(-30);
 
   const logoYValue = useSharedValue(0);
 
@@ -398,7 +398,7 @@ export const GasLessAnimatedWrapper = (
       height: '100%',
       top: 0,
       backgroundColor: colors['neutral-bg-1'],
-      left: (interpolate(logoXValue.value, [-10, 100], [-10, 100]) +
+      left: (interpolate(logoXValue.value, [-30, 100], [-30, 100]) +
         '%') as DimensionValue,
     }),
     [colors, props?.isGasNotEnough],
@@ -427,7 +427,7 @@ export const GasLessAnimatedWrapper = (
       backgroundColor: props?.gasLessThemeColor
         ? props?.gasLessThemeColor
         : colors['blue-default'],
-      left: (interpolate(logoXValue.value, [-10, 100], [-210, -100]) +
+      left: (interpolate(logoXValue.value, [-30, 100], [-210, -100]) +
         '%') as DimensionValue,
     }),
     [props?.gasLessThemeColor],

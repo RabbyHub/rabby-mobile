@@ -1,6 +1,7 @@
 import {
   RcIconKeychainFaceIdCC,
   RcIconKeychainFingerprintCC,
+  RcIconPasswordCC,
 } from '@/assets/icons/lock';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
@@ -34,32 +35,37 @@ const RcIconFingerprint = makeThemeIconFromCC(
   'neutral-body',
 );
 
+const RcIconPassword = makeThemeIconFromCC(RcIconPasswordCC, 'neutral-body');
+
 export const useSubmitAction = () => {
   const { t } = useTranslation();
   const { computed: bioComputed } = useBiometrics();
   const { isUseCustomPwd } = usePasswordStatus();
-  const signComputed = useMemo(() => {
-    return {
-      needShowBioAuthIcon: bioComputed.isBiometricsEnabled,
-      SubmitIcon: !bioComputed.isBiometricsEnabled
-        ? null
-        : bioComputed.isFaceID
-        ? RcIconFaceId
-        : RcIconFingerprint,
-    };
-  }, [bioComputed]);
 
   const [unlockTime, setUnlockTime] = useAtom(unlockTimeAtom);
-
-  React.useEffect(() => {
-    setUnlockTime(apisLock.getUnlockTime());
-  }, [setUnlockTime]);
 
   const isLastUnlockTimeValid =
     Date.now() - unlockTime < DEFAULT_VERIFY_INTERVAL;
   const disabledVerify =
     isLastUnlockTimeValid ||
     (!isUseCustomPwd && !bioComputed.isBiometricsEnabled);
+
+  const signComputed = useMemo(() => {
+    return {
+      needShowBioAuthIcon: bioComputed.isBiometricsEnabled,
+      SubmitIcon: !bioComputed.isBiometricsEnabled
+        ? !disabledVerify
+          ? RcIconPassword
+          : null
+        : bioComputed.isFaceID
+        ? RcIconFaceId
+        : RcIconFingerprint,
+    };
+  }, [bioComputed.isBiometricsEnabled, bioComputed.isFaceID, disabledVerify]);
+
+  React.useEffect(() => {
+    setUnlockTime(apisLock.getUnlockTime());
+  }, [setUnlockTime]);
 
   const {
     currentAuthType,

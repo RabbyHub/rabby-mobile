@@ -39,6 +39,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '@/components2024/Button';
+import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 
 const BridgeToken = ({
   type = 'from',
@@ -181,7 +182,7 @@ const BridgeToken = ({
                 keyboardType="numeric"
                 inputMode="decimal"
                 placeholderTextColor={colors2024['neutral-info']}
-                style={styles.input}
+                style={[styles.input, inSufficient && styles.insufficientInput]}
                 placeholder={'0'}
                 scrollEnabled={true}
                 value={value?.toString()}
@@ -241,13 +242,19 @@ const BridgeToken = ({
                   </Text>
                 </View>
               ) : (
-                <Text style={styles.balanceText}>
-                  {t('page.bridge.Balance')}
-                  {token
-                    ? formatTokenAmount(tokenAmountBn(token).toString(10)) ||
-                      '0'
-                    : 0}
-                </Text>
+                <View style={styles.balanceWrapper}>
+                  <RcIconWalletCC
+                    width={16}
+                    height={16}
+                    color={colors2024['neutral-foot']}
+                  />
+                  <Text style={styles.balanceText}>
+                    {token
+                      ? formatTokenAmount(tokenAmountBn(token).toString(10)) ||
+                        '0'
+                      : 0}
+                  </Text>
+                </View>
               )}
             </View>
           </View>
@@ -357,6 +364,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 0,
     overflow: 'hidden',
   },
+  insufficientInput: {
+    color: colors2024['red-default'],
+  },
   skeleton: {
     // marginTop: 16,
     backgroundColor: colors2024['neutral-line'],
@@ -385,6 +395,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   infoIcon: {
     marginLeft: 4,
+  },
+  balanceWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
   balanceText: {
     fontSize: 13,

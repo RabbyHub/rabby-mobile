@@ -7,9 +7,10 @@ import { ellipsisAddress, getAddressScanLink } from '@/utils/address';
 import { openExternalUrl } from '@/core/utils/linking';
 import { getTokenSymbol } from '@/utils/token';
 import { AssetAvatar, Button } from '@/components';
-import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024, useThemeStyles } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { RcIconExternalLinkCC } from '@/assets/icons/common';
+import RcIconWaring from '@/assets2024/icons/swap/waring.svg';
 
 export const useLowCreditState = () => {
   const [lowCreditToken, setLowCreditToken] = useState<TokenItem>();
@@ -36,7 +37,7 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
   onCancel,
   token,
 }) => {
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const openTokenAddress = () => {
@@ -79,9 +80,13 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
               height={14}
             />
           </TouchableOpacity>
-          <Text style={styles.title}>
-            {t('page.swap.lowCreditModal.title')}
-          </Text>
+          <View style={styles.titleWrapper}>
+            <RcIconWaring />
+            <Text style={styles.title}>
+              {t('page.swap.lowCreditModal.title')}
+            </Text>
+          </View>
+
           <View style={styles.desc}>
             <Text style={styles.description}>
               {t('page.swap.lowCreditModal.desc')}
@@ -101,19 +106,22 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(({ colors2024, colors }) => ({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.60)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   container: {
-    width: 320,
+    maxWidth: 352,
+    marginHorizontal: 20,
     backgroundColor: colors['neutral-bg1'],
-    borderRadius: 8,
+    borderRadius: 20,
     padding: 20,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
   },
   iconContainer: {
     marginBottom: 12,
@@ -121,10 +129,11 @@ const getStyles = createGetStyles(colors => ({
 
   tokenSymbol: {
     fontSize: 18,
-    fontWeight: '500',
-    color: colors['neutral-title1'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 4,
     marginBottom: 4,
   },
   addressContainer: {
@@ -133,41 +142,49 @@ const getStyles = createGetStyles(colors => ({
   },
   addressText: {
     fontSize: 14,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-foot'],
   },
   externalIcon: {
     marginLeft: 8,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
+  },
+  titleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 20,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors['neutral-title1'],
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
     textAlign: 'center',
-    marginTop: 16,
-    marginBottom: 12,
   },
   desc: {
-    width: '100%',
-    backgroundColor: colors['neutral-card2'],
-    height: 52,
-    padding: 10,
-    paddingRight: 9,
-    borderRadius: 6,
-    marginBottom: 32,
+    marginBottom: 20,
+    overflow: 'hidden',
   },
   description: {
-    fontSize: 12,
+    fontSize: 16,
+    textAlign: 'center',
     fontWeight: '400',
-    color: colors['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
   },
   containerStyle: {
     width: '100%',
-    height: 40,
+    height: 48,
+    borderRadius: 100,
   },
   titleStyle: {
-    fontSize: 15,
-    fontWeight: '500',
+    width: '100%',
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
     color: colors['neutral-title-2'],
   },
   buttonStyle: {
