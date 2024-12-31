@@ -243,11 +243,11 @@ export default function AppNavigation({
 
   useDetermineExitAppOnPressBack();
 
-  const previousRoute = usePrevious(routeNameRef.current);
-  const isSlideFromGetStarted =
-    [undefined, RootNames.GetStarted, RootNames.GetStartedScreen2024].includes(
-      previousRoute as any,
-    ) && routeNameRef.current === RootNames.Unlock;
+  // const previousRoute = usePrevious(routeNameRef.current);
+  // const isSlideFromGetStarted =
+  //   [undefined, RootNames.GetStarted, RootNames.GetStartedScreen2024].includes(
+  //     previousRoute as any,
+  //   ) && routeNameRef.current === RootNames.Unlock;
   // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
 
   return (

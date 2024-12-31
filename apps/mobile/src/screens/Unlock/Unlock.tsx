@@ -94,6 +94,11 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     const hasUnlockOnce = unlockOnceRef.current;
 
     const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+    console.log(
+      '[feat] hasAccountsInKeyring: %s; hasUnlockOnce: %s',
+      hasAccountsInKeyring,
+      hasUnlockOnce,
+    );
     resetNavigationTo(
       navigation,
       !hasAccountsInKeyring && !hasUnlockOnce ? 'GetStarted2024' : 'Home',

@@ -61,6 +61,7 @@ function MainScreen({ rabbitCode }: AppProps) {
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
+    console.log('[feat] accounts?.length', accounts?.length);
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStartedScreen2024,

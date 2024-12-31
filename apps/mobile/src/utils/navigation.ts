@@ -82,7 +82,10 @@ export const redirectBackErrorHandler = (
 };
 
 export function redirectToAddAddressEntry(options?: {
-  action?: `${'' | 'classical:'}${'push' | 'replace' | 'resetTo'}`;
+  action?: Exclude<
+    `${'' | 'classical:'}${'push' | 'replace' | 'resetTo'}`,
+    'replace'
+  >;
 }) {
   // navigate(RootNames.StackAddress, {
   //   screen: RootNames.ImportNewAddress,
@@ -118,11 +121,6 @@ export function redirectToAddAddressEntry(options?: {
       });
       break;
     }
-    case 'replace':
-      replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
-      });
-      break;
     case 'resetTo':
       navigationRef.resetRoot({
         index: 0,

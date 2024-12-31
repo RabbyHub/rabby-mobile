@@ -247,6 +247,7 @@ function MultiAddressHome(): JSX.Element {
   const detectHasAccounts = useMemoizedFn(async () => {
     const result = { redirectAction: null as Function | null };
     const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+    console.log('[feat] hasAccountsInKeyring', hasAccountsInKeyring);
 
     if (!hasAccountsInKeyring) {
       result.redirectAction = () => {
