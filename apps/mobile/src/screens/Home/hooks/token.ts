@@ -23,7 +23,7 @@ const walletProject = new DisplayedProject({
 });
 
 const { isSameAddress } = addressUtils;
-const filterDisplayToken = (tokens: AbstractPortfolioToken[]) => {
+export const filterDisplayToken = (tokens: AbstractPortfolioToken[]) => {
   return tokens.filter(token => {
     return findChain({
       serverId: token.chain,

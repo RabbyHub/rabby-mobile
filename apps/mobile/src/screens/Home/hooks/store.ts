@@ -278,3 +278,62 @@ export const combinedNFTAtom = atom<CombineNFTItem[]>(get => {
     amount: i.totalAmount?.toNumber(),
   }));
 });
+
+export const updateTokensAtom = atom(
+  null,
+  (
+    get,
+    set,
+    {
+      address,
+      newTokens,
+    }: { address: string; newTokens: AbstractPortfolioToken[] },
+  ) => {
+    const currentAssets = get(assetsMapAtom);
+
+    set(assetsMapAtom, {
+      ...currentAssets,
+      [address]: {
+        ...currentAssets[address],
+        tokens: newTokens,
+      },
+    });
+  },
+);
+
+export const updatePortfoliosAtom = atom(
+  null,
+  (
+    get,
+    set,
+    {
+      address,
+      newPortfolios,
+    }: { address: string; newPortfolios: DisplayedProject[] },
+  ) => {
+    const currentAssets = get(assetsMapAtom);
+
+    set(assetsMapAtom, {
+      ...currentAssets,
+      [address]: {
+        ...currentAssets[address],
+        portfolios: newPortfolios,
+      },
+    });
+  },
+);
+
+export const updateNFTsAtom = atom(
+  null,
+  (get, set, { address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
+    const currentAssets = get(assetsMapAtom);
+
+    set(assetsMapAtom, {
+      ...currentAssets,
+      [address]: {
+        ...currentAssets[address],
+        nfts: newNFTs,
+      },
+    });
+  },
+);

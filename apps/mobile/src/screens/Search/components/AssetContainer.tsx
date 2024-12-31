@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SectionList, Text, View } from 'react-native';
 
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
@@ -29,7 +29,8 @@ export const AssetContainer: React.FC<Props> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { currentAccount } = useCurrentAccount();
-  const { tokens, portfolios, nftList } = useQueryProjects();
+  const { tokens, portfolios, nftList, initFetchTop10Assets } =
+    useQueryProjects();
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
@@ -61,6 +62,11 @@ export const AssetContainer: React.FC<Props> = () => {
       },
     ];
   }, [foldHideList, nftList, portfolios, sortTokens]);
+
+  useEffect(() => {
+    initFetchTop10Assets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {

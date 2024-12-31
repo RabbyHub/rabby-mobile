@@ -20,7 +20,7 @@ import { usePortfoliosAtom } from './store';
 
 const chunkSize = 5;
 const { isSameAddress } = addressUtils;
-const tagProfiles = (
+export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
 ): DisplayedProject[] => {
