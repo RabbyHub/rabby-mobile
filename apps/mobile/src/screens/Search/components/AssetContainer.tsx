@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SectionList, Text, View } from 'react-native';
 
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useQueryProjects } from '../useAssets';
 import useSortToken from '@/screens/Home/hooks/useSortTokens';
@@ -28,7 +27,6 @@ interface Props {}
 export const AssetContainer: React.FC<Props> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const { currentAccount } = useCurrentAccount();
   const { tokens, portfolios, nftList, initFetchTop10Assets } =
     useQueryProjects();
   const sortTokens = useSortToken(tokens);
@@ -70,18 +68,21 @@ export const AssetContainer: React.FC<Props> = () => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
+      // TODO: replace
       navigate(RootNames.TokenDetail, {
         token: token,
-        // todo fix ts
-        account: currentAccount as any,
       });
     },
-    [currentAccount],
+    [],
   );
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
+      navigate(RootNames.DeFiDetail, {
+        data,
+        portfolioList: itemList,
+        cache: true,
+      });
     },
     [],
   );
@@ -153,10 +154,6 @@ export const AssetContainer: React.FC<Props> = () => {
     }),
     [],
   );
-
-  if (!currentAccount?.address) {
-    return null;
-  }
 
   return (
     <SectionList

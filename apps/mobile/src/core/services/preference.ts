@@ -99,6 +99,7 @@ export interface PreferenceStore {
   sendEnableTime?: number;
   customizedToken?: Token[];
   blockedToken?: Token[];
+  pinedQueue?: IManageToken[]; // maual always true
   tokenManageSettingMap: ITokenManageSettingMap;
   collectionStarred?: Token[];
   /**
