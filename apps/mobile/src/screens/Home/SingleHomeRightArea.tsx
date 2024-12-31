@@ -29,13 +29,22 @@ const historyHitSlop = {
   right: 4,
 };
 
-export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
-  const { currentAccount } = useCurrentAccount();
-  const showAddressDetail = useAddressDetailModal();
-  const { styles, colors, colors2024 } = useTheme2024();
+interface HeaderRightHistoryProps {
+  isInTokenDetail?: boolean;
+  isMultiAddress?: boolean;
+}
+
+export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
+  isInTokenDetail,
+  isMultiAddress,
+}) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { navigation } = useSafeSetNavigationOptions();
+  const { colors2024 } = useTheme2024();
+  const { currentAccount } = useCurrentAccount();
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const fetchHistory = useCallback(() => {
     if (!currentAccount) {
@@ -49,15 +58,6 @@ export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [currentAccount]);
 
-  const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
-    useSwitchSceneCurrentAccount();
-
-  const onPress = () => {
-    if (currentAccount) {
-      showAddressDetail({ account: currentAccount });
-    }
-  };
-
   useFocusEffect(
     useCallback(() => {
       fetchHistory();
@@ -65,28 +65,50 @@ export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
   );
 
   const openHistory = useCallback(async () => {
-    // setHistoryVisible(true);
     await switchSceneCurrentAccount('History', currentAccount);
-    // toggleUseAllAccountsOnScene('MultiHistory', false);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.History,
-        params: {},
+        params: {
+          isInTokenDetail,
+          isMultiAddress,
+        },
       }),
     );
-  }, [navigation, switchSceneCurrentAccount, currentAccount]);
+  }, [
+    navigation,
+    switchSceneCurrentAccount,
+    currentAccount,
+    isInTokenDetail,
+    isMultiAddress,
+  ]);
+
+  return (
+    <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
+      <View style={{ marginRight: 18 }}>
+        {pendingTxCount ? (
+          <PendingTx number={pendingTxCount} onClick={openHistory} />
+        ) : (
+          <RcIconSwapHistory color={colors2024['neutral-body']} />
+        )}
+      </View>
+    </CustomTouchableOpacity>
+  );
+};
+
+export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
+  const { currentAccount } = useCurrentAccount();
+  const showAddressDetail = useAddressDetailModal();
+
+  const onPress = () => {
+    if (currentAccount) {
+      showAddressDetail({ account: currentAccount });
+    }
+  };
 
   return (
     <>
-      <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
-        <View style={{ marginRight: 18 }}>
-          {pendingTxCount ? (
-            <PendingTx number={pendingTxCount} onClick={openHistory} />
-          ) : (
-            <RcIconSwapHistory color={colors2024['neutral-body']} />
-          )}
-        </View>
-      </CustomTouchableOpacity>
+      <HeaderRightHistory />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
         <RcIconMore width={24} height={24} />
       </CustomTouchableOpacity>

@@ -182,7 +182,11 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
           (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
       )?.params,
   ) as
-    | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
+    | {
+        chainEnum?: CHAINS_ENUM | undefined;
+        tokenId?: TokenItem['id'];
+        type?: 'Buy' | 'Sell';
+      }
     | undefined;
 
   useMount(() => {
@@ -190,9 +194,11 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       return;
     }
 
+    const isBuy = navState?.type === 'Buy';
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
       payTokenId: navState?.tokenId,
+      changeTo: isBuy,
     });
   });
 
@@ -432,7 +438,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       <KeyboardAwareScrollView
         style={[
           styles.container,
-          // eslint-disable-next-line react-native/no-inline-styles
+
           {
             marginBottom: 112 + (isAndroid ? 20 + safeOffBottom : 0),
           },

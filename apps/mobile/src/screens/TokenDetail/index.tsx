@@ -22,7 +22,7 @@ import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import { last } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { HistoryDisplayItem } from '../Transaction/MultiAddressHistory';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { HistoryList } from './components/HistoryList';
@@ -37,6 +37,10 @@ import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useRefreshTags } from '../Home/hooks/token';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
+import { AssetAvatar } from '@/components';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { RcIconRightCC } from '@/assets/icons/common';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
@@ -174,15 +178,18 @@ export const RightMore: React.FC<{
   };
 
   return (
-    <DropDownMenuView
-      menuConfig={{
-        menuActions: menuActions,
-      }}
-      triggerProps={{ action: 'press' }}>
-      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
-        <RcIconMore width={24} height={24} />
-      </CustomTouchableOpacity>
-    </DropDownMenuView>
+    <>
+      <HeaderRightHistory isInTokenDetail={true} isMultiAddress={false} />
+      <DropDownMenuView
+        menuConfig={{
+          menuActions: menuActions,
+        }}
+        triggerProps={{ action: 'press' }}>
+        <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+          <RcIconMore width={24} height={24} />
+        </CustomTouchableOpacity>
+      </DropDownMenuView>
+    </>
   );
 };
 export const TokenDetailScreen = () => {
@@ -198,7 +205,7 @@ export const TokenDetailScreen = () => {
   //   account: KeyringAccountWithAlias;
   // };
 
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
@@ -347,7 +354,7 @@ export const TokenDetailScreen = () => {
     });
   });
 
-  const handleSwap = useMemoizedFn(async () => {
+  const handleSwap = useMemoizedFn(async (type: 'Buy' | 'Sell') => {
     const chain = findChain({
       serverId: token.chain,
     });
@@ -357,6 +364,7 @@ export const TokenDetailScreen = () => {
       params: {
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: token?._tokenId,
+        type,
       },
     });
   });
@@ -375,48 +383,75 @@ export const TokenDetailScreen = () => {
 
   return (
     <NormalScreenContainer2024 type="bg1" style={styles.root}>
-      <HistoryList
-        ListHeaderComponent={
-          <>
-            <View>
-              <TokenPriceChart token={tokenWithAmount || token} />
-              <View style={styles.divider} />
-              <TokenBalanceArea
-                account={finalAccount}
-                token={tokenWithAmount || token}
-              />
-            </View>
-            <View style={styles.historyHeader}>
-              <Text style={styles.historyTitle}>
-                {t('page.tokenDetail.transactions')}
-              </Text>
-            </View>
-          </>
-        }
-        list={latestData?.list || []}
-        loading={isFirstLoading}
-        loadingMore={loadingMore}
-        refreshLoading={loading}
-        loadMore={loadMore}
-      />
+      <View>
+        <Text style={styles.currentText}>Current price</Text>
+        <TokenPriceChart token={tokenWithAmount || token} />
+        <View style={styles.divider} />
+        <TokenBalanceArea
+          account={finalAccount}
+          token={tokenWithAmount || token}
+        />
+      </View>
+
+      <View style={styles.historyHeader}>
+        <Text style={styles.relateTitle}>
+          {t('page.tokenDetail.relateDefi')}
+        </Text>
+      </View>
+      {/* flatlist */}
+      <View style={styles.defiItem}>
+        <View style={styles.defiItemContent}>
+          <AssetAvatar
+            logo={token?.logo_url}
+            size={26}
+            chain={token?.chain}
+            chainSize={12}
+          />
+          <Text
+            style={styles.defiItemText}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {/* {token?.name} */}
+            {ellipsisOverflowedText(token?.name, 20)}
+          </Text>
+        </View>
+        <View style={styles.defiItemContent}>
+          <Text style={styles.defiItemText}>{`5 ${token.name}`}</Text>
+          <RcIconRightCC
+            style={styles.arrowStyle}
+            width={13}
+            height={13}
+            color={colors2024['neutral-secondary']}
+          />
+        </View>
+      </View>
       <View
         style={[
           styles.buttonGroup,
           isAndroid && { paddingBottom: 20 + safeOffBottom },
         ]}>
         <Button
-          title={t('page.tokenDetail.action.swap')}
-          containerStyle={styles.btnContainer}
-          onPress={handleSwap}
-          disabled={!tokenSupportSwap}
-        />
-        <View style={styles.btnGap} />
-
-        <Button
           title={t('page.tokenDetail.action.send')}
           containerStyle={styles.btnContainer}
           type="ghost"
           onPress={handleSend}
+        />
+        <View style={styles.btnGap} />
+        <Button
+          title={t('page.tokenDetail.action.Buy')}
+          containerStyle={StyleSheet.flatten([styles.btnContainer])}
+          buttonStyle={styles.buyBtnContainer}
+          titleStyle={styles.buyBtnTitle}
+          // type={'ghost'}
+          onPress={() => handleSwap('Buy')}
+          disabled={!tokenSupportSwap}
+        />
+        <View style={styles.btnGap} />
+        <Button
+          title={t('page.tokenDetail.action.Sell')}
+          containerStyle={styles.btnContainer}
+          onPress={() => handleSwap('Sell')}
+          disabled={!tokenSupportSwap}
         />
       </View>
     </NormalScreenContainer2024>
@@ -426,17 +461,50 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     root: {},
 
+    currentText: {
+      marginLeft: 26,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+    },
     divider: {
       marginHorizontal: 20,
       backgroundColor: colors2024['neutral-line'],
       height: 1,
     },
-    historyTitle: {
-      color: colors2024['neutral-title-1'],
+    defiItem: {
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 6,
+      // paddingHorizontal: 8,
+    },
+    defiItemContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      paddingHorizontal: 20,
+      gap: 6,
+    },
+    arrowStyle: {
+      marginTop: 2,
+    },
+    defiItemText: {
+      color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 17,
-      lineHeight: 22,
-      fontWeight: '800',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+    },
+    relateTitle: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
     },
     historyHeader: {
       marginBottom: 16,
@@ -455,6 +523,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     btnContainer: {
       flex: 1,
+    },
+
+    buyBtnContainer: {
+      backgroundColor: colors2024['brand-light-1'],
+    },
+    buyBtnTitle: {
+      color: colors2024['brand-default'],
     },
 
     btnGap: {

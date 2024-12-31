@@ -2379,9 +2379,12 @@
     },
     "tokenDetail": {
       "transactions": "Transactions",
+      "relateDefi": "Related DeFi",
       "action": {
         "swap": "Swap",
         "send": "Send",
+        "Buy": "Buy",
+        "Sell": "Sell",
         "pin": "Pin",
         "unpin": "Unpin",
         "fold": "Fold",
