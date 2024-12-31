@@ -178,7 +178,7 @@ export const usePortfolios = (
           if (!currentAbort.signal.aborted && projectDict.current) {
             log('#####################REALTIME###############################');
             projectDict.current = produce(projectDict.current, draft => {
-              portfolio2Display(project, draft);
+              project && portfolio2Display(project, draft);
             });
           }
         });
