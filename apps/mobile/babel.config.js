@@ -33,17 +33,26 @@ const buildGitInfo = (function getBuildEnvVars() {
   const BUILD_GIT_COMMITS_COUNT_BASEVER = version;
 
   // calculate commits count from v{version}
-  const BUILD_GIT_COMMITS_COUNT = child_process
-    .execSync(`git rev-list --count v${BUILD_GIT_COMMITS_COUNT_BASEVER}..HEAD`)
-    .toString()
-    .trim();
+  let BUILD_GIT_COMMITS_COUNT = '';
+  try {
+    BUILD_GIT_COMMITS_COUNT = child_process
+      .execSync(
+        `git fetch --tags; git rev-list --count v${BUILD_GIT_COMMITS_COUNT_BASEVER}..HEAD`,
+      )
+      .toString()
+      .trim();
+  } catch (error) {
+    console.error('Error calculating commits count', error);
+  }
 
   return {
     BUILD_GIT_HASH,
     BUILD_GIT_HASH_TIME,
     BUILD_GIT_COMMITOR,
     BUILD_GIT_COMMITS_COUNT,
-    BUILD_GIT_COMMITS_COUNT_BASEVER,
+    BUILD_GIT_COMMITS_COUNT_BASEVER: BUILD_GIT_COMMITS_COUNT
+      ? BUILD_GIT_COMMITS_COUNT_BASEVER
+      : '',
   };
 })();
 
