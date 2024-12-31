@@ -1,14 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { SectionList, Text, View } from 'react-native';
-import { RefreshControl } from 'react-native-gesture-handler';
 
-import { EmptyHolder } from '@/components/EmptyHolder';
-import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { PositionLoader } from '@/screens/Home/components/Skeleton';
 import { useQueryProjects } from '../useAssets';
 import useSortToken from '@/screens/Home/hooks/useSortTokens';
 import {
@@ -17,7 +12,6 @@ import {
   AbstractProject,
 } from '@/screens/Home/types';
 import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
-import { findChain } from '@/utils/chain';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -29,34 +23,16 @@ import {
 } from '@/screens/Home/components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
-interface Props {
-  onRefresh(): void;
-}
+interface Props {}
 
-export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
+export const AssetContainer: React.FC<Props> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { currentAccount } = useCurrentAccount();
-  const {
-    tokens,
-    refreshPositions,
-    portfolios,
-    nftList,
-    loading,
-    refreshing,
-    hasAssets,
-  } = useQueryProjects(currentAccount?.address, true);
+  const { tokens, portfolios, nftList } = useQueryProjects();
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
-
-  const {
-    sheetModalRef: tokenDetailModalRef,
-    openTokenDetailPopup,
-    cleanFocusingToken,
-    focusingToken,
-    isTestnetToken,
-  } = useGeneralTokenDetailSheetModal();
 
   const sections = useMemo(() => {
     const unFoldList = sortTokens.filter(i => !i._isFold);
@@ -80,29 +56,21 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       {
         type: 'nft',
         originData: nftList,
-        data: [],
-        // data: nftList,
+        // data: [],
+        data: nftList,
       },
     ];
   }, [foldHideList, nftList, portfolios, sortTokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (
-        findChain({
-          serverId: token.chain,
-        })?.isTestnet
-      ) {
-        openTokenDetailPopup(token);
-      } else {
-        navigate(RootNames.TokenDetail, {
-          token: token,
-          // todo fix ts
-          account: currentAccount as any,
-        });
-      }
+      navigate(RootNames.TokenDetail, {
+        token: token,
+        // todo fix ts
+        account: currentAccount as any,
+      });
     },
-    [currentAccount, openTokenDetailPopup],
+    [currentAccount],
   );
 
   const handleOpenDefiDetail = useCallback(
@@ -115,27 +83,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const handlePressNft = (item: NFTItem) => {
     navigate(RootNames.NftDetail, { token: item });
   };
-
-  const ListEmptyComponent = useMemo(() => {
-    return loading ? (
-      <PositionLoader space={8} />
-    ) : hasAssets ? null : (
-      <View style={styles.emptyHolder}>
-        <EmptyHolder
-          imgStyle={styles.emptyImg}
-          textStyle={styles.emptyText}
-          text="No Assets"
-          type="default"
-        />
-      </View>
-    );
-  }, [
-    loading,
-    hasAssets,
-    styles.emptyHolder,
-    styles.emptyImg,
-    styles.emptyText,
-  ]);
 
   const renderItem = ({ item, section }) => {
     switch (section.type) {
@@ -206,43 +153,17 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   }
 
   return (
-    <>
-      <SectionList
-        sections={sections.filter(i => !!i.originData?.length)}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.bgContainer}
-        keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
-        windowSize={10}
-        getItemLayout={getItemLayout}
-        ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={!foldHideList}
-        renderSectionHeader={renderSectionHeader}
-        refreshControl={
-          <RefreshControl
-            style={styles.bgContainer}
-            onRefresh={() => {
-              refreshPositions();
-              onRefresh();
-            }}
-            refreshing={refreshing}
-          />
-        }
-      />
-      <BottomSheetModalTokenDetail
-        __shouldSwitchSceneAccountBeforeRedirect__
-        nextTxRedirectAccount={currentAccount}
-        ref={tokenDetailModalRef}
-        token={focusingToken}
-        isTestnet={isTestnetToken}
-        onDismiss={() => {
-          cleanFocusingToken({ noNeedCloseModal: true });
-        }}
-        onTriggerDismissFromInternal={() => {
-          cleanFocusingToken();
-        }}
-      />
-    </>
+    <SectionList
+      sections={sections.filter(i => !!i.originData?.length)}
+      renderItem={renderItem}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.bgContainer}
+      keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
+      windowSize={10}
+      getItemLayout={getItemLayout}
+      stickySectionHeadersEnabled={!foldHideList}
+      renderSectionHeader={renderSectionHeader}
+    />
   );
 };
 

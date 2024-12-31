@@ -54,6 +54,15 @@ export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
   return formatNetworth(tokensTotalValue);
 };
 
+export const getDisplayedPortfolioUsdValue = (
+  portfolios: DisplayedProject['_portfolios'],
+) => {
+  return portfolios?.reduce(
+    (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
+    new BigNumber(0),
+  );
+};
+
 export const getAllNftCount = (nfts: NFTItem[]) => {
   let total = 0;
   nfts.forEach(nft => {

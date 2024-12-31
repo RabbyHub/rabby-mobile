@@ -4,14 +4,28 @@ import { DisplayedProject } from '../utils/project';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
+import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue?: BigNumber;
   fromAddress: Array<{
     address: string;
-    addressType: string;
     amount: string;
+  }>;
+};
+
+export type CombineDefiItem = DisplayedProject & {
+  totalUsdValue?: BigNumber;
+  fromAddress: Array<{
+    address: string;
+  }>;
+};
+
+export type CombineNFTItem = NFTItem & {
+  totalAmount?: BigNumber;
+  fromAddress: Array<{
+    address: string;
   }>;
 };
 
@@ -159,7 +173,6 @@ export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
           fromAddress: [
             {
               address,
-              addressType: 'wallet',
               amount: token._amountStr || '',
             },
           ],
@@ -174,7 +187,6 @@ export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
         );
         existingToken.fromAddress.push({
           address,
-          addressType: 'wallet',
           amount: token._amountStr || '',
         });
       }
@@ -186,5 +198,83 @@ export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
     _usdValue: i.totalUsdValue?.toNumber(),
     _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
     _amountStr: formatNetworth(i.totalAmount.toNumber()),
+  }));
+});
+
+export const combinedDefiAtom = atom<CombineDefiItem[]>(get => {
+  const assetsMap = get(assetsMapAtom);
+  const defiMap: Record<string, CombineDefiItem> = {};
+
+  Object.entries(assetsMap).forEach(([address, assets]) => {
+    assets.portfolios?.forEach(defi => {
+      const key = defi.id;
+      if (!key) {
+        return;
+      }
+
+      if (!defiMap[key]) {
+        defiMap[key] = {
+          ...defi,
+          totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
+          fromAddress: [
+            {
+              address,
+            },
+          ],
+        };
+      } else {
+        const existingDefi = defiMap[key];
+        existingDefi.totalUsdValue = existingDefi.totalUsdValue?.plus(
+          getDisplayedPortfolioUsdValue(defi._portfolios),
+        );
+        existingDefi.fromAddress.push({
+          address,
+        });
+      }
+    });
+  });
+
+  return Object.values(defiMap).map(i => ({
+    ...i,
+    _netWorth: i.totalUsdValue?.toString(),
+  }));
+});
+
+export const combinedNFTAtom = atom<CombineNFTItem[]>(get => {
+  const assetsMap = get(assetsMapAtom);
+  const nftMap: Record<string, CombineNFTItem> = {};
+
+  Object.entries(assetsMap).forEach(([address, assets]) => {
+    assets.nfts?.forEach(nft => {
+      const key = `${nft.chain}-${nft.id}-${nft.name || ''}`;
+      if (!key) {
+        return;
+      }
+
+      if (!nftMap[key]) {
+        nftMap[key] = {
+          ...nft,
+          totalAmount: new BigNumber(nft.amount || 0),
+          fromAddress: [
+            {
+              address,
+            },
+          ],
+        };
+      } else {
+        const existingNFT = nftMap[key];
+        existingNFT.totalAmount = existingNFT.totalAmount?.plus(
+          nft.amount || 0,
+        );
+        existingNFT.fromAddress.push({
+          address,
+        });
+      }
+    });
+  });
+
+  return Object.values(nftMap).map(i => ({
+    ...i,
+    amount: i.totalAmount?.toNumber(),
   }));
 });
