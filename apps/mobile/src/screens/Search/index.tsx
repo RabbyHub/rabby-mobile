@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { Keyboard, SafeAreaView, TouchableOpacity, View } from 'react-native';
 
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -11,11 +10,10 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 
 import { AssetContainer } from './components/AssetContainer';
 
-function HomeScreen(): JSX.Element {
+function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const inputRef = useRef<any>(null);
 
   return (
@@ -45,7 +43,7 @@ function HomeScreen(): JSX.Element {
         />
       </View>
       <SafeAreaView style={styles.safeView}>
-        <AssetContainer onRefresh={triggerUpdate} />
+        <AssetContainer />
       </SafeAreaView>
     </NormalScreenContainer2024>
   );
@@ -72,4 +70,4 @@ const getStyles = createGetStyles2024(() => ({
   },
 }));
 
-export default HomeScreen;
+export default SearchScreen;

@@ -57,7 +57,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loading,
     refreshing,
     hasAssets,
-  } = useQueryProjects(currentAccount?.address, false, true);
+  } = useQueryProjects(currentAccount?.address, true);
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
@@ -199,7 +199,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             });
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
-          refreshTags(currentAccount?.address);
+          refreshTags();
         },
       },
       {
@@ -234,7 +234,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             });
             toast.success(t('page.tokenDetail.actionsTips.pin_success'));
           }
-          refreshTags(currentAccount?.address);
+          refreshTags();
         },
       },
     ];
@@ -275,7 +275,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return null;
     }
   };
-  const { refreshTags } = useRefreshTags();
+  const { refreshTags } = useRefreshTags(currentAccount?.address);
 
   const renderSectionHeader = ({ section }) => {
     switch (section.type) {

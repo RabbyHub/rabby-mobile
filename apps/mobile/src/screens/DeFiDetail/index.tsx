@@ -40,7 +40,7 @@ export const RightMore: React.FC<{
   address: string;
   refreshBalance: () => void;
 }> = ({ token, address, refreshBalance }) => {
-  const { refreshTags } = useRefreshTags();
+  const { refreshTags } = useRefreshTags(address);
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -82,7 +82,7 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags(address);
+          refreshTags();
           refreshBalance();
         },
       },
