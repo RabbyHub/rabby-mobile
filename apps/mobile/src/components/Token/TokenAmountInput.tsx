@@ -83,7 +83,6 @@ function useLoadTokenList({
   // when no any queryConds
   const { tokens: allTokens, isLoading: isLoadingAllTokens } = useTokens(
     currentAccount?.address,
-    undefined,
     tokenSelectorVisible,
     updateNonce,
     chainServerId,

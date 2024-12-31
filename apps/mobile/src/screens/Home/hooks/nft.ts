@@ -1,24 +1,27 @@
 import { openapi } from '@/core/request';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNFTsAtom } from './store';
 
 export const useQueryNft = (addr?: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const preAddressRef = useRef<string>();
-  const [list, setList] = useState<NFTItem[]>([]);
+  const [list, setList] = useNFTsAtom(addr);
 
-  const fetchData = useCallback(async (id: string) => {
-    try {
-      setIsLoading(true);
-      const ntfs = await openapi.listNFT(id, true, true);
-      preAddressRef.current = id;
-      setList(ntfs);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const fetchData = useCallback(
+    async (id: string) => {
+      try {
+        setIsLoading(true);
+        const ntfs = await openapi.listNFT(id, true, true);
+        preAddressRef.current = id;
+        setList(ntfs);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setList],
+  );
 
   const reload = () => {
     if (addr) {

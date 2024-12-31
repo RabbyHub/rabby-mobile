@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-// import { atom, useSetAtom } from 'jotai';
 
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
@@ -17,6 +16,7 @@ import { DisplayedProject } from '../utils/project';
 import { produce } from '@/core/utils/produce';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
+import { usePortfoliosAtom } from './store';
 
 const chunkSize = 5;
 const { isSameAddress } = addressUtils;
@@ -46,20 +46,16 @@ export const log = (...args: any) => {
   // console.log(...args);
 };
 
-// export const portfolioChangeLoadingAtom = atom(true);
-
 export const usePortfolios = (
   userAddr: string | undefined,
   visible = true,
   isTestnet = false,
 ) => {
-  const [data, setData] = useSafeState<DisplayedProject[]>([]);
-  const [netWorth, setNetWorth] = useSafeState(0);
+  const [data, setData] = usePortfoliosAtom(userAddr);
   const [hasValue, setHasValue] = useSafeState(false);
   const abortProcess = useRef<AbortController>();
   const [isLoading, setLoading] = useSafeState(true);
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
-  const historyLoad = useRef<boolean>(false);
   const realtimeIds = useRef<string[]>([]);
   const userAddrRef = useRef('');
 
@@ -67,7 +63,6 @@ export const usePortfolios = (
     let timer: ReturnType<typeof setTimeout> | null = null;
     if (userAddr && !isSameAddress(userAddr, userAddrRef.current)) {
       setData([]);
-      setNetWorth(0);
     }
 
     if (userAddr) {
@@ -89,6 +84,12 @@ export const usePortfolios = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible]);
 
+  useEffect(() => {
+    return () => {
+      abortProcess.current?.abort();
+    };
+  }, []);
+
   const loadProcess = async () => {
     if (!userAddr) {
       return;
@@ -98,10 +99,7 @@ export const usePortfolios = (
     const currentAbort = new AbortController();
     abortProcess.current = currentAbort;
 
-    historyLoad.current = false;
-
     setLoading(true);
-    // setPortfolioChangeLoading(withHistory);
 
     log('======Start-Portfolio======', userAddr);
     setData([]);
@@ -137,7 +135,6 @@ export const usePortfolios = (
     );
     const tokenSetting = await preferenceService.getUserTokenSettings(userAddr);
     setData(tagProfiles(snapshotData, tokenSetting));
-    setNetWorth(snapshotNetWorth);
 
     const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
       snapshotData,
@@ -192,18 +189,10 @@ export const usePortfolios = (
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
     setData(tagProfiles(realtimeData, tokenSetting));
-
-    setNetWorth(realtimeData.reduce((m, n) => m + n.netWorth, 0));
     setLoading(false);
 
     log('portfolios-end', userAddr);
   };
-
-  useEffect(() => {
-    return () => {
-      abortProcess.current?.abort();
-    };
-  }, []);
 
   return {
     data,

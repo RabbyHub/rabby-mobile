@@ -82,7 +82,6 @@ const TokenSelect = ({
   // when no any queryConds
   const { tokens: _allTokens, isLoading: isLoadingAllTokens } = useTokens(
     useSwapTokenList ? undefined : currentAccount?.address,
-    undefined,
     tokenSelectorVisible,
     updateNonce,
     queryConds.chainServerId,

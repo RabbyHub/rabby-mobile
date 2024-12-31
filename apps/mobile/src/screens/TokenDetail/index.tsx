@@ -53,7 +53,7 @@ export const RightMore: React.FC<{
   triggerUpdate: () => void;
 }> = ({ token, address, triggerUpdate }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { refreshTags } = useRefreshTags();
+  const { refreshTags } = useRefreshTags(address);
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
@@ -88,7 +88,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTags(address);
+          refreshTags();
         },
       },
       {

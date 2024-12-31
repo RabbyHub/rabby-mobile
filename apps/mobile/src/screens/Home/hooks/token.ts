@@ -5,7 +5,7 @@ import { findChain } from '@/utils/chain';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { preferenceService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
+import { atom } from 'jotai';
 import { DisplayedProject } from '../utils/project';
 import {
   queryTokensCache,
@@ -16,14 +16,14 @@ import {
 } from '../utils/token';
 import { log } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
-
-export const walletProject = new DisplayedProject({
+import { useTokensAtom } from './store';
+const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
 });
 
 const { isSameAddress } = addressUtils;
-const filterDisplayToken2024 = (tokens: AbstractPortfolioToken[]) => {
+const filterDisplayToken = (tokens: AbstractPortfolioToken[]) => {
   return tokens.filter(token => {
     return findChain({
       serverId: token.chain,
@@ -31,9 +31,6 @@ const filterDisplayToken2024 = (tokens: AbstractPortfolioToken[]) => {
   });
 };
 
-export const mainnetTokensAtom = atom({
-  list: [] as AbstractPortfolioToken[],
-});
 export const testnetTokensAtom = atom({
   list: [] as AbstractPortfolioToken[],
 });
@@ -46,17 +43,15 @@ export const useTokens = (
   isTestnet = false,
 ) => {
   const abortProcess = useRef<AbortController>();
-  const [data, setData] = useSafeState(walletProject);
   const [isLoading, setLoading] = useSafeState(true);
-  const [mainnetTokens, setMainnetTokens] = useAtom(mainnetTokensAtom);
+  const [mainnetTokens, setMainnetTokens] = useTokensAtom(userAddr);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (updateNonce === 0) {
-      return;
+    if (updateNonce !== 0) {
+      loadProcess();
     }
-    loadProcess();
     return () => {
       abortProcess.current?.abort();
     };
@@ -79,8 +74,6 @@ export const useTokens = (
           loadProcess();
         }
       });
-    } else {
-      setData(undefined);
     }
 
     return () => {
@@ -92,18 +85,11 @@ export const useTokens = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible, chainServerId]);
 
-  useEffect(() => {
-    return () => {
-      abortProcess.current?.abort();
-    };
-  }, []);
-
   const loadProcess = async () => {
     if (!userAddr) {
       return;
     }
 
-    // await dispatch.account.resetTokenList();
     const currentAbort = new AbortController();
     abortProcess.current = currentAbort;
 
@@ -121,7 +107,6 @@ export const useTokens = (
     });
 
     let _tokens: AbstractPortfolioToken[] = [];
-    setData(_data);
     const snapshot = await queryTokensCache(userAddr, isTestnet);
 
     const tokenSettings =
@@ -144,15 +129,9 @@ export const useTokens = (
         setWalletTokens(draft, chainTokens);
       });
 
-      setData(_data);
       _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-      setMainnetTokens(prev => {
-        return {
-          ...prev,
-          list: filterDisplayToken2024(_tokens),
-        };
-      });
+      setMainnetTokens(filterDisplayToken(_tokens));
       setLoading(false);
     }
 
@@ -176,15 +155,9 @@ export const useTokens = (
       setWalletTokens(draft, tokensDict);
     });
 
-    setData(_data);
     _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-    setMainnetTokens(prev => {
-      return {
-        ...prev,
-        list: [...filterDisplayToken2024(_tokens)],
-      };
-    });
+    setMainnetTokens([...filterDisplayToken(_tokens)]);
 
     setLoading(false);
     log('<<==Tokens-end==>>', userAddr);
@@ -192,27 +165,21 @@ export const useTokens = (
 
   return {
     isLoading,
-    tokens: mainnetTokens.list,
-    // testnetTokens: testnetTokens.list,
+    tokens: mainnetTokens,
     updateData: loadProcess,
   };
 };
 
-export const useRefreshTags = () => {
-  const [mainnetTokens, setMainnetTokens] = useAtom(mainnetTokensAtom);
+export const useRefreshTags = (userAddr?: string) => {
+  const [, setMainnetTokens] = useTokensAtom(userAddr);
 
-  const refreshTags = async (userAddr: string) => {
+  const refreshTags = async () => {
     if (!userAddr) {
       return;
     }
     const tokenSettings =
       (await preferenceService.getUserTokenSettings(userAddr)) || {};
-    setMainnetTokens(prev => {
-      return {
-        ...prev,
-        list: tagTokenList(mainnetTokens.list, tokenSettings),
-      };
-    });
+    setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
   };
   return {
     refreshTags,

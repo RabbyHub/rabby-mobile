@@ -75,6 +75,6 @@ export const useQueryProjects = (
     nftListLoading,
     loading: isTokensLoading || isPortfoliosLoading || nftListLoading,
     refreshing: refreshingToken || refreshingDefi || refreshingNft,
-    hasAssets: !!tokens.length || !!portfolios?.length || !!nftList.length,
+    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList.length,
   };
 };

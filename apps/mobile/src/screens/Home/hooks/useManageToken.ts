@@ -1,12 +1,8 @@
 import { preferenceService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
-import { useAtom } from 'jotai';
 import { AbstractPortfolioToken } from '../types';
-import { mainnetTokensAtom } from './token';
 
 export const useManageTokenList = () => {
-  const [, setMainnetTokens] = useAtom(mainnetTokensAtom);
-
   const addCustomToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
       const isAdded = await preferenceService.addCustomizedToken({
@@ -14,12 +10,12 @@ export const useManageTokenList = () => {
         chain: token.chain,
       });
       if (isAdded) {
-        setMainnetTokens(prev => {
-          return {
-            ...prev,
-            customize: [...prev.customize, token],
-          };
-        });
+        // setMainnetTokens(prev => {
+        //   return {
+        //     ...prev,
+        //     customize: [...prev.customize, token],
+        //   };
+        // });
       }
     },
   );
@@ -30,14 +26,14 @@ export const useManageTokenList = () => {
         address: token._tokenId,
         chain: token.chain,
       });
-      setMainnetTokens(prev => {
-        return {
-          ...prev,
-          customize: (prev.customize || []).filter(item => {
-            return item.id !== token.id;
-          }),
-        };
-      });
+      // setMainnetTokens(prev => {
+      //   return {
+      //     ...prev,
+      //     customize: (prev.customize || []).filter(item => {
+      //       return item.id !== token.id;
+      //     }),
+      //   };
+      // });
     },
   );
 
@@ -47,13 +43,13 @@ export const useManageTokenList = () => {
         address: token._tokenId,
         chain: token.chain,
       });
-      setMainnetTokens(prev => {
-        return {
-          ...prev,
-          blocked: [...prev.blocked, token],
-          list: prev.list.filter(item => item.id !== token.id),
-        };
-      });
+      // setMainnetTokens(prev => {
+      //   return {
+      //     ...prev,
+      //     blocked: [...prev.blocked, token],
+      //     list: prev.list.filter(item => item.id !== token.id),
+      //   };
+      // });
     },
   );
 
@@ -63,15 +59,15 @@ export const useManageTokenList = () => {
         address: token._tokenId,
         chain: token.chain,
       });
-      setMainnetTokens(prev => {
-        return {
-          ...prev,
-          blocked: (prev.blocked || []).filter(item => {
-            return item.id !== token.id;
-          }),
-          list: [...prev.list, token],
-        };
-      });
+      // setMainnetTokens(prev => {
+      //   return {
+      //     ...prev,
+      //     blocked: (prev.blocked || []).filter(item => {
+      //       return item.id !== token.id;
+      //     }),
+      //     list: [...prev.list, token],
+      //   };
+      // });
     },
   );
 
