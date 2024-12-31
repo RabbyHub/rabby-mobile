@@ -2,10 +2,12 @@ import { AbstractPortfolioToken } from '../types';
 import { atom, useAtom } from 'jotai';
 import { DisplayedProject } from '../utils/project';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
+import { formatNetworth } from '@/utils/math';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
-  totalAmount: string;
-  totalUsdValue?: number;
+  totalAmount: BigNumber;
+  totalUsdValue?: BigNumber;
   fromAddress: Array<{
     address: string;
     addressType: string;
@@ -21,7 +23,7 @@ interface IAssets {
 }
 
 export const assetsMapAtom = atom<{ [address: string]: IAssets }>({});
-
+export const useAssetsMap = () => useAtom(assetsMapAtom);
 const getOrInitializeAssets = (
   assets: { [address: string]: IAssets },
   address: string,
@@ -138,3 +140,51 @@ export const useLastUpdateTimeAtom = (address?: string) => {
   };
   return [lastUpdateTime, setLastUpdateTime] as const;
 };
+
+export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
+  const assetsMap = get(assetsMapAtom);
+  const tokenMap: Record<string, CombineTokensItem> = {};
+
+  Object.entries(assetsMap).forEach(([address, assets]) => {
+    assets.tokens?.forEach(token => {
+      const key = `${token._tokenId}-${token.chain}`;
+      if (key === 'eth-eth') {
+        // console.log('🔍 CUSTOM_LOGGER:=>: token)', token);
+      }
+      if (!tokenMap[key]) {
+        tokenMap[key] = {
+          ...token,
+          totalAmount: new BigNumber(token.amount || 0),
+          totalUsdValue: new BigNumber(token._usdValue || 0),
+          fromAddress: [
+            {
+              address,
+              addressType: 'wallet',
+              amount: token._amountStr || '',
+            },
+          ],
+        };
+      } else {
+        const existingToken = tokenMap[key];
+        existingToken.totalAmount = existingToken.totalAmount.plus(
+          token.amount || 0,
+        );
+        existingToken.totalUsdValue = existingToken.totalUsdValue?.plus(
+          token._usdValue || 0,
+        );
+        existingToken.fromAddress.push({
+          address,
+          addressType: 'wallet',
+          amount: token._amountStr || '',
+        });
+      }
+    });
+  });
+
+  return Object.values(tokenMap).map(i => ({
+    ...i,
+    _usdValue: i.totalUsdValue?.toNumber(),
+    _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
+    _amountStr: formatNetworth(i.totalAmount.toNumber()),
+  }));
+});

@@ -98,7 +98,7 @@ function useLoadTokenList({
     });
 
   const allDisplayTokens = useMemo(() => {
-    return allTokens.filter(i => !i._isFold).map(abstractTokenToTokenItem);
+    return allTokens?.filter(i => !i._isFold).map(abstractTokenToTokenItem);
   }, [allTokens]);
 
   const { isLoading: isSearchLoading, list: searchedTokenByQuery } =
@@ -110,7 +110,7 @@ function useLoadTokenList({
 
   const availableToken = useMemo(() => {
     const allTokens = chainServerId
-      ? allDisplayTokens.filter(token => token.chain === chainServerId)
+      ? allDisplayTokens?.filter(token => token.chain === chainServerId)
       : allDisplayTokens;
     return uniqBy(
       keyword ? searchedTokenByQuery.map(abstractTokenToTokenItem) : allTokens,
@@ -130,7 +130,7 @@ function useLoadTokenList({
 
   const foldTokensList = useMemo(() => {
     const list = convertSmallTokenList(
-      allTokens.filter(i => i._isFold && i.chain === chainServerId),
+      allTokens?.filter(i => i._isFold && i.chain === chainServerId),
     ).map(abstractTokenToTokenItem);
     return list.filter(e => !excludeTokens.includes(e.id));
   }, [allTokens, excludeTokens, chainServerId]);

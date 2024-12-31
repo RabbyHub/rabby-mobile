@@ -9,7 +9,7 @@ import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from '@/screens/Home/components/Skeleton';
-import { useQueryProjects } from '@/screens/Home/hooks';
+import { useQueryProjects } from '../useAssets';
 import useSortToken from '@/screens/Home/hooks/useSortTokens';
 import {
   AbstractPortfolio,

@@ -121,7 +121,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.pin_success'));
           }
           token._isPined = !token._isPined;
-          refreshTags(address);
+          refreshTags();
         },
       },
       {
@@ -160,7 +160,7 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags(address);
+          refreshTags();
           triggerUpdate();
         },
       },

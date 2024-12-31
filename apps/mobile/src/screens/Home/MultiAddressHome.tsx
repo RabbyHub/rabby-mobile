@@ -61,6 +61,7 @@ import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
+import { useAssetsMap } from './hooks/store';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -412,6 +413,7 @@ function MultiAddressHome(): JSX.Element {
     },
     [navigation, toggleUseAllAccountsOnScene, openUrlAsDapp],
   );
+  const [asssest] = useAssetsMap();
 
   const handleClickPinAccount = useCallback(
     (pinItem: KeyringAccountWithAlias) => {
@@ -431,6 +433,10 @@ function MultiAddressHome(): JSX.Element {
     [switchAccount, navigation],
   );
   const handlePressSearch = () => {
+    console.log(
+      '🔍 CUSTOM_LOGGER:=>: handlePressSearch)',
+      Object.keys(asssest),
+    );
     navigation.navigate(RootNames.StackRoot, {
       screen: RootNames.Search,
       params: {},

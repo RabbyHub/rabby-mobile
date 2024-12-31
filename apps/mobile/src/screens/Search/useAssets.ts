@@ -1,18 +1,15 @@
 import { useCallback, useMemo } from 'react';
-import { useTokens } from './token';
-import { usePortfolios } from './usePortfolio';
-import { useQueryNft } from './nft';
+import { usePortfolios } from '@/screens/Home/hooks/usePortfolio';
+import { useQueryNft } from '@/screens/Home/hooks/nft';
+import { combinedTokensAtom } from '@/screens/Home/hooks/store';
+import { useAtom } from 'jotai';
 
 export const useQueryProjects = (
   userAddr: string | undefined,
   visible: boolean,
   isTestnet = false,
 ) => {
-  const {
-    tokens,
-    isLoading: isTokensLoading,
-    updateData: updateTokens,
-  } = useTokens(userAddr, visible, 0, undefined, isTestnet);
+  const [tokens] = useAtom(combinedTokensAtom);
 
   const {
     data: portfolios,
@@ -28,26 +25,12 @@ export const useQueryProjects = (
   } = useQueryNft(userAddr);
 
   const refreshPositions = useCallback(() => {
-    if (!isTokensLoading && !isPortfoliosLoading) {
+    if (!isPortfoliosLoading) {
       updatePortfolio();
-      updateTokens();
       reloadNftList();
     }
-  }, [
-    isTokensLoading,
-    isPortfoliosLoading,
-    updatePortfolio,
-    updateTokens,
-    reloadNftList,
-  ]);
+  }, [isPortfoliosLoading, updatePortfolio, reloadNftList]);
 
-  const refreshingToken = useMemo(() => {
-    if ((tokens?.length || 0) > 0) {
-      return !!isTokensLoading;
-    } else {
-      return false;
-    }
-  }, [isTokensLoading, tokens?.length]);
   const refreshingDefi = useMemo(() => {
     if ((portfolios?.length || 0) > 0) {
       return !!isPortfoliosLoading;
@@ -66,15 +49,14 @@ export const useQueryProjects = (
 
   return {
     refreshPositions,
-    isTokensLoading,
     isPortfoliosLoading,
     hasPortfolios,
     tokens,
     portfolios,
     nftList,
     nftListLoading,
-    loading: isTokensLoading || isPortfoliosLoading || nftListLoading,
-    refreshing: refreshingToken || refreshingDefi || refreshingNft,
+    loading: isPortfoliosLoading || nftListLoading,
+    refreshing: refreshingDefi || refreshingNft,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
   };
 };

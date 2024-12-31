@@ -234,7 +234,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             });
             toast.success(t('page.tokenDetail.actionsTips.pin_success'));
           }
-          refreshTags(currentAccount?.address);
+          refreshTags();
         },
       },
     ];
