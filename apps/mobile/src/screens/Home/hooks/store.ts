@@ -155,6 +155,7 @@ export const useLastUpdateTimeAtom = (address?: string) => {
   return [lastUpdateTime, setLastUpdateTime] as const;
 };
 
+// TODO: keyringService.getAllVisibleAccountsArray() only top10 accounts
 export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
   const assetsMap = get(assetsMapAtom);
   const tokenMap: Record<string, CombineTokensItem> = {};
@@ -337,3 +338,5 @@ export const updateNFTsAtom = atom(
     });
   },
 );
+
+// TODO: delete outer top10 address assets
