@@ -59,6 +59,10 @@ export type IManageToken = {
   tokenId: string;
 };
 
+function makeManageTokenKey(x: IManageToken): `${string}-${string}` {
+  return `${x.chainId}-${x.tokenId}`;
+}
+
 export type IDefiOrToken = {
   id: string;
   chainid: string;
@@ -74,7 +78,10 @@ export type ITokenSetting = {
 };
 
 export interface ITokenManageSettingMap {
-  [address: string]: ITokenSetting;
+  [address: string]: Omit<ITokenSetting, 'pinedQueue'> & {
+    /** @deprecated will be migrated to store.pinedQueue */
+    pinedQueue?: IManageToken[];
+  };
 }
 
 export interface PreferenceStore {
@@ -196,6 +203,36 @@ export class PreferenceService {
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
     }
+
+    this._migrate();
+  }
+
+  private _migrate() {
+    // leave here for debug
+    // console.debug('[preference::_migrate] this.store.tokenManageSettingMap', JSON.stringify(this.store.tokenManageSettingMap, null, '\t'));
+    const pinedQueue = [...(this.store.pinedQueue || [])];
+    const pinedQueueSet = new Set(pinedQueue.map(x => makeManageTokenKey(x)));
+
+    const tokenManageSettingMap = { ...this.store.tokenManageSettingMap };
+    Object.entries(tokenManageSettingMap).forEach(([eoaAddr, setting]) => {
+      setting.pinedQueue?.forEach(item => {
+        const key = makeManageTokenKey(item);
+        if (!pinedQueueSet.has(key)) {
+          pinedQueue.push(item);
+          pinedQueueSet.add(key);
+        }
+      });
+
+      // TODO: should we delete old data?
+      // delete setting.pinedQueue;
+    });
+
+    this.store.pinedQueue = pinedQueue;
+    this.store.tokenManageSettingMap = tokenManageSettingMap;
+    console.debug(
+      '[preference::_migrate] this.store.pinedQueue',
+      this.store.pinedQueue,
+    );
   }
 
   /* eslint-disable no-dupe-class-members */
