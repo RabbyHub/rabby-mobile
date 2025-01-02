@@ -14,6 +14,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { useTranslation } from 'react-i18next';
+import { HighlightText } from '@/components2024/HighlightText';
 
 const hitSlop = {
   top: 10,
@@ -24,9 +25,11 @@ const hitSlop = {
 
 export const DefiRow = ({
   data,
+  filterText,
   onPress,
 }: {
   data: AbstractProject;
+  filterText?: string;
   onPress?: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -66,9 +69,14 @@ export const DefiRow = ({
           chain={data?.chain}
           chainSize={16}
         />
-        <Text style={styles.projectName} numberOfLines={1}>
-          {data?.name}
-        </Text>
+        <HighlightText
+          style={styles.projectName}
+          highlightStyle={styles.highlightText}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          searchWords={[filterText || '']}
+          textToHighlight={data?.name}
+        />
       </View>
       <View style={styles.projectHeaderUsd}>
         <Text
@@ -117,6 +125,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  highlightText: {
+    color: ctx.colors2024['brand-default'],
   },
   projectHeaderUsd: {
     justifyContent: 'center',

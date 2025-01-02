@@ -28,6 +28,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { PinBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
+import { HighlightText } from '@/components2024/HighlightText';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -51,6 +52,7 @@ export const TokenRow = memo(
     logoSize,
     logoStyle,
     menuActions,
+    filterText,
     onTokenPress,
     disableMenu,
   }: {
@@ -59,6 +61,7 @@ export const TokenRow = memo(
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
+    filterText?: string;
     menuActions?: MenuAction[];
     disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
@@ -136,19 +139,26 @@ export const TokenRow = memo(
           </View>
           <View style={styles.tokenRowTokenInner}>
             <View style={styles.tokenHeader}>
-              <Text
-                style={StyleSheet.flatten([styles.tokenSymbol])}
+              <HighlightText
+                style={styles.tokenSymbol}
+                highlightStyle={styles.highlightText}
                 numberOfLines={1}
-                ellipsizeMode="tail">
-                {data.symbol}
-              </Text>
+                ellipsizeMode="tail"
+                searchWords={[filterText || '']}
+                textToHighlight={data.symbol}
+              />
               {data._isPined && <PinBadge />}
             </View>
 
             {data._priceStr ? (
-              <Text style={styles.amountStr} numberOfLines={1}>
-                {`${data._amountStr} ${data.symbol}`}
-              </Text>
+              <HighlightText
+                style={styles.amountStr}
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                searchWords={[filterText || '']}
+                textToHighlight={`${data._amountStr} ${data.symbol}`}
+              />
             ) : null}
           </View>
         </View>
@@ -334,6 +344,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  highlightText: {
+    color: ctx.colors2024['brand-default'],
   },
   exclude: {
     color: ctx.colors2024['neutral-info'],

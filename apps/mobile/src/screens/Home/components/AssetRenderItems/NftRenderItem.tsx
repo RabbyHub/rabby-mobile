@@ -10,12 +10,15 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
+import { HighlightText } from '@/components2024/HighlightText';
 
 export const NftRow = ({
   item,
   onPress,
+  filterText,
 }: {
   item: NFTItem;
+  filterText?: string;
   onPress: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -55,9 +58,14 @@ export const NftRow = ({
             />
           ) : null}
         </View>
-        <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-          {item.name}
-        </Text>
+        <HighlightText
+          style={styles.name}
+          highlightStyle={styles.highlightText}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          searchWords={[filterText || '']}
+          textToHighlight={item.name}
+        />
       </View>
       <Text style={styles.amount}>{item.amount}</Text>
     </TouchableOpacity>
@@ -132,6 +140,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,
+  },
+  highlightText: {
+    color: colors2024['brand-default'],
   },
   amount: {
     fontSize: 16,

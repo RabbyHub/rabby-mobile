@@ -112,6 +112,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
           <TokenRow
             data={item}
             onTokenPress={handleOpenTokenDetail}
+            filterText={filterText}
             logoSize={40}
             disableMenu
           />
@@ -120,16 +121,25 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
         return (
           <TokenRow
             data={item}
+            filterText={filterText}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
+            disableMenu
           />
         );
       case 'nft':
-        return <NftRow item={item} onPress={() => handlePressNft(item)} />;
+        return (
+          <NftRow
+            filterText={filterText}
+            item={item}
+            onPress={() => handlePressNft(item)}
+          />
+        );
       case 'defi':
         return (
           <DefiRow
             data={item}
+            filterText={filterText}
             onPress={() =>
               handleOpenDefiDetail(item, [...(item._portfolios || [])])
             }
