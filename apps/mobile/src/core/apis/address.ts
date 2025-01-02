@@ -75,4 +75,14 @@ export async function getAllAccounts() {
   return await keyringService.getAllVisibleAccountsArray();
 }
 
+export async function getAllMyAccount() {
+  const accouts = await keyringService.getAllVisibleAccountsArray();
+  return accouts.filter(item => {
+    return (
+      item.type !== KEYRING_TYPE.WatchAddressKeyring &&
+      item.type !== KEYRING_TYPE.GnosisKeyring
+    );
+  });
+}
+
 export async function addWalletConnectAddress(addrses: string) {}

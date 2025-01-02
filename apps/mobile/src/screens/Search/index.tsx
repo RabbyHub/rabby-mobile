@@ -8,7 +8,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RcNextLeftCC } from '@/assets/icons/common';
 import { NextSearchBar } from '@/components2024/SearchBar';
 
-import { AssetContainer } from './components/AssetContainer';
+import { SearchAssets } from './components/SearchAssets';
 
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -43,7 +43,7 @@ function SearchScreen(): JSX.Element {
         />
       </View>
       <SafeAreaView style={styles.safeView}>
-        <AssetContainer />
+        <SearchAssets />
       </SafeAreaView>
     </NormalScreenContainer2024>
   );

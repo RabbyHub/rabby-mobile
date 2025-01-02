@@ -5,6 +5,7 @@ import {
   updateTokensAtom,
   updatePortfoliosAtom,
   updateNFTsAtom,
+  lastUpdateTimeAtom,
 } from '@/screens/Home/hooks/store';
 import { useSafeState } from '@/hooks/useSafeState';
 import { useAtom } from 'jotai';
@@ -32,6 +33,7 @@ import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useRef } from 'react';
+import { useSortAddressList } from '../Address/useSortAddressList';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -41,11 +43,13 @@ const walletProject = new DisplayedProject({
 export const useQueryProjects = () => {
   const [isLoading, setLoading] = useSafeState(true);
   const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  const [getUpdateTime, updateUpdateTime] = useAtom(lastUpdateTimeAtom);
 
   const [tokens] = useAtom(combinedTokensAtom);
   const [portfolios] = useAtom(combinedDefiAtom);
   const [nftList] = useAtom(combinedNFTAtom);
-
   const [, updateTokens] = useAtom(updateTokensAtom);
   const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
   const [, updateNftList] = useAtom(updateNFTsAtom);
@@ -185,12 +189,24 @@ export const useQueryProjects = () => {
   };
 
   const initFetchTop10Assets = () => {
-    // TODO: performance search
-    const top10Account = accounts.slice(0, 10);
+    const top10Account = sortedAccounts.slice(0, 10);
     top10Account.forEach(async account => {
-      await loadCacheToken(account.address, account);
-      await loadCacheDefi(account.address, account);
-      await loadNFT(account.address, account);
+      const lastUpdateTime = getUpdateTime(account.address) || 0;
+      const currentTime = Date.now();
+
+      if (currentTime - lastUpdateTime >= 10 * 60 * 1000) {
+        await loadCacheToken(account.address, account);
+        await loadCacheDefi(account.address, account);
+        await loadNFT(account.address, account);
+        console.log(
+          '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
+          account.address.slice(-8),
+        );
+        await updateUpdateTime({
+          address: account.address,
+          newLastUpdateTime: Date.now(),
+        });
+      }
     });
   };
 

@@ -89,20 +89,20 @@ export const DefiRow = ({
   );
 };
 export const DefiSectionHeader = ({
-  usdStr,
   onPress,
   fold,
 }: {
-  usdStr: string;
   fold?: boolean;
   onPress?: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   return (
     <View style={styles.headerWrapper}>
-      <Text style={styles.symbol}>Defi</Text>
+      <Text style={styles.symbol}>
+        {t('page.singleHome.sectionHeader.Defi')}
+      </Text>
       <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
-        <Text style={styles.totalUsd}>{usdStr}</Text>
         <ArrowRightSVG
           style={[
             styles.arrow,
@@ -179,13 +179,6 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 4,
-  },
-  totalUsd: {
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
   },
   arrow: {},
   modalNextButtonText: {

@@ -52,6 +52,7 @@ export const TokenRow = memo(
     logoStyle,
     menuActions,
     onTokenPress,
+    disableMenu,
   }: {
     data: AbstractPortfolioToken;
     style?: ViewStyle;
@@ -59,6 +60,7 @@ export const TokenRow = memo(
     fold?: boolean;
     logoSize?: number;
     menuActions?: MenuAction[];
+    disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -110,6 +112,78 @@ export const TokenRow = memo(
         },
       });
     };
+    const children = (
+      <TouchableOpacity
+        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        delayLongPress={200}
+        onLongPress={() => {
+          setShowContextMenu(true);
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}
+        onPress={onPressToken}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={16}
+            />
+          </View>
+          <View style={styles.tokenRowTokenInner}>
+            <View style={styles.tokenHeader}>
+              <Text
+                style={StyleSheet.flatten([styles.tokenSymbol])}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {data.symbol}
+              </Text>
+              {data._isPined && <PinBadge />}
+            </View>
+
+            {data._priceStr ? (
+              <Text style={styles.amountStr} numberOfLines={1}>
+                {`${data._amountStr} ${data.symbol}`}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.tokenRowUsdValueWrap}>
+          <Text
+            style={[
+              data._amountStr ? styles.tokenRowAmount : styles.tokenRowUsdValue,
+              data._isExcludeBalance &&
+                (data._usdValue || 0) > 0 &&
+                styles.exclude,
+            ]}>
+            {data._usdValueStr}
+          </Text>
+          {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
+            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
+              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
+            </TouchableOpacity>
+          ) : data._amountStr ? (
+            <Text
+              style={StyleSheet.compose(styles.percent, {
+                ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                  ? styles.exclude
+                  : {}),
+                color: percentColor,
+              })}>
+              {formatPercentage(data.price_24h_change || 0)}
+            </Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+    );
+    if (disableMenu) {
+      return children;
+    }
 
     return (
       <ContextMenuView
@@ -118,80 +192,7 @@ export const TokenRow = memo(
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>
-        <TouchableOpacity
-          style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-          delayLongPress={200}
-          onLongPress={() => {
-            setShowContextMenu(true);
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-          }}
-          onPress={onPressToken}>
-          <View style={styles.tokenRowTokenWrap}>
-            <View>
-              <AssetAvatar
-                logo={data?.logo_url}
-                chain={data?.chain}
-                style={mediaStyle}
-                size={logoSize}
-                chainSize={16}
-              />
-            </View>
-            <View style={styles.tokenRowTokenInner}>
-              <View style={styles.tokenHeader}>
-                <Text
-                  style={StyleSheet.flatten([styles.tokenSymbol])}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {data.symbol}
-                </Text>
-                {data._isPined && <PinBadge />}
-              </View>
-
-              {data._priceStr ? (
-                <Text style={styles.amountStr} numberOfLines={1}>
-                  {`${data._amountStr} ${data.symbol}`}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-
-          <View style={styles.tokenRowUsdValueWrap}>
-            <Text
-              style={[
-                data._amountStr
-                  ? styles.tokenRowAmount
-                  : styles.tokenRowUsdValue,
-                data._isExcludeBalance &&
-                  (data._usdValue || 0) > 0 &&
-                  styles.exclude,
-              ]}>
-              {data._usdValueStr}
-            </Text>
-            {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
-              <TouchableOpacity
-                hitSlop={hitSlop}
-                onPress={handleShowExcludeTips}>
-                <RcTipCC
-                  style={styles.tips}
-                  color={colors2024['neutral-info']}
-                />
-              </TouchableOpacity>
-            ) : data._amountStr ? (
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(data.price_24h_change || 0)}
-              </Text>
-            ) : null}
-          </View>
-        </TouchableOpacity>
+        {children}
       </ContextMenuView>
     );
   },

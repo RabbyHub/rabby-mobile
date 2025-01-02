@@ -2417,6 +2417,19 @@
     "receiveAddressList": {
       "title": "Select Recipient Address",
       "selectChainTitle": "Select Chain"
+    },
+    "singleHome": {
+      "sectionHeader": {
+        "Defi": "Defi",
+        "Nft": "NFT"
+      }
+    },
+    "search": {
+      "sectionHeader": {
+        "token": "Tokens",
+        "Defi": "Defi",
+        "NFT": "NFT"
+      }
     }
   },
   "component": {
