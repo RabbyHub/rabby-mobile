@@ -101,6 +101,7 @@ export const SearchAssets: React.FC<Props> = () => {
             data={item}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
+            disableMenu
           />
         );
       case 'fold_token':
