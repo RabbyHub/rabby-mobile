@@ -46,7 +46,11 @@ import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RcIconRightCC } from '@/assets/icons/common';
-import { CombineDefiItem, CombineTokensItem } from '../Home/hooks/store';
+import {
+  CombineDefiItem,
+  CombineTokensItem,
+  useAssetsMap,
+} from '../Home/hooks/store';
 import { useQueryProjects } from '../Search/useAssets';
 import { DisplayedProject, DisplayedPortfolio } from '../Home/utils/project';
 import { RelatedDeFi } from './components/RelatedDeFi';
@@ -55,6 +59,8 @@ import { formatTokenAmount } from '@/utils/number';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
+
+type RelatedDeFi = DisplayedProject & { amount: string };
 
 const hitSlop = {
   top: 10,
@@ -210,7 +216,7 @@ export const TokenDetailScreen = () => {
     account: KeyringAccountWithAlias;
   };
 
-  // console.log('tokenDetail token:', token);
+  console.log('tokenDetail token:', token.fromAddress);
   // const { token, account } = useNavigationState(
   //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
   // ) as {
@@ -222,45 +228,80 @@ export const TokenDetailScreen = () => {
     getStyle,
   });
 
-  const { tokens, portfolios, nftList } = useQueryProjects();
+  // const { tokens, portfolios, nftList } = useQueryProjects();
+  const [asssest] = useAssetsMap();
 
   // console.log('tokenDetail portfolios:', portfolios);
 
   const { safeOffBottom } = useSafeSizes();
 
   const relateDefiList = useMemo(() => {
-    const resList = [] as CombineDefiItem[];
+    const resList = [] as RelatedDeFi[];
 
-    portfolios.map(portfolio => {
-      if (portfolio.chain !== token.chain) {
-        return;
-      }
-
-      let amount = 0;
-      const { _portfolios } = portfolio;
-      _portfolios?.map(portfolioItem => {
-        const { _tokenList } = portfolioItem;
-        console.log('_tokenList:', _tokenList);
-
-        const sameItem = _tokenList.find(
-          item => item._tokenId === token._tokenId,
-        );
-        if (sameItem) {
-          amount += sameItem.amount;
+    Object.values(asssest).map(({ portfolios }) => {
+      portfolios?.map(portfolio => {
+        if (portfolio.chain !== token.chain) {
+          return;
         }
-      });
 
-      amount &&
-        resList.push({
-          ...portfolio,
-          amount: formatTokenAmount(Math.abs(amount)),
+        let amount = 0;
+        const { _portfolios } = portfolio;
+        _portfolios?.map(portfolioItem => {
+          const { _tokenList } = portfolioItem;
+          console.log('_tokenList:', _tokenList);
+
+          const sameItem = _tokenList.find(
+            item => item._tokenId === token._tokenId,
+          );
+          if (sameItem) {
+            amount += sameItem.amount;
+          }
         });
+
+        amount &&
+          resList.push({
+            ...portfolio,
+            amount: formatTokenAmount(Math.abs(amount)),
+          });
+      });
     });
-
     console.log('relateDefiList length:', resList.length);
-
     return resList;
-  }, [portfolios, token]);
+  }, [token, asssest]);
+
+  // const relateDefiList = useMemo(() => {
+  //   const resList = [] as CombineDefiItem[];
+
+  //   portfolios.map(portfolio => {
+  //     if (portfolio.chain !== token.chain) {
+  //       return;
+  //     }
+
+  //     let amount = 0;
+  //     const { _portfolios } = portfolio;
+  //     _portfolios?.map(portfolioItem => {
+  //       const { _tokenList } = portfolioItem;
+  //       console.log('_tokenList:', _tokenList);
+
+  //       const sameItem = _tokenList.find(
+  //         item => item._tokenId === token._tokenId,
+  //       );
+  //       if (sameItem) {
+  //         amount += sameItem.amount;
+  //       }
+  //     });
+
+  //     amount &&
+  //       resList.push({
+  //         ...portfolio,
+  //         amount: formatTokenAmount(Math.abs(amount)),
+  //       });
+  //   });
+
+  //   console.log('relateDefiList length:', resList.length);
+
+  //   return resList;
+  // }, [portfolios, token]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -382,14 +423,12 @@ export const TokenDetailScreen = () => {
         <View style={styles.divider} />
         <TokenArea
           handleSwap={handleSwap}
-          account={finalAccount}
           amountList={
             !account
               ? token.fromAddress
               : [
                   {
                     ...token,
-                    account: finalAccount,
                     amount: token._amountStr!,
                     address: finalAccount.address,
                   },

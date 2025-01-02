@@ -1,12 +1,14 @@
 import { Text } from '@/components';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import type { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisAddress } from '@/utils/address';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo } from 'react';
@@ -14,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 
 interface Props {
-  account: KeyringAccountWithAlias;
   token: AbstractPortfolioToken;
   amountList: CombineTokensItem['fromAddress'];
   handleSwap: (type: 'Buy' | 'Sell', address: string) => void;
@@ -23,16 +24,24 @@ interface Props {
 type amountItem = CombineTokensItem['fromAddress'][number];
 
 export const TokenArea: React.FC<Props> = ({
-  account,
   token,
   amountList,
   handleSwap,
 }) => {
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const getAccountName = useCallback(
-    (i: amountItem['account']) => i?.aliasName || i?.brandName,
-    [],
+  const getAccount = useCallback(
+    (address: string) => {
+      const item = sortedAccounts.find(
+        a =>
+          a.type !== KEYRING_TYPE.WatchAddressKeyring &&
+          isSameAddress(a.address, address),
+      );
+      return item;
+    },
+    [sortedAccounts],
   );
 
   const { t } = useTranslation();
@@ -49,7 +58,7 @@ export const TokenArea: React.FC<Props> = ({
             <View style={styles.accountBox}>
               <View className="relative">
                 <WalletIcon
-                  type={item.account?.type as KEYRING_TYPE}
+                  type={getAccount(item.address)?.type as KEYRING_TYPE}
                   width={styles.walletIcon.width}
                   height={styles.walletIcon.height}
                   style={styles.walletIcon}
@@ -59,7 +68,8 @@ export const TokenArea: React.FC<Props> = ({
                 numberOfLines={1}
                 ellipsizeMode="tail"
                 style={styles.titleText}>
-                {getAccountName(item.account)}
+                {getAccount(item.address)?.aliasName ||
+                  getAccount(item.address)?.brandName}
               </Text>
             </View>
           </View>
@@ -90,7 +100,7 @@ export const TokenArea: React.FC<Props> = ({
       styles.walletIcon,
       t,
       token.symbol,
-      getAccountName,
+      getAccount,
     ],
   );
 

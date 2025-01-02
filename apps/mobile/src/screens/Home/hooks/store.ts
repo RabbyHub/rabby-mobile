@@ -14,7 +14,6 @@ export type CombineTokensItem = AbstractPortfolioToken & {
   fromAddress: Array<{
     address: string;
     amount: string;
-    account: KeyringAccountWithAlias;
   }>;
 };
 
@@ -300,11 +299,9 @@ export const updateTokensAtom = atom(
     set,
     {
       address,
-      account,
       newTokens,
     }: {
       address: string;
-      account: KeyringAccountWithAlias;
       newTokens: AbstractPortfolioToken[];
     },
   ) => {
@@ -313,7 +310,6 @@ export const updateTokensAtom = atom(
     set(assetsMapAtom, {
       ...currentAssets,
       [address]: {
-        account,
         ...currentAssets[address],
         tokens: newTokens,
       },

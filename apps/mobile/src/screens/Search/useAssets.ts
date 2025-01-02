@@ -57,10 +57,7 @@ export const useQueryProjects = () => {
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
 
-  const loadCacheToken = async (
-    address: string,
-    account: KeyringAccountWithAlias,
-  ) => {
+  const loadCacheToken = async (address: string) => {
     if (!address) {
       return;
     }
@@ -100,17 +97,13 @@ export const useQueryProjects = () => {
 
     updateTokens({
       address,
-      account,
       newTokens: filterDisplayToken(_tokens),
     });
 
     setLoading(false);
   };
 
-  const loadCacheDefi = async (
-    address: string,
-    account: KeyringAccountWithAlias,
-  ) => {
+  const loadCacheDefi = async (address: string) => {
     if (!address) {
       return;
     }
@@ -173,7 +166,7 @@ export const useQueryProjects = () => {
     setLoading(false);
   };
 
-  const loadNFT = async (address: string, account: KeyringAccountWithAlias) => {
+  const loadNFT = async (address: string) => {
     try {
       setLoading(true);
       const ntfs = await openapi.listNFT(address, true, true);
@@ -195,9 +188,9 @@ export const useQueryProjects = () => {
       const currentTime = Date.now();
 
       if (currentTime - lastUpdateTime >= 10 * 60 * 1000) {
-        await loadCacheToken(account.address, account);
-        await loadCacheDefi(account.address, account);
-        await loadNFT(account.address, account);
+        await loadCacheToken(account.address);
+        await loadCacheDefi(account.address);
+        await loadNFT(account.address);
         console.log(
           '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
           account.address.slice(-8),
