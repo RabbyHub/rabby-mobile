@@ -32,7 +32,7 @@ import { openapi } from '@/core/request';
 import { useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { filterNfts, filterPortfolios, filterTokens } from './useSearch';
 
@@ -42,9 +42,10 @@ const walletProject = new DisplayedProject({
 });
 
 export const useAssets = (filterText?: string) => {
-  const [isLoading, setLoading] = useSafeState(true);
+  const [isLoading, setLoading] = useSafeState(false);
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
+  const [isFirstFetch, setIsFirstFetch] = useState(true);
 
   const [getUpdateTime, updateUpdateTime] = useAtom(lastUpdateTimeAtom);
 
@@ -63,7 +64,6 @@ export const useAssets = (filterText?: string) => {
       return;
     }
 
-    setLoading(true);
     let _data = produce(walletProject, draft => {
       draft.netWorth = 0;
       draft._netWorth = '$0';
@@ -100,8 +100,6 @@ export const useAssets = (filterText?: string) => {
       address,
       newTokens: filterDisplayToken(_tokens),
     });
-
-    setLoading(false);
   };
 
   const loadCacheDefi = async (address: string) => {
@@ -109,7 +107,6 @@ export const useAssets = (filterText?: string) => {
       return;
     }
     projectDict.current = {};
-    setLoading(true);
 
     const snapshotRes = await loadPortfolioSnapshot(address);
     const { list, netWorth: snapshotNetWorth } = snapshot2Display(
@@ -164,12 +161,10 @@ export const useAssets = (filterText?: string) => {
       address,
       newPortfolios: tagProfiles(realtimeData, tokenSetting),
     });
-    setLoading(false);
   };
 
   const loadNFT = async (address: string) => {
     try {
-      setLoading(true);
       const ntfs = await openapi.listNFT(address, true, true);
       updateNftList({
         address,
@@ -177,31 +172,46 @@ export const useAssets = (filterText?: string) => {
       });
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const initFetchTop10Assets = () => {
+  const initFetchTop10Assets = async (force?: boolean) => {
     const top10Account = sortedAccounts.slice(0, 10);
-    top10Account.forEach(async account => {
-      const lastUpdateTime = getUpdateTime(account.address) || 0;
-      const currentTime = Date.now();
+    setLoading(true);
+    try {
+      await Promise.all(
+        top10Account.map(async account => {
+          const lastUpdateTime = getUpdateTime(account.address) || 0;
+          const currentTime = Date.now();
 
-      if (currentTime - lastUpdateTime >= 10 * 60 * 1000) {
-        await loadCacheToken(account.address);
-        await loadCacheDefi(account.address);
-        await loadNFT(account.address);
-        console.log(
-          '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
-          account.address.slice(-8),
-        );
-        await updateUpdateTime({
-          address: account.address,
-          newLastUpdateTime: Date.now(),
-        });
-      }
-    });
+          if (force || currentTime - lastUpdateTime >= 10 * 60 * 1000) {
+            try {
+              await loadCacheToken(account.address);
+              await loadCacheDefi(account.address);
+              await loadNFT(account.address);
+              console.log(
+                '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
+                account.address.slice(-8),
+                'force:',
+                force,
+              );
+              await updateUpdateTime({
+                address: account.address,
+                newLastUpdateTime: Date.now(),
+              });
+            } catch (error) {
+              console.error(
+                `Error fetching data for ${account.address}:`,
+                error,
+              );
+            }
+          }
+        }),
+      );
+    } finally {
+      setLoading(false);
+      setIsFirstFetch(false);
+    }
   };
   const fTokens = useMemo(
     () => filterTokens(tokens, filterText),
@@ -222,5 +232,6 @@ export const useAssets = (filterText?: string) => {
     isLoading,
     hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
     initFetchTop10Assets,
+    refreshing: !!isLoading && !isFirstFetch,
   };
 };

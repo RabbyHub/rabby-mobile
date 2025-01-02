@@ -3,12 +3,18 @@ import { View, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 
-export const PositionLoader = ({ space }: { space: number }) => {
+export const PositionLoader = ({
+  space,
+  length = 6,
+}: {
+  space: number;
+  length?: number;
+}) => {
   const colors = useThemeColors();
 
   return (
     <>
-      {[...Array(6)].map((_, i) => (
+      {[...Array(length)].map((_, i) => (
         <View
           key={i}
           style={[

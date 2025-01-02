@@ -22,6 +22,9 @@ import {
 } from '@/screens/Home/components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
+import { PositionLoader } from '@/screens/Home/components/Skeleton';
+import { EmptyHolder } from '@/components/EmptyHolder';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 interface Props {
   filterText?: string;
@@ -30,8 +33,15 @@ interface Props {
 export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const { tokens, portfolios, nftList, initFetchTop10Assets } =
-    useAssets(filterText);
+  const {
+    tokens,
+    portfolios,
+    nftList,
+    initFetchTop10Assets,
+    hasAssets,
+    refreshing,
+    isLoading,
+  } = useAssets(filterText);
   const sortTokens = useSortToken(tokens);
   const { t } = useTranslation();
 
@@ -172,6 +182,27 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     [],
   );
 
+  const ListEmptyComponent = useMemo(() => {
+    return isLoading ? (
+      <PositionLoader space={14} length={12} />
+    ) : hasAssets ? null : (
+      <View style={styles.emptyHolder}>
+        <EmptyHolder
+          imgStyle={styles.emptyImg}
+          textStyle={styles.emptyText}
+          text="No Assets"
+          type="default"
+        />
+      </View>
+    );
+  }, [
+    isLoading,
+    hasAssets,
+    styles.emptyHolder,
+    styles.emptyImg,
+    styles.emptyText,
+  ]);
+
   return (
     <SectionList
       sections={sections.filter(i => !!i.originData?.length)}
@@ -182,10 +213,20 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       windowSize={10}
       getItemLayout={getItemLayout}
       stickySectionHeadersEnabled
+      ListEmptyComponent={ListEmptyComponent}
       onScroll={() => {
         Keyboard.dismiss();
       }}
       renderSectionHeader={renderSectionHeader}
+      refreshControl={
+        <RefreshControl
+          style={styles.bgContainer}
+          onRefresh={() => {
+            initFetchTop10Assets(true);
+          }}
+          refreshing={refreshing}
+        />
+      }
     />
   );
 };
