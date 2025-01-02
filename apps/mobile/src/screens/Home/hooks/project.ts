@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
@@ -13,31 +13,27 @@ export const useQueryProjects = (
   const shouldUseHistory = useMemo(() => {
     return lastUpdateTime && Date.now() - lastUpdateTime < 10 * 60 * 1000;
   }, [lastUpdateTime]);
-  console.log(
-    '🔍 CUSTOM_LOGGER:=>: shouldUseHistory)',
-    lastUpdateTime,
-    Date.now(),
-    userAddr?.slice(-8),
-  );
 
   const {
     tokens,
     isLoading: isTokensLoading,
     updateData: updateTokens,
-  } = useTokens(userAddr, !shouldUseHistory, 0, undefined, isTestnet);
+  } = useTokens(userAddr, false, 0, undefined, isTestnet);
 
   const {
     data: portfolios,
     isLoading: isPortfoliosLoading,
     hasValue: hasPortfolios,
     updateData: updatePortfolio,
-  } = usePortfolios(userAddr, !shouldUseHistory, isTestnet);
+  } = usePortfolios(userAddr, false, isTestnet);
 
   const {
     list: nftList,
     isLoading: nftListLoading,
     reload: reloadNftList,
-  } = useQueryNft(userAddr, !shouldUseHistory);
+  } = useQueryNft(userAddr, false);
+
+  const loading = isTokensLoading || isPortfoliosLoading || nftListLoading;
 
   const refreshPositions = useCallback(async () => {
     if (!isTokensLoading && !isPortfoliosLoading && !nftListLoading) {
@@ -80,6 +76,14 @@ export const useQueryProjects = (
     }
   }, [nftList?.length, nftListLoading]);
 
+  useEffect(() => {
+    if (!shouldUseHistory) {
+      console.log('🔍 CUSTOM_LOGGER:=>: this cache is failed');
+      refreshPositions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldUseHistory]);
+
   return {
     refreshPositions,
     isTokensLoading,
@@ -89,7 +93,7 @@ export const useQueryProjects = (
     portfolios,
     nftList,
     nftListLoading,
-    loading: isTokensLoading || isPortfoliosLoading || nftListLoading,
+    loading,
     refreshing: refreshingToken || refreshingDefi || refreshingNft,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
   };

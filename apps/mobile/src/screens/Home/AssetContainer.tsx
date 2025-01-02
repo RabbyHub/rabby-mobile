@@ -8,11 +8,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
-import {
-  getTotalFoldToken,
-  getAllDefiCount,
-  getAllNftCount,
-} from './utils/converAssets';
+import { getTotalFoldToken } from './utils/converAssets';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
@@ -61,7 +57,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
-  const [foldDefi, setFoldDefi] = useState(true);
+  const [foldDefi, setFoldDefi] = useState(false);
   const [foldNft, setFoldNft] = useState(true);
 
   const {
@@ -290,7 +286,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'defi':
         return (
           <DefiSectionHeader
-            usdStr={getAllDefiCount(portfolios || [])}
             fold={foldDefi}
             onPress={() => setFoldDefi(pre => !pre)}
           />
@@ -298,7 +293,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'nft':
         return (
           <NftSectionHeader
-            amount={getAllNftCount(nftList || [])}
             fold={foldNft}
             onPress={() => setFoldNft(pre => !pre)}
           />

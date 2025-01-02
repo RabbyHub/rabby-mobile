@@ -2417,6 +2417,12 @@
     "receiveAddressList": {
       "title": "Select Recipient Address",
       "selectChainTitle": "Select Chain"
+    },
+    "singleHome": {
+      "sectionHeader": {
+        "Defi": "Defi",
+        "Nft": "NFT"
+      }
     }
   },
   "component": {

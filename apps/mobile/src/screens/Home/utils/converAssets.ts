@@ -38,22 +38,6 @@ export const getTotalFoldToken = (tokens?: AbstractPortfolioToken[]) => {
   return formatNetworth(tokensTotalValue);
 };
 
-export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
-  let tokensTotalValue = 0;
-  portfolios.forEach(portfolio => {
-    // portfolio._isExcludeBalance
-    tokensTotalValue += portfolio._isExcludeBalance
-      ? 0
-      : portfolio._portfolios
-          ?.reduce(
-            (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
-            new BigNumber(0),
-          )
-          .toNumber();
-  });
-  return formatNetworth(tokensTotalValue);
-};
-
 export const getDisplayedPortfolioUsdValue = (
   portfolios: DisplayedProject['_portfolios'],
 ) => {
@@ -61,12 +45,4 @@ export const getDisplayedPortfolioUsdValue = (
     (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
     new BigNumber(0),
   );
-};
-
-export const getAllNftCount = (nfts: NFTItem[]) => {
-  let total = 0;
-  nfts.forEach(nft => {
-    total += nft.amount;
-  });
-  return total;
 };

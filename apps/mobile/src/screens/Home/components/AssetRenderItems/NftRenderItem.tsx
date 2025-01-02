@@ -9,6 +9,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { useTranslation } from 'react-i18next';
 
 export const NftRow = ({
   item,
@@ -64,20 +65,20 @@ export const NftRow = ({
 };
 
 export const NftSectionHeader = ({
-  amount,
   onPress,
   fold,
 }: {
-  amount: number;
   fold?: boolean;
   onPress: () => void;
 }) => {
+  const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   return (
     <View style={styles.headerWrapper}>
-      <Text style={styles.symbol}>NFT</Text>
+      <Text style={styles.symbol}>
+        {t('page.singleHome.sectionHeader.Nft')}
+      </Text>
       <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
-        <Text style={styles.totalAmount}>{amount}</Text>
         <ArrowRightSVG
           style={[
             styles.arrow,
@@ -161,13 +162,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 4,
-  },
-  totalAmount: {
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '500',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
   },
   arrow: {},
   imagesView: {
