@@ -32,15 +32,16 @@ import { openapi } from '@/core/request';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
+import { filterNfts, filterPortfolios, filterTokens } from './useSearch';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
 });
 
-export const useQueryProjects = () => {
+export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(true);
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -202,13 +203,24 @@ export const useQueryProjects = () => {
       }
     });
   };
-
+  const fTokens = useMemo(
+    () => filterTokens(tokens, filterText),
+    [filterText, tokens],
+  );
+  const fPortfolios = useMemo(
+    () => filterPortfolios(portfolios, filterText),
+    [filterText, portfolios],
+  );
+  const fNftList = useMemo(
+    () => filterNfts(nftList, filterText),
+    [filterText, nftList],
+  );
   return {
-    tokens,
-    portfolios,
-    nftList,
+    tokens: fTokens,
+    portfolios: fPortfolios,
+    nftList: fNftList,
     isLoading,
-    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
+    hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
     initFetchTop10Assets,
   };
 };

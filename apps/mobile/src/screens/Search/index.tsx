@@ -9,10 +9,14 @@ import { RcNextLeftCC } from '@/assets/icons/common';
 import { NextSearchBar } from '@/components2024/SearchBar';
 
 import { SearchAssets } from './components/SearchAssets';
+import { useSearch } from './useSearch';
+import { useTranslation } from 'react-i18next';
 
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { searchState, debouncedSearchValue, setSearchState } = useSearch();
+  const { t } = useTranslation();
 
   const inputRef = useRef<any>(null);
 
@@ -33,17 +37,16 @@ function SearchScreen(): JSX.Element {
         </TouchableOpacity>
         <NextSearchBar
           style={styles.searchBar}
-          placeholder={'Search'}
-          value={''}
-          onChangeText={() => {}}
-          onFocus={() => {}}
-          onBlur={() => {}}
-          onCancel={() => {}}
+          placeholder={t('page.search.header.placeHolder')}
+          value={searchState}
+          onChangeText={v => {
+            setSearchState(v);
+          }}
           ref={inputRef}
         />
       </View>
       <SafeAreaView style={styles.safeView}>
-        <SearchAssets />
+        <SearchAssets filterText={debouncedSearchValue} />
       </SafeAreaView>
     </NormalScreenContainer2024>
   );

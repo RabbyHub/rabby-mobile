@@ -2429,6 +2429,9 @@
         "token": "Tokens",
         "Defi": "Defi",
         "NFT": "NFT"
+      },
+      "header": {
+        "placeHolder": "Search"
       }
     }
   },

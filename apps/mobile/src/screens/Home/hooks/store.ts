@@ -243,10 +243,11 @@ export const combinedDefiAtom = atom(async get => {
     });
   });
 
-  return Object.values(defiMap).map(i => ({
-    ...i,
-    _netWorth: i.totalUsdValue?.toString(),
-  }));
+  return Object.values(defiMap).map(i =>
+    Object.assign(i, {
+      _netWorth: i.totalUsdValue?.toString(),
+    }),
+  );
 });
 
 export const combinedNFTAtom = atom(async get => {
@@ -265,15 +266,14 @@ export const combinedNFTAtom = atom(async get => {
       }
 
       if (!nftMap[key]) {
-        nftMap[key] = {
-          ...nft,
+        nftMap[key] = Object.assign(nft, {
           totalAmount: new BigNumber(nft.amount || 0),
           fromAddress: [
             {
               address,
             },
           ],
-        };
+        });
       } else {
         const existingNFT = nftMap[key];
         existingNFT.totalAmount = existingNFT.totalAmount?.plus(
@@ -286,10 +286,11 @@ export const combinedNFTAtom = atom(async get => {
     });
   });
 
-  return Object.values(nftMap).map(i => ({
-    ...i,
-    amount: i.totalAmount?.toNumber(),
-  }));
+  return Object.values(nftMap).map(i =>
+    Object.assign(i, {
+      amount: i.totalAmount?.toNumber(),
+    }),
+  );
 });
 
 export const updateTokensAtom = atom(

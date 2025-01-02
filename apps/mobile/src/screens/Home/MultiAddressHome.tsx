@@ -459,6 +459,7 @@ function MultiAddressHome(): JSX.Element {
       <View style={styles.paddingContainer}>
         <MultiAddressHomeHeader loading={balanceLoading} />
         <ScrollView
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>

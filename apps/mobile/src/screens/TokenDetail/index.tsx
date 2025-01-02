@@ -46,12 +46,7 @@ import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RcIconRightCC } from '@/assets/icons/common';
-import {
-  CombineDefiItem,
-  CombineTokensItem,
-  useAssetsMap,
-} from '../Home/hooks/store';
-import { useQueryProjects } from '../Search/useAssets';
+import { CombineTokensItem, useAssetsMap } from '../Home/hooks/store';
 import { DisplayedProject, DisplayedPortfolio } from '../Home/utils/project';
 import { RelatedDeFi } from './components/RelatedDeFi';
 import { navigate } from '@/utils/navigation';

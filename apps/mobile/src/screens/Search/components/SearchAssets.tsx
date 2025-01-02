@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { SectionList, Text, View } from 'react-native';
+import { Keyboard, SectionList, Text, View } from 'react-native';
 
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { useQueryProjects } from '../useAssets';
+import { useAssets } from '../useAssets';
 import useSortToken from '@/screens/Home/hooks/useSortTokens';
 import {
   AbstractPortfolio,
@@ -23,13 +23,15 @@ import {
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 
-interface Props {}
+interface Props {
+  filterText?: string;
+}
 
-export const SearchAssets: React.FC<Props> = () => {
+export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { tokens, portfolios, nftList, initFetchTop10Assets } =
-    useQueryProjects();
+    useAssets(filterText);
   const sortTokens = useSortToken(tokens);
   const { t } = useTranslation();
 
@@ -179,7 +181,10 @@ export const SearchAssets: React.FC<Props> = () => {
       keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
       windowSize={10}
       getItemLayout={getItemLayout}
-      stickySectionHeadersEnabled={!foldHideList}
+      stickySectionHeadersEnabled
+      onScroll={() => {
+        Keyboard.dismiss();
+      }}
       renderSectionHeader={renderSectionHeader}
     />
   );
