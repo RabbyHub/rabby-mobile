@@ -57,7 +57,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
-  const [foldDefi, setFoldDefi] = useState(false);
   const [foldNft, setFoldNft] = useState(true);
 
   const {
@@ -87,7 +86,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       {
         type: 'defi',
         originData: portfolios,
-        data: foldDefi ? [] : portfolios || [],
+        data: portfolios,
       },
       {
         type: 'nft',
@@ -95,7 +94,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         data: foldNft ? [] : nftList || [],
       },
     ];
-  }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
+  }, [foldHideList, foldNft, nftList, portfolios, sortTokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -284,12 +283,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           />
         );
       case 'defi':
-        return (
-          <DefiSectionHeader
-            fold={foldDefi}
-            onPress={() => setFoldDefi(pre => !pre)}
-          />
-        );
+        return <DefiSectionHeader />;
       case 'nft':
         return (
           <NftSectionHeader
@@ -328,7 +322,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         windowSize={10}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={!foldDefi || !foldNft || !foldHideList}
+        stickySectionHeadersEnabled={!foldNft || !foldHideList}
         renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl

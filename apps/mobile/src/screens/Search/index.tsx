@@ -31,6 +31,7 @@ function SearchScreen(): JSX.Element {
             if (navigation.canGoBack()) {
               navigation.goBack();
             }
+            setSearchState('');
             Keyboard.dismiss();
           }}>
           <RcNextLeftCC color={colors2024['neutral-title-1']} />

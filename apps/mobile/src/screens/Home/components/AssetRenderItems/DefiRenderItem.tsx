@@ -6,7 +6,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -88,31 +87,14 @@ export const DefiRow = ({
     </TouchableOpacity>
   );
 };
-export const DefiSectionHeader = ({
-  onPress,
-  fold,
-}: {
-  fold?: boolean;
-  onPress?: () => void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+export const DefiSectionHeader = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   return (
     <View style={styles.headerWrapper}>
       <Text style={styles.symbol}>
         {t('page.singleHome.sectionHeader.Defi')}
       </Text>
-      <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
-        <ArrowRightSVG
-          style={[
-            styles.arrow,
-            {
-              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
-            },
-          ]}
-          color={colors2024['neutral-title-1']}
-        />
-      </TouchableOpacity>
     </View>
   );
 };

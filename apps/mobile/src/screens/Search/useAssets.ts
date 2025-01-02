@@ -29,7 +29,7 @@ import {
 } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { openapi } from '@/core/request';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useMemo, useRef } from 'react';
