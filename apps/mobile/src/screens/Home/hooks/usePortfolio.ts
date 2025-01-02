@@ -4,7 +4,6 @@ import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
 import { chunk } from 'lodash';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   loadTestnetPortfolioSnapshot,
   loadPortfolioSnapshot,
@@ -19,7 +18,6 @@ import { preferenceService } from '@/core/services';
 import { usePortfoliosAtom } from './store';
 
 const chunkSize = 5;
-const { isSameAddress } = addressUtils;
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -57,19 +55,13 @@ export const usePortfolios = (
   const [isLoading, setLoading] = useSafeState(false);
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
-  const userAddrRef = useRef('');
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
-    if (userAddr && !isSameAddress(userAddr, userAddrRef.current)) {
-      setData([]);
-    }
-
     if (userAddr) {
       timer = setTimeout(() => {
-        if (visible && !isSameAddress(userAddr, userAddrRef.current)) {
+        if (visible) {
           abortProcess.current?.abort();
-          userAddrRef.current = userAddr;
           loadProcess();
         }
       });

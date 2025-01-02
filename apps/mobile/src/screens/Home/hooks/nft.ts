@@ -1,10 +1,9 @@
 import { openapi } from '@/core/request';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNFTsAtom } from './store';
 
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(false);
-  const preAddressRef = useRef<string>();
   const [list, setList] = useNFTsAtom(addr);
 
   const fetchData = useCallback(
@@ -13,7 +12,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
         console.log('🔍 CUSTOM_LOGGER:=>: nft==loadProcess)', id);
         setIsLoading(true);
         const ntfs = await openapi.listNFT(id, true, true);
-        preAddressRef.current = id;
         setList(ntfs);
       } catch (e) {
         console.error(e);
@@ -31,10 +29,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
   };
 
   useEffect(() => {
-    if (addr !== preAddressRef.current) {
-      preAddressRef.current = addr;
-      setList([]);
-    }
     if (addr && visible) {
       fetchData(addr);
     }
