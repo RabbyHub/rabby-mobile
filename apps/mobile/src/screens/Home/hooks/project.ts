@@ -77,12 +77,12 @@ export const useQueryProjects = (
   }, [nftList?.length, nftListLoading]);
 
   useEffect(() => {
-    if (!shouldUseHistory) {
+    if (!shouldUseHistory && userAddr) {
       console.log('🔍 CUSTOM_LOGGER:=>: this cache is failed');
       refreshPositions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldUseHistory]);
+  }, [shouldUseHistory, userAddr]);
 
   return {
     refreshPositions,

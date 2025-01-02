@@ -218,13 +218,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             return;
           }
           if (data._isPined) {
-            preferenceService.removePinedToken(currentAccount?.address, {
+            preferenceService.removePinedToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
           } else {
-            preferenceService.pinToken(currentAccount?.address, {
+            preferenceService.pinToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });

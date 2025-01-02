@@ -123,13 +123,13 @@ export const RightMore: React.FC<{
         key: 'pin',
         action() {
           if (token._isPined) {
-            preferenceService.removePinedToken(address, {
+            preferenceService.removePinedToken({
               tokenId: token._tokenId,
               chainId: token.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
           } else {
-            preferenceService.pinToken(address, {
+            preferenceService.pinToken({
               tokenId: token._tokenId,
               chainId: token.chain,
             });
