@@ -5,6 +5,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -12,6 +13,7 @@ export type CombineTokensItem = AbstractPortfolioToken & {
   fromAddress: Array<{
     address: string;
     amount: string;
+    account: KeyringAccountWithAlias;
   }>;
 };
 
@@ -34,6 +36,7 @@ interface IAssets {
   tokens?: AbstractPortfolioToken[];
   nfts?: NFTItem[];
   lastUpdateTime?: number;
+  account?: KeyringAccountWithAlias;
 }
 
 export const assetsMapAtom = atom<{ [address: string]: IAssets }>({});
@@ -174,6 +177,7 @@ export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
           fromAddress: [
             {
               address,
+              account: assets.account!,
               amount: token._amountStr || '',
             },
           ],
@@ -188,6 +192,7 @@ export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
         );
         existingToken.fromAddress.push({
           address,
+          account: assets.account!,
           amount: token._amountStr || '',
         });
       }
@@ -287,14 +292,20 @@ export const updateTokensAtom = atom(
     set,
     {
       address,
+      account,
       newTokens,
-    }: { address: string; newTokens: AbstractPortfolioToken[] },
+    }: {
+      address: string;
+      account: KeyringAccountWithAlias;
+      newTokens: AbstractPortfolioToken[];
+    },
   ) => {
     const currentAssets = get(assetsMapAtom);
 
     set(assetsMapAtom, {
       ...currentAssets,
       [address]: {
+        account,
         ...currentAssets[address],
         tokens: newTokens,
       },

@@ -28,7 +28,7 @@ import {
 } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { openapi } from '@/core/request';
-import { useMyAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useRef } from 'react';
@@ -53,7 +53,10 @@ export const useQueryProjects = () => {
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
 
-  const loadCacheToken = async (address: string) => {
+  const loadCacheToken = async (
+    address: string,
+    account: KeyringAccountWithAlias,
+  ) => {
     if (!address) {
       return;
     }
@@ -93,13 +96,17 @@ export const useQueryProjects = () => {
 
     updateTokens({
       address,
+      account,
       newTokens: filterDisplayToken(_tokens),
     });
 
     setLoading(false);
   };
 
-  const loadCacheDefi = async (address: string) => {
+  const loadCacheDefi = async (
+    address: string,
+    account: KeyringAccountWithAlias,
+  ) => {
     if (!address) {
       return;
     }
@@ -162,7 +169,7 @@ export const useQueryProjects = () => {
     setLoading(false);
   };
 
-  const loadNFT = async (address: string) => {
+  const loadNFT = async (address: string, account: KeyringAccountWithAlias) => {
     try {
       setLoading(true);
       const ntfs = await openapi.listNFT(address, true, true);
@@ -181,9 +188,9 @@ export const useQueryProjects = () => {
     // TODO: performance search
     const top10Account = accounts.slice(0, 10);
     top10Account.forEach(async account => {
-      await loadCacheToken(account.address);
-      await loadCacheDefi(account.address);
-      await loadNFT(account.address);
+      await loadCacheToken(account.address, account);
+      await loadCacheDefi(account.address, account);
+      await loadNFT(account.address, account);
     });
   };
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -6,7 +7,11 @@ import { openapi } from '@/core/request';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/home/types';
+import {
+  AbstractPortfolio,
+  AbstractPortfolioToken,
+  AbstractProject,
+} from '@/screens/home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -19,14 +24,14 @@ import {
 import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
-import { last } from 'lodash';
-import React, { useMemo } from 'react';
+import { chain, last } from 'lodash';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { HistoryDisplayItem } from '../Transaction/MultiAddressHistory';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { HistoryList } from './components/HistoryList';
-import { TokenBalanceArea } from './components/TokenBalanceArea';
+import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -41,6 +46,12 @@ import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RcIconRightCC } from '@/assets/icons/common';
+import { CombineDefiItem, CombineTokensItem } from '../Home/hooks/store';
+import { useQueryProjects } from '../Search/useAssets';
+import { DisplayedProject, DisplayedPortfolio } from '../Home/utils/project';
+import { RelatedDeFi } from './components/RelatedDeFi';
+import { navigate } from '@/utils/navigation';
+import { formatTokenAmount } from '@/utils/number';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
@@ -195,9 +206,10 @@ export const RightMore: React.FC<{
 export const TokenDetailScreen = () => {
   const route = useRoute();
   const { token, account } = (route.params || {}) as {
-    token: AbstractPortfolioToken;
+    token: CombineTokensItem;
     account: KeyringAccountWithAlias;
   };
+
   // const { token, account } = useNavigationState(
   //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
   // ) as {
@@ -209,7 +221,57 @@ export const TokenDetailScreen = () => {
     getStyle,
   });
 
+  const { tokens, portfolios, nftList } = useQueryProjects();
+
+  // console.log('tokenDetail portfolios:', portfolios);
+
   const { safeOffBottom } = useSafeSizes();
+
+  const relateDefiList = useMemo(() => {
+    const resList = [] as CombineDefiItem[];
+
+    portfolios.map(portfolio => {
+      if (portfolio.chain !== token.chain) {
+        return;
+      }
+
+      let amount = 0;
+      const { _portfolios } = portfolio;
+      _portfolios?.map(portfolioItem => {
+        const { _tokenList } = portfolioItem;
+        console.log('_tokenList:', _tokenList);
+
+        const sameItem = _tokenList.find(
+          item => item._tokenId === token._tokenId,
+        );
+        if (sameItem) {
+          amount += sameItem.amount;
+        }
+      });
+
+      amount &&
+        resList.push({
+          ...portfolio,
+          amount: formatTokenAmount(Math.abs(amount)),
+        });
+    });
+
+    console.log('relateDefiList length:', resList.length);
+
+    return resList;
+  }, [portfolios, token]);
+
+  const handleOpenDefiDetail = useCallback(
+    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      navigate(RootNames.DeFiDetail, {
+        data,
+        portfolioList: itemList,
+        cache: true,
+        symbol: token.symbol,
+      });
+    },
+    [token],
+  );
 
   const isTestnet = false;
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -239,104 +301,31 @@ export const TokenDetailScreen = () => {
     },
   );
 
-  type LoadData = {
-    earliest?: TxDisplayItem['time_at'] | undefined;
-    tokenId?: AbstractPortfolioToken['_tokenId'] | null;
-    list: HistoryDisplayItem[];
-  };
-  const {
-    data: latestData,
-    loading,
-    loadingMore,
-    loadMore,
-    reloadAsync,
-  } = useInfiniteScroll<LoadData>(
-    async currentData => {
-      const address = finalAccount?.address;
-      const lastEarliestTime =
-        currentData?.earliest ?? last(currentData?.list)?.time_at;
-      const tickResult: LoadData = {
-        earliest: lastEarliestTime ?? undefined,
-        tokenId: token?._tokenId,
-        list: [],
-      };
-
-      if (!token || isTestnet) {
-        return tickResult;
-      }
-
-      try {
-        const res: TxHistoryResult = await openapi.listTxHisotry({
-          id: finalAccount?.address,
-          chain_id: token?.chain,
-          start_time: lastEarliestTime ?? undefined,
-          page_count: PAGE_COUNT,
-          token_id: token?._tokenId,
-        });
-        const { project_dict, cate_dict, token_dict, history_list: list } = res;
-        const displayList: HistoryDisplayItem[] = list
-          .map(item => ({
-            ...item,
-            projectDict: project_dict,
-            cateDict: cate_dict,
-            tokenDict: token_dict,
-            account: finalAccount,
-            address,
-            key: `${address}_${item.chain}_${item.id}`,
-          }))
-          .sort((v1, v2) => v2.time_at - v1.time_at);
-
-        tickResult.earliest = last(displayList)?.time_at;
-
-        tickResult.list = !lastEarliestTime
-          ? displayList
-          : // find out the items that are earlier than the earliest item in current list
-            displayList.filter(
-              item => !item.time_at || item.time_at <= lastEarliestTime,
-            );
-
-        return tickResult;
-      } catch (error) {
-        console.error(error);
-        return tickResult;
-      }
-    },
-    {
-      // manual: true,
-      reloadDeps: [token, token?._tokenId, isTestnet],
-      isNoMore: d => {
-        if (isTestnet) {
-          return true;
-        }
-        return !d?.earliest || (d?.list.length || 0) < PAGE_COUNT;
-      },
-    },
-  );
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
-  const isFirstLoading = loading && !latestData?.list?.length;
+  const getHeaderRight = useCallback(() => {
+    return (
+      <RightMore
+        token={token}
+        address={finalAccount.address}
+        triggerUpdate={triggerUpdate}
+      />
+    );
+  }, [finalAccount.address, token, triggerUpdate]);
+
+  const getHeaderTitle = useCallback(() => {
+    return (
+      <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
+    );
+  }, [currentAccount?.address, token]);
 
   React.useEffect(() => {
     setNavigationOptions({
-      headerTitle: () => (
-        <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
-      ),
-      headerRight: () => (
-        <RightMore
-          token={token}
-          address={finalAccount.address}
-          triggerUpdate={triggerUpdate}
-        />
-      ),
+      headerTitle: getHeaderTitle,
+      headerRight: getHeaderRight,
       headerTitleAlign: 'left',
     });
-  }, [
-    currentAccount?.address,
-    finalAccount.address,
-    setNavigationOptions,
-    token,
-    triggerUpdate,
-  ]);
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
@@ -354,20 +343,23 @@ export const TokenDetailScreen = () => {
     });
   });
 
-  const handleSwap = useMemoizedFn(async (type: 'Buy' | 'Sell') => {
-    const chain = findChain({
-      serverId: token.chain,
-    });
-    await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
-      params: {
-        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: token?._tokenId,
-        type,
-      },
-    });
-  });
+  const handleSwap = useMemoizedFn(
+    async (type: 'Buy' | 'Sell', address?: string) => {
+      const chain = findChain({
+        serverId: token.chain,
+      });
+      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.Swap,
+        params: {
+          chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+          tokenId: token?._tokenId,
+          type,
+          address,
+        },
+      });
+    },
+  );
 
   const { t } = useTranslation();
 
@@ -387,48 +379,25 @@ export const TokenDetailScreen = () => {
         <Text style={styles.currentText}>Current price</Text>
         <TokenPriceChart token={tokenWithAmount || token} />
         <View style={styles.divider} />
-        <TokenBalanceArea
+        <TokenArea
+          handleSwap={handleSwap}
           account={finalAccount}
+          amountList={token.fromAddress}
           token={tokenWithAmount || token}
         />
       </View>
-
-      <View style={styles.historyHeader}>
-        <Text style={styles.relateTitle}>
-          {t('page.tokenDetail.relateDefi')}
-        </Text>
-      </View>
-      {/* flatlist */}
-      <View style={styles.defiItem}>
-        <View style={styles.defiItemContent}>
-          <AssetAvatar
-            logo={token?.logo_url}
-            size={26}
-            chain={token?.chain}
-            chainSize={12}
-          />
-          <Text
-            style={styles.defiItemText}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {/* {token?.name} */}
-            {ellipsisOverflowedText(token?.name, 20)}
-          </Text>
-        </View>
-        <View style={styles.defiItemContent}>
-          <Text style={styles.defiItemText}>{`5 ${token.name}`}</Text>
-          <RcIconRightCC
-            style={styles.arrowStyle}
-            width={13}
-            height={13}
-            color={colors2024['neutral-secondary']}
-          />
-        </View>
-      </View>
+      {relateDefiList.length > 0 && (
+        <RelatedDeFi
+          deFiList={relateDefiList}
+          symbol={token.symbol}
+          handleGoDeFi={handleOpenDefiDetail}
+        />
+      )}
+      <View style={{ height: isAndroid ? 40 + safeOffBottom : 76 }} />
       <View
         style={[
           styles.buttonGroup,
-          isAndroid && { paddingBottom: 20 + safeOffBottom },
+          isAndroid && { paddingBottom: 40 + safeOffBottom },
         ]}>
         <Button
           title={t('page.tokenDetail.action.send')}
@@ -490,7 +459,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       gap: 6,
     },
     arrowStyle: {
-      marginTop: 2,
+      marginTop: 0,
     },
     defiItemText: {
       color: colors2024['neutral-secondary'],
@@ -498,6 +467,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '500',
+      marginLeft: 4,
     },
     relateTitle: {
       color: colors2024['neutral-secondary'],
@@ -512,13 +482,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     buttonGroup: {
       width: '100%',
-      display: 'flex',
+      position: 'absolute',
+      bottom: 0,
+      // display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingTop: 20,
       paddingHorizontal: 20,
-      paddingBottom: 56,
+      paddingBottom: 76,
     },
 
     btnContainer: {

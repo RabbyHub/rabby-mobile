@@ -156,7 +156,7 @@ export class DisplayedProject implements AbstractProject {
   }
 }
 
-class DisplayedPortfolio implements AbstractPortfolio {
+export class DisplayedPortfolio implements AbstractPortfolio {
   // [immerable] = true;
   id: string;
   name?: string;
