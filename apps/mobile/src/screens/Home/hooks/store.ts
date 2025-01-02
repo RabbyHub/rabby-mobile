@@ -17,7 +17,12 @@ export type CombineTokensItem = AbstractPortfolioToken & {
   }>;
 };
 
-export type CombineDefiItem = DisplayedProject & {
+type DisplayedProjectWithoutMethods = Omit<
+  DisplayedProject,
+  'setPortfolios' | 'patchHistory' | 'afterHistoryPatched' | 'patchPrice'
+>;
+
+export type CombineDefiItem = DisplayedProjectWithoutMethods & {
   totalUsdValue?: BigNumber;
   fromAddress: Array<{
     address: string;
@@ -223,14 +228,15 @@ export const combinedDefiAtom = atom(async get => {
       }
 
       if (!defiMap[key]) {
-        defiMap[key] = Object.assign(defi, {
+        defiMap[key] = {
+          ...defi,
           totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
           fromAddress: [
             {
               address,
             },
           ],
-        });
+        };
       } else {
         const existingDefi = defiMap[key];
         existingDefi.totalUsdValue = existingDefi.totalUsdValue?.plus(
@@ -243,11 +249,10 @@ export const combinedDefiAtom = atom(async get => {
     });
   });
 
-  return Object.values(defiMap).map(i =>
-    Object.assign(i, {
-      _netWorth: i.totalUsdValue?.toString(),
-    }),
-  );
+  return Object.values(defiMap).map(p => ({
+    ...p,
+    _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
+  }));
 });
 
 export const combinedNFTAtom = atom(async get => {
@@ -266,14 +271,15 @@ export const combinedNFTAtom = atom(async get => {
       }
 
       if (!nftMap[key]) {
-        nftMap[key] = Object.assign(nft, {
+        nftMap[key] = {
+          ...nft,
           totalAmount: new BigNumber(nft.amount || 0),
           fromAddress: [
             {
               address,
             },
           ],
-        });
+        };
       } else {
         const existingNFT = nftMap[key];
         existingNFT.totalAmount = existingNFT.totalAmount?.plus(
@@ -286,11 +292,10 @@ export const combinedNFTAtom = atom(async get => {
     });
   });
 
-  return Object.values(nftMap).map(i =>
-    Object.assign(i, {
-      amount: i.totalAmount?.toNumber(),
-    }),
-  );
+  return Object.values(nftMap).map(nft => ({
+    ...nft,
+    amount: nft.totalAmount?.toNumber() || 0,
+  }));
 });
 
 export const updateTokensAtom = atom(

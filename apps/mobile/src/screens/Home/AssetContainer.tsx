@@ -86,7 +86,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       {
         type: 'defi',
         originData: portfolios,
-        data: portfolios,
+        data: portfolios || [],
       },
       {
         type: 'nft',

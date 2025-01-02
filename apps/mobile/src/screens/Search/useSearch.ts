@@ -1,9 +1,7 @@
 import { useDebounce } from 'ahooks';
 import { useState } from 'react';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-
-import { DisplayedProject } from '../Home/utils/project';
 import { AbstractPortfolioToken } from '../Home/types';
+import { CombineDefiItem, CombineNFTItem } from '../Home/hooks/store';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -36,7 +34,7 @@ export const filterTokens = (
 };
 
 export const filterPortfolios = (
-  portfolios: DisplayedProject[],
+  portfolios: CombineDefiItem[],
   filterText?: string,
 ) => {
   if (!filterText) {
@@ -55,7 +53,7 @@ export const filterPortfolios = (
   });
 };
 
-export const filterNfts = (nfts: NFTItem[], filterText?: string) => {
+export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
   if (!filterText) {
     return nfts;
   }
