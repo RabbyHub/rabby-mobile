@@ -33,6 +33,7 @@ import { useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useRef } from 'react';
+import { useSortAddressList } from '../Address/useSortAddressList';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -42,15 +43,16 @@ const walletProject = new DisplayedProject({
 export const useQueryProjects = () => {
   const [isLoading, setLoading] = useSafeState(true);
   const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  const [getUpdateTime, updateUpdateTime] = useAtom(lastUpdateTimeAtom);
 
   const [tokens] = useAtom(combinedTokensAtom);
   const [portfolios] = useAtom(combinedDefiAtom);
   const [nftList] = useAtom(combinedNFTAtom);
-
   const [, updateTokens] = useAtom(updateTokensAtom);
   const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
   const [, updateNftList] = useAtom(updateNFTsAtom);
-  const [getUpdateTime, updateUpdateTime] = useAtom(lastUpdateTimeAtom);
 
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
@@ -180,7 +182,7 @@ export const useQueryProjects = () => {
   };
 
   const initFetchTop10Assets = () => {
-    const top10Account = accounts.slice(0, 10);
+    const top10Account = sortedAccounts.slice(0, 10);
     top10Account.forEach(async account => {
       const lastUpdateTime = getUpdateTime(account.address) || 0;
       const currentTime = Date.now();
@@ -188,7 +190,7 @@ export const useQueryProjects = () => {
       if (currentTime - lastUpdateTime >= 10 * 60 * 1000) {
         console.log(
           '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
-          account.address,
+          account.address.slice(-8),
         );
         await loadCacheToken(account.address);
         await loadCacheDefi(account.address);

@@ -5,6 +5,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
+import { getAllMyAccount } from '@/core/apis/address';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -155,17 +156,17 @@ export const useLastUpdateTimeAtom = (address?: string) => {
   return [lastUpdateTime, setLastUpdateTime] as const;
 };
 
-// TODO: keyringService.getAllVisibleAccountsArray() only top10 accounts
-export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
+export const combinedTokensAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const tokenMap: Record<string, CombineTokensItem> = {};
-
+  const myAccouts = await getAllMyAccount();
+  const lowerAddresses = myAccouts.map(i => i.address.toLowerCase()) || [];
   Object.entries(assetsMap).forEach(([address, assets]) => {
+    if (!lowerAddresses.includes(address.toLowerCase())) {
+      return;
+    }
     assets.tokens?.forEach(token => {
       const key = `${token._tokenId}-${token.chain}`;
-      if (key === 'eth-eth') {
-        // console.log('🔍 CUSTOM_LOGGER:=>: token)', token);
-      }
       if (!tokenMap[key]) {
         tokenMap[key] = {
           ...token,
@@ -202,11 +203,15 @@ export const combinedTokensAtom = atom<CombineTokensItem[]>(get => {
   }));
 });
 
-export const combinedDefiAtom = atom<CombineDefiItem[]>(get => {
+export const combinedDefiAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const defiMap: Record<string, CombineDefiItem> = {};
-
+  const myAccouts = await getAllMyAccount();
+  const lowerAddresses = myAccouts.map(i => i.address.toLowerCase()) || [];
   Object.entries(assetsMap).forEach(([address, assets]) => {
+    if (!lowerAddresses.includes(address.toLowerCase())) {
+      return;
+    }
     assets.portfolios?.forEach(defi => {
       const key = defi.id;
       if (!key) {
@@ -214,15 +219,14 @@ export const combinedDefiAtom = atom<CombineDefiItem[]>(get => {
       }
 
       if (!defiMap[key]) {
-        defiMap[key] = {
-          ...defi,
+        defiMap[key] = Object.assign(defi, {
           totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
           fromAddress: [
             {
               address,
             },
           ],
-        };
+        });
       } else {
         const existingDefi = defiMap[key];
         existingDefi.totalUsdValue = existingDefi.totalUsdValue?.plus(
@@ -241,11 +245,15 @@ export const combinedDefiAtom = atom<CombineDefiItem[]>(get => {
   }));
 });
 
-export const combinedNFTAtom = atom<CombineNFTItem[]>(get => {
+export const combinedNFTAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const nftMap: Record<string, CombineNFTItem> = {};
-
+  const myAccouts = await getAllMyAccount();
+  const lowerAddresses = myAccouts.map(i => i.address.toLowerCase()) || [];
   Object.entries(assetsMap).forEach(([address, assets]) => {
+    if (!lowerAddresses.includes(address.toLowerCase())) {
+      return;
+    }
     assets.nfts?.forEach(nft => {
       const key = `${nft.chain}-${nft.id}-${nft.name || ''}`;
       if (!key) {
