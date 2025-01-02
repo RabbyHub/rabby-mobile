@@ -2,12 +2,20 @@ import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import SettingsScreen from '../Settings/Settings';
-import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
-import SetPasswordScreen from '../ManagePassword/SetPassword';
 import { CustomTestnetScreen } from '../CustomTestnet';
-import { useSetPasswordFirstState } from '@/hooks/useLock';
 import { CustomRPCScreen } from '../CustomRPC';
+import { registerAppScreen } from '@/perfs/apis';
+
+const SetPasswordScreen = registerAppScreen<
+  typeof import('../ManagePassword/SetPassword').default
+>({
+  loader: () => import('../ManagePassword/SetPassword'),
+});
+const ProviderControllerTester = registerAppScreen<
+  typeof import('../ProviderControllerTester/ProviderControllerTester').default
+>({
+  loader: () => import('../ProviderControllerTester/ProviderControllerTester'),
+});
 
 const SettingsStack = createCustomNativeStackNavigator();
 
