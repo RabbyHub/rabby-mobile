@@ -5,6 +5,7 @@ import {
   updateTokensAtom,
   updatePortfoliosAtom,
   updateNFTsAtom,
+  lastUpdateTimeAtom,
 } from '@/screens/Home/hooks/store';
 import { useSafeState } from '@/hooks/useSafeState';
 import { useAtom } from 'jotai';
@@ -49,6 +50,7 @@ export const useQueryProjects = () => {
   const [, updateTokens] = useAtom(updateTokensAtom);
   const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
   const [, updateNftList] = useAtom(updateNFTsAtom);
+  const [getUpdateTime, updateUpdateTime] = useAtom(lastUpdateTimeAtom);
 
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
@@ -178,12 +180,24 @@ export const useQueryProjects = () => {
   };
 
   const initFetchTop10Assets = () => {
-    // TODO: performance search
     const top10Account = accounts.slice(0, 10);
     top10Account.forEach(async account => {
-      await loadCacheToken(account.address);
-      await loadCacheDefi(account.address);
-      await loadNFT(account.address);
+      const lastUpdateTime = getUpdateTime(account.address) || 0;
+      const currentTime = Date.now();
+
+      if (currentTime - lastUpdateTime >= 10 * 60 * 1000) {
+        console.log(
+          '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
+          account.address,
+        );
+        await loadCacheToken(account.address);
+        await loadCacheDefi(account.address);
+        await loadNFT(account.address);
+        await updateUpdateTime({
+          address: account.address,
+          newLastUpdateTime: Date.now(),
+        });
+      }
     });
   };
 

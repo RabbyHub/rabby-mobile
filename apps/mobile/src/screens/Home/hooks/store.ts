@@ -339,4 +339,27 @@ export const updateNFTsAtom = atom(
   },
 );
 
+export const lastUpdateTimeAtom = atom(
+  get => (address: string) => {
+    const currentAssets = get(assetsMapAtom);
+    return currentAssets[address]?.lastUpdateTime ?? null;
+  },
+  (
+    get,
+    set,
+    {
+      address,
+      newLastUpdateTime,
+    }: { address: string; newLastUpdateTime: number },
+  ) => {
+    const currentAssets = get(assetsMapAtom);
+    set(assetsMapAtom, {
+      ...currentAssets,
+      [address]: {
+        ...currentAssets[address],
+        lastUpdateTime: newLastUpdateTime,
+      },
+    });
+  },
+);
 // TODO: delete outer top10 address assets

@@ -54,7 +54,7 @@ export const usePortfolios = (
   const [data, setData] = usePortfoliosAtom(userAddr);
   const [hasValue, setHasValue] = useSafeState(false);
   const abortProcess = useRef<AbortController>();
-  const [isLoading, setLoading] = useSafeState(true);
+  const [isLoading, setLoading] = useSafeState(false);
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
   const userAddrRef = useRef('');
@@ -94,6 +94,7 @@ export const usePortfolios = (
     if (!userAddr) {
       return;
     }
+    console.log('🔍 CUSTOM_LOGGER:=>: portfolios==loadProcess)', userAddr);
     projectDict.current = {};
 
     const currentAbort = new AbortController();

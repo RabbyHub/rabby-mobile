@@ -43,7 +43,7 @@ export const useTokens = (
   isTestnet = false,
 ) => {
   const abortProcess = useRef<AbortController>();
-  const [isLoading, setLoading] = useSafeState(true);
+  const [isLoading, setLoading] = useSafeState(false);
   const [mainnetTokens, setMainnetTokens] = useTokensAtom(userAddr);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
@@ -89,7 +89,7 @@ export const useTokens = (
     if (!userAddr) {
       return;
     }
-
+    console.log('🔍 CUSTOM_LOGGER:=>: token==loadProcess)', userAddr);
     const currentAbort = new AbortController();
     abortProcess.current = currentAbort;
 
