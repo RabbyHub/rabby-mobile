@@ -48,7 +48,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   const [foldHideList, setFoldHideList] = useState(true);
 
   const sections = useMemo(() => {
-    const unFoldList = sortTokens.filter(i => !i._isFold);
+    const unFoldList = sortTokens.filter(i => filterText || !i._isFold);
     const foldList = sortTokens.filter(i => i._isFold);
     return [
       {
@@ -58,7 +58,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       },
       {
         type: 'fold_token',
-        originData: foldList,
+        originData: filterText ? [] : foldList,
         data: foldHideList ? [] : foldList,
       },
       {
@@ -68,12 +68,11 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       },
       {
         type: 'nft',
-        originData: nftList,
-        // data: [],
+        originData: filterText ? nftList : [],
         data: nftList,
       },
     ];
-  }, [foldHideList, nftList, portfolios, sortTokens]);
+  }, [filterText, foldHideList, nftList, portfolios, sortTokens]);
 
   useEffect(() => {
     initFetchTop10Assets();
@@ -82,7 +81,6 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      // TODO: replace
       navigate(RootNames.TokenDetail, {
         token: token,
       });

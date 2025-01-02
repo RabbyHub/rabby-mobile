@@ -38,7 +38,7 @@ HomeScreen.HeaderArea = HeaderArea;
 
 const getStyles = createGetStyles2024(() => ({
   rootScreenContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   safeView: {
     flex: 1,

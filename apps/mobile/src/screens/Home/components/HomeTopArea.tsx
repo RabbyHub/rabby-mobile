@@ -536,7 +536,7 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingTop: 24,
     paddingBottom: 20,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     height: 185,
     width: '100%',
