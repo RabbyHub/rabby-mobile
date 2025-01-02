@@ -81,7 +81,6 @@ export const RootNames = {
 
   /* warning: testkits only ------ start */
   StackTestkits: 'StackTestkits',
-  TestKits: 'TestKits',
   NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIFormShowCase: 'DevUIFormShowCase',
@@ -108,6 +107,7 @@ export const RootNames = {
   GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',
+  /* @deprecated */
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',

@@ -199,7 +199,12 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
         setBootstrap({ couldRender: true });
       })
       .finally(() => {
-        setTimeout(() => hideSplashScreen(false), 1000);
+        setTimeout(() => {
+          hideSplashScreen(false);
+          console.debug(
+            'useBootstrapApp:: splash screen hidden due to timeout',
+          );
+        }, 1e3);
       });
   }, [getTriedUnlock, setBootstrap, fetchBiometrics, rabbitCode]);
 

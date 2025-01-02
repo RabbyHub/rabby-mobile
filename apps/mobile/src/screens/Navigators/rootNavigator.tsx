@@ -8,7 +8,7 @@ import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import { DappsScreen } from '@/screens/Dapps/DappsScreen';
 
 import { HomeNavigatorParamsList } from '@/navigation-type';
-import React, { useMemo } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo } from 'react';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
@@ -17,13 +17,8 @@ import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { registerAppScreen } from '@/perfs/apis';
-
-const SettingsScreen = registerAppScreen<
-  typeof import('@/screens/Settings/Settings').default
->({
-  loader: () => import('@/screens/Settings/Settings'),
-});
+import { preloadSettingsScreen } from '@/perfs/preloads';
+import { SettingsScreen } from '../index.lazy';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
@@ -37,6 +32,12 @@ export function HomeScreenNavigator() {
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');
   }
+
+  useLayoutEffect(() => {
+    const timer = setTimeout(() => preloadSettingsScreen(), 200);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
