@@ -17,6 +17,7 @@ export const useQueryProjects = (
     '🔍 CUSTOM_LOGGER:=>: shouldUseHistory)',
     lastUpdateTime,
     Date.now(),
+    userAddr?.slice(-8),
   );
 
   const {

@@ -188,13 +188,13 @@ export const useQueryProjects = () => {
       const currentTime = Date.now();
 
       if (currentTime - lastUpdateTime >= 10 * 60 * 1000) {
+        await loadCacheToken(account.address);
+        await loadCacheDefi(account.address);
+        await loadNFT(account.address);
         console.log(
           '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
           account.address.slice(-8),
         );
-        await loadCacheToken(account.address);
-        await loadCacheDefi(account.address);
-        await loadNFT(account.address);
         await updateUpdateTime({
           address: account.address,
           newLastUpdateTime: Date.now(),
