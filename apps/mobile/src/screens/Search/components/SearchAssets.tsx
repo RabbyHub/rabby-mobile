@@ -24,7 +24,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 interface Props {}
 
-export const AssetContainer: React.FC<Props> = () => {
+export const SearchAssets: React.FC<Props> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { tokens, portfolios, nftList, initFetchTop10Assets } =
