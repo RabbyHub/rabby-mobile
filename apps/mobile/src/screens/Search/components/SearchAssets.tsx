@@ -21,6 +21,7 @@ import {
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useTranslation } from 'react-i18next';
 
 interface Props {}
 
@@ -30,6 +31,7 @@ export const SearchAssets: React.FC<Props> = () => {
   const { tokens, portfolios, nftList, initFetchTop10Assets } =
     useQueryProjects();
   const sortTokens = useSortToken(tokens);
+  const { t } = useTranslation();
 
   const [foldHideList, setFoldHideList] = useState(true);
 
@@ -128,7 +130,11 @@ export const SearchAssets: React.FC<Props> = () => {
   const renderSectionHeader = ({ section }) => {
     switch (section.type) {
       case 'unfold_token':
-        return <Text style={styles.sectionHeader}>Token</Text>;
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.token')}
+          </Text>
+        );
       case 'fold_token':
         return (
           <TokenRowSectionHeader
@@ -138,9 +144,17 @@ export const SearchAssets: React.FC<Props> = () => {
           />
         );
       case 'defi':
-        return <Text style={styles.sectionHeader}>Defi</Text>;
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.Defi')}
+          </Text>
+        );
       case 'nft':
-        return <Text style={styles.sectionHeader}>NFT</Text>;
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.NFT')}
+          </Text>
+        );
       default:
         return <View style={{ height: 0 }} />;
     }

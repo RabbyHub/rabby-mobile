@@ -2423,6 +2423,13 @@
         "Defi": "Defi",
         "Nft": "NFT"
       }
+    },
+    "search": {
+      "sectionHeader": {
+        "token": "Tokens",
+        "Defi": "Defi",
+        "NFT": "NFT"
+      }
     }
   },
   "component": {
