@@ -647,63 +647,25 @@ export class PreferenceService {
   };
 
   /** =========toggle pinToken start =========== */
-  pinToken = (_address: string, token: IManageToken) => {
-    const address = _address.toLowerCase();
-    const preMap = this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    if (!preSetting) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          pinedQueue: [token],
-        },
-      };
-      return;
+  pinToken = (token: IManageToken) => {
+    if (!this.store.pinedQueue) {
+      this.store.pinedQueue = [token];
     }
-    const pinedQueue = preSetting.pinedQueue || [];
+    const pinedQueue = this.store.pinedQueue;
     const exist = pinedQueue.find(
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      const nextQueue = [token, ...pinedQueue];
-      const nextMap = {
-        ...preMap,
-        [address]: {
-          ...preSetting,
-          pinedQueue: nextQueue,
-        },
-      };
-      this.store.tokenManageSettingMap = nextMap;
-      this.manualUnFoldToken(address, token, nextMap);
+      this.store.pinedQueue = [token, ...pinedQueue];
+      this.manualUnFoldTokenForAllAddress(token);
     }
   };
-  removePinedToken = (
-    _address: string,
-    token: IManageToken,
-    prePassMap?: ITokenManageSettingMap,
-  ) => {
-    const address = _address.toLowerCase();
-    const preMap = prePassMap || this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    const pinedQueue = this.store.tokenManageSettingMap[address]?.pinedQueue;
-    if (pinedQueue) {
-      const exist = pinedQueue.find(
+  removePinedToken = (token: IManageToken) => {
+    if (this.store.pinedQueue?.length) {
+      this.store.pinedQueue = this.store.pinedQueue.filter(
         item =>
-          item.chainId === token.chainId && item.tokenId === token.tokenId,
+          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
       );
-      if (exist) {
-        const nextPinQueue = pinedQueue.filter(
-          item =>
-            item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-        );
-        this.store.tokenManageSettingMap = {
-          ...preMap,
-          [address]: {
-            ...preSetting,
-            pinedQueue: nextPinQueue,
-          },
-        };
-      }
     }
   };
 
@@ -742,7 +704,7 @@ export class PreferenceService {
         },
       };
       this.store.tokenManageSettingMap = nextMap;
-      this.removePinedToken(address, token, nextMap);
+      this.removePinedToken(token);
     }
   };
   manualUnFoldToken = (
@@ -781,6 +743,35 @@ export class PreferenceService {
         },
       };
     }
+  };
+  manualUnFoldTokenForAllAddress = (token: IManageToken) => {
+    const preMap = this.store.tokenManageSettingMap || {};
+    this.store.tokenManageSettingMap = Object.fromEntries(
+      Object.entries(preMap).map(([address, preSetting]) => {
+        const preFoldedTokens = preSetting?.foldTokens || [];
+        const preUnFoldedToken = preSetting?.unfoldTokens || [];
+
+        const exist = preUnFoldedToken.find(
+          item =>
+            item.chainId === token.chainId && item.tokenId === token.tokenId,
+        );
+        if (!exist) {
+          return [
+            address,
+            {
+              ...preSetting,
+              unfoldTokens: [...preUnFoldedToken, token],
+              foldTokens: preFoldedTokens.filter(
+                item =>
+                  item.chainId !== token.chainId ||
+                  item.tokenId !== token.tokenId,
+              ),
+            },
+          ];
+        }
+        return [address, preSetting];
+      }),
+    );
   };
   /** =========toggle fold token end =========== */
 
@@ -860,6 +851,12 @@ export class PreferenceService {
   /** =========toggle include or exclude token end =========== */
 
   getUserTokenSettings = async (address: string) => {
-    return this.store.tokenManageSettingMap[address.toLowerCase()] || {};
+    return {
+      ...(this.store.tokenManageSettingMap[address.toLowerCase()] || {}),
+      pinedQueue: this.store.pinedQueue, // from global
+    };
+  };
+  getPinedQueue = () => {
+    return this.store.pinedQueue;
   };
 }
