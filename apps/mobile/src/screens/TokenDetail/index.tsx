@@ -210,6 +210,7 @@ export const TokenDetailScreen = () => {
     account: KeyringAccountWithAlias;
   };
 
+  // console.log('tokenDetail token:', token);
   // const { token, account } = useNavigationState(
   //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
   // ) as {
@@ -382,7 +383,18 @@ export const TokenDetailScreen = () => {
         <TokenArea
           handleSwap={handleSwap}
           account={finalAccount}
-          amountList={token.fromAddress}
+          amountList={
+            !account
+              ? token.fromAddress
+              : [
+                  {
+                    ...token,
+                    account: finalAccount,
+                    amount: token._amountStr!,
+                    address: finalAccount.address,
+                  },
+                ]
+          }
           token={tokenWithAmount || token}
         />
       </View>
