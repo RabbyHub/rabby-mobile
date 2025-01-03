@@ -26,7 +26,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
-import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 
@@ -278,7 +278,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: ASSETS_ITEM_HEIGHT,
+    height: ASSETS_SECTION_HEADER,
   },
   tokenRowTokenWrap: {
     flexShrink: 1,

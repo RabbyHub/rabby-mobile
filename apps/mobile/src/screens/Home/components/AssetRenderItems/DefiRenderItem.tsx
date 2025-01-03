@@ -145,14 +145,6 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 14,
     height: 14,
   },
-  headerWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    height: ASSETS_ITEM_HEIGHT,
-  },
   symbol: {
     fontSize: 22,
     lineHeight: 28,

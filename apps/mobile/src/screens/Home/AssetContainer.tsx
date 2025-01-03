@@ -16,7 +16,11 @@ import {
 } from './types';
 import { findChain } from '@/utils/chain';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_SECTION_HEADER,
+  RootNames,
+} from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { PositionLoader } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
@@ -352,12 +356,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ListHeaderComponent={header}
         renderSectionHeader={renderSectionHeader}
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.bgContainer}
         ItemSeparatorComponent={ItemSeparatorComponent}
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
+        contentContainerStyle={styles.bgContainer}
+        showsVerticalScrollIndicator={false}
         windowSize={10}
-        getItemLayout={getItemLayout}
+        // getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled
         refreshControl={
@@ -412,8 +416,7 @@ const getStyles = createGetStyles2024(ctx => ({
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 16,
-    height: 72,
-    // marginBottom: 8,
+    height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     paddingRight: 16,
   },
@@ -428,7 +431,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   symbol: {
     fontSize: 22,
-    lineHeight: 28,
+    height: ASSETS_SECTION_HEADER,
+    lineHeight: ASSETS_SECTION_HEADER,
     fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-title-1'],

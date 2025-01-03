@@ -8,7 +8,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
-import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { HighlightText } from '@/components2024/HighlightText';
 
@@ -169,7 +169,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 4,
-    height: 74,
+    height: ASSETS_SECTION_HEADER,
     backgroundColor: colors2024['neutral-bg-gray'],
   },
   symbol: {
