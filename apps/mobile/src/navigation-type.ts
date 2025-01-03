@@ -31,7 +31,7 @@ export type RootStackParamsList = {
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.TokenDetail]: {
     token: AbstractPortfolioToken;
-    isFromPortfolio?: boolean;
+    needUseCacheToken?: boolean;
     account?: KeyringAccountWithAlias;
   };
 };

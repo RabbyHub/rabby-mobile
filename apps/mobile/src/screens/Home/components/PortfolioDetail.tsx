@@ -26,6 +26,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useAssets } from '@/screens/Search/useAssets';
+import { useRoute } from '@react-navigation/native';
 
 export const PortfolioHeader = ({
   data,
@@ -112,6 +113,10 @@ export const TokenList = ({
   };
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const route = useRoute();
+  const { relateTokenId } = (route.params || {}) as {
+    relateTokenId?: string;
+  };
 
   const headers = [name, 'amount', 'USD Value'];
 
@@ -206,7 +211,6 @@ export const TokenList = ({
       if (idx > -1) {
         navigate(RootNames.TokenDetail, {
           token: cacheAssets[idx],
-          isFromPortfolio: true,
         });
       } else {
         toast.show('Token not found');
@@ -235,7 +239,13 @@ export const TokenList = ({
       </View>
       {list.map(l => {
         return (
-          <View style={[styles.tokenRow, styles.tokenRowToken]} key={l.id}>
+          <View
+            style={[
+              styles.tokenRow,
+              styles.tokenRowToken,
+              relateTokenId === l.id && styles.hightlightRow,
+            ]}
+            key={l.id}>
             <TouchableWithoutFeedback
               onPress={() => l.isToken && handleOpenTokenDetail(l)}>
               <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
@@ -328,6 +338,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
   portfolioTypeDesc: {
     flexDirection: 'row',
@@ -378,12 +389,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
   arrowStyle: {
     marginLeft: -2,
   },
   tokenRowToken: {
     height: 40,
+  },
+  hightlightRow: {
+    backgroundColor: colors2024['brand-light-1'],
   },
   tokenRowHeader: {
     marginBottom: 8,

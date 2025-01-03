@@ -1,7 +1,11 @@
 import { useDebounce } from 'ahooks';
 import { useState } from 'react';
 import { AbstractPortfolioToken } from '../Home/types';
-import { CombineDefiItem, CombineNFTItem } from '../Home/hooks/store';
+import {
+  CombineDefiItem,
+  CombineNFTItem,
+  CombineTokensItem,
+} from '../Home/hooks/store';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -15,7 +19,7 @@ export const useSearch = () => {
   };
 };
 export const filterTokens = (
-  tokens: AbstractPortfolioToken[],
+  tokens: CombineTokensItem[],
   filterText?: string,
 ) => {
   if (!filterText) {

@@ -119,39 +119,13 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const { data } = useNavigationState(
+  const { data, relateTokenId } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
+    relateTokenId?: string;
   };
-
-  const [asssest] = useAssetsMap();
-  const sectionsMultiProject = useMemo(() => {
-    const sectionsList: {
-      data: AbstractPortfolio[];
-      project: AbstractProject;
-      address: string;
-      index: number;
-    }[] = [];
-
-    Object.keys(asssest).map((address, index) => {
-      const { portfolios } = asssest[address];
-
-      portfolios?.map(portfolio => {
-        if (portfolio.id === data.id && portfolio.chain === data.chain) {
-          sectionsList.push({
-            data: portfolio._portfolios,
-            project: portfolio,
-            address,
-            index,
-          });
-        }
-      });
-    });
-    console.log('relateDefiList length:', sectionsList.length);
-    return sectionsList;
-  }, [data, asssest]);
 
   // console.log('DefiDetail data:', JSON.stringify(data));
   const { t } = useTranslation();
@@ -210,9 +184,36 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const renderItem = ({ item, section }) => {
+  const [asssest] = useAssetsMap();
+  const sectionsMultiProject = useMemo(() => {
+    const sectionsList: {
+      data: AbstractPortfolio[];
+      project: AbstractProject;
+      address: string;
+      index: number;
+    }[] = [];
+
+    Object.keys(asssest).map((address, index) => {
+      const { portfolios } = asssest[address];
+
+      portfolios?.map(portfolio => {
+        if (portfolio.id === data.id && portfolio.chain === data.chain) {
+          sectionsList.push({
+            data: portfolio._portfolios,
+            project: portfolio,
+            address,
+            index,
+          });
+        }
+      });
+    });
+    console.log('relateDefiList length:', sectionsList.length);
+    return sectionsList;
+  }, [data, asssest]);
+
+  const renderItem = useCallback(({ item, section }) => {
     return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
-  };
+  }, []);
 
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -245,31 +246,32 @@ export const DeFiDetailScreen = () => {
   );
 
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.projectHeaderBalance}>
-          {t('page.nextComponent.multiAddressHome.totalBalance')}
-        </Text>
-        <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-
-        <SectionList
-          sections={sectionsMultiProject}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={item => `${item.id}`}
-          windowSize={10}
-          // getItemLayout={getItemLayout}
-          stickySectionHeadersEnabled
-          // ListEmptyComponent={ListEmptyComponent}
-          onScroll={() => {
-            Keyboard.dismiss();
-          }}
-          renderSectionHeader={renderSectionHeader}
-        />
-        {/* {portfolioList.map((item, index) => {
+    <NormalScreenContainer2024 type="bg1" overwriteStyle={[styles.container]}>
+      <SectionList
+        sections={sectionsMultiProject}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        keyExtractor={item => `${item.id}`}
+        windowSize={10}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.projectHeaderBalance}>
+              {t('page.nextComponent.multiAddressHome.totalBalance')}
+            </Text>
+            <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
+          </>
+        }
+        // getItemLayout={getItemLayout}
+        // stickySectionHeadersEnabled
+        // ListEmptyComponent={ListEmptyComponent}
+        onScroll={() => {
+          Keyboard.dismiss();
+        }}
+        renderSectionHeader={renderSectionHeader}
+      />
+      {/* {portfolioList.map((item, index) => {
           return <MemoItem item={item} key={index} />;
         })} */}
-      </ScrollView>
     </NormalScreenContainer2024>
   );
 };

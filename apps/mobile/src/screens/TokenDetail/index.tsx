@@ -168,10 +168,14 @@ export const RightMore: React.FC<{
 };
 export const TokenDetailScreen = () => {
   const route = useRoute();
-  const { token, account, isFromPortfolio } = (route.params || {}) as {
+  const {
+    token: _token,
+    account,
+    needUseCacheToken,
+  } = (route.params || {}) as {
     token: CombineTokensItem;
     account: KeyringAccountWithAlias;
-    isFromPortfolio?: boolean;
+    needUseCacheToken?: boolean;
   };
 
   // console.log(' TokenDetailScreen token:', token);
@@ -187,7 +191,14 @@ export const TokenDetailScreen = () => {
   });
 
   const [asssest] = useAssetsMap();
-
+  const { tokens: cacheAssets } = useAssets();
+  const token = useMemo(() => {
+    if (needUseCacheToken) {
+      const iToken = cacheAssets.find(item => item.id === _token.id);
+      return iToken || _token;
+    }
+    return _token;
+  }, [cacheAssets, _token, needUseCacheToken]);
   const { safeOffBottom } = useSafeSizes();
 
   const relateDefiList = useMemo(() => {
@@ -229,7 +240,7 @@ export const TokenDetailScreen = () => {
         data,
         portfolioList: itemList,
         cache: true,
-        symbol: token.symbol,
+        relateTokenId: token._tokenId,
       });
     },
     [token],

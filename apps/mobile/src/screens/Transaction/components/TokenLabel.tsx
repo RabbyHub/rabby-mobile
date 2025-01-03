@@ -74,7 +74,8 @@ export default function TokenLabel({
           // openTokenDetailPopup(token as TokenItem);
           naviPush(RootNames.TokenDetail, {
             token: ensureAbstractPortfolioToken(token),
-            account: address,
+            // account: address,
+            needUseCacheToken: true,
           });
         }
       }}
