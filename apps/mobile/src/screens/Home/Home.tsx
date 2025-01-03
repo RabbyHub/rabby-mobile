@@ -12,7 +12,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
@@ -28,8 +28,13 @@ function HomeScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type={isDarkTheme ? 'bg1' : 'linear-bg2'}
-      style={styles.rootScreenContainer}>
+      type="bg1"
+      overwriteStyle={[
+        styles.rootScreenContainer,
+        {
+          backgroundColor: isDarkTheme ? colors2024['neutral-bg-1'] : '#F6F7F7',
+        },
+      ]}>
       <SafeAreaView style={styles.safeView}>
         <AssetContainer onRefresh={triggerUpdate} />
       </SafeAreaView>

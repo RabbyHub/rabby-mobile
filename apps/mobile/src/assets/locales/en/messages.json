@@ -2688,6 +2688,8 @@
     "next": "Next",
     "back": "Back",
     "ok": "OK",
+    "pin": "Pin",
+    "folded": "Folded",
     "refresh": "Refresh",
     "failed": "Failed",
     "scamTx": "Scam tx",

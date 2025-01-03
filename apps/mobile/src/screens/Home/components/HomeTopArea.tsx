@@ -534,7 +534,7 @@ export const HomeTopArea = () => {
 const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 20,
     paddingHorizontal: 8,
     backgroundColor: 'transparent',
@@ -664,7 +664,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-foot'],
   },
   opacityWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   textBox: {
     marginTop: 0,

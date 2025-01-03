@@ -24,11 +24,10 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
-import { getTokenSymbol, SMALL_TOKEN_ID } from '@/utils/token';
+import { getTokenSymbol } from '@/utils/token';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
-import TouchableView from '../Touchable/TouchableView';
 import { findChainByServerID } from '@/utils/chain';
 import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
@@ -41,7 +40,7 @@ import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { PinBadge } from '@/screens/Address/components/PinBadge';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
@@ -412,7 +411,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   <Text style={styles.tokenName} numberOfLines={1}>
                     {ellipsisOverflowedText(token?._symbol, 15)}
                   </Text>
-                  {isPined && <PinBadge />}
+                  {isPined && <TextBadge />}
                   <View style={{ marginLeft: 8 }}>
                     {isSelected ? <RcIconChecked /> : null}
                   </View>

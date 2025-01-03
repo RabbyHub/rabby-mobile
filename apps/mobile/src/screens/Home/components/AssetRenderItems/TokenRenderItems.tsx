@@ -25,7 +25,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { PinBadge } from '@/screens/Address/components/PinBadge';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
@@ -152,7 +152,8 @@ export const TokenRow = memo(
                 searchWords={[filterText || '']}
                 textToHighlight={data.symbol}
               />
-              {data._isPined && <PinBadge />}
+              {data._isPined && <TextBadge />}
+              {data._isManualFold && <TextBadge type="folded" />}
             </View>
 
             {data._priceStr ? (
