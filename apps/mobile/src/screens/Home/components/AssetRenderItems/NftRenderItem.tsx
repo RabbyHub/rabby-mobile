@@ -170,6 +170,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: 4,
     height: 74,
+    backgroundColor: colors2024['neutral-bg-gray'],
   },
   symbol: {
     fontSize: 22,

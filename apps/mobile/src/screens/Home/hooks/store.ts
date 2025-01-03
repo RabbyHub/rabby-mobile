@@ -37,7 +37,7 @@ export type CombineNFTItem = NFTItem & {
   }>;
 };
 
-interface IAssets {
+export interface IAssets {
   portfolios?: DisplayedProject[];
   tokens?: AbstractPortfolioToken[];
   nfts?: NFTItem[];

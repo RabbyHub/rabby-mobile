@@ -56,12 +56,10 @@ const hitSlop = {
 };
 export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
-  address: string;
-  isMultiAddress?: boolean;
   triggerUpdate: () => void;
-}> = ({ token, address, triggerUpdate, isMultiAddress }) => {
+}> = ({ token, triggerUpdate }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { refreshTags } = useRefreshTags(address);
+  const { refreshTags } = useRefreshTags();
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
@@ -267,15 +265,8 @@ export const TokenDetailScreen = () => {
 
   const isSingleAddress = useMemo(() => !!account, [account]);
   const getHeaderRight = useCallback(() => {
-    return (
-      <RightMore
-        token={token}
-        isMultiAddress={!isSingleAddress}
-        address={finalAccount.address}
-        triggerUpdate={triggerUpdate}
-      />
-    );
-  }, [finalAccount.address, token, triggerUpdate, isSingleAddress]);
+    return <RightMore token={token} triggerUpdate={triggerUpdate} />;
+  }, [token, triggerUpdate]);
 
   const getHeaderTitle = useCallback(() => {
     return (

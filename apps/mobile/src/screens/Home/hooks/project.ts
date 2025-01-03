@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useRefreshTags, useTokens } from './token';
+import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import { useLastUpdateTimeAtom } from './store';
@@ -10,7 +10,6 @@ export const useQueryProjects = (
   isTestnet = false,
 ) => {
   const [lastUpdateTime, setLastUpdateTime] = useLastUpdateTimeAtom(userAddr);
-  const { refreshTags } = useRefreshTags(userAddr);
   const [isLoading, setLoading] = useSafeState(false);
 
   const shouldUseHistory = useMemo(() => {
@@ -61,10 +60,6 @@ export const useQueryProjects = (
       refreshPositions();
       return;
     }
-    if (userAddr) {
-      console.log('🔍 CUSTOM_LOGGER:=>: refreshTags)', userAddr.slice(-8));
-      refreshTags();
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldUseHistory, userAddr]);
 
@@ -75,7 +70,7 @@ export const useQueryProjects = (
     portfolios,
     nftList,
     loading: isLoading,
-    refreshing: isLoading && lastUpdateTime,
+    refreshing: !!isLoading && !!lastUpdateTime,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
   };
 };

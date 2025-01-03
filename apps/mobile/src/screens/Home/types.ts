@@ -65,6 +65,7 @@ export type AbstractPortfolioToken = PortfolioItemToken & {
   _realUsdValueChange?: number;
   _isPined?: boolean;
   _isFold?: boolean;
+  _isManualFold?: boolean;
   _isExcludeBalance?: boolean;
   _pinIndex?: number;
 };

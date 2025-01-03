@@ -46,10 +46,9 @@ const hitSlop = {
 
 export const RightMore: React.FC<{
   token: AbstractProject;
-  address: string;
   refreshBalance: () => void;
-}> = ({ token, address, refreshBalance }) => {
-  const { refreshTags } = useRefreshTags(address);
+}> = ({ token, refreshBalance }) => {
+  const { refreshTags } = useRefreshTags();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -120,12 +119,10 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const { currentAccount } = useCurrentAccount();
-  const { data, account } = useNavigationState(
+  const { data } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
-    account: KeyringAccountWithAlias;
     portfolioList: AbstractPortfolio[];
   };
 
@@ -159,11 +156,6 @@ export const DeFiDetailScreen = () => {
   // console.log('DefiDetail data:', JSON.stringify(data));
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
-
-  const finalAccount = useMemo(
-    () => account || currentAccount,
-    [account, currentAccount],
-  );
 
   const getHeaderTitle = useMemoizedFn(() => {
     return (
@@ -207,13 +199,7 @@ export const DeFiDetailScreen = () => {
   });
 
   const getHeaderRight = useMemoizedFn(() => {
-    return (
-      <RightMore
-        token={data}
-        address={finalAccount.address}
-        refreshBalance={triggerUpdate}
-      />
-    );
+    return <RightMore token={data} refreshBalance={triggerUpdate} />;
   });
 
   React.useEffect(() => {

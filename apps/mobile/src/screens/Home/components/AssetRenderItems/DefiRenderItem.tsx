@@ -101,17 +101,6 @@ export const DefiRow = ({
     </TouchableOpacity>
   );
 };
-export const DefiSectionHeader = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
-  return (
-    <View style={styles.headerWrapper}>
-      <Text style={styles.symbol}>
-        {t('page.singleHome.sectionHeader.Defi')}
-      </Text>
-    </View>
-  );
-};
 const getStyles = createGetStyles2024(ctx => ({
   projectHeader: {
     paddingHorizontal: 4,
