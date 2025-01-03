@@ -31,6 +31,7 @@ export type RootStackParamsList = {
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.TokenDetail]: {
     token: AbstractPortfolioToken;
+    isFromPortfolio?: boolean;
     account?: KeyringAccountWithAlias;
   };
 };
@@ -183,6 +184,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;
     collectionName?: string;
+    address?: string;
   };
   [RootNames.Swap]?: {};
   [RootNames.MultiSwap]?: {};

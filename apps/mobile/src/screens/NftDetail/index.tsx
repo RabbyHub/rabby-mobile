@@ -23,6 +23,16 @@ import { useTranslation } from 'react-i18next';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  useMyAccounts,
+} from '@/hooks/account';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useAssetsMap } from '../Home/hooks/store';
 
 const ListItem = (props: {
   title: string;
@@ -59,7 +69,7 @@ export const NFTDetailScreen = () => {
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
-  const collectionName = token.contract_name || token?.collection?.name || '';
+  // const collectionName = token.contract_name || token?.collection?.name || '';
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
@@ -107,90 +117,172 @@ export const NFTDetailScreen = () => {
     });
   }, [TokenDetailHeaderArea, setNavigationOptions]);
 
-  const price = useMemo(() => {
-    if (token?.usd_price) {
-      return `$${new BigNumber(token?.usd_price).toFormat(2, 4)}`;
+  const calPrice = useCallback((iToken: NFTItem) => {
+    if (iToken?.usd_price) {
+      return `$${new BigNumber(iToken?.usd_price).toFormat(2, 4)}`;
     }
     return 'Unable to get price';
-  }, [token?.usd_price]);
+  }, []);
 
-  const date = useMemo(
-    () =>
-      token?.pay_token?.time_at
-        ? dayjs(token?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
+  const calDate = useCallback(
+    (iToken: NFTItem) =>
+      iToken?.pay_token?.time_at
+        ? dayjs(iToken?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
         : 'Unable to get Date',
-
-    [token?.pay_token?.time_at],
+    [],
   );
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback((iToken: NFTItem, address: string) => {
     navigate(RootNames.StackTransaction, {
       screen: RootNames.SendNFT,
       params: {
-        collectionName,
-        nftItem: token,
+        collectionName: iToken.contract_name || iToken?.collection?.name || '',
+        nftItem: iToken,
+        address,
       },
     });
-  }, [collectionName, token]);
+  }, []);
+
+  const [asssest] = useAssetsMap();
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  const itemList = useMemo(() => {
+    const resList: {
+      data: NFTItem;
+      address: string;
+      index: number;
+    }[] = [];
+
+    Object.keys(asssest).map((address, index) => {
+      const { nfts } = asssest[address];
+
+      nfts?.map(item => {
+        if (
+          item.id === token.id &&
+          item.chain === token.chain &&
+          item.contract_id === token.contract_id
+        ) {
+          resList.push({
+            data: item,
+            address,
+            index,
+          });
+        }
+      });
+    });
+    console.log('relateNFTList length:', resList.length);
+    return resList;
+  }, [asssest, token]);
+
+  const renderAccountHeader = useCallback(
+    (selectAccount: KeyringAccountWithAlias) => {
+      return (
+        <View style={styles.accountBox}>
+          <View className="relative">
+            <WalletIcon
+              type={selectAccount?.type as KEYRING_TYPE}
+              width={styles.walletIcon.width}
+              height={styles.walletIcon.height}
+              style={styles.walletIcon}
+            />
+          </View>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {selectAccount?.aliasName || selectAccount?.brandName}
+          </Text>
+        </View>
+      );
+    },
+    [styles.accountBox, styles.titleText, styles.walletIcon],
+  );
+
+  const renderSingeleNft = useCallback(
+    ({ address, iToken }: { address: string; iToken: NFTItem }) => {
+      const selectAccount = sortedAccounts.find(a =>
+        isSameAddress(a.address, address),
+      );
+      if (!selectAccount) {
+        return null;
+      }
+
+      return (
+        <>
+          {renderAccountHeader(selectAccount)}
+          <Media
+            failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
+            type={iToken?.content_type}
+            src={iToken?.content}
+            style={styles.images}
+            mediaStyle={styles.innerImages}
+            playable={true}
+            poster={iToken?.content}
+          />
+          <View style={styles.bottom}>
+            <View style={styles.titleView}>
+              <Text style={styles.title} numberOfLines={1}>
+                {iToken?.name || 'Unable to get NFT name'}
+              </Text>
+              {iToken?.amount > 1 ? (
+                <View style={styles.subtitle}>
+                  <IconNumberNFT color={colors['neutral-title-1']} width={15} />
+                  <View>
+                    <Text style={styles.numbernft}>
+                      {'Number of NFTs '}{' '}
+                      <Text
+                        style={{
+                          color: colors['neutral-title-1'],
+                        }}>
+                        {iToken.amount}
+                      </Text>
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+            <ListItem
+              title="Collection"
+              value={iToken.contract_name || iToken?.collection?.name || ''}
+              showBorderTop
+            />
+            <ListItem
+              title="Chain"
+              value={
+                getCHAIN_ID_LIST().get(iToken?.chain || CHAINS_ENUM.ETH)?.name
+              }
+            />
+            <ListItem title="Purchase Date" value={calDate(iToken)} />
+            <ListItem title="Last Price" value={calPrice(iToken)} />
+          </View>
+          <View style={[styles.buttonContainer]}>
+            <Button
+              onPress={() => handleSend(iToken, address)}
+              title={t('page.sendNFT.sendButton')}
+              titleStyle={styles.btnTitle}
+            />
+          </View>
+        </>
+      );
+    },
+    [
+      calDate,
+      calPrice,
+      renderAccountHeader,
+      t,
+      handleSend,
+      colors,
+      styles,
+      sortedAccounts,
+    ],
+  );
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       <ScrollView style={styles.scrollContainer}>
-        <Media
-          failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
-          type={token?.content_type}
-          src={token?.content}
-          style={styles.images}
-          mediaStyle={styles.innerImages}
-          playable={true}
-          poster={token?.content}
-        />
-        <View style={styles.bottom}>
-          <View style={styles.titleView}>
-            <Text style={styles.title} numberOfLines={1}>
-              {token?.name || 'Unable to get NFT name'}
-            </Text>
-            {token?.amount > 1 ? (
-              <View style={styles.subtitle}>
-                <IconNumberNFT color={colors['neutral-title-1']} width={15} />
-                <View>
-                  <Text style={styles.numbernft}>
-                    {'Number of NFTs '}{' '}
-                    <Text
-                      style={{
-                        color: colors['neutral-title-1'],
-                      }}>
-                      {token.amount}
-                    </Text>
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-          </View>
-          <ListItem title="Collection" value={collectionName} showBorderTop />
-          <ListItem
-            title="Chain"
-            value={
-              getCHAIN_ID_LIST().get(token?.chain || CHAINS_ENUM.ETH)?.name
-            }
-          />
-          <ListItem title="Purchase Date" value={date} />
-          <ListItem title="Last Price" value={price} />
-        </View>
+        {itemList.map(({ data, address }) =>
+          renderSingeleNft({ address, iToken: data }),
+        )}
+        <View style={{ height: 40 }} />
       </ScrollView>
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            paddingBottom: Math.max(bottom, 50),
-          },
-        ]}>
-        <Button
-          onPress={handleSend}
-          title={t('page.sendNFT.sendButton')}
-          titleStyle={styles.btnTitle}
-        />
-      </View>
     </NormalScreenContainer2024>
   );
 };
@@ -202,8 +294,29 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     marginTop: 8,
     // backgroundColor: colors2024['neutral-bg-4'],
   },
+  accountBox: {
+    flexDirection: 'row',
+    marginLeft: 25,
+    gap: 4,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  titleText: {
+    flexShrink: 1,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexWrap: 'nowrap',
+  },
+  walletIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+  },
   buttonContainer: {
-    height: 140,
+    height: 100,
     width: '100%',
     padding: 20,
   },

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, SectionList, Keyboard } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
@@ -25,8 +25,17 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useRefreshTags } from '../Home/hooks/token';
 import { preferenceService } from '@/core/services';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  useMyAccounts,
+} from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useAssetsMap } from '../Home/hooks/store';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const hitSlop = {
   top: 10,
@@ -36,7 +45,7 @@ const hitSlop = {
 };
 
 export const RightMore: React.FC<{
-  token: AbstractPortfolioToken;
+  token: AbstractProject;
   address: string;
   refreshBalance: () => void;
 }> = ({ token, address, refreshBalance }) => {
@@ -65,7 +74,7 @@ export const RightMore: React.FC<{
           if (token._isExcludeBalance) {
             preferenceService.includeBalanceToken(address, {
               id: token.id,
-              chainid: token.chain,
+              chainid: token.chain!,
               type: 'defi',
             });
             toast.success(
@@ -74,7 +83,7 @@ export const RightMore: React.FC<{
           } else {
             preferenceService.excludeBalance(address, {
               id: token.id,
-              chainid: token.chain,
+              chainid: token.chain!,
               type: 'defi',
             });
             toast.success(
@@ -112,13 +121,43 @@ export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const { currentAccount } = useCurrentAccount();
-  const { data, portfolioList, account } = useNavigationState(
+  const { data, account } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
     account: KeyringAccountWithAlias;
     portfolioList: AbstractPortfolio[];
   };
+
+  const [asssest] = useAssetsMap();
+  const sectionsMultiProject = useMemo(() => {
+    const sectionsList: {
+      data: AbstractPortfolio[];
+      project: AbstractProject;
+      address: string;
+      index: number;
+    }[] = [];
+
+    Object.keys(asssest).map((address, index) => {
+      const { portfolios } = asssest[address];
+
+      portfolios?.map(portfolio => {
+        if (portfolio.id === data.id && portfolio.chain === data.chain) {
+          sectionsList.push({
+            data: portfolio._portfolios,
+            project: portfolio,
+            address,
+            index,
+          });
+        }
+      });
+    });
+    console.log('relateDefiList length:', sectionsList.length);
+    return sectionsList;
+  }, [data, asssest]);
+
+  // console.log('DefiDetail data:', JSON.stringify(data));
+  const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
   const finalAccount = useMemo(
@@ -185,13 +224,65 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
+  const renderItem = ({ item, section }) => {
+    return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
+  };
+
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  const renderSectionHeader = useCallback(
+    ({ section }) => {
+      const selectAccount = sortedAccounts.find(
+        a =>
+          a.type !== KEYRING_TYPE.WatchAddressKeyring &&
+          isSameAddress(a.address, section.address),
+      );
+
+      return (
+        <View style={styles.accountBox}>
+          <View className="relative">
+            <WalletIcon
+              type={selectAccount?.type as KEYRING_TYPE}
+              width={styles.walletIcon.width}
+              height={styles.walletIcon.height}
+              style={styles.walletIcon}
+            />
+          </View>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {selectAccount?.aliasName || selectAccount?.brandName}
+          </Text>
+        </View>
+      );
+    },
+    [sortedAccounts, styles.accountBox, styles.titleText, styles.walletIcon],
+  );
+
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       <ScrollView style={styles.scrollContainer}>
+        <Text style={styles.projectHeaderBalance}>
+          {t('page.nextComponent.multiAddressHome.totalBalance')}
+        </Text>
         <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-        {portfolioList.map((item, index) => {
+
+        <SectionList
+          sections={sectionsMultiProject}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={item => `${item.id}`}
+          windowSize={10}
+          // getItemLayout={getItemLayout}
+          stickySectionHeadersEnabled
+          // ListEmptyComponent={ListEmptyComponent}
+          onScroll={() => {
+            Keyboard.dismiss();
+          }}
+          renderSectionHeader={renderSectionHeader}
+        />
+        {/* {portfolioList.map((item, index) => {
           return <MemoItem item={item} key={index} />;
-        })}
+        })} */}
       </ScrollView>
     </NormalScreenContainer2024>
   );
@@ -204,6 +295,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 8,
     // backgroundColor: colors2024['neutral-bg-4'],
   },
+  accountBox: {
+    flexDirection: 'row',
+    marginLeft: 25,
+    gap: 4,
+    marginTop: 20,
+    marginBottom: 8,
+  },
   backButtonStyle: {
     // width: 56,
     // height: 56,
@@ -211,6 +309,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     marginLeft: -16,
     paddingLeft: 16,
+  },
+  titleText: {
+    flexShrink: 1,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexWrap: 'nowrap',
+  },
+  walletIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+  },
+  projectHeaderBalance: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'left',
+    marginLeft: 25,
+    marginBottom: 7,
   },
   projectHeaderNetWorth: {
     color: colors2024['neutral-title-1'],
@@ -220,7 +342,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'left',
     marginLeft: 25,
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   headerArea: {
     width: '100%',

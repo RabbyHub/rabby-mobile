@@ -21,9 +21,10 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { RelatedDeFiType } from '..';
 
 interface Props {
-  deFiList: CombineDefiItem[];
+  deFiList: RelatedDeFiType[];
   handleGoDeFi: (
     data: AbstractProject,
     itemList: AbstractPortfolio[],
@@ -42,7 +43,7 @@ export const RelatedDeFi: React.FC<Props> = ({
   const { t } = useTranslation();
 
   const renderItem = useCallback(
-    ({ item }: { item: CombineDefiItem }) => {
+    ({ item }: { item: RelatedDeFiType }) => {
       return (
         <TouchableOpacity
           onPress={() =>
@@ -61,12 +62,13 @@ export const RelatedDeFi: React.FC<Props> = ({
                 numberOfLines={1}
                 ellipsizeMode="tail">
                 {/* {token?.name} */}
-                {ellipsisOverflowedText(item?.name, 20)}
+                {ellipsisOverflowedText(item?.name, 10)}
               </Text>
             </View>
             <View style={styles.defiItemContent}>
-              <Text
-                style={styles.defiItemText}>{`${item?.amount} ${symbol}`}</Text>
+              <Text style={styles.defiItemText}>{`${
+                item?.amount
+              } ${ellipsisOverflowedText(symbol, 6)}`}</Text>
               <RcIconRightCC
                 style={styles.arrowStyle}
                 width={13}

@@ -51,7 +51,7 @@ export const TokenArea: React.FC<Props> = ({
       return (
         <View style={styles.itemCard}>
           <View style={styles.tokenBox}>
-            <Text style={styles.tokenAmount}>
+            <Text style={styles.tokenAmount} numberOfLines={1}>
               {formatTokenAmount(item.amount)}
               {token.symbol}
             </Text>
@@ -142,7 +142,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   accountBox: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 4,
   },
@@ -188,12 +188,14 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+    flex: 1,
   },
   actionBox: {
     display: 'flex',
     flexDirection: 'row',
+    width: 100,
     gap: 8,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   actionText: {

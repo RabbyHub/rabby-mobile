@@ -182,7 +182,6 @@ export const combinedTokensAtom = atom(async get => {
           fromAddress: [
             {
               address,
-              account: assets.account!,
               amount: token._amountStr || '',
             },
           ],
@@ -197,7 +196,6 @@ export const combinedTokensAtom = atom(async get => {
         );
         existingToken.fromAddress.push({
           address,
-          account: assets.account!,
           amount: token._amountStr || '',
         });
       }

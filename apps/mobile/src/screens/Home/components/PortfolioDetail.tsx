@@ -1,10 +1,16 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Text, ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ViewStyle,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
 import groupBy from 'lodash/groupBy';
-import { RcIconInfoCC } from '@/assets/icons/common';
-
+import { RcIconInfoCC, RcIconRightCC } from '@/assets/icons/common';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { AssetAvatar, Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
@@ -17,6 +23,9 @@ import {
 import { AbstractPortfolio } from '../types';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useAssets } from '@/screens/Search/useAssets';
 
 export const PortfolioHeader = ({
   data,
@@ -74,6 +83,7 @@ export const PortfolioHeader = ({
 
 type TokenItem = {
   id: string;
+  chain: string;
   _logo: string;
   amount: number;
   _symbol: string;
@@ -101,7 +111,7 @@ export const TokenList = ({
     shareToken: PortfolioItemToken;
   };
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const headers = [name, 'amount', 'USD Value'];
 
@@ -112,6 +122,7 @@ export const TokenList = ({
 
         return {
           id: x.id,
+          chain: x.chain,
           amount: x.amount,
           _logo: x.logo_url,
           _symbol: getTokenSymbol(x),
@@ -134,6 +145,7 @@ export const TokenList = ({
 
       return {
         id: n.id,
+        chain: n.collection.chain_id,
         _logo: n.collection.logo_url,
         _symbol,
         amount: n.amount,
@@ -153,6 +165,7 @@ export const TokenList = ({
           id: `fraction${
             fraction.collection.id + fraction.collection.chain_id
           }`,
+          chain: fraction.collection.chain_id,
           _logo: fraction.collection.logo_url,
           _symbol: getCollectionDisplayName(fraction.collection),
           amount: fraction.shareToken.amount,
@@ -184,6 +197,24 @@ export const TokenList = ({
     return result;
   }, [_fraction, _nfts, _tokens]);
 
+  const { tokens: cacheAssets } = useAssets();
+  const handleOpenTokenDetail = React.useCallback(
+    (token: TokenItem) => {
+      const idx = cacheAssets.findIndex(
+        item => item._tokenId === token.id && item.chain === token.chain,
+      );
+      if (idx > -1) {
+        navigate(RootNames.TokenDetail, {
+          token: cacheAssets[idx],
+          isFromPortfolio: true,
+        });
+      } else {
+        toast.show('Token not found');
+      }
+    },
+    [cacheAssets],
+  );
+
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
       <View style={[styles.tokenRow, styles.tokenRowHeader]}>
@@ -205,16 +236,27 @@ export const TokenList = ({
       {list.map(l => {
         return (
           <View style={[styles.tokenRow, styles.tokenRowToken]} key={l.id}>
-            <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
-              <AssetAvatar
-                logo={l._logo}
-                logoStyle={l.isToken ? undefined : styles.nftIcon}
-                size={24}
-              />
-              <Text style={styles.tokenListSymbolText} numberOfLines={1}>
-                {l._symbol}
-              </Text>
-            </View>
+            <TouchableWithoutFeedback
+              onPress={() => l.isToken && handleOpenTokenDetail(l)}>
+              <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
+                <AssetAvatar
+                  logo={l._logo}
+                  logoStyle={l.isToken ? undefined : styles.nftIcon}
+                  size={24}
+                />
+                <Text style={styles.tokenListSymbolText} numberOfLines={1}>
+                  {l._symbol}
+                </Text>
+                {l.isToken && (
+                  <RcIconRightCC
+                    style={styles.arrowStyle}
+                    width={14}
+                    height={14}
+                    color={colors2024['neutral-secondary']}
+                  />
+                )}
+              </View>
+            </TouchableWithoutFeedback>
             <Text style={styles.tokenListCol}>{formatAmount(l.amount)}</Text>
             <View
               style={StyleSheet.flatten([
@@ -336,6 +378,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  arrowStyle: {
+    marginLeft: -2,
   },
   tokenRowToken: {
     height: 40,

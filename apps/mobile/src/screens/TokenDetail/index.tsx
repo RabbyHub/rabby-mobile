@@ -51,11 +51,12 @@ import { DisplayedProject, DisplayedPortfolio } from '../Home/utils/project';
 import { RelatedDeFi } from './components/RelatedDeFi';
 import { navigate } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
+import { useAssets } from '../Search/useAssets';
 
 const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
 
-type RelatedDeFi = DisplayedProject & { amount: string };
+export type RelatedDeFiType = DisplayedProject & { amount: string };
 
 const hitSlop = {
   top: 10,
@@ -206,12 +207,12 @@ export const RightMore: React.FC<{
 };
 export const TokenDetailScreen = () => {
   const route = useRoute();
-  const { token, account } = (route.params || {}) as {
+  const { token, account, isFromPortfolio } = (route.params || {}) as {
     token: CombineTokensItem;
     account: KeyringAccountWithAlias;
+    isFromPortfolio?: boolean;
   };
 
-  console.log('tokenDetail token:', token.fromAddress);
   // const { token, account } = useNavigationState(
   //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
   // ) as {
@@ -223,15 +224,12 @@ export const TokenDetailScreen = () => {
     getStyle,
   });
 
-  // const { tokens, portfolios, nftList } = useQueryProjects();
   const [asssest] = useAssetsMap();
-
-  // console.log('tokenDetail portfolios:', portfolios);
 
   const { safeOffBottom } = useSafeSizes();
 
   const relateDefiList = useMemo(() => {
-    const resList = [] as RelatedDeFi[];
+    const resList = [] as RelatedDeFiType[];
 
     Object.values(asssest).map(({ portfolios }) => {
       portfolios?.map(portfolio => {
@@ -243,7 +241,6 @@ export const TokenDetailScreen = () => {
         const { _portfolios } = portfolio;
         _portfolios?.map(portfolioItem => {
           const { _tokenList } = portfolioItem;
-          console.log('_tokenList:', _tokenList);
 
           const sameItem = _tokenList.find(
             item => item._tokenId === token._tokenId,
@@ -263,40 +260,6 @@ export const TokenDetailScreen = () => {
     console.log('relateDefiList length:', resList.length);
     return resList;
   }, [token, asssest]);
-
-  // const relateDefiList = useMemo(() => {
-  //   const resList = [] as CombineDefiItem[];
-
-  //   portfolios.map(portfolio => {
-  //     if (portfolio.chain !== token.chain) {
-  //       return;
-  //     }
-
-  //     let amount = 0;
-  //     const { _portfolios } = portfolio;
-  //     _portfolios?.map(portfolioItem => {
-  //       const { _tokenList } = portfolioItem;
-  //       console.log('_tokenList:', _tokenList);
-
-  //       const sameItem = _tokenList.find(
-  //         item => item._tokenId === token._tokenId,
-  //       );
-  //       if (sameItem) {
-  //         amount += sameItem.amount;
-  //       }
-  //     });
-
-  //     amount &&
-  //       resList.push({
-  //         ...portfolio,
-  //         amount: formatTokenAmount(Math.abs(amount)),
-  //       });
-  //   });
-
-  //   console.log('relateDefiList length:', resList.length);
-
-  //   return resList;
-  // }, [portfolios, token]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
