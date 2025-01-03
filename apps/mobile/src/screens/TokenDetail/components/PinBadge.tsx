@@ -26,13 +26,13 @@ export const HomePinBadge: React.FC<Props> = ({ token }) => {
   const { t } = useTranslation();
   const handlePress = useCallback(() => {
     if (token._isPined) {
-      preferenceService.pinToken({
+      preferenceService.removePinedToken({
         tokenId: token._tokenId,
         chainId: token.chain,
       });
       // toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
     } else {
-      preferenceService.removePinedToken({
+      preferenceService.pinToken({
         tokenId: token._tokenId,
         chainId: token.chain,
       });
