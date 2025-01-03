@@ -38,6 +38,7 @@ import {
   ensureAbstractPortfolioToken,
   tagTokenList,
 } from '@/screens/Home/utils/token';
+import { CHAINS_ENUM } from '@debank/common';
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
@@ -59,6 +60,7 @@ interface TokenSelectProps {
         openTokenModal: () => void;
       }) => React.ReactNode)
     | React.ReactNode;
+  supportChains: CHAINS_ENUM[];
 }
 const defaultExcludeTokens = [];
 const TokenSelect = forwardRef<
@@ -79,6 +81,7 @@ const TokenSelect = forwardRef<
       loading = false,
       tokenRender,
       useSwapTokenList = false,
+      supportChains,
     },
     ref,
   ) => {
@@ -402,7 +405,7 @@ const TokenSelect = forwardRef<
           headerTitle={headerTitle}
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}
-          supportChains={SWAP_SUPPORT_CHAINS}
+          supportChains={supportChains}
           hideChainFilter={type === 'swapFrom' ? false : true}
         />
       </>

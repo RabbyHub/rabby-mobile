@@ -216,6 +216,7 @@ const BridgeToken = ({
                 chainId={chainObj?.serverId!}
                 type={'bridgeFrom'}
                 placeholder={t('page.swap.search-by-name-address')}
+                supportChains={supportedChains}
               />
             )}
           </View>
