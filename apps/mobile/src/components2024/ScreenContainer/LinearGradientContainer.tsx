@@ -5,7 +5,7 @@ import LinearGradient, {
 } from 'react-native-linear-gradient';
 
 export type LinearGradientContainerProps = {
-  type: 'linear' | 'bg1' | 'bg2' | 'classical:bg2';
+  type: 'linear' | 'bg1' | 'bg2' | 'classical:bg2' | 'linear-bg2';
 } & Omit<LinearGradientProps, 'colors'>;
 
 export const LinearGradientContainer: React.FC<
@@ -20,6 +20,8 @@ export const LinearGradientContainer: React.FC<
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
           : type === 'bg1'
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
+          : type === 'linear-bg2'
+          ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
           : type === 'classical:bg2'
           ? [colors['neutral-bg-2'], colors['neutral-bg-2']]
           : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]

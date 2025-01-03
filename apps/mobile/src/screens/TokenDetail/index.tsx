@@ -17,20 +17,13 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
-import {
-  TxDisplayItem,
-  TxHistoryResult,
-} from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
-import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
-import { chain, last } from 'lodash';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import { HistoryDisplayItem } from '../Transaction/MultiAddressHistory';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { HistoryList } from './components/HistoryList';
 import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -43,17 +36,13 @@ import { useRefreshTags } from '../Home/hooks/token';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
-import { AssetAvatar } from '@/components';
-import { ellipsisOverflowedText } from '@/utils/text';
-import { RcIconRightCC } from '@/assets/icons/common';
 import { CombineTokensItem, useAssetsMap } from '../Home/hooks/store';
-import { DisplayedProject, DisplayedPortfolio } from '../Home/utils/project';
+import { DisplayedProject } from '../Home/utils/project';
 import { RelatedDeFi } from './components/RelatedDeFi';
 import { navigate } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 
-const PAGE_COUNT = 10;
 const isAndroid = Platform.OS === 'android';
 
 export type RelatedDeFiType = DisplayedProject & { amount: string };
@@ -92,13 +81,13 @@ export const RightMore: React.FC<{
         key: 'fold',
         action() {
           if (token._isFold) {
-            preferenceService.manualUnFoldToken(address, {
+            preferenceService.manualUnFoldToken({
               tokenId: token._tokenId,
               chainId: token.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
           } else {
-            preferenceService.manualFoldToken(address, {
+            preferenceService.manualFoldToken({
               tokenId: token._tokenId,
               chainId: token.chain,
             });
@@ -158,7 +147,7 @@ export const RightMore: React.FC<{
           : 'ic_rabby_menu_exclude_balance',
         action() {
           if (token._isExcludeBalance) {
-            preferenceService.includeBalanceToken(address, {
+            preferenceService.includeBalanceToken({
               id: token._tokenId,
               chainid: token.chain,
               type: 'token',
@@ -167,7 +156,7 @@ export const RightMore: React.FC<{
               t('page.tokenDetail.actionsTips.includeBalance_success'),
             );
           } else {
-            preferenceService.excludeBalance(address, {
+            preferenceService.excludeBalance({
               id: token._tokenId,
               chainid: token.chain,
               type: 'token',
@@ -182,7 +171,7 @@ export const RightMore: React.FC<{
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, address, triggerUpdate]);
+  }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -220,7 +209,7 @@ export const TokenDetailScreen = () => {
   //   account: KeyringAccountWithAlias;
   // };
 
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
@@ -273,7 +262,6 @@ export const TokenDetailScreen = () => {
     [token],
   );
 
-  const isTestnet = false;
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { currentAccount } = useCurrentAccount();
   const finalAccount = account || currentAccount;

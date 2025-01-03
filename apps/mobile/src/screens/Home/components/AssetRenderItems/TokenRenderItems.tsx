@@ -49,7 +49,8 @@ export const TokenRow = memo(
   ({
     data,
     style,
-    logoSize,
+    logoSize = 40,
+    chainLogoSize = 16,
     logoStyle,
     menuActions,
     filterText,
@@ -61,6 +62,7 @@ export const TokenRow = memo(
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
+    chainLogoSize?: number;
     filterText?: string;
     menuActions?: MenuAction[];
     disableMenu?: boolean;
@@ -120,6 +122,9 @@ export const TokenRow = memo(
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
         delayLongPress={200}
         onLongPress={() => {
+          if (!showContextMenu) {
+            return;
+          }
           setShowContextMenu(true);
           trigger('impactLight', {
             enableVibrateFallback: true,
@@ -134,7 +139,7 @@ export const TokenRow = memo(
               chain={data?.chain}
               style={mediaStyle}
               size={logoSize}
-              chainSize={16}
+              chainSize={chainLogoSize}
             />
           </View>
           <View style={styles.tokenRowTokenInner}>
@@ -211,22 +216,26 @@ export const TokenRow = memo(
 export const TokenRowSectionHeader = ({
   usdStr,
   fold,
+  style,
+  buttonStyle,
   onPressFold,
 }: {
   usdStr: string;
   fold?: boolean;
+  style?: ViewStyle;
+  buttonStyle?: ViewStyle;
   onPressFold?(): void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   return (
-    <View style={styles.tokenSectionHeader}>
+    <View style={[styles.tokenSectionHeader, style]}>
       <View style={styles.tokenRowTokenWrap}>
         <View style={styles.tokenRowTokenInner}>
           <TouchableOpacity
             onPress={onPressFold}
-            style={styles.tokenRowTokenInnerSmallToken}>
+            style={[styles.tokenRowTokenInnerSmallToken, buttonStyle]}>
             <Text style={styles.actionText}>
               {fold
                 ? t('page.tokenDetail.action.all')

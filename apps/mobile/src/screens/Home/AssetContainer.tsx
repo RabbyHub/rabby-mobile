@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import { SectionList, StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -182,13 +182,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             return;
           }
           if (data._isFold) {
-            preferenceService.manualUnFoldToken(currentAccount.address, {
+            preferenceService.manualUnFoldToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
           } else {
-            preferenceService.manualFoldToken(currentAccount.address, {
+            preferenceService.manualFoldToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
@@ -241,26 +241,52 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <TokenRow
             data={item}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
             onTokenPress={handleOpenTokenDetail}
             menuActions={getTokenMenuActions(item)}
-            logoSize={40}
+            logoSize={46}
+            chainLogoSize={18}
           />
         );
       case 'fold_token':
         return (
           <TokenRow
             data={item}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
             onTokenPress={handleOpenTokenDetail}
             menuActions={getTokenMenuActions(item)}
-            logoSize={40}
+            logoSize={46}
           />
         );
       case 'nft':
-        return <NftRow item={item} onPress={() => handlePressNft(item)} />;
+        return (
+          <NftRow
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
+            logoSize={46}
+            chainLogoSize={18}
+            item={item}
+            onPress={() => handlePressNft(item)}
+          />
+        );
       case 'defi':
         return (
           <DefiRow
             data={item}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
+            logoSize={46}
+            chainLogoSize={18}
             onPress={() =>
               handleOpenDefiDetail(item, [...(item._portfolios || [])])
             }
@@ -279,6 +305,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <TokenRowSectionHeader
             usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
             fold={foldHideList}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([styles.buttonHeader, styles.bg2])}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
         );
@@ -298,8 +326,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const getItemLayout = useCallback(
     (_data: any, index: number) => ({
-      length: ASSETS_ITEM_HEIGHT,
-      offset: ASSETS_ITEM_HEIGHT * index,
+      // TODO: constant
+      length: 74 + 8,
+      offset: (74 + 8) * index,
       index,
     }),
     [],
@@ -314,8 +343,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     <>
       <SectionList
         sections={sections.filter(i => !!i.originData?.length)}
-        renderItem={renderItem}
         ListHeaderComponent={header}
+        renderSectionHeader={renderSectionHeader}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
@@ -323,7 +353,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={!foldNft || !foldHideList}
-        renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
@@ -354,7 +383,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   emptyHolder: {
     marginTop: 65,
@@ -370,5 +399,22 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-info'],
+  },
+  renderItemWrapper: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    height: 72,
+    marginBottom: 8,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
+  bg2: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  sectionHeader: {
+    backgroundColor: 'transparent',
+  },
+  buttonHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
 }));

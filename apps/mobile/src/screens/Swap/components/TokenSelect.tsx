@@ -245,9 +245,7 @@ const TokenSelect = forwardRef<
 
     const { value: tokenSettings } = useAsync(async () => {
       if (currentAccount?.address) {
-        const data = await preferenceService.getUserTokenSettings(
-          currentAccount?.address,
-        );
+        const data = await preferenceService.getUserTokenSettings();
         return data || {};
       }
       return {};

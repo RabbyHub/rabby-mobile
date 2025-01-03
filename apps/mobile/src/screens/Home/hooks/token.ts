@@ -110,7 +110,7 @@ export const useTokens = (
     const snapshot = await queryTokensCache(userAddr, isTestnet);
 
     const tokenSettings =
-      (await preferenceService.getUserTokenSettings(userAddr)) || {};
+      (await preferenceService.getUserTokenSettings()) || {};
 
     if (currentAbort.signal.aborted || !snapshot) {
       log('--Terminate-tokens-snapshot-', userAddr);
@@ -178,7 +178,7 @@ export const useRefreshTags = (userAddr?: string) => {
       return;
     }
     const tokenSettings =
-      (await preferenceService.getUserTokenSettings(userAddr)) || {};
+      (await preferenceService.getUserTokenSettings()) || {};
     setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
   };
   return {

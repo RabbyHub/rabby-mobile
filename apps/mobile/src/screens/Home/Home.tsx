@@ -6,13 +6,14 @@ import { AssetContainer } from './AssetContainer';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { currentAccount } = useCurrentAccount({
@@ -26,7 +27,9 @@ function HomeScreen(): JSX.Element {
   }, [currentAccount?.address, navigation, setNavigationOptions]);
 
   return (
-    <NormalScreenContainer2024 type="bg1" style={styles.rootScreenContainer}>
+    <NormalScreenContainer2024
+      type={isDarkTheme ? 'bg1' : 'linear-bg2'}
+      style={styles.rootScreenContainer}>
       <SafeAreaView style={styles.safeView}>
         <AssetContainer onRefresh={triggerUpdate} />
       </SafeAreaView>
@@ -38,7 +41,7 @@ HomeScreen.HeaderArea = HeaderArea;
 
 const getStyles = createGetStyles2024(() => ({
   rootScreenContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   safeView: {
     flex: 1,
