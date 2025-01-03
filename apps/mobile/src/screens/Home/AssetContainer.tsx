@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -27,7 +27,6 @@ import {
   DefiRow,
   NftRow,
   TokenRowSectionHeader,
-  DefiSectionHeader,
   NftSectionHeader,
 } from './components/AssetRenderItems';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -314,7 +313,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           />
         );
       case 'defi':
-        return <DefiSectionHeader />;
+        return (
+          <Text style={styles.symbol}>
+            {t('page.singleHome.sectionHeader.Defi')}
+          </Text>
+        );
       case 'nft':
         return (
           <NftSectionHeader
@@ -356,7 +359,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         windowSize={10}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={!foldNft || !foldHideList}
+        stickySectionHeadersEnabled
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
@@ -418,9 +421,17 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   sectionHeader: {
-    backgroundColor: 'transparent',
+    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  symbol: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-title-1'],
+    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
 }));
