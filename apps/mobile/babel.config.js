@@ -12,7 +12,8 @@ const buildGitInfo = (function getBuildEnvVars() {
 
   const BUILD_GIT_HASH_TIME = child_process
     .execSync(
-      `TZ=UTC0 git show --quiet --date='format-local:%Y-%m-%dT%H:%M:%S+00:00' --format="%cd"`,
+      `git show --quiet --date='format-local:%Y-%m-%dT%H:%M:%S+00:00' --format="%cd"`,
+      { env: { ...process.env, TZ: 'UTC0' } },
     )
     .toString()
     .trim();
