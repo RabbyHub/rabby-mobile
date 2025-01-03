@@ -261,17 +261,8 @@ export const DeFiDetailScreen = () => {
             <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
           </>
         }
-        // getItemLayout={getItemLayout}
-        // stickySectionHeadersEnabled
-        // ListEmptyComponent={ListEmptyComponent}
-        onScroll={() => {
-          Keyboard.dismiss();
-        }}
         renderSectionHeader={renderSectionHeader}
       />
-      {/* {portfolioList.map((item, index) => {
-          return <MemoItem item={item} key={index} />;
-        })} */}
     </NormalScreenContainer2024>
   );
 };
