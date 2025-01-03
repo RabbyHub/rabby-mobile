@@ -107,7 +107,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       </View>
       <TouchableWithoutFeedback
         onPress={() => {
-          navigation.navigate(RootNames.StackRoot, {
+          navigation.navigate(RootNames.StackSettings, {
             screen: RootNames.Settings,
             params: {},
           });
@@ -393,17 +393,8 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackRoot, {
+          navigation.navigate(RootNames.StackDapps, {
             screen: RootNames.Dapps,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.TEST_DAPP:
-          openUrlAsDapp('https://metamask.github.io/test-dapp/', {
-            forceReopen: true,
-          });
-          navigation.navigate(RootNames.StackRoot, {
-            screen: RootNames.DappWebViewStubOnHome,
             params: {},
           });
           break;
@@ -413,7 +404,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene, openUrlAsDapp],
+    [navigation, toggleUseAllAccountsOnScene],
   );
 
   const handleClickPinAccount = useCallback(

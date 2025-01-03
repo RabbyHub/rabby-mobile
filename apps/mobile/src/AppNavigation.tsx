@@ -44,7 +44,7 @@ import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetMo
 import { useAppUnlocked } from './hooks/useLock';
 import {
   AccountNavigatorParamList,
-  FavoriteDappsNavigatorParamList,
+  DappsNavigatorParamsList,
   RootStackParamsList,
 } from './navigation-type';
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
@@ -62,13 +62,11 @@ import { TokenDetailScreen } from './screens/TokenDetail';
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
+import { DappsNavigator } from './screens/Navigators/DappsNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
-
-const FavoriteDappsStack =
-  createNativeStackNavigator<FavoriteDappsNavigatorParamList>();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
@@ -343,8 +341,8 @@ export default function AppNavigation({
             component={AddressNavigator}
           />
           <RootStack.Screen
-            name={RootNames.StackFavoriteDapps}
-            component={FavoriteDappsNavigator}
+            name={RootNames.StackDapps}
+            component={DappsNavigator}
           />
           <RootStack.Screen
             name={RootNames.NftDetail}
@@ -438,39 +436,5 @@ function AccountNavigator() {
         }}
       />
     </AccountStack.Navigator>
-  );
-}
-
-function FavoriteDappsNavigator() {
-  const { mergeScreenOptions } = useStackScreenConfig();
-  const { colors } = useTheme2024();
-  // console.log('============== FavoritePopularNavigator Render =========');
-
-  return (
-    <FavoriteDappsStack.Navigator
-      screenOptions={mergeScreenOptions({
-        gestureEnabled: false,
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-        headerTitleStyle: {
-          color: colors['neutral-title-1'],
-          fontWeight: 'normal',
-        },
-        headerTintColor: colors['neutral-title-1'],
-      })}>
-      <FavoriteDappsStack.Screen
-        name={RootNames.FavoriteDapps}
-        component={FavoriteDappsScreen}
-        options={mergeScreenOptions({
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontWeight: '800',
-            color: colors['neutral-title-1'],
-          },
-        })}
-      />
-    </FavoriteDappsStack.Navigator>
   );
 }
