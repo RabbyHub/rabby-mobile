@@ -336,6 +336,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           return token.$origin.headerRender();
         }
         const isPined = token?.$origin.isPined;
+        const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
         const currentChainItem = findChainByServerID(token._chain);
@@ -412,6 +413,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     {ellipsisOverflowedText(token?._symbol, 15)}
                   </Text>
                   {isPined && <TextBadge />}
+                  {isManualFold && <TextBadge type="folded" />}
                   <View style={{ marginLeft: 8 }}>
                     {isSelected ? <RcIconChecked /> : null}
                   </View>

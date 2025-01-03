@@ -306,7 +306,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
             fold={foldHideList}
             style={styles.sectionHeader}
-            buttonStyle={StyleSheet.flatten([styles.buttonHeader, styles.bg2])}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
         );
