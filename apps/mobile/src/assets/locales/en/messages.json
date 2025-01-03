@@ -2411,7 +2411,7 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Recipient Address",
+      "title": "Select Receive Address",
       "selectChainTitle": "Select Chain"
     }
   },

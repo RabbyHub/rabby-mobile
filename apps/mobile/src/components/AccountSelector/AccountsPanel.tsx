@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   FlatList,
   StyleProp,
@@ -15,7 +15,6 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { RcIconCopy, RcIconQR } from './icons';
 import { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
@@ -39,7 +38,7 @@ interface CombineDataInterface {
 const MY_ADDRESS_LIMIT = 3;
 
 const SIZES = {
-  itemH: 96,
+  itemH: 86,
   itemGap: 12,
   get myAddressesAreaVisiableH() {
     return (
@@ -109,29 +108,36 @@ function AddressItemInSheetModal({
         defaultPressAction === 'copy' ? handleCopyAddress : onPressAccount
       }>
       <AddressItem {...addressItemProps}>
-        {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
+        {({
+          WalletIcon,
+          WalletAddress,
+          WalletBalance,
+          WalletName,
+          walletName,
+        }) => {
+          const hasAlias = walletName !== ellipsisAddress(account.address);
           return (
             <View style={styles.addressItemInner}>
               <WalletIcon style={styles.walletIcon} />
               <View style={styles.centerInfo}>
                 <View style={styles.nameAndAdderss}>
-                  {replaceNameWithAliasAddress ? (
-                    <Text style={styles.addressAliasName}>
+                  <Text style={styles.addressAlias} numberOfLines={1}>
+                    <Text style={styles.addressTruncate}>
                       {ellipsisAddress(account.address)}
                     </Text>
-                  ) : (
-                    <WalletName style={styles.addressAliasName} />
-                  )}
-                  {isPinned && (
-                    <View style={styles.pinnedWrapper}>
-                      {/* <ICONS_COMMON_2024.RcPinCC
-                        color={styles.pinText.color}
-                        width={15}
-                        height={15}
-                      /> */}
-                      <Text style={styles.pinText}>Pin</Text>
-                    </View>
-                  )}
+                    {hasAlias ? (
+                      <Text>
+                        {' '}
+                        (<WalletName style={styles.addressAlias} />
+                        {IS_ANDROID ? ')' : null}
+                      </Text>
+                    ) : null}
+                  </Text>
+                  {hasAlias && !IS_ANDROID ? (
+                    <Text numberOfLines={1} style={styles.addressAlias}>
+                      )
+                    </Text>
+                  ) : null}
                 </View>
                 <WalletBalance
                   style={[
@@ -140,8 +146,8 @@ function AddressItemInSheetModal({
                   ]}
                 />
               </View>
-              <View style={styles.rightArea}>
-                {showCopyAndQR && (
+              {showCopyAndQR && (
+                <View style={styles.rightArea}>
                   <View style={styles.iconList}>
                     <TouchableOpacity
                       onPress={handleCopyAddress}
@@ -158,8 +164,8 @@ function AddressItemInSheetModal({
                       <RcIconQR style={styles.icon} />
                     </TouchableOpacity>
                   </View>
-                )}
-              </View>
+                </View>
+              )}
             </View>
           );
         }}
@@ -175,9 +181,9 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['brand-light-1'],
     },
     addressItemContainer: {
-      borderRadius: 30,
+      borderRadius: 24,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
-      padding: 24,
+      padding: 20,
       height: SIZES.itemH,
       borderWidth: IS_ANDROID ? 1 : 0,
       borderColor: ctx.colors2024['neutral-line'],
@@ -187,31 +193,36 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemInner: {
       flexDirection: 'row',
-      height: 52,
       alignItems: 'center',
       width: '100%',
     },
-    walletIcon: { marginRight: 12 },
+    walletIcon: { marginRight: 6, width: 34, height: 34, borderRadius: 8.5 },
     centerInfo: {
-      flexDirection: 'column',
+      flex: 1,
       flexShrink: 1,
-      width: '100%',
-      // ...makeDebugBorder('blue')
+      flexDirection: 'column',
+      marginRight: 20,
     },
     nameAndAdderss: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      // ...makeDebugBorder('yellow'),
     },
-    addressAliasName: {
+    addressTruncate: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 17,
       fontStyle: 'normal',
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
       lineHeight: 22,
-      flexShrink: 1,
+    },
+    addressAlias: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '500',
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-secondary'],
     },
     addressUsdValue: {
       marginTop: 6,
@@ -228,9 +239,6 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
 
     pinnedWrapper: {
-      flexShrink: 0,
-      // paddingHorizontal: 6,
-      // paddingVertical: 4,
       width: 33,
       height: 20,
       marginLeft: 4,
@@ -254,14 +262,12 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
 
     rightArea: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100%',
+      width: 72,
     },
     iconList: {
       display: 'flex',
       flexDirection: 'row',
-      gap: 16,
+      gap: 12,
     },
     iconWrapper: {
       width: 30,
@@ -473,7 +479,10 @@ export function AccountsPanelInSheetModal({
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => (
                     <AddressItemShadowView
-                      style={[index > 0 && styles.addressItemTopGap]}>
+                      style={[
+                        { borderRadius: 24 },
+                        index > 0 && styles.addressItemTopGap,
+                      ]}>
                       <AddressItemInSheetModal
                         key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                         addressItemProps={{ account: item }}
