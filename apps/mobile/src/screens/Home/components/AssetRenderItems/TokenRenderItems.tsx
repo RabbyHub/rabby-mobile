@@ -122,7 +122,7 @@ export const TokenRow = memo(
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
         delayLongPress={200}
         onLongPress={() => {
-          if (!showContextMenu) {
+          if (disableMenu) {
             return;
           }
           setShowContextMenu(true);

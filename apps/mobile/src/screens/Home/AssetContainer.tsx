@@ -351,6 +351,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bgContainer}
+        ItemSeparatorComponent={ItemSeparatorComponent}
         keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
         windowSize={10}
         getItemLayout={getItemLayout}
@@ -384,6 +385,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   );
 };
 
+const ItemSeparatorComponent = () => <View style={{ height: 8 }} />;
+
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -407,7 +410,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 16,
     height: 72,
-    marginBottom: 8,
+    // marginBottom: 8,
     paddingLeft: 12,
     paddingRight: 16,
   },
