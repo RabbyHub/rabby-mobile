@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 
 import { AbstractProject } from '../../types';
 import { useTheme2024 } from '@/hooks/theme';
@@ -26,9 +26,15 @@ const hitSlop = {
 export const DefiRow = ({
   data,
   filterText,
+  style,
+  logoSize = 40,
+  chainLogoSize = 16,
   onPress,
 }: {
   data: AbstractProject;
+  style?: ViewStyle;
+  logoSize?: number;
+  chainLogoSize?: number;
   filterText?: string;
   onPress?: () => void;
 }) => {
@@ -61,13 +67,13 @@ export const DefiRow = ({
   };
 
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.projectHeader]}>
+    <TouchableOpacity onPress={onPress} style={[styles.projectHeader, style]}>
       <View style={styles.projectHeaderName}>
         <AssetAvatar
           logo={data?.logo}
-          size={40}
+          size={logoSize}
           chain={data?.chain}
-          chainSize={16}
+          chainSize={chainLogoSize}
         />
         <HighlightText
           style={styles.projectName}
@@ -157,7 +163,6 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     paddingHorizontal: 4,
     height: ASSETS_ITEM_HEIGHT,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   symbol: {
     fontSize: 22,

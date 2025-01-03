@@ -3,7 +3,7 @@ import { getCHAIN_ID_LIST } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { IconDefaultNFT } from '@/assets/icons/nft';
@@ -16,9 +16,15 @@ export const NftRow = ({
   item,
   onPress,
   filterText,
+  style,
+  logoSize = 40,
+  chainLogoSize = 16,
 }: {
   item: NFTItem;
   filterText?: string;
+  style?: ViewStyle;
+  logoSize?: number;
+  chainLogoSize?: number;
   onPress: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -28,15 +34,15 @@ export const NftRow = ({
   const isSvgURL = item?.content?.endsWith('.svg');
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.wrpper}>
+    <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
       <View style={styles.main}>
         <View style={styles.avator}>
           <View
             style={StyleSheet.flatten([
               styles.imagesView,
               {
-                width: 40,
-                height: 40,
+                width: logoSize,
+                height: logoSize,
               },
             ])}>
             <Media
@@ -54,7 +60,13 @@ export const NftRow = ({
               source={{
                 uri: iconUri,
               }}
-              style={styles.chainIcon}
+              style={[
+                styles.chainIcon,
+                {
+                  width: chainLogoSize,
+                  height: chainLogoSize,
+                },
+              ]}
             />
           ) : null}
         </View>
@@ -157,8 +169,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 4,
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: ASSETS_ITEM_HEIGHT,
+    height: 74,
   },
   symbol: {
     fontSize: 22,

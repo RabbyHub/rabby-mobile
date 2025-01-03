@@ -658,6 +658,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-bg-1'],
       // borderBottomWidth: 0.5,
       marginHorizontal: 24,
+      marginBottom: 16,
     },
     headerBoxText: {
       fontSize: 17,
