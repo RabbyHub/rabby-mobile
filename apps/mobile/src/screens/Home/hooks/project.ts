@@ -3,6 +3,7 @@ import { useRefreshTags, useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import { useLastUpdateTimeAtom } from './store';
+import { useSafeState } from '@/hooks/useSafeState';
 
 export const useQueryProjects = (
   userAddr: string | undefined,
@@ -10,72 +11,49 @@ export const useQueryProjects = (
 ) => {
   const [lastUpdateTime, setLastUpdateTime] = useLastUpdateTimeAtom(userAddr);
   const { refreshTags } = useRefreshTags(userAddr);
+  const [isLoading, setLoading] = useSafeState(false);
 
   const shouldUseHistory = useMemo(() => {
     return lastUpdateTime && Date.now() - lastUpdateTime < 10 * 60 * 1000;
   }, [lastUpdateTime]);
 
-  const {
-    tokens,
-    isLoading: isTokensLoading,
-    updateData: updateTokens,
-  } = useTokens(userAddr, false, 0, undefined, isTestnet);
+  const { tokens, updateData: updateTokens } = useTokens(
+    userAddr,
+    false,
+    0,
+    undefined,
+    isTestnet,
+  );
 
   const {
     data: portfolios,
-    isLoading: isPortfoliosLoading,
     hasValue: hasPortfolios,
     updateData: updatePortfolio,
   } = usePortfolios(userAddr, false, isTestnet);
 
-  const {
-    list: nftList,
-    isLoading: nftListLoading,
-    reload: reloadNftList,
-  } = useQueryNft(userAddr, false);
-
-  const loading = isTokensLoading || isPortfoliosLoading || nftListLoading;
+  const { list: nftList, reload: reloadNftList } = useQueryNft(userAddr, false);
 
   const refreshPositions = useCallback(async () => {
-    if (!isTokensLoading && !isPortfoliosLoading && !nftListLoading) {
+    if (!isLoading) {
       console.log('🔍 CUSTOM_LOGGER:=>: force==refreshPositions)');
-      await updatePortfolio();
-      await updateTokens();
-      await reloadNftList();
-      setLastUpdateTime(Date.now());
+      setLoading(true);
+      try {
+        await updatePortfolio();
+        await updateTokens();
+        await reloadNftList();
+      } finally {
+        setLoading(false);
+        setLastUpdateTime(Date.now());
+      }
     }
   }, [
-    isTokensLoading,
-    isPortfoliosLoading,
-    nftListLoading,
+    isLoading,
+    setLoading,
     updatePortfolio,
     updateTokens,
     reloadNftList,
     setLastUpdateTime,
   ]);
-
-  const refreshingToken = useMemo(() => {
-    if ((tokens?.length || 0) > 0) {
-      return !!isTokensLoading;
-    } else {
-      return false;
-    }
-  }, [isTokensLoading, tokens?.length]);
-  const refreshingDefi = useMemo(() => {
-    if ((portfolios?.length || 0) > 0) {
-      return !!isPortfoliosLoading;
-    } else {
-      return false;
-    }
-  }, [portfolios?.length, isPortfoliosLoading]);
-
-  const refreshingNft = useMemo(() => {
-    if ((nftList?.length || 0) > 0) {
-      return !!nftListLoading;
-    } else {
-      return false;
-    }
-  }, [nftList?.length, nftListLoading]);
 
   useEffect(() => {
     if (!shouldUseHistory && userAddr) {
@@ -92,15 +70,12 @@ export const useQueryProjects = (
 
   return {
     refreshPositions,
-    isTokensLoading,
-    isPortfoliosLoading,
     hasPortfolios,
     tokens,
     portfolios,
     nftList,
-    nftListLoading,
-    loading,
-    refreshing: refreshingToken || refreshingDefi || refreshingNft,
+    loading: isLoading,
+    refreshing: isLoading && lastUpdateTime,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
   };
 };
