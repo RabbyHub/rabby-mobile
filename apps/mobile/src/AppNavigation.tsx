@@ -127,10 +127,10 @@ function useDetermineExitAppOnPressBack() {
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
       if (navigationInst && !navigationInst?.canGoBack()) {
-        if (restCount > REST_COUNTS.PRE_EXIT) {
+        /* if (restCount > REST_COUNTS.PRE_EXIT) {
           toast.info('Press back 2 times to exit');
-          setBackStage(REST_COUNTS.PRE_EXIT);
-        } else if (restCount === REST_COUNTS.PRE_EXIT) {
+          setBackStage(REST_COUNTS.ON_EXIT);
+        } else  */ if (restCount >= REST_COUNTS.PRE_EXIT) {
           toast.info('Press back again to exit');
           setBackStage(REST_COUNTS.ON_EXIT);
         } else if (restCount === REST_COUNTS.ON_EXIT) {
