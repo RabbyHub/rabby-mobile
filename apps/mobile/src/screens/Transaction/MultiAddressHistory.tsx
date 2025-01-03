@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
@@ -17,7 +23,7 @@ import {
 import PQueue from 'p-queue';
 import { last, unionBy, orderBy } from 'lodash';
 import { Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -39,6 +45,10 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { AbstractPortfolioToken } from '../Home/types';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { AssetAvatar } from '@/components';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 
 const PAGE_COUNT = 10;
 
@@ -74,6 +84,13 @@ function History({
   isForMultipleAdderss: boolean;
 }): JSX.Element {
   const { accounts } = useMyAccounts();
+  const route = useRoute();
+  const { tokenItem, isInTokenDetail, isMultiAddress } = (route.params ||
+    {}) as {
+    tokenItem: AbstractPortfolioToken;
+    isInTokenDetail?: boolean;
+    isMultiAddress?: boolean;
+  };
   const unionAccounts = useMemo(() => {
     return unionBy(accounts, account => account.address.toLowerCase());
   }, [accounts]);
@@ -279,7 +296,36 @@ function History({
   }, [data]);
 
   const displayList = useMemo(() => {
-    return allTxHistory
+    const needFilterToken = isInTokenDetail && tokenItem;
+    const list = needFilterToken
+      ? allTxHistory.filter(tx => {
+          if (needFilterToken) {
+            const { tokenDict, receives, sends, chain } = tx;
+            if (chain !== tokenItem.chain) {
+              return false;
+            }
+            const concatArr = receives.concat(sends as any);
+            const res = concatArr.some(item => {
+              if (item.token_id === tokenItem._tokenId) {
+                return true;
+              }
+            });
+            // const res = Object.values(tokenDict).some(token => {
+            //   if (
+            //     token.id === tokenItem._tokenId &&
+            //     token.chain === tokenItem.chain
+            //   ) {
+            //     return true;
+            //   }
+            // });
+            return res;
+          } else {
+            return true;
+          }
+        })
+      : allTxHistory;
+
+    return list
       .filter(tx => {
         if (isSceneUsingAllAccounts) {
           return true;
@@ -291,6 +337,8 @@ function History({
       })
       .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
+    tokenItem,
+    isInTokenDetail,
     allTxHistory,
     currentPage,
     isSceneUsingAllAccounts,
@@ -304,6 +352,38 @@ function History({
     };
   });
 
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const getHeaderTitle = useCallback(() => {
+    return (
+      <ScreenHeaderAccountSwitcher
+        forScene={isForMultipleAdderss ? 'MultiHistory' : 'History'}
+        titleText={
+          <View style={styles.headerTitle}>
+            <AssetAvatar
+              logo={tokenItem?.logo_url}
+              size={24}
+              chain={tokenItem?.chain}
+              chainSize={10}
+            />
+            <Text style={styles.titleText}>{tokenItem.symbol}</Text>
+            <Text style={styles.titleText}>Transactions</Text>
+          </View>
+        }
+        disableSwitch={!isForMultipleAdderss}
+      />
+    );
+  }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
+
+  React.useEffect(() => {
+    if (isInTokenDetail && tokenItem) {
+      setNavigationOptions({
+        headerTitle: getHeaderTitle,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setNavigationOptions, getHeaderTitle]);
+
   const isFirstLoading = loading && !allTxHistory.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
@@ -312,7 +392,7 @@ function History({
 
   return (
     <View style={{ paddingBottom: bottom, paddingTop: 24 }}>
-      {isTestnet ? null : (
+      {isTestnet || isInTokenDetail ? null : (
         <TouchableOpacity
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
@@ -409,6 +489,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 20,
     color: colors2024['brand-default'],
+  },
+  headerTitle: {
+    flexWrap: 'nowrap',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    flexDirection: 'row',
+  },
+  titleText: {
+    marginLeft: 4,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
+    color: colors2024['netural-title-1'],
   },
   netTabs: {
     marginBottom: 12,

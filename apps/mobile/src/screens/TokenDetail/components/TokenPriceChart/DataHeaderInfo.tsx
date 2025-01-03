@@ -14,16 +14,19 @@ import {
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { LoadingLinear } from './LoadingLinear';
+import { PinBadge } from '@/screens/Address/components/PinBadge';
 
 export const DataHeaderInfo = ({
   currentPercentChange,
   currentIsLoss,
   currentBalance,
   isOffline,
+  isPin,
   data,
   isLoading,
   isNoAssets,
 }: {
+  isPin?: boolean;
   currentPercentChange: string;
   currentIsLoss: boolean;
   currentBalance: string;
@@ -89,10 +92,15 @@ export const DataHeaderInfo = ({
         <View style={styles.balanceChangeWrapper}>
           {!isLoading ? (
             <>
-              <AnimateableText
-                style={styles.usdValue}
-                animatedProps={usdValueAnimatedProps}
-              />
+              <View
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <AnimateableText
+                  style={styles.usdValue}
+                  animatedProps={usdValueAnimatedProps}
+                />
+                {isPin && <PinBadge />}
+              </View>
               <AnimateableText
                 style={lossStyleProps}
                 animatedProps={percentChangeAnimatedProps}

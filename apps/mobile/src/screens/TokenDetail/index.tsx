@@ -42,6 +42,7 @@ import { RelatedDeFi } from './components/RelatedDeFi';
 import { navigate } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
+import { HomePinBadge } from './components/PinBadge';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -56,8 +57,9 @@ const hitSlop = {
 export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   address: string;
+  isMultiAddress?: boolean;
   triggerUpdate: () => void;
-}> = ({ token, address, triggerUpdate }) => {
+}> = ({ token, address, triggerUpdate, isMultiAddress }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { refreshTags } = useRefreshTags(address);
   const { t } = useTranslation();
@@ -94,39 +96,6 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTags();
-        },
-      },
-      {
-        title: token._isPined
-          ? t('page.tokenDetail.action.unpin')
-          : t('page.tokenDetail.action.pin'),
-        icon: token._isPined
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-        androidIconName: token._isPined
-          ? 'ic_rabby_menu_un_pin'
-          : 'ic_rabby_menu_pin',
-        key: 'pin',
-        action() {
-          if (token._isPined) {
-            preferenceService.removePinedToken({
-              tokenId: token._tokenId,
-              chainId: token.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
-          } else {
-            preferenceService.pinToken({
-              tokenId: token._tokenId,
-              chainId: token.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.pin_success'));
-          }
-          token._isPined = !token._isPined;
           refreshTags();
         },
       },
@@ -181,7 +150,11 @@ export const RightMore: React.FC<{
 
   return (
     <>
-      <HeaderRightHistory isInTokenDetail={true} isMultiAddress={false} />
+      <HeaderRightHistory
+        isInTokenDetail={true}
+        tokenItem={token}
+        isMultiAddress={isMultiAddress}
+      />
       <DropDownMenuView
         menuConfig={{
           menuActions: menuActions,
@@ -202,6 +175,7 @@ export const TokenDetailScreen = () => {
     isFromPortfolio?: boolean;
   };
 
+  // console.log(' TokenDetailScreen token:', token);
   // const { token, account } = useNavigationState(
   //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
   // ) as {
@@ -291,15 +265,17 @@ export const TokenDetailScreen = () => {
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
+  const isSingleAddress = useMemo(() => !!account, [account]);
   const getHeaderRight = useCallback(() => {
     return (
       <RightMore
         token={token}
+        isMultiAddress={!isSingleAddress}
         address={finalAccount.address}
         triggerUpdate={triggerUpdate}
       />
     );
-  }, [finalAccount.address, token, triggerUpdate]);
+  }, [finalAccount.address, token, triggerUpdate, isSingleAddress]);
 
   const getHeaderTitle = useCallback(() => {
     return (
@@ -363,9 +339,13 @@ export const TokenDetailScreen = () => {
 
   return (
     <NormalScreenContainer2024 type="bg1" style={styles.root}>
-      <View>
+      <View style={{ position: 'relative' }}>
+        <HomePinBadge token={token} />
         <Text style={styles.currentText}>Current price</Text>
-        <TokenPriceChart token={tokenWithAmount || token} />
+        <TokenPriceChart
+          token={tokenWithAmount || token}
+          isPin={token._isPined}
+        />
         <View style={styles.divider} />
         <TokenArea
           handleSwap={handleSwap}

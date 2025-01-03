@@ -14,6 +14,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { View } from 'react-native';
+import { AbstractPortfolioToken } from './types';
 
 const hitSlop = {
   top: 10,
@@ -32,11 +33,13 @@ const historyHitSlop = {
 interface HeaderRightHistoryProps {
   isInTokenDetail?: boolean;
   isMultiAddress?: boolean;
+  tokenItem?: AbstractPortfolioToken;
 }
 
 export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   isInTokenDetail,
   isMultiAddress,
+  tokenItem,
 }) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
@@ -68,9 +71,12 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     await switchSceneCurrentAccount('History', currentAccount);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.History,
+        screen: isMultiAddress
+          ? RootNames.MultiAddressHistory
+          : RootNames.History,
         params: {
           isInTokenDetail,
+          tokenItem,
           isMultiAddress,
         },
       }),
@@ -78,6 +84,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   }, [
     navigation,
     switchSceneCurrentAccount,
+    tokenItem,
     currentAccount,
     isInTokenDetail,
     isMultiAddress,
