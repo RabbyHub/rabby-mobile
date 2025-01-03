@@ -21,19 +21,18 @@ interface Props {
 }
 
 export const HomePinBadge: React.FC<Props> = ({ token }) => {
-  const { currentAccount } = useCurrentAccount();
-  const { refreshTags } = useRefreshTags(currentAccount!.address);
+  const { refreshTags } = useRefreshTags();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const handlePress = useCallback(() => {
-    if (token._isFold) {
-      preferenceService.manualUnFoldToken({
+    if (token._isPined) {
+      preferenceService.pinToken({
         tokenId: token._tokenId,
         chainId: token.chain,
       });
       // toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
     } else {
-      preferenceService.manualFoldToken({
+      preferenceService.removePinedToken({
         tokenId: token._tokenId,
         chainId: token.chain,
       });

@@ -14,7 +14,6 @@ import {
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { LoadingLinear } from './LoadingLinear';
-import { PinBadge } from '@/screens/Address/components/PinBadge';
 
 export const DataHeaderInfo = ({
   currentPercentChange,
@@ -99,7 +98,13 @@ export const DataHeaderInfo = ({
                   style={styles.usdValue}
                   animatedProps={usdValueAnimatedProps}
                 />
-                {isPin && <PinBadge />}
+                {isPin && (
+                  <View style={styles.pinBadge}>
+                    <Text style={styles.pinText} numberOfLines={1}>
+                      {'Pin'}
+                    </Text>
+                  </View>
+                )}
               </View>
               <AnimateableText
                 style={lossStyleProps}
@@ -156,6 +161,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 36,
     lineHeight: 42,
     fontWeight: '800',
+  },
+  pinBadge: {
+    // paddingHorizontal: 6,
+    // paddingVertical: 4,
+    // gap: 4,
+    borderRadius: 6,
+    backgroundColor: colors2024['brand-light-1'],
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 33,
+    height: 20,
+    flexWrap: 'nowrap',
+  },
+  pinText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['brand-default'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   percent: {
     fontFamily: 'SF Pro Rounded',
