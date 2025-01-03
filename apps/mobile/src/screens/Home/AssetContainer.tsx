@@ -182,13 +182,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             return;
           }
           if (data._isFold) {
-            preferenceService.manualUnFoldToken(currentAccount.address, {
+            preferenceService.manualUnFoldToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
           } else {
-            preferenceService.manualFoldToken(currentAccount.address, {
+            preferenceService.manualFoldToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });

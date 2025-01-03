@@ -63,7 +63,7 @@ export const RightMore: React.FC<{
           : 'ic_rabby_menu_exclude_balance',
         action() {
           if (token._isExcludeBalance) {
-            preferenceService.includeBalanceToken(address, {
+            preferenceService.includeBalanceToken({
               id: token.id,
               chainid: token.chain,
               type: 'defi',
@@ -72,7 +72,7 @@ export const RightMore: React.FC<{
               t('page.tokenDetail.actionsTips.includeBalance_success'),
             );
           } else {
-            preferenceService.excludeBalance(address, {
+            preferenceService.excludeBalance({
               id: token.id,
               chainid: token.chain,
               type: 'defi',
@@ -87,7 +87,7 @@ export const RightMore: React.FC<{
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, address, refreshBalance]);
+  }, [token, t, isDarkTheme, refreshTags, refreshBalance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,

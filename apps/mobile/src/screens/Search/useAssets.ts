@@ -78,7 +78,7 @@ export const useAssets = (filterText?: string) => {
     let _tokens: AbstractPortfolioToken[] = [];
 
     const tokenSettings =
-      (await preferenceService.getUserTokenSettings(address)) || {};
+      (await preferenceService.getUserTokenSettings()) || {};
 
     const tokenRes = await batchQueryTokens(address);
 
@@ -115,7 +115,7 @@ export const useAssets = (filterText?: string) => {
     const snapshotData = Object.values(list)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    const tokenSetting = await preferenceService.getUserTokenSettings(address);
+    const tokenSetting = await preferenceService.getUserTokenSettings();
 
     updatePortfolios({
       address,

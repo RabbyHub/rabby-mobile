@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useTokens } from './token';
+import { useRefreshTags, useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import { useLastUpdateTimeAtom } from './store';
@@ -9,6 +9,7 @@ export const useQueryProjects = (
   isTestnet = false,
 ) => {
   const [lastUpdateTime, setLastUpdateTime] = useLastUpdateTimeAtom(userAddr);
+  const { refreshTags } = useRefreshTags(userAddr);
 
   const shouldUseHistory = useMemo(() => {
     return lastUpdateTime && Date.now() - lastUpdateTime < 10 * 60 * 1000;
@@ -80,6 +81,11 @@ export const useQueryProjects = (
     if (!shouldUseHistory && userAddr) {
       console.log('🔍 CUSTOM_LOGGER:=>: this cache is failed');
       refreshPositions();
+      return;
+    }
+    if (userAddr) {
+      console.log('🔍 CUSTOM_LOGGER:=>: refreshTags)', userAddr.slice(-8));
+      refreshTags();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldUseHistory, userAddr]);

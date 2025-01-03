@@ -126,7 +126,7 @@ export const usePortfolios = (
     const snapshotData = Object.values(list)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    const tokenSetting = await preferenceService.getUserTokenSettings(userAddr);
+    const tokenSetting = await preferenceService.getUserTokenSettings();
     setData(tagProfiles(snapshotData, tokenSetting));
 
     const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
