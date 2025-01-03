@@ -206,7 +206,7 @@ export const NFTDetailScreen = () => {
       }
 
       return (
-        <>
+        <View key={`${address}-${iToken.id}`}>
           {renderAccountHeader(selectAccount)}
           <Media
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
@@ -260,7 +260,7 @@ export const NFTDetailScreen = () => {
               titleStyle={styles.btnTitle}
             />
           </View>
-        </>
+        </View>
       );
     },
     [
