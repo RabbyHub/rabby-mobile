@@ -1,12 +1,13 @@
-import { AbstractPortfolioToken } from '../types';
-import { atom, useAtom } from 'jotai';
-import { DisplayedProject } from '../utils/project';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { formatNetworth } from '@/utils/math';
-import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { atom, useAtom } from 'jotai';
+
 import { getAllMyAccount } from '@/core/apis/address';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { formatNetworth } from '@/utils/math';
+import { AbstractPortfolioToken } from '../types';
+import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
+import { DisplayedProject } from '../utils/project';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;

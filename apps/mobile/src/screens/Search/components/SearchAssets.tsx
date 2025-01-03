@@ -1,9 +1,18 @@
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Keyboard, SectionList, Text, View } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
 
+import { EmptyHolder } from '@/components/EmptyHolder';
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { useAssets } from '../useAssets';
+import {
+  DefiRow,
+  NftRow,
+  TokenRow,
+  TokenRowSectionHeader,
+} from '@/screens/Home/components/AssetRenderItems';
 import useSortToken from '@/screens/Home/hooks/useSortTokens';
 import {
   AbstractPortfolio,
@@ -13,18 +22,8 @@ import {
 import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-
-import {
-  DefiRow,
-  NftRow,
-  TokenRow,
-  TokenRowSectionHeader,
-} from '@/screens/Home/components/AssetRenderItems';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useTranslation } from 'react-i18next';
-import { PositionLoader } from '@/screens/Home/components/Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { useAssets } from '../useAssets';
+import { PositionLoader } from './Skeleton';
 
 interface Props {
   filterText?: string;
@@ -192,7 +191,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
 
   const ListEmptyComponent = useMemo(() => {
     return isLoading ? (
-      <PositionLoader space={14} length={12} />
+      <PositionLoader />
     ) : hasAssets ? null : (
       <View style={styles.emptyHolder}>
         <EmptyHolder
