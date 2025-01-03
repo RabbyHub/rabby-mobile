@@ -59,7 +59,7 @@ export const useAssets = (filterText?: string) => {
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
 
-  const loadCacheToken = async (address: string) => {
+  const loadToken = async (address: string) => {
     if (!address) {
       return;
     }
@@ -102,7 +102,7 @@ export const useAssets = (filterText?: string) => {
     });
   };
 
-  const loadCacheDefi = async (address: string) => {
+  const loadDefi = async (address: string) => {
     if (!address) {
       return;
     }
@@ -186,8 +186,8 @@ export const useAssets = (filterText?: string) => {
 
           if (force || currentTime - lastUpdateTime >= 10 * 60 * 1000) {
             try {
-              await loadCacheToken(account.address);
-              await loadCacheDefi(account.address);
+              await loadToken(account.address);
+              await loadDefi(account.address);
               await loadNFT(account.address);
               console.log(
                 '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',

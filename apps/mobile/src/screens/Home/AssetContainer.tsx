@@ -296,7 +296,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return null;
     }
   };
-  const { refreshTags } = useRefreshTags(currentAccount?.address);
+  const { refreshTags } = useRefreshTags();
 
   const renderSectionHeader = ({ section }) => {
     switch (section.type) {

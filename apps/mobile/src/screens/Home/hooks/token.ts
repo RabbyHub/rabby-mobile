@@ -14,9 +14,9 @@ import {
   tagTokenList,
   batchQueryTokens,
 } from '../utils/token';
-import { log } from './usePortfolio';
+import { log, tagProfiles } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
-import { useTokensAtom } from './store';
+import { IAssets, useAssetsMap, useTokensAtom } from './store';
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
@@ -170,16 +170,24 @@ export const useTokens = (
   };
 };
 
-export const useRefreshTags = (userAddr?: string) => {
-  const [, setMainnetTokens] = useTokensAtom(userAddr);
+export const useRefreshTags = () => {
+  const [, setAssetsMap] = useAssetsMap();
 
   const refreshTags = async () => {
-    if (!userAddr) {
-      return;
-    }
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
-    setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          tokens: tagTokenList(assets.tokens || [], tokenSettings),
+          portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
   };
   return {
     refreshTags,
