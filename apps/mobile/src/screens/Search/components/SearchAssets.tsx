@@ -73,10 +73,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     ];
   }, [filterText, foldHideList, nftList, portfolios, sortTokens]);
 
-  useEffect(() => {
-    initFetchTop10Assets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   initFetchTop10Assets();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
