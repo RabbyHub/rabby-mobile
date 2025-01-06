@@ -128,7 +128,16 @@ function History({
         if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
           return;
         }
-        const result = await fetchData(addr, lastMap.current[addr] || 0);
+        const needFilter = isInTokenDetail && tokenItem;
+        const result = needFilter
+          ? await fetchData(
+              addr,
+              lastMap.current[addr] || 0,
+              tokenItem.chain,
+              tokenItem._tokenId,
+            )
+          : await fetchData(addr, lastMap.current[addr] || 0);
+
         if (result.list.length < PAGE_COUNT) {
           hasMoreMap.current[addr] = false;
         } else {
@@ -155,6 +164,8 @@ function History({
   const fetchData = async (
     address: string,
     startTime = 0,
+    chain_id?: string,
+    token_id?: string,
   ): Promise<IFetchHistory> => {
     if (isTestnet) {
       return {
@@ -172,6 +183,8 @@ function History({
         id: address,
         start_time: startTime,
         page_count: PAGE_COUNT,
+        chain_id,
+        token_id,
       });
 
       const { project_dict, cate_dict, token_dict, history_list: list } = res;
@@ -296,36 +309,7 @@ function History({
   }, [data]);
 
   const displayList = useMemo(() => {
-    const needFilterToken = isInTokenDetail && tokenItem;
-    const list = needFilterToken
-      ? allTxHistory.filter(tx => {
-          if (needFilterToken) {
-            const { tokenDict, receives, sends, chain } = tx;
-            if (chain !== tokenItem.chain) {
-              return false;
-            }
-            const concatArr = receives.concat(sends as any);
-            const res = concatArr.some(item => {
-              if (item.token_id === tokenItem._tokenId) {
-                return true;
-              }
-            });
-            // const res = Object.values(tokenDict).some(token => {
-            //   if (
-            //     token.id === tokenItem._tokenId &&
-            //     token.chain === tokenItem.chain
-            //   ) {
-            //     return true;
-            //   }
-            // });
-            return res;
-          } else {
-            return true;
-          }
-        })
-      : allTxHistory;
-
-    return list
+    return allTxHistory
       .filter(tx => {
         if (isSceneUsingAllAccounts) {
           return true;
@@ -337,8 +321,6 @@ function History({
       })
       .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
-    tokenItem,
-    isInTokenDetail,
     allTxHistory,
     currentPage,
     isSceneUsingAllAccounts,

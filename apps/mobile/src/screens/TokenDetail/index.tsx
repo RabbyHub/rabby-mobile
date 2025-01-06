@@ -230,7 +230,7 @@ export const TokenDetailScreen = () => {
           });
       });
     });
-    console.log('relateDefiList length:', resList.length);
+    console.debug('relateDefiList length:', resList.length);
     return resList;
   }, [token, asssest]);
 
@@ -476,7 +476,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       paddingTop: 20,
       paddingHorizontal: 20,
-      paddingBottom: 76,
+      paddingBottom: 56,
     },
 
     btnContainer: {

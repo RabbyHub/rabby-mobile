@@ -45,6 +45,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { useAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
+import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 
 const hitSlop = {
   top: 10,
@@ -202,6 +203,7 @@ export const DeFiDetailScreen = () => {
       data: AbstractPortfolio[];
       project: AbstractProject;
       address: string;
+      totalUsdValue: BigNumber;
       index: number;
     }[] = [];
 
@@ -213,25 +215,24 @@ export const DeFiDetailScreen = () => {
           sectionsList.push({
             data: portfolio._portfolios,
             project: portfolio,
+            totalUsdValue: getDisplayedPortfolioUsdValue(portfolio._portfolios),
             address,
             index,
           });
         }
       });
     });
-    console.log('relateDefiList length:', sectionsList.length);
+    console.debug('relateDefiList length:', sectionsList.length);
     return sectionsList.sort((a, b) =>
-      new BigNumber(b.project.netWorth).comparedTo(
-        new BigNumber(a.project.netWorth),
-      ),
+      new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
   }, [data, asssest]);
 
   const sumNetWorth = useMemo(() => {
     const res = sectionsMultiProject.reduce((pre, cur) => {
-      return (pre += cur.project.netWorth);
-    }, 0);
-    return res ? formatNetworth(res) : data._netWorth;
+      return pre.plus(cur.totalUsdValue);
+    }, new BigNumber(0));
+    return res ? formatNetworth(res.toNumber()) : data._netWorth;
   }, [data._netWorth, sectionsMultiProject]);
 
   const renderItem = useCallback(({ item, section }) => {
