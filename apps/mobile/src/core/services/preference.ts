@@ -69,6 +69,10 @@ export type IDefiOrToken = {
   type: 'token' | 'defi';
 };
 
+function makeDefiOrTokenKey(x: IDefiOrToken): `${string}-${string}-${string}` {
+  return `${x.chainid}-${x.id}-${x.type}`;
+}
+
 export type ITokenSetting = {
   pinedQueue?: IManageToken[]; // maual always true
   foldTokens?: IManageToken[];
@@ -78,9 +82,17 @@ export type ITokenSetting = {
 };
 
 export interface ITokenManageSettingMap {
-  [address: string]: Omit<ITokenSetting, 'pinedQueue'> & {
+  [address: string]: {
     /** @deprecated will be migrated to store.pinedQueue */
-    pinedQueue?: IManageToken[];
+    pinedQueue?: ITokenSetting['pinedQueue'];
+    /** @deprecated will be migrated to store.foldTokens */
+    foldTokens?: ITokenSetting['foldTokens'];
+    /** @deprecated will be migrated to store.unfoldTokens */
+    unfoldTokens?: ITokenSetting['unfoldTokens'];
+    /** @deprecated will be migrated to store.includeDefiAndTokens */
+    includeDefiAndTokens?: ITokenSetting['includeDefiAndTokens'];
+    /** @deprecated will be migrated to store.excludeDefiAndTokens */
+    excludeDefiAndTokens?: ITokenSetting['excludeDefiAndTokens'];
   };
 }
 
@@ -214,31 +226,69 @@ export class PreferenceService {
   }
 
   private _migrate() {
+    const tokenManageSettingMap = { ...this.store.tokenManageSettingMap };
+    if (Object.keys(tokenManageSettingMap).length === 0) return;
+
     // leave here for debug
     // console.debug('[preference::_migrate] this.store.tokenManageSettingMap', JSON.stringify(this.store.tokenManageSettingMap, null, '\t'));
-    const pinedQueue = [...(this.store.pinedQueue || [])];
-    const pinedQueueSet = new Set(pinedQueue.map(x => makeManageTokenKey(x)));
+    const lists = {
+      pinedQueue: this.store.pinedQueue || [],
+      foldTokens: this.store.foldTokens || [],
+      unfoldTokens: this.store.unfoldTokens || [],
+      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
+      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
+    };
+    const sets = {
+      pinedQueue: new Set(lists.pinedQueue.map(x => makeManageTokenKey(x))),
+      foldTokens: new Set(lists.foldTokens.map(x => makeManageTokenKey(x))),
+      unfoldTokens: new Set(lists.unfoldTokens.map(x => makeManageTokenKey(x))),
+      includeDefiAndTokens: new Set(
+        lists.includeDefiAndTokens.map(x => makeDefiOrTokenKey(x)),
+      ),
+      excludeDefiAndTokens: new Set(
+        lists.excludeDefiAndTokens.map(x => makeDefiOrTokenKey(x)),
+      ),
+    };
 
-    const tokenManageSettingMap = { ...this.store.tokenManageSettingMap };
     Object.entries(tokenManageSettingMap).forEach(([eoaAddr, setting]) => {
-      setting.pinedQueue?.forEach(item => {
-        const key = makeManageTokenKey(item);
-        if (!pinedQueueSet.has(key)) {
-          pinedQueue.push(item);
-          pinedQueueSet.add(key);
-        }
+      (['pinedQueue', 'foldTokens', 'unfoldTokens'] as const).forEach(key => {
+        setting[key]?.forEach(item => {
+          const k = makeManageTokenKey(item);
+          if (!sets.pinedQueue.has(k)) {
+            lists[key].push(item);
+            sets[key].add(k);
+          }
+        });
+
+        if (!__DEV__) delete setting[key];
       });
 
-      // TODO: should we delete old data?
-      // delete setting.pinedQueue;
+      (['includeDefiAndTokens', 'excludeDefiAndTokens'] as const).forEach(
+        key => {
+          setting[key]?.forEach(item => {
+            const k = makeDefiOrTokenKey(item);
+            if (!sets[key].has(k)) {
+              lists[key].push(item);
+              sets[key].add(k);
+            }
+          });
+
+          if (!__DEV__) delete setting[key];
+        },
+      );
     });
 
-    this.store.pinedQueue = pinedQueue;
+    this.store.pinedQueue = lists.pinedQueue;
+    // console.debug(
+    //   '[preference::_migrate] this.store.pinedQueue',
+    //   this.store.pinedQueue,
+    // );
+    this.store.foldTokens = lists.foldTokens;
+    this.store.unfoldTokens = lists.unfoldTokens;
+    this.store.includeDefiAndTokens = lists.includeDefiAndTokens;
+    this.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
+
     this.store.tokenManageSettingMap = tokenManageSettingMap;
-    console.debug(
-      '[preference::_migrate] this.store.pinedQueue',
-      this.store.pinedQueue,
-    );
   }
 
   /* eslint-disable no-dupe-class-members */
