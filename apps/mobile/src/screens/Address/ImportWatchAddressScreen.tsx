@@ -26,7 +26,7 @@ import {
   View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Code } from 'react-native-vision-camera';
+// import { Code } from 'react-native-vision-camera';
 import { CameraPopup } from './components/CameraPopup';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
@@ -112,7 +112,7 @@ export const ImportWatchAddressScreen = () => {
     }
   }, [error, ensResult, input]);
 
-  const onCodeScanned = (codes: Code[]) => {
+  const onCodeScanned = (codes: any[]) => {
     if (codes[0].value && isValidHexAddress(codes[0].value as `0x${string}`)) {
       codeRef.current?.close();
       setInput(codes[0].value);

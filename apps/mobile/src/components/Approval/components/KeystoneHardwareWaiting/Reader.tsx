@@ -8,7 +8,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { RcArrowRightCC } from '@/assets/icons/common';
-import { Code } from 'react-native-vision-camera';
+// import { Code } from 'react-native-vision-camera';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -53,7 +53,7 @@ const Reader = ({ requestId, setErrorMessage, brandName, onScan, onBack }) => {
   const decoder = useRef(new URDecoder());
   const [progress, setProgress] = useState(0);
 
-  const handleSuccess = async (codes: Code[]) => {
+  const handleSuccess = async (codes: any[]) => {
     const data = codes[0].value!;
     decoder.current.receivePart(data);
     setProgress(Math.floor(decoder.current.estimatedPercentComplete() * 100));

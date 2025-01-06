@@ -1,20 +1,20 @@
 import { useThemeColors } from '@/hooks/theme';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import {
-  CameraRuntimeError,
-  Code,
-  Camera as VisionCamera,
-  useCameraDevice,
-  useCameraPermission,
-  useCodeScanner,
-} from 'react-native-vision-camera';
+// import {
+//   CameraRuntimeError,
+//   Code,
+//   Camera as VisionCamera,
+//   useCameraDevice,
+//   useCameraPermission,
+//   useCodeScanner,
+// } from 'react-native-vision-camera';
 import { Text } from '../Text';
 import { useAppState } from '@react-native-community/hooks';
 import { AppColorsVariants } from '@/constant/theme';
 
 interface CameraViewProps {
-  onCodeScanned?: (code: Code[]) => void;
+  onCodeScanned?: (code: any[]) => void;
   containerStyle?: StyleProp<ViewStyle>;
 }
 
@@ -49,78 +49,31 @@ export const CameraView = ({
   const cameraRef = React.useRef(null);
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
-  const device = useCameraDevice('back');
-
-  const codeScanner = useCodeScanner({
-    codeTypes: ['qr'],
-    onCodeScanned: codes => {
-      onCodeScanned?.(codes);
-    },
-  });
-  const onError = useCallback((error: CameraRuntimeError) => {
-    console.error(error);
-  }, []);
-
-  const appState = useAppState();
-
-  const isActive = appState === 'active';
-
-  useEffect(() => {
-    setTimeout(() => {
-      setInitialized(true);
-    }, 500);
-  }, []);
-
-  if (device == null) {
-    return (
-      <View style={StyleSheet.flatten([styles.container, containerStyle])}>
-        <Text>No Camera Device</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={StyleSheet.flatten([styles.container, containerStyle])}>
-      <View style={styles.cameraWrap}>
-        {device != null && (
-          <VisionCamera
-            ref={cameraRef}
-            photo={false}
-            video={false}
-            audio={false}
-            device={device}
-            isActive={initialized && isActive}
-            style={styles.camera}
-            onError={onError}
-            codeScanner={codeScanner}
-          />
-        )}
-      </View>
-    </View>
-  );
+  return null;
 };
 export interface QRCodeScannerProps extends CameraViewProps {}
 
 export const QRCodeScanner = (props: QRCodeScannerProps) => {
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const appState = useAppState();
+  return null;
+  // const { hasPermission, requestPermission } = useCameraPermission();
+  // const appState = useAppState();
 
-  React.useEffect(() => {
-    if (!hasPermission && appState === 'active') {
-      requestPermission();
-    }
-  }, [hasPermission, requestPermission, appState]);
+  // React.useEffect(() => {
+  //   if (!hasPermission && appState === 'active') {
+  //     requestPermission();
+  //   }
+  // }, [hasPermission, requestPermission, appState]);
 
-  if (!hasPermission) {
-    return (
-      <Text
-        style={{
-          maxWidth: 300,
-        }}>
-        Camera permission is not granted. You can grant it on
-        <Text onPress={Linking.openSettings}> setting</Text>
-      </Text>
-    );
-  }
-  return <CameraView {...props} />;
+  // if (!hasPermission) {
+  //   return (
+  //     <Text
+  //       style={{
+  //         maxWidth: 300,
+  //       }}>
+  //       Camera permission is not granted. You can grant it on
+  //       <Text onPress={Linking.openSettings}> setting</Text>
+  //     </Text>
+  //   );
+  // }
+  // return <CameraView {...props} />;
 };

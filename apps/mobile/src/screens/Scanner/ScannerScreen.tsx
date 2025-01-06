@@ -6,7 +6,7 @@ import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
 import { useNavigation } from '@react-navigation/native';
 import { atom, useAtom } from 'jotai';
-import { Code } from 'react-native-vision-camera';
+// import { Code } from 'react-native-vision-camera';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -25,7 +25,7 @@ export const ScannerScreen = () => {
   const { styles } = useThemeStyles(getStyles);
   const nav = useNavigation();
   const handleCodeScanned = React.useCallback(
-    (data: Code[]) => {
+    (data: any[]) => {
       setText(data[0].value!);
       nav.goBack();
     },

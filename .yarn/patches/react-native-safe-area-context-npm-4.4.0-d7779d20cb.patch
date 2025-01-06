@@ -1,0 +1,68 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 7b5b358c6081d37edcd61e28b65dde87a7eb24d9..b60327f8077d63f9f734229146f4f434ccbb6663 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -100,7 +100,7 @@ def kotlin_version = getExtOrDefault('kotlinVersion', project.properties['RNSAC_
+ 
+ dependencies {
+     if (isNewArchitectureEnabled()) {
+-        implementation project(":ReactAndroid")
++        implementation("com.facebook.react:react-android")
+     } else {
+         implementation 'com.facebook.react:react-native:+'
+     }
+diff --git a/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewComponentDescriptor.h b/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewComponentDescriptor.h
+index fd11385bb0d3bbd52301ca9b5894d4ca54b6f995..a319702b48d0db8f408c63348f18bd0ea949c80b 100644
+--- a/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewComponentDescriptor.h
++++ b/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewComponentDescriptor.h
+@@ -12,13 +12,10 @@ namespace react {
+ class RNCSafeAreaViewComponentDescriptor final
+     : public ConcreteComponentDescriptor<RNCSafeAreaViewShadowNode> {
+   using ConcreteComponentDescriptor::ConcreteComponentDescriptor;
+-  void adopt(ShadowNode::Unshared const &shadowNode) const override {
+-    auto concreteShadowNode =
+-        std::static_pointer_cast<RNCSafeAreaViewShadowNode>(shadowNode);
+-
+-    concreteShadowNode->adjustLayoutWithState();
+-
+-    ConcreteComponentDescriptor::adopt(shadowNode);
++  void adopt(ShadowNode& shadowNode) const override {
++    auto& concreteShadowNode =
++        static_cast<RNCSafeAreaViewShadowNode&>(shadowNode);
++    concreteShadowNode.adjustLayoutWithState();
+   }
+ };
+ 
+diff --git a/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp b/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp
+index f75bdd35d94d48ea921c313f206f3377b5c51f0c..0df79d5d35ffb4f42f8884b6a1a024c3d682253e 100644
+--- a/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp
++++ b/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp
+@@ -10,7 +10,7 @@ namespace react {
+ 
+ extern const char RNCSafeAreaViewComponentName[] = "RNCSafeAreaView";
+ 
+-inline YGValue valueFromEdges(YGStyle::Edges edges, YGEdge edge, YGEdge axis) {
++inline YGValue valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+   YGValue edgeValue = edges[edge];
+   if (edgeValue.unit != YGUnitUndefined) {
+     return edgeValue;
+@@ -22,6 +22,10 @@ inline YGValue valueFromEdges(YGStyle::Edges edges, YGEdge edge, YGEdge axis) {
+   return edges[YGEdgeAll];
+ }
+ 
++inline YGValue yogaStyleValueFromFloat(float value) {
++  return {value, YGUnitPoint};
++}
++
+ void RNCSafeAreaViewShadowNode::adjustLayoutWithState() {
+   ensureUnsealed();
+ 
+@@ -71,7 +75,7 @@ void RNCSafeAreaViewShadowNode::adjustLayoutWithState() {
+         (bottom.unit == YGUnitPoint ? bottom.value : 0));
+   }
+ 
+-  YGStyle adjustedStyle = getConcreteProps().yogaStyle;
++  yoga::Style adjustedStyle = getConcreteProps().yogaStyle;
+   if (props.mode == RNCSafeAreaViewMode::Padding) {
+     adjustedStyle.padding()[YGEdgeTop] = top;
+     adjustedStyle.padding()[YGEdgeLeft] = left;

@@ -5,7 +5,7 @@ import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '../QRCodeScanner/QRCodeScanner';
-import { Code } from 'react-native-vision-camera';
+// import { Code } from 'react-native-vision-camera';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { apiKeystone } from '@/core/apis';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -59,7 +59,7 @@ export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
   const [errorMessage, setErrorMessage] = React.useState('');
   const scannedRef = React.useRef(false);
 
-  const handleCodeScanned = async (codes: Code[]) => {
+  const handleCodeScanned = async (codes: any[]) => {
     try {
       const data = codes[0].value!;
 
