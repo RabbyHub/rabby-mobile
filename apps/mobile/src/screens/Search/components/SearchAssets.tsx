@@ -187,6 +187,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     return isLoading ? <PositionLoader /> : null;
   }, [isLoading]);
 
+  const ListFooterComponent = useMemo(() => {
+    return <SearchOnTheChain filterText={filterText} />;
+  }, [filterText]);
+
   return (
     <SectionList
       sections={sections.filter(i => !!i.originData?.length)}
@@ -201,7 +205,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       onScroll={() => {
         Keyboard.dismiss();
       }}
-      ListFooterComponent={() => <SearchOnTheChain filterText={filterText} />}
+      ListFooterComponent={ListFooterComponent}
       renderSectionHeader={renderSectionHeader}
       refreshControl={
         <RefreshControl
