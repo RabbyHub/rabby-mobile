@@ -116,7 +116,7 @@ export const TokenArea: React.FC<Props> = ({
     <View style={styles.container}>
       <FlatList
         ListHeaderComponent={ListHeaderComponent}
-        data={amountList.sort((a, b) =>
+        data={amountList?.sort((a, b) =>
           new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
         )}
         renderItem={renderItem}

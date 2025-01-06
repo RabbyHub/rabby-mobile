@@ -29,6 +29,7 @@ import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
+import { ellipsisAddress } from '@/utils/address';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -210,6 +211,79 @@ export const TokenRow = memo(
         triggerProps={{ action: 'longPress' }}>
         {children}
       </ContextMenuView>
+    );
+  },
+);
+
+export const ExternalTokenRow = memo(
+  ({
+    data,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+    logoStyle,
+    filterText,
+    onTokenPress,
+  }: {
+    data: AbstractPortfolioToken;
+    style?: ViewStyle;
+    logoStyle?: ViewStyle;
+    fold?: boolean;
+    logoSize?: number;
+    chainLogoSize?: number;
+    filterText?: string;
+    onTokenPress?(token: AbstractPortfolioToken): void;
+  }) => {
+    const { styles } = useTheme2024({ getStyle: getStyles });
+
+    const mediaStyle = useMemo(
+      () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
+      [logoStyle, styles.tokenRowLogo],
+    );
+
+    const onPressToken = useCallback(() => {
+      console.log('🔍 CUSTOM_LOGGER:=>: onPressToken)', data);
+      return onTokenPress?.(data);
+    }, [data, onTokenPress]);
+
+    return (
+      <TouchableOpacity
+        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        delayLongPress={200}
+        onPress={onPressToken}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={chainLogoSize}
+            />
+          </View>
+          <View style={styles.tokenRowTokenInner}>
+            <View style={styles.tokenHeader}>
+              <HighlightText
+                style={styles.tokenSymbol}
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                searchWords={[filterText || '']}
+                textToHighlight={data.symbol}
+              />
+            </View>
+
+            <HighlightText
+              style={styles.amountStr}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={ellipsisAddress(data.id)}
+            />
+          </View>
+        </View>
+      </TouchableOpacity>
     );
   },
 );

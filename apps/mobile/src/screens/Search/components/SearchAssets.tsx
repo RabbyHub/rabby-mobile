@@ -24,6 +24,7 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '../useAssets';
 import { PositionLoader } from './Skeleton';
+import SearchOnTheChain from './SearchOnTheChain';
 
 interface Props {
   filterText?: string;
@@ -224,6 +225,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       onScroll={() => {
         Keyboard.dismiss();
       }}
+      ListFooterComponent={() => <SearchOnTheChain filterText={filterText} />}
       renderSectionHeader={renderSectionHeader}
       refreshControl={
         <RefreshControl

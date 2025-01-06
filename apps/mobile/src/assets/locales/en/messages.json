@@ -2432,6 +2432,11 @@
       },
       "header": {
         "placeHolder": "Search"
+      },
+      "searchWeb": {
+        "noResult": "No Results for",
+        "title": "All Results",
+        "searchTips": "Search the web"
       }
     }
   },
