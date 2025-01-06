@@ -4,7 +4,11 @@ import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+} from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -22,7 +26,7 @@ import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -43,6 +47,7 @@ import { navigate } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -166,6 +171,7 @@ export const RightMore: React.FC<{
     </>
   );
 };
+
 export const TokenDetailScreen = () => {
   const route = useRoute();
   const {
@@ -178,7 +184,7 @@ export const TokenDetailScreen = () => {
     needUseCacheToken?: boolean;
   };
 
-  // console.log(' TokenDetailScreen token:', token);
+  console.debug(' TokenDetailScreen refresh', new Date().toString());
   // const { token, account } = useNavigationState(
   //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
   // ) as {
@@ -204,7 +210,8 @@ export const TokenDetailScreen = () => {
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
-    Object.values(asssest).map(({ portfolios }) => {
+    Object.keys(asssest).map((address, index) => {
+      const { portfolios } = asssest[address];
       portfolios?.map(portfolio => {
         if (portfolio.chain !== token.chain) {
           return;
@@ -301,6 +308,9 @@ export const TokenDetailScreen = () => {
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
 
   const handleSend = useMemoizedFn(async () => {
     const chain = findChain({
@@ -308,7 +318,7 @@ export const TokenDetailScreen = () => {
     });
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.Send,
+      screen: RootNames.MultiSend,
       params: {
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: token?._tokenId,
@@ -316,14 +326,29 @@ export const TokenDetailScreen = () => {
     });
   });
 
+  const tokenSupportSwap = useMemo(() => {
+    const tokenChain = findChain({ serverId: token?.chain })?.enum;
+
+    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
+  }, [token]);
+
   const handleSwap = useMemoizedFn(
     async (type: 'Buy' | 'Sell', address?: string) => {
+      if (!tokenSupportSwap) {
+        toast.error('Token not support');
+        return;
+      }
+
       const chain = findChain({
         serverId: token.chain,
       });
-      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+
+      const toAccount = address
+        ? accounts.find(i => isSameAddress(address, i.address)) || finalAccount
+        : finalAccount;
+      await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.Swap,
+        screen: address ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?._tokenId,
@@ -336,50 +361,46 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
-  const tokenSupportSwap = useMemo(() => {
-    const tokenChain = findChain({ serverId: token?.chain })?.enum;
-
-    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
-  }, [token]);
-
   if (!finalAccount) {
     return null;
   }
 
   return (
     <NormalScreenContainer2024 type="bg1" style={styles.root}>
-      <View style={{ position: 'relative' }}>
-        <HomePinBadge token={token} />
-        <Text style={styles.currentText}>Current price</Text>
-        <TokenPriceChart
-          token={tokenWithAmount || token}
-          isPin={token._isPined}
-        />
-        <View style={styles.divider} />
-        <TokenArea
-          handleSwap={handleSwap}
-          amountList={
-            !account
-              ? token.fromAddress
-              : [
-                  {
-                    ...token,
-                    amount: token._amountStr!,
-                    address: finalAccount.address,
-                  },
-                ]
-          }
-          token={tokenWithAmount || token}
-        />
-      </View>
-      {relateDefiList.length > 0 && (
-        <RelatedDeFi
-          deFiList={relateDefiList}
-          symbol={token.symbol}
-          handleGoDeFi={handleOpenDefiDetail}
-        />
-      )}
-      <View style={{ height: isAndroid ? 40 + safeOffBottom : 76 }} />
+      <ScrollView>
+        <View style={{ position: 'relative' }}>
+          <HomePinBadge token={token} />
+          <Text style={styles.currentText}>Current price</Text>
+          <TokenPriceChart
+            token={tokenWithAmount || token}
+            isPin={token._isPined}
+          />
+          <View style={styles.divider} />
+          <TokenArea
+            handleSwap={handleSwap}
+            amountList={
+              !account
+                ? token.fromAddress
+                : [
+                    {
+                      ...token,
+                      amount: token._amountStr!,
+                      address: finalAccount.address,
+                    },
+                  ]
+            }
+            token={tokenWithAmount || token}
+          />
+        </View>
+        {relateDefiList.length > 0 && (
+          <RelatedDeFi
+            deFiList={relateDefiList}
+            symbol={token.symbol}
+            handleGoDeFi={handleOpenDefiDetail}
+          />
+        )}
+        <View style={{ height: isAndroid ? 90 + safeOffBottom : 126 }} />
+      </ScrollView>
       <View
         style={[
           styles.buttonGroup,
@@ -399,14 +420,14 @@ export const TokenDetailScreen = () => {
           titleStyle={styles.buyBtnTitle}
           // type={'ghost'}
           onPress={() => handleSwap('Buy')}
-          disabled={!tokenSupportSwap}
+          // disabled={!tokenSupportSwap}
         />
         <View style={styles.btnGap} />
         <Button
           title={t('page.tokenDetail.action.Sell')}
           containerStyle={styles.btnContainer}
           onPress={() => handleSwap('Sell')}
-          disabled={!tokenSupportSwap}
+          // disabled={!tokenSupportSwap}
         />
       </View>
     </NormalScreenContainer2024>

@@ -120,13 +120,17 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
+      navigate(RootNames.DeFiDetail, {
+        data,
+        portfolioList: itemList,
+        isSingleAddress: true,
+      });
     },
     [],
   );
 
   const handlePressNft = (item: NFTItem) => {
-    navigate(RootNames.NftDetail, { token: item });
+    navigate(RootNames.NftDetail, { token: item, isSingleAddress: true });
   };
 
   const ListEmptyComponent = useMemo(() => {

@@ -112,15 +112,18 @@ export const TokenArea: React.FC<Props> = ({
     );
   }, [styles.header, styles.balanceTitle, t]);
 
+  const sortedList = useMemo(
+    () =>
+      amountList?.sort((a, b) =>
+        new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
+      ),
+    [amountList],
+  );
+
   return (
     <View style={styles.container}>
-      <FlatList
-        ListHeaderComponent={ListHeaderComponent}
-        data={amountList?.sort((a, b) =>
-          new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-        )}
-        renderItem={renderItem}
-      />
+      {ListHeaderComponent()}
+      {sortedList.length && sortedList.map(item => renderItem({ item }))}
     </View>
   );
 };

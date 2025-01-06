@@ -129,12 +129,13 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const { data, relateTokenId } = useNavigationState(
+  const { data, relateTokenId, isSingleAddress } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
     relateTokenId?: string;
+    isSingleAddress?: boolean;
   };
 
   // console.log('DefiDetail data:', JSON.stringify(data));
@@ -190,9 +191,15 @@ export const DeFiDetailScreen = () => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerLeft: getHeaderLeft,
-      headerRight: getHeaderRight,
+      headerRight: isSingleAddress ? getHeaderRight : () => null,
     });
-  }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
+  }, [
+    getHeaderTitle,
+    setNavigationOptions,
+    getHeaderLeft,
+    getHeaderRight,
+    isSingleAddress,
+  ]);
 
   const [asssest] = useAssetsMap();
 
