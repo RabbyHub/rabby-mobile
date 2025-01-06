@@ -25,6 +25,7 @@ import {
   GasAccountTips,
 } from './GasLessComponents';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -281,6 +282,8 @@ export const FooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { androidOnlyBottomOffset } = useSafeSizes();
+
   if (!account) {
     return null;
   }
@@ -291,7 +294,13 @@ export const FooterBar: React.FC<Props> = ({
   const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
 
   return (
-    <View style={styles.container}>
+    <View
+      style={StyleSheet.flatten([
+        styles.container,
+        {
+          paddingBottom: androidOnlyBottomOffset,
+        },
+      ])}>
       {/* {!isDarkTheme && hasShadow && <Shadow />} */}
       <View
         style={styles.wrapper}
