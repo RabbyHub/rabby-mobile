@@ -27,15 +27,14 @@ export const PositionLoader = ({
               borderTopWidth: space ? 0 : StyleSheet.hairlineWidth,
             },
           ]}>
-          <Skeleton width={26} height={26} style={{ borderRadius: 13 }} />
+          <Skeleton width={46} height={46} circle />
           <View
             style={{
-              marginLeft: 8,
-              justifyContent: 'center',
-              gap: 4,
+              gap: 2,
+              flex: 1,
             }}>
-            <Skeleton width={51} height={17} style={{ borderRadius: 2 }} />
-            <Skeleton width={144} height={17} style={{ borderRadius: 2 }} />
+            <Skeleton height={20} circle />
+            <Skeleton height={18} circle />
           </View>
         </View>
       ))}
@@ -61,10 +60,11 @@ export const ChangeLoader = memo(() => {
 
 const styles = StyleSheet.create({
   positionLoader: {
-    height: 60,
+    height: 74,
     alignItems: 'center',
-    borderRadius: 4,
+    borderRadius: 16,
     flexDirection: 'row',
+    gap: 12,
     paddingHorizontal: 16,
   },
 });

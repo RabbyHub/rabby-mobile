@@ -131,7 +131,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const ListEmptyComponent = useMemo(() => {
     return loading ? (
-      <PositionLoader space={8} />
+      <PositionLoader length={7} space={8} />
     ) : hasAssets ? null : (
       <View style={styles.emptyHolder}>
         <EmptyHolder
