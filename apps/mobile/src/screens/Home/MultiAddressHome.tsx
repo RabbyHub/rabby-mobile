@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
