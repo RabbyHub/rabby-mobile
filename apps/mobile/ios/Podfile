@@ -94,7 +94,7 @@ target 'RabbyMobile' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    # __apply_Xcode_12_5_M1_post_install_workaround(installer)
     patch_build_settings(installer)
 
     # @see https://stackoverflow.com/a/79022687
