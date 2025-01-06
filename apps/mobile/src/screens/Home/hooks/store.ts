@@ -168,7 +168,10 @@ export const combinedTokensAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const tokenMap: Record<string, CombineTokensItem> = {};
   const myAccouts = await getAllMyAccount();
-  const lowerAddresses = myAccouts.map(i => i.address.toLowerCase()) || [];
+  const lowerAddresses = [
+    ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
+  ];
+
   Object.entries(assetsMap).forEach(([address, assets]) => {
     if (!lowerAddresses.includes(address.toLowerCase())) {
       return;
@@ -215,7 +218,9 @@ export const combinedDefiAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const defiMap: Record<string, CombineDefiItem> = {};
   const myAccouts = await getAllMyAccount();
-  const lowerAddresses = myAccouts.map(i => i.address.toLowerCase()) || [];
+  const lowerAddresses = [
+    ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
+  ];
   Object.entries(assetsMap).forEach(([address, assets]) => {
     if (!lowerAddresses.includes(address.toLowerCase())) {
       return;
@@ -258,7 +263,9 @@ export const combinedNFTAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const nftMap: Record<string, CombineNFTItem> = {};
   const myAccouts = await getAllMyAccount();
-  const lowerAddresses = myAccouts.map(i => i.address.toLowerCase()) || [];
+  const lowerAddresses = [
+    ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
+  ];
   Object.entries(assetsMap).forEach(([address, assets]) => {
     if (!lowerAddresses.includes(address.toLowerCase())) {
       return;
