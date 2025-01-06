@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, ScrollView, SectionList, Keyboard } from 'react-native';
+import {
+  View,
+  ScrollView,
+  SectionList,
+  Keyboard,
+  RefreshControl,
+} from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
@@ -36,6 +42,9 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAssetsMap } from '../Home/hooks/store';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import BigNumber from 'bignumber.js';
+import { useAssets } from '../Search/useAssets';
+import { formatNetworth } from '@/utils/math';
 
 const hitSlop = {
   top: 10,
@@ -185,6 +194,9 @@ export const DeFiDetailScreen = () => {
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
   const [asssest] = useAssetsMap();
+
+  const { initFetchTop10Assets, refreshing } = useAssets();
+
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: {
       data: AbstractPortfolio[];
@@ -208,8 +220,19 @@ export const DeFiDetailScreen = () => {
       });
     });
     console.log('relateDefiList length:', sectionsList.length);
-    return sectionsList;
+    return sectionsList.sort((a, b) =>
+      new BigNumber(b.project.netWorth).comparedTo(
+        new BigNumber(a.project.netWorth),
+      ),
+    );
   }, [data, asssest]);
+
+  const sumNetWorth = useMemo(() => {
+    const res = sectionsMultiProject.reduce((pre, cur) => {
+      return (pre += cur.project.netWorth);
+    }, 0);
+    return res ? formatNetworth(res) : data._netWorth;
+  }, [data._netWorth, sectionsMultiProject]);
 
   const renderItem = useCallback(({ item, section }) => {
     return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
@@ -258,10 +281,18 @@ export const DeFiDetailScreen = () => {
             <Text style={styles.projectHeaderBalance}>
               {t('page.nextComponent.multiAddressHome.totalBalance')}
             </Text>
-            <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
+            <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
           </>
         }
         renderSectionHeader={renderSectionHeader}
+        refreshControl={
+          <RefreshControl
+            onRefresh={() => {
+              initFetchTop10Assets(true);
+            }}
+            refreshing={refreshing}
+          />
+        }
       />
     </NormalScreenContainer2024>
   );

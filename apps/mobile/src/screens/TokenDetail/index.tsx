@@ -46,7 +46,7 @@ import { HomePinBadge } from './components/PinBadge';
 
 const isAndroid = Platform.OS === 'android';
 
-export type RelatedDeFiType = DisplayedProject & { amount: string };
+export type RelatedDeFiType = AbstractProject & { amount: string };
 
 const hitSlop = {
   top: 10,

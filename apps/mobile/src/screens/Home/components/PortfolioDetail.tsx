@@ -392,7 +392,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 8,
   },
   arrowStyle: {
-    marginLeft: -2,
+    marginLeft: -4,
   },
   tokenRowToken: {
     height: 40,
@@ -435,7 +435,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
   },
   tokenListSymbolText: {
-    paddingLeft: 8,
+    paddingLeft: 4,
     paddingRight: 4,
     fontSize: 14,
     fontWeight: '700',

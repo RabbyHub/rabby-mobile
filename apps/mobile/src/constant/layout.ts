@@ -274,7 +274,7 @@ function makeScreenSpecConfig() {
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
       Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      SingleAddressHome: bg1Default2024Conf,
+      SingleAddressHome: transparentDefault2024Conf,
       Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,
