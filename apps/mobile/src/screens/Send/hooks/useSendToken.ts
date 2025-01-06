@@ -422,11 +422,13 @@ export function useSendTokenForm() {
             },
           ] as any[],
         } as const,
-        [
-          to || '0x0000000000000000000000000000000000000000',
-          sendValue.toFixed(0),
-        ] as any[],
+        [to, sendValue.toFixed(0)] as any[],
       ] as const;
+
+      if (!isValidAddress(to)) {
+        to = dataInput[1][0] = '0x0000000000000000000000000000000000000000';
+      }
+
       const params: Record<string, any> = {
         chainId: chain.id,
         from: currentAccount!.address,
