@@ -17,6 +17,7 @@ import {
 import { log, tagProfiles } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
 import { IAssets, useAssetsMap, useTokensAtom } from './store';
+import { usePinTokens } from '@/screens/Search/usePinTokens';
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
@@ -172,10 +173,12 @@ export const useTokens = (
 
 export const useRefreshTags = () => {
   const [, setAssetsMap] = useAssetsMap();
+  const { handleFetchTokens } = usePinTokens();
 
   const refreshTags = async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
+    handleFetchTokens();
     setAssetsMap(prevAssetsMap => {
       const updatedAssetsMap: { [address: string]: IAssets } = {};
       Object.entries(prevAssetsMap).forEach(([address, assets]) => {

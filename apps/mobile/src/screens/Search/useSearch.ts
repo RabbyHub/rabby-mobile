@@ -6,6 +6,7 @@ import {
   CombineNFTItem,
   CombineTokensItem,
 } from '../Home/hooks/store';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -74,4 +75,31 @@ export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
       // nftContractNameLower,
     ].some(i => i.includes(filterTextLower));
   });
+};
+
+export const combinePinTokens = (
+  pinTokens: TokenItem[],
+  tokens: CombineTokensItem[],
+) => {
+  const existPinTokens = tokens.filter(i => i._isPined);
+  const noPinTokens = tokens.filter(i => !i._isPined);
+  const unloadPinTokens = pinTokens
+    .filter(
+      i =>
+        !existPinTokens.some(j => j._tokenId === i.id && j.chain === i.chain),
+    )
+    .map(i => ({
+      ...i,
+      _isPined: true,
+      _isFold: false,
+      _isExcludeBalance: false,
+      _usdValueStr: 0,
+      _amountStr: 1,
+      _tokenId: i.id,
+    }));
+  return [
+    ...existPinTokens,
+    ...unloadPinTokens,
+    ...noPinTokens,
+  ] as CombineTokensItem[];
 };

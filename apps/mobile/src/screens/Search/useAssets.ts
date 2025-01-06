@@ -34,7 +34,13 @@ import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useMemo, useRef, useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import { filterNfts, filterPortfolios, filterTokens } from './useSearch';
+import {
+  combinePinTokens,
+  filterNfts,
+  filterPortfolios,
+  filterTokens,
+} from './useSearch';
+import { usePinTokens } from './usePinTokens';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -55,6 +61,7 @@ export const useAssets = (filterText?: string) => {
   const [, updateTokens] = useAtom(updateTokensAtom);
   const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
   const [, updateNftList] = useAtom(updateNFTsAtom);
+  const { data: pinTokens, handleFetchTokens } = usePinTokens();
 
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
   const realtimeIds = useRef<string[]>([]);
@@ -179,6 +186,7 @@ export const useAssets = (filterText?: string) => {
     const top10Account = sortedAccounts.slice(0, 10);
     setLoading(true);
     try {
+      await handleFetchTokens();
       await Promise.all(
         top10Account.map(async account => {
           const lastUpdateTime = getUpdateTime(account.address) || 0;
@@ -214,8 +222,8 @@ export const useAssets = (filterText?: string) => {
     }
   };
   const fTokens = useMemo(
-    () => filterTokens(tokens, filterText),
-    [filterText, tokens],
+    () => filterTokens(combinePinTokens(pinTokens, tokens), filterText),
+    [filterText, pinTokens, tokens],
   );
   const fPortfolios = useMemo(
     () => filterPortfolios(portfolios, filterText),
