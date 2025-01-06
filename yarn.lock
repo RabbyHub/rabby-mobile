@@ -18193,21 +18193,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eth-rpc-errors@npm:4.0.3":
+"eth-rpc-errors@npm:^4.0.2, eth-rpc-errors@npm:^4.0.3":
   version: 4.0.3
   resolution: "eth-rpc-errors@npm:4.0.3"
   dependencies:
     fast-safe-stringify: ^2.0.6
   checksum: 5fa31d1a10fdb340733b9a55e38e7687222c501052ca20743cef4d0c911a9bbcc0cad54aa6bf3e4b428604c071ff519803060e1cbc79ddb7c9257c11d407d32a
-  languageName: node
-  linkType: hard
-
-"eth-rpc-errors@patch:eth-rpc-errors@npm%3A4.0.3#./.yarn/patches/eth-rpc-errors-npm-4.0.3-d154190eb6.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 4.0.3
-  resolution: "eth-rpc-errors@patch:eth-rpc-errors@npm%3A4.0.3#./.yarn/patches/eth-rpc-errors-npm-4.0.3-d154190eb6.patch::version=4.0.3&hash=7d89ee&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    fast-safe-stringify: ^2.0.6
-  checksum: 81ee4f34af7c647542cca336af145e34e6bb31861e03ee5a306011d27508a1b31824c799fcf11ee0d4167f0df8798950a0098712c13edde1082ae0ddb412bdea
   languageName: node
   linkType: hard
 
