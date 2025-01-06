@@ -13,9 +13,10 @@ import { openapi, testOpenapi } from '@/core/request';
 
 type Props = {
   filterText?: string;
+  existTokensIds?: string[];
 };
 
-const SearchOnTheChain = ({ filterText }: Props) => {
+const SearchOnTheChain = ({ filterText, existTokensIds = [] }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [resultTokens, setResultTokens] = useState<AbstractPortfolioToken[]>(
     [],
@@ -36,7 +37,24 @@ const SearchOnTheChain = ({ filterText }: Props) => {
       const res = await testOpenapi.searchTokens({
         q: text,
       });
-      setResultTokens(res);
+      setResultTokens(
+        res
+          .filter(
+            token => !existTokensIds.includes(`${token.chain}:${token.id}`),
+          )
+          .map(
+            token =>
+              ({
+                ...token,
+                _isPined: false,
+                _isFold: false,
+                _isExcludeBalance: false,
+                _usdValueStr: 0,
+                _amountStr: 1,
+                _tokenId: token.id,
+              } as unknown as AbstractPortfolioToken),
+          ),
+      );
       setSearched(true);
     } catch (error) {
       console.log(
