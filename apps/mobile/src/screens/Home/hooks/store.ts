@@ -2,7 +2,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
 
-import { getAllMyAccount } from '@/core/apis/address';
+import { getAllAccounts, getAllMyAccount } from '@/core/apis/address';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { formatNetworth } from '@/utils/math';
 import { AbstractPortfolioToken } from '../types';
@@ -167,7 +167,7 @@ export const useLastUpdateTimeAtom = (address?: string) => {
 export const combinedTokensAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const tokenMap: Record<string, CombineTokensItem> = {};
-  const myAccouts = await getAllMyAccount();
+  const myAccouts = await getAllAccounts();
   const lowerAddresses = [
     ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
   ];
@@ -217,7 +217,7 @@ export const combinedTokensAtom = atom(async get => {
 export const combinedDefiAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const defiMap: Record<string, CombineDefiItem> = {};
-  const myAccouts = await getAllMyAccount();
+  const myAccouts = await getAllAccounts();
   const lowerAddresses = [
     ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
   ];
@@ -262,7 +262,7 @@ export const combinedDefiAtom = atom(async get => {
 export const combinedNFTAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const nftMap: Record<string, CombineNFTItem> = {};
-  const myAccouts = await getAllMyAccount();
+  const myAccouts = await getAllAccounts();
   const lowerAddresses = [
     ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
   ];

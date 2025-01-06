@@ -29,7 +29,7 @@ import {
 } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { openapi } from '@/core/request';
-import { useMyAccounts } from '@/hooks/account';
+import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useMemo, useRef, useState } from 'react';
@@ -43,7 +43,7 @@ const walletProject = new DisplayedProject({
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
-  const { accounts } = useMyAccounts();
+  const { accounts } = useAccounts();
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
 
