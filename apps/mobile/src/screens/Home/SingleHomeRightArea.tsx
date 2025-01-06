@@ -50,6 +50,11 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const fetchHistory = useCallback(() => {
+    if (tokenItem) {
+      // single token no pending tx
+      return;
+    }
+
     if (!currentAccount) {
       return;
     }
@@ -59,7 +64,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [currentAccount]);
+  }, [currentAccount, tokenItem]);
 
   useFocusEffect(
     useCallback(() => {

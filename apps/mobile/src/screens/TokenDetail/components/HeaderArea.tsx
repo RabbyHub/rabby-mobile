@@ -59,6 +59,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
       };
     }, [token]);
 
+  const needHideAddress = React.useMemo(
+    () => getTokenSymbol(token).length >= 5,
+    [token],
+  );
+
   return (
     <View style={styles.root}>
       <View style={styles.container}>
@@ -97,7 +102,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
                 style={styles.address}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {ellipsisAddress(tokenAddress)}
+                {needHideAddress
+                  ? ellipsisOverflowedText(tokenAddress, 6)
+                  : ellipsisAddress(tokenAddress)}
               </Text>
               <TouchableOpacity onPress={handleCopyAddress}>
                 <RcIconCopyRegularCC
@@ -156,7 +163,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingVertical: 4,
 
     display: 'flex',
     flexDirection: 'row',
