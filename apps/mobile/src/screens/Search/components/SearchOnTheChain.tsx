@@ -1100,7 +1100,7 @@ const SearchOnTheChain = ({ filterText }: Props) => {
     searchedRef.current = text;
     try {
       const rawRes = mockRes; // TODO api
-      setResultTokens(mockRes);
+      setResultTokens(rawRes);
       setSearched(true);
     } catch (error) {
       console.log(
@@ -1125,6 +1125,10 @@ const SearchOnTheChain = ({ filterText }: Props) => {
       setResultTokens([]);
     }
   }, [filterText]);
+
+  if (!filterText) {
+    return null;
+  }
   return (
     <View>
       {searched ? (
@@ -1187,6 +1191,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     fontSize: 18,
     lineHeight: 22,
+    marginTop: 12,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],

@@ -1,10 +1,9 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, SectionList, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-import { EmptyHolder } from '@/components/EmptyHolder';
 import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -38,7 +37,6 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     portfolios,
     nftList,
     initFetchTop10Assets,
-    hasAssets,
     refreshing,
     isLoading,
   } = useAssets(filterText);
@@ -73,11 +71,6 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       },
     ];
   }, [filterText, foldHideList, nftList, portfolios, sortTokens]);
-
-  // useEffect(() => {
-  //   initFetchTop10Assets();
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -191,25 +184,8 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   );
 
   const ListEmptyComponent = useMemo(() => {
-    return isLoading ? (
-      <PositionLoader />
-    ) : hasAssets ? null : (
-      <View style={styles.emptyHolder}>
-        <EmptyHolder
-          imgStyle={styles.emptyImg}
-          textStyle={styles.emptyText}
-          text="No Assets"
-          type="default"
-        />
-      </View>
-    );
-  }, [
-    isLoading,
-    hasAssets,
-    styles.emptyHolder,
-    styles.emptyImg,
-    styles.emptyText,
-  ]);
+    return isLoading ? <PositionLoader /> : null;
+  }, [isLoading]);
 
   return (
     <SectionList
