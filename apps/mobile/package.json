@@ -132,7 +132,7 @@
     "react-is": "18.2.0",
     "react-native": "0.73.11",
     "react-native-aes-crypto": "^3.0.1",
-    "react-native-animateable-text": "0.11.0",
+    "react-native-animateable-text": "0.11.1",
     "react-native-ble-manager": "8",
     "react-native-ble-plx": "3.1.2",
     "react-native-bundle-splitter": "^3.0.1",

@@ -29290,7 +29290,7 @@ __metadata:
     react-is: 18.2.0
     react-native: 0.73.11
     react-native-aes-crypto: ^3.0.1
-    react-native-animateable-text: 0.11.0
+    react-native-animateable-text: 0.11.1
     react-native-asset: ^2.1.1
     react-native-ble-manager: 8
     react-native-ble-plx: 3.1.2
@@ -29723,9 +29723,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-animateable-text@npm:0.11.0":
-  version: 0.11.0
-  resolution: "react-native-animateable-text@npm:0.11.0"
+"react-native-animateable-text@npm:0.11.1":
+  version: 0.11.1
+  resolution: "react-native-animateable-text@npm:0.11.1"
   dependencies:
     deprecated-react-native-prop-types: ^2.3.0
     nullthrows: ^1.1.1
@@ -29733,7 +29733,7 @@ __metadata:
     react: "*"
     react-native: ">=0.64.0-rc.3"
     react-native-reanimated: "*"
-  checksum: 70295464a94dd07aa8ef994fe4b4b37525381ea03b2282f6b6c196ccec04dbbc894398d3905752dbb8443611f9e636326fd01eefa26856895b3c019d62e6a1c3
+  checksum: b848b150a186ad536400a6b16050a68deb6ad97c9c93c987e3a2f5954643752a2cc855c3cc134a227c2f18af5f2b669ba8c37428673bbfbd2aef21149be1abf3
   languageName: node
   linkType: hard
 
