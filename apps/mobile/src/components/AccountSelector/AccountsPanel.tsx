@@ -64,6 +64,7 @@ function AddressItemInSheetModal({
   replaceNameWithAliasAddress,
   defaultPressAction = showCopyAndQR ? 'copy' : 'asPress',
   onPressAccount: proponPressAddress,
+  isReceive,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
@@ -72,6 +73,7 @@ function AddressItemInSheetModal({
   replaceNameWithAliasAddress?: boolean;
   defaultPressAction?: 'copy' | 'asPress';
   onPressAccount?: (account: Account) => void;
+  isReceive?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
@@ -134,10 +136,21 @@ function AddressItemInSheetModal({
                     ) : null}
                   </Text>
                   {hasAlias && !IS_ANDROID ? (
-                    <Text numberOfLines={1} style={styles.addressAlias}>
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.addressAlias,
+
+                        { flexGrow: 0, position: 'relative', top: 0.5 },
+                      ]}>
                       )
                     </Text>
                   ) : null}
+                  {!isReceive && isPinned && (
+                    <View style={styles.pinnedWrapper}>
+                      <Text style={styles.pinText}>Pin</Text>
+                    </View>
+                  )}
                 </View>
                 <WalletBalance
                   style={[
@@ -185,8 +198,6 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 20,
       height: SIZES.itemH,
-      borderWidth: IS_ANDROID ? 1 : 0,
-      borderColor: ctx.colors2024['neutral-line'],
     },
     addressItemContainerCurrent: {
       backgroundColor: ctx.colors2024['brand-light-1'],
@@ -223,6 +234,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       color: ctx.colors2024['neutral-secondary'],
+      flexGrow: IS_ANDROID ? 1 : 0,
     },
     addressUsdValue: {
       marginTop: 6,
@@ -489,6 +501,7 @@ export function AccountsPanelInSheetModal({
                         isPinned={isPinnedAccount(item)}
                         onPressAccount={onSelectAccount}
                         replaceNameWithAliasAddress={isReceive}
+                        isReceive={isReceive}
                         showCopyAndQR={!isGasAccount}
                         defaultPressAction={defaultPressItemAction}
                       />
