@@ -59,8 +59,14 @@ export type IManageToken = {
   tokenId: string;
 };
 
-function makeManageTokenKey(x: IManageToken): `${string}-${string}` {
-  return `${x.chainId}-${x.tokenId}`;
+function makeManageTokenKey(x: IManageToken) {
+  // return `${x.chainId}-${x.tokenId}`;
+  return JSON.stringify(x);
+}
+
+function decodeManageTokenKey(x: string): IManageToken {
+  const [chainId, tokenId] = JSON.parse(x);
+  return { chainId, tokenId };
 }
 
 export type IDefiOrToken = {
@@ -69,8 +75,14 @@ export type IDefiOrToken = {
   type: 'token' | 'defi';
 };
 
-function makeDefiOrTokenKey(x: IDefiOrToken): `${string}-${string}-${string}` {
-  return `${x.chainid}-${x.id}-${x.type}`;
+function makeDefiOrTokenKey(x: IDefiOrToken) {
+  // return `${x.chainid}-${x.id}-${x.type}`;
+  return JSON.stringify(x);
+}
+
+function decodeDefiOrTokenKey(x: string): IDefiOrToken {
+  const [chainid, id, type] = JSON.parse(x);
+  return { chainid, id, type };
 }
 
 export type ITokenSetting = {
@@ -250,14 +262,11 @@ export class PreferenceService {
       ),
     };
 
-    Object.entries(tokenManageSettingMap).forEach(([eoaAddr, setting]) => {
+    Object.values(tokenManageSettingMap).forEach(setting => {
       (['pinedQueue', 'foldTokens', 'unfoldTokens'] as const).forEach(key => {
         setting[key]?.forEach(item => {
           const k = makeManageTokenKey(item);
-          if (!sets.pinedQueue.has(k)) {
-            lists[key].push(item);
-            sets[key].add(k);
-          }
+          if (!sets[key].has(k)) sets[key].add(k);
         });
 
         if (!__DEV__) delete setting[key];
@@ -267,10 +276,7 @@ export class PreferenceService {
         key => {
           setting[key]?.forEach(item => {
             const k = makeDefiOrTokenKey(item);
-            if (!sets[key].has(k)) {
-              lists[key].push(item);
-              sets[key].add(k);
-            }
+            if (!sets[key].has(k)) sets[key].add(k);
           });
 
           if (!__DEV__) delete setting[key];
@@ -278,17 +284,44 @@ export class PreferenceService {
       );
     });
 
-    this.store.pinedQueue = lists.pinedQueue;
-    // console.debug(
-    //   '[preference::_migrate] this.store.pinedQueue',
-    //   this.store.pinedQueue,
-    // );
-    this.store.foldTokens = lists.foldTokens;
-    this.store.unfoldTokens = lists.unfoldTokens;
-    this.store.includeDefiAndTokens = lists.includeDefiAndTokens;
-    this.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
+    priority_process: {
+      // pinedQueue > foldTokens > unfoldTokens
+      sets.pinedQueue.forEach(k => {
+        sets.foldTokens.delete(k);
+        sets.unfoldTokens.delete(k);
+      });
+      sets.foldTokens.forEach(k => {
+        sets.unfoldTokens.delete(k);
+      });
 
-    this.store.tokenManageSettingMap = tokenManageSettingMap;
+      lists.pinedQueue = [...sets.pinedQueue].map(k => decodeManageTokenKey(k));
+      lists.foldTokens = [...sets.foldTokens].map(k => decodeManageTokenKey(k));
+      lists.unfoldTokens = [...sets.unfoldTokens].map(k =>
+        decodeManageTokenKey(k),
+      );
+
+      // excludeDefiAndTokens > includeDefiAndTokens
+      sets.excludeDefiAndTokens.forEach(k => {
+        sets.includeDefiAndTokens.delete(k);
+      });
+
+      lists.excludeDefiAndTokens = [...sets.excludeDefiAndTokens].map(k =>
+        decodeDefiOrTokenKey(k),
+      );
+      lists.includeDefiAndTokens = [...sets.includeDefiAndTokens].map(k =>
+        decodeDefiOrTokenKey(k),
+      );
+    }
+
+    flush_back: {
+      this.store.pinedQueue = lists.pinedQueue;
+      this.store.foldTokens = lists.foldTokens;
+      this.store.unfoldTokens = lists.unfoldTokens;
+      this.store.includeDefiAndTokens = lists.includeDefiAndTokens;
+      this.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
+
+      this.store.tokenManageSettingMap = tokenManageSettingMap;
+    }
   }
 
   /* eslint-disable no-dupe-class-members */
