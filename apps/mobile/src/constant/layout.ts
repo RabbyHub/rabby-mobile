@@ -65,8 +65,8 @@ export const RootNames = {
   Home: 'Home',
   Points: 'Points',
 
+  StackDapps: 'StackDapps',
   Dapps: 'Dapps',
-  StackFavoriteDapps: 'StackFavoriteDapps',
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
 
