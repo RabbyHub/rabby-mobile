@@ -61,12 +61,14 @@ import {
   ScannerScreen,
   UnlockScreen,
   FavoriteDappsScreen,
-  TokenDetailScreen,
-  NFTDetailScreen,
-  DeFiDetailScreen,
   NotFoundScreen,
   MyBundleScreen,
 } from '@/screens/index.lazy';
+import {
+  TokenDetailScreen,
+  NFTDetailScreen,
+  DeFiDetailScreen,
+} from '@/screens/index.eager';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
