@@ -26,6 +26,7 @@ import {
   HomeScreenNavigator,
   TransactionNavigator,
   SingleAddressNavigator,
+  DappsNavigator,
 } from './screens/Navigators/index.eager';
 
 import usePrevious from 'ahooks/lib/usePrevious';
@@ -56,7 +57,6 @@ import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView'
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
-import { DappsNavigator } from './screens/Navigators/DappsNavigator';
 
 import {
   UnlockScreen,
