@@ -15,6 +15,7 @@ import { AbstractPortfolioToken } from './screens/Home/types';
 
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
+  [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -45,12 +46,15 @@ export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
-  [RootNames.Search]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
       | typeof RootNames.FavoriteDapps;
   };
+};
+
+export type HomeNonTabNavigatorParamsList = {
+  [RootNames.Search]?: {};
 };
 
 export type DappsNavigatorParamsList = {

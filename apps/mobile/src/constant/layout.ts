@@ -58,6 +58,8 @@ export const RootNames = {
   GetStartedScreen2024: 'GetStartedScreen2024',
   CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
+  StackHomeNonTab: 'StackHomeNonTab',
+
   NotFound: 'NotFound',
   Unlock: 'Unlock',
 

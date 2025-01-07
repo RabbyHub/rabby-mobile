@@ -63,6 +63,7 @@ import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
 import { DappsNavigator } from './screens/Navigators/DappsNavigator';
+import HomeNonTabNavigator from './screens/Navigators/HomeNonTabNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -281,6 +282,11 @@ export default function AppNavigation({
           <RootStack.Screen
             name={RootNames.StackRoot}
             component={HomeScreenNavigator}
+            options={RootOptions}
+          />
+          <RootStack.Screen
+            name={RootNames.StackHomeNonTab}
+            component={HomeNonTabNavigator}
             options={RootOptions}
           />
           <RootStack.Screen

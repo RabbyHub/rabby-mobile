@@ -7,23 +7,16 @@ import { useThemeColors } from '@/hooks/theme';
 
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 
-import { DappsScreen } from '@/screens/Dapps/DappsScreen';
-import SettingsScreen from '../Settings/Settings';
-
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
-import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
-import SearchScreen from '../Search';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
-
-const isIOS = Platform.OS === 'ios';
 
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
@@ -58,19 +51,6 @@ export function HomeScreenNavigator() {
           name={RootNames.Home}
           component={MultiAddressHome}
           options={{
-            headerShown: false,
-          }}
-        />
-        <HomeHiddenTabStack.Screen
-          name={RootNames.Search}
-          component={SearchScreen}
-          options={{
-            title: 'Search',
-            headerTitleStyle: {
-              fontWeight: '500',
-            },
-            headerTitle: 'Search',
-            headerTransparent: true,
             headerShown: false,
           }}
         />

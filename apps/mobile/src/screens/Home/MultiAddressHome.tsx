@@ -434,7 +434,7 @@ function MultiAddressHome(): JSX.Element {
       '🔍 CUSTOM_LOGGER:=>: handlePressSearch)',
       Object.keys(asssest),
     );
-    navigation.navigate(RootNames.StackRoot, {
+    navigation.navigate(RootNames.StackHomeNonTab, {
       screen: RootNames.Search,
       params: {},
     });
