@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
@@ -34,6 +35,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useAssetsMap } from '../Home/hooks/store';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { ellipsisAddress } from '@/utils/address';
 
 const ListItem = (props: {
   title: string;
@@ -165,6 +167,14 @@ export const NFTDetailScreen = () => {
       data: NFTItem;
       address: string;
       index: number;
+      type: KEYRING_TYPE;
+      aliasName: string;
+    }[] = [];
+
+    const tempList: {
+      data: NFTItem;
+      address: string;
+      index: number;
     }[] = [];
 
     Object.keys(asssest).map((address, index) => {
@@ -176,7 +186,7 @@ export const NFTDetailScreen = () => {
           item.chain === token.chain &&
           item.contract_id === token.contract_id
         ) {
-          resList.push({
+          tempList.push({
             data: item,
             address,
             index,
@@ -184,24 +194,35 @@ export const NFTDetailScreen = () => {
         }
       });
     });
+
+    sortedAccounts.map(account => {
+      const idx = tempList.findIndex(item => item.address === account.address);
+      if (idx > -1) {
+        resList.push({
+          ...tempList[idx],
+          type: account.type,
+          aliasName: account.aliasName || ellipsisAddress(account.address),
+        });
+      }
+    });
     console.log('relateNFTList length:', resList.length);
     return resList;
-  }, [asssest, token]);
+  }, [asssest, token, sortedAccounts]);
 
   const renderAccountHeader = useCallback(
-    (selectAccount: KeyringAccountWithAlias) => {
+    (type: KEYRING_TYPE, aliasName: string) => {
       return (
         <View style={styles.accountBox}>
           <View className="relative">
             <WalletIcon
-              type={selectAccount?.type as KEYRING_TYPE}
+              type={type as KEYRING_TYPE}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}
             />
           </View>
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-            {selectAccount?.aliasName || selectAccount?.brandName}
+            {aliasName}
           </Text>
         </View>
       );
@@ -210,17 +231,24 @@ export const NFTDetailScreen = () => {
   );
 
   const renderSingeleNft = useCallback(
-    ({ address, iToken }: { address: string; iToken: NFTItem }) => {
-      const selectAccount = sortedAccounts.find(a =>
-        isSameAddress(a.address, address),
-      );
-      if (!selectAccount) {
+    ({
+      address,
+      iToken,
+      type,
+      aliasName,
+    }: {
+      address: string;
+      type: KEYRING_TYPE;
+      aliasName: string;
+      iToken: NFTItem;
+    }) => {
+      if (!address) {
         return null;
       }
 
       return (
         <View key={`${address}-${iToken.id}`}>
-          {renderAccountHeader(selectAccount)}
+          {renderAccountHeader(type, aliasName)}
           <Media
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
             type={iToken?.content_type}
@@ -276,23 +304,14 @@ export const NFTDetailScreen = () => {
         </View>
       );
     },
-    [
-      calDate,
-      calPrice,
-      renderAccountHeader,
-      t,
-      handleSend,
-      colors,
-      styles,
-      sortedAccounts,
-    ],
+    [calDate, calPrice, renderAccountHeader, t, handleSend, colors, styles],
   );
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       <ScrollView style={styles.scrollContainer}>
-        {itemList.map(({ data, address }) =>
-          renderSingeleNft({ address, iToken: data }),
+        {itemList.map(({ data, address, type, aliasName }) =>
+          renderSingeleNft({ address, iToken: data, type, aliasName }),
         )}
         <View style={{ height: 40 }} />
       </ScrollView>

@@ -8,6 +8,7 @@ import {
   KeyringAccountWithAlias,
   useAccounts,
   useCurrentAccount,
+  useMyAccounts,
 } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
@@ -50,6 +51,7 @@ import { HomePinBadge } from './components/PinBadge';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
+import { useSortAddressList } from '../Address/useSortAddressList';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -321,9 +323,8 @@ export const TokenDetailScreen = () => {
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
 
   const handleSend = useMemoizedFn(async () => {
     const chain = findChain({
@@ -341,25 +342,26 @@ export const TokenDetailScreen = () => {
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
 
-    const actionsAccounts = [...accounts];
-    token.fromAddress?.map(item => {
-      const idx = actionsAccounts.findIndex(i =>
-        isSameAddress(i.address, item.address),
+    const actionsAccounts = [...sortedAccounts];
+    actionsAccounts.map(item => {
+      const { fromAddress } = token;
+      const idx = fromAddress?.findIndex(
+        i =>
+          isSameAddress(i.address, item.address) &&
+          item.type !== KEYRING_TYPE.WatchAddressKeyring,
       );
       if (idx > -1) {
         res.push({
           address: item.address,
-          amount: formatTokenAmount(item.amount),
-          aliasName:
-            actionsAccounts[idx].aliasName || ellipsisAddress(item.address),
-          type: actionsAccounts[idx].type,
+          amount: formatTokenAmount(fromAddress[idx].amount),
+          aliasName: item.aliasName || ellipsisAddress(item.address),
+          type: item.type,
         });
-        actionsAccounts.splice(idx, 1);
       }
     });
 
     return res;
-  }, [token, accounts]);
+  }, [token, sortedAccounts]);
 
   const tokenSupportSwap = useMemo(() => {
     const tokenChain = findChain({ serverId: token?.chain })?.enum;

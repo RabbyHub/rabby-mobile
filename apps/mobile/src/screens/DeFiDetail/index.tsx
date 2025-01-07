@@ -48,13 +48,15 @@ import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_ANDROID } from '@/core/native/utils';
+import { ellipsisAddress } from '@/utils/address';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
   project: AbstractProject;
   address: string;
+  type: KEYRING_TYPE;
+  aliasName: string;
   totalUsdValue: BigNumber;
-  index: number;
 };
 
 const hitSlop = {
@@ -211,30 +213,48 @@ export const DeFiDetailScreen = () => {
   const [asssest] = useAssetsMap();
 
   const { initFetchTop10Assets, refreshing } = useAssets();
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
 
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
 
-    Object.keys(asssest).map((address, index) => {
+    const tempList: {
+      data: SectionListItem['data'];
+      project: SectionListItem['project'];
+      totalUsdValue: SectionListItem['totalUsdValue'];
+      address: SectionListItem['address'];
+    }[] = [];
+    Object.keys(asssest).map(address => {
       const { portfolios } = asssest[address];
 
       portfolios?.map(portfolio => {
         if (portfolio.id === data.id && portfolio.chain === data.chain) {
-          sectionsList.push({
+          tempList.push({
             data: portfolio._portfolios,
             project: portfolio,
             totalUsdValue: getDisplayedPortfolioUsdValue(portfolio._portfolios),
             address,
-            index,
           });
         }
       });
+    });
+
+    sortedAccounts.map(account => {
+      const idx = tempList.findIndex(item => item.address === account.address);
+      if (idx > -1) {
+        sectionsList.push({
+          ...tempList[idx],
+          type: account.type,
+          aliasName: account.aliasName || ellipsisAddress(account.address),
+        });
+      }
     });
     console.debug('relateDefiList length:', sectionsList.length);
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [data, asssest]);
+  }, [data, asssest, sortedAccounts]);
 
   const sumNetWorth = useMemo(() => {
     const res = sectionsMultiProject.reduce((pre, cur) => {
@@ -256,38 +276,29 @@ export const DeFiDetailScreen = () => {
     [],
   );
 
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
-
   const { bottom } = useSafeAreaInsets();
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: SectionListItem }) => {
-      const selectAccount = sortedAccounts.find(
-        a =>
-          a.type !== KEYRING_TYPE.WatchAddressKeyring &&
-          isSameAddress(a.address, section.address),
-      );
-
       return (
         <View style={styles.accountBox}>
           <View className="relative">
             <WalletIcon
-              type={selectAccount?.type as KEYRING_TYPE}
+              type={section.type as KEYRING_TYPE}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}
             />
           </View>
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-            {selectAccount?.aliasName || selectAccount?.brandName}
+            {section.aliasName}
           </Text>
         </View>
       );
     },
-    [sortedAccounts, styles.accountBox, styles.titleText, styles.walletIcon],
+    [styles.accountBox, styles.titleText, styles.walletIcon],
   );
 
   return (
