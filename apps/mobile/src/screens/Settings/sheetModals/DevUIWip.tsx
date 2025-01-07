@@ -21,9 +21,11 @@ import { useDappsViewConfig } from '@/screens/Dapps/hooks/useDappView';
 import { formatTimeReadable } from '@/utils/time';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { getKeyring } from '@/core/apis/keyring';
-import { keyringService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
+import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
+import RNHelpers from '@/core/native/RNHelpers';
 
 async function importWalletConnectAddress({
   address,
@@ -115,14 +117,29 @@ export default function DevUIWipModal({
   const Items = (() => {
     const list: DevTestItem[] = [
       {
-        label: '[Screen] go to multi address home',
+        label: '[Data] mock assets data <= 0.5.4',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
-          navigation.dispatch(
-            StackActions.replace(RootNames.StackRoot, {
-              screen: RootNames.Home,
-              params: {},
-            }),
+          preferenceService._dangerouslySetTokenManageSettingMap(
+            makeTokenManageSettingMap(),
+          );
+
+          Alert.alert(
+            'Mock done',
+            [
+              `Address-indexed assets data has been mocked.`,
+              `Restart the app to trigger the migrations.`,
+            ].join('\n'),
+            [
+              { text: 'OK', onPress: makeNoop },
+              {
+                text: 'Exit App',
+                style: 'destructive',
+                onPress: () => {
+                  RNHelpers.forceExitApp();
+                },
+              },
+            ],
           );
         },
       },

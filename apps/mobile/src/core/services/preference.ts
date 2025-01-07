@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { addressUtils } from '@rabby-wallet/base-utils';
+import { addressUtils, urlUtils } from '@rabby-wallet/base-utils';
 import * as Sentry from '@sentry/react-native';
 
 import dayjs from 'dayjs';
@@ -16,11 +16,12 @@ import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const { isSameAddress } = addressUtils;
 
 const SWITCHES = {
-  KEEP_DATA_ON_DEV: __DEV__,
+  KEEP_DATA_ON_DEV: false,
 };
 
 // export interface Account {
@@ -64,13 +65,22 @@ export type IManageToken = {
   tokenId: string;
 };
 
+function sortObjByKey<T extends Record<string, any>>(obj: T): T {
+  return Object.keys(obj)
+    .sort()
+    .reduce((acc, key) => {
+      // @ts-expect-error
+      acc[key] = obj[key];
+      return acc;
+    }, {} as T);
+}
+
 function makeManageTokenKey(x: IManageToken) {
-  // return `${x.chainId}-${x.tokenId}`;
-  return JSON.stringify(x);
+  return urlUtils.obj2query(sortObjByKey(x));
 }
 
 function decodeManageTokenKey(x: string): IManageToken {
-  const { chainId, tokenId } = JSON.parse(x);
+  const { chainId, tokenId } = urlUtils.query2obj(x);
   return { chainId, tokenId };
 }
 
@@ -81,13 +91,12 @@ export type IDefiOrToken = {
 };
 
 function makeDefiOrTokenKey(x: IDefiOrToken) {
-  // return `${x.chainid}-${x.id}-${x.type}`;
-  return JSON.stringify(x);
+  return urlUtils.obj2query(sortObjByKey(x));
 }
 
 function decodeDefiOrTokenKey(x: string): IDefiOrToken {
-  const { chainid, id, type } = JSON.parse(x);
-  return { chainid, id, type };
+  const { chainid, id, type } = urlUtils.query2obj(x);
+  return { chainid, id, type: type as any };
 }
 
 export type ITokenSetting = {
@@ -250,14 +259,35 @@ export class PreferenceService {
   private _trimLegacyData<T extends (...args: any) => any>(
     fn: Function,
   ): undefined | ReturnType<T> {
-    if (SWITCHES.KEEP_DATA_ON_DEV) return;
+    if (__DEV__ && SWITCHES.KEEP_DATA_ON_DEV) return;
 
     return fn();
   }
 
   private _migrate() {
+    const _logMigratedData = () => {
+      // // leave here for debug
+      // console.debug(
+      //   'this.store.pinedQueue',
+      //   JSON.stringify(this.store.pinedQueue, null, '\t'),
+      //   'this.store.foldTokens',
+      //   JSON.stringify(this.store.foldTokens, null, '\t'),
+      //   'this.store.unfoldTokens',
+      //   JSON.stringify(this.store.unfoldTokens, null, '\t'),
+      // );
+      // // leave here for debug
+      // console.debug(
+      //   'this.store.includeDefiAndTokens',
+      //   JSON.stringify(this.store.includeDefiAndTokens, null, '\t'),
+      //   'this.store.excludeDefiAndTokens',
+      //   JSON.stringify(this.store.excludeDefiAndTokens, null, '\t'),
+      // );
+    };
     const tokenManageSettingMap = { ...this.store.tokenManageSettingMap };
-    if (Object.keys(tokenManageSettingMap).length === 0) return;
+    if (Object.keys(tokenManageSettingMap).length === 0) {
+      _logMigratedData();
+      return;
+    }
 
     // leave here for debug
     // console.debug('[preference::_migrate] this.store.tokenManageSettingMap', JSON.stringify(this.store.tokenManageSettingMap, null, '\t'));
@@ -344,29 +374,25 @@ export class PreferenceService {
       this.store.foldTokens = lists.foldTokens;
       this.store.unfoldTokens = lists.unfoldTokens;
 
-      // // leave here for debug
-      // console.debug(
-      //   'this.store.pinedQueue',
-      //   JSON.stringify(this.store.pinedQueue, null, '\t'),
-      //   'this.store.foldTokens',
-      //   JSON.stringify(this.store.foldTokens, null, '\t'),
-      //   'this.store.unfoldTokens',
-      //   JSON.stringify(this.store.unfoldTokens, null, '\t'),
-      // );
-
       this.store.includeDefiAndTokens = lists.includeDefiAndTokens;
       this.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
 
-      // // leave here for debug
-      // console.debug(
-      //   'this.store.includeDefiAndTokens',
-      //   JSON.stringify(this.store.includeDefiAndTokens, null, '\t'),
-      //   'this.store.excludeDefiAndTokens',
-      //   JSON.stringify(this.store.excludeDefiAndTokens, null, '\t'),
-      // );
+      _logMigratedData();
 
       this.store.tokenManageSettingMap = tokenManageSettingMap;
     }
+  }
+
+  /** @deprecated */
+  _dangerouslySetTokenManageSettingMap(input: ITokenManageSettingMap) {
+    // only allow use in non-production environment
+    if (!isNonPublicProductionEnv) return;
+
+    this.store.tokenManageSettingMap = input;
+    console.warn(
+      '[preference::_dangerouslySetTokenManageSettingMap] written tokenManageSettingMap',
+      input,
+    );
   }
 
   /* eslint-disable no-dupe-class-members */
