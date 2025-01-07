@@ -46,6 +46,8 @@ import BigNumber from 'bignumber.js';
 import { useAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IS_ANDROID } from '@/core/native/utils';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -154,15 +156,18 @@ export const DeFiDetailScreen = () => {
     return (
       <View style={styles.headerArea}>
         <AssetAvatar
-          logo={data?.logo}
+          logo={data?.logo || sectionsMultiProject[0]?.project?.logo}
           logoStyle={styles.assetIcon}
           size={40}
-          chain={data?.chain}
+          chain={data?.chain || sectionsMultiProject[0]?.project?.chain}
           chainSize={16}
         />
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
           {/* {token?.name} */}
-          {ellipsisOverflowedText(data?.name, 20)}
+          {ellipsisOverflowedText(
+            data?.name || sectionsMultiProject[0]?.project?.name,
+            20,
+          )}
         </Text>
       </View>
     );
@@ -199,15 +204,9 @@ export const DeFiDetailScreen = () => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerLeft: getHeaderLeft,
-      headerRight: isSingleAddress ? getHeaderRight : () => null,
+      headerRight: getHeaderRight,
     });
-  }, [
-    getHeaderTitle,
-    setNavigationOptions,
-    getHeaderLeft,
-    getHeaderRight,
-    isSingleAddress,
-  ]);
+  }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
   const [asssest] = useAssetsMap();
 
@@ -260,6 +259,10 @@ export const DeFiDetailScreen = () => {
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
 
+  const { bottom } = useSafeAreaInsets();
+
+  const androidBottomOffset = IS_ANDROID ? bottom : 0;
+
   const renderSectionHeader = useCallback(
     ({ section }: { section: SectionListItem }) => {
       const selectAccount = sortedAccounts.find(
@@ -288,7 +291,12 @@ export const DeFiDetailScreen = () => {
   );
 
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={[styles.container]}>
+    <NormalScreenContainer2024
+      type="bg1"
+      overwriteStyle={[
+        styles.container,
+        { paddingBottom: androidBottomOffset },
+      ]}>
       <SectionList
         sections={sectionsMultiProject}
         renderItem={renderItem}

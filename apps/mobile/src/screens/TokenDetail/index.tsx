@@ -43,7 +43,7 @@ import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { CombineTokensItem, useAssetsMap } from '../Home/hooks/store';
 import { DisplayedProject } from '../Home/utils/project';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { navigate } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
@@ -186,22 +186,18 @@ export const RightMore: React.FC<{
 export const TokenDetailScreen = () => {
   const route = useRoute();
   const {
+    fromPortfolio,
     token: _token,
     account,
     needUseCacheToken,
+    unHold,
   } = (route.params || {}) as {
+    fromPortfolio?: boolean;
     token: CombineTokensItem;
     account: KeyringAccountWithAlias;
     needUseCacheToken?: boolean;
+    unHold?: boolean;
   };
-
-  console.debug(' TokenDetailScreen refresh', new Date().toString());
-  // const { token, account } = useNavigationState(
-  //   s => s.routes.find(r => r.name === RootNames.TokenDetail)?.params,
-  // ) as {
-  //   token: AbstractPortfolioToken;
-  //   account: KeyringAccountWithAlias;
-  // };
 
   const { styles } = useTheme2024({
     getStyle,
@@ -210,12 +206,18 @@ export const TokenDetailScreen = () => {
   const [asssest] = useAssetsMap();
   const { tokens: cacheAssets } = useAssets();
   const token = useMemo(() => {
-    if (needUseCacheToken) {
+    if (fromPortfolio) {
+      const iToken = cacheAssets.find(
+        item => item._tokenId === _token.id && item.chain === _token.chain,
+      );
+      return iToken || _token;
+    }
+    if (needUseCacheToken || fromPortfolio) {
       const iToken = cacheAssets.find(item => item.id === _token.id);
       return iToken || _token;
     }
     return _token;
-  }, [cacheAssets, _token, needUseCacheToken]);
+  }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
 
   const relateDefiList = useMemo(() => {
@@ -254,7 +256,7 @@ export const TokenDetailScreen = () => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigate(RootNames.DeFiDetail, {
+      naviPush(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
         cache: true,
@@ -313,10 +315,10 @@ export const TokenDetailScreen = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
+      headerRight: unHold ? () => null : getHeaderRight,
       headerTitleAlign: 'left',
     });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useAccounts({
@@ -411,6 +413,7 @@ export const TokenDetailScreen = () => {
           />
           <View style={styles.divider} />
           <TokenArea
+            tokenSupportSwap={tokenSupportSwap}
             handleSwap={handleSwap}
             amountList={
               !isSingleAddress
@@ -430,7 +433,7 @@ export const TokenDetailScreen = () => {
             token={tokenWithAmount || token}
           />
         </View>
-        {relateDefiList.length > 0 && (
+        {relateDefiList.length > 0 && !unHold && (
           <RelatedDeFi
             deFiList={relateDefiList}
             symbol={token.symbol}
@@ -448,24 +451,33 @@ export const TokenDetailScreen = () => {
           title={t('page.tokenDetail.action.send')}
           containerStyle={styles.btnContainer}
           type="ghost"
+          disabled={unHold}
           onPress={handleSend}
         />
         <View style={styles.btnGap} />
         <Button
-          title={t('page.tokenDetail.action.Buy')}
+          title={
+            unHold
+              ? t('page.tokenDetail.action.Sell')
+              : t('page.tokenDetail.action.Buy')
+          }
           containerStyle={StyleSheet.flatten([styles.btnContainer])}
           buttonStyle={styles.buyBtnContainer}
           titleStyle={styles.buyBtnTitle}
           // type={'ghost'}
           onPress={() => handleSwap('Buy')}
-          // disabled={!tokenSupportSwap}
+          disabled={!tokenSupportSwap || unHold}
         />
         <View style={styles.btnGap} />
         <Button
-          title={t('page.tokenDetail.action.Sell')}
+          title={
+            unHold
+              ? t('page.tokenDetail.action.Buy')
+              : t('page.tokenDetail.action.Sell')
+          }
           containerStyle={styles.btnContainer}
-          onPress={() => handleSwap('Sell')}
-          // disabled={!tokenSupportSwap}
+          onPress={() => handleSwap(unHold ? 'Buy' : 'Sell')}
+          disabled={!tokenSupportSwap}
         />
       </View>
     </NormalScreenContainer2024>

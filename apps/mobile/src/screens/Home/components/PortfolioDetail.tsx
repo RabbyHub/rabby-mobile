@@ -20,13 +20,14 @@ import {
   PortfolioItemNft,
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolio } from '../types';
+import { AbstractPortfolio, AbstractPortfolioToken } from '../types';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { navigate } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useAssets } from '@/screens/Search/useAssets';
 import { useRoute } from '@react-navigation/native';
+import { ensureAbstractPortfolioToken } from '../utils/token';
 
 export const PortfolioHeader = ({
   data,
@@ -202,22 +203,21 @@ export const TokenList = ({
     return result;
   }, [_fraction, _nfts, _tokens]);
 
-  const { tokens: cacheAssets } = useAssets();
-  const handleOpenTokenDetail = React.useCallback(
-    (token: TokenItem) => {
-      const idx = cacheAssets.findIndex(
-        item => item._tokenId === token.id && item.chain === token.chain,
-      );
-      if (idx > -1) {
-        navigate(RootNames.TokenDetail, {
-          token: cacheAssets[idx],
-        });
-      } else {
-        toast.show('Token not found');
-      }
-    },
-    [cacheAssets],
-  );
+  // const { tokens: cacheAssets } = useAssets();
+  const handleOpenTokenDetail = React.useCallback((token: TokenItem) => {
+    // const idx = cacheAssets.findIndex(
+    //   item => item._tokenId === token.id && item.chain === token.chain,
+    // );AbstractPortfolioToken
+    naviPush(RootNames.TokenDetail, {
+      token: {
+        ...token,
+        logo_url: token._logo,
+        symbol: token._symbol,
+        _tokenId: token.id,
+      },
+      fromPortfolio: true,
+    });
+  }, []);
 
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
@@ -254,7 +254,12 @@ export const TokenList = ({
                   logoStyle={l.isToken ? undefined : styles.nftIcon}
                   size={24}
                 />
-                <Text style={styles.tokenListSymbolText} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.tokenListSymbolText,
+                    relateTokenId === l.id && styles.tokenTextHightlight,
+                  ]}
+                  numberOfLines={1}>
                   {l._symbol}
                 </Text>
                 {l.isToken && (
@@ -262,7 +267,11 @@ export const TokenList = ({
                     style={styles.arrowStyle}
                     width={14}
                     height={14}
-                    color={colors2024['neutral-secondary']}
+                    color={
+                      relateTokenId === l.id
+                        ? colors2024['brand-default']
+                        : colors2024['neutral-secondary']
+                    }
                   />
                 )}
               </View>
@@ -433,6 +442,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 1,
+  },
+  tokenTextHightlight: {
+    color: colors2024['brand-default'],
   },
   tokenListSymbolText: {
     paddingLeft: 4,

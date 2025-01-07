@@ -365,7 +365,7 @@ export default function AppNavigation({
             options={mergeScreenOptions({
               headerShown: true,
               headerTitleAlign: 'center',
-              headerTitle: 'DeFi Detail',
+              headerTitle: '',
               headerLeft: () => null,
               headerStyle: {
                 backgroundColor: 'transparent',

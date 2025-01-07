@@ -2384,6 +2384,7 @@
       }
     },
     "tokenDetail": {
+      "noBalance": "No Balance",
       "transactions": "Transactions",
       "relateDefi": "Related DeFi",
       "action": {

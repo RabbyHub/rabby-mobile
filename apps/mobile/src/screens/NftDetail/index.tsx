@@ -33,6 +33,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useAssetsMap } from '../Home/hooks/store';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const ListItem = (props: {
   title: string;
@@ -132,19 +133,31 @@ export const NFTDetailScreen = () => {
     [],
   );
 
-  const handleSend = useCallback((iToken: NFTItem, address: string) => {
-    navigate(RootNames.StackTransaction, {
-      screen: RootNames.SendNFT,
-      params: {
-        collectionName: iToken.contract_name || iToken?.collection?.name || '',
-        nftItem: iToken,
-        address,
-      },
-    });
-  }, []);
+  const { currentAccount } = useCurrentAccount();
+  const { accounts } = useMyAccounts();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  const handleSend = useCallback(
+    async (iToken: NFTItem, address: string) => {
+      const toAccount = address
+        ? accounts.find(i => isSameAddress(address, i.address)) ||
+          currentAccount
+        : currentAccount;
+      await switchSceneCurrentAccount('SendNFT', toAccount);
+      navigate(RootNames.StackTransaction, {
+        screen: RootNames.SendNFT,
+        params: {
+          collectionName:
+            iToken.contract_name || iToken?.collection?.name || '',
+          nftItem: iToken,
+          address,
+        },
+      });
+    },
+    [accounts, currentAccount, switchSceneCurrentAccount],
+  );
 
   const [asssest] = useAssetsMap();
-  const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
 
   const itemList = useMemo(() => {

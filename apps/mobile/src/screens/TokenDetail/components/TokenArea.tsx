@@ -8,12 +8,13 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, TouchableOpacity, View } from 'react-native';
 import { TokenFromAddressItem } from '..';
 
 interface Props {
   token: AbstractPortfolioToken;
   amountList: TokenFromAddressItem[];
+  tokenSupportSwap: boolean;
   handleSwap: (type: 'Buy' | 'Sell', address: string) => void;
 }
 
@@ -21,8 +22,9 @@ export const TokenArea: React.FC<Props> = ({
   token,
   amountList,
   handleSwap,
+  tokenSupportSwap,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
 
@@ -53,21 +55,28 @@ export const TokenArea: React.FC<Props> = ({
             </View>
           </View>
           <View style={styles.actionBox}>
-            <TouchableOpacity onPress={() => handleSwap('Buy', item.address)}>
-              <Text style={styles.actionText}>
-                {t('page.tokenDetail.action.Buy')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleSwap('Sell', item.address)}>
-              <Text style={styles.actionText}>
-                {t('page.tokenDetail.action.Sell')}
-              </Text>
-            </TouchableOpacity>
+            {tokenSupportSwap && (
+              <>
+                <TouchableOpacity
+                  onPress={() => handleSwap('Buy', item.address)}>
+                  <Text style={styles.actionText}>
+                    {t('page.tokenDetail.action.Buy')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleSwap('Sell', item.address)}>
+                  <Text style={styles.actionText}>
+                    {t('page.tokenDetail.action.Sell')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       );
     },
     [
+      tokenSupportSwap,
       handleSwap,
       styles.accountBox,
       styles.actionBox,
@@ -98,11 +107,25 @@ export const TokenArea: React.FC<Props> = ({
     [amountList],
   );
 
+  const ImageSrc = React.useMemo(() => {
+    return !isLight
+      ? require('@/assets2024/images/ImgNoBalanceDark.png')
+      : require('@/assets2024/images/ImgNoBalance.png');
+  }, [isLight]);
+
   return (
     <View style={styles.container}>
       {ListHeaderComponent()}
-      {Boolean(sortedList.length) &&
-        sortedList.map((item, index) => renderItem({ item, index }))}
+      {sortedList.length ? (
+        sortedList.map((item, index) => renderItem({ item, index }))
+      ) : (
+        <View style={styles.empytContainer}>
+          <Image style={styles.imgIcon} source={ImageSrc} />
+          <Text style={styles.noBalanceText}>
+            {t('page.tokenDetail.noBalance')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -113,6 +136,25 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 30,
     paddingHorizontal: 20,
     marginBottom: 16,
+  },
+  imgIcon: {
+    width: 160,
+    height: 116,
+  },
+  empytContainer: {
+    paddingVertical: 40,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noBalanceText: {
+    color: ctx.colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 21,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    textAlign: 'center',
   },
   header: {
     width: '100%',

@@ -19,7 +19,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RelatedDeFiType } from '..';
 
@@ -43,9 +43,10 @@ export const RelatedDeFi: React.FC<Props> = ({
   const { t } = useTranslation();
 
   const renderItem = useCallback(
-    ({ item }: { item: RelatedDeFiType }) => {
+    ({ item, index }: { item: RelatedDeFiType; index: number }) => {
       return (
         <TouchableOpacity
+          key={index}
           onPress={() =>
             handleGoDeFi(item, [...(item._portfolios || [])], symbol)
           }>
@@ -101,15 +102,19 @@ export const RelatedDeFi: React.FC<Props> = ({
     );
   }, [styles.relateTitle, styles.historyHeader, t]);
 
+  const sortedList = useMemo(
+    () =>
+      deFiList?.sort((a, b) =>
+        new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
+      ),
+    [deFiList],
+  );
+
   return (
     <View style={styles.container}>
-      <FlatList
-        ListHeaderComponent={ListHeaderComponent}
-        data={deFiList.sort((a, b) =>
-          new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-        )}
-        renderItem={renderItem}
-      />
+      {ListHeaderComponent()}
+      {Boolean(sortedList.length) &&
+        sortedList.map((item, index) => renderItem({ item, index }))}
     </View>
   );
 };
