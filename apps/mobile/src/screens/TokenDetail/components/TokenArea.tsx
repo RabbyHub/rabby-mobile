@@ -1,55 +1,35 @@
 import { Text } from '@/components';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import type { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ellipsisAddress } from '@/utils/address';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, TouchableOpacity, View } from 'react-native';
+import { TokenFromAddressItem } from '..';
 
 interface Props {
   token: AbstractPortfolioToken;
-  amountList: CombineTokensItem['fromAddress'];
+  amountList: TokenFromAddressItem[];
   handleSwap: (type: 'Buy' | 'Sell', address: string) => void;
 }
-
-type amountItem = CombineTokensItem['fromAddress'][number];
 
 export const TokenArea: React.FC<Props> = ({
   token,
   amountList,
   handleSwap,
 }) => {
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const getAccount = useCallback(
-    (address: string) => {
-      const item = sortedAccounts.find(
-        a =>
-          a.type !== KEYRING_TYPE.WatchAddressKeyring &&
-          isSameAddress(a.address, address),
-      );
-      return item;
-    },
-    [sortedAccounts],
-  );
 
   const { t } = useTranslation();
 
   const renderItem = useCallback(
-    ({ item }: { item: amountItem }) => {
+    ({ item, index }: { item: TokenFromAddressItem; index: number }) => {
       return (
-        <View style={styles.itemCard}>
+        <View style={styles.itemCard} key={index}>
           <View style={styles.tokenBox}>
             <Text style={styles.tokenAmount} numberOfLines={1}>
               {formatTokenAmount(item.amount)}
@@ -58,7 +38,7 @@ export const TokenArea: React.FC<Props> = ({
             <View style={styles.accountBox}>
               <View className="relative">
                 <WalletIcon
-                  type={getAccount(item.address)?.type as KEYRING_TYPE}
+                  type={item?.type as KEYRING_TYPE}
                   width={styles.walletIcon.width}
                   height={styles.walletIcon.height}
                   style={styles.walletIcon}
@@ -68,8 +48,7 @@ export const TokenArea: React.FC<Props> = ({
                 numberOfLines={1}
                 ellipsizeMode="tail"
                 style={styles.titleText}>
-                {getAccount(item.address)?.aliasName ||
-                  getAccount(item.address)?.brandName}
+                {item?.aliasName}
               </Text>
             </View>
           </View>
@@ -100,7 +79,6 @@ export const TokenArea: React.FC<Props> = ({
       styles.walletIcon,
       t,
       token.symbol,
-      getAccount,
     ],
   );
 
@@ -123,7 +101,8 @@ export const TokenArea: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       {ListHeaderComponent()}
-      {sortedList.length && sortedList.map(item => renderItem({ item }))}
+      {Boolean(sortedList.length) &&
+        sortedList.map((item, index) => renderItem({ item, index }))}
     </View>
   );
 };

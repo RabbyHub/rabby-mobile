@@ -47,6 +47,14 @@ import { useAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 
+type SectionListItem = {
+  data: AbstractPortfolio[];
+  project: AbstractProject;
+  address: string;
+  totalUsdValue: BigNumber;
+  index: number;
+};
+
 const hitSlop = {
   top: 10,
   bottom: 10,
@@ -206,13 +214,7 @@ export const DeFiDetailScreen = () => {
   const { initFetchTop10Assets, refreshing } = useAssets();
 
   const sectionsMultiProject = useMemo(() => {
-    const sectionsList: {
-      data: AbstractPortfolio[];
-      project: AbstractProject;
-      address: string;
-      totalUsdValue: BigNumber;
-      index: number;
-    }[] = [];
+    const sectionsList: SectionListItem[] = [];
 
     Object.keys(asssest).map((address, index) => {
       const { portfolios } = asssest[address];
@@ -242,15 +244,24 @@ export const DeFiDetailScreen = () => {
     return res ? formatNetworth(res.toNumber()) : data._netWorth;
   }, [data._netWorth, sectionsMultiProject]);
 
-  const renderItem = useCallback(({ item, section }) => {
-    return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
-  }, []);
+  const renderItem = useCallback(
+    ({
+      item,
+      section,
+    }: {
+      item: AbstractPortfolio;
+      section: SectionListItem;
+    }) => {
+      return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
+    },
+    [],
+  );
 
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
 
   const renderSectionHeader = useCallback(
-    ({ section }) => {
+    ({ section }: { section: SectionListItem }) => {
       const selectAccount = sortedAccounts.find(
         a =>
           a.type !== KEYRING_TYPE.WatchAddressKeyring &&

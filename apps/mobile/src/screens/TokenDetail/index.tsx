@@ -48,10 +48,21 @@ import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import { ellipsisAddress } from '@/utils/address';
 
 const isAndroid = Platform.OS === 'android';
 
-export type RelatedDeFiType = AbstractProject & { amount: string };
+export type TokenFromAddressItem = {
+  address: string;
+  amount: string;
+  type: KEYRING_TYPE;
+  aliasName: string;
+};
+
+export type RelatedDeFiType = AbstractProject & {
+  amount: string;
+};
 
 const hitSlop = {
   top: 10,
@@ -326,6 +337,29 @@ export const TokenDetailScreen = () => {
     });
   });
 
+  const tokenFromAddress = useMemo(() => {
+    const res = [] as TokenFromAddressItem[];
+
+    const actionsAccounts = [...accounts];
+    token.fromAddress?.map(item => {
+      const idx = actionsAccounts.findIndex(i =>
+        isSameAddress(i.address, item.address),
+      );
+      if (idx > -1) {
+        res.push({
+          address: item.address,
+          amount: item.amount,
+          aliasName:
+            actionsAccounts[idx].aliasName || ellipsisAddress(item.address),
+          type: actionsAccounts[idx].type,
+        });
+        actionsAccounts.splice(idx, 1);
+      }
+    });
+
+    return res;
+  }, [token, accounts]);
+
   const tokenSupportSwap = useMemo(() => {
     const tokenChain = findChain({ serverId: token?.chain })?.enum;
 
@@ -379,13 +413,17 @@ export const TokenDetailScreen = () => {
           <TokenArea
             handleSwap={handleSwap}
             amountList={
-              !account
-                ? token.fromAddress
+              !isSingleAddress
+                ? tokenFromAddress
                 : [
                     {
                       ...token,
                       amount: token._amountStr!,
                       address: finalAccount.address,
+                      type: finalAccount.type,
+                      aliasName:
+                        finalAccount.aliasName ||
+                        ellipsisAddress(finalAccount.address),
                     },
                   ]
             }

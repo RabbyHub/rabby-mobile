@@ -42,7 +42,6 @@ export interface IAssets {
   tokens?: AbstractPortfolioToken[];
   nfts?: NFTItem[];
   lastUpdateTime?: number;
-  account?: KeyringAccountWithAlias;
 }
 
 export const assetsMapAtom = atom<{ [address: string]: IAssets }>({});
