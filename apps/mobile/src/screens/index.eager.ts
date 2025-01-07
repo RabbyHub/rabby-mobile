@@ -1,4 +1,4 @@
-// export { ScannerScreen } from '@/screens/Scanner/ScannerScreen';
+export { ScannerScreen } from '@/screens/Scanner/ScannerScreen';
 // export { default as UnlockScreen } from '@/screens/Unlock/Unlock';
 // export { FavoriteDappsScreen } from '@/screens/Dapps/FavoriteDappsScreen';
 

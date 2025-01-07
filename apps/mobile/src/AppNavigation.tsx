@@ -58,13 +58,13 @@ import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
 
 import {
-  ScannerScreen,
   UnlockScreen,
   FavoriteDappsScreen,
   NotFoundScreen,
   MyBundleScreen,
 } from '@/screens/index.lazy';
 import {
+  ScannerScreen,
   TokenDetailScreen,
   NFTDetailScreen,
   DeFiDetailScreen,
