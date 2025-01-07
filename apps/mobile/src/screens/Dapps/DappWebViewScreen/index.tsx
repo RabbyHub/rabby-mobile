@@ -26,6 +26,8 @@ import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { getLatestNavigationName } from '@/utils/navigation';
+import { useNavigationState } from '@react-navigation/native';
+import { HomeNavigatorParamsList } from '@/navigation-type';
 
 /**
  * @description this screen will be put on top level of App's navigation
@@ -37,6 +39,12 @@ export function DappWebViewStubScreen() {
   const { styles } = useTheme2024({ getStyle: getWebViewStubStyles });
 
   const { safeTop, androidOnlyBottomOffset } = useSafeSizes();
+
+  const { dappsWebViewFromRoute = RootNames.Dapps } = useNavigationState(
+    s =>
+      s.routes.find(r => r.name === RootNames.DappWebViewStubOnHome)?.params ||
+      {},
+  ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
 
   const {
     openedDappItems,
@@ -53,10 +61,25 @@ export function DappWebViewStubScreen() {
 
   const navigation = useRabbyAppNavigation();
 
+  /**
+   * @description we put this screen at top level home-navigator (which's bottom-tabs-navigator)
+   */
   const backToDappsScreen = useCallback(() => {
-    // TODO: improve it, back to previous route name
-    navigation.navigate(RootNames.StackRoot, { screen: RootNames.Dapps });
-  }, [navigation]);
+    switch (dappsWebViewFromRoute) {
+      case RootNames.Dapps:
+      case RootNames.FavoriteDapps: {
+        navigation.navigate(RootNames.StackDapps, {
+          screen: dappsWebViewFromRoute,
+        });
+        break;
+      }
+      default: {
+        navigation.replace(RootNames.StackDapps, {
+          screen: dappsWebViewFromRoute,
+        });
+      }
+    }
+  }, [navigation, dappsWebViewFromRoute]);
 
   const hideDappWebViewScreen = useCallback(
     (ctx?: DappWebViewHideContext) => {

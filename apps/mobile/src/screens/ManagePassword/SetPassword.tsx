@@ -138,7 +138,7 @@ function useSetupPasswordForm() {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
               navigation.dispatch(
-                StackActions.push(RootNames.StackRoot, {
+                StackActions.push(RootNames.StackSettings, {
                   screen: RootNames.Settings,
                   params: {},
                 }),

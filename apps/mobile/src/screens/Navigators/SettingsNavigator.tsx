@@ -6,6 +6,11 @@ import { CustomTestnetScreen } from '../CustomTestnet';
 import { CustomRPCScreen } from '../CustomRPC';
 import { registerAppScreen } from '@/perfs/apis';
 
+const SettingsScreen = registerAppScreen<
+  typeof import('../Settings/Settings').default
+>({
+  loader: () => import('../Settings/Settings'),
+});
 const SetPasswordScreen = registerAppScreen<
   typeof import('../ManagePassword/SetPassword').default
 >({
@@ -16,11 +21,12 @@ const ProviderControllerTester = registerAppScreen<
 >({
   loader: () => import('../ProviderControllerTester/ProviderControllerTester'),
 });
+import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 
 const SettingsStack = createCustomNativeStackNavigator();
 
 export function SettingNavigator() {
-  const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
   const headerPresets = makeHeadersPresets({ colors });
@@ -39,6 +45,21 @@ export function SettingNavigator() {
         headerTitle: 'Settings',
         headerTintColor: colors['neutral-title-1'],
       })}>
+      <SettingsStack.Screen
+        name={RootNames.Settings}
+        component={SettingsScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: () => (
+              <I18nRouteScreenTitle
+                i18nTitle={({ t }) => t('screens.settings.screenTitle')}
+              />
+            ),
+            headerTitleAlign: 'center',
+            headerTintColor: colors['neutral-title-1'],
+          },
+        ])}
+      />
       <SettingsStack.Screen
         name={RootNames.SetPassword}
         component={SetPasswordScreen}

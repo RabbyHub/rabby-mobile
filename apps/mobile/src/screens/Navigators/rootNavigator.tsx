@@ -68,38 +68,6 @@ export function HomeScreenNavigator() {
           }}
         />
         <HomeHiddenTabStack.Screen
-          name={RootNames.Dapps}
-          component={DappsScreen}
-          options={{
-            title: isIOS ? 'Explore' : 'Dapps',
-            headerTitleStyle: {
-              fontWeight: '500',
-            },
-            headerTitle: 'Dapps',
-            headerTransparent: true,
-            headerShown: false,
-          }}
-        />
-        <HomeHiddenTabStack.Screen
-          name={RootNames.Settings}
-          component={SettingsScreen}
-          options={mergeBottomTabOptions2024([
-            {
-              headerTitle: () => (
-                <I18nRouteScreenTitle
-                  i18nTitle={({ t }) => t('screens.settings.screenTitle')}
-                />
-              ),
-              headerLeftContainerStyle: {
-                paddingLeft: 20,
-              },
-              headerTitleAlign: 'center',
-              headerTintColor: colors['neutral-title-1'],
-            },
-          ])}
-        />
-
-        <HomeHiddenTabStack.Screen
           name={RootNames.DappWebViewStubOnHome}
           component={DappWebViewStubScreen}
           options={{
