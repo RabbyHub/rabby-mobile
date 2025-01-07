@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import {
+  Alert,
   Linking,
   Platform,
   SafeAreaView,
@@ -37,6 +38,7 @@ import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import {
   BUILD_CHANNEL,
+  BUILD_GIT_INFO,
   isNonPublicProductionEnv,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
@@ -136,6 +138,7 @@ import DevUIWipModal, {
 import CurrentLanguageSelectorModal, {
   useCurrentLanguageModalVisible,
 } from './sheetModals/LanguageSelector';
+import dayjs from 'dayjs';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -517,12 +520,35 @@ function DevSettingsBlocks() {
           label: 'Test Kits (Not present on production package)',
           items: [
             {
-              label: 'Build Hash',
+              label: 'Build Info',
               icon: RcInfo,
-              // onPress: () => {},
+              onPress: () => {
+                Alert.alert(
+                  'Build Info',
+                  [
+                    `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+                    '   ',
+                    !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
+                      `Lastest Commit: ${dayjs(
+                        BUILD_GIT_INFO.BUILD_GIT_HASH_TIME,
+                      ).format('YYYY-MM-DD HH:mm:ss')}`,
+                    !!BUILD_GIT_INFO.BUILD_GIT_COMMITOR &&
+                      `Lastest Commitor: ${BUILD_GIT_INFO.BUILD_GIT_COMMITOR}`,
+                    // '   ',
+                    // !!BUILD_GIT_INFO.BUILD_GIT_COMMITS_COUNT && `Distance From v${BUILD_GIT_INFO.BUILD_GIT_COMMITS_COUNT_BASEVER}: ${BUILD_GIT_INFO.BUILD_GIT_COMMITS_COUNT}`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n'),
+                  [
+                    {
+                      text: 'OK',
+                    },
+                  ],
+                );
+              },
               rightNode: (
                 <Text style={{ color: colors['neutral-body'] }}>
-                  {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+                  {BUILD_CHANNEL} - {BUILD_GIT_INFO.BUILD_GIT_HASH}
                 </Text>
               ),
               // TODO: only show in non-production mode
