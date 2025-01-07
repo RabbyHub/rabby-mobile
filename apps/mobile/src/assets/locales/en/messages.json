@@ -2422,7 +2422,8 @@
     "singleHome": {
       "sectionHeader": {
         "Defi": "Defi",
-        "Nft": "NFT"
+        "Nft": "NFT",
+        "Token": "Token"
       }
     },
     "search": {

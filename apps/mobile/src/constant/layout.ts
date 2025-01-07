@@ -25,7 +25,7 @@ export const ScreenLayouts = {
 };
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
-export const ASSETS_SECTION_HEADER = 68;
+export const ASSETS_SECTION_HEADER = 36;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {

@@ -37,7 +37,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
 
   return {
     isLoading,
-    list,
+    list: list || [],
     reload,
   };
 };

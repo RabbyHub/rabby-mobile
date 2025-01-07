@@ -188,7 +188,7 @@ export const usePortfolios = (
   };
 
   return {
-    data,
+    data: data || [],
     hasValue,
     isLoading,
     updateData: loadProcess,
