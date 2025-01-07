@@ -76,6 +76,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     (token: AbstractPortfolioToken) => {
       navigate(RootNames.TokenDetail, {
         token: token,
+        unHold: token._unHold,
       });
     },
     [],

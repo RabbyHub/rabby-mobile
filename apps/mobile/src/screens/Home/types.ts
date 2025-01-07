@@ -68,6 +68,7 @@ export type AbstractPortfolioToken = PortfolioItemToken & {
   _isManualFold?: boolean;
   _isExcludeBalance?: boolean;
   _pinIndex?: number;
+  _unHold?: boolean;
 };
 
 export type PortfolioProject = {

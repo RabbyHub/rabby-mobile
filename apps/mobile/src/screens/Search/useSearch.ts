@@ -95,6 +95,7 @@ export const combinePinTokens = (
       _isExcludeBalance: false,
       _usdValueStr: 0,
       _amountStr: 1,
+      _unHold: true,
       _tokenId: i.id,
     }));
   return [
