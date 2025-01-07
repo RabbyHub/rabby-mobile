@@ -34,6 +34,7 @@ import {
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { GasLevelType } from '@/components/ReserveGasPopup';
+import { apiProvider } from '@/core/apis';
 
 export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
   shouldApproveToken?: boolean;
@@ -706,7 +707,9 @@ export const useBridge = () => {
   const { value: gasList } = useAsync(() => {
     gasPriceRef.current = undefined;
     setGasLevel('normal');
-    return openapi.gasMarket(chainInfo.serverId);
+    return apiProvider.gasMarketV2({
+      chainId: chainInfo.serverId,
+    });
   }, [chainInfo?.serverId]);
 
   const [passGasPrice, setUseGasPrice] = useState(false);
