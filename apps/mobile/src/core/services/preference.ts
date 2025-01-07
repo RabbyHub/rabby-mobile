@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import * as Sentry from '@sentry/react-native';
 
 import dayjs from 'dayjs';
 import {
@@ -234,7 +235,12 @@ export class PreferenceService {
       this.store.currentAccount = this.store.tempCurrentAccount;
     }
 
-    this._migrate();
+    try {
+      this._migrate();
+    } catch (error) {
+      console.error('[preference::_migrate] error', error);
+      Sentry.captureException(error);
+    }
   }
 
   private _migrate() {
@@ -262,14 +268,14 @@ export class PreferenceService {
       ),
     };
 
-    Object.values(tokenManageSettingMap).forEach(setting => {
+    Object.entries(tokenManageSettingMap).forEach(([eoaAddress, setting]) => {
       (['pinedQueue', 'foldTokens', 'unfoldTokens'] as const).forEach(key => {
         setting[key]?.forEach(item => {
           const k = makeManageTokenKey(item);
           if (!sets[key].has(k)) sets[key].add(k);
         });
 
-        if (!__DEV__) delete setting[key];
+        setting[key] = [];
       });
 
       (['includeDefiAndTokens', 'excludeDefiAndTokens'] as const).forEach(
@@ -279,9 +285,11 @@ export class PreferenceService {
             if (!sets[key].has(k)) sets[key].add(k);
           });
 
-          if (!__DEV__) delete setting[key];
+          setting[key] = [];
         },
       );
+
+      delete tokenManageSettingMap[eoaAddress];
     });
 
     priority_process: {
