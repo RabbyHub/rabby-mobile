@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 
 import { AbstractProject } from '../../types';
@@ -23,84 +23,86 @@ const hitSlop = {
   right: 10,
 };
 
-export const DefiRow = ({
-  data,
-  filterText,
-  style,
-  logoSize = 40,
-  chainLogoSize = 16,
-  onPress,
-}: {
-  data: AbstractProject;
-  style?: ViewStyle;
-  logoSize?: number;
-  chainLogoSize?: number;
-  filterText?: string;
-  onPress?: () => void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+export const DefiRow = memo(
+  ({
+    data,
+    filterText,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+    onPress,
+  }: {
+    data: AbstractProject;
+    style?: ViewStyle;
+    logoSize?: number;
+    chainLogoSize?: number;
+    filterText?: string;
+    onPress?: () => void;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
 
-  const handleShowExcludeTips = () => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.DESCRIPTION,
-      title: t('page.tokenDetail.excludeBalanceTips'),
-      sections: [],
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        snapPoints: ['40%'],
-      },
-      nextButtonProps: {
-        title: (
-          <Text style={styles.modalNextButtonText}>
-            {t('page.tokenDetail.excludeBalanceTipsButton')}
-          </Text>
-        ),
-        titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-        onPress: () => {
-          removeGlobalBottomSheetModal2024(modalId);
+    const handleShowExcludeTips = () => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: t('page.tokenDetail.excludeBalanceTips'),
+        sections: [],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['40%'],
         },
-      },
-    });
-  };
+        nextButtonProps: {
+          title: (
+            <Text style={styles.modalNextButtonText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    };
 
-  return (
-    <TouchableOpacity onPress={onPress} style={[styles.projectHeader, style]}>
-      <View style={styles.projectHeaderName}>
-        <AssetAvatar
-          logo={data?.logo}
-          size={logoSize}
-          chain={data?.chain}
-          chainSize={chainLogoSize}
-        />
-        <HighlightText
-          style={styles.projectName}
-          highlightStyle={styles.highlightText}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          searchWords={[filterText || '']}
-          textToHighlight={data?.name}
-        />
-      </View>
-      <View style={styles.projectHeaderUsd}>
-        <Text
-          style={[
-            styles.projectHeaderNetWorth,
-            data._isExcludeBalance && styles.exclude,
-          ]}>
-          {data._netWorth}
-        </Text>
-        {data._isExcludeBalance && data._netWorth && (
-          <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
-            <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-};
+    return (
+      <TouchableOpacity onPress={onPress} style={[styles.projectHeader, style]}>
+        <View style={styles.projectHeaderName}>
+          <AssetAvatar
+            logo={data?.logo}
+            size={logoSize}
+            chain={data?.chain}
+            chainSize={chainLogoSize}
+          />
+          <HighlightText
+            style={styles.projectName}
+            highlightStyle={styles.highlightText}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            searchWords={[filterText || '']}
+            textToHighlight={data?.name}
+          />
+        </View>
+        <View style={styles.projectHeaderUsd}>
+          <Text
+            style={[
+              styles.projectHeaderNetWorth,
+              data._isExcludeBalance && styles.exclude,
+            ]}>
+            {data._netWorth}
+          </Text>
+          {data._isExcludeBalance && data._netWorth && (
+            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
+              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
 const getStyles = createGetStyles2024(ctx => ({
   projectHeader: {
     paddingHorizontal: 4,

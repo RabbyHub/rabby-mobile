@@ -202,25 +202,28 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     navigate(RootNames.NftDetail, { token: item, isSingleAddress: true });
   };
   const handleSwitchTab = (key: AsssetKey) => {
-    let index = 0;
-    if (key === 'token') {
-      index = 1;
-    }
-    if (key === 'defi') {
-      index = dataList.findIndex(
-        item => item.type === 'defi_header' || item.type === 'toggle_defi_fold',
-      );
-    }
-    if (key === 'nft') {
-      index = dataList.findIndex(
-        item => item.type === 'nft_header' || item.type === 'toggle_nft_fold',
-      );
-    }
-    flatListRef.current?.scrollToIndex({
-      animated: true,
-      index: index,
-      viewOffset: ASSETS_SECTION_HEADER,
-    });
+    setTimeout(() => {
+      let index = 0;
+      if (key === 'token') {
+        index = 1;
+      }
+      if (key === 'defi') {
+        index = dataList.findIndex(
+          item =>
+            item.type === 'defi_header' || item.type === 'toggle_defi_fold',
+        );
+      }
+      if (key === 'nft') {
+        index = dataList.findIndex(
+          item => item.type === 'nft_header' || item.type === 'toggle_nft_fold',
+        );
+      }
+      flatListRef.current?.scrollToIndex({
+        animated: true,
+        index: index,
+        viewOffset: ASSETS_SECTION_HEADER,
+      });
+    }, 0);
   };
 
   const ListEmptyComponent = useMemo(() => {
@@ -468,7 +471,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         }
         contentContainerStyle={styles.bgContainer}
         showsVerticalScrollIndicator={false}
-        windowSize={10}
+        // windowSize={10}
         // getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickyHeaderIndices={[1]}

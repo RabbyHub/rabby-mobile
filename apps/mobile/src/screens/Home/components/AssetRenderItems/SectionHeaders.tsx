@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ViewStyle } from 'react-native';
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ type Props = {
   style?: ViewStyle;
 };
 
-export const AssestAllHeader = ({ onPress, style }: Props) => {
+export const AssestAllHeader = memo(({ onPress, style }: Props) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
@@ -47,7 +47,7 @@ export const AssestAllHeader = ({ onPress, style }: Props) => {
       </Pressable>
     </View>
   );
-};
+});
 
 const getStyle = createGetStyles2024(ctx => ({
   constainer: {

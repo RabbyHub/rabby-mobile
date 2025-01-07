@@ -288,54 +288,56 @@ export const ExternalTokenRow = memo(
   },
 );
 
-export const TokenRowSectionHeader = ({
-  usdStr,
-  fold,
-  style,
-  buttonStyle,
-  onPressFold,
-}: {
-  usdStr: string;
-  fold?: boolean;
-  style?: ViewStyle;
-  buttonStyle?: ViewStyle;
-  onPressFold?(): void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+export const TokenRowSectionHeader = memo(
+  ({
+    usdStr,
+    fold,
+    style,
+    buttonStyle,
+    onPressFold,
+  }: {
+    usdStr: string;
+    fold?: boolean;
+    style?: ViewStyle;
+    buttonStyle?: ViewStyle;
+    onPressFold?(): void;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
 
-  return (
-    <View style={[styles.tokenSectionHeader, style]}>
-      <View style={styles.tokenRowTokenWrap}>
-        <View style={styles.tokenRowTokenInner}>
-          <TouchableOpacity
-            onPress={onPressFold}
-            style={[styles.tokenRowTokenInnerSmallToken, buttonStyle]}>
-            <Text style={styles.actionText}>
-              {fold
-                ? t('page.tokenDetail.action.all')
-                : t('page.tokenDetail.action.less')}
-            </Text>
-            {fold ? (
-              <RcUnFoldCC
-                style={styles.arrow}
-                color={colors2024['neutral-secondary']}
-              />
-            ) : (
-              <RcFoldCC
-                style={styles.arrow}
-                color={colors2024['neutral-secondary']}
-              />
-            )}
-          </TouchableOpacity>
+    return (
+      <View style={[styles.tokenSectionHeader, style]}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View style={styles.tokenRowTokenInner}>
+            <TouchableOpacity
+              onPress={onPressFold}
+              style={[styles.tokenRowTokenInnerSmallToken, buttonStyle]}>
+              <Text style={styles.actionText}>
+                {fold
+                  ? t('page.tokenDetail.action.all')
+                  : t('page.tokenDetail.action.less')}
+              </Text>
+              {fold ? (
+                <RcUnFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              ) : (
+                <RcFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.tokenRowUsdValueWrap}>
+          <Text style={styles.tokenRowUsdValue}>{usdStr}</Text>
         </View>
       </View>
-      <View style={styles.tokenRowUsdValueWrap}>
-        <Text style={styles.tokenRowUsdValue}>{usdStr}</Text>
-      </View>
-    </View>
-  );
-};
+    );
+  },
+);
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {

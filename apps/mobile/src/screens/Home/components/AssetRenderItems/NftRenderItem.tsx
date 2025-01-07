@@ -11,78 +11,83 @@ import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { HighlightText } from '@/components2024/HighlightText';
+import { memo } from 'react';
 
-export const NftRow = ({
-  item,
-  onPress,
-  filterText,
-  style,
-  logoSize = 40,
-  chainLogoSize = 16,
-}: {
-  item: NFTItem;
-  filterText?: string;
-  style?: ViewStyle;
-  logoSize?: number;
-  chainLogoSize?: number;
-  onPress: () => void;
-}) => {
-  const { styles } = useTheme2024({ getStyle });
+export const NftRow = memo(
+  ({
+    item,
+    onPress,
+    filterText,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+  }: {
+    item: NFTItem;
+    filterText?: string;
+    style?: ViewStyle;
+    logoSize?: number;
+    chainLogoSize?: number;
+    onPress: () => void;
+  }) => {
+    const { styles } = useTheme2024({ getStyle });
 
-  const chain = getCHAIN_ID_LIST().get(item.chain);
-  const iconUri = chain?.logo;
-  const isSvgURL = item?.content?.endsWith('.svg');
+    const chain = getCHAIN_ID_LIST().get(item.chain);
+    const iconUri = chain?.logo;
+    const isSvgURL = item?.content?.endsWith('.svg');
 
-  return (
-    <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
-      <View style={styles.main}>
-        <View style={styles.avator}>
-          <View
-            style={StyleSheet.flatten([
-              styles.imagesView,
-              {
-                width: logoSize,
-                height: logoSize,
-              },
-            ])}>
-            <Media
-              failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
-              type="image_url"
-              src={isSvgURL ? '' : item?.thumbnail_url}
-              thumbnail={isSvgURL ? '' : item?.thumbnail_url}
-              mediaStyle={styles.images}
-              style={styles.images}
-              playIconSize={36}
-            />
-          </View>
-          {iconUri ? (
-            <FastImage
-              source={{
-                uri: iconUri,
-              }}
-              style={[
-                styles.chainIcon,
+    return (
+      <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
+        <View style={styles.main}>
+          <View style={styles.avator}>
+            <View
+              style={StyleSheet.flatten([
+                styles.imagesView,
                 {
-                  width: chainLogoSize,
-                  height: chainLogoSize,
+                  width: logoSize,
+                  height: logoSize,
                 },
-              ]}
-            />
-          ) : null}
+              ])}>
+              <Media
+                failedPlaceholder={
+                  <IconDefaultNFT width="100%" height="100%" />
+                }
+                type="image_url"
+                src={isSvgURL ? '' : item?.thumbnail_url}
+                thumbnail={isSvgURL ? '' : item?.thumbnail_url}
+                mediaStyle={styles.images}
+                style={styles.images}
+                playIconSize={36}
+              />
+            </View>
+            {iconUri ? (
+              <FastImage
+                source={{
+                  uri: iconUri,
+                }}
+                style={[
+                  styles.chainIcon,
+                  {
+                    width: chainLogoSize,
+                    height: chainLogoSize,
+                  },
+                ]}
+              />
+            ) : null}
+          </View>
+          <HighlightText
+            style={styles.name}
+            highlightStyle={styles.highlightText}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            searchWords={[filterText || '']}
+            textToHighlight={item.name}
+          />
         </View>
-        <HighlightText
-          style={styles.name}
-          highlightStyle={styles.highlightText}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          searchWords={[filterText || '']}
-          textToHighlight={item.name}
-        />
-      </View>
-      <Text style={styles.amount}>{item.amount}</Text>
-    </TouchableOpacity>
-  );
-};
+        <Text style={styles.amount}>{item.amount}</Text>
+      </TouchableOpacity>
+    );
+  },
+);
 
 export const NftSectionHeader = ({
   onPress,
