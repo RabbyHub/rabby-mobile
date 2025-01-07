@@ -69,6 +69,7 @@ const SearchOnTheChain = ({ filterText, existTokensIds = [] }: Props) => {
     (token: AbstractPortfolioToken) => {
       navigate(RootNames.TokenDetail, {
         token: token,
+        unHold: true,
       });
     },
     [],

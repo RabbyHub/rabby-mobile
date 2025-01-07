@@ -33,6 +33,7 @@ export type RootStackParamsList = {
     token: AbstractPortfolioToken;
     needUseCacheToken?: boolean;
     account?: KeyringAccountWithAlias;
+    unHold?: boolean;
   };
 };
 
