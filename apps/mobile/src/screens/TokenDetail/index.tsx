@@ -193,6 +193,7 @@ export const TokenDetailScreen = () => {
     token: CombineTokensItem;
     account: KeyringAccountWithAlias;
     needUseCacheToken?: boolean;
+    unHold?: boolean;
   };
 
   console.debug(' TokenDetailScreen refresh', new Date().toString());
