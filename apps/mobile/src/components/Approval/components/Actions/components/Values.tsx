@@ -56,7 +56,13 @@ import { Chain } from '@/constant/chains';
 const { isSameAddress } = addressUtils;
 
 const Boolean = ({ value, style }: { value: boolean; style?: TextStyle }) => {
-  return <Text style={style}>{value ? 'Yes' : 'No'}</Text>;
+  const commonStyle = useCommonStyle();
+
+  return (
+    <Text style={StyleSheet.flatten([commonStyle.subRowText, style])}>
+      {value ? 'Yes' : 'No'}
+    </Text>
+  );
 };
 
 const styles = StyleSheet.create({
