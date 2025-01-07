@@ -114,25 +114,17 @@ export const RabbyFeePopup = ({
           <Text style={styles.title}>{t('page.swap.rabbyFee.title')}</Text>
 
           <Text style={styles.description}>
-            {type === 'swap' ? (
-              t('page.swap.rabbyFee.swapDesc')
-            ) : (
-              // <Trans
-              //   t={t}
-              //   i18nKey="page.swap.rabbyFee.bridgeDesc"
-              //   // values={{ name: 'John' }}
-              //   components={{
-              //     0: <Text style={styles.highlightText} />,
-              //   }}
-              // />
-              <>
-                {
-                  'Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a '
-                }
-                <Text style={styles.highlightText}>0.25% fee</Text>
-                {', which is automatically included in the quote.'}
-              </>
-            )}
+            <Trans
+              t={t}
+              i18nKey={
+                type === 'swap'
+                  ? t('page.swap.rabbyFee.swapDesc')
+                  : t('page.swap.rabbyFee.bridgeDesc')
+              }
+              components={{
+                1: <Text style={styles.highlightText} />,
+              }}
+            />
           </Text>
 
           <View style={styles.header}>

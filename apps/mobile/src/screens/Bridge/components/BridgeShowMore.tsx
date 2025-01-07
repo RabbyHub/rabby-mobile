@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Pressable,
 } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +20,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import useDebounce from 'react-use/lib/useDebounce';
+
+const RABBY_FEE = '0.25%';
 
 const BridgeShowMore = ({
   openQuotesList,
@@ -46,6 +49,7 @@ const BridgeShowMore = ({
   originPreferMEVGuarded,
   switchPreferMEV,
   recommendValue,
+  openFeePopup,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -66,6 +70,7 @@ const BridgeShowMore = ({
   setAutoSlippage: (boolean: boolean) => void;
   setIsCustomSlippage: (boolean: boolean) => void;
   type: 'swap' | 'bridge';
+  openFeePopup: () => void;
   /**
    * for swap props
    */
@@ -114,7 +119,6 @@ const BridgeShowMore = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.dottedLine} />
         <TouchableOpacity
           onPress={() => setOpen(e => !e)}
           style={styles.headerTextWrapper}>
@@ -128,7 +132,6 @@ const BridgeShowMore = ({
             color={colors2024['neutral-secondary']}
           />
         </TouchableOpacity>
-        <View style={styles.dottedLine} />
       </View>
 
       <View style={[styles.body, !open && { height: 0 }]}>
@@ -234,6 +237,20 @@ const BridgeShowMore = ({
           recommendValue={recommendValue}
         />
 
+        <ListItem
+          name={t('page.swap.rabbyFee.title')}
+          style={{
+            marginTop: 20,
+          }}>
+          <Pressable onPress={openFeePopup}>
+            <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
+              {isWrapToken && type === 'swap'
+                ? t('page.swap.no-fees-for-wrap')
+                : RABBY_FEE}
+            </Text>
+          </Pressable>
+        </ListItem>
+
         {showMEVGuardedSwitch && (
           <ListItem style={{ marginTop: 20 }} name={t('page.swap.preferMEV')}>
             <AppSwitch
@@ -310,6 +327,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     marginBottom: 8,
     paddingHorizontal: 12,
+    justifyContent: 'center',
   },
   dottedLine: {
     flex: 1,
@@ -397,8 +415,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sourceLogo: { width: 18, height: 18, borderRadius: 16 },
   sourceName: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
     color: colors2024['brand-default'],
+  },
+  fee: {
+    color: colors2024['brand-default'],
+    textAlign: 'right',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  wrapTokenFee: {
+    color: colors2024['neutral-foot'],
+    textAlign: 'right',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
     fontWeight: '500',
+    lineHeight: 20,
   },
   recommendFromToken: {
     // flexDirection: 'row',
