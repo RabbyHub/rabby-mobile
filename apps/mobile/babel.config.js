@@ -10,13 +10,16 @@ const buildGitInfo = (function getBuildEnvVars() {
     .toString()
     .trim();
 
-  const BUILD_GIT_HASH_TIME = child_process
-    .execSync(
-      `git show --quiet --date='format-local:%Y-%m-%dT%H:%M:%S+00:00' --format="%cd"`,
-      { env: { ...process.env, TZ: 'UTC0' } },
-    )
-    .toString()
-    .trim();
+  const BUILD_GIT_HASH_TIME =
+    process.platform === 'win32'
+      ? ''
+      : child_process
+          .execSync(
+            `git show --quiet --date='format-local:%Y-%m-%dT%H:%M:%S+00:00' --format="%cd"`,
+            { env: { ...process.env, TZ: 'UTC0' } },
+          )
+          .toString()
+          .trim();
 
   const buildchannel = process.env.buildchannel || 'selfhost-reg';
 
