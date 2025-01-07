@@ -1,7 +1,7 @@
 import { RcNextLeftCC } from '@/assets/icons/common';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
-import { ScreenLayouts } from '@/constant/layout';
+import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
@@ -49,7 +49,10 @@ export function DappsScreen(): JSX.Element {
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, options);
+      openUrlAsDapp(url, {
+        ...options,
+        dappsWebViewFromRoute: RootNames.Dapps,
+      });
       setBrowserHistory(safeGetOrigin(url));
       Keyboard.dismiss();
     },

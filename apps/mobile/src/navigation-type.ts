@@ -22,7 +22,7 @@ export type RootStackParamsList = {
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
-  [RootNames.StackFavoriteDapps]: NavigatorScreenParams<FavoriteDappsNavigatorParamList>;
+  [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
   [RootNames.DeFiDetail]?: {};
@@ -43,11 +43,16 @@ export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
-  [RootNames.Dapps]?: {};
-  [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+  [RootNames.DappWebViewStubOnHome]?: {
+    dappsWebViewFromRoute?:
+      | typeof RootNames.Dapps
+      | typeof RootNames.FavoriteDapps;
   };
-  [RootNames.DappWebViewStubOnHome]?: {};
+};
+
+export type DappsNavigatorParamsList = {
+  [RootNames.Dapps]?: {};
+  [RootNames.FavoriteDapps]?: {};
 };
 
 type GetStartedNavigatorParamsList = {
@@ -194,6 +199,9 @@ export type TransactionNavigatorParamList = {
 };
 
 export type SettingNavigatorParamList = {
+  [RootNames.Settings]?: {
+    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+  };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
     | {
@@ -219,8 +227,4 @@ export type SettingNavigatorParamList = {
     chainId: number;
     rpcUrl: string;
   };
-};
-
-export type FavoriteDappsNavigatorParamList = {
-  [RootNames.FavoriteDapps]?: {};
 };
