@@ -19,6 +19,10 @@ import { appServiceEvents } from './_utils';
 
 const { isSameAddress } = addressUtils;
 
+const SWITCHES = {
+  KEEP_DATA_ON_DEV: __DEV__,
+};
+
 // export interface Account {
 //   type: string;
 //   address: string;
@@ -66,7 +70,7 @@ function makeManageTokenKey(x: IManageToken) {
 }
 
 function decodeManageTokenKey(x: string): IManageToken {
-  const [chainId, tokenId] = JSON.parse(x);
+  const { chainId, tokenId } = JSON.parse(x);
   return { chainId, tokenId };
 }
 
@@ -82,7 +86,7 @@ function makeDefiOrTokenKey(x: IDefiOrToken) {
 }
 
 function decodeDefiOrTokenKey(x: string): IDefiOrToken {
-  const [chainid, id, type] = JSON.parse(x);
+  const { chainid, id, type } = JSON.parse(x);
   return { chainid, id, type };
 }
 
@@ -243,6 +247,14 @@ export class PreferenceService {
     }
   }
 
+  private _trimLegacyData<T extends (...args: any) => any>(
+    fn: Function,
+  ): undefined | ReturnType<T> {
+    if (SWITCHES.KEEP_DATA_ON_DEV) return;
+
+    return fn();
+  }
+
   private _migrate() {
     const tokenManageSettingMap = { ...this.store.tokenManageSettingMap };
     if (Object.keys(tokenManageSettingMap).length === 0) return;
@@ -275,7 +287,9 @@ export class PreferenceService {
           if (!sets[key].has(k)) sets[key].add(k);
         });
 
-        setting[key] = [];
+        this._trimLegacyData(() => {
+          setting[key] = [];
+        });
       });
 
       (['includeDefiAndTokens', 'excludeDefiAndTokens'] as const).forEach(
@@ -285,11 +299,15 @@ export class PreferenceService {
             if (!sets[key].has(k)) sets[key].add(k);
           });
 
-          setting[key] = [];
+          this._trimLegacyData(() => {
+            setting[key] = [];
+          });
         },
       );
 
-      delete tokenManageSettingMap[eoaAddress];
+      this._trimLegacyData(() => {
+        delete tokenManageSettingMap[eoaAddress];
+      });
     });
 
     priority_process: {
@@ -325,8 +343,27 @@ export class PreferenceService {
       this.store.pinedQueue = lists.pinedQueue;
       this.store.foldTokens = lists.foldTokens;
       this.store.unfoldTokens = lists.unfoldTokens;
+
+      // // leave here for debug
+      // console.debug(
+      //   'this.store.pinedQueue',
+      //   JSON.stringify(this.store.pinedQueue, null, '\t'),
+      //   'this.store.foldTokens',
+      //   JSON.stringify(this.store.foldTokens, null, '\t'),
+      //   'this.store.unfoldTokens',
+      //   JSON.stringify(this.store.unfoldTokens, null, '\t'),
+      // );
+
       this.store.includeDefiAndTokens = lists.includeDefiAndTokens;
       this.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
+
+      // // leave here for debug
+      // console.debug(
+      //   'this.store.includeDefiAndTokens',
+      //   JSON.stringify(this.store.includeDefiAndTokens, null, '\t'),
+      //   'this.store.excludeDefiAndTokens',
+      //   JSON.stringify(this.store.excludeDefiAndTokens, null, '\t'),
+      // );
 
       this.store.tokenManageSettingMap = tokenManageSettingMap;
     }
