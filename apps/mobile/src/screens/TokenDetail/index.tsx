@@ -338,7 +338,6 @@ export const TokenDetailScreen = () => {
       },
     });
   });
-
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
 

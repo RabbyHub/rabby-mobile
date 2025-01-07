@@ -8,13 +8,14 @@ import { formatNetworth } from '@/utils/math';
 import { AbstractPortfolioToken } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
+import { formatAmount } from '@/utils/number';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue?: BigNumber;
   fromAddress: Array<{
     address: string;
-    amount: string;
+    amount: number;
   }>;
 };
 
@@ -185,7 +186,7 @@ export const combinedTokensAtom = atom(async get => {
           fromAddress: [
             {
               address,
-              amount: token._amountStr || '',
+              amount: token.amount,
             },
           ],
         };
@@ -199,7 +200,7 @@ export const combinedTokensAtom = atom(async get => {
         );
         existingToken.fromAddress.push({
           address,
-          amount: token._amountStr || '',
+          amount: token.amount,
         });
       }
     });
@@ -209,7 +210,7 @@ export const combinedTokensAtom = atom(async get => {
     ...i,
     _usdValue: i.totalUsdValue?.toNumber(),
     _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
-    _amountStr: formatNetworth(i.totalAmount.toNumber()),
+    _amountStr: formatAmount(i.totalAmount.toNumber()),
   }));
 });
 
