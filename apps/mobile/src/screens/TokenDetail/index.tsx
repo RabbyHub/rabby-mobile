@@ -349,7 +349,7 @@ export const TokenDetailScreen = () => {
       if (idx > -1) {
         res.push({
           address: item.address,
-          amount: item.amount,
+          amount: formatTokenAmount(item.amount),
           aliasName:
             actionsAccounts[idx].aliasName || ellipsisAddress(item.address),
           type: actionsAccounts[idx].type,

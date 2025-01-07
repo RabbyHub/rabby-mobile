@@ -35,7 +35,7 @@ export const TokenArea: React.FC<Props> = ({
           <View style={styles.tokenBox}>
             <Text style={styles.tokenAmount} numberOfLines={1}>
               {formatTokenAmount(item.amount)}
-              {`  `}
+              {'  '}
               {token.symbol}
             </Text>
             <View style={styles.accountBox}>
