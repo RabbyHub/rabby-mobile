@@ -18,7 +18,7 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
@@ -47,6 +47,7 @@ import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
@@ -63,6 +64,7 @@ import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useAssetsMap } from './hooks/store';
 import { useAssets } from '../Search/useAssets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -429,6 +431,10 @@ function MultiAddressHome(): JSX.Element {
     },
     [switchAccount, navigation],
   );
+
+  const { bottom } = useSafeAreaInsets();
+
+  const androidBottomOffset = IS_ANDROID ? bottom : 0;
   const handlePressSearch = () => {
     console.log(
       '🔍 CUSTOM_LOGGER:=>: handlePressSearch)',
@@ -594,16 +600,22 @@ function MultiAddressHome(): JSX.Element {
             })}
           </View>
         </ScrollView>
-        <Pressable onPress={handlePressSearch} style={styles.search}>
-          <RcNextSearchCC
-            width={20}
-            height={20}
-            color={colors2024['neutral-secondary']}
-          />
-          <Text style={styles.searchText}>
-            {t('page.dashboard.home.search')}
-          </Text>
-        </Pressable>
+        <LinearGradient
+          colors={['rgba(224, 229, 236, 0)', '#E0E5EC']} // 渐变的颜色数组
+          start={{ x: 0, y: 0 }} // 渐变的起点
+          end={{ x: 0, y: 1 }} // 渐变的终点
+          style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
+          <Pressable onPress={handlePressSearch} style={styles.search}>
+            <RcNextSearchCC
+              width={20}
+              height={20}
+              color={colors2024['neutral-secondary']}
+            />
+            <Text style={styles.searchText}>
+              {t('page.dashboard.home.search')}
+            </Text>
+          </Pressable>
+        </LinearGradient>
       </View>
     </NormalScreenContainer2024>
   );
@@ -824,16 +836,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
-  search: {
+  floatBottom: {
     position: 'absolute',
-    bottom: 43,
-    left: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    bottom: 0,
+    left: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: Dimensions.get('window').width,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    height: 128,
+  },
+  search: {
     width: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
     height: 60,
     borderRadius: 100,
     flexDirection: 'row',
     alignItems: 'center',
+    marginVertical: 20,
     paddingHorizontal: 28,
     gap: 8,
   },
