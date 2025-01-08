@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import {
+  SectionList,
+  SectionListProps,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { useCurrentAccount } from '@/hooks/account';
@@ -17,6 +23,8 @@ import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
+  ActionHeaderItem,
+  ActionHeaderType,
   ActionItem,
   DisplayNftItem,
 } from './types';
@@ -47,7 +55,8 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import {
   AssestAllHeader,
-  AsssetKey,
+  mapItemTypeToHeaderType,
+  useCurrentSection,
 } from './components/AssetRenderItems/SectionHeaders';
 import { DisplayedProject } from './utils/project';
 
@@ -75,7 +84,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
-  const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
+  const { setCurrentSection } = useCurrentSection();
 
   const { refreshTagNft, refreshTagToken, refreshTagPortfolio } =
     useRefreshTags();
@@ -88,7 +97,31 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
 
-  const dataList = useMemo(() => {
+  const sectionHeaderRenderInfo = useMemo(() => {
+    const result = {
+      showToken: !!tokens?.length,
+      showDefi: !!portfolios.length,
+      showNft: !!nftList?.length,
+    };
+
+    return {
+      ...result,
+      asset_header_shown: result.showToken || result.showDefi || result.showNft,
+    };
+  }, [tokens, portfolios, nftList]);
+
+  type SectionData = {
+    show: boolean;
+    type: 'asset_type_switcher';
+    data: ActionItem[];
+  };
+  const { sectionList } = useMemo(() => {
+    const result: {
+      sectionList: SectionData[];
+    } = {
+      sectionList: [],
+    };
+
     const unFoldTokenList: ActionItem[] = sortTokens
       .filter(i => !i._isFold)
       .map(item => ({
@@ -125,18 +158,14 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         type: 'unfold_nft',
         data: item,
       }));
-    const itemData: Array<{
+
+    const itemData: {
       show: boolean;
       data: ActionItem[];
-    }> = [
+    }[] = [
       {
         show: hasAssets,
-        data: [
-          {
-            type: 'asset_header',
-          },
-          ...unFoldTokenList,
-        ],
+        data: [...unFoldTokenList],
       },
       {
         show: !!foldTokenList.length,
@@ -167,15 +196,25 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
     ];
-    return itemData
+    const flatList = itemData
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
+
+    result.sectionList = [
+      {
+        type: 'asset_type_switcher',
+        show: true,
+        data: flatList,
+      },
+    ];
+
+    return result;
   }, [
+    hasAssets,
     foldDefi,
     foldHideList,
     foldNft,
-    hasAssets,
     nftList,
     portfolios,
     sortTokens,
@@ -217,33 +256,40 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       account: currentAccount as any,
     });
   };
-  const handleSwitchTab = (key: AsssetKey) => {
+  const handleSwitchTab = (key: ActionHeaderType) => {
     if (loading || refreshing) {
       return;
     }
     setFoldHideList(true);
     setTimeout(() => {
-      flatListRef.current?.forceUpdate(() => {
-        const data = (flatListRef.current?.props.data || []) as ActionItem[];
-        let offset = HEADER_TOP_AREA_HEIGHT;
+      const firstSection = sectionList.find(
+        i => i.type === 'asset_type_switcher',
+      )!;
+      sectionListRef.current?.forceUpdate(() => {
+        // const data = (sectionListRef.current?.props.data || []) as ActionItem[];
+        const data = firstSection.data;
+        // let offset = HEADER_TOP_AREA_HEIGHT;
         let index = 0;
-        if (key === 'defi') {
+
+        if (key === 'defi_header') {
           index = data.findIndex(item => item.type === 'defi_header');
         }
-        if (key === 'nft') {
+        if (key === 'nft_header') {
           index = data.findIndex(item => item.type === 'nft_header');
         }
-        const headerLength = data.slice(0, index).filter(i => !i.data).length;
-        if (index > -1 && key !== 'token') {
-          offset +=
-            index * (ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT) -
-            (ASSETS_ITEM_HEIGHT_NEW - ASSETS_SECTION_HEADER) *
-              (headerLength + 1);
+        // const headerLength = data.slice(0, index).filter(i => !i.data).length;
+        if (index > -1 && key !== 'token_header') {
+          // offset +=
+          //   index * (ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT) -
+          //   (ASSETS_ITEM_HEIGHT_NEW - ASSETS_SECTION_HEADER) *
+          //     (headerLength + 1);
         }
-        flatListRef.current?.scrollToOffset({
-          animated: true,
-          offset,
-        });
+        if (index > -1)
+          sectionListRef.current?.scrollToLocation({
+            sectionIndex: 0,
+            animated: true,
+            itemIndex: index + 1,
+          });
       });
     }, 0);
   };
@@ -405,8 +451,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     ];
   };
 
-  const renderItem = ({ item: _item }: { item: ActionItem }) => {
+  const renderItem: SectionListProps<ActionItem>['renderItem'] & object = ({
+    item: _item,
+  }) => {
     const { type, data } = _item;
+
     switch (type) {
       case 'unfold_token':
       case 'fold_token':
@@ -453,19 +502,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             chainLogoSize={18}
             item={data}
             onPress={() => handlePressNft(data)}
-          />
-        );
-      /** header */
-      case 'asset_header':
-        return (
-          <AssestAllHeader
-            style={styles.assetHeader}
-            showToken={!!tokens?.length}
-            currentSection={currentSection}
-            setCurrentSection={setCurrentSection}
-            showDefi={!!portfolios.length}
-            showNft={!!nftList?.length}
-            onPress={handleSwitchTab}
           />
         );
       case 'toggle_token_fold':
@@ -524,56 +560,87 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }
   };
 
+  const renderSectionHeader: SectionListProps<ActionItem>['renderSectionHeader'] &
+    object = ({ section: _section }) => {
+    const section = _section as SectionData;
+    if (!section.show) return null;
+
+    switch (section.type) {
+      case 'asset_type_switcher':
+        return (
+          <AssestAllHeader
+            style={styles.assetHeader}
+            showToken={sectionHeaderRenderInfo.showToken}
+            showDefi={sectionHeaderRenderInfo.showDefi}
+            showNft={sectionHeaderRenderInfo.showNft}
+            onPress={handleSwitchTab}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  /* height: 185 */
   const header = useCallback(() => <HomeTopArea />, []);
-  const flatListRef = useRef<FlatList>(null);
+
+  const sectionListRef = useRef<SectionList>(null);
 
   const viewabilityConfigRef = useRef({
     viewAreaCoveragePercentThreshold: 300,
     minimumViewTime: 100,
     waitForInteraction: false,
   });
-  const onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
-    if (!changed) {
-      return;
-    }
-    const type = (viewableItems?.[0]?.item?.type || '') as string;
-    if (type.includes('token')) {
-      setCurrentSection('token');
-      return;
-    }
-    if (type.includes('defi')) {
-      setCurrentSection('defi');
-      return;
-    }
-    if (type.includes('nft')) {
-      setCurrentSection('nft');
-      return;
-    }
-  }, []);
+  const onViewableItemsChanged = useCallback<
+    SectionListProps<ActionItem>['onViewableItemsChanged'] & object
+  >(
+    ({ viewableItems, changed }) => {
+      if (!changed) return;
+
+      // const changedItemTypes = changed.map(i => (i.item as ActionItem).type);
+      const viewableItemsItemTypes = viewableItems.map(
+        i => (i.item as ActionItem).type,
+      );
+
+      if (viewableItemsItemTypes[0]) {
+        setCurrentSection(
+          mapItemTypeToHeaderType(viewableItemsItemTypes[0]) || 'token_header',
+        );
+      }
+    },
+    [setCurrentSection],
+  );
 
   if (!currentAccount?.address) {
     return null;
   }
 
   return (
-    <>
-      <FlatList<ActionItem>
-        data={dataList}
-        ref={flatListRef}
+    <View style={{ height: '100%', flex: 1, position: 'relative' }}>
+      <SectionList<ActionItem>
+        sections={sectionList}
+        ref={sectionListRef}
         viewabilityConfig={viewabilityConfigRef.current}
         onViewableItemsChanged={onViewableItemsChanged}
-        ListHeaderComponent={header}
-        renderItem={renderItem}
-        ItemSeparatorComponent={ItemSeparatorComponent}
         keyExtractor={item =>
-          `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
-            item.data?.chain || ''
-          }`
+          [
+            item.type,
+            // @ts-expect-error
+            item.data?._tokenId || '',
+            item.data?.id,
+            item.data?.chain,
+          ].join('/')
         }
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
+        ItemSeparatorComponent={ItemSeparatorComponent}
+        SectionSeparatorComponent={SectionSeparatorComponent}
+        ListHeaderComponent={header}
+        ListEmptyComponent={ListEmptyComponent}
         contentContainerStyle={styles.bgContainer}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={ListEmptyComponent}
-        stickyHeaderIndices={[1]}
+        stickySectionHeadersEnabled
+        stickyHeaderIndices={[4]}
         windowSize={10}
         onScrollToIndexFailed={info => {
           console.warn('Scroll to index failed', info);
@@ -602,11 +669,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           cleanFocusingToken();
         }}
       />
-    </>
+    </View>
   );
 };
 
 const ItemSeparatorComponent = () => <View style={{ height: 8 }} />;
+const SectionSeparatorComponent = () => <View style={{ height: 8 }} />;
 
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {

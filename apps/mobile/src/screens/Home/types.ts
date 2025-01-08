@@ -101,7 +101,8 @@ export type CombineNft = {
 
 export type ActionHeaderItem = {
   type:
-    | 'asset_header'
+    | 'token_header'
+    // | 'asset_header'
     | 'toggle_token_fold'
     | 'defi_header'
     | 'toggle_defi_fold'
@@ -109,6 +110,8 @@ export type ActionHeaderItem = {
     | 'toggle_nft_fold';
   data?: null;
 };
+
+export type ActionHeaderType = ActionHeaderItem['type'] & `${string}_header`;
 
 export type ActionItem =
   | ActionHeaderItem
@@ -120,14 +123,4 @@ export type DisplayNftItem = NFTItem & {
   _isFold?: boolean;
   _isManualFold?: boolean;
   is_core?: boolean;
-};
-export const isSectionHeader = (type: string) => {
-  return [
-    'asset_header',
-    'toggle_token_fold',
-    'defi_header',
-    'toggle_defi_fold',
-    'nft_header',
-    'toggle_nft_fold',
-  ].includes(type);
 };
