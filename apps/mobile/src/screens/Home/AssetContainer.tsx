@@ -201,13 +201,18 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       navigate(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
+        account: currentAccount,
         isSingleAddress: true,
       });
     },
-    [],
+    [currentAccount],
   );
   const handlePressNft = (item: DisplayNftItem) => {
-    navigate(RootNames.NftDetail, { token: item, isSingleAddress: true });
+    navigate(RootNames.NftDetail, {
+      token: item,
+      isSingleAddress: true,
+      account: currentAccount as any,
+    });
   };
   const handleSwitchTab = (key: AsssetKey) => {
     setTimeout(() => {

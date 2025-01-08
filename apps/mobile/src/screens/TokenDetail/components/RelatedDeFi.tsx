@@ -67,9 +67,9 @@ export const RelatedDeFi: React.FC<Props> = ({
               </Text>
             </View>
             <View style={styles.defiItemContent}>
-              <Text style={styles.defiItemText}>{`${
-                item?.amount
-              } ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+              <Text style={styles.defiItemText}>{`${formatTokenAmount(
+                item?.amount,
+              )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
               <RcIconRightCC
                 style={styles.arrowStyle}
                 width={13}

@@ -65,10 +65,16 @@ export const NFTDetailScreen = () => {
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { token } = useNavigationState(
+  const {
+    token,
+    isSingleAddress,
+    account: routeAccount,
+  } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
   ) as {
     token: NFTItem;
+    account: KeyringAccountWithAlias;
+    isSingleAddress?: boolean;
   };
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
@@ -138,6 +144,10 @@ export const NFTDetailScreen = () => {
 
   const { currentAccount } = useCurrentAccount();
   const { accounts } = useAccounts();
+  const finalAccount = useMemo(
+    () => routeAccount || currentAccount,
+    [routeAccount, currentAccount],
+  );
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleSend = useCallback(
@@ -171,6 +181,18 @@ export const NFTDetailScreen = () => {
       type: KEYRING_TYPE;
       aliasName: string;
     }[] = [];
+    if (isSingleAddress) {
+      console.debug('relateNFTList isSingleAddress');
+      resList.push({
+        data: token,
+        index: 0,
+        type: finalAccount.type,
+        address: finalAccount.address,
+        aliasName:
+          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
+      });
+      return resList;
+    }
 
     const tempList: {
       data: NFTItem;
@@ -203,12 +225,13 @@ export const NFTDetailScreen = () => {
           ...tempList[idx],
           type: account.type,
           aliasName: account.aliasName || ellipsisAddress(account.address),
+          index: idx,
         });
       }
     });
     console.log('relateNFTList length:', resList.length);
     return resList;
-  }, [asssest, token, sortedAccounts]);
+  }, [asssest, token, sortedAccounts, finalAccount, isSingleAddress]);
 
   const renderAccountHeader = useCallback(
     (type: KEYRING_TYPE, aliasName: string) => {

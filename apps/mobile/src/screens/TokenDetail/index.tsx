@@ -52,18 +52,19 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import { useSortAddressList } from '../Address/useSortAddressList';
+import BigNumber from 'bignumber.js';
 
 const isAndroid = Platform.OS === 'android';
 
 export type TokenFromAddressItem = {
   address: string;
-  amount: string;
+  amountStr: string;
   type: KEYRING_TYPE;
   aliasName: string;
 };
 
 export type RelatedDeFiType = AbstractProject & {
-  amount: string;
+  amount: number;
 };
 
 const hitSlop = {
@@ -248,7 +249,7 @@ export const TokenDetailScreen = () => {
         amount &&
           resList.push({
             ...portfolio,
-            amount: formatTokenAmount(Math.abs(amount)),
+            amount,
           });
       });
     });
@@ -256,21 +257,25 @@ export const TokenDetailScreen = () => {
     return resList;
   }, [token, asssest]);
 
+  const isSingleAddress = useMemo(() => !!account, [account]);
+  const { currentAccount } = useCurrentAccount();
+  const finalAccount = account || currentAccount;
+
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
       naviPush(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
+        isSingleAddress,
+        account: finalAccount,
         cache: true,
         relateTokenId: token._tokenId,
       });
     },
-    [token],
+    [token, isSingleAddress, finalAccount],
   );
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { currentAccount } = useCurrentAccount();
-  const finalAccount = account || currentAccount;
 
   const { data: tokenWithAmount } = useRequest(
     async () => {
@@ -297,7 +302,6 @@ export const TokenDetailScreen = () => {
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
-  const isSingleAddress = useMemo(() => !!account, [account]);
   const getHeaderRight = useCallback(() => {
     return (
       <RightMore
@@ -343,9 +347,13 @@ export const TokenDetailScreen = () => {
     const res = [] as TokenFromAddressItem[];
 
     const actionsAccounts = [...sortedAccounts];
+
+    const { fromAddress } = token;
+    const sortFromAddress = fromAddress?.sort((a, b) =>
+      new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
+    );
     actionsAccounts.map(item => {
-      const { fromAddress } = token;
-      const idx = fromAddress?.findIndex(
+      const idx = sortFromAddress?.findIndex(
         i =>
           isSameAddress(i.address, item.address) &&
           item.type !== KEYRING_TYPE.WatchAddressKeyring,
@@ -353,7 +361,7 @@ export const TokenDetailScreen = () => {
       if (idx > -1) {
         res.push({
           address: item.address,
-          amount: formatTokenAmount(fromAddress[idx].amount),
+          amountStr: formatTokenAmount(sortFromAddress[idx].amount),
           aliasName: item.aliasName || ellipsisAddress(item.address),
           type: item.type,
         });
@@ -422,7 +430,7 @@ export const TokenDetailScreen = () => {
                 : [
                     {
                       ...token,
-                      amount: token._amountStr!,
+                      amountStr: token._amountStr!,
                       address: finalAccount.address,
                       type: finalAccount.type,
                       aliasName:

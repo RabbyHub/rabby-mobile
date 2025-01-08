@@ -142,12 +142,17 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const { data, relateTokenId, isSingleAddress } = useNavigationState(
+  const {
+    data,
+    portfolioList,
+    isSingleAddress,
+    account: routeAccount,
+  } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
-    relateTokenId?: string;
+    account: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
 
@@ -217,8 +222,27 @@ export const DeFiDetailScreen = () => {
   const { accounts } = useAccounts();
   const sortedAccounts = useSortAddressList(accounts);
 
+  const { currentAccount } = useCurrentAccount();
+  const finalAccount = useMemo(
+    () => routeAccount || currentAccount,
+    [routeAccount, currentAccount],
+  );
+
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
+    if (isSingleAddress) {
+      console.debug('relateDefiList isSingleAddress');
+      sectionsList.push({
+        data: portfolioList,
+        project: data,
+        totalUsdValue: new BigNumber(data.netWorth),
+        type: finalAccount.type,
+        address: finalAccount.address,
+        aliasName:
+          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
+      });
+      return sectionsList;
+    }
 
     const tempList: {
       data: SectionListItem['data'];
@@ -255,7 +279,14 @@ export const DeFiDetailScreen = () => {
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [data, asssest, sortedAccounts]);
+  }, [
+    data,
+    asssest,
+    sortedAccounts,
+    isSingleAddress,
+    finalAccount,
+    portfolioList,
+  ]);
 
   const sumNetWorth = useMemo(() => {
     const res = sectionsMultiProject.reduce((pre, cur) => {

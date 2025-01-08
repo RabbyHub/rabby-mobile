@@ -34,9 +34,7 @@ export const TokenArea: React.FC<Props> = ({
         <View style={styles.itemCard} key={index}>
           <View style={styles.tokenBox}>
             <Text style={styles.tokenAmount} numberOfLines={1}>
-              {item.amount}
-              {'  '}
-              {token.symbol}
+              {item.amountStr} {token.symbol}
             </Text>
             <View style={styles.accountBox}>
               <View className="relative">
@@ -100,14 +98,6 @@ export const TokenArea: React.FC<Props> = ({
     );
   }, [styles.header, styles.balanceTitle, t]);
 
-  const sortedList = useMemo(
-    () =>
-      amountList?.sort((a, b) =>
-        new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-      ),
-    [amountList],
-  );
-
   const ImageSrc = React.useMemo(() => {
     return !isLight
       ? require('@/assets2024/images/ImgNoBalanceDark.png')
@@ -117,8 +107,8 @@ export const TokenArea: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       {ListHeaderComponent()}
-      {sortedList.length ? (
-        sortedList.map((item, index) => renderItem({ item, index }))
+      {amountList.length ? (
+        amountList.map((item, index) => renderItem({ item, index }))
       ) : (
         <View style={styles.empytContainer}>
           <Image style={styles.imgIcon} source={ImageSrc} />

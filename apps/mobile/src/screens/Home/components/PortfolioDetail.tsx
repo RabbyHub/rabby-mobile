@@ -115,8 +115,9 @@ export const TokenList = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute();
-  const { relateTokenId } = (route.params || {}) as {
+  const { relateTokenId, isSingleAddress } = (route.params || {}) as {
     relateTokenId?: string;
+    isSingleAddress?: boolean;
   };
 
   const headers = [name, 'amount', 'USD Value'];
@@ -204,20 +205,24 @@ export const TokenList = ({
   }, [_fraction, _nfts, _tokens]);
 
   // const { tokens: cacheAssets } = useAssets();
-  const handleOpenTokenDetail = React.useCallback((token: TokenItem) => {
-    // const idx = cacheAssets.findIndex(
-    //   item => item._tokenId === token.id && item.chain === token.chain,
-    // );AbstractPortfolioToken
-    naviPush(RootNames.TokenDetail, {
-      token: {
-        ...token,
-        logo_url: token._logo,
-        symbol: token._symbol,
-        _tokenId: token.id,
-      },
-      fromPortfolio: true,
-    });
-  }, []);
+  const handleOpenTokenDetail = React.useCallback(
+    (token: TokenItem) => {
+      // const idx = cacheAssets.findIndex(
+      //   item => item._tokenId === token.id && item.chain === token.chain,
+      // );AbstractPortfolioToken
+      naviPush(RootNames.TokenDetail, {
+        token: {
+          ...token,
+          logo_url: token._logo,
+          symbol: token._symbol,
+          _tokenId: token.id,
+        },
+        isSingleAddress,
+        fromPortfolio: true,
+      });
+    },
+    [isSingleAddress],
+  );
 
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
