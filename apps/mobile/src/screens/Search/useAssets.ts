@@ -32,7 +32,7 @@ import { openapi } from '@/core/request';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
   combinePinTokens,
@@ -63,9 +63,6 @@ export const useAssets = (filterText?: string) => {
   const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
   const [, updateNftList] = useAtom(updateNFTsAtom);
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
-
-  const projectDict = useRef<Record<string, DisplayedProject> | null>({});
-  const realtimeIds = useRef<string[]>([]);
 
   const loadToken = async (address: string) => {
     if (!address) {
@@ -114,9 +111,16 @@ export const useAssets = (filterText?: string) => {
     if (!address) {
       return;
     }
-    projectDict.current = {};
+    let projectDict: Record<string, DisplayedProject> | null = {};
 
     const snapshotRes = await loadPortfolioSnapshot(address);
+    if (snapshotRes) {
+      console.log(
+        '🔍 CUSTOM_LOGGER:=>: snapshotRes)',
+        address.slice(-8),
+        snapshotRes.filter(i => i.name === 'Uniswap V3'),
+      );
+    }
     const { list, netWorth: snapshotNetWorth } = snapshot2Display(
       snapshotRes || [],
     );
@@ -134,11 +138,11 @@ export const useAssets = (filterText?: string) => {
       snapshotNetWorth,
     );
 
-    realtimeIds.current = hasExpandSwitch
+    const realtimeIds = hasExpandSwitch
       ? snapshotData.slice(0, thresholdIndex).map(x => x.id)
       : snapshotRes?.map(x => x.id) || [];
 
-    const chunkIds = chunk(realtimeIds.current, 5);
+    const chunkIds = chunk(realtimeIds, 5);
 
     let realtimeData: DisplayedProject[] = [];
 
@@ -153,8 +157,8 @@ export const useAssets = (filterText?: string) => {
         }
 
         projects.forEach(project => {
-          if (projectDict.current) {
-            projectDict.current = produce(projectDict.current, draft => {
+          if (projectDict) {
+            projectDict = produce(projectDict, draft => {
               project && portfolio2Display(project, draft);
             });
           }
@@ -162,7 +166,7 @@ export const useAssets = (filterText?: string) => {
       }),
     );
 
-    realtimeData = Object.values(projectDict.current)?.sort(
+    realtimeData = Object.values(projectDict)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
     updatePortfolios({
@@ -203,9 +207,9 @@ export const useAssets = (filterText?: string) => {
                 loadNFT(account.address),
               ]);
               console.log(
-                '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
+                '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets fetch =>>',
                 account.address.slice(-8),
-                'force:',
+                'force: complete',
                 force,
               );
               await updateUpdateTime({
