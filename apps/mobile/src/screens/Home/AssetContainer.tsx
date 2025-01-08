@@ -542,6 +542,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
         stickyHeaderIndices={[1]}
+        windowSize={10}
+        onScrollToIndexFailed={info => {
+          console.warn('Scroll to index failed', info);
+        }}
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}

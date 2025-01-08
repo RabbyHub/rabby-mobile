@@ -43,11 +43,6 @@ import {
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
 
-const walletProject = new DisplayedProject({
-  id: 'Wallet',
-  name: 'Wallet',
-});
-
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
   const { accounts } = useMyAccounts();
@@ -68,6 +63,10 @@ export const useAssets = (filterText?: string) => {
     if (!address) {
       return;
     }
+    const walletProject = new DisplayedProject({
+      id: 'Wallet',
+      name: 'Wallet',
+    });
 
     let _data = produce(walletProject, draft => {
       draft.netWorth = 0;
