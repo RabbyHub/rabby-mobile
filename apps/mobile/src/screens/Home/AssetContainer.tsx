@@ -192,7 +192,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       } else {
         navigate(RootNames.TokenDetail, {
           token: token,
-          // todo fix ts
+          isSingleAddress: true,
           account: currentAccount as any,
         });
       }

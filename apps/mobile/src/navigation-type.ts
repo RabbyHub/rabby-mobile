@@ -33,6 +33,7 @@ export type RootStackParamsList = {
   [RootNames.TokenDetail]: {
     token: AbstractPortfolioToken;
     needUseCacheToken?: boolean;
+    isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias;
     unHold?: boolean;
   };
