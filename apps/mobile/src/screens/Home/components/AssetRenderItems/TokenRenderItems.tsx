@@ -56,6 +56,7 @@ export const TokenRow = memo(
     menuActions,
     filterText,
     onTokenPress,
+    hideFoldTag,
     disableMenu,
   }: {
     data: AbstractPortfolioToken;
@@ -65,6 +66,7 @@ export const TokenRow = memo(
     chainLogoSize?: number;
     filterText?: string;
     menuActions?: MenuAction[];
+    hideFoldTag?: boolean;
     disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
@@ -153,7 +155,9 @@ export const TokenRow = memo(
                 textToHighlight={data.symbol}
               />
               {data._isPined && <TextBadge />}
-              {data._isManualFold && <TextBadge type="folded" />}
+              {!hideFoldTag && data._isManualFold && (
+                <TextBadge type="folded" />
+              )}
             </View>
 
             {data._priceStr ? (

@@ -3,7 +3,6 @@ import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
 
 import { getAllAccounts, getAllMyAccount } from '@/core/apis/address';
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { formatNetworth } from '@/utils/math';
 import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
@@ -25,14 +24,14 @@ type DisplayedProjectWithoutMethods = Omit<
 >;
 
 export type CombineDefiItem = DisplayedProjectWithoutMethods & {
-  totalUsdValue?: BigNumber;
+  totalUsdValue: BigNumber;
   fromAddress: Array<{
     address: string;
   }>;
 };
 
 export type CombineNFTItem = NFTItem & {
-  totalAmount?: BigNumber;
+  totalAmount: BigNumber;
   fromAddress: Array<{
     address: string;
   }>;
@@ -253,10 +252,18 @@ export const combinedDefiAtom = atom(async get => {
     });
   });
 
-  return Object.values(defiMap).map(p => ({
-    ...p,
-    _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
-  }));
+  return Object.values(defiMap)
+    .sort((a, b) =>
+      a.totalUsdValue.gt(b.totalUsdValue)
+        ? -1
+        : a.totalUsdValue.lt(b.totalUsdValue)
+        ? 1
+        : 0,
+    )
+    .map(p => ({
+      ...p,
+      _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
+    }));
 });
 
 export const combinedNFTAtom = atom(async get => {
@@ -298,10 +305,18 @@ export const combinedNFTAtom = atom(async get => {
     });
   });
 
-  return Object.values(nftMap).map(nft => ({
-    ...nft,
-    amount: nft.totalAmount?.toNumber() || 0,
-  }));
+  return Object.values(nftMap)
+    .sort((a, b) =>
+      a.totalAmount.gt(b.totalAmount)
+        ? -1
+        : a.totalAmount.lt(b.totalAmount)
+        ? 1
+        : 0,
+    )
+    .map(nft => ({
+      ...nft,
+      amount: nft.totalAmount?.toNumber() || 0,
+    }));
 });
 
 export const updateTokensAtom = atom(

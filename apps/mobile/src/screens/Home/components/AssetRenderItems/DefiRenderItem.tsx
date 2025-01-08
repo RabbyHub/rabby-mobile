@@ -38,6 +38,7 @@ export const DefiRow = memo(
     logoSize = 40,
     chainLogoSize = 16,
     menuActions,
+    hideFoldTag,
     disableMenu,
     onPress,
   }: {
@@ -48,6 +49,7 @@ export const DefiRow = memo(
     filterText?: string;
     menuActions?: MenuAction[];
     disableMenu?: boolean;
+    hideFoldTag?: boolean;
     onPress?: () => void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -117,7 +119,7 @@ export const DefiRow = memo(
               searchWords={[filterText || '']}
               textToHighlight={data?.name}
             />
-            {data._isManualFold && <TextBadge type="folded" />}
+            {!hideFoldTag && data._isManualFold && <TextBadge type="folded" />}
           </View>
         </View>
         <View style={styles.projectHeaderUsd}>

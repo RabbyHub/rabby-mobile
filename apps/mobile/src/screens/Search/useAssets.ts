@@ -114,13 +114,6 @@ export const useAssets = (filterText?: string) => {
     let projectDict: Record<string, DisplayedProject> | null = {};
 
     const snapshotRes = await loadPortfolioSnapshot(address);
-    if (snapshotRes) {
-      console.log(
-        '🔍 CUSTOM_LOGGER:=>: snapshotRes)',
-        address.slice(-8),
-        snapshotRes.filter(i => i.name === 'Uniswap V3'),
-      );
-    }
     const { list, netWorth: snapshotNetWorth } = snapshot2Display(
       snapshotRes || [],
     );

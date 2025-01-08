@@ -30,6 +30,7 @@ export const NftRow = memo(
     logoSize = 40,
     disableMenu,
     menuActions,
+    hideFoldTag,
     chainLogoSize = 16,
   }: {
     item: DisplayNftItem;
@@ -37,6 +38,7 @@ export const NftRow = memo(
     style?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
+    hideFoldTag?: boolean;
     menuActions?: MenuAction[];
     disableMenu?: boolean;
     onPress: () => void;
@@ -115,7 +117,7 @@ export const NftRow = memo(
               searchWords={[filterText || '']}
               textToHighlight={item.name}
             />
-            {item._isManualFold && <TextBadge type="folded" />}
+            {!hideFoldTag && item._isManualFold && <TextBadge type="folded" />}
           </View>
         </View>
         <Text style={styles.amount}>{item.amount}</Text>

@@ -106,6 +106,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             onTokenPress={handleOpenTokenDetail}
             filterText={filterText}
             logoSize={40}
+            hideFoldTag
             disableMenu
           />
         );
@@ -116,6 +117,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             filterText={filterText}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
+            hideFoldTag
             disableMenu
           />
         );
@@ -125,6 +127,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             filterText={filterText}
             item={item}
             disableMenu
+            hideFoldTag
             onPress={() => handlePressNft(item)}
           />
         );
@@ -134,6 +137,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             data={item}
             filterText={filterText}
             disableMenu
+            hideFoldTag
             onPress={() =>
               handleOpenDefiDetail(item, [...(item._portfolios || [])])
             }
