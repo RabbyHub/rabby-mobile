@@ -51,17 +51,17 @@ export const AssestAllHeader = memo(
   ({ showDefi, showToken, showNft, onPress, style }: Props) => {
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
-    const { currentSection, setCurrentSection } = useCurrentSection();
+    const { currentSection } = useCurrentSection();
     const handlePress = useCallback(
       (key: ActionHeaderType) => {
         trigger('impactLight', {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
         });
-        setCurrentSection(key);
+        // setCurrentSection(key);
         onPress?.(key);
       },
-      [setCurrentSection, onPress],
+      [onPress],
     );
 
     return (

@@ -587,7 +587,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const sectionListRef = useRef<SectionList>(null);
 
   const viewabilityConfigRef = useRef({
-    viewAreaCoveragePercentThreshold: 300,
+    viewAreaCoveragePercentThreshold: 150,
     minimumViewTime: 100,
     waitForInteraction: false,
   });
