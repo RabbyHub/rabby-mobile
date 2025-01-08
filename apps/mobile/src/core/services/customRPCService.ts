@@ -5,6 +5,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import axios from 'axios';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export interface RPCItem {
   url: string;
@@ -41,7 +42,7 @@ class CustomRPCService {
   init = (options?: StorageAdapaterOptions) => {
     const storage = createPersistStore<RPCServiceStore>(
       {
-        name: 'rpc',
+        name: APP_STORE_NAMES.rpc,
         template: {
           customRPC: {},
         },

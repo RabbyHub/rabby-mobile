@@ -10,6 +10,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { EVENTS, eventBus } from '@/utils/events';
 import type { TransactionHistoryService } from './transactionHistory';
 import type { TransactionWatcherService } from './transactionWatcher';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 interface WatcherItem {
   address: string;
@@ -39,7 +40,7 @@ export class TransactionBroadcastWatcherService {
     this.transactionWatcherService = options?.transactionWatcherService;
     this.store = createPersistStore<TransactionBroadcastWatcherStore>(
       {
-        name: 'transactionBroadcastWatcher',
+        name: APP_STORE_NAMES.transactionBroadcastWatcher,
         template: {
           pendingTx: {},
         },

@@ -1,6 +1,7 @@
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export type RabbyPointsStore = {
   signatures: Record<string, string>;
@@ -14,7 +15,7 @@ export class RabbyPointsService {
   constructor(options?: StorageAdapaterOptions) {
     const storage = createPersistStore<RabbyPointsStore>(
       {
-        name: 'RabbyPoints',
+        name: APP_STORE_NAMES.RabbyPoints,
         template: {
           signatures: {},
         },
