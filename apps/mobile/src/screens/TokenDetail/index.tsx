@@ -378,7 +378,11 @@ export const TokenDetailScreen = () => {
   }, [token]);
 
   const handleSwap = useMemoizedFn(
-    async (type: 'Buy' | 'Sell', address?: string) => {
+    async (
+      type: 'Buy' | 'Sell',
+      address?: string,
+      accountType?: KEYRING_TYPE,
+    ) => {
       if (!tokenSupportSwap) {
         toast.error('Token not support');
         return;
@@ -388,9 +392,12 @@ export const TokenDetailScreen = () => {
         serverId: token.chain,
       });
 
-      const toAccount = address
-        ? accounts.find(i => isSameAddress(address, i.address)) || finalAccount
-        : finalAccount;
+      const toAccount =
+        address && accountType
+          ? accounts.find(
+              i => isSameAddress(address, i.address) && i.type === accountType,
+            ) || finalAccount
+          : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       navigation.push(RootNames.StackTransaction, {
         screen: address ? RootNames.Swap : RootNames.MultiSwap,

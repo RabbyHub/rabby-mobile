@@ -15,7 +15,11 @@ interface Props {
   token: AbstractPortfolioToken;
   amountList: TokenFromAddressItem[];
   tokenSupportSwap: boolean;
-  handleSwap: (type: 'Buy' | 'Sell', address: string) => void;
+  handleSwap: (
+    type: 'Buy' | 'Sell',
+    address: string,
+    accountType: KEYRING_TYPE,
+  ) => void;
 }
 
 export const TokenArea: React.FC<Props> = ({
@@ -57,13 +61,13 @@ export const TokenArea: React.FC<Props> = ({
             {tokenSupportSwap && (
               <>
                 <TouchableOpacity
-                  onPress={() => handleSwap('Buy', item.address)}>
+                  onPress={() => handleSwap('Buy', item.address, item.type)}>
                   <Text style={styles.actionText}>
                     {t('page.tokenDetail.action.Buy')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleSwap('Sell', item.address)}>
+                  onPress={() => handleSwap('Sell', item.address, item.type)}>
                   <Text style={styles.actionText}>
                     {t('page.tokenDetail.action.Sell')}
                   </Text>

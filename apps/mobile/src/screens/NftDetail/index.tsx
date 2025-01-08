@@ -230,11 +230,13 @@ export const NFTDetailScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleSend = useCallback(
-    async (iToken: NFTItem, address: string) => {
-      const toAccount = address
-        ? accounts.find(i => isSameAddress(address, i.address)) ||
-          currentAccount
-        : currentAccount;
+    async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
+      const toAccount =
+        address && accountType
+          ? accounts.find(
+              i => isSameAddress(address, i.address) && i.type === accountType,
+            ) || currentAccount
+          : currentAccount;
       await switchSceneCurrentAccount('SendNFT', toAccount);
       navigate(RootNames.StackTransaction, {
         screen: RootNames.SendNFT,
@@ -399,7 +401,7 @@ export const NFTDetailScreen = () => {
           </View>
           <View style={[styles.buttonContainer]}>
             <Button
-              onPress={() => handleSend(iToken, address)}
+              onPress={() => handleSend(iToken, address, type)}
               title={t('page.sendNFT.sendButton')}
               titleStyle={styles.btnTitle}
             />
