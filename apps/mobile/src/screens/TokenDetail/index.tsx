@@ -226,11 +226,21 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
     Object.keys(asssest).map((address, index) => {
       if (isSingleAddress && !isSameAddress(address, account?.address)) {
+        return;
+      }
+
+      if (
+        accounts.findIndex(item => isSameAddress(item.address, address)) < 0
+      ) {
+        // filter watch address not in myaccounts
         return;
       }
 
@@ -262,7 +272,7 @@ export const TokenDetailScreen = () => {
     });
     console.debug('relateDefiList length:', resList.length);
     return resList;
-  }, [token, asssest, isSingleAddress, account]);
+  }, [token, asssest, isSingleAddress, account, accounts]);
   const { currentAccount } = useCurrentAccount();
   const finalAccount = account || currentAccount;
 
@@ -324,9 +334,6 @@ export const TokenDetailScreen = () => {
   }, [currentAccount?.address, token]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
 
   const handleSend = useMemoizedFn(async () => {
     const chain = findChain({
