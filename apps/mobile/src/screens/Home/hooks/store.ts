@@ -404,4 +404,27 @@ export const lastUpdateTimeAtom = atom(
     });
   },
 );
-// TODO: delete outer top10 address assets
+
+export const useDeleteAssets = () => {
+  const [, updateTokens] = useAtom(updateTokensAtom);
+  const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
+  const [, updateNftList] = useAtom(updateNFTsAtom);
+  const deleteAssets = (address: string) => {
+    if (!address) {
+      return;
+    }
+    updateTokens({
+      address,
+      newTokens: [],
+    });
+    updatePortfolios({
+      address,
+      newPortfolios: [],
+    });
+    updateNftList({
+      address,
+      newNFTs: [],
+    });
+  };
+  return deleteAssets;
+};

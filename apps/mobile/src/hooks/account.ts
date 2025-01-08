@@ -12,8 +12,7 @@ import {
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { getWalletIcon, WALLET_INFO } from '@/utils/walletInfo';
-import { RcIconWatchAddress } from '@/assets/icons/address';
+import { getWalletIcon } from '@/utils/walletInfo';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import {
   DisplayChainWithWhiteLogo,
@@ -26,6 +25,7 @@ import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
+import { useDeleteAssets } from '@/screens/Home/hooks/store';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -289,12 +289,14 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 
 export function useRemoveAccount() {
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const deleteAssetInStore = useDeleteAssets();
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
       await fetchAccounts();
+      deleteAssetInStore(account?.address?.toLowerCase());
     },
-    [fetchAccounts],
+    [deleteAssetInStore, fetchAccounts],
   );
 }
 
