@@ -601,9 +601,9 @@ function MultiAddressHome(): JSX.Element {
           </View>
         </ScrollView>
         <LinearGradient
-          colors={['rgba(224, 229, 236, 0)', '#E0E5EC']} // 渐变的颜色数组
-          start={{ x: 0, y: 0 }} // 渐变的起点
-          end={{ x: 0, y: 1 }} // 渐变的终点
+          colors={['rgba(224, 229, 236, 0)', '#E0E5EC']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
           style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
           <Pressable onPress={handlePressSearch} style={styles.search}>
             <RcNextSearchCC
