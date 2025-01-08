@@ -59,6 +59,7 @@ import {
   useCurrentSection,
 } from './components/AssetRenderItems/SectionHeaders';
 import { DisplayedProject } from './utils/project';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 interface Props {
   onRefresh(): void;
@@ -220,6 +221,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     sortTokens,
   ]);
 
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
       if (
@@ -229,6 +232,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       ) {
         openTokenDetailPopup(token);
       } else {
+        switchSceneCurrentAccount(
+          '@AssetPageFromSingleAddress',
+          currentAccount,
+        );
         navigate(RootNames.TokenDetail, {
           token: token,
           isSingleAddress: true,
@@ -236,10 +243,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         });
       }
     },
-    [currentAccount, openTokenDetailPopup],
+    [currentAccount, openTokenDetailPopup, switchSceneCurrentAccount],
   );
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      switchSceneCurrentAccount('@AssetPageFromSingleAddress', currentAccount);
       navigate(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
@@ -247,9 +255,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         isSingleAddress: true,
       });
     },
-    [currentAccount],
+    [switchSceneCurrentAccount, currentAccount],
   );
   const handlePressNft = (item: DisplayNftItem) => {
+    switchSceneCurrentAccount('@AssetPageFromSingleAddress', currentAccount);
     navigate(RootNames.NftDetail, {
       token: item,
       isSingleAddress: true,

@@ -254,6 +254,7 @@ export const TokenList = ({
       //   item => item._tokenId === token.id && item.chain === token.chain,
       // );AbstractPortfolioToken
       naviPush(RootNames.TokenDetail, {
+        // TODO: FIXME
         token: {
           ...token,
           logo_url: token._logo,

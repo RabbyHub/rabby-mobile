@@ -35,6 +35,8 @@ const DefaultStates: {
   MultiHistory: makeDefaultState(),
   // HistoryFilterScam: makeDefaultState(),
 
+  '@AssetPageFromSingleAddress': makeDefaultState(),
+
   // Receive: makeDefaultState(),
   // GasAccount: makeDefaultState(),
 

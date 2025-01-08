@@ -34,7 +34,11 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useAssetsMap } from '../Home/hooks/store';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import {
+  isSameAccount,
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
 import { DisplayNftItem } from '../Home/types';
@@ -44,6 +48,7 @@ import { preferenceService } from '@/core/services';
 import { RcIconMore } from '@/assets/icons/home';
 import { toast } from '@/components2024/Toast';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
+import { useKeepAccountOnSingleAddressBasedAssetDetailScreen } from '@/components/AccountSwitcher/singleAddressHooks';
 
 const ListItem = (props: {
   title: string;
@@ -142,6 +147,10 @@ export const NFTDetailScreen = () => {
   const { styles, colors } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const { currentAccount, switchSceneCurrentAccount } =
+    useKeepAccountOnSingleAddressBasedAssetDetailScreen();
+
   const {
     token,
     isSingleAddress,
@@ -222,7 +231,6 @@ export const NFTDetailScreen = () => {
     [],
   );
 
-  const { currentAccount } = useCurrentAccount();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -230,8 +238,6 @@ export const NFTDetailScreen = () => {
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],
   );
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
       const toAccount =

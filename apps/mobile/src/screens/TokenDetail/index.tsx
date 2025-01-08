@@ -54,6 +54,8 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import BigNumber from 'bignumber.js';
+import { RootStackParamsList } from '@/navigation-type';
+import { useKeepAccountOnSingleAddressBasedAssetDetailScreen } from '@/components/AccountSwitcher/singleAddressHooks';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -197,14 +199,10 @@ export const TokenDetailScreen = () => {
     needUseCacheToken,
     unHold: _unHold,
     isSingleAddress,
-  } = (route.params || {}) as {
-    fromPortfolio?: boolean;
-    token: CombineTokensItem;
-    account: KeyringAccountWithAlias;
-    isSingleAddress?: boolean;
-    needUseCacheToken?: boolean;
-    unHold?: boolean;
-  };
+  } = (route.params || {}) as RootStackParamsList[typeof RootNames.TokenDetail];
+
+  const { currentAccount, switchSceneCurrentAccount } =
+    useKeepAccountOnSingleAddressBasedAssetDetailScreen();
 
   const { styles } = useTheme2024({
     getStyle,
@@ -273,7 +271,6 @@ export const TokenDetailScreen = () => {
     console.debug('relateDefiList length:', resList.length);
     return resList;
   }, [token, asssest, isSingleAddress, account, accounts]);
-  const { currentAccount } = useCurrentAccount();
   const finalAccount = account || currentAccount;
 
   const handleOpenDefiDetail = useCallback(
@@ -332,8 +329,6 @@ export const TokenDetailScreen = () => {
       <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
     );
   }, [currentAccount?.address, token]);
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleSend = useMemoizedFn(async () => {
     const chain = findChain({

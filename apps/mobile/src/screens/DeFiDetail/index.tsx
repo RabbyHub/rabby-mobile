@@ -50,6 +50,7 @@ import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_ANDROID } from '@/core/native/utils';
 import { ellipsisAddress } from '@/utils/address';
+import { useKeepAccountOnSingleAddressBasedAssetDetailScreen } from '@/components/AccountSwitcher/singleAddressHooks';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -169,6 +170,10 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
+
+  const { currentAccount, switchSceneCurrentAccount } =
+    useKeepAccountOnSingleAddressBasedAssetDetailScreen();
+
   const {
     data,
     portfolioList,
@@ -250,7 +255,6 @@ export const DeFiDetailScreen = () => {
     disableAutoFetch: true,
   });
 
-  const { currentAccount } = useCurrentAccount();
   const finalAccount = useMemo(
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],

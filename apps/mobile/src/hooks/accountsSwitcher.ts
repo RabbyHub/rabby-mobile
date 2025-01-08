@@ -49,6 +49,8 @@ const AccountSwitcherInfos = {
 
   Approvals: makeSceneAccount(),
 
+  '@AssetPageFromSingleAddress': makeSceneAccount(),
+
   '@ActiveDappWebViewModal': makeSceneAccount(),
 };
 
