@@ -2,13 +2,14 @@ import {
   APP_STORE_NAMES,
   GET_SERVICE_BY_NAME,
 } from '@/core/storage/storeConstant';
-import { makeMigration, makeServiceMigration } from './_fns';
+import { makeStoreMigration } from './_fns.store';
+import { makeServiceMigration } from './_fns.service';
 
 import type { IDefiOrToken, IManageToken } from '@/core/services/preference';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
-export const preferenceStoreMigration = makeMigration({
-  // '20250101-000000': {
+export const preferenceStoreMigration = makeStoreMigration({
+  // '2025-01-01T00:00:00Z': {
   //   minAppVer: '0.5.6',
   //   migrator: ctx => {
   //     const preferenceData = ctx.appStorage.getItem('preference');
@@ -16,7 +17,7 @@ export const preferenceStoreMigration = makeMigration({
   //     return ctx;
   //   },
   // },
-  // '20250108-000000': (ctx) => {
+  // '2025-01-08T00:00:00Z': (ctx) => {
   //   return ctx;
   // },
 });
@@ -51,7 +52,10 @@ function decodeDefiOrTokenKey(x: string): IDefiOrToken {
 
 export const preferenceServiceMigration =
   makeServiceMigration<APP_STORE_NAMES.preference>({
-    '20250101-000000': {
+    '2024-12-25T00:00:00Z': ctx => {
+      return ctx;
+    },
+    '2025-01-01T00:00:00Z': {
       minAppVer: '0.5.4',
       migrate: ctx => {
         const preferenceService = ctx.service;

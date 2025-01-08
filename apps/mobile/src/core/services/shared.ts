@@ -35,9 +35,9 @@ import { BridgeService } from './bridge';
 import { GasAccountService } from './gasAccount';
 import { BrowserHistoryService } from './browserHistoryService';
 import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
-import migrateApp, { migrateServices } from '@/migrations';
+import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 
-migrateApp(appStorage);
+migrateAppStorage(appStorage);
 
 const keyringState = normalizeKeyringState().keyringData;
 
