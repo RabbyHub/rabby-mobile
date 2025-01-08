@@ -11,7 +11,7 @@ import { formatAmount } from '@/utils/number';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
-  totalUsdValue?: BigNumber;
+  totalUsdValue: BigNumber;
   fromAddress: Array<{
     address: string;
     amount: number;
@@ -167,14 +167,13 @@ export const combinedTokensAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const tokenMap: Record<string, CombineTokensItem> = {};
   const myAccouts = await getAllMyAccount();
-  const lowerAddresses = [
-    ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
-  ];
+  const lowerAddresses = new Set(myAccouts.map(i => i.address.toLowerCase()));
 
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.includes(address.toLowerCase())) {
+    if (!lowerAddresses.has(address.toLowerCase())) {
       return;
     }
+    lowerAddresses.delete(address.toLowerCase());
     assets.tokens?.forEach(token => {
       const key = `${token._tokenId}-${token.chain}`;
       if (!tokenMap[key]) {
@@ -205,27 +204,36 @@ export const combinedTokensAtom = atom(async get => {
     });
   });
 
-  return Object.values(tokenMap).map(i => ({
-    ...i,
-    totalAmount: i.totalAmount.toNumber(),
-    totalUsdValue: i.totalUsdValue?.toNumber(),
-    _usdValue: i.totalUsdValue?.toNumber(),
-    _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
-    _amountStr: formatAmount(i.totalAmount.toNumber()),
-  }));
+  return Object.values(tokenMap)
+    .sort((a, b) =>
+      a.totalUsdValue.gt(b.totalUsdValue)
+        ? -1
+        : a.totalUsdValue.lt(b.totalUsdValue)
+        ? 1
+        : 0,
+    )
+    .map(i => ({
+      ...i,
+      totalAmount: i.totalAmount.toNumber(),
+      totalUsdValue: i.totalUsdValue?.toNumber(),
+      _usdValue: i.totalUsdValue?.toNumber(),
+      _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
+      _amountStr: formatAmount(i.totalAmount.toNumber()),
+    }));
 });
 
 export const combinedDefiAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const defiMap: Record<string, CombineDefiItem> = {};
   const myAccouts = await getAllMyAccount();
-  const lowerAddresses = [
-    ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
-  ];
+  const lowerAddresses = new Set(
+    myAccouts.map(i => i.address.toLowerCase()) || [],
+  );
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.includes(address.toLowerCase())) {
+    if (!lowerAddresses.has(address.toLowerCase())) {
       return;
     }
+    lowerAddresses.delete(address.toLowerCase());
     assets.portfolios?.forEach(defi => {
       const key = defi.id;
       if (!key) {
@@ -273,13 +281,14 @@ export const combinedNFTAtom = atom(async get => {
   const assetsMap = get(assetsMapAtom);
   const nftMap: Record<string, CombineNFTItem> = {};
   const myAccouts = await getAllMyAccount();
-  const lowerAddresses = [
-    ...new Set(myAccouts.map(i => i.address.toLowerCase()) || []),
-  ];
+  const lowerAddresses = new Set(
+    myAccouts.map(i => i.address.toLowerCase()) || [],
+  );
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.includes(address.toLowerCase())) {
+    if (!lowerAddresses.has(address.toLowerCase())) {
       return;
     }
+    lowerAddresses.delete(address.toLowerCase());
     assets.nfts?.forEach(nft => {
       const key = `${nft.chain}-${nft.id}-${nft.name || ''}`;
       if (!key) {

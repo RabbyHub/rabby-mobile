@@ -12,7 +12,6 @@ import {
   TokenRow,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
-import useSortToken from '@/screens/Home/hooks/useSortTokens';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
@@ -40,14 +39,13 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     refreshing,
     isLoading,
   } = useAssets(filterText);
-  const sortTokens = useSortToken(tokens);
   const { t } = useTranslation();
 
   const [foldHideList, setFoldHideList] = useState(true);
 
   const sections = useMemo(() => {
-    const unFoldList = sortTokens.filter(i => filterText || !i._isFold);
-    const foldList = sortTokens.filter(i => i._isFold);
+    const unFoldList = tokens.filter(i => filterText || !i._isFold);
+    const foldList = tokens.filter(i => i._isFold);
     return [
       {
         type: 'unfold_token',
@@ -70,7 +68,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
         data: nftList,
       },
     ];
-  }, [filterText, foldHideList, nftList, portfolios, sortTokens]);
+  }, [filterText, foldHideList, nftList, portfolios, tokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -159,7 +157,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       case 'fold_token':
         return (
           <TokenRowSectionHeader
-            str={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
             fold={foldHideList}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
@@ -197,13 +195,11 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   const ListFooterComponent = useMemo(() => {
     return (
       <SearchOnTheChain
-        existTokensIds={sortTokens.map(
-          token => `${token.chain}:${token._tokenId}`,
-        )}
+        existTokensIds={tokens.map(token => `${token.chain}:${token._tokenId}`)}
         filterText={filterText}
       />
     );
-  }, [filterText, sortTokens]);
+  }, [filterText, tokens]);
 
   return (
     <SectionList
