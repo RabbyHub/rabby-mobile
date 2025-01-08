@@ -196,10 +196,12 @@ export const TokenDetailScreen = () => {
     account,
     needUseCacheToken,
     unHold: _unHold,
+    isSingleAddress,
   } = (route.params || {}) as {
     fromPortfolio?: boolean;
     token: CombineTokensItem;
     account: KeyringAccountWithAlias;
+    isSingleAddress?: boolean;
     needUseCacheToken?: boolean;
     unHold?: boolean;
   };
@@ -224,8 +226,6 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-
-  const isSingleAddress = useMemo(() => !!account, [account]);
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
@@ -334,7 +334,7 @@ export const TokenDetailScreen = () => {
     });
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.MultiSend,
+      screen: isSingleAddress ? RootNames.Send : RootNames.MultiSend,
       params: {
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: token?._tokenId,
@@ -419,7 +419,7 @@ export const TokenDetailScreen = () => {
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       navigation.push(RootNames.StackTransaction, {
-        screen: address ? RootNames.Swap : RootNames.MultiSwap,
+        screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?._tokenId,
