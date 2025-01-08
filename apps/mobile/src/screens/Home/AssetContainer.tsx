@@ -215,28 +215,33 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     });
   };
   const handleSwitchTab = (key: AsssetKey) => {
+    setFoldHideList(true);
     setTimeout(() => {
-      let index = 0;
-      if (key === 'token') {
-        index = 1;
-      }
-      if (key === 'defi') {
-        index = dataList.findIndex(
-          item =>
-            item.type === 'defi_header' || item.type === 'toggle_defi_fold',
-        );
-      }
-      if (key === 'nft') {
-        index = dataList.findIndex(
-          item => item.type === 'nft_header' || item.type === 'toggle_nft_fold',
-        );
-      }
-      flatListRef.current?.scrollToIndex({
-        animated: true,
-        index: index,
-        viewOffset: ASSETS_SECTION_HEADER,
+      const data = (flatListRef.current?.props.data || []) as ActionItem[];
+      flatListRef.current?.forceUpdate(() => {
+        let index = 0;
+        if (key === 'token') {
+          index = 1;
+        }
+        if (key === 'defi') {
+          index = data.findIndex(
+            item =>
+              item.type === 'defi_header' || item.type === 'toggle_defi_fold',
+          );
+        }
+        if (key === 'nft') {
+          index = data.findIndex(
+            item =>
+              item.type === 'nft_header' || item.type === 'toggle_nft_fold',
+          );
+        }
+        flatListRef.current?.scrollToIndex({
+          animated: true,
+          index: index,
+          viewOffset: ASSETS_SECTION_HEADER,
+        });
       });
-    }, 100);
+    }, 0);
   };
 
   const ListEmptyComponent = useMemo(() => {
@@ -523,7 +528,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   return (
     <>
       <FlatList<ActionItem>
-        data={dataList}
+        data={loading ? [] : dataList}
         ref={flatListRef}
         ListHeaderComponent={header}
         renderItem={renderItem}
