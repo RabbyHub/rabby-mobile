@@ -542,7 +542,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
         stickyHeaderIndices={[1]}
-        windowSize={10}
+        windowSize={5}
         onScrollToIndexFailed={info => {
           console.warn('Scroll to index failed', info);
         }}
