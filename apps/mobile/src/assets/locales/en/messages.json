@@ -1260,6 +1260,7 @@
         "requestDeBankTestnetGasToken": "Request DeBank Testnet Gas Token"
       },
       "tokenDetail": {
+        "notSupportedOnChain": "Not supported on this chain",
         "blockedTip": "Blocked token will not be shown in token list",
         "blocked": "Blocked",
         "selectedCustom": "Token is not listed by Rabby. You've added it to the token list by custom.",

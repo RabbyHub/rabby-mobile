@@ -4,6 +4,7 @@ import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
+import { Tip } from '@/components/Tip';
 import {
   KeyringAccountWithAlias,
   useAccounts,
@@ -471,30 +472,47 @@ export const TokenDetailScreen = () => {
           onPress={handleSend}
         />
         <View style={styles.btnGap} />
-        <Button
-          title={
-            unHold
-              ? t('page.tokenDetail.action.Sell')
-              : t('page.tokenDetail.action.Buy')
-          }
-          containerStyle={StyleSheet.flatten([styles.btnContainer])}
-          buttonStyle={styles.buyBtnContainer}
-          titleStyle={styles.buyBtnTitle}
-          // type={'ghost'}
-          onPress={() => handleSwap('Buy')}
-          disabled={!tokenSupportSwap || unHold}
-        />
+        <View style={styles.btnContainer}>
+          <Tip
+            placement="top"
+            content={
+              !tokenSupportSwap
+                ? t('page.tokenDetail.notSupportedOnChain')
+                : undefined
+            }>
+            <Button
+              title={
+                unHold
+                  ? t('page.tokenDetail.action.Sell')
+                  : t('page.tokenDetail.action.Buy')
+              }
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              onPress={() => handleSwap('Buy')}
+              disabled={!tokenSupportSwap || unHold}
+            />
+          </Tip>
+        </View>
         <View style={styles.btnGap} />
-        <Button
-          title={
-            unHold
-              ? t('page.tokenDetail.action.Buy')
-              : t('page.tokenDetail.action.Sell')
-          }
-          containerStyle={styles.btnContainer}
-          onPress={() => handleSwap(unHold ? 'Buy' : 'Sell')}
-          disabled={!tokenSupportSwap}
-        />
+        <View style={styles.btnContainer}>
+          <Tip
+            placement="top"
+            content={
+              !tokenSupportSwap
+                ? t('page.tokenDetail.notSupportedOnChain')
+                : undefined
+            }>
+            <Button
+              title={
+                unHold
+                  ? t('page.tokenDetail.action.Buy')
+                  : t('page.tokenDetail.action.Sell')
+              }
+              containerStyle={styles.btnContainer}
+              onPress={() => handleSwap(unHold ? 'Buy' : 'Sell')}
+              disabled={!tokenSupportSwap}
+            />
+          </Tip>
+        </View>
       </View>
     </NormalScreenContainer2024>
   );

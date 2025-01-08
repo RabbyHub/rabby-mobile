@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ViewStyle,
   TouchableWithoutFeedback,
+  Animated,
+  Easing,
 } from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
@@ -119,6 +121,47 @@ export const TokenList = ({
     relateTokenId?: string;
     isSingleAddress?: boolean;
   };
+
+  const [highlightAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(highlightAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 0.5,
+        duration: 1000,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 0.5,
+        duration: 1000,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [highlightAnim]);
+
+  const backgroundColor = highlightAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [
+      'transparent',
+      colors2024['brand-light-1'],
+      'rgba(112, 132, 255, 0.04)',
+    ],
+  });
 
   const headers = [name, 'amount', 'USD Value'];
 
@@ -244,11 +287,11 @@ export const TokenList = ({
       </View>
       {list.map(l => {
         return (
-          <View
+          <Animated.View
             style={[
               styles.tokenRow,
               styles.tokenRowToken,
-              relateTokenId === l.id && styles.hightlightRow,
+              relateTokenId === l.id && { backgroundColor },
             ]}
             key={l.id}>
             <TouchableWithoutFeedback
@@ -300,7 +343,7 @@ export const TokenList = ({
                 </Tip>
               ) : null}
             </View>
-          </View>
+          </Animated.View>
         );
       })}
     </View>
@@ -363,7 +406,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 10,
     paddingHorizontal: 8,
     height: 20,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(112, 132, 255, 0.12)',
   },
   portfolioTypeText: {
     fontSize: 12,
@@ -412,7 +455,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 40,
   },
   hightlightRow: {
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(112, 132, 255, 0.04)',
   },
   tokenRowHeader: {
     marginBottom: 8,

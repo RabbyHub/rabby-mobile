@@ -601,7 +601,11 @@ function MultiAddressHome(): JSX.Element {
           </View>
         </ScrollView>
         <LinearGradient
-          colors={['rgba(224, 229, 236, 0)', '#E0E5EC']}
+          colors={
+            isLight
+              ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
+              : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
+          }
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
@@ -848,7 +852,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   search: {
     width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     height: 60,
     borderRadius: 100,
     flexDirection: 'row',

@@ -498,7 +498,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
-        snapPoints={['90%']}
+        snapPoints={[ModalLayouts.defaultHeightPercentText]}
         enableContentPanningGesture={false}
         enableDismissOnClose={true}
         onChange={idx => {

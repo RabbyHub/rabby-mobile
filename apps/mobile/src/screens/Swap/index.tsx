@@ -385,13 +385,20 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     } else if (
       receiveToken &&
       receiveToken?.low_credit_score &&
-      !lowCreditInit.current
+      !lowCreditInit.current &&
+      navState?.type !== 'Sell'
     ) {
       setLowCreditToken(receiveToken);
       setLowCreditVisible(true);
       lowCreditInit.current = true;
     }
-  }, [isFocused, receiveToken, setLowCreditToken, setLowCreditVisible]);
+  }, [
+    isFocused,
+    receiveToken,
+    setLowCreditToken,
+    setLowCreditVisible,
+    navState?.type,
+  ]);
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 
