@@ -88,7 +88,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
 
-  const dataList = useMemo(() => {
+  const { dataList, stickyHeaderIndices } = useMemo(() => {
+    const result: {
+      stickyHeaderIndices?: number[];
+      dataList: ActionItem[];
+    } = { stickyHeaderIndices: undefined, dataList: [] };
+
     const unFoldTokenList: ActionItem[] = sortTokens
       .filter(i => !i._isFold)
       .map(item => ({
@@ -125,10 +130,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         type: 'unfold_nft',
         data: item,
       }));
-    const itemData: Array<{
+
+    const itemData: {
       show: boolean;
       data: ActionItem[];
-    }> = [
+    }[] = [
       {
         show: hasAssets,
         data: [
@@ -167,10 +173,19 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
     ];
-    return itemData
+    result.dataList = itemData
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
+
+    const asset_header_idx = result.dataList.findIndex(
+      item => item.type === 'asset_header',
+    );
+    if (asset_header_idx > -1) {
+      result.stickyHeaderIndices = [asset_header_idx + 1];
+    }
+
+    return result;
   }, [
     foldDefi,
     foldHideList,
@@ -407,6 +422,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const renderItem = ({ item: _item }: { item: ActionItem }) => {
     const { type, data } = _item;
+
     switch (type) {
       case 'unfold_token':
       case 'fold_token':
@@ -455,7 +471,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             onPress={() => handlePressNft(data)}
           />
         );
-      /** header */
+      // /** header */
       case 'asset_header':
         return (
           <AssestAllHeader
@@ -573,7 +589,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         contentContainerStyle={styles.bgContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
-        stickyHeaderIndices={[1]}
+        stickyHeaderIndices={stickyHeaderIndices}
+        // stickyHeaderHiddenOnScroll
         windowSize={10}
         onScrollToIndexFailed={info => {
           console.warn('Scroll to index failed', info);
