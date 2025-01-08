@@ -577,6 +577,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         windowSize={10}
         onScrollToIndexFailed={info => {
           console.warn('Scroll to index failed', info);
+          if (info.highestMeasuredFrameIndex < info.index) {
+            toast.info(
+              `Ops! The asset wasn't shown yet, please scroll down manually`,
+            );
+          }
         }}
         refreshControl={
           <RefreshControl
