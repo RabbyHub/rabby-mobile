@@ -38,6 +38,8 @@ export const useQueryProjects = (
       setLoading(true);
       try {
         await Promise.all([updatePortfolio(), updateTokens(), reloadNftList()]);
+      } catch (error) {
+        console.error(error);
       } finally {
         console.log('🔍 CUSTOM_LOGGER:=>: force==refreshPositions end');
         setLoading(false);
