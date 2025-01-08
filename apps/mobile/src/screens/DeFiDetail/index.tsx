@@ -35,7 +35,6 @@ import {
   KeyringAccountWithAlias,
   useCurrentAccount,
   useMyAccounts,
-  useAccounts,
 } from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
@@ -246,7 +245,7 @@ export const DeFiDetailScreen = () => {
   const [asssest] = useAssetsMap();
 
   const { initFetchTop10Assets, refreshing } = useAssets();
-  const { accounts } = useAccounts();
+  const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
 
   const { currentAccount } = useCurrentAccount();

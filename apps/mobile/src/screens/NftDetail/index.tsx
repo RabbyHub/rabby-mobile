@@ -25,7 +25,7 @@ import FastImage from 'react-native-fast-image';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import {
   useCurrentAccount,
-  useAccounts,
+  useMyAccounts,
   KeyringAccountWithAlias,
 } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -222,7 +222,7 @@ export const NFTDetailScreen = () => {
   );
 
   const { currentAccount } = useCurrentAccount();
-  const { accounts } = useAccounts();
+  const { accounts } = useMyAccounts();
   const finalAccount = useMemo(
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],
