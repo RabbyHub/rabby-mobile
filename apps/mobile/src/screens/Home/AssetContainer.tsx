@@ -640,7 +640,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         contentContainerStyle={styles.bgContainer}
         showsVerticalScrollIndicator={false}
         stickySectionHeadersEnabled
-        stickyHeaderIndices={[4]}
         windowSize={10}
         onScrollToIndexFailed={info => {
           console.warn('Scroll to index failed', info);
