@@ -143,7 +143,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
-        show: !!unFoldDefiList.length,
+        show: !!portfolios.length,
         data: [{ type: 'defi_header' }, ...unFoldDefiList],
       },
       {
@@ -156,7 +156,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
-        show: !!unFoldNftList.length,
+        show: !!nftList.length,
         data: [{ type: 'nft_header' }, ...unFoldNftList],
       },
       {
