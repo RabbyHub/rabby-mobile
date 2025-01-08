@@ -320,8 +320,9 @@ export const TokenDetailScreen = () => {
   }, [currentAccount?.address, token]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
 
   const handleSend = useMemoizedFn(async () => {
     const chain = findChain({
@@ -350,13 +351,11 @@ export const TokenDetailScreen = () => {
       return res;
     }
 
-    const actionsAccounts = [...sortedAccounts];
-
     const { fromAddress } = token;
     const sortFromAddress = fromAddress?.sort((a, b) =>
       new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
     );
-    actionsAccounts.map(item => {
+    accounts.map(item => {
       const idx = sortFromAddress?.findIndex(
         i =>
           isSameAddress(i.address, item.address) &&
@@ -373,7 +372,7 @@ export const TokenDetailScreen = () => {
     });
 
     return res;
-  }, [token, sortedAccounts, isSingleAddress, finalAccount]);
+  }, [token, accounts, isSingleAddress, finalAccount]);
 
   const tokenSupportSwap = useMemo(() => {
     const tokenChain = findChain({ serverId: token?.chain })?.enum;

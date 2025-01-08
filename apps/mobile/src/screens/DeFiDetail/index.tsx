@@ -33,6 +33,7 @@ import { useRefreshTags } from '../Home/hooks/token';
 import { preferenceService } from '@/core/services';
 import {
   KeyringAccountWithAlias,
+  useAccounts,
   useCurrentAccount,
   useMyAccounts,
 } from '@/hooks/account';
@@ -245,8 +246,9 @@ export const DeFiDetailScreen = () => {
   const [asssest] = useAssetsMap();
 
   const { initFetchTop10Assets, refreshing } = useAssets();
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
 
   const { currentAccount } = useCurrentAccount();
   const finalAccount = useMemo(
@@ -257,7 +259,6 @@ export const DeFiDetailScreen = () => {
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
     if (isSingleAddress) {
-      console.debug('relateDefiList isSingleAddress');
       sectionsList.push({
         data: portfolioList,
         project: data,
@@ -291,7 +292,7 @@ export const DeFiDetailScreen = () => {
       });
     });
 
-    sortedAccounts.map(account => {
+    accounts.map(account => {
       const idx = tempList.findIndex(
         item =>
           item.address === account.address &&
@@ -305,18 +306,10 @@ export const DeFiDetailScreen = () => {
         });
       }
     });
-    console.debug('relateDefiList length:', sectionsList.length);
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [
-    data,
-    asssest,
-    sortedAccounts,
-    isSingleAddress,
-    finalAccount,
-    portfolioList,
-  ]);
+  }, [data, asssest, accounts, isSingleAddress, finalAccount, portfolioList]);
 
   const sumNetWorth = useMemo(() => {
     const res = sectionsMultiProject.reduce((pre, cur) => {

@@ -27,6 +27,7 @@ import {
   useCurrentAccount,
   useMyAccounts,
   KeyringAccountWithAlias,
+  useAccounts,
 } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -222,7 +223,9 @@ export const NFTDetailScreen = () => {
   );
 
   const { currentAccount } = useCurrentAccount();
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
   const finalAccount = useMemo(
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],
@@ -252,8 +255,6 @@ export const NFTDetailScreen = () => {
   );
 
   const [asssest] = useAssetsMap();
-  const sortedAccounts = useSortAddressList(accounts);
-
   const itemList = useMemo(() => {
     const resList: {
       data: NFTItem;
@@ -299,7 +300,7 @@ export const NFTDetailScreen = () => {
       });
     });
 
-    sortedAccounts.map(account => {
+    accounts.map(account => {
       const idx = tempList.findIndex(
         item =>
           item.address === account.address &&
@@ -316,7 +317,7 @@ export const NFTDetailScreen = () => {
     });
     console.log('relateNFTList length:', resList.length);
     return resList;
-  }, [asssest, token, sortedAccounts, finalAccount, isSingleAddress]);
+  }, [asssest, token, accounts, finalAccount, isSingleAddress]);
 
   const renderAccountHeader = useCallback(
     (type: KEYRING_TYPE, aliasName: string) => {
