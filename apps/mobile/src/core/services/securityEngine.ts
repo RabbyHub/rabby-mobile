@@ -13,6 +13,7 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import { openapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export interface SecurityEngineStore {
   userData: UserData;
@@ -72,7 +73,7 @@ export class SecurityEngineService {
   init = async (options?: StorageAdapaterOptions) => {
     const storage = await createPersistStore<SecurityEngineStore>(
       {
-        name: 'securityEngine',
+        name: APP_STORE_NAMES.securityEngine,
         template: {
           userData: {
             originBlacklist: [],

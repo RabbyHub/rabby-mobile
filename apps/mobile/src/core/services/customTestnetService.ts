@@ -31,6 +31,7 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import { updateChainStore } from '@/constant/chains';
 import { appStorage } from '../storage/mmkv';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 // todo
 const matomoRequestEvent = (args: any) => {
@@ -101,7 +102,7 @@ export class CustomTestnetService {
   init = (options?: StorageAdapaterOptions) => {
     const storage = createPersistStore<CutsomTestnetServiceStore>(
       {
-        name: 'customTestnet',
+        name: APP_STORE_NAMES.customTestnet,
         template: {
           customTestnet: {},
           customTokenList: [],

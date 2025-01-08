@@ -23,6 +23,7 @@ import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -92,7 +93,7 @@ export class TransactionHistoryService {
   constructor(options?: StorageAdapaterOptions) {
     this.store = createPersistStore<TxHistoryStore>(
       {
-        name: 'txHistory',
+        name: APP_STORE_NAMES.txHistory,
         template: {
           transactions: [],
         },

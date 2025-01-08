@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils, urlUtils } from '@rabby-wallet/base-utils';
-import * as Sentry from '@sentry/react-native';
 
 import dayjs from 'dayjs';
 import {
@@ -17,12 +16,9 @@ import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 const { isSameAddress } = addressUtils;
-
-const SWITCHES = {
-  KEEP_DATA_ON_DEV: false,
-};
 
 // export interface Account {
 //   type: string;
@@ -65,43 +61,16 @@ export type IManageToken = {
   tokenId: string;
 };
 
-function sortObjByKey<T extends Record<string, any>>(obj: T): T {
-  return Object.keys(obj)
-    .sort()
-    .reduce((acc, key) => {
-      // @ts-expect-error
-      acc[key] = obj[key];
-      return acc;
-    }, {} as T);
-}
 export type IManageNft = {
   id: string;
   chain: string;
 };
-
-function makeManageTokenKey(x: IManageToken) {
-  return urlUtils.obj2query(sortObjByKey(x));
-}
-
-function decodeManageTokenKey(x: string): IManageToken {
-  const { chainId, tokenId } = urlUtils.query2obj(x);
-  return { chainId, tokenId };
-}
 
 export type IDefiOrToken = {
   id: string;
   chainid: string;
   type: 'token' | 'defi';
 };
-
-function makeDefiOrTokenKey(x: IDefiOrToken) {
-  return urlUtils.obj2query(sortObjByKey(x));
-}
-
-function decodeDefiOrTokenKey(x: string): IDefiOrToken {
-  const { chainid, id, type } = urlUtils.query2obj(x);
-  return { chainid, id, type: type as any };
-}
 
 export type ITokenSetting = {
   pinedQueue?: IManageToken[]; // maual always true
@@ -220,7 +189,7 @@ export class PreferenceService {
     this.sessionService = options.sessionService;
     this.store = createPersistStore<PreferenceStore>(
       {
-        name: 'preference',
+        name: APP_STORE_NAMES.preference,
         template: {
           currentAccount: undefined,
           balanceMap: {},
@@ -263,140 +232,6 @@ export class PreferenceService {
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
-    }
-
-    try {
-      this._migrate();
-    } catch (error) {
-      console.error('[preference::_migrate] error', error);
-      Sentry.captureException(error);
-    }
-  }
-
-  private _trimLegacyData<T extends (...args: any) => any>(
-    fn: Function,
-  ): undefined | ReturnType<T> {
-    if (__DEV__ && SWITCHES.KEEP_DATA_ON_DEV) return;
-
-    return fn();
-  }
-
-  private _migrate() {
-    const _logMigratedData = () => {
-      // // leave here for debug
-      // console.debug(
-      //   'this.store.pinedQueue',
-      //   JSON.stringify(this.store.pinedQueue, null, '\t'),
-      //   'this.store.foldTokens',
-      //   JSON.stringify(this.store.foldTokens, null, '\t'),
-      //   'this.store.unfoldTokens',
-      //   JSON.stringify(this.store.unfoldTokens, null, '\t'),
-      // );
-      // // leave here for debug
-      // console.debug(
-      //   'this.store.includeDefiAndTokens',
-      //   JSON.stringify(this.store.includeDefiAndTokens, null, '\t'),
-      //   'this.store.excludeDefiAndTokens',
-      //   JSON.stringify(this.store.excludeDefiAndTokens, null, '\t'),
-      // );
-    };
-    const tokenManageSettingMap = { ...this.store.tokenManageSettingMap };
-    if (Object.keys(tokenManageSettingMap).length === 0) {
-      _logMigratedData();
-      return;
-    }
-
-    // leave here for debug
-    // console.debug('[preference::_migrate] this.store.tokenManageSettingMap', JSON.stringify(this.store.tokenManageSettingMap, null, '\t'));
-    const lists = {
-      pinedQueue: this.store.pinedQueue || [],
-      foldTokens: this.store.foldTokens || [],
-      unfoldTokens: this.store.unfoldTokens || [],
-      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
-      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
-    };
-    const sets = {
-      pinedQueue: new Set(lists.pinedQueue.map(x => makeManageTokenKey(x))),
-      foldTokens: new Set(lists.foldTokens.map(x => makeManageTokenKey(x))),
-      unfoldTokens: new Set(lists.unfoldTokens.map(x => makeManageTokenKey(x))),
-      includeDefiAndTokens: new Set(
-        lists.includeDefiAndTokens.map(x => makeDefiOrTokenKey(x)),
-      ),
-      excludeDefiAndTokens: new Set(
-        lists.excludeDefiAndTokens.map(x => makeDefiOrTokenKey(x)),
-      ),
-    };
-
-    Object.entries(tokenManageSettingMap).forEach(([eoaAddress, setting]) => {
-      (['pinedQueue', 'foldTokens', 'unfoldTokens'] as const).forEach(key => {
-        setting[key]?.forEach(item => {
-          const k = makeManageTokenKey(item);
-          if (!sets[key].has(k)) sets[key].add(k);
-        });
-
-        this._trimLegacyData(() => {
-          setting[key] = [];
-        });
-      });
-
-      (['includeDefiAndTokens', 'excludeDefiAndTokens'] as const).forEach(
-        key => {
-          setting[key]?.forEach(item => {
-            const k = makeDefiOrTokenKey(item);
-            if (!sets[key].has(k)) sets[key].add(k);
-          });
-
-          this._trimLegacyData(() => {
-            setting[key] = [];
-          });
-        },
-      );
-
-      this._trimLegacyData(() => {
-        delete tokenManageSettingMap[eoaAddress];
-      });
-    });
-
-    priority_process: {
-      // pinedQueue > foldTokens > unfoldTokens
-      sets.pinedQueue.forEach(k => {
-        sets.foldTokens.delete(k);
-        sets.unfoldTokens.delete(k);
-      });
-      sets.foldTokens.forEach(k => {
-        sets.unfoldTokens.delete(k);
-      });
-
-      lists.pinedQueue = [...sets.pinedQueue].map(k => decodeManageTokenKey(k));
-      lists.foldTokens = [...sets.foldTokens].map(k => decodeManageTokenKey(k));
-      lists.unfoldTokens = [...sets.unfoldTokens].map(k =>
-        decodeManageTokenKey(k),
-      );
-
-      // excludeDefiAndTokens > includeDefiAndTokens
-      sets.excludeDefiAndTokens.forEach(k => {
-        sets.includeDefiAndTokens.delete(k);
-      });
-
-      lists.excludeDefiAndTokens = [...sets.excludeDefiAndTokens].map(k =>
-        decodeDefiOrTokenKey(k),
-      );
-      lists.includeDefiAndTokens = [...sets.includeDefiAndTokens].map(k =>
-        decodeDefiOrTokenKey(k),
-      );
-    }
-
-    flush_back: {
-      this.store.pinedQueue = lists.pinedQueue;
-      this.store.foldTokens = lists.foldTokens;
-      this.store.unfoldTokens = lists.unfoldTokens;
-
-      this.store.includeDefiAndTokens = lists.includeDefiAndTokens;
-      this.store.excludeDefiAndTokens = lists.excludeDefiAndTokens;
-
-      _logMigratedData();
-
-      this.store.tokenManageSettingMap = tokenManageSettingMap;
     }
   }
 
