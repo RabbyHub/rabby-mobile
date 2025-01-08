@@ -10,6 +10,7 @@ import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { TransactionHistoryService } from './transactionHistory';
 import { customTestnetService } from './customTestnetService';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 class Transaction {
   createdTime = 0;
@@ -40,7 +41,7 @@ export class TransactionWatcherService {
     this.transactionHistoryService = options.transactionHistoryService;
     this.store = createPersistStore<TransactionWatcherStore>(
       {
-        name: 'transactions',
+        name: APP_STORE_NAMES.transactions,
         template: {
           pendingTx: {},
         },
