@@ -218,6 +218,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     });
   };
   const handleSwitchTab = (key: AsssetKey) => {
+    if (loading || refreshing) {
+      return;
+    }
     setFoldHideList(true);
     setTimeout(() => {
       flatListRef.current?.forceUpdate(() => {
@@ -555,7 +558,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   return (
     <>
       <FlatList<ActionItem>
-        data={loading ? [] : dataList}
+        data={dataList}
         ref={flatListRef}
         viewabilityConfig={viewabilityConfigRef.current}
         onViewableItemsChanged={onViewableItemsChanged}
