@@ -49,7 +49,13 @@ type IServiceAfterMigrate<T extends STORE_BASED_SERVICE> = (
 ) => void;
 
 type IServiceMigration<T extends STORE_BASED_SERVICE> = {
-  minAppVer?: string;
+  shouldMigration?:
+    | boolean
+    | ((ctx: {
+        service: T;
+        appVersion: string;
+        semverModule: typeof semver;
+      }) => boolean);
   migrate: IServiceMigrate<T>;
   afterMigrate?: IServiceAfterMigrate<T>;
   migrateFailed?: IServiceMigrate<T>;
@@ -118,12 +124,19 @@ export function processMigrateService<U extends MIGRATABLE_STORE_SERVICE>(
           }
         : migration[utc0Ver];
 
-    if (
-      formattedMigration.minAppVer &&
-      !semver.satisfies(APP_VER, formattedMigration.minAppVer)
-    ) {
+    const { shouldMigration } = formattedMigration;
+    const finalShouldMigration =
+      typeof shouldMigration === 'function'
+        ? shouldMigration({
+            service: context.service,
+            appVersion: APP_VER,
+            semverModule: semver,
+          })
+        : !!shouldMigration;
+
+    if (!finalShouldMigration) {
       console.debug(
-        `${context.loggerPrefix} Skip migration ${utc0Ver} due to minAppVer`,
+        `${context.loggerPrefix} Skip migration ${utc0Ver} due to judgement`,
       );
       continue;
     }

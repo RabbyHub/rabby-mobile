@@ -33,18 +33,18 @@ export function getLatestStoreMigration(storeName: APP_STORE_NAMES) {
 
 type StoreMigrator = (data: IMigrationStorageContext) => any;
 
-type IStoreMigration<T = any> = {
-  minAppVer?: string;
+type IStoreMigration = {
+  shouldMigration?:
+    | boolean
+    | ((ctx: {
+        /* storeName: string,  */ appVersion: string;
+        semverModule: typeof semver;
+      }) => boolean);
   migrator: StoreMigrator;
 };
 
 export type IStoreMigrations = {
-  [dateVer in UTC0LikeVer]:
-    | StoreMigrator
-    | {
-        minAppVer?: string;
-        migrator: StoreMigrator;
-      };
+  [dateVer in UTC0LikeVer]: StoreMigrator | IStoreMigration;
 };
 
 type IMigrationStorageContext = {
@@ -93,12 +93,15 @@ export function processMigration(
           }
         : migration[utc0Ver];
 
-    if (
-      formattedMigrator.minAppVer &&
-      !semver.satisfies(APP_VER, formattedMigrator.minAppVer)
-    ) {
+    const { shouldMigration } = formattedMigrator;
+    const finalShouldMigration =
+      typeof shouldMigration === 'function'
+        ? shouldMigration({ appVersion: APP_VER, semverModule: semver })
+        : !!shouldMigration;
+
+    if (!finalShouldMigration) {
       console.debug(
-        `${context.loggerPrefix} Skip migration ${utc0Ver} due to minAppVer`,
+        `${context.loggerPrefix} Skip migration ${utc0Ver} due to judgement`,
       );
       continue;
     }

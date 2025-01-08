@@ -1,7 +1,4 @@
-import {
-  APP_STORE_NAMES,
-  GET_SERVICE_BY_NAME,
-} from '@/core/storage/storeConstant';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { makeStoreMigration } from './_fns.store';
 import { makeServiceMigration } from './_fns.service';
 
@@ -9,14 +6,15 @@ import type { IDefiOrToken, IManageToken } from '@/core/services/preference';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
 export const preferenceStoreMigration = makeStoreMigration({
-  // '2025-01-01T00:00:00Z': {
-  //   minAppVer: '0.5.6',
-  //   migrator: ctx => {
-  //     const preferenceData = ctx.appStorage.getItem('preference');
-  //     console.debug(`${ctx.loggerPrefix} preferenceData`, preferenceData);
-  //     return ctx;
-  //   },
-  // },
+  '2025-01-01T00:00:00Z': {
+    shouldMigration: !__DEV__
+      ? false
+      : ctx => ctx.semverModule.gte(ctx.appVersion, '0.5.4'),
+    migrator: ctx => {
+      const preferenceData = ctx.appStorage.getItem('preference');
+      console.debug(`${ctx.loggerPrefix} preferenceData`, preferenceData);
+    },
+  },
   // '2025-01-08T00:00:00Z': (ctx) => {
   //   return ctx;
   // },
@@ -56,7 +54,7 @@ export const preferenceServiceMigration =
       return ctx;
     },
     '2025-01-01T00:00:00Z': {
-      minAppVer: '0.5.4',
+      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.5.4'),
       migrate: ctx => {
         const preferenceService = ctx.service;
         const srv = ctx.service;
