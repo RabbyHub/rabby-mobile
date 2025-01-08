@@ -12,14 +12,23 @@ type Props = {
   showToken?: boolean;
   showDefi?: boolean;
   showNft?: boolean;
+  currentSection: AsssetKey;
+  setCurrentSection: React.Dispatch<React.SetStateAction<AsssetKey>>;
   style?: ViewStyle;
 };
 
 export const AssestAllHeader = memo(
-  ({ showDefi, showToken, showNft, onPress, style }: Props) => {
+  ({
+    showDefi,
+    showToken,
+    showNft,
+    onPress,
+    style,
+    currentSection,
+    setCurrentSection,
+  }: Props) => {
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
-    const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
     const handlePress = (key: AsssetKey) => {
       trigger('impactLight', {
         enableVibrateFallback: true,

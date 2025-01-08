@@ -75,6 +75,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
 
   const { refreshTagNft, refreshTagToken, refreshTagPortfolio } =
     useRefreshTags();
@@ -457,6 +458,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <AssestAllHeader
             style={styles.assetHeader}
             showToken={!!tokens?.length}
+            currentSection={currentSection}
+            setCurrentSection={setCurrentSection}
             showDefi={!!portfolios.length}
             showNft={!!nftList?.length}
             onPress={handleSwitchTab}
@@ -521,6 +524,30 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const header = useCallback(() => <HomeTopArea />, []);
   const flatListRef = useRef<FlatList>(null);
 
+  const viewabilityConfigRef = useRef({
+    viewAreaCoveragePercentThreshold: 300,
+    minimumViewTime: 100,
+    waitForInteraction: false,
+  });
+  const onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
+    if (!changed) {
+      return;
+    }
+    const type = (viewableItems?.[0]?.item?.type || '') as string;
+    if (type.includes('token')) {
+      setCurrentSection('token');
+      return;
+    }
+    if (type.includes('defi')) {
+      setCurrentSection('defi');
+      return;
+    }
+    if (type.includes('nft')) {
+      setCurrentSection('nft');
+      return;
+    }
+  }, []);
+
   if (!currentAccount?.address) {
     return null;
   }
@@ -530,6 +557,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       <FlatList<ActionItem>
         data={loading ? [] : dataList}
         ref={flatListRef}
+        viewabilityConfig={viewabilityConfigRef.current}
+        onViewableItemsChanged={onViewableItemsChanged}
         ListHeaderComponent={header}
         renderItem={renderItem}
         ItemSeparatorComponent={ItemSeparatorComponent}
