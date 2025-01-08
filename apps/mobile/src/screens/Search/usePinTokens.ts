@@ -1,7 +1,7 @@
 import { IManageToken } from '@/core/services/preference';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
-import { testOpenapi } from '@/core/request';
+import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
@@ -18,7 +18,7 @@ const getPinTokens = async () => {
 
   let newTokenDetails: TokenItem[] = [];
   for (const batch of batches) {
-    const batchDetails = await testOpenapi.batchQueryTokens(
+    const batchDetails = await openapi.batchQueryTokens(
       batch
         .filter(t => t.chainId && t.tokenId)
         .map(i => `${i.chainId}:${i.tokenId}`),

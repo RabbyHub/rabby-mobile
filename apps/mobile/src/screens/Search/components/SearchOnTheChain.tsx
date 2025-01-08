@@ -9,7 +9,7 @@ import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
-import { openapi, testOpenapi } from '@/core/request';
+import { openapi } from '@/core/request';
 
 type Props = {
   filterText?: string;
@@ -34,7 +34,7 @@ const SearchOnTheChain = ({ filterText, existTokensIds = [] }: Props) => {
     });
     searchedRef.current = text;
     try {
-      const res = await testOpenapi.searchTokens({
+      const res = await openapi.searchTokens({
         q: text,
       });
       setResultTokens(
