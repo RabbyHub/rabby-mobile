@@ -207,6 +207,8 @@ export const combinedTokensAtom = atom(async get => {
 
   return Object.values(tokenMap).map(i => ({
     ...i,
+    totalAmount: i.totalAmount.toNumber(),
+    totalUsdValue: i.totalUsdValue?.toNumber(),
     _usdValue: i.totalUsdValue?.toNumber(),
     _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
     _amountStr: formatAmount(i.totalAmount.toNumber()),
@@ -262,6 +264,7 @@ export const combinedDefiAtom = atom(async get => {
     )
     .map(p => ({
       ...p,
+      totalUsdValue: p.totalUsdValue.toNumber(),
       _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
     }));
 });
@@ -315,6 +318,7 @@ export const combinedNFTAtom = atom(async get => {
     )
     .map(nft => ({
       ...nft,
+      totalAmount: nft.totalAmount.toNumber(),
       amount: nft.totalAmount?.toNumber() || 0,
     }));
 });
