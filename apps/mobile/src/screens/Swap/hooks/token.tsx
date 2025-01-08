@@ -23,6 +23,7 @@ import { useSlippageStore } from './slippage';
 import { useSwapRecentToTokens } from './recent';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
+import { apiProvider } from '@/core/apis';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
@@ -289,7 +290,9 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return openapi.gasMarket(chainInfo.serverId);
+    return apiProvider.gasMarketV2({
+      chainId: chainInfo.serverId,
+    });
   }, [chainInfo?.serverId]);
 
   const normalGasPrice = useMemo(

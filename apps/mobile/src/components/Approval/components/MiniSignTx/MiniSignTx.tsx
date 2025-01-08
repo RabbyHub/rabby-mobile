@@ -62,7 +62,7 @@ import {
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
-import { apiCustomRPC } from '@/core/apis';
+import { apiCustomRPC, apiProvider } from '@/core/apis';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -566,10 +566,11 @@ const MiniSignTx = ({
     chain: Chain,
     custom?: number,
   ): Promise<GasLevel[]> => {
-    const list = await openapi.gasMarket(
-      chain.serverId,
-      custom && custom > 0 ? custom : undefined,
-    );
+    const list = await apiProvider.gasMarketV2({
+      chain,
+      customGas: custom && custom > 0 ? custom : undefined,
+      tx: txs[0],
+    });
     setGasList(list);
     return list;
   };
@@ -926,6 +927,7 @@ const MiniSignTx = ({
         task={task}
         Header={
           <GasSelectorHeader
+            tx={txs[0]}
             gasAccountCost={gasAccountCost}
             gasMethod={gasMethod}
             onChangeGasMethod={setGasMethod}
