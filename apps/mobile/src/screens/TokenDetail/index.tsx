@@ -194,7 +194,7 @@ export const TokenDetailScreen = () => {
     token: _token,
     account,
     needUseCacheToken,
-    unHold,
+    unHold: _unHold,
   } = (route.params || {}) as {
     fromPortfolio?: boolean;
     token: CombineTokensItem;
@@ -319,14 +319,6 @@ export const TokenDetailScreen = () => {
     );
   }, [currentAccount?.address, token]);
 
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerRight: unHold ? () => null : getHeaderRight,
-      headerTitleAlign: 'left',
-    });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
-
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -346,6 +338,17 @@ export const TokenDetailScreen = () => {
   });
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
+    if (isSingleAddress) {
+      res.push({
+        ...token,
+        amountStr: token._amountStr!,
+        address: finalAccount.address,
+        type: finalAccount.type,
+        aliasName:
+          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
+      });
+      return res;
+    }
 
     const actionsAccounts = [...sortedAccounts];
 
@@ -370,13 +373,26 @@ export const TokenDetailScreen = () => {
     });
 
     return res;
-  }, [token, sortedAccounts]);
+  }, [token, sortedAccounts, isSingleAddress, finalAccount]);
 
   const tokenSupportSwap = useMemo(() => {
     const tokenChain = findChain({ serverId: token?.chain })?.enum;
 
     return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
   }, [token]);
+
+  const unHold = useMemo(
+    () => _unHold || tokenFromAddress.length === 0,
+    [_unHold, tokenFromAddress],
+  );
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      headerRight: unHold ? () => null : getHeaderRight,
+      headerTitleAlign: 'left',
+    });
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
   const handleSwap = useMemoizedFn(
     async (
@@ -432,21 +448,7 @@ export const TokenDetailScreen = () => {
           <TokenArea
             tokenSupportSwap={tokenSupportSwap}
             handleSwap={handleSwap}
-            amountList={
-              !isSingleAddress
-                ? tokenFromAddress
-                : [
-                    {
-                      ...token,
-                      amountStr: token._amountStr!,
-                      address: finalAccount.address,
-                      type: finalAccount.type,
-                      aliasName:
-                        finalAccount.aliasName ||
-                        ellipsisAddress(finalAccount.address),
-                    },
-                  ]
-            }
+            amountList={tokenFromAddress}
             token={tokenWithAmount || token}
           />
         </View>
