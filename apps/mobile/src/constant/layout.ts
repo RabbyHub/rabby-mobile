@@ -27,6 +27,7 @@ export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
 export const ASSETS_SECTION_HEADER = 36;
 export const ASSETS_SEPARATOR_HEIGHT = 8;
+export const HEADER_TOP_AREA_HEIGHT = 185;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {

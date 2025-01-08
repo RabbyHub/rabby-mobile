@@ -25,6 +25,8 @@ import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/h
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
+  ASSETS_SEPARATOR_HEIGHT,
+  HEADER_TOP_AREA_HEIGHT,
   RootNames,
 } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
@@ -217,28 +219,26 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const handleSwitchTab = (key: AsssetKey) => {
     setFoldHideList(true);
     setTimeout(() => {
-      const data = (flatListRef.current?.props.data || []) as ActionItem[];
       flatListRef.current?.forceUpdate(() => {
+        const data = (flatListRef.current?.props.data || []) as ActionItem[];
+        let offset = HEADER_TOP_AREA_HEIGHT;
         let index = 0;
-        if (key === 'token') {
-          index = 1;
-        }
         if (key === 'defi') {
-          index = data.findIndex(
-            item =>
-              item.type === 'defi_header' || item.type === 'toggle_defi_fold',
-          );
+          index = data.findIndex(item => item.type === 'defi_header');
         }
         if (key === 'nft') {
-          index = data.findIndex(
-            item =>
-              item.type === 'nft_header' || item.type === 'toggle_nft_fold',
-          );
+          index = data.findIndex(item => item.type === 'nft_header');
         }
-        flatListRef.current?.scrollToIndex({
+        const headerLength = data.slice(0, index).filter(i => !i.data).length;
+        if (index > -1) {
+          offset +=
+            index * (ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT) -
+            (ASSETS_ITEM_HEIGHT_NEW - ASSETS_SECTION_HEADER) *
+              (headerLength + 1);
+        }
+        flatListRef.current?.scrollToOffset({
           animated: true,
-          index: index,
-          viewOffset: ASSETS_SECTION_HEADER,
+          offset,
         });
       });
     }, 0);
@@ -542,7 +542,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={ListEmptyComponent}
         stickyHeaderIndices={[1]}
-        windowSize={5}
+        windowSize={10}
         onScrollToIndexFailed={info => {
           console.warn('Scroll to index failed', info);
         }}
