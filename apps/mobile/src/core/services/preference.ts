@@ -74,6 +74,10 @@ function sortObjByKey<T extends Record<string, any>>(obj: T): T {
       return acc;
     }, {} as T);
 }
+export type IManageNft = {
+  id: string;
+  chain: string;
+};
 
 function makeManageTokenKey(x: IManageToken) {
   return urlUtils.obj2query(sortObjByKey(x));
@@ -105,6 +109,10 @@ export type ITokenSetting = {
   unfoldTokens?: IManageToken[];
   includeDefiAndTokens?: IDefiOrToken[];
   excludeDefiAndTokens?: IDefiOrToken[];
+  foldNfts?: IManageNft[];
+  unfoldNfts?: IManageNft[];
+  foldDefis?: string[];
+  unFoldDefis?: string[];
 };
 
 export interface ITokenManageSettingMap {
@@ -150,6 +158,11 @@ export interface PreferenceStore {
   unfoldTokens?: IManageToken[];
   includeDefiAndTokens?: IDefiOrToken[];
   excludeDefiAndTokens?: IDefiOrToken[];
+
+  foldDefis?: string[];
+  unFoldDefis?: string[];
+  foldNfts?: IManageNft[];
+  unFoldNfts?: IManageNft[];
 
   tokenManageSettingMap: ITokenManageSettingMap;
   collectionStarred?: Token[];
@@ -215,6 +228,10 @@ export class PreferenceService {
           locale: defaultLang,
           lastTimeSendToken: {},
           pinAddresses: [],
+          foldDefis: [],
+          unFoldDefis: [],
+          foldNfts: [],
+          unFoldNfts: [],
           gasCache: {},
           currentVersion: '0',
           pinnedChain: [],
@@ -904,6 +921,55 @@ export class PreferenceService {
   };
   /** =========toggle include or exclude token end =========== */
 
+  manualFoldNft = (nft: IManageNft) => {
+    const preFoldedNfts = this.store.foldNfts || [];
+    const preUnFoldNfts = this.store.unFoldNfts || [];
+
+    const exist = preFoldedNfts.find(
+      item => item.chain === nft.chain && item.id === nft.chain,
+    );
+    if (!exist) {
+      this.store.foldNfts = [...preFoldedNfts, nft];
+      this.store.unFoldNfts = preUnFoldNfts.filter(
+        item => item.chain !== nft.chain || item.id !== nft.id,
+      );
+    }
+  };
+  manualUnFoldNft = (nft: IManageNft) => {
+    const preUnFoldNfts = this.store.unFoldNfts || [];
+    const preFoldedNfts = this.store.foldNfts || [];
+
+    const exist = preUnFoldNfts.find(
+      item => item.chain === nft.chain && item.id === nft.chain,
+    );
+    if (!exist) {
+      this.store.unFoldNfts = [...preUnFoldNfts, nft];
+      this.store.foldNfts = preFoldedNfts.filter(
+        item => item.chain !== nft.chain || item.id !== nft.id,
+      );
+    }
+  };
+
+  manualFoldDefi = (defiId: string) => {
+    const preFoldDefis = this.store.foldDefis || [];
+    const preUnFoldDefis = this.store.unFoldDefis || [];
+    const exist = preFoldDefis.includes(defiId);
+    if (!exist) {
+      this.store.foldDefis = [...preFoldDefis, defiId];
+      this.store.unFoldDefis = preUnFoldDefis.filter(item => item !== defiId);
+    }
+  };
+
+  manualUnFoldDefi = (defiId: string) => {
+    const preUnFoldDefis = this.store.unFoldDefis || [];
+    const preFoldDefis = this.store.foldDefis || [];
+    const exist = preUnFoldDefis.includes(defiId);
+    if (!exist) {
+      this.store.unFoldDefis = [...preUnFoldDefis, defiId];
+      this.store.foldDefis = preFoldDefis.filter(item => item !== defiId);
+    }
+  };
+
   getUserTokenSettings = async () => {
     return {
       foldTokens: this.store.foldTokens || [],
@@ -911,6 +977,10 @@ export class PreferenceService {
       includeDefiAndTokens: this.store.includeDefiAndTokens || [],
       excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
       pinedQueue: this.store.pinedQueue,
+      foldNfts: this.store.foldNfts || [],
+      unfoldNfts: this.store.unFoldNfts || [],
+      foldDefis: this.store.foldDefis || [],
+      unFoldDefis: this.store.unFoldDefis || [],
     };
   };
 }

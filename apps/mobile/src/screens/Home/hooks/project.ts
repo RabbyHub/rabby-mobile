@@ -37,10 +37,9 @@ export const useQueryProjects = (
       console.log('🔍 CUSTOM_LOGGER:=>: force==refreshPositions)');
       setLoading(true);
       try {
-        await updatePortfolio();
-        await updateTokens();
-        await reloadNftList();
+        await Promise.all([updatePortfolio(), updateTokens(), reloadNftList()]);
       } finally {
+        console.log('🔍 CUSTOM_LOGGER:=>: force==refreshPositions end');
         setLoading(false);
         setLastUpdateTime(Date.now());
       }

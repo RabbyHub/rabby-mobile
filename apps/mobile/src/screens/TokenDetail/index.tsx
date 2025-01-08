@@ -78,7 +78,7 @@ export const RightMore: React.FC<{
   triggerUpdate: () => void;
 }> = ({ token, triggerUpdate, isMultiAddress }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { refreshTags } = useRefreshTags();
+  const { refreshTagToken } = useRefreshTags();
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
@@ -113,7 +113,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTags();
+          refreshTagToken();
         },
       },
       {
@@ -152,12 +152,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags();
+          refreshTagToken();
           triggerUpdate();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
+  }, [token, t, isDarkTheme, refreshTagToken, triggerUpdate]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,

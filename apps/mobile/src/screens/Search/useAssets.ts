@@ -41,6 +41,7 @@ import {
   filterTokens,
 } from './useSearch';
 import { usePinTokens } from './usePinTokens';
+import { tagNfts } from '../Home/hooks/nft';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -173,9 +174,11 @@ export const useAssets = (filterText?: string) => {
   const loadNFT = async (address: string) => {
     try {
       const ntfs = await openapi.listNFT(address, true, true);
+      const tokenSetting = await preferenceService.getUserTokenSettings();
+
       updateNftList({
         address,
-        newNFTs: ntfs,
+        newNFTs: tagNfts(ntfs, tokenSetting),
       });
     } catch (e) {
       console.error(e);
@@ -194,9 +197,11 @@ export const useAssets = (filterText?: string) => {
 
           if (force || currentTime - lastUpdateTime >= 10 * 60 * 1000) {
             try {
-              await loadToken(account.address);
-              await loadDefi(account.address);
-              await loadNFT(account.address);
+              await Promise.all([
+                loadToken(account.address),
+                loadDefi(account.address),
+                loadNFT(account.address),
+              ]);
               console.log(
                 '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets timeout)',
                 account.address.slice(-8),

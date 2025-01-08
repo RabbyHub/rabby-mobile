@@ -21,7 +21,7 @@ interface Props {
 }
 
 export const HomePinBadge: React.FC<Props> = ({ token }) => {
-  const { refreshTags } = useRefreshTags();
+  const { refreshTagToken } = useRefreshTags();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const handlePress = useCallback(() => {
@@ -39,8 +39,8 @@ export const HomePinBadge: React.FC<Props> = ({ token }) => {
       // toast.success(t('page.tokenDetail.actionsTips.fold_success'));
     }
     token._isPined = !token._isPined;
-    refreshTags();
-  }, [refreshTags, token]);
+    refreshTagToken();
+  }, [refreshTagToken, token]);
 
   return token._isPined ? (
     <TouchableOpacity

@@ -22,22 +22,51 @@ export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
 ): DisplayedProject[] => {
-  const { includeDefiAndTokens = [], excludeDefiAndTokens = [] } = tokenSetting;
-
+  const {
+    includeDefiAndTokens = [],
+    excludeDefiAndTokens = [],
+    foldDefis = [],
+    unFoldDefis = [],
+  } = tokenSetting;
+  const excludeDefiAndTokensSet = new Set(
+    excludeDefiAndTokens.map(x => `${x.id}-${x.type}`),
+  );
+  const includeDefiAndTokensSet = new Set(
+    includeDefiAndTokens.map(x => `${x.id}-${x.type}`),
+  );
+  const foldDefisSet = new Set(foldDefis);
+  const unFoldDefisSet = new Set(unFoldDefis);
   return profiles.map(i => {
     const isExcludeBalance = (() => {
-      if (excludeDefiAndTokens.some(x => x.id === i.id && x.type === 'defi')) {
+      if (excludeDefiAndTokensSet.has(`${i.id}-defi`)) {
         return true;
       }
-      if (includeDefiAndTokens.some(x => x.id === i.id && x.type === 'defi')) {
+      if (includeDefiAndTokensSet.has(`${i.id}-defi`)) {
         return false;
       }
       return false;
     })();
 
-    return Object.assign(i, {
-      _isExcludeBalance: isExcludeBalance,
-    });
+    const isManualFold = foldDefisSet.has(i.id);
+
+    const isFold = (() => {
+      if (isManualFold) {
+        return true;
+      }
+      if (unFoldDefisSet.has(i.id)) {
+        return false;
+      }
+      if ((i.netWorth || 0) < 1) {
+        return true;
+      }
+      return false;
+    })();
+
+    i._isExcludeBalance = isExcludeBalance;
+    i._isFold = isFold;
+    i._isManualFold = isManualFold;
+
+    return i;
   });
 };
 export const log = (...args: any) => {

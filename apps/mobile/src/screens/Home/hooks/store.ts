@@ -5,7 +5,7 @@ import { atom, useAtom } from 'jotai';
 import { getAllAccounts, getAllMyAccount } from '@/core/apis/address';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { formatNetworth } from '@/utils/math';
-import { AbstractPortfolioToken } from '../types';
+import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
@@ -41,7 +41,7 @@ export type CombineNFTItem = NFTItem & {
 export interface IAssets {
   portfolios?: DisplayedProject[];
   tokens?: AbstractPortfolioToken[];
-  nfts?: NFTItem[];
+  nfts?: DisplayNftItem[];
   lastUpdateTime?: number;
 }
 

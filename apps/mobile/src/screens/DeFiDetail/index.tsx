@@ -70,7 +70,7 @@ export const RightMore: React.FC<{
   token: AbstractProject;
   refreshBalance: () => void;
 }> = ({ token, refreshBalance }) => {
-  const { refreshTags } = useRefreshTags();
+  const { refreshTagPortfolio } = useRefreshTags();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -112,12 +112,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags();
+          refreshTagPortfolio();
           refreshBalance();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, refreshBalance]);
+  }, [token, t, isDarkTheme, refreshTagPortfolio, refreshBalance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,

@@ -32,6 +32,8 @@ export interface AbstractProject {
   _netWorthChangePercent: string;
   _intNetworth: string;
   _isExcludeBalance?: boolean;
+  _isFold?: boolean;
+  _isManualFold?: boolean;
 }
 
 export interface AbstractPortfolio {
@@ -113,3 +115,9 @@ export type ActionItem =
   | CombineToken
   | CombineDefi
   | CombineNft;
+
+export type DisplayNftItem = NFTItem & {
+  _isFold?: boolean;
+  _isManualFold?: boolean;
+  is_core?: boolean;
+};

@@ -124,6 +124,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
           <NftRow
             filterText={filterText}
             item={item}
+            disableMenu
             onPress={() => handlePressNft(item)}
           />
         );
@@ -132,6 +133,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
           <DefiRow
             data={item}
             filterText={filterText}
+            disableMenu
             onPress={() =>
               handleOpenDefiDetail(item, [...(item._portfolios || [])])
             }
@@ -153,7 +155,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       case 'fold_token':
         return (
           <TokenRowSectionHeader
-            usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+            str={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
             fold={foldHideList}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />

@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, View, ViewStyle } from 'react-native';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -23,13 +23,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export const TextBadge = ({ type = 'pin' }: { type?: 'pin' | 'folded' }) => {
+export const TextBadge = ({
+  type = 'pin',
+  style,
+}: {
+  type?: 'pin' | 'folded';
+  style?: ViewStyle;
+}) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const text = type === 'folded' ? t('global.folded') : t('global.pin');
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, style]}>
       <Text style={styles.text} numberOfLines={1}>
         {text}
       </Text>

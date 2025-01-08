@@ -61,7 +61,6 @@ export const TokenRow = memo(
     data: AbstractPortfolioToken;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
-    fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
     filterText?: string;
@@ -290,13 +289,13 @@ export const ExternalTokenRow = memo(
 
 export const TokenRowSectionHeader = memo(
   ({
-    usdStr,
+    str,
     fold,
     style,
     buttonStyle,
     onPressFold,
   }: {
-    usdStr: string;
+    str: string;
     fold?: boolean;
     style?: ViewStyle;
     buttonStyle?: ViewStyle;
@@ -332,7 +331,7 @@ export const TokenRowSectionHeader = memo(
           </View>
         </View>
         <View style={styles.tokenRowUsdValueWrap}>
-          <Text style={styles.tokenRowUsdValue}>{usdStr}</Text>
+          <Text style={styles.tokenRowUsdValue}>{str}</Text>
         </View>
       </View>
     );

@@ -1,8 +1,8 @@
+import React from 'react';
 import FastImage from 'react-native-fast-image';
 import { getCHAIN_ID_LIST } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
@@ -12,6 +12,14 @@ import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { HighlightText } from '@/components2024/HighlightText';
 import { memo } from 'react';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
+import { DisplayNftItem } from '../../types';
+import { IS_ANDROID } from '@/core/native/utils';
+import { trigger } from 'react-native-haptic-feedback';
 
 export const NftRow = memo(
   ({
@@ -20,13 +28,17 @@ export const NftRow = memo(
     filterText,
     style,
     logoSize = 40,
+    disableMenu,
+    menuActions,
     chainLogoSize = 16,
   }: {
-    item: NFTItem;
+    item: DisplayNftItem;
     filterText?: string;
     style?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
+    menuActions?: MenuAction[];
+    disableMenu?: boolean;
     onPress: () => void;
   }) => {
     const { styles } = useTheme2024({ getStyle });
@@ -34,9 +46,23 @@ export const NftRow = memo(
     const chain = getCHAIN_ID_LIST().get(item.chain);
     const iconUri = chain?.logo;
     const isSvgURL = item?.content?.endsWith('.svg');
+    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
 
-    return (
-      <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
+    const children = (
+      <TouchableOpacity
+        onPress={onPress}
+        delayLongPress={200}
+        onLongPress={() => {
+          if (disableMenu) {
+            return;
+          }
+          setShowContextMenu(true);
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}
+        style={[styles.wrpper, style]}>
         <View style={styles.main}>
           <View style={styles.avator}>
             <View
@@ -58,33 +84,56 @@ export const NftRow = memo(
                 style={styles.images}
                 playIconSize={36}
               />
+              {iconUri ? (
+                <FastImage
+                  source={{
+                    uri: iconUri,
+                  }}
+                  style={[
+                    styles.chainIcon,
+                    {
+                      width: chainLogoSize,
+                      height: chainLogoSize,
+                    },
+                  ]}
+                />
+              ) : null}
             </View>
-            {iconUri ? (
-              <FastImage
-                source={{
-                  uri: iconUri,
-                }}
-                style={[
-                  styles.chainIcon,
-                  {
-                    width: chainLogoSize,
-                    height: chainLogoSize,
-                  },
-                ]}
-              />
-            ) : null}
           </View>
-          <HighlightText
-            style={styles.name}
-            highlightStyle={styles.highlightText}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            searchWords={[filterText || '']}
-            textToHighlight={item.name}
-          />
+          <View
+            style={[
+              styles.projectNameBox,
+              item._isManualFold && {
+                marginRight: 55,
+              },
+            ]}>
+            <HighlightText
+              style={styles.name}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={item.name}
+            />
+            {item._isManualFold && <TextBadge type="folded" />}
+          </View>
         </View>
         <Text style={styles.amount}>{item.amount}</Text>
       </TouchableOpacity>
+    );
+    if (disableMenu) {
+      return children;
+    }
+
+    return (
+      <ContextMenuView
+        menuConfig={{
+          menuActions: showContextMenu && menuActions ? menuActions : [],
+        }}
+        preViewBorderRadius={12}
+        triggerProps={{ action: 'longPress' }}>
+        {children}
+      </ContextMenuView>
     );
   },
 );
@@ -150,13 +199,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     bottom: -2,
     right: -2,
   },
+  projectNameBox: {
+    flex: 1,
+    flexDirection: 'row',
+  },
   name: {
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    flex: 1,
+    marginRight: 8,
   },
   highlightText: {
     color: colors2024['brand-default'],

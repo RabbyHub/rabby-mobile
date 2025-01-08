@@ -15,6 +15,13 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { useTranslation } from 'react-i18next';
 import { HighlightText } from '@/components2024/HighlightText';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
+import { IS_ANDROID } from '@/core/native/utils';
+import { trigger } from 'react-native-haptic-feedback';
 
 const hitSlop = {
   top: 10,
@@ -30,6 +37,8 @@ export const DefiRow = memo(
     style,
     logoSize = 40,
     chainLogoSize = 16,
+    menuActions,
+    disableMenu,
     onPress,
   }: {
     data: AbstractProject;
@@ -37,9 +46,13 @@ export const DefiRow = memo(
     logoSize?: number;
     chainLogoSize?: number;
     filterText?: string;
+    menuActions?: MenuAction[];
+    disableMenu?: boolean;
     onPress?: () => void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
+
     const { t } = useTranslation();
 
     const handleShowExcludeTips = () => {
@@ -67,8 +80,21 @@ export const DefiRow = memo(
       });
     };
 
-    return (
-      <TouchableOpacity onPress={onPress} style={[styles.projectHeader, style]}>
+    const children = (
+      <TouchableOpacity
+        onPress={onPress}
+        delayLongPress={200}
+        onLongPress={() => {
+          if (disableMenu) {
+            return;
+          }
+          setShowContextMenu(true);
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}
+        style={[styles.projectHeader, style]}>
         <View style={styles.projectHeaderName}>
           <AssetAvatar
             logo={data?.logo}
@@ -76,14 +102,23 @@ export const DefiRow = memo(
             chain={data?.chain}
             chainSize={chainLogoSize}
           />
-          <HighlightText
-            style={styles.projectName}
-            highlightStyle={styles.highlightText}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            searchWords={[filterText || '']}
-            textToHighlight={data?.name}
-          />
+          <View
+            style={[
+              styles.projectNameBox,
+              data._isManualFold && {
+                marginRight: 55,
+              },
+            ]}>
+            <HighlightText
+              style={styles.projectName}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={data?.name}
+            />
+            {data._isManualFold && <TextBadge type="folded" />}
+          </View>
         </View>
         <View style={styles.projectHeaderUsd}>
           <Text
@@ -101,6 +136,21 @@ export const DefiRow = memo(
         </View>
       </TouchableOpacity>
     );
+
+    if (disableMenu) {
+      return children;
+    }
+
+    return (
+      <ContextMenuView
+        menuConfig={{
+          menuActions: showContextMenu && menuActions ? menuActions : [],
+        }}
+        preViewBorderRadius={12}
+        triggerProps={{ action: 'longPress' }}>
+        {children}
+      </ContextMenuView>
+    );
   },
 );
 const getStyles = createGetStyles2024(ctx => ({
@@ -114,6 +164,7 @@ const getStyles = createGetStyles2024(ctx => ({
   projectHeaderName: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   projectName: {
     marginLeft: 8,
@@ -122,6 +173,11 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    marginRight: 8,
+  },
+  projectNameBox: {
+    flex: 1,
+    flexDirection: 'row',
   },
   highlightText: {
     color: ctx.colors2024['brand-default'],

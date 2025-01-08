@@ -18,6 +18,7 @@ import { log, tagProfiles } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
 import { IAssets, useAssetsMap, useTokensAtom } from './store';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
+import { tagNfts } from './nft';
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
@@ -175,6 +176,57 @@ export const useRefreshTags = () => {
   const [, setAssetsMap] = useAssetsMap();
   const { handleFetchTokens } = usePinTokens();
 
+  const refreshTagToken = async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    handleFetchTokens();
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          tokens: tagTokenList(assets.tokens || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
+  };
+  const refreshTagPortfolio = async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        if (!assets) {
+          return;
+        }
+        updatedAssetsMap[address] = {
+          ...assets,
+          portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
+  };
+  const refreshTagNft = async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          nfts: tagNfts(assets.nfts || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
+  };
+
   const refreshTags = async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -186,6 +238,7 @@ export const useRefreshTags = () => {
           ...assets,
           tokens: tagTokenList(assets.tokens || [], tokenSettings),
           portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
+          nfts: tagNfts(assets.nfts || [], tokenSettings),
         };
       });
 
@@ -194,5 +247,8 @@ export const useRefreshTags = () => {
   };
   return {
     refreshTags,
+    refreshTagNft,
+    refreshTagPortfolio,
+    refreshTagToken,
   };
 };
