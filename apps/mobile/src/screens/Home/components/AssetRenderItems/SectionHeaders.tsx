@@ -9,45 +9,65 @@ import { trigger } from 'react-native-haptic-feedback';
 export type AsssetKey = 'token' | 'defi' | 'nft';
 type Props = {
   onPress: (key: AsssetKey) => void;
+  showToken?: boolean;
+  showDefi?: boolean;
+  showNft?: boolean;
   style?: ViewStyle;
 };
 
-export const AssestAllHeader = memo(({ onPress, style }: Props) => {
-  const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
-  const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
-  const handlePress = (key: AsssetKey) => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-    setCurrentSection(key);
-    onPress?.(key);
-  };
+export const AssestAllHeader = memo(
+  ({ showDefi, showToken, showNft, onPress, style }: Props) => {
+    const { t } = useTranslation();
+    const { styles } = useTheme2024({ getStyle });
+    const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
+    const handlePress = (key: AsssetKey) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+      setCurrentSection(key);
+      onPress?.(key);
+    };
 
-  return (
-    <View style={[styles.constainer, style]}>
-      <Pressable onPress={() => handlePress('token')}>
-        <Text
-          style={[styles.symbol, currentSection === 'token' && styles.active]}>
-          {t('page.singleHome.sectionHeader.Token')}
-        </Text>
-      </Pressable>
-      <Pressable onPress={() => handlePress('defi')}>
-        <Text
-          style={[styles.symbol, currentSection === 'defi' && styles.active]}>
-          {t('page.singleHome.sectionHeader.Defi')}
-        </Text>
-      </Pressable>
-      <Pressable onPress={() => handlePress('nft')}>
-        <Text
-          style={[styles.symbol, currentSection === 'nft' && styles.active]}>
-          {t('page.singleHome.sectionHeader.Nft')}
-        </Text>
-      </Pressable>
-    </View>
-  );
-});
+    return (
+      <View style={[styles.constainer, style]}>
+        {showToken && (
+          <Pressable onPress={() => handlePress('token')}>
+            <Text
+              style={[
+                styles.symbol,
+                currentSection === 'token' && styles.active,
+              ]}>
+              {t('page.singleHome.sectionHeader.Token')}
+            </Text>
+          </Pressable>
+        )}
+        {showDefi && (
+          <Pressable onPress={() => handlePress('defi')}>
+            <Text
+              style={[
+                styles.symbol,
+                currentSection === 'defi' && styles.active,
+              ]}>
+              {t('page.singleHome.sectionHeader.Defi')}
+            </Text>
+          </Pressable>
+        )}
+        {showNft && (
+          <Pressable onPress={() => handlePress('nft')}>
+            <Text
+              style={[
+                styles.symbol,
+                currentSection === 'nft' && styles.active,
+              ]}>
+              {t('page.singleHome.sectionHeader.Nft')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(ctx => ({
   constainer: {

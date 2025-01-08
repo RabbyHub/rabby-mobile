@@ -231,7 +231,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         index: index,
         viewOffset: ASSETS_SECTION_HEADER,
       });
-    }, 0);
+    }, 100);
   };
 
   const ListEmptyComponent = useMemo(() => {
@@ -446,6 +446,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <AssestAllHeader
             style={styles.assetHeader}
+            showToken={!!tokens?.length}
+            showDefi={!!portfolios.length}
+            showNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
         );
