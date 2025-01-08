@@ -60,6 +60,7 @@ const isAndroid = Platform.OS === 'android';
 export type TokenFromAddressItem = {
   address: string;
   amountStr: string;
+  amount: number;
   type: KEYRING_TYPE;
   aliasName: string;
 };
@@ -224,10 +225,15 @@ export const TokenDetailScreen = () => {
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
 
+  const isSingleAddress = useMemo(() => !!account, [account]);
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
     Object.keys(asssest).map((address, index) => {
+      if (isSingleAddress && !isSameAddress(address, account?.address)) {
+        return;
+      }
+
       const { portfolios } = asssest[address];
       portfolios?.map(portfolio => {
         if (portfolio.chain !== token.chain) {
@@ -256,9 +262,7 @@ export const TokenDetailScreen = () => {
     });
     console.debug('relateDefiList length:', resList.length);
     return resList;
-  }, [token, asssest]);
-
-  const isSingleAddress = useMemo(() => !!account, [account]);
+  }, [token, asssest, isSingleAddress, account]);
   const { currentAccount } = useCurrentAccount();
   const finalAccount = account || currentAccount;
 
@@ -343,6 +347,7 @@ export const TokenDetailScreen = () => {
       res.push({
         ...token,
         amountStr: token._amountStr!,
+        amount: token.amount,
         address: finalAccount.address,
         type: finalAccount.type,
         aliasName:
@@ -352,26 +357,24 @@ export const TokenDetailScreen = () => {
     }
 
     const { fromAddress } = token;
-    const sortFromAddress = fromAddress?.sort((a, b) =>
-      new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-    );
     accounts.map(item => {
-      const idx = sortFromAddress?.findIndex(
-        i =>
-          isSameAddress(i.address, item.address) &&
-          item.type !== KEYRING_TYPE.WatchAddressKeyring,
+      const idx = fromAddress?.findIndex(i =>
+        isSameAddress(i.address, item.address),
       );
       if (idx > -1) {
         res.push({
           address: item.address,
-          amountStr: formatTokenAmount(sortFromAddress[idx].amount),
+          amountStr: formatTokenAmount(fromAddress[idx].amount),
+          amount: fromAddress[idx].amount,
           aliasName: item.aliasName || ellipsisAddress(item.address),
           type: item.type,
         });
       }
     });
 
-    return res;
+    return res.sort((a, b) =>
+      new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
+    );
   }, [token, accounts, isSingleAddress, finalAccount]);
 
   const tokenSupportSwap = useMemo(() => {

@@ -293,11 +293,7 @@ export const DeFiDetailScreen = () => {
     });
 
     accounts.map(account => {
-      const idx = tempList.findIndex(
-        item =>
-          item.address === account.address &&
-          account.type !== KEYRING_TYPE.WatchAddressKeyring,
-      );
+      const idx = tempList.findIndex(item => item.address === account.address);
       if (idx > -1) {
         sectionsList.push({
           ...tempList[idx],

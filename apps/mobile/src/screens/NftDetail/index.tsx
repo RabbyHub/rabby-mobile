@@ -236,9 +236,8 @@ export const NFTDetailScreen = () => {
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
       const toAccount =
         address && accountType
-          ? accounts.find(
-              i => isSameAddress(address, i.address) && i.type === accountType,
-            ) || currentAccount
+          ? accounts.find(i => isSameAddress(address, i.address)) ||
+            currentAccount
           : currentAccount;
       await switchSceneCurrentAccount('SendNFT', toAccount);
       navigate(RootNames.StackTransaction, {
