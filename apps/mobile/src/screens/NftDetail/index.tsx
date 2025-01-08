@@ -28,6 +28,7 @@ import {
   KeyringAccountWithAlias,
   useCurrentAccount,
   useMyAccounts,
+  useAccounts,
 } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -136,7 +137,7 @@ export const NFTDetailScreen = () => {
   );
 
   const { currentAccount } = useCurrentAccount();
-  const { accounts } = useMyAccounts();
+  const { accounts } = useAccounts();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleSend = useCallback(
