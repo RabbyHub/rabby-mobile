@@ -121,3 +121,13 @@ export type DisplayNftItem = NFTItem & {
   _isManualFold?: boolean;
   is_core?: boolean;
 };
+export const isSectionHeader = (type: string) => {
+  return [
+    'asset_header',
+    'toggle_token_fold',
+    'defi_header',
+    'toggle_defi_fold',
+    'nft_header',
+    'toggle_nft_fold',
+  ].includes(type);
+};

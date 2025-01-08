@@ -540,8 +540,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         }
         contentContainerStyle={styles.bgContainer}
         showsVerticalScrollIndicator={false}
-        // windowSize={10}
-        // getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         stickyHeaderIndices={[1]}
         refreshControl={
