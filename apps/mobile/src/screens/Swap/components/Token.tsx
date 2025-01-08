@@ -1,5 +1,5 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { QuoteProvider, useRabbyFeeVisible } from '../hooks';
+import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
@@ -21,18 +21,15 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { useSwapBottomModalTips } from '../hooks/tip';
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -108,32 +105,6 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     },
     [isFrom, onTokenChange, onValueChange, token?.id],
   );
-
-  const showTips = useSwapBottomModalTips();
-  const [, setRabbyFeeVisible] = useRabbyFeeVisible();
-
-  const isWrapQuote = useMemo(() => {
-    return currentQuote?.name === 'WrapToken';
-  }, [currentQuote?.name]);
-
-  const openFeePopup = useCallback(() => {
-    if (isWrapQuote) {
-      showTips(t('page.swap.no-fees-for-wrap'));
-      return;
-    }
-    setRabbyFeeVisible({
-      visible: true,
-      dexName: currentQuote?.name || undefined,
-      dexFeeDesc: currentQuote?.quote?.dexFeeDesc || undefined,
-    });
-  }, [
-    currentQuote?.name,
-    currentQuote?.quote?.dexFeeDesc,
-    isWrapQuote,
-    setRabbyFeeVisible,
-    showTips,
-    t,
-  ]);
 
   const onInputChange: (text: string) => void = useCallback(
     e => {
@@ -311,11 +282,6 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             />
           ) : (
             <Text style={styles.usdValue}>{usdValue}</Text>
-          )}
-          {!isFrom && !valueLoading && !!value && (
-            <TouchableOpacity onPress={openFeePopup}>
-              <RcIcHelp color={colors2024['neutral-secondary']} />
-            </TouchableOpacity>
           )}
         </View>
       </View>

@@ -12,12 +12,9 @@ import {
   QuotePreExecResultInfo,
   QuoteProvider,
   isSwapWrapToken,
-  useRabbyFeeVisible,
   useSetQuoteVisible,
   useSwapSettings,
 } from '../hooks';
-
-import RcIconInfoCC from '@/assets2024/icons/bridge/IcHelp.svg';
 
 import { AssetAvatar } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -353,8 +350,6 @@ export const DexQuoteItem = (
     [isSdkDataPass, quote, preExecResult, inSufficient],
   );
 
-  const [, setIsShowRabbyFeePopup] = useRabbyFeeVisible();
-
   useEffect(() => {
     if (isErrorQuote && onlyShowErrorQuote) {
       onErrQuote?.(e => {
@@ -495,23 +490,6 @@ export const DexQuoteItem = (
                       usd: receivedTokenUsd,
                     })}
               </Text>
-              {isWrapToken ? (
-                <TouchableOpacity onPress={() => handleTips('wrapToken')}>
-                  <RcIconInfoCC color={colors2024['neutral-info']} />
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  hitSlop={10}
-                  onPress={() => {
-                    setIsShowRabbyFeePopup({
-                      visible: true,
-                      dexName: dexId,
-                      dexFeeDesc: quote?.dexFeeDesc || undefined,
-                    });
-                  }}>
-                  <RcIconInfoCC color={colors2024['neutral-info']} />
-                </TouchableOpacity>
-              )}
             </>
           )}
         </View>
