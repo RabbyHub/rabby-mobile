@@ -78,6 +78,33 @@ export const RightMore: React.FC<{
   const menuActions = React.useMemo(() => {
     return [
       {
+        title: token._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: token._isFold
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        androidIconName: token._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (token._isFold) {
+            preferenceService.manualUnFoldDefi(token.id);
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+          } else {
+            preferenceService.manualFoldDefi(token.id);
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+          }
+          token._isFold = !token._isFold;
+          refreshTagPortfolio();
+        },
+      },
+      {
         title: token._isExcludeBalance
           ? t('page.tokenDetail.action.includeBalance')
           : t('page.tokenDetail.action.excludeBalance'),
