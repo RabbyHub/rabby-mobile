@@ -35,6 +35,7 @@ import Animated, {
 import { useSwapBottomModalTips } from '../hooks/tip';
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
+import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -251,6 +252,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             placeholder={t('page.swap.search-by-name-address')}
             excludeTokens={excludeTokens}
             useSwapTokenList={!isFrom}
+            supportChains={SWAP_SUPPORT_CHAINS}
           />
           <Divider color={colors2024['neutral-line']} />
         </View>
