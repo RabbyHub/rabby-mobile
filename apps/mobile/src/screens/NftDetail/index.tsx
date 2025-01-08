@@ -4,12 +4,10 @@ import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { AssetAvatar, Text } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
@@ -24,11 +22,11 @@ import { useTranslation } from 'react-i18next';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import {
-  KeyringAccountWithAlias,
   useCurrentAccount,
-  useMyAccounts,
   useAccounts,
+  KeyringAccountWithAlias,
 } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -37,6 +35,14 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useAssetsMap } from '../Home/hooks/store';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
+import { DropDownMenuView } from '@/components2024/DropDownMenu';
+import { DisplayNftItem } from '../Home/types';
+import { useRefreshTags } from '../Home/hooks/token';
+import { trigger } from 'react-native-haptic-feedback';
+import { preferenceService } from '@/core/services';
+import { RcIconMore } from '@/assets/icons/home';
+import { toast } from '@/components2024/Toast';
+import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 const ListItem = (props: {
   title: string;
@@ -44,7 +50,7 @@ const ListItem = (props: {
   showBorderTop?: boolean;
 }) => {
   const { title, value, showBorderTop } = props;
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View style={[styles.listItem, showBorderTop && styles.borderTop]}>
@@ -60,11 +66,81 @@ const ListItem = (props: {
   );
 };
 
-export const NFTDetailScreen = () => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+
+const RightMore: React.FC<{
+  nft: DisplayNftItem;
+}> = ({ nft }) => {
+  const { refreshTagNft } = useRefreshTags();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const menuActions = React.useMemo(() => {
+    return [
+      {
+        title: nft._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: nft._isFold
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        androidIconName: nft._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (nft._isFold) {
+            preferenceService.manualUnFoldNft({
+              chain: nft.chain,
+              id: nft.id,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+          } else {
+            preferenceService.manualFoldNft({
+              chain: nft.chain,
+              id: nft.id,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+          }
+          nft._isFold = !nft._isFold;
+          refreshTagNft();
+        },
+      },
+    ] as MenuAction[];
+  }, [nft, t, isDarkTheme, refreshTagNft]);
+  const onPress = () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
+
+  return (
+    <DropDownMenuView
+      menuConfig={{
+        menuActions: menuActions,
+      }}
+      triggerProps={{ action: 'press' }}>
+      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+        <RcIconMore width={24} height={24} />
+      </CustomTouchableOpacity>
+    </DropDownMenuView>
+  );
+};
+
+export const NFTDetailScreen = () => {
+  const { styles, colors } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const {
     token,
     isSingleAddress,
@@ -79,7 +155,9 @@ export const NFTDetailScreen = () => {
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
-  // const collectionName = token.contract_name || token?.collection?.name || '';
+  const getHeaderRight = useMemoizedFn(() => {
+    return <RightMore nft={token} />;
+  });
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
@@ -123,9 +201,10 @@ export const NFTDetailScreen = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
+      headerRight: getHeaderRight,
       headerTitleAlign: 'center',
     });
-  }, [TokenDetailHeaderArea, setNavigationOptions]);
+  }, [TokenDetailHeaderArea, getHeaderRight, setNavigationOptions]);
 
   const calPrice = useCallback((iToken: NFTItem) => {
     if (iToken?.usd_price) {
