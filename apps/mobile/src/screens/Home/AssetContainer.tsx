@@ -230,7 +230,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           index = data.findIndex(item => item.type === 'nft_header');
         }
         const headerLength = data.slice(0, index).filter(i => !i.data).length;
-        if (index > -1) {
+        if (index > -1 && key !== 'token') {
           offset +=
             index * (ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT) -
             (ASSETS_ITEM_HEIGHT_NEW - ASSETS_SECTION_HEADER) *
