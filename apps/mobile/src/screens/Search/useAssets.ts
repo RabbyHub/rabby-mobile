@@ -45,7 +45,9 @@ import { tagNfts } from '../Home/hooks/nft';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
 
