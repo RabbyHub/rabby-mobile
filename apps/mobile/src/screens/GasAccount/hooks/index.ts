@@ -174,6 +174,7 @@ export const useGasAccountHistory = () => {
     mutate,
   } = useInfiniteScroll<{
     rechargeList: History['recharge_list'];
+    withdrawList: History['recharge_list'];
     list: History['history_list'];
     totalCount: number;
   }>(
@@ -187,9 +188,10 @@ export const useGasAccountHistory = () => {
 
       const rechargeList = data.recharge_list;
       const historyList = data.history_list;
-
+      const withdrawList = data.withdraw_list;
       return {
         rechargeList: rechargeList || [],
+        withdrawList: withdrawList || [],
         list: historyList,
         totalCount: data.pagination.total,
       };
@@ -201,7 +203,9 @@ export const useGasAccountHistory = () => {
         if (data) {
           return (
             data.totalCount <=
-            (data.list.length || 0) + (data?.rechargeList?.length || 0)
+            (data.list.length || 0) +
+              (data?.rechargeList?.length || 0) +
+              (data?.withdrawList?.length || 0)
           );
         }
         return true;
@@ -228,10 +232,14 @@ export const useGasAccountHistory = () => {
           return;
         }
 
-        if (value?.recharge_list?.length !== d.rechargeList.length) {
+        if (
+          value?.recharge_list?.length !== d.rechargeList.length ||
+          value?.withdraw_list?.length !== d.withdrawList.length
+        ) {
           refreshGasAccountBalance();
         }
         return {
+          withdrawList: value?.withdraw_list,
           rechargeList: value?.recharge_list,
           totalCount: value.pagination.total,
           list: uniqBy(
@@ -245,7 +253,10 @@ export const useGasAccountHistory = () => {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (!loading && !loadingMore && !!txList?.rechargeList?.length) {
+    const hasSomePending = Boolean(
+      txList?.rechargeList?.length || txList?.withdrawList?.length,
+    );
+    if (!loading && !loadingMore && hasSomePending) {
       timer = setTimeout(refreshListTx, 2000);
     }
     return () => {
