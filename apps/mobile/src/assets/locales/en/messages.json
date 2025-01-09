@@ -41,6 +41,8 @@
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.",
       "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.",
       "nativeTokenNotEngouthForGas": "Gas balance is not enough",
+      "gasAccountForGas": "Use USD from my GasAccount to pay for gas",
+      "nativeTokenForGas": "Use {{tokenName}} token on {{chainName}} to pay for gas",
       "nonceLowerThanExpect": "Nonce is too low, the minimum should be {{0}}",
       "canOnlyUseImportedAddress": "You cannot sign transactions with a watch-only address.",
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
@@ -896,6 +898,7 @@
       "directlySwap": "Wrapping {{symbol}} tokens directly with the smart contract",
       "rates-from-cex": "Rates from CEX",
       "edit": "Edit",
+      "gas-fee-too-high": "Gas fee too high",
       "tradingSettingTips": "{{viewCount}} exchanges offer quotes, and {{tradeCount}} enable trading",
       "the-following-swap-rates-are-found": "Found following rates",
       "sort-with-gas": "Sort with gas",
@@ -1803,7 +1806,7 @@
             "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
             "legacy": "Legacy: HD path used by MEW / Mycrypto."
           },
-          "hdPathTypeNochain": {
+          "hdPathTypeNoChain": {
             "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
             "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
             "legacy": "Legacy: HD path used by MEW / Mycrypto."

@@ -27685,6 +27685,7 @@ __metadata:
     react-native-keyboard-aware-scroll-view: ^0.9.5
     react-native-keychain: 8.0.0
     react-native-linear-gradient: ^2.8.3
+    react-native-localize: ^3.3.0
     react-native-mmkv: ^2.12.2
     react-native-pager-view: ^6.2.3
     react-native-permissions: ^4.1.2
@@ -28422,6 +28423,20 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: f980d324e551bbc475c6406bdc5250a08242020cbe653412fa169bbdf51e28a502e225de105b4d696d6a1a1b733d44782469020f4936d8b3ce0e2c78e51cf58f
+  languageName: node
+  linkType: hard
+
+"react-native-localize@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "react-native-localize@npm:3.3.0"
+  peerDependencies:
+    react: ">=18.1.0"
+    react-native: ">=0.70.0"
+    react-native-macos: ">=0.70.0"
+  peerDependenciesMeta:
+    react-native-macos:
+      optional: true
+  checksum: b6abffb3bbe3a47f171afb4d9a5ca1268576bf191d5ebe9f929308acd5892e67aedf4a5ef5d65eae67482ef357dc644791e8492c38c3d1cdfa449d63ab9b7df9
   languageName: node
   linkType: hard
 
