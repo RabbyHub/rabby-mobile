@@ -15,4 +15,17 @@
     "i18next",
     "react-i18next"
   ],
+  "i18n-ally.keysInUse": [
+    "native.authentication.auth_prompt_cancel",
+    "native.authentication.auth_prompt_desc",
+    "native.authentication.auth_prompt_title",
+    "native.biometrics.enable_device_passcode_android",
+    "native.biometrics.enable_device_passcode_ios",
+    "native.biometrics.enable_biometrics",
+    "native.biometrics.enable_fingerprint",
+    "native.biometrics.enable_faceid",
+    "native.biometrics.enable_touchid",
+    "global.appName",
+    "global.appDescription"
+  ],
 }

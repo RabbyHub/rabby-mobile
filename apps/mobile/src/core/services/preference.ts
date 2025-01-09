@@ -1,6 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
-
+import { getLocales } from 'react-native-localize';
+import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
 import {
   TokenItem,
@@ -190,7 +191,10 @@ export class PreferenceService {
         storage: options?.storageAdapter,
       },
     );
-
+    const languageCode = getLocales()[0]?.languageTag || defaultLang;
+    if (languageCode in SupportedLang) {
+      this.setLocale(languageCode);
+    }
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
@@ -387,14 +391,14 @@ export class PreferenceService {
     return balanceMap[address.toLowerCase()] || null;
   };
 
-  // getLocale = () => {
-  //   return this.store.locale;
-  // };
+  getLocale = () => {
+    return this.store.locale;
+  };
 
-  // setLocale = (locale: string) => {
-  //   this.store.locale = locale;
-  //   i18n.changeLanguage(locale);
-  // };
+  setLocale = (locale: string) => {
+    this.store.locale = locale;
+    i18n.changeLanguage(locale);
+  };
 
   // getThemeMode = () => {
   //   return this.store.themeMode;
