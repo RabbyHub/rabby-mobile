@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-import { useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
@@ -50,6 +50,8 @@ import {
 import { DisplayedProject } from './utils/project';
 import { flatListRefAtom } from './hooks/store';
 import { useSetAtom } from 'jotai';
+import { useFocusEffect } from '@react-navigation/native';
+import { useMemoizedFn } from 'ahooks';
 
 interface Props {
   onRefresh(): void;
@@ -60,7 +62,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const { currentAccount } = useCurrentAccount();
+  const { currentAccount, switchAccount } = useCurrentAccount();
   const {
     tokens,
     refreshPositions,
@@ -504,14 +506,28 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }
   };
 
-  const header = useCallback(() => <HomeTopArea />, []);
+  const header = useCallback(
+    () => <HomeTopArea currentAccount={currentAccount} />,
+    [currentAccount],
+  );
   const flatListRef = useRef<FlatList>(null);
+  const preAccount = useRef<KeyringAccountWithAlias | null>(null);
 
   const setFlatListRef = useSetAtom(flatListRefAtom);
 
   React.useEffect(() => {
     setFlatListRef(flatListRef);
   }, [flatListRef, setFlatListRef]);
+
+  useFocusEffect(
+    useMemoizedFn(() => {
+      if (preAccount.current) {
+        switchAccount(preAccount.current);
+      } else {
+        preAccount.current = currentAccount;
+      }
+    }),
+  );
 
   const viewabilityConfigRef = useRef({
     viewAreaCoveragePercentThreshold: 300,
