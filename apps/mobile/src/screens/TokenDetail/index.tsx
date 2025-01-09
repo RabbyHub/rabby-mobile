@@ -206,7 +206,7 @@ export const TokenDetailScreen = () => {
 
   const [asssest] = useAssetsMap();
   const { tokens: cacheAssets } = useAssets();
-  const token = useMemo(() => {
+  const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio) {
       const iToken = cacheAssets.find(
         item => item._tokenId === _token.id && item.chain === _token.chain,
@@ -227,7 +227,7 @@ export const TokenDetailScreen = () => {
     const resList = [] as RelatedDeFiType[];
 
     Object.keys(asssest).map((address, index) => {
-      if (isSingleAddress && !isSameAddress(address, account?.address)) {
+      if (isSingleAddress && !isSameAddress(address, account!.address)) {
         return;
       }
 
@@ -294,7 +294,7 @@ export const TokenDetailScreen = () => {
       // }
 
       const res = await openapi.getToken(
-        finalAccount.address,
+        finalAccount!.address,
         token.chain,
         token._tokenId,
       );
@@ -352,15 +352,15 @@ export const TokenDetailScreen = () => {
         ...token,
         amountStr: token._amountStr!,
         amount: token.amount,
-        address: finalAccount.address,
-        type: finalAccount.type,
+        address: finalAccount!.address,
+        type: finalAccount!.type,
         aliasName:
-          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
+          finalAccount!.aliasName || ellipsisAddress(finalAccount!.address),
       });
       return res;
     }
 
-    const { fromAddress } = token;
+    const { fromAddress } = token as CombineTokensItem;
     accounts.map(item => {
       const idx = fromAddress?.findIndex(i =>
         isSameAddress(i.address, item.address),

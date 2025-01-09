@@ -250,16 +250,13 @@ export const TokenList = ({
   // const { tokens: cacheAssets } = useAssets();
   const handleOpenTokenDetail = React.useCallback(
     (token: TokenItem) => {
-      // const idx = cacheAssets.findIndex(
-      //   item => item._tokenId === token.id && item.chain === token.chain,
-      // );AbstractPortfolioToken
       naviPush(RootNames.TokenDetail, {
         token: {
           ...token,
           logo_url: token._logo,
           symbol: token._symbol,
           _tokenId: token.id,
-        },
+        } as any, // to do fix type
         isSingleAddress,
         fromPortfolio: true,
       });

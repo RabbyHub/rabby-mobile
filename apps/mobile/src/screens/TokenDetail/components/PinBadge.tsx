@@ -25,9 +25,9 @@ export const HomePinBadge: React.FC<Props> = ({ token }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const handlePress = useCallback(() => {
-    const tmp = token._isPined;
+    const currentPin = token._isPined;
     token._isPined = !token._isPined;
-    if (tmp) {
+    if (currentPin) {
       preferenceService.removePinedToken({
         tokenId: token._tokenId,
         chainId: token.chain,
@@ -40,7 +40,6 @@ export const HomePinBadge: React.FC<Props> = ({ token }) => {
       });
       // toast.success(t('page.tokenDetail.actionsTips.fold_success'));
     }
-    token._isPined = !token._isPined;
     refreshTagToken();
   }, [refreshTagToken, token]);
 
