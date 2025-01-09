@@ -32,7 +32,7 @@ import { openapi } from '@/core/request';
 import { useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
   combinePinTokens,
@@ -60,7 +60,7 @@ export const useAssets = (filterText?: string) => {
   const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
   const [, updateNftList] = useAtom(updateNFTsAtom);
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
-
+  const abortRef = useRef(false);
   const loadToken = async (address: string) => {
     if (!address) {
       return;
@@ -183,47 +183,58 @@ export const useAssets = (filterText?: string) => {
     }
   };
 
+  const interrupt = () => {
+    abortRef.current = true;
+  };
+
   const initFetchTop10Assets = async (force?: boolean) => {
     const top10Account = sortedAccounts.slice(0, 10);
     setLoading(true);
     try {
       await handleFetchTokens();
-      await Promise.all(
-        top10Account.map(async account => {
-          const lastUpdateTime = getUpdateTime(account.address) || 0;
-          const currentTime = Date.now();
+      for (const account of top10Account) {
+        if (abortRef.current) {
+          console.log('🔍 CUSTOM_LOGGER:=>: Fetching interrupted.');
+          setLoading(false);
+          setIsFirstFetch(false);
+          break;
+        }
 
-          if (force || currentTime - lastUpdateTime >= 10 * 60 * 1000) {
-            try {
-              await Promise.all([
-                loadToken(account.address),
-                loadDefi(account.address),
-                loadNFT(account.address),
-              ]);
-              console.log(
-                '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets fetch =>>',
-                account.address.slice(-8),
-                'force: complete',
-                force,
-              );
-              await updateUpdateTime({
-                address: account.address,
-                newLastUpdateTime: Date.now(),
-              });
-            } catch (error) {
-              console.error(
-                `Error fetching data for ${account.address}:`,
-                error,
-              );
-            }
+        const lastUpdateTime = getUpdateTime(account.address) || 0;
+        const currentTime = Date.now();
+
+        if (force || currentTime - lastUpdateTime >= 10 * 60 * 1000) {
+          try {
+            await Promise.all([
+              loadToken(account.address),
+              loadDefi(account.address),
+              loadNFT(account.address),
+            ]);
+            console.log(
+              '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets fetch =>>',
+              account.address.slice(-8),
+              'force: complete',
+              force,
+            );
+            await updateUpdateTime({
+              address: account.address,
+              newLastUpdateTime: Date.now(),
+            });
+          } catch (error) {
+            console.error(
+              `Error fetching data for ${account.address.slice(-8)}:`,
+              error,
+            );
           }
-        }),
-      );
+        }
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
     } finally {
       setLoading(false);
       setIsFirstFetch(false);
     }
   };
+
   const fTokens = useMemo(
     () => filterTokens(combinePinTokens(pinTokens, tokens), filterText),
     [filterText, pinTokens, tokens],
@@ -243,6 +254,7 @@ export const useAssets = (filterText?: string) => {
     isLoading,
     hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
     initFetchTop10Assets,
+    interrupt,
     refreshing: !!isLoading && !isFirstFetch,
   };
 };

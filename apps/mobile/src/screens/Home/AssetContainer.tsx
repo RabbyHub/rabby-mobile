@@ -211,6 +211,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   };
   const handleSwitchTab = (key: AsssetKey) => {
     if (loading || refreshing) {
+      toast.info(
+        `Ops! The asset wasn't shown yet, please scroll down manually`,
+      );
       return;
     }
     setFoldHideList(true);
