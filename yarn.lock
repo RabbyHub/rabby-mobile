@@ -28517,7 +28517,7 @@ __metadata:
 
 "react-native-reanimated@patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 3.6.1
-  resolution: "react-native-reanimated@patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch::version=3.6.1&hash=8340c6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-reanimated@patch:react-native-reanimated@npm%3A3.6.1%3A%3A__archiveUrl=https%253A%252F%252Fregistry.npmjs.org%252Freact-native-reanimated%252F-%252Freact-native-reanimated-3.6.1.tgz#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch::version=3.6.1&hash=8340c6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@babel/plugin-transform-object-assign": ^7.16.7
     "@babel/preset-typescript": ^7.16.7
