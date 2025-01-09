@@ -130,6 +130,7 @@ const themeColorsNext2024 = {
     'neutral-info': 'rgba(197, 197, 207, 1)',
     'neutral-InvertHighlight': 'rgba(255, 255, 255, 1)',
     'neutral-black': 'rgba(0, 0, 0, 1)',
+    'neutral-bg-gray': 'rgba(246, 247, 247, 1)',
   },
   dark: {
     'brand-default': 'rgba(112, 132, 255, 1)',
@@ -179,6 +180,7 @@ const themeColorsNext2024 = {
     'neutral-info': 'rgba(86, 87, 95, 1)',
     'neutral-InvertHighlight': 'rgba(255, 255, 255, 1)',
     'neutral-black': 'rgba(0, 0, 0, 1)',
+    'neutral-bg-gray': 'rgba(19, 20, 22, 1)',
   },
 };
 

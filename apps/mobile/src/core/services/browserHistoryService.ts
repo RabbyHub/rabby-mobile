@@ -1,6 +1,7 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import { omit, sortBy } from 'lodash';
+import { APP_STORE_NAMES } from '../storage/storeConstant';
 
 export interface BrowserHistoryItem {
   origin: string;
@@ -19,7 +20,7 @@ export class BrowserHistoryService extends StoreServiceBase<
 > {
   constructor(options?: StorageAdapaterOptions<BrowserHistoryStore>) {
     super(
-      'browserHistory',
+      APP_STORE_NAMES.browserHistory,
       {
         browserHistory: {},
       },

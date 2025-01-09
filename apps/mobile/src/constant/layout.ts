@@ -24,6 +24,10 @@ export const ScreenLayouts = {
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
 export const ASSETS_ITEM_HEIGHT = 68;
+export const ASSETS_ITEM_HEIGHT_NEW = 74;
+export const ASSETS_SECTION_HEADER = 36;
+export const ASSETS_SEPARATOR_HEIGHT = 8;
+export const HEADER_TOP_AREA_HEIGHT = 185;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
@@ -56,6 +60,8 @@ export const RootNames = {
   GetStartedScreen2024: 'GetStartedScreen2024',
   CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
+  StackHomeNonTab: 'StackHomeNonTab',
+
   NotFound: 'NotFound',
   Unlock: 'Unlock',
 
@@ -63,9 +69,10 @@ export const RootNames = {
   Home: 'Home',
   Points: 'Points',
 
+  StackDapps: 'StackDapps',
   Dapps: 'Dapps',
-  StackFavoriteDapps: 'StackFavoriteDapps',
   FavoriteDapps: 'FavoriteDapps',
+  Search: 'Search',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -81,7 +88,6 @@ export const RootNames = {
 
   /* warning: testkits only ------ start */
   StackTestkits: 'StackTestkits',
-  TestKits: 'TestKits',
   NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIFormShowCase: 'DevUIFormShowCase',
@@ -108,6 +114,7 @@ export const RootNames = {
   GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',
+  /* @deprecated */
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
@@ -271,7 +278,7 @@ function makeScreenSpecConfig() {
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
       Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      SingleAddressHome: bg1Default2024Conf,
+      SingleAddressHome: transparentDefault2024Conf,
       Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,

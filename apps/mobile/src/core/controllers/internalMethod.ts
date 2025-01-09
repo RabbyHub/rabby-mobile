@@ -17,7 +17,7 @@ const tabCheckin = ({
   session: { origin },
 }) => {
   // session.setProp({ origin, name, icon });
-  // console.log('tabCheckin', origin, name, icon);
+  // console.debug('tabCheckin', origin, name, icon);
   const dapp = dappService.getDapp(origin);
   if (!dapp) {
     dappService.addDapp(
@@ -41,6 +41,8 @@ const tabCheckin = ({
       },
     });
   }
+
+  return null;
 };
 
 const getProviderState = async (req: ProviderRequest) => {

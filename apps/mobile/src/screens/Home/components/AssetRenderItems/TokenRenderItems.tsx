@@ -25,9 +25,11 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { PinBadge } from '@/screens/Address/components/PinBadge';
-import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
+import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
+import { HighlightText } from '@/components2024/HighlightText';
+import { ellipsisAddress } from '@/utils/address';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -48,17 +50,24 @@ export const TokenRow = memo(
   ({
     data,
     style,
-    logoSize,
+    logoSize = 40,
+    chainLogoSize = 16,
     logoStyle,
     menuActions,
+    filterText,
     onTokenPress,
+    hideFoldTag,
+    disableMenu,
   }: {
     data: AbstractPortfolioToken;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
-    fold?: boolean;
     logoSize?: number;
-    menuActions: MenuAction[];
+    chainLogoSize?: number;
+    filterText?: string;
+    menuActions?: MenuAction[];
+    hideFoldTag?: boolean;
+    disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -110,137 +119,227 @@ export const TokenRow = memo(
         },
       });
     };
+    const children = (
+      <TouchableOpacity
+        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        delayLongPress={200}
+        onLongPress={() => {
+          if (disableMenu) {
+            return;
+          }
+          setShowContextMenu(true);
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}
+        onPress={onPressToken}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={chainLogoSize}
+            />
+          </View>
+          <View style={styles.tokenRowTokenInner}>
+            <View style={styles.tokenHeader}>
+              <HighlightText
+                style={styles.tokenSymbol}
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                searchWords={[filterText || '']}
+                textToHighlight={data.symbol}
+              />
+              {data._isPined && <TextBadge />}
+              {!hideFoldTag && data._isManualFold && (
+                <TextBadge type="folded" />
+              )}
+            </View>
+
+            {data._priceStr ? (
+              <HighlightText
+                style={styles.amountStr}
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                searchWords={[filterText || '']}
+                textToHighlight={`${data._amountStr} ${data.symbol}`}
+              />
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.tokenRowUsdValueWrap}>
+          <Text
+            style={[
+              data._amountStr ? styles.tokenRowAmount : styles.tokenRowUsdValue,
+              data._isExcludeBalance &&
+                (data._usdValue || 0) > 0 &&
+                styles.exclude,
+            ]}>
+            {data._usdValueStr}
+          </Text>
+          {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
+            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
+              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
+            </TouchableOpacity>
+          ) : data._amountStr ? (
+            <Text
+              style={StyleSheet.compose(styles.percent, {
+                ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                  ? styles.exclude
+                  : {}),
+                color: percentColor,
+              })}>
+              {formatPercentage(data.price_24h_change || 0)}
+            </Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+    );
+    if (disableMenu) {
+      return children;
+    }
 
     return (
       <ContextMenuView
         menuConfig={{
-          menuActions: showContextMenu ? menuActions : [],
+          menuActions: showContextMenu && menuActions ? menuActions : [],
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>
-        <TouchableOpacity
-          style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-          delayLongPress={200}
-          onLongPress={() => {
-            setShowContextMenu(true);
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-          }}
-          onPress={onPressToken}>
-          <View style={styles.tokenRowTokenWrap}>
-            <View>
-              <AssetAvatar
-                logo={data?.logo_url}
-                chain={data?.chain}
-                style={mediaStyle}
-                size={logoSize}
-                chainSize={16}
-              />
-            </View>
-            <View style={styles.tokenRowTokenInner}>
-              <View style={styles.tokenHeader}>
-                <Text
-                  style={StyleSheet.flatten([styles.tokenSymbol])}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {data.symbol}
-                </Text>
-                {data._isPined && <PinBadge />}
-              </View>
-
-              {data._priceStr ? (
-                <Text style={styles.amountStr} numberOfLines={1}>
-                  {`${data._amountStr} ${data.symbol}`}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-
-          <View style={styles.tokenRowUsdValueWrap}>
-            <Text
-              style={[
-                data._amountStr
-                  ? styles.tokenRowAmount
-                  : styles.tokenRowUsdValue,
-                data._isExcludeBalance &&
-                  (data._usdValue || 0) > 0 &&
-                  styles.exclude,
-              ]}>
-              {data._usdValueStr}
-            </Text>
-            {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
-              <TouchableOpacity
-                hitSlop={hitSlop}
-                onPress={handleShowExcludeTips}>
-                <RcTipCC
-                  style={styles.tips}
-                  color={colors2024['neutral-info']}
-                />
-              </TouchableOpacity>
-            ) : data._amountStr ? (
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(data.price_24h_change || 0)}
-              </Text>
-            ) : null}
-          </View>
-        </TouchableOpacity>
+        {children}
       </ContextMenuView>
     );
   },
 );
 
-export const TokenRowSectionHeader = ({
-  usdStr,
-  fold,
-  onPressFold,
-}: {
-  usdStr: string;
-  fold?: boolean;
-  onPressFold?(): void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+export const ExternalTokenRow = memo(
+  ({
+    data,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+    logoStyle,
+    filterText,
+    onTokenPress,
+  }: {
+    data: AbstractPortfolioToken;
+    style?: ViewStyle;
+    logoStyle?: ViewStyle;
+    fold?: boolean;
+    logoSize?: number;
+    chainLogoSize?: number;
+    filterText?: string;
+    onTokenPress?(token: AbstractPortfolioToken): void;
+  }) => {
+    const { styles } = useTheme2024({ getStyle: getStyles });
 
-  return (
-    <View style={styles.tokenSectionHeader}>
-      <View style={styles.tokenRowTokenWrap}>
-        <View style={styles.tokenRowTokenInner}>
-          <TouchableOpacity
-            onPress={onPressFold}
-            style={styles.tokenRowTokenInnerSmallToken}>
-            <Text style={styles.actionText}>
-              {fold
-                ? t('page.tokenDetail.action.all')
-                : t('page.tokenDetail.action.less')}
-            </Text>
-            {fold ? (
-              <RcUnFoldCC
-                style={styles.arrow}
-                color={colors2024['neutral-secondary']}
+    const mediaStyle = useMemo(
+      () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
+      [logoStyle, styles.tokenRowLogo],
+    );
+
+    const onPressToken = useCallback(() => {
+      return onTokenPress?.(data);
+    }, [data, onTokenPress]);
+
+    return (
+      <TouchableOpacity
+        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        delayLongPress={200}
+        onPress={onPressToken}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={chainLogoSize}
+            />
+          </View>
+          <View style={styles.tokenRowTokenInner}>
+            <View style={styles.tokenHeader}>
+              <HighlightText
+                style={styles.tokenSymbol}
+                highlightStyle={styles.highlightText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                searchWords={[filterText || '']}
+                textToHighlight={data.symbol}
               />
-            ) : (
-              <RcFoldCC
-                style={styles.arrow}
-                color={colors2024['neutral-secondary']}
-              />
-            )}
-          </TouchableOpacity>
+            </View>
+
+            <HighlightText
+              style={styles.amountStr}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={ellipsisAddress(data.id)}
+            />
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
+
+export const TokenRowSectionHeader = memo(
+  ({
+    str,
+    fold,
+    style,
+    buttonStyle,
+    onPressFold,
+  }: {
+    str: string;
+    fold?: boolean;
+    style?: ViewStyle;
+    buttonStyle?: ViewStyle;
+    onPressFold?(): void;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
+
+    return (
+      <View style={[styles.tokenSectionHeader, style]}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View style={styles.tokenRowTokenInner}>
+            <TouchableOpacity
+              onPress={onPressFold}
+              style={[styles.tokenRowTokenInnerSmallToken, buttonStyle]}>
+              <Text style={styles.actionText}>
+                {fold
+                  ? t('page.tokenDetail.action.all')
+                  : t('page.tokenDetail.action.less')}
+              </Text>
+              {fold ? (
+                <RcUnFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              ) : (
+                <RcFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.tokenRowUsdValueWrap}>
+          <Text style={styles.tokenRowUsdValue}>{str}</Text>
         </View>
       </View>
-      <View style={styles.tokenRowUsdValueWrap}>
-        <Text style={styles.tokenRowUsdValue}>{usdStr}</Text>
-      </View>
-    </View>
-  );
-};
+    );
+  },
+);
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
@@ -257,7 +356,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: ASSETS_ITEM_HEIGHT,
+    height: ASSETS_SECTION_HEADER,
   },
   tokenRowTokenWrap: {
     flexShrink: 1,
@@ -333,6 +432,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  highlightText: {
+    color: ctx.colors2024['brand-default'],
   },
   exclude: {
     color: ctx.colors2024['neutral-info'],

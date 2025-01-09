@@ -1,12 +1,11 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { memo } from 'react';
+import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 
 import { AbstractProject } from '../../types';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -15,6 +14,14 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { useTranslation } from 'react-i18next';
+import { HighlightText } from '@/components2024/HighlightText';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
+import { IS_ANDROID } from '@/core/native/utils';
+import { trigger } from 'react-native-haptic-feedback';
 
 const hitSlop = {
   top: 10,
@@ -23,99 +30,131 @@ const hitSlop = {
   right: 10,
 };
 
-export const DefiRow = ({
-  data,
-  onPress,
-}: {
-  data: AbstractProject;
-  onPress?: () => void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+export const DefiRow = memo(
+  ({
+    data,
+    filterText,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+    menuActions,
+    hideFoldTag,
+    disableMenu,
+    onPress,
+  }: {
+    data: AbstractProject;
+    style?: ViewStyle;
+    logoSize?: number;
+    chainLogoSize?: number;
+    filterText?: string;
+    menuActions?: MenuAction[];
+    disableMenu?: boolean;
+    hideFoldTag?: boolean;
+    onPress?: () => void;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
 
-  const handleShowExcludeTips = () => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.DESCRIPTION,
-      title: t('page.tokenDetail.excludeBalanceTips'),
-      sections: [],
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        snapPoints: ['40%'],
-      },
-      nextButtonProps: {
-        title: (
-          <Text style={styles.modalNextButtonText}>
-            {t('page.tokenDetail.excludeBalanceTipsButton')}
-          </Text>
-        ),
-        titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-        onPress: () => {
-          removeGlobalBottomSheetModal2024(modalId);
+    const { t } = useTranslation();
+
+    const handleShowExcludeTips = () => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: t('page.tokenDetail.excludeBalanceTips'),
+        sections: [],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['40%'],
         },
-      },
-    });
-  };
+        nextButtonProps: {
+          title: (
+            <Text style={styles.modalNextButtonText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    };
 
-  return (
-    <TouchableOpacity onPress={onPress} style={[styles.projectHeader]}>
-      <View style={styles.projectHeaderName}>
-        <AssetAvatar
-          logo={data?.logo}
-          size={40}
-          chain={data?.chain}
-          chainSize={16}
-        />
-        <Text style={styles.projectName} numberOfLines={1}>
-          {data?.name}
-        </Text>
-      </View>
-      <View style={styles.projectHeaderUsd}>
-        <Text
-          style={[
-            styles.projectHeaderNetWorth,
-            data._isExcludeBalance && styles.exclude,
-          ]}>
-          {data._netWorth}
-        </Text>
-        {data._isExcludeBalance && data._netWorth && (
-          <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
-            <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-};
-export const DefiSectionHeader = ({
-  usdStr,
-  onPress,
-  fold,
-}: {
-  usdStr: string;
-  fold?: boolean;
-  onPress?: () => void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  return (
-    <View style={styles.headerWrapper}>
-      <Text style={styles.symbol}>Defi</Text>
-      <TouchableOpacity onPress={onPress} style={styles.totalUsdWrapper}>
-        <Text style={styles.totalUsd}>{usdStr}</Text>
-        <ArrowRightSVG
-          style={[
-            styles.arrow,
-            {
-              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
-            },
-          ]}
-          color={colors2024['neutral-title-1']}
-        />
+    const children = (
+      <TouchableOpacity
+        onPress={onPress}
+        delayLongPress={200}
+        onLongPress={() => {
+          if (disableMenu) {
+            return;
+          }
+          setShowContextMenu(true);
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}
+        style={[styles.projectHeader, style]}>
+        <View style={styles.projectHeaderName}>
+          <AssetAvatar
+            logo={data?.logo}
+            size={logoSize}
+            chain={data?.chain}
+            chainSize={chainLogoSize}
+          />
+          <View
+            style={[
+              styles.projectNameBox,
+              data._isManualFold && {
+                marginRight: 55,
+              },
+            ]}>
+            <HighlightText
+              style={styles.projectName}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={data?.name}
+            />
+            {!hideFoldTag && data._isManualFold && <TextBadge type="folded" />}
+          </View>
+        </View>
+        <View style={styles.projectHeaderUsd}>
+          <Text
+            style={[
+              styles.projectHeaderNetWorth,
+              data._isExcludeBalance && styles.exclude,
+            ]}>
+            {data._netWorth}
+          </Text>
+          {data._isExcludeBalance && data._netWorth && (
+            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
+              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
+            </TouchableOpacity>
+          )}
+        </View>
       </TouchableOpacity>
-    </View>
-  );
-};
+    );
+
+    if (disableMenu) {
+      return children;
+    }
+
+    return (
+      <ContextMenuView
+        menuConfig={{
+          menuActions: showContextMenu && menuActions ? menuActions : [],
+        }}
+        preViewBorderRadius={12}
+        triggerProps={{ action: 'longPress' }}>
+        {children}
+      </ContextMenuView>
+    );
+  },
+);
 const getStyles = createGetStyles2024(ctx => ({
   projectHeader: {
     paddingHorizontal: 4,
@@ -127,6 +166,7 @@ const getStyles = createGetStyles2024(ctx => ({
   projectHeaderName: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   projectName: {
     marginLeft: 8,
@@ -135,6 +175,14 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    marginRight: 8,
+  },
+  projectNameBox: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  highlightText: {
+    color: ctx.colors2024['brand-default'],
   },
   projectHeaderUsd: {
     justifyContent: 'center',
@@ -157,15 +205,6 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 14,
     height: 14,
   },
-  headerWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    height: ASSETS_ITEM_HEIGHT,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
   symbol: {
     fontSize: 22,
     lineHeight: 28,
@@ -179,13 +218,6 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 4,
-  },
-  totalUsd: {
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
   },
   arrow: {},
   modalNextButtonText: {

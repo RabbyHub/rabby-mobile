@@ -26,7 +26,9 @@ function HomeScreen(): JSX.Element {
   }, [currentAccount?.address, navigation, setNavigationOptions]);
 
   return (
-    <NormalScreenContainer2024 type="bg1" style={styles.rootScreenContainer}>
+    <NormalScreenContainer2024
+      type="bg1"
+      overwriteStyle={styles.rootScreenContainer}>
       <SafeAreaView style={styles.safeView}>
         <AssetContainer onRefresh={triggerUpdate} />
       </SafeAreaView>
@@ -36,9 +38,10 @@ function HomeScreen(): JSX.Element {
 
 HomeScreen.HeaderArea = HeaderArea;
 
-const getStyles = createGetStyles2024(() => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
     paddingHorizontal: 16,
+    backgroundColor: colors2024['neutral-bg-gray'],
   },
   safeView: {
     flex: 1,

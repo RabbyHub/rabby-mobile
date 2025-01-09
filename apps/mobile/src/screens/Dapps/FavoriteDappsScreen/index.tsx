@@ -13,6 +13,7 @@ import { Text } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 import { debounce } from 'lodash';
+import { RootNames } from '@/constant/layout';
 
 export function FavoriteDappsScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -44,7 +45,10 @@ export function FavoriteDappsScreen(): JSX.Element {
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, options);
+      openUrlAsDapp(url, {
+        ...options,
+        dappsWebViewFromRoute: RootNames.FavoriteDapps,
+      });
       setBrowserHistory(safeGetOrigin(url));
     },
   );

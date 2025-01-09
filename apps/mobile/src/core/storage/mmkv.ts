@@ -64,6 +64,7 @@ const {
   methods: appMethods,
   mmkv: appMMKV,
 } = makeAppStorage();
+
 const { storage: keyringStorage } = makeAppStorage({
   id: 'mmkv.keyring',
   encryptionKey: 'keyring',

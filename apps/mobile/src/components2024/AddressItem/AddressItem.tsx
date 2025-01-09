@@ -22,6 +22,7 @@ interface ChildrenProps {
   WalletName: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletAddress: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
+  walletName?: string;
 }
 
 type AddressItemProps =
@@ -114,6 +115,7 @@ export const AddressItem = (props: AddressItemProps) => {
           WalletName,
           WalletAddress,
           WalletBalance,
+          walletName,
         })
       ) : (
         <View style={styles.root}>

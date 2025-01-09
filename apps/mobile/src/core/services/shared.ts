@@ -35,6 +35,9 @@ import { BridgeService } from './bridge';
 import { GasAccountService } from './gasAccount';
 import { BrowserHistoryService } from './browserHistoryService';
 import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
+import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
+
+migrateAppStorage(appStorage);
 
 const keyringState = normalizeKeyringState().keyringData;
 
@@ -169,4 +172,21 @@ export const bridgeService = new BridgeService({
 
 export const gasAccountService = new GasAccountService({
   storageAdapter: appStorage,
+});
+
+migrateServices({
+  contactBook: contactService,
+  dapps: dappService,
+  bridge: bridgeService,
+  browserHistory: browserHistoryService,
+  preference: preferenceService,
+  whitelist: whitelistService,
+  txHistory: transactionHistoryService,
+  transactions: transactionWatcherService,
+  transactionBroadcastWatcher: transactionBroadcastWatcherService,
+  securityEngine: securityEngineService,
+  RabbyPoints: rabbyPointsService,
+  swap: swapService,
+  HDKeyRingLastAddAddrTime: hdKeyringService,
+  gasAccount: gasAccountService,
 });

@@ -150,10 +150,15 @@ export const tagTokenList = (
       return false;
     })();
 
+    const isManualFold = foldTokens.some(
+      x => x.chainId === i.chain && x.tokenId === i._tokenId,
+    );
+
     return {
       ...i,
       _isPined: isPin,
       _isFold: isFold,
+      _isManualFold: isManualFold,
       _isExcludeBalance: isExcludeBalance,
       _pinIndex: pinIndex,
     };

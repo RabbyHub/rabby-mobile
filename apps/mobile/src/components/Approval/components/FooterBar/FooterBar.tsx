@@ -25,6 +25,7 @@ import {
   GasAccountTips,
 } from './GasLessComponents';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;

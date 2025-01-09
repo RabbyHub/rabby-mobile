@@ -27,7 +27,9 @@ const TxChangeItem = ({
   data,
   isSend,
   canClickToken = true,
+  isForMultipleAdderss,
 }: {
+  isForMultipleAdderss?: boolean;
   data: HistoryDisplayItem;
   item: TxHistoryItem['sends'][0] | TxDisplayItem['receives'][0];
   tokenDict: /* TxDisplayItem['tokenDict'] */ Record<
@@ -78,6 +80,7 @@ const TxChangeItem = ({
         {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)}
       </Text>
       <TokenLabel
+        isForMultipleAdderss={isForMultipleAdderss}
         disableClickToken={!canClickToken}
         style={[tokenChangeStyle, styles.tokenLabel]}
         {...(isNft
@@ -94,7 +97,9 @@ export const TxChange = ({
   tokenDict,
   canClickToken,
   style,
+  isForMultipleAdderss,
 }: {
+  isForMultipleAdderss?: boolean;
   data: HistoryDisplayItem;
   tokenDict: TxDisplayItem['tokenDict'];
   canClickToken?: boolean;
@@ -104,6 +109,7 @@ export const TxChange = ({
     <View style={[styles.container, style]}>
       {data?.sends?.map(item => (
         <TxChangeItem
+          isForMultipleAdderss={isForMultipleAdderss}
           isSend
           canClickToken={canClickToken}
           key={item.token_id}
@@ -114,6 +120,7 @@ export const TxChange = ({
       ))}
       {data?.receives?.map(item => (
         <TxChangeItem
+          isForMultipleAdderss={isForMultipleAdderss}
           canClickToken={canClickToken}
           key={item.token_id}
           data={data}

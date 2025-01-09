@@ -127,6 +127,7 @@ export const HistoryList = ({
           ) : null}
           <HistoryItem
             data={item.data}
+            isForMultipleAdderss={isForMultipleAdderss}
             projectDict={item.data.projectDict}
             cateDict={item.data.cateDict}
             tokenDict={item.data.tokenDict || {}}
