@@ -313,6 +313,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
               tokenId: data._tokenId,
               chainId: data.chain,
             });
+            flatListRef.current?.scrollToOffset({
+              animated: true,
+              offset: HEADER_TOP_AREA_HEIGHT,
+            });
             toast.success(t('page.tokenDetail.actionsTips.pin_success'));
           }
           refreshTagToken();
