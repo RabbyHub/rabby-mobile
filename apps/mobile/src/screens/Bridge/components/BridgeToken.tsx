@@ -1,44 +1,26 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  ScrollView,
 } from 'react-native';
-import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
 import { useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-// import { MaxButton } from '../../SendToken/components/MaxButton';
-import { RcIconMaxButton } from '@/assets/icons/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { useBridgeSupportedChains, useSetSettingVisible } from '../hooks';
-// import { ChainInfo } from './ChainInfo';
+import { useBridgeSupportedChains } from '../hooks';
 import { ChainInfo } from './ChainInfo';
-// import TokenSelect from '@/ui/component/TokenSelect';
-// import BridgeToTokenSelect from './BridgeToTokenSelect';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
-import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
-import { Button } from '@/components2024/Button';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 
 const BridgeToken = ({
@@ -87,9 +69,7 @@ const BridgeToken = ({
   const name = isFromToken ? t('page.bridge.From') : t('page.bridge.To');
   const chainObj = findChainByEnum(chain);
 
-  const openFeePopup = useSetSettingVisible();
   const inputRef = useRef<TextInput>(null);
-  const scrollRef = useRef<ScrollView>(null);
 
   useLayoutEffect(() => {
     if (isFromToken && inputRef.current && !isMaxRef?.current) {
@@ -216,6 +196,7 @@ const BridgeToken = ({
                 chainId={chainObj?.serverId!}
                 type={'bridgeFrom'}
                 placeholder={t('page.swap.search-by-name-address')}
+                supportChains={supportedChains}
               />
             )}
           </View>
@@ -224,13 +205,6 @@ const BridgeToken = ({
           <View style={styles.footer}>
             <View style={styles.balanceContainer}>
               {<Text style={styles.value}>{useValue}</Text>}
-              {isToken && !!value && (
-                <TouchableOpacity
-                  onPress={() => openFeePopup(true)}
-                  style={styles.infoIcon}>
-                  <RcIcHelp color={colors2024['neutral-secondary']} />
-                </TouchableOpacity>
-              )}
             </View>
             <View style={styles.balanceContainer}>
               {inSufficient && token ? (

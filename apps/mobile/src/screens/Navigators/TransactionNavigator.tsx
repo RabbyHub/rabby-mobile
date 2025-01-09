@@ -24,7 +24,6 @@ import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import HistoryScreen from '../Transaction/History';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 
 const TransactionStack =

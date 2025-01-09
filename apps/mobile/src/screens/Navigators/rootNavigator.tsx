@@ -1,19 +1,19 @@
-import React from 'react';
-import { Platform } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import 'react-native-gesture-handler';
 
 import { useThemeColors } from '@/hooks/theme';
 
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 
-import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
-import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
-import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { HomeNavigatorParamsList } from '@/navigation-type';
+import React, { useLayoutEffect } from 'react';
+import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
+import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
+import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { preloadSettingsScreen } from '@/perfs/preloads';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
@@ -25,6 +25,12 @@ export function HomeScreenNavigator() {
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');
   }
+
+  useLayoutEffect(() => {
+    const timer = setTimeout(() => preloadSettingsScreen(), 200);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>

@@ -476,6 +476,22 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     ],
   );
 
+  const openFeePopup = useCallback(() => {
+    if (isWrapToken) {
+      return;
+    }
+    setIsShowRabbyFeePopup({
+      visible: true,
+      dexName: activeProvider?.name || undefined,
+      dexFeeDesc: activeProvider?.quote?.dexFeeDesc || undefined,
+    });
+  }, [
+    activeProvider?.name,
+    activeProvider?.quote?.dexFeeDesc,
+    isWrapToken,
+    setIsShowRabbyFeePopup,
+  ]);
+
   return (
     <NormalScreenContainer2024 type="bg1">
       {isForMultipleAdderss && (
@@ -584,6 +600,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
             !!receiveToken && (
               <View style={{ marginTop: 16, marginHorizontal: -24 }}>
                 <BridgeShowMore
+                  openFeePopup={openFeePopup}
                   open={showMoreOpen}
                   setOpen={setShowMoreOpen}
                   sourceName={sourceName}

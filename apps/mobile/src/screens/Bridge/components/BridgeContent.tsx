@@ -4,7 +4,12 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useQuoteVisible, useSetQuoteVisible, useSetRefreshId } from '../hooks';
+import {
+  useQuoteVisible,
+  useSetQuoteVisible,
+  useSetRefreshId,
+  useSetSettingVisible,
+} from '../hooks';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
@@ -501,6 +506,12 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     handleBridge();
   };
 
+  const switchFeePopup = useSetSettingVisible();
+
+  const openFeePopup = useCallback(() => {
+    switchFeePopup(true);
+  }, [switchFeePopup]);
+
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
       {isForMultipleAdderss && (
@@ -556,6 +567,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         <View>
           {selectedBridgeQuote && (
             <BridgeShowMore
+              openFeePopup={openFeePopup}
               open={showMoreOpen}
               setOpen={setShowMoreOpen}
               sourceName={selectedBridgeQuote?.aggregator.name || ''}

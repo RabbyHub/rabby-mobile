@@ -1,5 +1,7 @@
 import BigNumber from 'bignumber.js';
 
+const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
+
 export const splitNumberByStep = (
   num: number | string,
   step = 3,
@@ -19,6 +21,27 @@ export const splitNumberByStep = (
   return n.toFormat(fmt);
 };
 
+export const formatLittleNumber = (num: string, minLen = 6) => {
+  const bn = new BigNumber(num);
+  if (bn.toFixed().length >= minLen) {
+    const s = bn.precision(4).toFormat();
+    const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z: string) => {
+      const zeroLength = z.length;
+
+      const sub = `${zeroLength}`
+        .split('')
+        .map(x => Sub_Numbers[x as any])
+        .join('');
+
+      const end = s.slice(zeroLength + 2);
+      return `0.0${sub}${end}`;
+    });
+
+    return ss;
+  }
+  return num;
+};
+
 export const formatTokenAmount = (
   amount: number | string,
   decimals = 4,
@@ -33,6 +56,9 @@ export const formatTokenAmount = (
   let realDecimals = decimals;
   if (moreDecimalsWhenNotEnough && bn.lt(0.0001) && decimals < 8) {
     realDecimals = 8;
+  }
+  if (bn.lte(0.0001)) {
+    return formatLittleNumber(bn.toFixed());
   }
   if (!split[1] || split[1].length < realDecimals) {
     return splitNumberByStep(bn.toFixed());
@@ -88,30 +114,12 @@ export const formatNumber = (
   return n.toFormat(decimal, format);
 };
 
-const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
-
 export const formatPrice = (price: string | number, len = 4) => {
   if ((price as number) >= 0.1) {
     return formatNumber(price);
   }
-  if ((price as number) < 0.00001) {
-    if (price.toString().length > 10) {
-      const s = new BigNumber(price).precision(4).toFormat();
-      const ss = s.replace(/^0.(0*)?(?:.*)/u, (_l, z: string) => {
-        const zeroLength = z.length;
-
-        const sub = `${zeroLength}`
-          .split('')
-          .map(x => Sub_Numbers[x as any])
-          .join('');
-
-        const end = s.slice(zeroLength + 2);
-        return `0.0${sub}${end}`;
-      });
-
-      return ss;
-    }
-    return price.toString();
+  if ((price as number) < 0.0001) {
+    return formatLittleNumber(new BigNumber(price).toFixed(), 6);
   }
   return formatNumber(price, len);
 };
@@ -144,11 +152,9 @@ export const formatAmount = (amount: string | number, decimals = 4) => {
   if ((amount as number) > 1) {
     return formatNumber(amount, 4);
   }
-  if ((amount as number) < 0.00001) {
-    if (amount.toString().length > 10) {
-      return Number(amount).toExponential(4);
-    }
-    return amount.toString();
+  if ((amount as number) < 0.0001) {
+    const str = new BigNumber(amount).toFixed();
+    return formatLittleNumber(str);
   }
   return formatNumber(amount, decimals);
 };

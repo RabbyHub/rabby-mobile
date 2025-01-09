@@ -30,7 +30,9 @@ bridgeSupportedChainsAtom.onMount = setAtom => {
         acc[chain.serverId] = chain.enum;
         return acc;
       }, {} as Record<string, CHAINS_ENUM>);
-      setAtom(chains.map(item => mappings[item]));
+      setAtom(
+        chains.map(item => findChainByServerID(item)?.enum || mappings[item]),
+      );
     }
   });
 };

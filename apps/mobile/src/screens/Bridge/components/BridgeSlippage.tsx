@@ -280,8 +280,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   value: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['brand-default'],
   },
@@ -348,7 +348,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-foot'],
     fontSize: 16,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
+    fontWeight: '500',
   },
   activeText: {
     color: colors2024['brand-default'],
