@@ -282,8 +282,6 @@ export const FooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { androidOnlyBottomOffset } = useSafeSizes();
-
   if (!account) {
     return null;
   }
@@ -294,13 +292,7 @@ export const FooterBar: React.FC<Props> = ({
   const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
 
   return (
-    <View
-      style={StyleSheet.flatten([
-        styles.container,
-        {
-          paddingBottom: androidOnlyBottomOffset,
-        },
-      ])}>
+    <View style={styles.container}>
       {/* {!isDarkTheme && hasShadow && <Shadow />} */}
       <View
         style={styles.wrapper}

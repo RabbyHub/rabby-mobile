@@ -19,6 +19,7 @@ import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
 import { useSensitiveGlobalModalsOpened } from './security';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -168,6 +169,7 @@ export const GlobalBottomSheetModal2024 = () => {
 
   const { panResponder } = useRefreshAutoLockPanResponder();
   const { colors2024 } = useTheme2024();
+  const { androidOnlyBottomOffset } = useSafeSizes();
 
   return (
     <View>
@@ -184,6 +186,7 @@ export const GlobalBottomSheetModal2024 = () => {
         return (
           <AppBottomSheetModal
             topInset={height.top}
+            bottomInset={androidOnlyBottomOffset}
             enableContentPanningGesture={false}
             enableDismissOnClose
             keyboardBlurBehavior="restore"
