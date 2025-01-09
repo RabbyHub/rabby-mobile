@@ -1,6 +1,5 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { useTheme2024 } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
@@ -9,7 +8,6 @@ import { RightArea } from '../Home/SingleHomeRightArea';
 const SingleAddressStack = createCustomNativeStackNavigator();
 
 export function SingleAddressNavigator() {
-  const { colors2024 } = useTheme2024();
   const { mergeScreenOptions } = useStackScreenConfig();
 
   if (__DEV__) {
@@ -30,7 +28,7 @@ export function SingleAddressNavigator() {
           headerShown: true,
           headerRight: RightArea,
           headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
+            backgroundColor: 'transparent',
           },
         })}
       />

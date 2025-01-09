@@ -27,6 +27,7 @@ import {
   TransactionNavigator,
   SingleAddressNavigator,
   DappsNavigator,
+  HomeNonTabNavigator,
 } from './screens/Navigators/index.eager';
 
 import usePrevious from 'ahooks/lib/usePrevious';
@@ -291,6 +292,11 @@ export default function AppNavigation({
             options={RootOptions}
           />
           <RootStack.Screen
+            name={RootNames.StackHomeNonTab}
+            component={HomeNonTabNavigator}
+            options={RootOptions}
+          />
+          <RootStack.Screen
             name={RootNames.SingleAddressStack}
             component={SingleAddressNavigator}
           />
@@ -370,7 +376,7 @@ export default function AppNavigation({
             options={mergeScreenOptions({
               headerShown: true,
               headerTitleAlign: 'center',
-              headerTitle: 'DeFi Detail',
+              headerTitle: '',
               headerLeft: () => null,
               headerStyle: {
                 backgroundColor: 'transparent',

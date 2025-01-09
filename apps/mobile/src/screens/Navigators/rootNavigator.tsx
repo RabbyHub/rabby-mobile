@@ -1,29 +1,22 @@
 import 'react-native-gesture-handler';
-import { Platform } from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
 
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 
-import { DappsScreen } from '@/screens/Dapps/DappsScreen';
-
 import { HomeNavigatorParamsList } from '@/navigation-type';
-import React, { useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useLayoutEffect } from 'react';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { useBottomTabScreenConfig } from '@/hooks/navigation';
-import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadSettingsScreen } from '@/perfs/preloads';
-import { SettingsScreen } from '../index.lazy';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
-
-const isIOS = Platform.OS === 'ios';
 
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
@@ -67,6 +60,7 @@ export function HomeScreenNavigator() {
             headerShown: false,
           }}
         />
+
         <HomeHiddenTabStack.Screen
           name={RootNames.DappWebViewStubOnHome}
           component={DappWebViewStubScreen}

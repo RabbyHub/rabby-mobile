@@ -8,6 +8,7 @@ import createPersistStore, {
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { CEX, DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 
@@ -69,7 +70,7 @@ export class SwapService {
   constructor(options?: StorageAdapaterOptions) {
     const storage = createPersistStore<SwapServiceStore>(
       {
-        name: 'swap',
+        name: APP_STORE_NAMES.swap,
         template: {
           autoSlippage: true,
           slippage: '0.1',

@@ -29,6 +29,9 @@ export class DisplayedProject implements AbstractProject {
   chain?: string;
   netWorth: number;
   _netWorth: string;
+  _isExcludeBalance?: boolean;
+  _isFold?: boolean;
+  _isManualFold?: boolean;
   _portfolioDict: Record<string, DisplayedPortfolio> = {};
   _portfolios: DisplayedPortfolio[] = [];
   _historyPatched?: boolean;
@@ -156,7 +159,7 @@ export class DisplayedProject implements AbstractProject {
   }
 }
 
-class DisplayedPortfolio implements AbstractPortfolio {
+export class DisplayedPortfolio implements AbstractPortfolio {
   // [immerable] = true;
   id: string;
   name?: string;

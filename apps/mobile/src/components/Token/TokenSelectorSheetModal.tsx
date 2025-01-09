@@ -24,11 +24,10 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
-import { getTokenSymbol, SMALL_TOKEN_ID } from '@/utils/token';
+import { getTokenSymbol } from '@/utils/token';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
-import TouchableView from '../Touchable/TouchableView';
 import { findChainByServerID } from '@/utils/chain';
 import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
@@ -41,7 +40,7 @@ import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { PinBadge } from '@/screens/Address/components/PinBadge';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
@@ -337,6 +336,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           return token.$origin.headerRender();
         }
         const isPined = token?.$origin.isPined;
+        const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
         const currentChainItem = findChainByServerID(token._chain);
@@ -412,7 +412,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   <Text style={styles.tokenName} numberOfLines={1}>
                     {ellipsisOverflowedText(token?._symbol, 15)}
                   </Text>
-                  {isPined && <PinBadge />}
+                  {isPined && <TextBadge />}
+                  {isManualFold && <TextBadge type="folded" />}
                   <View style={{ marginLeft: 8 }}>
                     {isSelected ? <RcIconChecked /> : null}
                   </View>
@@ -497,7 +498,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
-        snapPoints={['90%']}
+        snapPoints={[ModalLayouts.defaultHeightPercentText]}
         enableContentPanningGesture={false}
         enableDismissOnClose={true}
         onChange={idx => {
@@ -658,6 +659,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-bg-1'],
       // borderBottomWidth: 0.5,
       marginHorizontal: 24,
+      marginBottom: 16,
     },
     headerBoxText: {
       fontSize: 17,

@@ -1,0 +1,43 @@
+diff --git a/android/src/main/java/com/swmansion/reanimated/layoutReanimation/ReanimatedNativeHierarchyManager.java b/android/src/main/java/com/swmansion/reanimated/layoutReanimation/ReanimatedNativeHierarchyManager.java
+index e73034e3fb2a48959e4de9619341c567b74906f1..44e1d48350490bbe77c97bef7a965f767eb008e3 100644
+--- a/android/src/main/java/com/swmansion/reanimated/layoutReanimation/ReanimatedNativeHierarchyManager.java
++++ b/android/src/main/java/com/swmansion/reanimated/layoutReanimation/ReanimatedNativeHierarchyManager.java
+@@ -242,9 +242,9 @@ public class ReanimatedNativeHierarchyManager extends NativeViewHierarchyManager
+       e.printStackTrace();
+     }
+ 
+-    if (initOk) {
+-      setLayoutAnimationEnabled(true);
+-    }
++    // if (initOk) {
++    //   setLayoutAnimationEnabled(true);
++    // }
+   }
+ 
+   private boolean isLayoutAnimationDisabled() {
+@@ -290,6 +290,16 @@ public class ReanimatedNativeHierarchyManager extends NativeViewHierarchyManager
+     }
+   }
+ 
++  /** @why catch exception here to avoid render flicker/stuck on Android */
++  private void _patchedManageChildren(int tag, int[] indicesToRemove, ViewAtIndex[] viewsToAdd, int[] tagsToDelete) {
++    try {
++      super.manageChildren(tag, indicesToRemove, viewsToAdd, tagsToDelete);
++    } catch (Exception e) {
++      // TODO: try to capture it by sentry
++      e.printStackTrace();
++    }
++  }
++
+   @Override
+   public synchronized void manageChildren(
+       int tag,
+@@ -297,7 +307,7 @@ public class ReanimatedNativeHierarchyManager extends NativeViewHierarchyManager
+       @Nullable ViewAtIndex[] viewsToAdd,
+       @Nullable int[] tagsToDelete) {
+     if (isLayoutAnimationDisabled()) {
+-      super.manageChildren(tag, indicesToRemove, viewsToAdd, tagsToDelete);
++      this._patchedManageChildren(tag, indicesToRemove, viewsToAdd, tagsToDelete);
+       return;
+     }
+     ViewGroup viewGroup;

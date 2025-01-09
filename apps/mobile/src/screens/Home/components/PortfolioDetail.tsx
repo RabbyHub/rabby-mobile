@@ -1,10 +1,18 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, Text, ViewStyle } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ViewStyle,
+  TouchableWithoutFeedback,
+  Animated,
+  Easing,
+} from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
 import groupBy from 'lodash/groupBy';
-import { RcIconInfoCC } from '@/assets/icons/common';
-
+import { RcIconInfoCC, RcIconRightCC } from '@/assets/icons/common';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { AssetAvatar, Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
@@ -14,9 +22,14 @@ import {
   PortfolioItemNft,
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolio } from '../types';
+import { AbstractPortfolio, AbstractPortfolioToken } from '../types';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { navigate, naviPush } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useAssets } from '@/screens/Search/useAssets';
+import { useRoute } from '@react-navigation/native';
+import { ensureAbstractPortfolioToken } from '../utils/token';
 
 export const PortfolioHeader = ({
   data,
@@ -74,6 +87,7 @@ export const PortfolioHeader = ({
 
 type TokenItem = {
   id: string;
+  chain: string;
   _logo: string;
   amount: number;
   _symbol: string;
@@ -101,7 +115,53 @@ export const TokenList = ({
     shareToken: PortfolioItemToken;
   };
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const route = useRoute();
+  const { relateTokenId, isSingleAddress } = (route.params || {}) as {
+    relateTokenId?: string;
+    isSingleAddress?: boolean;
+  };
+
+  const [highlightAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(highlightAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 0.5,
+        duration: 1000,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 0.5,
+        duration: 1000,
+        useNativeDriver: false,
+      }),
+      Animated.timing(highlightAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [highlightAnim]);
+
+  const backgroundColor = highlightAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [
+      'transparent',
+      colors2024['brand-light-1'],
+      'rgba(112, 132, 255, 0.04)',
+    ],
+  });
 
   const headers = [name, 'amount', 'USD Value'];
 
@@ -112,6 +172,7 @@ export const TokenList = ({
 
         return {
           id: x.id,
+          chain: x.chain,
           amount: x.amount,
           _logo: x.logo_url,
           _symbol: getTokenSymbol(x),
@@ -134,6 +195,7 @@ export const TokenList = ({
 
       return {
         id: n.id,
+        chain: n.collection.chain_id,
         _logo: n.collection.logo_url,
         _symbol,
         amount: n.amount,
@@ -153,6 +215,7 @@ export const TokenList = ({
           id: `fraction${
             fraction.collection.id + fraction.collection.chain_id
           }`,
+          chain: fraction.collection.chain_id,
           _logo: fraction.collection.logo_url,
           _symbol: getCollectionDisplayName(fraction.collection),
           amount: fraction.shareToken.amount,
@@ -184,6 +247,25 @@ export const TokenList = ({
     return result;
   }, [_fraction, _nfts, _tokens]);
 
+  // const { tokens: cacheAssets } = useAssets();
+  const handleOpenTokenDetail = React.useCallback(
+    (token: TokenItem) => {
+      naviPush(RootNames.TokenDetail, {
+        token: {
+          // just need id and chain to search cache
+          id: token.id,
+          chain: token.chain,
+          logo_url: token._logo,
+          symbol: token._symbol,
+          _tokenId: token.id,
+        } as any, // to do fix type
+        isSingleAddress,
+        fromPortfolio: true,
+      });
+    },
+    [isSingleAddress],
+  );
+
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
       <View style={[styles.tokenRow, styles.tokenRowHeader]}>
@@ -204,17 +286,43 @@ export const TokenList = ({
       </View>
       {list.map(l => {
         return (
-          <View style={[styles.tokenRow, styles.tokenRowToken]} key={l.id}>
-            <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
-              <AssetAvatar
-                logo={l._logo}
-                logoStyle={l.isToken ? undefined : styles.nftIcon}
-                size={24}
-              />
-              <Text style={styles.tokenListSymbolText} numberOfLines={1}>
-                {l._symbol}
-              </Text>
-            </View>
+          <Animated.View
+            style={[
+              styles.tokenRow,
+              styles.tokenRowToken,
+              relateTokenId === l.id && { backgroundColor },
+            ]}
+            key={l.id}>
+            <TouchableWithoutFeedback
+              onPress={() => l.isToken && handleOpenTokenDetail(l)}>
+              <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
+                <AssetAvatar
+                  logo={l._logo}
+                  logoStyle={l.isToken ? undefined : styles.nftIcon}
+                  size={24}
+                />
+                <Text
+                  style={[
+                    styles.tokenListSymbolText,
+                    relateTokenId === l.id && styles.tokenTextHightlight,
+                  ]}
+                  numberOfLines={1}>
+                  {l._symbol}
+                </Text>
+                {l.isToken && (
+                  <RcIconRightCC
+                    style={styles.arrowStyle}
+                    width={14}
+                    height={14}
+                    color={
+                      relateTokenId === l.id
+                        ? colors2024['brand-default']
+                        : colors2024['neutral-secondary']
+                    }
+                  />
+                )}
+              </View>
+            </TouchableWithoutFeedback>
             <Text style={styles.tokenListCol}>{formatAmount(l.amount)}</Text>
             <View
               style={StyleSheet.flatten([
@@ -234,7 +342,7 @@ export const TokenList = ({
                 </Tip>
               ) : null}
             </View>
-          </View>
+          </Animated.View>
         );
       })}
     </View>
@@ -286,6 +394,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
   portfolioTypeDesc: {
     flexDirection: 'row',
@@ -296,7 +405,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 10,
     paddingHorizontal: 8,
     height: 20,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(112, 132, 255, 0.12)',
   },
   portfolioTypeText: {
     fontSize: 12,
@@ -336,9 +445,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  arrowStyle: {
+    marginLeft: -4,
   },
   tokenRowToken: {
     height: 40,
+  },
+  hightlightRow: {
+    backgroundColor: 'rgba(112, 132, 255, 0.04)',
   },
   tokenRowHeader: {
     marginBottom: 8,
@@ -374,8 +490,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexShrink: 1,
   },
+  tokenTextHightlight: {
+    color: colors2024['brand-default'],
+  },
   tokenListSymbolText: {
-    paddingLeft: 8,
+    paddingLeft: 4,
     paddingRight: 4,
     fontSize: 14,
     fontWeight: '700',

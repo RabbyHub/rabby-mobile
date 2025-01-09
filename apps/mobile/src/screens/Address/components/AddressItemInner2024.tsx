@@ -5,7 +5,7 @@ import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
-import { PinBadge } from './PinBadge';
+import { TextBadge } from './PinBadge';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 
@@ -120,7 +120,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
                   ])}
                 />
                 <View style={styles.itemNamePinned}>
-                  {pinned && <PinBadge />}
+                  {pinned && <TextBadge />}
                 </View>
               </View>
               <WalletBalance style={styles.itemBalanceText} />

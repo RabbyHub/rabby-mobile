@@ -5,6 +5,7 @@ import {
   StackActions,
   createNavigationContainerRef,
 } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 export const navigationRef =
   createNavigationContainerRef<RootStackParamsList>();
@@ -22,42 +23,47 @@ export function getLatestNavigationName() {
 
   return navigationRef.getCurrentRoute()?.name;
 }
+
 /**
  * navigate in pure function
  *
  * https://reactnavigation.org/docs/navigating-without-navigation-prop
  */
-export const navigate = ((...arg: any) => {
-  if (navigationRef.isReady()) {
-    // Perform navigation if the react navigation is ready to handle actions
-    navigationRef.navigate(...arg);
-  } else {
-    __DEV__ && console.warn('[navigate] navigationRef is not ready');
-    // You can decide what to do if react navigation is not ready
-    // You can ignore this, or add these actions to a queue you can call later
-  }
-}) as typeof navigationRef.navigate;
+export const navigate: NativeStackScreenProps<RootStackParamsList>['navigation']['navigate'] =
+  ((...arg: any) => {
+    if (navigationRef.isReady()) {
+      // Perform navigation if the react navigation is ready to handle actions
+      navigationRef.navigate(...arg);
+    } else {
+      __DEV__ && console.warn('[navigate] navigationRef is not ready');
+      // You can decide what to do if react navigation is not ready
+      // You can ignore this, or add these actions to a queue you can call later
+    }
+  }) as typeof navigationRef.navigate;
 
-export function naviPush(name: any, pramas?: object) {
-  if (navigationRef.isReady()) {
-    // Perform navigation if the react navigation is ready to handle actions
-    navigationRef.dispatch(StackActions.push(name, pramas));
-  } else {
-    __DEV__ && console.warn('[naviPush] navigationRef is not ready');
-    // You can decide what to do if react navigation is not ready
-    // You can ignore this, or add these actions to a queue you can call later
-  }
-}
+// @ts-expect-error
+export const naviPush: NativeStackScreenProps<RootStackParamsList>['navigation']['push'] =
+  (name, pramas) => {
+    if (navigationRef.isReady()) {
+      // Perform navigation if the react navigation is ready to handle actions
+      navigationRef.dispatch(StackActions.push(name, pramas));
+    } else {
+      __DEV__ && console.warn('[naviPush] navigationRef is not ready');
+      // You can decide what to do if react navigation is not ready
+      // You can ignore this, or add these actions to a queue you can call later
+    }
+  };
 
-export const replace = ((name: any, pramas?: object) => {
-  if (navigationRef.isReady()) {
-    // Perform navigation if the react navigation is ready to handle actions
-    navigationRef.dispatch(StackActions.replace(name, pramas));
-  } else {
-    // You can decide what to do if react navigation is not ready
-    // You can ignore this, or add these actions to a queue you can call later
-  }
-}) as typeof navigationRef.navigate;
+export const replace: NativeStackScreenProps<RootStackParamsList>['navigation']['replace'] =
+  ((name: any, pramas?: object) => {
+    if (navigationRef.isReady()) {
+      // Perform navigation if the react navigation is ready to handle actions
+      navigationRef.dispatch(StackActions.replace(name, pramas));
+    } else {
+      // You can decide what to do if react navigation is not ready
+      // You can ignore this, or add these actions to a queue you can call later
+    }
+  }) as typeof navigationRef.navigate;
 
 export const redirectBackErrorHandler = (
   navigation: any,

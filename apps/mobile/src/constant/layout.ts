@@ -24,6 +24,10 @@ export const ScreenLayouts = {
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
 export const ASSETS_ITEM_HEIGHT = 68;
+export const ASSETS_ITEM_HEIGHT_NEW = 74;
+export const ASSETS_SECTION_HEADER = 36;
+export const ASSETS_SEPARATOR_HEIGHT = 8;
+export const HEADER_TOP_AREA_HEIGHT = 185;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
@@ -56,6 +60,8 @@ export const RootNames = {
   GetStartedScreen2024: 'GetStartedScreen2024',
   CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
+  StackHomeNonTab: 'StackHomeNonTab',
+
   NotFound: 'NotFound',
   Unlock: 'Unlock',
 
@@ -66,6 +72,7 @@ export const RootNames = {
   StackDapps: 'StackDapps',
   Dapps: 'Dapps',
   FavoriteDapps: 'FavoriteDapps',
+  Search: 'Search',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -271,7 +278,7 @@ function makeScreenSpecConfig() {
       ImportSuccess: blueLightConf,
       // ImportSuccess2024: blueLightConf,
       Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      SingleAddressHome: bg1Default2024Conf,
+      SingleAddressHome: transparentDefault2024Conf,
       Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,

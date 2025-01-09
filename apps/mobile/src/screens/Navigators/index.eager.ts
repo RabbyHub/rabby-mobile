@@ -6,3 +6,4 @@ export { HomeScreenNavigator } from '@/screens/Navigators/rootNavigator';
 export { default as TransactionNavigator } from '@/screens/Navigators/TransactionNavigator';
 export { SingleAddressNavigator } from '@/screens/Navigators/SingleAddressNavigator';
 export { DappsNavigator } from '@/screens/Navigators/DappsNavigator';
+export { default as HomeNonTabNavigator } from '@/screens/Navigators/HomeNonTabNavigator';

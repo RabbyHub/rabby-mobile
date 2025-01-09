@@ -9,8 +9,6 @@ import BigNumber from 'bignumber.js';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
-export const DEFI_ID = '_DEFI_';
-export const NFT_ID = '_NFT_';
 export const geTokenDecimals = async (
   id: string,
   provider: providers.JsonRpcProvider,
@@ -187,6 +185,7 @@ export const abstractTokenToTokenItem = (
       token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
     isPined: token?._isPined,
     isFold: token?._isFold,
+    isManualFold: token?._isManualFold,
     isExcludeBalance: token?._isExcludeBalance,
     pinIndex: token?._pinIndex,
   };

@@ -1,87 +1,96 @@
 import { useEffect, useRef } from 'react';
-import { Dayjs } from 'dayjs';
-// import { atom, useSetAtom } from 'jotai';
 
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
 import { chunk } from 'lodash';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   loadTestnetPortfolioSnapshot,
   loadPortfolioSnapshot,
   snapshot2Display,
   batchLoadProjects,
   portfolio2Display,
-  batchLoadHistoryProjects,
-  patchPortfolioHistory,
-  getMissedTokenPrice,
 } from '../utils/portfolio';
 import { DisplayedProject } from '../utils/project';
 import { produce } from '@/core/utils/produce';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
+import { usePortfoliosAtom } from './store';
 
 const chunkSize = 5;
-const { isSameAddress } = addressUtils;
-const tagProfiles = (
+export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
 ): DisplayedProject[] => {
-  const { includeDefiAndTokens = [], excludeDefiAndTokens = [] } = tokenSetting;
-
+  const {
+    includeDefiAndTokens = [],
+    excludeDefiAndTokens = [],
+    foldDefis = [],
+    unFoldDefis = [],
+  } = tokenSetting;
+  const excludeDefiAndTokensSet = new Set(
+    excludeDefiAndTokens.map(x => `${x.id}-${x.type}`),
+  );
+  const includeDefiAndTokensSet = new Set(
+    includeDefiAndTokens.map(x => `${x.id}-${x.type}`),
+  );
+  const foldDefisSet = new Set(foldDefis);
+  const unFoldDefisSet = new Set(unFoldDefis);
   return profiles.map(i => {
     const isExcludeBalance = (() => {
-      if (excludeDefiAndTokens.some(x => x.id === i.id && x.type === 'defi')) {
+      if (excludeDefiAndTokensSet.has(`${i.id}-defi`)) {
         return true;
       }
-      if (includeDefiAndTokens.some(x => x.id === i.id && x.type === 'defi')) {
+      if (includeDefiAndTokensSet.has(`${i.id}-defi`)) {
         return false;
       }
       return false;
     })();
 
-    return Object.assign(i, {
-      _isExcludeBalance: isExcludeBalance,
-    });
+    const isManualFold = foldDefisSet.has(i.id);
+
+    const isFold = (() => {
+      if (isManualFold) {
+        return true;
+      }
+      if (unFoldDefisSet.has(i.id)) {
+        return false;
+      }
+      if ((i.netWorth || 0) < 1) {
+        return true;
+      }
+      return false;
+    })();
+
+    i._isExcludeBalance = isExcludeBalance;
+    i._isFold = isFold;
+    i._isManualFold = isManualFold;
+
+    return i;
   });
 };
 export const log = (...args: any) => {
   // console.log(...args);
 };
 
-// export const portfolioChangeLoadingAtom = atom(true);
-
 export const usePortfolios = (
   userAddr: string | undefined,
-  timeAt?: Dayjs,
   visible = true,
   isTestnet = false,
 ) => {
-  const [data, setData] = useSafeState<DisplayedProject[]>([]);
-  const [netWorth, setNetWorth] = useSafeState(0);
+  const [data, setData] = usePortfoliosAtom(userAddr);
   const [hasValue, setHasValue] = useSafeState(false);
   const abortProcess = useRef<AbortController>();
-  const [isLoading, setLoading] = useSafeState(true);
+  const [isLoading, setLoading] = useSafeState(false);
   const projectDict = useRef<Record<string, DisplayedProject> | null>({});
-  const historyTime = useRef<number>();
-  const historyLoad = useRef<boolean>(false);
   const realtimeIds = useRef<string[]>([]);
-  const userAddrRef = useRef('');
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
-    if (userAddr && !isSameAddress(userAddr, userAddrRef.current)) {
-      setData([]);
-      setNetWorth(0);
-    }
-
     if (userAddr) {
       timer = setTimeout(() => {
-        if (visible && !isSameAddress(userAddr, userAddrRef.current)) {
+        if (visible) {
           abortProcess.current?.abort();
-          userAddrRef.current = userAddr;
           loadProcess();
         }
       });
@@ -97,17 +106,10 @@ export const usePortfolios = (
   }, [userAddr, visible]);
 
   useEffect(() => {
-    if (timeAt) {
-      historyTime.current = timeAt.unix();
-
-      if (!isLoading) {
-        loadHistory();
-      }
-    } else {
-      historyTime.current = 0;
-    }
-    // eslint-disable-next-line
-  }, [timeAt, isLoading]);
+    return () => {
+      abortProcess.current?.abort();
+    };
+  }, []);
 
   const loadProcess = async () => {
     if (!userAddr) {
@@ -118,13 +120,9 @@ export const usePortfolios = (
     const currentAbort = new AbortController();
     abortProcess.current = currentAbort;
 
-    historyLoad.current = false;
-
     setLoading(true);
-    // setPortfolioChangeLoading(withHistory);
 
     log('======Start-Portfolio======', userAddr);
-    setData([]);
     setHasValue(false);
 
     let snapshotRes: ComplexProtocol[] = [];
@@ -155,9 +153,8 @@ export const usePortfolios = (
     const snapshotData = Object.values(list)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    const tokenSetting = await preferenceService.getUserTokenSettings(userAddr);
+    const tokenSetting = await preferenceService.getUserTokenSettings();
     setData(tagProfiles(snapshotData, tokenSetting));
-    setNetWorth(snapshotNetWorth);
 
     const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
       snapshotData,
@@ -201,7 +198,7 @@ export const usePortfolios = (
           if (!currentAbort.signal.aborted && projectDict.current) {
             log('#####################REALTIME###############################');
             projectDict.current = produce(projectDict.current, draft => {
-              portfolio2Display(project, draft);
+              project && portfolio2Display(project, draft);
             });
           }
         });
@@ -212,138 +209,13 @@ export const usePortfolios = (
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
     setData(tagProfiles(realtimeData, tokenSetting));
-
-    setNetWorth(realtimeData.reduce((m, n) => m + n.netWorth, 0));
     setLoading(false);
 
-    loadHistory(currentAbort);
     log('portfolios-end', userAddr);
   };
 
-  const loadHistory = async (currentAbort = new AbortController()) => {
-    if (
-      !historyTime.current ||
-      currentAbort.signal.aborted ||
-      !userAddr ||
-      historyLoad.current
-    ) {
-      return;
-    }
-
-    historyLoad.current = true;
-    const historyIds = realtimeIds.current.filter(
-      x =>
-        projectDict.current![x].chain &&
-        getCHAIN_ID_LIST().get(projectDict.current![x].chain!)
-          ?.isSupportHistory,
-    );
-
-    const historyIdsArr = chunk(historyIds, chunkSize);
-
-    if (currentAbort.signal.aborted || !historyIdsArr.length) {
-      return;
-    }
-
-    await Promise.all(
-      historyIdsArr.map(async ids => {
-        const historyProjectListRes = await batchLoadHistoryProjects(
-          userAddr,
-          ids,
-          historyTime.current,
-          isTestnet,
-        );
-        const projects = historyProjectListRes;
-
-        if (!projects?.length) {
-          return;
-        }
-
-        projects.forEach(project => {
-          if (!currentAbort.signal.aborted && projectDict.current) {
-            projectDict.current = produce(projectDict.current, draft => {
-              patchPortfolioHistory(project, draft);
-            });
-          }
-        });
-      }),
-    );
-
-    if (currentAbort.signal.aborted) {
-      return;
-    }
-    const historyList = Object.values(projectDict.current!)?.sort(
-      (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-    );
-
-    const tokenSetting = await preferenceService.getUserTokenSettings(userAddr);
-    setData(tagProfiles(historyList, tokenSetting));
-
-    // 可能有获取失败的，也需要通过 priceChange 来算大概的变化
-    const notSuportHistoryProjects = realtimeIds.current.filter(
-      x => !projectDict.current![x]._historyPatched,
-    );
-
-    // 是否存在没有被 patchHistory 的（不支持历史结点 | 获取失败的），需要再去请求它之前的价格来计算大致的 usdChange
-    const missedTokens = notSuportHistoryProjects.reduce((m, n) => {
-      const pChain = projectDict.current![n]?.chain;
-
-      if (!pChain) {
-        return m;
-      }
-
-      m[pChain] = m[pChain] || new Set();
-
-      projectDict.current![n]._portfolios?.forEach(x => {
-        x._tokenList?.forEach(t => {
-          m[pChain].add(t._tokenId);
-        });
-      });
-
-      return m;
-    }, {} as Record<string, Set<string>>);
-
-    if (currentAbort.signal.aborted) {
-      return;
-    }
-
-    const priceDicts = await getMissedTokenPrice(
-      missedTokens,
-      historyTime.current,
-      isTestnet,
-    );
-
-    if (currentAbort.signal.aborted || !projectDict.current || !priceDicts) {
-      return;
-    }
-
-    projectDict.current = produce(projectDict.current, draft => {
-      notSuportHistoryProjects?.forEach(pId => {
-        if (priceDicts?.[draft[pId].chain!]) {
-          draft[pId].patchPrice(priceDicts?.[draft[pId].chain!]);
-        }
-      });
-    });
-
-    if (currentAbort.signal.aborted) {
-      return;
-    }
-
-    const priceProjects = Object.values(projectDict.current!)?.sort(
-      (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-    );
-    setData(tagProfiles(priceProjects, tokenSetting));
-    // setPortfolioChangeLoading(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      abortProcess.current?.abort();
-    };
-  }, []);
-
   return {
-    netWorth,
-    data,
+    data: data || [],
     hasValue,
     isLoading,
     updateData: loadProcess,

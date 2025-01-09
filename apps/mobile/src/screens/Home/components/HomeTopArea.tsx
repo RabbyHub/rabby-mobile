@@ -16,7 +16,7 @@ import { toast } from '@/components/Toast';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
-import { useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useTheme2024 } from '@/hooks/theme';
@@ -124,7 +124,11 @@ export function BadgeText({
   );
 }
 
-export const HomeTopArea = () => {
+export const HomeTopArea = ({
+  currentAccount,
+}: {
+  currentAccount?: KeyringAccountWithAlias | null;
+}) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -134,7 +138,6 @@ export const HomeTopArea = () => {
   // const approvalRiskAlert = 200;
   const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
 
-  const { currentAccount } = useCurrentAccount();
   const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const { data: gnosisPendingTxs, refreshAsync } = useGnosisPendingTxs({
     address: isGnosisKeyring ? currentAccount?.address : undefined,
@@ -188,6 +191,9 @@ export const HomeTopArea = () => {
     title: 'Bridge',
     Icon: RcIconBridge,
     onPress: async () => {
+      if (!currentAccount) {
+        return;
+      }
       await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.Bridge,
@@ -207,6 +213,9 @@ export const HomeTopArea = () => {
       title: 'Send',
       Icon: RcIconSend,
       onPress: async () => {
+        if (!currentAccount) {
+          return;
+        }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Send,
@@ -220,6 +229,9 @@ export const HomeTopArea = () => {
       title: 'Receive',
       Icon: RcIconReceive,
       onPress: async () => {
+        if (!currentAccount) {
+          return;
+        }
         await switchSceneCurrentAccount('Receive', currentAccount);
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
@@ -249,6 +261,9 @@ export const HomeTopArea = () => {
       title: 'Swap',
       Icon: RcIconSwap,
       onPress: async () => {
+        if (!currentAccount) {
+          return;
+        }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Swap,
@@ -286,6 +301,9 @@ export const HomeTopArea = () => {
             title: 'Approvals',
             Icon: RcIconApproval,
             onPress: async () => {
+              if (!currentAccount) {
+                return;
+              }
               await switchSceneCurrentAccount('Approvals', currentAccount);
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.Approvals,
@@ -534,10 +552,10 @@ export const HomeTopArea = () => {
 const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 20,
     paddingHorizontal: 8,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: 'transparent',
     height: 185,
     width: '100%',
   },
@@ -664,7 +682,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-foot'],
   },
   opacityWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   textBox: {
     marginTop: 0,
