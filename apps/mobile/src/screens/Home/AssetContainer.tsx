@@ -48,6 +48,8 @@ import {
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
 import { DisplayedProject } from './utils/project';
+import { flatListRefAtom } from './hooks/store';
+import { useSetAtom } from 'jotai';
 
 interface Props {
   onRefresh(): void;
@@ -501,6 +503,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const header = useCallback(() => <HomeTopArea />, []);
   const flatListRef = useRef<FlatList>(null);
+
+  const setFlatListRef = useSetAtom(flatListRefAtom);
+
+  React.useEffect(() => {
+    setFlatListRef(flatListRef);
+  }, [flatListRef, setFlatListRef]);
 
   const viewabilityConfigRef = useRef({
     viewAreaCoveragePercentThreshold: 300,

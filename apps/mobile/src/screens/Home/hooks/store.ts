@@ -8,6 +8,7 @@ import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
+import { FlatList } from 'react-native';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -46,6 +47,8 @@ export interface IAssets {
 
 export const assetsMapAtom = atom<{ [address: string]: IAssets }>({});
 export const useAssetsMap = () => useAtom(assetsMapAtom);
+
+export const flatListRefAtom = atom<React.RefObject<FlatList> | null>(null);
 const getOrInitializeAssets = (
   assets: { [address: string]: IAssets },
   address: string,

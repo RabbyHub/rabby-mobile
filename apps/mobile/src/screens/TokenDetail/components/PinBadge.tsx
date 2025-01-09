@@ -1,20 +1,17 @@
 import { Text } from '@/components';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import {
-  KeyringAccountWithAlias,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconPinCC from '@/assets2024/icons/home/IconPinCC.svg';
 import RcIconUnPinCC from '@/assets2024/icons/home/IconUnPinCC.svg';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { preferenceService } from '@/core/services';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRefreshTags } from '@/screens/Home/hooks/token';
+import { useAtomValue } from 'jotai';
+import { flatListRefAtom } from '@/screens/Home/hooks/store';
+import { HEADER_TOP_AREA_HEIGHT } from '@/constant/layout';
 
 interface Props {
   token: AbstractPortfolioToken;
@@ -24,6 +21,7 @@ export const HomePinBadge: React.FC<Props> = ({ token }) => {
   const { refreshTagToken } = useRefreshTags();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const flatListRef = useAtomValue(flatListRefAtom);
   const handlePress = useCallback(() => {
     const currentPin = token._isPined;
     token._isPined = !token._isPined;
@@ -38,10 +36,14 @@ export const HomePinBadge: React.FC<Props> = ({ token }) => {
         tokenId: token._tokenId,
         chainId: token.chain,
       });
+      flatListRef?.current?.scrollToOffset?.({
+        animated: true,
+        offset: HEADER_TOP_AREA_HEIGHT,
+      });
       // toast.success(t('page.tokenDetail.actionsTips.fold_success'));
     }
     refreshTagToken();
-  }, [refreshTagToken, token]);
+  }, [flatListRef, refreshTagToken, token]);
 
   return token._isPined ? (
     <TouchableOpacity
