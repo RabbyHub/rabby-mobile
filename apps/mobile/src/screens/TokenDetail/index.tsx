@@ -223,11 +223,14 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
+  const { currentAccount } = useCurrentAccount();
+  const finalAccount = account || currentAccount;
+
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
     Object.keys(asssest).map((address, index) => {
-      if (isSingleAddress && !isSameAddress(address, account!.address)) {
+      if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
       }
 
@@ -267,9 +270,7 @@ export const TokenDetailScreen = () => {
     });
     console.debug('relateDefiList length:', resList.length);
     return resList;
-  }, [token, asssest, isSingleAddress, account, accounts]);
-  const { currentAccount } = useCurrentAccount();
-  const finalAccount = account || currentAccount;
+  }, [token, asssest, isSingleAddress, finalAccount, accounts]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -347,7 +348,8 @@ export const TokenDetailScreen = () => {
   });
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
-    if (isSingleAddress) {
+    if (isSingleAddress && token.amount) {
+      console.log('tokenFromAddress', token);
       res.push({
         ...token,
         amountStr: token._amountStr!,

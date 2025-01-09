@@ -252,7 +252,9 @@ export const TokenList = ({
     (token: TokenItem) => {
       naviPush(RootNames.TokenDetail, {
         token: {
-          ...token,
+          // just need id and chain to search cache
+          id: token.id,
+          chain: token.chain,
           logo_url: token._logo,
           symbol: token._symbol,
           _tokenId: token.id,
