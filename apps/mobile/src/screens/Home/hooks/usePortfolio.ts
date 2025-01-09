@@ -124,7 +124,6 @@ export const usePortfolios = (
     setLoading(true);
 
     log('======Start-Portfolio======', userAddr);
-    setData([]);
     setHasValue(false);
 
     let snapshotRes: ComplexProtocol[] = [];

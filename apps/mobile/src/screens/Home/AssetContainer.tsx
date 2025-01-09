@@ -30,8 +30,6 @@ import {
   RootNames,
 } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { PositionLoader } from './components/Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 import {
@@ -130,7 +128,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       data: ActionItem[];
     }> = [
       {
-        show: hasAssets,
+        show: true,
         data: [
           {
             type: 'asset_header',
@@ -171,15 +169,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [
-    foldDefi,
-    foldHideList,
-    foldNft,
-    hasAssets,
-    nftList,
-    portfolios,
-    sortTokens,
-  ]);
+  }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -247,27 +237,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       });
     }, 0);
   };
-
-  const ListEmptyComponent = useMemo(() => {
-    return loading ? (
-      <PositionLoader length={7} space={8} />
-    ) : hasAssets ? null : (
-      <View style={styles.emptyHolder}>
-        <EmptyHolder
-          imgStyle={styles.emptyImg}
-          textStyle={styles.emptyText}
-          text="No Assets"
-          type="default"
-        />
-      </View>
-    );
-  }, [
-    loading,
-    hasAssets,
-    styles.emptyHolder,
-    styles.emptyImg,
-    styles.emptyText,
-  ]);
 
   const icons = React.useMemo(
     () => ({
@@ -461,6 +430,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <AssestAllHeader
             style={styles.assetHeader}
             showToken={!!tokens?.length}
+            hasAssets={hasAssets}
+            loading={loading}
             currentSection={currentSection}
             setCurrentSection={setCurrentSection}
             showDefi={!!portfolios.length}
@@ -572,7 +543,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         }
         contentContainerStyle={styles.bgContainer}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={ListEmptyComponent}
         stickyHeaderIndices={[1]}
         windowSize={10}
         onScrollToIndexFailed={info => {
@@ -616,21 +586,6 @@ const ItemSeparatorComponent = () => <View style={{ height: 8 }} />;
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
-  emptyText: {
-    marginTop: 21,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-info'],
   },
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
