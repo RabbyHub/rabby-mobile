@@ -219,7 +219,7 @@ export const TokenDetailScreen = () => {
       );
       return iToken || _token;
     }
-    if (needUseCacheToken || fromPortfolio) {
+    if (needUseCacheToken) {
       const iToken = cacheAssets.find(item => item.id === _token.id);
       return iToken || _token;
     }
@@ -238,6 +238,7 @@ export const TokenDetailScreen = () => {
       }
 
       if (
+        !isSingleAddress &&
         accounts.findIndex(item => isSameAddress(item.address, address)) < 0
       ) {
         // filter watch address not in myaccounts
