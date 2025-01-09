@@ -109,6 +109,7 @@ export function processMigration(
     try {
       formattedMigrator.migrator(context);
       result.successMigrationCount++;
+      setLatestStoreMigration(migrationName, utc0Ver);
     } catch (error) {
       console.error(
         `${context.loggerPrefix} Failed migration ${utc0Ver}`,
