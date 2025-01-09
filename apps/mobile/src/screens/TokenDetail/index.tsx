@@ -339,7 +339,9 @@ export const TokenDetailScreen = () => {
     const chain = findChain({
       serverId: token.chain,
     });
-    await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+    if (isSingleAddress) {
+      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+    }
     navigation.push(RootNames.StackTransaction, {
       screen: isSingleAddress ? RootNames.Send : RootNames.MultiSend,
       params: {

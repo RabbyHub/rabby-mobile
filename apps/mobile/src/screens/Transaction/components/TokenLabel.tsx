@@ -20,10 +20,12 @@ export default function TokenLabel({
   isMyOwn,
   disableClickToken: propDisableClick,
   style,
+  isForMultipleAdderss,
   address,
 }: RNViewProps & {
   isMyOwn?: boolean;
   disableClickToken?: boolean;
+  isForMultipleAdderss?: boolean;
   address?: KeyringAccountWithAlias;
 } & (
     | {
@@ -57,6 +59,7 @@ export default function TokenLabel({
     if (isNft) {
       naviPush(RootNames.NftDetail, {
         token: { ...token },
+        isSingleAddress: !isForMultipleAdderss,
       });
     } else {
       // if (address) {
@@ -67,9 +70,10 @@ export default function TokenLabel({
         token: ensureAbstractPortfolioToken(token),
         // account: address,
         needUseCacheToken: true,
+        isSingleAddress: !isForMultipleAdderss,
       });
     }
-  }, [token, disableClickToken, isNft]);
+  }, [token, disableClickToken, isNft, isForMultipleAdderss]);
 
   if (disableClickToken) {
     return (
