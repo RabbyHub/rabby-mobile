@@ -31,7 +31,10 @@ export type RootStackParamsList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.TokenDetail]: {
-    token: AbstractPortfolioToken;
+    token:
+      | AbstractPortfolioToken
+      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias;
