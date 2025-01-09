@@ -493,7 +493,7 @@ export const TokenDetailScreen = () => {
               title={t('page.tokenDetail.action.Sell')}
               containerStyle={styles.btnContainer}
               onPress={() => handleSwap('Sell')}
-              disabled={!tokenSupportSwap}
+              disabled={!tokenSupportSwap || unHold}
             />
           </Tip>
         </View>
@@ -510,7 +510,7 @@ export const TokenDetailScreen = () => {
               title={t('page.tokenDetail.action.Buy')}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
               onPress={() => handleSwap('Buy')}
-              disabled={!tokenSupportSwap || unHold}
+              disabled={!tokenSupportSwap}
             />
           </Tip>
         </View>
