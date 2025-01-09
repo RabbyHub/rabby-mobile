@@ -2422,7 +2422,7 @@
     },
     "singleHome": {
       "sectionHeader": {
-        "Defi": "Defi",
+        "Defi": "DeFi",
         "Nft": "NFT",
         "Token": "Token"
       }
@@ -2430,7 +2430,7 @@
     "search": {
       "sectionHeader": {
         "token": "Tokens",
-        "Defi": "Defi",
+        "Defi": "DeFi",
         "NFT": "NFT"
       },
       "header": {
