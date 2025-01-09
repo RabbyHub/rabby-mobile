@@ -388,6 +388,9 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       !lowCreditInit.current &&
       navState?.type !== 'Sell'
     ) {
+      if (navState?.type === 'Buy' && navState?.tokenId !== receiveToken.id) {
+        return;
+      }
       setLowCreditToken(receiveToken);
       setLowCreditVisible(true);
       lowCreditInit.current = true;
@@ -397,7 +400,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     receiveToken,
     setLowCreditToken,
     setLowCreditVisible,
-    navState?.type,
+    navState,
   ]);
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
