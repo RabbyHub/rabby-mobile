@@ -91,7 +91,6 @@ export const useTokens = (
     if (!userAddr) {
       return;
     }
-    console.log('🔍 CUSTOM_LOGGER:=>: token==loadProcess)', userAddr);
     const currentAbort = new AbortController();
     abortProcess.current = currentAbort;
 

@@ -34,14 +34,12 @@ export const useQueryProjects = (
 
   const refreshPositions = useCallback(async () => {
     if (!isLoading) {
-      console.log('🔍 CUSTOM_LOGGER:=>: force==refreshPositions)');
       setLoading(true);
       try {
         await Promise.all([updatePortfolio(), updateTokens(), reloadNftList()]);
       } catch (error) {
         console.error(error);
       } finally {
-        console.log('🔍 CUSTOM_LOGGER:=>: force==refreshPositions end');
         setLoading(false);
         setLastUpdateTime(Date.now());
       }
@@ -57,7 +55,6 @@ export const useQueryProjects = (
 
   useEffect(() => {
     if (!shouldUseHistory && userAddr) {
-      console.log('🔍 CUSTOM_LOGGER:=>: this cache is failed');
       refreshPositions();
       return;
     }

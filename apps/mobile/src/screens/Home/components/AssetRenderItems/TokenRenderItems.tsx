@@ -245,7 +245,6 @@ export const ExternalTokenRow = memo(
     );
 
     const onPressToken = useCallback(() => {
-      console.log('🔍 CUSTOM_LOGGER:=>: onPressToken)', data);
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
 

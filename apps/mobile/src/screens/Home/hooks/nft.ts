@@ -42,7 +42,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
   const fetchData = useCallback(
     async (id: string) => {
       try {
-        console.log('🔍 CUSTOM_LOGGER:=>: nft==loadProcess)', id);
         setIsLoading(true);
         const ntfs = await openapi.listNFT(id, true, true);
         const tokenSetting = await preferenceService.getUserTokenSettings();

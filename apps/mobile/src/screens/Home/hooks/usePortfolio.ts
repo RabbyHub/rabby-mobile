@@ -115,7 +115,6 @@ export const usePortfolios = (
     if (!userAddr) {
       return;
     }
-    console.log('🔍 CUSTOM_LOGGER:=>: portfolios==loadProcess)', userAddr);
     projectDict.current = {};
 
     const currentAbort = new AbortController();

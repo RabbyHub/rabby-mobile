@@ -210,12 +210,6 @@ export const useAssets = (filterText?: string) => {
               loadDefi(account.address),
               loadNFT(account.address),
             ]);
-            console.log(
-              '🔍 CUSTOM_LOGGER:=>: initFetchTop10Assets fetch =>>',
-              account.address.slice(-8),
-              'force: complete',
-              force,
-            );
             await updateUpdateTime({
               address: account.address,
               newLastUpdateTime: Date.now(),

@@ -436,10 +436,6 @@ function MultiAddressHome(): JSX.Element {
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
   const handlePressSearch = () => {
-    console.log(
-      '🔍 CUSTOM_LOGGER:=>: handlePressSearch)',
-      Object.keys(asssest),
-    );
     navigation.navigate(RootNames.StackHomeNonTab, {
       screen: RootNames.Search,
       params: {},
