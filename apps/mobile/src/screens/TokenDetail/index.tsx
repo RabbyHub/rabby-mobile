@@ -349,7 +349,6 @@ export const TokenDetailScreen = () => {
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
-      console.log('tokenFromAddress', token);
       res.push({
         ...token,
         amountStr: token._amountStr!,
@@ -491,14 +490,10 @@ export const TokenDetailScreen = () => {
                 : undefined
             }>
             <Button
-              title={
-                unHold
-                  ? t('page.tokenDetail.action.Sell')
-                  : t('page.tokenDetail.action.Buy')
-              }
-              containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Buy')}
-              disabled={!tokenSupportSwap || unHold}
+              title={t('page.tokenDetail.action.Sell')}
+              containerStyle={styles.btnContainer}
+              onPress={() => handleSwap('Sell')}
+              disabled={!tokenSupportSwap}
             />
           </Tip>
         </View>
@@ -512,14 +507,10 @@ export const TokenDetailScreen = () => {
                 : undefined
             }>
             <Button
-              title={
-                unHold
-                  ? t('page.tokenDetail.action.Buy')
-                  : t('page.tokenDetail.action.Sell')
-              }
-              containerStyle={styles.btnContainer}
-              onPress={() => handleSwap(unHold ? 'Buy' : 'Sell')}
-              disabled={!tokenSupportSwap}
+              title={t('page.tokenDetail.action.Buy')}
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              onPress={() => handleSwap('Buy')}
+              disabled={!tokenSupportSwap || unHold}
             />
           </Tip>
         </View>
