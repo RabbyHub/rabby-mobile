@@ -2,6 +2,27 @@
   "screens": {
     "settings": {
       "screenTitle": "Settings"
+    },
+    "addressStackTitle": {
+      "WatchAddressList": "Watch-Only Address",
+      "SafeAddressList": "Safe Address",
+      "ImportNewAddress": "Add an Address",
+      "ImportHardwareAddress": "Connect Hardware Wallets",
+      "ImportSuccess": "Added successfully",
+      "ImportWatchAddress2024": "Add Watch-only Address",
+      "ImportMethods": "Select Import Method",
+      "ImportSafeAddress2024": "Add Safe Address",
+      "CreateSelectMethod": "1. Select Creation Method",
+      "CreateNewAddress": "1. Name Your Address",
+      "CreateSelectOnCurrentSeed": "2. Add Address",
+      "SetPassword2024": "2. Set password",
+      "CreateChooseBackup": "3. Choose a backup method",
+      "AddressDetail": "Address detail",
+      "ImportMoreAddress": "Import more address",
+      "ImportPrivateKey": "Import Private Key",
+      "ImportMnemonic": "Import Seed Phrase",
+      "AddMnemonic": "Add from Current Seed Phrase",
+      "CreateMnemonicBackup": "Backup seed phrase"
     }
   },
   "page": {
@@ -1074,6 +1095,21 @@
       "enterPassphraseTitle": "Enter Passphrase to Sign",
       "passphraseError": "Passphrase invalid"
     },
+    "home": {
+      "services": {
+        "swap": "Swap",
+        "bridge": "Bridge",
+        "send": "Send",
+        "history": "History",
+        "receive": "Receive",
+        "gasAccount": "GasAccount",
+        "transactions": "Transactions",
+        "approvals": "Approvals",
+        "dapps": "Dapps",
+        "websites": "Websites",
+        "rabbyPoints": "Rabby Points"
+      }
+    },
     "dashboard": {
       "home": {
         "offline": "The network is disconnected and no data is obtained",
@@ -1440,7 +1476,20 @@
       }
     },
     "newAddress": {
+      "Quick": "Quick",
       "title": "Add an Address",
+      "whatIsSeedPhrase": {
+        "title": "What is a 'Seed phrase'",
+        "description1": "A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.",
+        "title1": "Backup",
+        "description2": "If you lose your seed phrase, you won’t be able to restore your wallet.",
+        "title2": "Never Share It",
+        "description3": "Never share your seed phrase—anyone with access to it can control your funds.",
+        "title3": "Safety",
+        "description4": "Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.",
+        "GotIt": "I Got It."
+      },
+
       "importSeedPhrase": "Import Seed Phrase",
       "importPrivateKey": "Import Private Key",
       "importMyMetamaskAccount": "Import My MetaMask Account",
@@ -2111,6 +2160,16 @@
       "alert": "Signing with 'eth_sign' can lead to asset loss. For your safety, Rabby does not support this method."
     },
     "createPassword": {
+      "settingUp": "Setting up password",
+      "setUpSuccess": "Setup Password Successfully",
+      "Newpassword": "New password",
+      "enable": "Enable {{ bioType }}",
+      "agreeToTerms": "I have read and agree to the",
+      "termOfUse": "Terms of Use",
+      "PrivacyPolicy": "Privacy Policy",
+      "phoneNotSupport": "Your phone does not support {{ bioType }}",
+      "ConfirmPassword": "Confirm password",
+      "biometricsFail": "Enable biometrics fail",
       "title": "Set Password",
       "subTitle": "It will be used to unlock your wallet and encrypt local data",
       "passwordRequired": "Please input Password",
@@ -2458,28 +2517,20 @@
   },
   "component": {
     "gasAccount": {
-      "title": "GasAccount",
       "deposit": "Deposit",
       "withdraw": "Withdraw",
       "gasExceed": "GasAccount balance cannot exceed $1000",
-      "logout": "Log out current GasAccount",
       "history": {
         "noHistory": "No history"
       },
       "loginInTip": {
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
-        "login": "Log in GasAccount",
-        "gotIt": "Got it"
+        "login": "Log in GasAccount"
       },
       "loginConfirmModal": {
         "title": "Select An Address to Login",
         "desc": "Once login, you can only deposit it at this address"
-      },
-      "logoutConfirmModal": {
-        "title": "Log out current GasAccount",
-        "desc": "Once logged out, you will no longer be able to use GasAccount to pay for gas fees.",
-        "logout": "Log out"
       },
       "depositPopup": {
         "title": "Deposit",
@@ -2497,14 +2548,6 @@
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
         "button": "View on DeBank APP"
-      },
-      "GasAccountDepositTipPopup": {
-        "title": "Open GasAccount and Deposit",
-        "gotIt": "Got it"
-      },
-      "switchLoginAddressBeforeDeposit": {
-        "title": "Switch address before deposit",
-        "desc": "Please switch to your login address."
       }
     },
     "accountSwitcher": {
@@ -2625,9 +2668,6 @@
       },
       "searchInput": {
         "placeholder": "Search by Name / Address"
-      },
-      "header": {
-        "title": "Select a token"
       },
       "noTokens": "No Tokens",
       "noMatch": "No Match",

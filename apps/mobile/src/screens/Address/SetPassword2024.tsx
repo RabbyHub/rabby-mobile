@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import * as Yup from 'yup';
 import { RootNames } from '@/constant/layout';
@@ -105,7 +106,7 @@ function useSetupPasswordForm(
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />
-      ))('Setting up password', {
+      ))(t('page.createPassword.settingUp'), {
         duration: 1e6,
         position: toast.positions.CENTER,
         hideOnPress: false,
@@ -130,7 +131,7 @@ function useSetupPasswordForm(
             return true;
           } catch (e) {
             console.log('toggleBiometrics error', e);
-            toast.show('Enable biometrics fail');
+            toast.show(t('page.createPassword.biometricsFail'));
           }
         }
       };
@@ -147,7 +148,7 @@ function useSetupPasswordForm(
         } else {
           const success = await updatePassword();
           if (success) {
-            toast.success('Setup Password Successfully');
+            toast.success(t('page.createPassword.setUpSuccess'));
           } else {
             return; // error to reset password
           }
@@ -213,10 +214,10 @@ function MainListBlocks() {
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {state.title || '2. Set password'}
+        {state.title || t('screens.addressStackTitle.SetPassword2024')}
       </HeaderTitleText2024>
     );
-  }, [state.title, styles.headerTitleStyle]);
+  }, [state.title, styles.headerTitleStyle, t]);
 
   React.useEffect(() => {
     setNavigationOptions(
@@ -267,7 +268,7 @@ function MainListBlocks() {
               <NextInput.Password
                 // initialPasswordVisible
                 ref={passwordInputRef}
-                fieldName="New password"
+                fieldName={t('page.createPassword.Newpassword')}
                 fieldNameStyle={styles.absoluteLeft}
                 inputStyle={styles.paddingLeft}
                 containerStyle={styles.inputStyle}
@@ -297,7 +298,7 @@ function MainListBlocks() {
               />
 
               <NextInput.Password
-                fieldName="Confirm password"
+                fieldName={t('page.createPassword.ConfirmPassword')}
                 ref={confirmPasswordInputRef}
                 style={{ marginTop: 20 }}
                 containerStyle={styles.inputStyle}
@@ -338,15 +339,18 @@ function MainListBlocks() {
               />
             </View>
             <View style={styles.switchContainer}>
-              <Text
-                style={styles.labelText}>{`Enable ${defaultTypeLabel}?`}</Text>
+              <Text style={styles.labelText}>
+                {t('page.createPassword.enable', { type: defaultTypeLabel })}
+              </Text>
               <View style={styles.valueView}>
                 <AppSwitch2024
                   value={formik.values.switch}
                   onValueChange={async value => {
                     if (!couldSetupBiometrics) {
                       toast.show(
-                        `your phone can not support ${defaultTypeLabel}`,
+                        t('page.createPassword.phoneNotSupport', {
+                          type: defaultTypeLabel,
+                        }),
                       );
                       return;
                     }
@@ -355,7 +359,7 @@ function MainListBlocks() {
                 />
               </View>
             </View>
-            <TouchableView
+            <TouchableOpacity
               style={styles.agreementWrapper}
               onPress={() => {
                 formik.setFieldValue('checked', !formik.values.checked, true);
@@ -365,7 +369,7 @@ function MainListBlocks() {
               </View>
               <View style={styles.agreementTextWrapper}>
                 <Text style={styles.agreementText}>
-                  I have read and agree to the{' '}
+                  {t('page.createPassword.agreeToTerms')}{' '}
                 </Text>
                 <TouchableText
                   style={styles.userAgreementTouchText}
@@ -374,7 +378,7 @@ function MainListBlocks() {
                     evt.stopPropagation();
                     viewTermsOfUse();
                   }}>
-                  Term of Use
+                  {t('page.createPassword.termOfUse')}
                 </TouchableText>
                 <Text style={styles.agreementText}> and </Text>
                 <TouchableText
@@ -384,10 +388,10 @@ function MainListBlocks() {
                     evt.stopPropagation();
                     viewPrivacyPolicy();
                   }}>
-                  Privacy Policy
+                  {t('page.createPassword.PrivacyPolicy')}
                 </TouchableText>
               </View>
-            </TouchableView>
+            </TouchableOpacity>
           </View>
         </View>
         <Button

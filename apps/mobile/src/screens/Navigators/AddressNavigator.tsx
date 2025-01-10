@@ -152,8 +152,8 @@ export function AddressNavigator() {
         name={RootNames.WatchAddressList}
         component={WatchAddressListScreen}
         options={mergeScreenOptions({
-          headerTitle: 'Watch-Only Address',
-          title: 'Watch-Only Address',
+          headerTitle: strings('screens.addressStackTitle.WatchAddressList'),
+          title: strings('screens.addressStackTitle.WatchAddressList'),
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
@@ -164,8 +164,8 @@ export function AddressNavigator() {
         name={RootNames.SafeAddressList}
         component={SafeAddressListScreen}
         options={mergeScreenOptions({
-          headerTitle: 'Safe Address',
-          title: 'Safe Address',
+          headerTitle: strings('screens.addressStackTitle.SafeAddressList'),
+          title: strings('screens.addressStackTitle.SafeAddressList'),
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           // eslint-disable-next-line react/no-unstable-nested-components
@@ -177,8 +177,8 @@ export function AddressNavigator() {
         name={RootNames.ImportNewAddress}
         component={ImportNewAddressScreen}
         options={mergeScreenOptions({
-          headerTitle: 'Add an Address',
-          title: 'Add an Address',
+          headerTitle: strings('screens.addressStackTitle.ImportNewAddress'),
+          title: strings('screens.addressStackTitle.ImportNewAddress'),
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             // fontWeight: '500',
@@ -190,8 +190,10 @@ export function AddressNavigator() {
         name={RootNames.ImportHardwareAddress}
         component={ImportHardwareAddressScreen}
         options={mergeScreenOptions({
-          headerTitle: 'Connect Hardware Wallets',
-          title: 'Connect Hardware Wallets',
+          headerTitle: strings(
+            'screens.addressStackTitle.ImportHardwareAddress',
+          ),
+          title: strings('screens.addressStackTitle.ImportHardwareAddress'),
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
           headerStyle: {
@@ -203,7 +205,7 @@ export function AddressNavigator() {
         name={RootNames.ImportSuccess}
         component={ImportSuccessScreen}
         options={{
-          title: 'Added successfully',
+          title: strings('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors['neutral-title-2'],
         }}
       />
@@ -211,7 +213,7 @@ export function AddressNavigator() {
         name={RootNames.ImportSuccess2024}
         component={ImportSuccessScreen2024}
         options={{
-          title: 'Added successfully',
+          title: strings('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors2024['neutral-bg-1'],
           statusBarColor: colors2024['neutral-bg-1'],
         }}
@@ -227,8 +229,10 @@ export function AddressNavigator() {
         name={RootNames.ImportWatchAddress2024}
         component={ImportWatchAddressScreen2024}
         options={mergeScreenOptions({
-          headerTitle: 'Add Watch-only Address',
-          title: 'Add Watch-only Address',
+          headerTitle: strings(
+            'screens.addressStackTitle.ImportWatchAddress2024',
+          ),
+          title: strings('screens.addressStackTitle.ImportWatchAddress2024'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -241,8 +245,8 @@ export function AddressNavigator() {
         component={ImportMethods}
         options={mergeScreenOptions2024([
           {
-            headerTitle: 'Select Import Method',
-            title: 'Select Import Method',
+            headerTitle: strings('screens.addressStackTitle.ImportMethods'),
+            title: strings('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
           },
@@ -259,8 +263,10 @@ export function AddressNavigator() {
         name={RootNames.ImportSafeAddress2024}
         component={ImportSafeAddressScreen2024}
         options={mergeScreenOptions({
-          headerTitle: 'Add Safe Address',
-          title: 'Add Safe Address',
+          headerTitle: strings(
+            'screens.addressStackTitle.ImportSafeAddress2024',
+          ),
+          title: strings('screens.addressStackTitle.ImportSafeAddress2024'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -272,8 +278,8 @@ export function AddressNavigator() {
         name={RootNames.CreateSelectMethod}
         component={CreateSelectMethod}
         options={mergeScreenOptions({
-          headerTitle: '1. Select Creation Method',
-          title: '1. Select Creation Method',
+          headerTitle: strings('screens.addressStackTitle.CreateSelectMethod'),
+          title: strings('screens.addressStackTitle.CreateSelectMethod'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -285,8 +291,8 @@ export function AddressNavigator() {
         name={RootNames.CreateNewAddress}
         component={CreateNewAddress}
         options={mergeScreenOptions({
-          headerTitle: '1. Name Your Address',
-          title: '1. Name Your Address',
+          headerTitle: strings('screens.addressStackTitle.CreateNewAddress'),
+          title: strings('screens.addressStackTitle.CreateNewAddress'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -298,8 +304,10 @@ export function AddressNavigator() {
         name={RootNames.CreateSelectOnCurrentSeed}
         component={CreateSelectOnCurrentSeed}
         options={mergeScreenOptions({
-          headerTitle: '2. Add Address',
-          title: '2. Add Address',
+          headerTitle: strings(
+            'screens.addressStackTitle.CreateSelectOnCurrentSeed',
+          ),
+          title: strings('screens.addressStackTitle.CreateSelectOnCurrentSeed'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -311,8 +319,8 @@ export function AddressNavigator() {
         name={RootNames.SetPassword2024}
         component={SetPassword2024}
         options={mergeScreenOptions({
-          headerTitle: '2. Set password',
-          title: '2. Set password',
+          headerTitle: strings('screens.addressStackTitle.SetPassword2024'),
+          title: strings('screens.addressStackTitle.SetPassword2024'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -324,8 +332,8 @@ export function AddressNavigator() {
         name={RootNames.CreateChooseBackup}
         component={CreateChooseBackup}
         options={mergeScreenOptions({
-          headerTitle: '3. Choose a backup method',
-          title: '3. Choose a backup method',
+          headerTitle: strings('screens.addressStackTitle.CreateChooseBackup'),
+          title: strings('screens.addressStackTitle.CreateChooseBackup'),
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
@@ -337,19 +345,19 @@ export function AddressNavigator() {
         name={RootNames.AddressDetail}
         component={AddressDetailScreen}
         options={{
-          headerTitle: 'Address detail',
-          title: 'Address detail',
+          headerTitle: strings('screens.addressStackTitle.AddressDetail'),
+          title: strings('screens.addressStackTitle.AddressDetail'),
         }}
       />
       <AddressStack.Screen
         name={RootNames.ImportMoreAddress}
         component={ImportMoreAddressScreen}
         options={{
-          headerTitle: 'Import more address',
+          headerTitle: strings('screens.addressStackTitle.ImportMoreAddress'),
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
-          title: 'Import more address',
+          title: strings('screens.addressStackTitle.ImportMoreAddress'),
           headerRight: ImportMoreAddressScreenButton,
         }}
       />
@@ -357,8 +365,8 @@ export function AddressNavigator() {
         name={RootNames.ImportPrivateKey}
         component={ImportPrivateKeyScreen}
         options={{
-          headerTitle: 'Import Private Key',
-          title: 'Import Private Key',
+          headerTitle: strings('screens.addressStackTitle.ImportPrivateKey'),
+          title: strings('screens.addressStackTitle.ImportPrivateKey'),
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
@@ -368,8 +376,8 @@ export function AddressNavigator() {
         name={RootNames.ImportPrivateKey2024}
         component={ImportPrivateKeyScreen2024}
         options={{
-          headerTitle: 'Import Private Key',
-          title: 'Import Private Key',
+          headerTitle: strings('screens.addressStackTitle.ImportPrivateKey'),
+          title: strings('screens.addressStackTitle.ImportPrivateKey'),
           headerTitleStyle: styles.headerTitleText,
         }}
       />
@@ -377,8 +385,8 @@ export function AddressNavigator() {
         name={RootNames.ImportMnemonic}
         component={ImportSeedPhraseScreen}
         options={{
-          headerTitle: 'Import Seed Phrase',
-          title: 'Import Seed Phrase',
+          headerTitle: strings('screens.addressStackTitle.ImportMnemonic'),
+          title: strings('screens.addressStackTitle.ImportMnemonic'),
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
@@ -389,8 +397,8 @@ export function AddressNavigator() {
         name={RootNames.ImportMnemonic2024}
         component={ImportSeedPhraseScreen2024}
         options={{
-          headerTitle: 'Import Seed Phrase',
-          title: 'Import Seed Phrase',
+          headerTitle: strings('screens.addressStackTitle.ImportMnemonic'),
+          title: strings('screens.addressStackTitle.ImportMnemonic'),
           headerTitleStyle: styles.headerTitleText,
           headerRight: CloudBackupButton2024,
         }}
@@ -414,21 +422,24 @@ export function AddressNavigator() {
         name={RootNames.AddMnemonic}
         component={AddSeedPhraseScreen}
         options={{
-          headerTitle: 'Add from Current Seed Phrase',
-          title: 'Add from Current Seed Phrase',
+          headerTitle: strings('screens.addressStackTitle.AddMnemonic'),
+          title: strings('screens.addressStackTitle.AddMnemonic'),
         }}
       />
       <AddressStack.Screen
         name={RootNames.CreateMnemonicBackup}
         component={CreateSeedPhraseBackupScreen}
         options={{
-          headerTitle: 'Backup seed phrase',
-          title: 'Backup seed phrase',
+          headerTitle: strings(
+            'screens.addressStackTitle.CreateMnemonicBackup',
+          ),
+          title: strings('screens.addressStackTitle.CreateMnemonicBackup'),
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
       />
+      {/* no use RootNames page */}
       <AddressStack.Screen
         name={RootNames.CreateMnemonicVerify}
         component={CreateSeedPhraseVerifyScreen}
