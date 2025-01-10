@@ -183,7 +183,11 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
           (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
       )?.params,
   ) as
-    | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
+    | {
+        chainEnum?: CHAINS_ENUM | undefined;
+        tokenId?: TokenItem['id'];
+        type?: 'Buy' | 'Sell';
+      }
     | undefined;
 
   useMount(() => {
@@ -191,9 +195,11 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       return;
     }
 
+    const isBuy = navState?.type === 'Buy';
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
       payTokenId: navState?.tokenId,
+      changeTo: isBuy,
     });
   });
 
@@ -379,13 +385,23 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     } else if (
       receiveToken &&
       receiveToken?.low_credit_score &&
-      !lowCreditInit.current
+      !lowCreditInit.current &&
+      navState?.type !== 'Sell'
     ) {
+      if (navState?.type === 'Buy' && navState?.tokenId !== receiveToken.id) {
+        return;
+      }
       setLowCreditToken(receiveToken);
       setLowCreditVisible(true);
       lowCreditInit.current = true;
     }
-  }, [isFocused, receiveToken, setLowCreditToken, setLowCreditVisible]);
+  }, [
+    isFocused,
+    receiveToken,
+    setLowCreditToken,
+    setLowCreditVisible,
+    navState,
+  ]);
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 
@@ -484,7 +500,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
       <KeyboardAwareScrollView
         style={[
           styles.container,
-          // eslint-disable-next-line react-native/no-inline-styles
+
           {
             marginBottom: 112 + (isAndroid ? 20 + safeOffBottom : 0),
           },

@@ -16,6 +16,8 @@ import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
+import { isNonPublicProductionEnv } from '@/constant/env';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 const { isSameAddress } = addressUtils;
 
@@ -60,6 +62,11 @@ export type IManageToken = {
   tokenId: string;
 };
 
+export type IManageNft = {
+  id: string;
+  chain: string;
+};
+
 export type IDefiOrToken = {
   id: string;
   chainid: string;
@@ -72,10 +79,25 @@ export type ITokenSetting = {
   unfoldTokens?: IManageToken[];
   includeDefiAndTokens?: IDefiOrToken[];
   excludeDefiAndTokens?: IDefiOrToken[];
+  foldNfts?: IManageNft[];
+  unfoldNfts?: IManageNft[];
+  foldDefis?: string[];
+  unFoldDefis?: string[];
 };
 
 export interface ITokenManageSettingMap {
-  [address: string]: ITokenSetting;
+  [address: string]: {
+    /** @deprecated will be migrated to store.pinedQueue */
+    pinedQueue?: ITokenSetting['pinedQueue'];
+    /** @deprecated will be migrated to store.foldTokens */
+    foldTokens?: ITokenSetting['foldTokens'];
+    /** @deprecated will be migrated to store.unfoldTokens */
+    unfoldTokens?: ITokenSetting['unfoldTokens'];
+    /** @deprecated will be migrated to store.includeDefiAndTokens */
+    includeDefiAndTokens?: ITokenSetting['includeDefiAndTokens'];
+    /** @deprecated will be migrated to store.excludeDefiAndTokens */
+    excludeDefiAndTokens?: ITokenSetting['excludeDefiAndTokens'];
+  };
 }
 
 export interface PreferenceStore {
@@ -100,6 +122,18 @@ export interface PreferenceStore {
   sendEnableTime?: number;
   customizedToken?: Token[];
   blockedToken?: Token[];
+  // manage token
+  pinedQueue?: IManageToken[]; // maual always true
+  foldTokens?: IManageToken[];
+  unfoldTokens?: IManageToken[];
+  includeDefiAndTokens?: IDefiOrToken[];
+  excludeDefiAndTokens?: IDefiOrToken[];
+
+  foldDefis?: string[];
+  unFoldDefis?: string[];
+  foldNfts?: IManageNft[];
+  unFoldNfts?: IManageNft[];
+
   tokenManageSettingMap: ITokenManageSettingMap;
   collectionStarred?: Token[];
   /**
@@ -156,7 +190,7 @@ export class PreferenceService {
     this.sessionService = options.sessionService;
     this.store = createPersistStore<PreferenceStore>(
       {
-        name: 'preference',
+        name: APP_STORE_NAMES.preference,
         template: {
           currentAccount: undefined,
           balanceMap: {},
@@ -164,6 +198,10 @@ export class PreferenceService {
           locale: defaultLang,
           lastTimeSendToken: {},
           pinAddresses: [],
+          foldDefis: [],
+          unFoldDefis: [],
+          foldNfts: [],
+          unFoldNfts: [],
           gasCache: {},
           currentVersion: '0',
           pinnedChain: [],
@@ -199,6 +237,18 @@ export class PreferenceService {
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
     }
+  }
+
+  /** @deprecated */
+  _dangerouslySetTokenManageSettingMap(input: ITokenManageSettingMap) {
+    // only allow use in non-production environment
+    if (!isNonPublicProductionEnv) return;
+
+    this.store.tokenManageSettingMap = input;
+    console.warn(
+      '[preference::_dangerouslySetTokenManageSettingMap] written tokenManageSettingMap',
+      input,
+    );
   }
 
   /* eslint-disable no-dupe-class-members */
@@ -613,219 +663,163 @@ export class PreferenceService {
   };
 
   /** =========toggle pinToken start =========== */
-  pinToken = (_address: string, token: IManageToken) => {
-    const address = _address.toLowerCase();
-    const preMap = this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    if (!preSetting) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          pinedQueue: [token],
-        },
-      };
-      return;
+  pinToken = (token: IManageToken) => {
+    if (!this.store.pinedQueue) {
+      this.store.pinedQueue = [token];
     }
-    const pinedQueue = preSetting.pinedQueue || [];
+    const pinedQueue = this.store.pinedQueue;
     const exist = pinedQueue.find(
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      const nextQueue = [token, ...pinedQueue];
-      const nextMap = {
-        ...preMap,
-        [address]: {
-          ...preSetting,
-          pinedQueue: nextQueue,
-        },
-      };
-      this.store.tokenManageSettingMap = nextMap;
-      this.manualUnFoldToken(address, token, nextMap);
+      this.store.pinedQueue = [token, ...pinedQueue];
+      this.manualUnFoldToken(token);
     }
   };
-  removePinedToken = (
-    _address: string,
-    token: IManageToken,
-    prePassMap?: ITokenManageSettingMap,
-  ) => {
-    const address = _address.toLowerCase();
-    const preMap = prePassMap || this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    const pinedQueue = this.store.tokenManageSettingMap[address]?.pinedQueue;
-    if (pinedQueue) {
-      const exist = pinedQueue.find(
+  removePinedToken = (token: IManageToken) => {
+    if (this.store.pinedQueue?.length) {
+      this.store.pinedQueue = this.store.pinedQueue.filter(
         item =>
-          item.chainId === token.chainId && item.tokenId === token.tokenId,
+          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
       );
-      if (exist) {
-        const nextPinQueue = pinedQueue.filter(
-          item =>
-            item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-        );
-        this.store.tokenManageSettingMap = {
-          ...preMap,
-          [address]: {
-            ...preSetting,
-            pinedQueue: nextPinQueue,
-          },
-        };
-      }
     }
   };
 
   /** =========toggle pinToken end =========== */
 
   /** =========toggle fold token start =========== */
-  manualFoldToken = (_address: string, token: IManageToken) => {
-    const address = _address.toLowerCase();
-    const preMap = this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    if (!preSetting) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          foldTokens: [token],
-        },
-      };
-      return;
-    }
-    const preFoldedTokens = preSetting?.foldTokens || [];
-    const preUnFoldedToken = preSetting.unfoldTokens || [];
+  manualFoldToken = (token: IManageToken) => {
+    const preFoldedTokens = this.store.foldTokens || [];
+    const preUnFoldedToken = this.store.unfoldTokens || [];
 
     const exist = preFoldedTokens.find(
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      const nextMap = {
-        ...preMap,
-        [address]: {
-          ...preSetting,
-          foldTokens: [...preFoldedTokens, token],
-          unfoldTokens: preUnFoldedToken.filter(
-            item =>
-              item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-          ),
-        },
-      };
-      this.store.tokenManageSettingMap = nextMap;
-      this.removePinedToken(address, token, nextMap);
+      this.store.foldTokens = [...preFoldedTokens, token];
+      this.store.unfoldTokens = preUnFoldedToken.filter(
+        item =>
+          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+      );
+      this.removePinedToken(token);
     }
   };
-  manualUnFoldToken = (
-    _address: string,
-    token: IManageToken,
-    prePassMap?: ITokenManageSettingMap,
-  ) => {
-    const address = _address.toLowerCase();
-    const preMap = prePassMap || this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    if (!preSetting) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          unfoldTokens: [token],
-        },
-      };
-      return;
-    }
-    const preFoldedTokens = preSetting?.foldTokens || [];
-    const preUnFoldedToken = preSetting.unfoldTokens || [];
+  manualUnFoldToken = (token: IManageToken) => {
+    const preFoldedTokens = this.store.foldTokens || [];
+    const preUnFoldedToken = this.store.unfoldTokens || [];
 
     const exist = preUnFoldedToken.find(
       item => item.chainId === token.chainId && item.tokenId === token.tokenId,
     );
     if (!exist) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          ...preSetting,
-          unfoldTokens: [...preUnFoldedToken, token],
-          foldTokens: preFoldedTokens.filter(
-            item =>
-              item.chainId !== token.chainId || item.tokenId !== token.tokenId,
-          ),
-        },
-      };
+      this.store.unfoldTokens = [...preUnFoldedToken, token];
+      this.store.foldTokens = preFoldedTokens.filter(
+        item =>
+          item.chainId !== token.chainId || item.tokenId !== token.tokenId,
+      );
     }
   };
   /** =========toggle fold token end =========== */
 
   /** =========toggle include or exclude token start =========== */
-  includeBalanceToken = (_address: string, item: IDefiOrToken) => {
-    const address = _address.toLowerCase();
-    const preMap = this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    if (!preSetting) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          includeDefiAndTokens: [item],
-        },
-      };
-      return;
-    }
-    const preIncludeDefiAndToken = preSetting?.includeDefiAndTokens || [];
-    const preExcludeDefiAndToken = preSetting?.excludeDefiAndTokens || [];
+  includeBalanceToken = (item: IDefiOrToken) => {
+    const preIncludeDefiAndToken = this.store?.includeDefiAndTokens || [];
+    const preExcludeDefiAndToken = this.store?.excludeDefiAndTokens || [];
 
     const exist = preIncludeDefiAndToken.find(
       i =>
         i.chainid === item.chainid && i.id === item.id && i.type === item.type,
     );
     if (!exist) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          ...preSetting,
-          includeDefiAndTokens: [...preIncludeDefiAndToken, item],
-          excludeDefiAndTokens: preExcludeDefiAndToken.filter(
-            i =>
-              i.chainid !== item.chainid ||
-              i.id !== item.id ||
-              i.type !== item.type,
-          ),
-        },
-      };
+      this.store.includeDefiAndTokens = [...preIncludeDefiAndToken, item];
+      this.store.excludeDefiAndTokens = preExcludeDefiAndToken.filter(
+        i =>
+          i.chainid !== item.chainid ||
+          i.id !== item.id ||
+          i.type !== item.type,
+      );
     }
   };
-  excludeBalance = (_address: string, item: IDefiOrToken) => {
-    const address = _address.toLowerCase();
-    const preMap = this.store.tokenManageSettingMap;
-    const preSetting = preMap[address];
-    if (!preSetting) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          excludeDefiAndTokens: [item],
-        },
-      };
-      return;
-    }
-    const preIncludeDefiAndToken = preSetting?.includeDefiAndTokens || [];
-    const preExcludeDefiAndToken = preSetting?.excludeDefiAndTokens || [];
+  excludeBalance = (item: IDefiOrToken) => {
+    const preIncludeDefiAndToken = this.store?.includeDefiAndTokens || [];
+    const preExcludeDefiAndToken = this.store?.excludeDefiAndTokens || [];
 
     const exist = preExcludeDefiAndToken.find(
       i =>
         i.chainid === item.chainid && i.id === item.id && i.type === item.type,
     );
     if (!exist) {
-      this.store.tokenManageSettingMap = {
-        ...preMap,
-        [address]: {
-          ...preSetting,
-          excludeDefiAndTokens: [...preExcludeDefiAndToken, item],
-          includeDefiAndTokens: preIncludeDefiAndToken.filter(
-            i =>
-              i.chainid !== item.chainid ||
-              i.id !== item.id ||
-              i.type !== item.type,
-          ),
-        },
-      };
+      this.store.excludeDefiAndTokens = [...preExcludeDefiAndToken, item];
+      this.store.includeDefiAndTokens = preIncludeDefiAndToken.filter(
+        i =>
+          i.chainid !== item.chainid ||
+          i.id !== item.id ||
+          i.type !== item.type,
+      );
     }
   };
   /** =========toggle include or exclude token end =========== */
 
-  getUserTokenSettings = async (address: string) => {
-    return this.store.tokenManageSettingMap[address.toLowerCase()] || {};
+  manualFoldNft = (nft: IManageNft) => {
+    const preFoldedNfts = this.store.foldNfts || [];
+    const preUnFoldNfts = this.store.unFoldNfts || [];
+
+    const exist = preFoldedNfts.find(
+      item => item.chain === nft.chain && item.id === nft.chain,
+    );
+    if (!exist) {
+      this.store.foldNfts = [...preFoldedNfts, nft];
+      this.store.unFoldNfts = preUnFoldNfts.filter(
+        item => item.chain !== nft.chain || item.id !== nft.id,
+      );
+    }
+  };
+  manualUnFoldNft = (nft: IManageNft) => {
+    const preUnFoldNfts = this.store.unFoldNfts || [];
+    const preFoldedNfts = this.store.foldNfts || [];
+
+    const exist = preUnFoldNfts.find(
+      item => item.chain === nft.chain && item.id === nft.chain,
+    );
+    if (!exist) {
+      this.store.unFoldNfts = [...preUnFoldNfts, nft];
+      this.store.foldNfts = preFoldedNfts.filter(
+        item => item.chain !== nft.chain || item.id !== nft.id,
+      );
+    }
+  };
+
+  manualFoldDefi = (defiId: string) => {
+    const preFoldDefis = this.store.foldDefis || [];
+    const preUnFoldDefis = this.store.unFoldDefis || [];
+    const exist = preFoldDefis.includes(defiId);
+    if (!exist) {
+      this.store.foldDefis = [...preFoldDefis, defiId];
+      this.store.unFoldDefis = preUnFoldDefis.filter(item => item !== defiId);
+    }
+  };
+
+  manualUnFoldDefi = (defiId: string) => {
+    const preUnFoldDefis = this.store.unFoldDefis || [];
+    const preFoldDefis = this.store.foldDefis || [];
+    const exist = preUnFoldDefis.includes(defiId);
+    if (!exist) {
+      this.store.unFoldDefis = [...preUnFoldDefis, defiId];
+      this.store.foldDefis = preFoldDefis.filter(item => item !== defiId);
+    }
+  };
+
+  getUserTokenSettings = async () => {
+    return {
+      foldTokens: this.store.foldTokens || [],
+      unfoldTokens: this.store.unfoldTokens || [],
+      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
+      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
+      pinedQueue: this.store.pinedQueue,
+      foldNfts: this.store.foldNfts || [],
+      unfoldNfts: this.store.unFoldNfts || [],
+      foldDefis: this.store.foldDefis || [],
+      unFoldDefis: this.store.unFoldDefis || [],
+    };
   };
 }

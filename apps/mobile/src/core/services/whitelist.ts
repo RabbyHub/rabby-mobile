@@ -1,6 +1,7 @@
 import { addressUtils } from '@rabby-wallet/base-utils';
 import createPersistStore from '@rabby-wallet/persist-store';
 import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 const { isSameAddress } = addressUtils;
 
@@ -18,7 +19,7 @@ export class WhitelistService {
   constructor(options?: StorageAdapaterOptions) {
     const storage = createPersistStore<WhitelistStore>(
       {
-        name: 'whitelist',
+        name: APP_STORE_NAMES.whitelist,
         template: {
           enabled: true,
           whitelists: [],

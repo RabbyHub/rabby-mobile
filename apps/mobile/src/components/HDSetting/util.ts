@@ -17,7 +17,7 @@ export const getAccountBalance = async (
   }
 
   try {
-    const tokenSetting = await getTokenSettings(address);
+    const tokenSetting = await getTokenSettings();
     const res = await openapi.getTotalBalanceV2({
       address,
       isCore: false,
@@ -59,7 +59,7 @@ export const fetchAccountsInfo = async (accounts: Account[]) => {
 
       try {
         // get balance from api
-        const tokenSetting = await getTokenSettings(account.address);
+        const tokenSetting = await getTokenSettings();
         const res = await openapi.getTotalBalanceV2({
           address: account.address,
           isCore: false,

@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, ScrollView } from 'react-native';
+import {
+  View,
+  ScrollView,
+  SectionList,
+  Keyboard,
+  RefreshControl,
+} from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
@@ -25,8 +31,34 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useRefreshTags } from '../Home/hooks/token';
 import { preferenceService } from '@/core/services';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+  useMyAccounts,
+} from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useAssetsMap } from '../Home/hooks/store';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import BigNumber from 'bignumber.js';
+import { useAssets } from '../Search/useAssets';
+import { formatNetworth } from '@/utils/math';
+import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IS_ANDROID } from '@/core/native/utils';
+import { ellipsisAddress } from '@/utils/address';
+
+type SectionListItem = {
+  data: AbstractPortfolio[];
+  project: AbstractProject;
+  address: string;
+  type: KEYRING_TYPE;
+  aliasName: string;
+  totalUsdValue: BigNumber;
+};
 
 const hitSlop = {
   top: 10,
@@ -36,16 +68,42 @@ const hitSlop = {
 };
 
 export const RightMore: React.FC<{
-  token: AbstractPortfolioToken;
-  address: string;
+  token: AbstractProject;
   refreshBalance: () => void;
-}> = ({ token, address, refreshBalance }) => {
-  const { refreshTags } = useRefreshTags();
+}> = ({ token, refreshBalance }) => {
+  const { refreshTagPortfolio } = useRefreshTags();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
     return [
+      {
+        title: token._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: token._isFold
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        androidIconName: token._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (token._isFold) {
+            preferenceService.manualUnFoldDefi(token.id);
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+          } else {
+            preferenceService.manualFoldDefi(token.id);
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+          }
+          token._isFold = !token._isFold;
+          refreshTagPortfolio();
+        },
+      },
       {
         title: token._isExcludeBalance
           ? t('page.tokenDetail.action.includeBalance')
@@ -63,18 +121,18 @@ export const RightMore: React.FC<{
           : 'ic_rabby_menu_exclude_balance',
         action() {
           if (token._isExcludeBalance) {
-            preferenceService.includeBalanceToken(address, {
+            preferenceService.includeBalanceToken({
               id: token.id,
-              chainid: token.chain,
+              chainid: token.chain!,
               type: 'defi',
             });
             toast.success(
               t('page.tokenDetail.actionsTips.includeBalance_success'),
             );
           } else {
-            preferenceService.excludeBalance(address, {
+            preferenceService.excludeBalance({
               id: token.id,
-              chainid: token.chain,
+              chainid: token.chain!,
               type: 'defi',
             });
             toast.success(
@@ -82,12 +140,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags(address);
+          refreshTagPortfolio();
           refreshBalance();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, address, refreshBalance]);
+  }, [token, t, isDarkTheme, refreshTagPortfolio, refreshBalance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -111,34 +169,40 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const { currentAccount } = useCurrentAccount();
-  const { data, portfolioList, account } = useNavigationState(
+  const {
+    data,
+    portfolioList,
+    isSingleAddress,
+    account: routeAccount,
+  } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
-    account: KeyringAccountWithAlias;
     portfolioList: AbstractPortfolio[];
+    account: KeyringAccountWithAlias;
+    isSingleAddress?: boolean;
   };
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
-  const finalAccount = useMemo(
-    () => account || currentAccount,
-    [account, currentAccount],
-  );
+  // console.log('DefiDetail data:', JSON.stringify(data));
+  const { t } = useTranslation();
+  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
   const getHeaderTitle = useMemoizedFn(() => {
     return (
       <View style={styles.headerArea}>
         <AssetAvatar
-          logo={data?.logo}
+          logo={data?.logo || sectionsMultiProject[0]?.project?.logo}
           logoStyle={styles.assetIcon}
           size={40}
-          chain={data?.chain}
+          chain={data?.chain || sectionsMultiProject[0]?.project?.chain}
           chainSize={16}
         />
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
           {/* {token?.name} */}
-          {ellipsisOverflowedText(data?.name, 20)}
+          {ellipsisOverflowedText(
+            data?.name || sectionsMultiProject[0]?.project?.name,
+            20,
+          )}
         </Text>
       </View>
     );
@@ -168,13 +232,7 @@ export const DeFiDetailScreen = () => {
   });
 
   const getHeaderRight = useMemoizedFn(() => {
-    return (
-      <RightMore
-        token={data}
-        address={finalAccount.address}
-        refreshBalance={triggerUpdate}
-      />
-    );
+    return <RightMore token={data} refreshBalance={triggerUpdate} />;
   });
 
   React.useEffect(() => {
@@ -185,14 +243,146 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
+  const [asssest] = useAssetsMap();
+
+  const { initFetchTop10Assets, refreshing } = useAssets();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
+
+  const { currentAccount } = useCurrentAccount();
+  const finalAccount = useMemo(
+    () => routeAccount || currentAccount,
+    [routeAccount, currentAccount],
+  );
+
+  const sectionsMultiProject = useMemo(() => {
+    const sectionsList: SectionListItem[] = [];
+    if (isSingleAddress) {
+      sectionsList.push({
+        data: portfolioList,
+        project: data,
+        totalUsdValue: new BigNumber(data.netWorth),
+        type: finalAccount.type,
+        address: finalAccount.address,
+        aliasName:
+          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
+      });
+      return sectionsList;
+    }
+
+    const tempList: {
+      data: SectionListItem['data'];
+      project: SectionListItem['project'];
+      totalUsdValue: SectionListItem['totalUsdValue'];
+      address: SectionListItem['address'];
+    }[] = [];
+    Object.keys(asssest).map(address => {
+      const { portfolios } = asssest[address];
+
+      portfolios?.map(portfolio => {
+        if (portfolio.id === data.id && portfolio.chain === data.chain) {
+          tempList.push({
+            data: portfolio._portfolios,
+            project: portfolio,
+            totalUsdValue: getDisplayedPortfolioUsdValue(portfolio._portfolios),
+            address,
+          });
+        }
+      });
+    });
+
+    accounts.map(account => {
+      const idx = tempList.findIndex(item => item.address === account.address);
+      if (idx > -1) {
+        sectionsList.push({
+          ...tempList[idx],
+          type: account.type,
+          aliasName: account.aliasName || ellipsisAddress(account.address),
+        });
+      }
+    });
+    return sectionsList.sort((a, b) =>
+      new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
+    );
+  }, [data, asssest, accounts, isSingleAddress, finalAccount, portfolioList]);
+
+  const sumNetWorth = useMemo(() => {
+    const res = sectionsMultiProject.reduce((pre, cur) => {
+      return pre.plus(cur.totalUsdValue);
+    }, new BigNumber(0));
+    return res ? formatNetworth(res.toNumber()) : data._netWorth;
+  }, [data._netWorth, sectionsMultiProject]);
+
+  const renderItem = useCallback(
+    ({
+      item,
+      section,
+    }: {
+      item: AbstractPortfolio;
+      section: SectionListItem;
+    }) => {
+      return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
+    },
+    [],
+  );
+
+  const { bottom } = useSafeAreaInsets();
+
+  const androidBottomOffset = IS_ANDROID ? bottom : 0;
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: SectionListItem }) => {
+      return (
+        <View style={styles.accountBox}>
+          <View className="relative">
+            <WalletIcon
+              type={section.type as KEYRING_TYPE}
+              width={styles.walletIcon.width}
+              height={styles.walletIcon.height}
+              style={styles.walletIcon}
+            />
+          </View>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {section.aliasName}
+          </Text>
+        </View>
+      );
+    },
+    [styles.accountBox, styles.titleText, styles.walletIcon],
+  );
+
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-        {portfolioList.map((item, index) => {
-          return <MemoItem item={item} key={index} />;
-        })}
-      </ScrollView>
+    <NormalScreenContainer2024
+      type="bg1"
+      overwriteStyle={[
+        styles.container,
+        { paddingBottom: androidBottomOffset },
+      ]}>
+      <SectionList
+        sections={sectionsMultiProject}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        keyExtractor={item => `${item.id}`}
+        windowSize={10}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.projectHeaderBalance}>
+              {t('page.nextComponent.multiAddressHome.totalBalance')}
+            </Text>
+            <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
+          </>
+        }
+        renderSectionHeader={renderSectionHeader}
+        refreshControl={
+          <RefreshControl
+            onRefresh={() => {
+              initFetchTop10Assets(true);
+            }}
+            refreshing={refreshing}
+          />
+        }
+      />
     </NormalScreenContainer2024>
   );
 };
@@ -204,6 +394,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 8,
     // backgroundColor: colors2024['neutral-bg-4'],
   },
+  accountBox: {
+    flexDirection: 'row',
+    marginLeft: 25,
+    gap: 4,
+    marginTop: 20,
+    marginBottom: 8,
+  },
   backButtonStyle: {
     // width: 56,
     // height: 56,
@@ -211,6 +408,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     marginLeft: -16,
     paddingLeft: 16,
+  },
+  titleText: {
+    flexShrink: 1,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexWrap: 'nowrap',
+  },
+  walletIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+  },
+  projectHeaderBalance: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'left',
+    marginLeft: 25,
+    marginBottom: 7,
   },
   projectHeaderNetWorth: {
     color: colors2024['neutral-title-1'],
@@ -220,7 +441,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'left',
     marginLeft: 25,
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   headerArea: {
     width: '100%',

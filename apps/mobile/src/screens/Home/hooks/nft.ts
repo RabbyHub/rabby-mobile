@@ -1,45 +1,76 @@
 import { openapi } from '@/core/request';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNFTsAtom } from './store';
+import { DisplayNftItem } from '../types';
+import { ITokenSetting } from '@/core/services/preference';
+import { preferenceService } from '@/core/services';
 
-export const useQueryNft = (addr?: string) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const preAddressRef = useRef<string>();
-  const [list, setList] = useState<NFTItem[]>([]);
+export const tagNfts = (
+  nfts: DisplayNftItem[],
+  tokenSetting: ITokenSetting,
+): DisplayNftItem[] => {
+  const { foldNfts, unfoldNfts } = tokenSetting;
 
-  const fetchData = useCallback(async (id: string) => {
-    try {
-      setIsLoading(true);
-      const ntfs = await openapi.listNFT(id, true, true);
-      preAddressRef.current = id;
-      setList(ntfs);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  return nfts.map(i => {
+    const isFold = (() => {
+      if (foldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
+        return true;
+      }
+      if (unfoldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
+        return false;
+      }
+      if (!i.is_core) {
+        return true;
+      }
+      return false;
+    })();
 
-  const reload = () => {
+    const isManualFold = foldNfts?.some(
+      nft => nft.chain === i.chain && nft.id === i.id,
+    );
+
+    return Object.assign(i, {
+      _isFold: isFold,
+      _isManualFold: isManualFold,
+    });
+  });
+};
+export const useQueryNft = (addr?: string, visible = true) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [list, setList] = useNFTsAtom(addr);
+
+  const fetchData = useCallback(
+    async (id: string) => {
+      try {
+        setIsLoading(true);
+        const ntfs = await openapi.listNFT(id, true, true);
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+        setList(tagNfts(ntfs, tokenSetting));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setList],
+  );
+
+  const reload = async () => {
     if (addr) {
-      fetchData(addr);
+      await fetchData(addr);
     }
   };
 
   useEffect(() => {
-    if (addr !== preAddressRef.current) {
-      preAddressRef.current = addr;
-      setList([]);
-    }
-    if (addr) {
+    if (addr && visible) {
       fetchData(addr);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addr]);
+  }, [addr, visible]);
 
   return {
     isLoading,
-    list,
+    list: list || [],
     reload,
   };
 };

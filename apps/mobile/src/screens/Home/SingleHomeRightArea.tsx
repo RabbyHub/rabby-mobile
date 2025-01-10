@@ -14,6 +14,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { View } from 'react-native';
+import { AbstractPortfolioToken } from './types';
 
 const hitSlop = {
   top: 10,
@@ -29,15 +30,31 @@ const historyHitSlop = {
   right: 4,
 };
 
-export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
-  const { currentAccount } = useCurrentAccount();
-  const showAddressDetail = useAddressDetailModal();
-  const { styles, colors, colors2024 } = useTheme2024();
+interface HeaderRightHistoryProps {
+  isInTokenDetail?: boolean;
+  isMultiAddress?: boolean;
+  tokenItem?: AbstractPortfolioToken;
+}
+
+export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
+  isInTokenDetail,
+  isMultiAddress,
+  tokenItem,
+}) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { navigation } = useSafeSetNavigationOptions();
+  const { colors2024 } = useTheme2024();
+  const { currentAccount } = useCurrentAccount();
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const fetchHistory = useCallback(() => {
+    if (tokenItem) {
+      // single token no pending tx
+      return;
+    }
+
     if (!currentAccount) {
       return;
     }
@@ -47,16 +64,7 @@ export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
     setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [currentAccount]);
-
-  const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
-    useSwitchSceneCurrentAccount();
-
-  const onPress = () => {
-    if (currentAccount) {
-      showAddressDetail({ account: currentAccount });
-    }
-  };
+  }, [currentAccount, tokenItem]);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,28 +73,54 @@ export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
   );
 
   const openHistory = useCallback(async () => {
-    // setHistoryVisible(true);
     await switchSceneCurrentAccount('History', currentAccount);
-    // toggleUseAllAccountsOnScene('MultiHistory', false);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.History,
-        params: {},
+        screen: isMultiAddress
+          ? RootNames.MultiAddressHistory
+          : RootNames.History,
+        params: {
+          isInTokenDetail,
+          tokenItem,
+          isMultiAddress,
+        },
       }),
     );
-  }, [navigation, switchSceneCurrentAccount, currentAccount]);
+  }, [
+    navigation,
+    switchSceneCurrentAccount,
+    tokenItem,
+    currentAccount,
+    isInTokenDetail,
+    isMultiAddress,
+  ]);
+
+  return (
+    <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
+      <View style={{ marginRight: 18 }}>
+        {pendingTxCount ? (
+          <PendingTx number={pendingTxCount} onClick={openHistory} />
+        ) : (
+          <RcIconSwapHistory color={colors2024['neutral-body']} />
+        )}
+      </View>
+    </CustomTouchableOpacity>
+  );
+};
+
+export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
+  const { currentAccount } = useCurrentAccount();
+  const showAddressDetail = useAddressDetailModal();
+
+  const onPress = () => {
+    if (currentAccount) {
+      showAddressDetail({ account: currentAccount });
+    }
+  };
 
   return (
     <>
-      <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
-        <View style={{ marginRight: 18 }}>
-          {pendingTxCount ? (
-            <PendingTx number={pendingTxCount} onClick={openHistory} />
-          ) : (
-            <RcIconSwapHistory color={colors2024['neutral-body']} />
-          )}
-        </View>
-      </CustomTouchableOpacity>
+      <HeaderRightHistory />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
         <RcIconMore width={24} height={24} />
       </CustomTouchableOpacity>

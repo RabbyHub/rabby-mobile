@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { cloneDeep, omit } from 'lodash';
 import { Common, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
-import { bytesToHex } from '@ethereumjs/util';
+import { bytesToHex, isValidAddress } from '@ethereumjs/util';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -326,6 +326,10 @@ export const gasMarketV2 = async (
     };
   } else {
     chainId = params.chainId;
+  }
+
+  if (tx && !isValidAddress(tx.to)) {
+    tx.to = '0x0000000000000000000000000000000000000000';
   }
 
   return openapi.gasMarketV2({

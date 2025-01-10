@@ -4,6 +4,7 @@ import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from './preference';
+import { APP_STORE_NAMES } from '../storage/storeConstant';
 
 export interface DappInfo {
   origin: string;
@@ -23,10 +24,13 @@ export type DappStore = {
   dapps: Record<string, DappInfo>;
 };
 
-export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
+export class DappService extends StoreServiceBase<
+  DappStore,
+  APP_STORE_NAMES.dapps
+> {
   constructor(options?: StorageAdapaterOptions<DappStore>) {
     super(
-      'dapps',
+      APP_STORE_NAMES.dapps,
       {
         dapps: {},
       },

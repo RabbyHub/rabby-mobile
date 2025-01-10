@@ -31,9 +31,10 @@ const winInfo = Dimensions.get('window');
 
 interface Props {
   token: AbstractPortfolioToken;
+  isPin?: boolean;
 }
 export function TokenPriceChart(props: Props) {
-  const { token } = props;
+  const { token, isPin } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
@@ -120,6 +121,7 @@ export function TokenPriceChart(props: Props) {
                 ? realTimeData?.list
                 : timeMachMapping?.[e.key]?.list) || []
             }
+            isPin={isPin}
             activeKey={e.key}
             currentInfo={currentInfo}
             loading={isRealTimeKey(e.key) ? curveLoading : timeMachineLoading}
@@ -150,9 +152,11 @@ function Chart({
   currentInfo,
   isOffline,
   loading,
+  isPin,
   pathColor,
   xOffset,
 }: {
+  isPin?: boolean;
   isOffline: boolean;
   data: CurvePoint[];
   activeKey: TabKey;
@@ -172,6 +176,7 @@ function Chart({
   return (
     <LineChart.Provider data={data}>
       <DataHeaderInfo
+        isPin={isPin}
         key={activeKey}
         currentPercentChange={currentInfo.percent}
         currentIsLoss={currentInfo.isLoss}

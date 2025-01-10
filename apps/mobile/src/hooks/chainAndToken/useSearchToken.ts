@@ -6,9 +6,6 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { findChainByServerID } from '@/utils/chain';
-import { mainnetTokensAtom } from '@/screens/Home/hooks/token';
-import { useAtomValue } from 'jotai';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 
 const useSearchToken = (
@@ -30,7 +27,6 @@ const useSearchToken = (
   const [isLoading, setIsLoading] = useState(false);
   const addressRef = useRef(address);
   const kwRef = useRef('');
-  const { customize, blocked } = useAtomValue(mainnetTokensAtom);
 
   const searchToken = useCallback(
     async ({
@@ -71,31 +67,15 @@ const useSearchToken = (
         setIsLoading(false);
       }
 
-      const reg = new RegExp(q, 'i');
-      const matchCustomTokens = customize.filter(token => {
-        return (
-          reg.test(token.name) ||
-          reg.test(token.symbol) ||
-          reg.test(token.display_symbol || '')
-        );
-      });
       if (addressRef.current === address && kwRef.current === q) {
-        setResult(
-          [
-            ...(list.map(
-              item => new DisplayedToken(item),
-            ) as AbstractPortfolioToken[]),
-            ...matchCustomTokens,
-          ].filter(item => {
-            const isBlocked = !!blocked.find(b =>
-              addressUtils.isSameAddress(b.id, item.id),
-            );
-            return !isBlocked;
-          }),
-        );
+        setResult([
+          ...(list.map(
+            item => new DisplayedToken(item),
+          ) as AbstractPortfolioToken[]),
+        ]);
       }
     },
-    [customize, blocked, isTestnet, withBalance],
+    [isTestnet, withBalance],
   );
 
   useEffect(() => {

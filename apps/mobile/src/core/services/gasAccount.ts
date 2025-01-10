@@ -1,6 +1,7 @@
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export type GasAccountRecord = {
   chain_id: string;
@@ -26,7 +27,7 @@ export class GasAccountService {
   constructor(options?: StorageAdapaterOptions) {
     const storage = createPersistStore<GasAccountServiceStore>(
       {
-        name: 'gasAccount',
+        name: APP_STORE_NAMES.gasAccount,
         template: {},
       },
       {

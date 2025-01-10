@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import TouchableText from '@/components/Touchable/TouchableText';
@@ -20,10 +20,12 @@ export default function TokenLabel({
   isMyOwn,
   disableClickToken: propDisableClick,
   style,
+  isForMultipleAdderss,
   address,
 }: RNViewProps & {
   isMyOwn?: boolean;
   disableClickToken?: boolean;
+  isForMultipleAdderss?: boolean;
   address?: KeyringAccountWithAlias;
 } & (
     | {
@@ -47,37 +49,43 @@ export default function TokenLabel({
       : symbol;
   }, [t, isNft, token]);
 
-  const { openTokenDetailPopup, setTokenDetailAddress } =
-    useGeneralTokenDetailSheetModal();
-  const { handlePressNftToken } = useNFTDetailSheetModalOnHistory();
-
   const disableClickToken = propDisableClick || (isNft && !isMyOwn);
 
-  if (disableClickToken)
+  const handlePress = useCallback(() => {
+    if (disableClickToken) {
+      return;
+    }
+
+    if (isNft) {
+      naviPush(RootNames.NftDetail, {
+        token: { ...token },
+        isSingleAddress: !isForMultipleAdderss,
+      });
+    } else {
+      // if (address) {
+      //   setTokenDetailAddress(address);
+      // }
+      // openTokenDetailPopup(token as TokenItem);
+      naviPush(RootNames.TokenDetail, {
+        token: ensureAbstractPortfolioToken(token),
+        // account: address,
+        needUseCacheToken: true,
+        isSingleAddress: !isForMultipleAdderss,
+      });
+    }
+  }, [token, disableClickToken, isNft, isForMultipleAdderss]);
+
+  if (disableClickToken) {
     return (
       <Text style={style} numberOfLines={1} ellipsizeMode="tail">
         {symbolName}
       </Text>
     );
+  }
 
   return (
     <TouchableText
-      onPress={() => {
-        if (disableClickToken) return;
-
-        if (isNft) {
-          handlePressNftToken(token, { needSendButton: isMyOwn });
-        } else {
-          // if (address) {
-          //   setTokenDetailAddress(address);
-          // }
-          // openTokenDetailPopup(token as TokenItem);
-          naviPush(RootNames.TokenDetail, {
-            token: ensureAbstractPortfolioToken(token),
-            account: address,
-          });
-        }
-      }}
+      onPress={handlePress}
       disabled={disableClickToken}
       style={[!disableClickToken && styles.clickable, style]}
       numberOfLines={1}

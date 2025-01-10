@@ -104,7 +104,6 @@ const TokenSelect = forwardRef<
     // when no any queryConds
     const { tokens: _allTokens, isLoading: isLoadingAllTokens } = useTokens(
       useSwapTokenList ? undefined : currentAccount?.address,
-      undefined,
       tokenSelectorVisible,
       updateNonce,
       queryConds.chainServerId,
@@ -249,9 +248,7 @@ const TokenSelect = forwardRef<
 
     const { value: tokenSettings } = useAsync(async () => {
       if (currentAccount?.address) {
-        const data = await preferenceService.getUserTokenSettings(
-          currentAccount?.address,
-        );
+        const data = await preferenceService.getUserTokenSettings();
         return data || {};
       }
       return {};

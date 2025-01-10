@@ -4,7 +4,9 @@ import {
   NativeModule,
   NativeModules,
   Platform,
+  UIManager,
 } from 'react-native';
+import { enableLayoutAnimations } from 'react-native-reanimated';
 
 const isTurboModuleEnabled = global.__turboModuleProxy != null;
 
@@ -30,6 +32,12 @@ interface NativeModulesStatic {
 
 export const IS_ANDROID = Platform.OS === 'android';
 export const IS_IOS = Platform.OS === 'ios';
+
+if (IS_ANDROID) {
+  enableLayoutAnimations(false);
+  UIManager.setLayoutAnimationEnabledExperimental &&
+    UIManager.setLayoutAnimationEnabledExperimental(false);
+}
 
 export function resolveNativeModule<T extends keyof NativeModulesStatic>(
   name: T,

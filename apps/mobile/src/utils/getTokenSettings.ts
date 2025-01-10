@@ -1,8 +1,8 @@
 import { preferenceService } from '@/core/services';
 
-export const getTokenSettings = async (address: string) => {
+export const getTokenSettings = async () => {
   const { includeDefiAndTokens, excludeDefiAndTokens } =
-    await preferenceService.getUserTokenSettings(address);
+    await preferenceService.getUserTokenSettings();
   const included_token_uuids =
     includeDefiAndTokens
       ?.filter(i => i.type === 'token')

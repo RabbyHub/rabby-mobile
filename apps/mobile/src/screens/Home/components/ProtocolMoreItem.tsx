@@ -55,7 +55,7 @@ const getStyles = createGetStyles2024(ctx => ({
   portfolioCard: {
     marginBottom: 12,
     paddingVertical: 12,
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
     marginHorizontal: 20,
     borderRadius: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],

@@ -18,18 +18,17 @@ import {
 } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
 
-import NotFoundScreen from './screens/NotFound';
-
-import MyBundleScreen from './screens/Assets/MyBundle';
-
-import { AddressNavigator } from './screens/Navigators/AddressNavigator';
-import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
-
-import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
-import { NFTDetailScreen } from './screens/NftDetail';
-import { DeFiDetailScreen } from './screens/DeFiDetail';
-
-import { HomeScreenNavigator } from './screens/Navigators/rootNavigator';
+import { TestkitsNavigator } from './screens/Navigators/index.lazy';
+import {
+  AddressNavigator,
+  SettingNavigator,
+  GetStartedNavigator,
+  HomeScreenNavigator,
+  TransactionNavigator,
+  SingleAddressNavigator,
+  DappsNavigator,
+  HomeNonTabNavigator,
+} from './screens/Navigators/index.eager';
 
 import usePrevious from 'ahooks/lib/usePrevious';
 import {
@@ -42,27 +41,36 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
-import {
+
+import type {
   AccountNavigatorParamList,
   DappsNavigatorParamsList,
   RootStackParamsList,
 } from './navigation-type';
+
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
-import { FavoriteDappsScreen } from './screens/Dapps/FavoriteDappsScreen';
-import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
+
 import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
 import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
-import TransactionNavigator from './screens/Navigators/TransactionNavigator';
-import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
-import UnlockScreen from './screens/Unlock/Unlock';
-import { SingleAddressNavigator } from './screens/Navigators/SingleAddressNavigator';
-import { TokenDetailScreen } from './screens/TokenDetail';
+
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
-import { DappsNavigator } from './screens/Navigators/DappsNavigator';
+
+import {
+  UnlockScreen,
+  FavoriteDappsScreen,
+  NotFoundScreen,
+  MyBundleScreen,
+} from '@/screens/index.lazy';
+import {
+  ScannerScreen,
+  TokenDetailScreen,
+  NFTDetailScreen,
+  DeFiDetailScreen,
+} from '@/screens/index.eager';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -284,6 +292,11 @@ export default function AppNavigation({
             options={RootOptions}
           />
           <RootStack.Screen
+            name={RootNames.StackHomeNonTab}
+            component={HomeNonTabNavigator}
+            options={RootOptions}
+          />
+          <RootStack.Screen
             name={RootNames.SingleAddressStack}
             component={SingleAddressNavigator}
           />
@@ -363,7 +376,7 @@ export default function AppNavigation({
             options={mergeScreenOptions({
               headerShown: true,
               headerTitleAlign: 'center',
-              headerTitle: 'DeFi Detail',
+              headerTitle: '',
               headerLeft: () => null,
               headerStyle: {
                 backgroundColor: 'transparent',
