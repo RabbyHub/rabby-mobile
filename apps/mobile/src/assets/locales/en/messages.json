@@ -1106,6 +1106,8 @@
         "transactions": "Transactions",
         "approvals": "Approvals",
         "dapps": "Dapps",
+        "more": "More",
+        "queue": "Queue",
         "websites": "Websites",
         "rabbyPoints": "Rabby Points"
       }

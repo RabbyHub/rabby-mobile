@@ -135,7 +135,6 @@ export const HomeTopArea = ({
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
   const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert();
-  // const approvalRiskAlert = 200;
   const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
 
   const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
@@ -188,7 +187,8 @@ export const HomeTopArea = ({
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const bridgeItemAction = {
-    title: 'Bridge',
+    key: 'Bridge',
+    title: t('page.home.services.bridge'),
     Icon: RcIconBridge,
     onPress: async () => {
       if (!currentAccount) {
@@ -203,6 +203,7 @@ export const HomeTopArea = ({
 
   const actions: {
     title: string;
+    key: string;
     Icon: any;
     onPress: () => void;
     disabled?: boolean;
@@ -210,7 +211,8 @@ export const HomeTopArea = ({
     badgeStyle?: StyleProp<TextStyle>;
   }[] = [
     {
-      title: 'Send',
+      key: 'Send',
+      title: t('page.home.services.send'),
       Icon: RcIconSend,
       onPress: async () => {
         if (!currentAccount) {
@@ -226,7 +228,8 @@ export const HomeTopArea = ({
       },
     },
     {
-      title: 'Receive',
+      key: 'Receive',
+      title: t('page.home.services.receive'),
       Icon: RcIconReceive,
       onPress: async () => {
         if (!currentAccount) {
@@ -258,7 +261,8 @@ export const HomeTopArea = ({
       },
     },
     {
-      title: 'Swap',
+      key: 'Swap',
+      title: t('page.home.services.swap'),
       Icon: RcIconSwap,
       onPress: async () => {
         if (!currentAccount) {
@@ -273,7 +277,8 @@ export const HomeTopArea = ({
     ...(isGnosisKeyring
       ? [
           {
-            title: 'Queue',
+            key: 'Queue',
+            title: t('page.home.services.queue'),
             badge: gnosisPendingTxs?.total,
             Icon: RcIconQueue,
             onPress: () => {
@@ -286,7 +291,8 @@ export const HomeTopArea = ({
             },
           },
           {
-            title: 'More',
+            key: 'More',
+            title: t('page.home.services.more'),
             Icon: RcIconMore,
             onPress: () => {
               loadApprovalStatus();
@@ -298,7 +304,8 @@ export const HomeTopArea = ({
       : [
           bridgeItemAction,
           {
-            title: 'Approvals',
+            key: 'Approvals',
+            title: t('page.home.services.approvals'),
             Icon: RcIconApproval,
             onPress: async () => {
               if (!currentAccount) {
@@ -319,11 +326,12 @@ export const HomeTopArea = ({
   ];
 
   const toastDisabledAction = useCallback(() => {
-    toast.show('Coming Soon :)');
-  }, []);
+    toast.show(t('page.dashboard.assets.comingSoon'));
+  }, [t]);
 
   const moreItems: {
     title: string;
+    key: string;
     Icon: any;
     onPress: () => void;
     disabled?: boolean;
@@ -332,6 +340,7 @@ export const HomeTopArea = ({
   }[] = [
     {
       title: 'Approvals',
+      key: t('page.home.services.approvals'),
       Icon: RcIconApproval,
       onPress: () => {
         navigation.push(RootNames.StackTransaction, {
@@ -443,7 +452,7 @@ export const HomeTopArea = ({
                       item.onPress();
                     }
               }
-              key={item.title}>
+              key={item.key}>
               <View style={styles.actionIconWrapper}>
                 <item.Icon style={styles.actionIcon} />
               </View>
@@ -451,7 +460,7 @@ export const HomeTopArea = ({
               <View
                 style={[
                   styles.actionBadgeWrapper,
-                  item.title === 'Approvals' && {
+                  item.key === 'Approvals' && {
                     right: 0,
                   },
                 ]}>
@@ -523,7 +532,7 @@ export const HomeTopArea = ({
                       item.onPress();
                     }
               }
-              key={item.title}>
+              key={item.key}>
               <View style={[styles.sheetModalItemLeft]}>
                 <item.Icon style={styles.actionIcon} />
                 <Text style={styles.itemText}>{item.title}</Text>
