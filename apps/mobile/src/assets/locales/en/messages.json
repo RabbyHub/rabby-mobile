@@ -1473,6 +1473,22 @@
         "pin": "Pin",
         "services": "Services",
         "totalBalance": "Total Balance"
+      },
+      "importAddress": {
+        "importTitle": "Import Address",
+        "seedPhrase": "Import Seed Phrase",
+        "privateKey": "Import Private Key",
+        "safeTitle": "Import Safe Address",
+        "safe": "Safe",
+        "watchOnlyTitle": "Import Watch-only Addres",
+        "watch": "Watch-only Address",
+        "hardWare": "Connect Hardware Wallets",
+        "tips": {
+          "title": "Is it safe to import into Rabby?",
+          "description": "Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.",
+          "gotIt": "I Got It.",
+          "entry": "Is it safe to import into Rabby"
+        }
       }
     },
     "newAddress": {
