@@ -52,6 +52,7 @@ import { ApprovalAddressListScreen } from '@/screens/Address/ApprovalAddressList
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { ReceiveAddressListScreen } from '../Address/ReceiveAddressListScreen';
+import { useTranslation } from 'react-i18next';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -78,6 +79,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 export function AddressNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { colors, colors2024, styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -111,9 +113,9 @@ export function AddressNavigator() {
         component={AddressListScreen}
         options={mergeScreenOptions2024([
           {
-            headerTitle: `${mainAddressCount} ${
-              mainAddressCount > 1 ? 'Addresses' : 'Address'
-            }`,
+            headerTitle: t('page.addressDetail.addressListScreen.title', {
+              count: mainAddressCount,
+            }),
             title: 'Address',
             headerTintColor: colors2024['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,

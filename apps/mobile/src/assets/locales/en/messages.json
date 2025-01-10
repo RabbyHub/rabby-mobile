@@ -1978,6 +1978,7 @@
     },
     "addressDetail": {
       "add-to-whitelist": "Add to Whitelist",
+      "pin-in-list": "Pin in List",
       "remove-from-whitelist": "Remove from Whitelist",
       "address-detail": "Address Detail",
       "backup-private-key": "Backup Private Key",
@@ -2009,7 +2010,16 @@
       },
       "addressListScreen": {
         "importSafeAddress": "Imported Safe Addresses",
-        "importWatchAddress": "Imported Watch-only Addresses"
+        "importWatchAddress": "Imported Watch-only Addresses",
+        "unpin": "Unpin",
+        "pin": "Pin",
+        "edit": "Edit",
+        "detail": "Details",
+        "delete": "Delete",
+        "title_zero": "0 Address",
+        "title_one": "{{count}} Address",
+        "title_other": "{{count}} Addresses",
+        "addAddress": "Add an Address"
       }
     },
     "preferMetamaskDapps": {
