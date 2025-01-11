@@ -16,8 +16,9 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
+  Pressable,
 } from 'react-native';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
@@ -46,6 +47,7 @@ import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
@@ -54,16 +56,15 @@ import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
 import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-  usePinAddresses,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
+import { RcNextSearchCC } from '@/assets/icons/common';
+import { useAssetsMap } from './hooks/store';
+import { useAssets } from '../Search/useAssets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -107,7 +108,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       </View>
       <TouchableWithoutFeedback
         onPress={() => {
-          navigation.navigate(RootNames.StackRoot, {
+          navigation.navigate(RootNames.StackSettings, {
             screen: RootNames.Settings,
             params: {},
           });
@@ -229,6 +230,8 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
+  const { initFetchTop10Assets } = useAssets();
+
   const { pinAccountsFirstFour, isShowPin } =
     useHomePinAddress(balanceAccounts);
 
@@ -282,14 +285,17 @@ function MultiAddressHome(): JSX.Element {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
+        initFetchTop10Assets();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [triggerUpdate, triggerUpdateAlert, appState]),
   );
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
     forceUpdate();
-  }, [forceUpdate, triggerUpdate]);
+    initFetchTop10Assets(true);
+  }, [forceUpdate, triggerUpdate, initFetchTop10Assets]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -393,17 +399,8 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackRoot, {
+          navigation.navigate(RootNames.StackDapps, {
             screen: RootNames.Dapps,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.TEST_DAPP:
-          openUrlAsDapp('https://metamask.github.io/test-dapp/', {
-            forceReopen: true,
-          });
-          navigation.navigate(RootNames.StackRoot, {
-            screen: RootNames.DappWebViewStubOnHome,
             params: {},
           });
           break;
@@ -413,8 +410,9 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene, openUrlAsDapp],
+    [navigation, toggleUseAllAccountsOnScene],
   );
+  const [asssest] = useAssetsMap();
 
   const handleClickPinAccount = useCallback(
     (pinItem: KeyringAccountWithAlias) => {
@@ -434,6 +432,16 @@ function MultiAddressHome(): JSX.Element {
     [switchAccount, navigation],
   );
 
+  const { bottom } = useSafeAreaInsets();
+
+  const androidBottomOffset = IS_ANDROID ? bottom : 0;
+  const handlePressSearch = () => {
+    navigation.navigate(RootNames.StackHomeNonTab, {
+      screen: RootNames.Search,
+      params: {},
+    });
+  };
+
   return (
     <NormalScreenContainer2024
       type="linear"
@@ -450,6 +458,7 @@ function MultiAddressHome(): JSX.Element {
       <View style={styles.paddingContainer}>
         <MultiAddressHomeHeader loading={balanceLoading} />
         <ScrollView
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
@@ -587,6 +596,26 @@ function MultiAddressHome(): JSX.Element {
             })}
           </View>
         </ScrollView>
+        <LinearGradient
+          colors={
+            isLight
+              ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
+              : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
+          <Pressable onPress={handlePressSearch} style={styles.search}>
+            <RcNextSearchCC
+              width={20}
+              height={20}
+              color={colors2024['neutral-secondary']}
+            />
+            <Text style={styles.searchText}>
+              {t('page.dashboard.home.search')}
+            </Text>
+          </Pressable>
+        </LinearGradient>
       </View>
     </NormalScreenContainer2024>
   );
@@ -768,6 +797,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     marginBottom: 20,
+    paddingBottom: 100,
   },
   gridItem: {
     borderWidth: 1,
@@ -804,6 +834,35 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+  },
+  floatBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: Dimensions.get('window').width,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    height: 128,
+  },
+  search: {
+    width: '100%',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    height: 60,
+    borderRadius: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    paddingHorizontal: 28,
+    gap: 8,
+  },
+  searchText: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
 }));

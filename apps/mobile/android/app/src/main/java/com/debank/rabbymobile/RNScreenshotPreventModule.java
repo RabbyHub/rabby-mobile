@@ -27,7 +27,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class RNScreenshotPreventModule extends EventEmitterPackageSpec implements LifecycleEventListener {
+public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implements LifecycleEventListener */ {
   public static final String NAME = "RNScreenshotPrevent";
   private final ReactApplicationContext reactContext;
   private RelativeLayout overlayLayout;
@@ -36,7 +36,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
     super(reactContext);
     this.reactContext = reactContext;
 
-    reactContext.addLifecycleEventListener(this);
+    // reactContext.addLifecycleEventListener(this);
   }
 
   @Override
@@ -146,52 +146,52 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
     overlayLayout.addView(imageView);
   }
 
-  @Override
-  public void onHostResume() {
-    // Activity currentActivity = this.reactContext.getCurrentActivity();
-    // WritableMap params = Arguments.createMap();
-    // params.putString("state", "resume");
-    // RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
-    // if (currentActivity != null && overlayLayout != null) {
-    //   currentActivity.runOnUiThread(new Runnable() {
-    //     @Override
-    //     public void run() {
-    //       if (overlayLayout != null) {
-    //         activityGetRootView(currentActivity).removeView(overlayLayout);
-    //         overlayLayout = null;
-    //       }
-    //     }
-    //   });
-    // }
-  }
+  // @Override
+  // public void onHostResume() {
+  //   // Activity currentActivity = this.reactContext.getCurrentActivity();
+  //   // WritableMap params = Arguments.createMap();
+  //   // params.putString("state", "resume");
+  //   // RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
+  //   // if (currentActivity != null && overlayLayout != null) {
+  //   //   currentActivity.runOnUiThread(new Runnable() {
+  //   //     @Override
+  //   //     public void run() {
+  //   //       if (overlayLayout != null) {
+  //   //         activityGetRootView(currentActivity).removeView(overlayLayout);
+  //   //         overlayLayout = null;
+  //   //       }
+  //   //     }
+  //   //   });
+  //   // }
+  // }
 
-  @Override
-  public void onHostPause() {
-    // Activity currentActivity = this.reactContext.getCurrentActivity();
-    // WritableMap params = Arguments.createMap();
-    // params.putString("state", "pause");
-    // RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
+  // @Override
+  // public void onHostPause() {
+  //   // Activity currentActivity = this.reactContext.getCurrentActivity();
+  //   // WritableMap params = Arguments.createMap();
+  //   // params.putString("state", "pause");
+  //   // RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
 
-    // if (currentActivity != null && overlayLayout == null) {
-    //  currentActivity.runOnUiThread(new Runnable() {
-    //     @Override
-    //     public void run() {
-    //       ViewGroup rootView = activityGetRootView(currentActivity);
-    //       createOverlay(currentActivity, "");
+  //   // if (currentActivity != null && overlayLayout == null) {
+  //   //  currentActivity.runOnUiThread(new Runnable() {
+  //   //     @Override
+  //   //     public void run() {
+  //   //       ViewGroup rootView = activityGetRootView(currentActivity);
+  //   //       createOverlay(currentActivity, "");
 
-    //       RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-    //       ViewGroup.LayoutParams.MATCH_PARENT,
-    //       ViewGroup.LayoutParams.MATCH_PARENT);
-    //       rootView.addView(overlayLayout, layoutParams);
-    //     }
-    //  });
-    // }
-  }
+  //   //       RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+  //   //       ViewGroup.LayoutParams.MATCH_PARENT,
+  //   //       ViewGroup.LayoutParams.MATCH_PARENT);
+  //   //       rootView.addView(overlayLayout, layoutParams);
+  //   //     }
+  //   //  });
+  //   // }
+  // }
 
-  @Override
-  public void onHostDestroy() {
-    // Cleanup if needed
-  }
+  // @Override
+  // public void onHostDestroy() {
+  //   // Cleanup if needed
+  // }
 
   private Bitmap decodeImageUrl(String imagePath) {
     try {

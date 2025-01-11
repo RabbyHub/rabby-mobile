@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-import { useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
@@ -17,14 +17,19 @@ import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
+  ActionItem,
+  DisplayNftItem,
 } from './types';
-import { DEFI_ID, NFT_ID, SMALL_TOKEN_ID } from '@/utils/token';
 import { findChain } from '@/utils/chain';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_SECTION_HEADER,
+  ASSETS_SEPARATOR_HEIGHT,
+  HEADER_TOP_AREA_HEIGHT,
+  RootNames,
+} from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { PositionLoader } from './components/Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 import {
@@ -32,15 +37,21 @@ import {
   DefiRow,
   NftRow,
   TokenRowSectionHeader,
-  DefiSectionHeader,
-  NftSectionHeader,
 } from './components/AssetRenderItems';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HomeTopArea } from './components/HomeTopArea';
 import { useTranslation } from 'react-i18next';
 import { useRefreshTags } from './hooks/token';
 import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
+import {
+  AssestAllHeader,
+  AsssetKey,
+} from './components/AssetRenderItems/SectionHeaders';
+import { DisplayedProject } from './utils/project';
+import { flatListRefAtom } from './hooks/store';
+import { useSetAtom } from 'jotai';
+import { useFocusEffect } from '@react-navigation/native';
+import { useMemoizedFn } from 'ahooks';
 
 interface Props {
   onRefresh(): void;
@@ -48,8 +59,10 @@ interface Props {
 
 export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const { currentAccount } = useCurrentAccount();
+  const { currentAccount, switchAccount } = useCurrentAccount();
   const {
     tokens,
     refreshPositions,
@@ -58,12 +71,16 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loading,
     refreshing,
     hasAssets,
-  } = useQueryProjects(currentAccount?.address, false, true);
+  } = useQueryProjects(currentAccount?.address);
   const sortTokens = useSortToken(tokens);
 
   const [foldHideList, setFoldHideList] = useState(true);
-  const [foldDefi, setFoldDefi] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
+  const [foldDefi, setFoldDefi] = useState(true);
+  const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
+
+  const { refreshTagNft, refreshTagToken, refreshTagPortfolio } =
+    useRefreshTags();
 
   const {
     sheetModalRef: tokenDetailModalRef,
@@ -72,34 +89,90 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     focusingToken,
     isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
-  const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const sections = useMemo(() => {
-    const unFoldList = sortTokens.filter(i => !i._isFold);
-    const foldList = sortTokens.filter(i => i._isFold);
-    return [
-      {
+  const dataList = useMemo(() => {
+    const unFoldTokenList: ActionItem[] = sortTokens
+      .filter(i => !i._isFold)
+      .map(item => ({
         type: 'unfold_token',
-        originData: unFoldList,
-        data: unFoldList,
-      },
-      {
+        data: item,
+      }));
+    const foldTokenList: ActionItem[] = sortTokens
+      .filter(i => i._isFold)
+      .map(item => ({
         type: 'fold_token',
-        originData: foldList,
-        data: foldHideList ? [] : foldList,
+        data: item,
+      }));
+    const foldDefiList: ActionItem[] = portfolios
+      .filter(i => i._isFold)
+      .map(item => ({
+        type: 'fold_defi',
+        data: item,
+      }));
+    const unFoldDefiList: ActionItem[] = portfolios
+      .filter(i => !i._isFold)
+      .map(item => ({
+        type: 'unfold_defi',
+        data: item,
+      }));
+    const foldNftList: ActionItem[] = nftList
+      .filter(i => i._isFold)
+      .map(item => ({
+        type: 'fold_nft',
+        data: item,
+      }));
+    const unFoldNftList: ActionItem[] = nftList
+      .filter(i => !i._isFold)
+      .map(item => ({
+        type: 'unfold_nft',
+        data: item,
+      }));
+    const itemData: Array<{
+      show: boolean;
+      data: ActionItem[];
+    }> = [
+      {
+        show: true,
+        data: [
+          {
+            type: 'asset_header',
+          },
+          ...unFoldTokenList,
+        ],
       },
       {
-        type: 'defi',
-        originData: portfolios,
-        data: foldDefi ? [] : portfolios || [],
+        show: !!foldTokenList.length,
+        data: [
+          { type: 'toggle_token_fold' },
+          ...(foldHideList ? [] : foldTokenList),
+        ],
       },
       {
-        type: 'nft',
-        originData: nftList,
-        data: foldNft ? [] : nftList || [],
+        show: !!portfolios.length,
+        data: [{ type: 'defi_header' }, ...unFoldDefiList],
+      },
+      {
+        show: !!foldDefiList.length,
+        data: [
+          {
+            type: 'toggle_defi_fold',
+          },
+          ...(foldDefi ? [] : foldDefiList),
+        ],
+      },
+      {
+        show: !!nftList.length,
+        data: [{ type: 'nft_header' }, ...unFoldNftList],
+      },
+      {
+        show: !!foldNftList.length,
+        data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
     ];
+    return itemData
+      .filter(item => item.show)
+      .map(item => item.data)
+      .flat();
   }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
 
   const handleOpenTokenDetail = React.useCallback(
@@ -113,45 +186,65 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       } else {
         navigate(RootNames.TokenDetail, {
           token: token,
-          // todo fix ts
+          isSingleAddress: true,
           account: currentAccount as any,
         });
       }
     },
     [currentAccount, openTokenDetailPopup],
   );
-
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigate(RootNames.DeFiDetail, { data, portfolioList: itemList });
+      navigate(RootNames.DeFiDetail, {
+        data,
+        portfolioList: itemList,
+        account: currentAccount,
+        isSingleAddress: true,
+      });
     },
-    [],
+    [currentAccount],
   );
-
-  const handlePressNft = (item: NFTItem) => {
-    navigate(RootNames.NftDetail, { token: item });
+  const handlePressNft = (item: DisplayNftItem) => {
+    navigate(RootNames.NftDetail, {
+      token: item,
+      isSingleAddress: true,
+      account: currentAccount as any,
+    });
+  };
+  const handleSwitchTab = (key: AsssetKey) => {
+    if (loading || refreshing) {
+      toast.info(
+        `Ops! The asset wasn't shown yet, please scroll down manually`,
+      );
+      return;
+    }
+    setFoldHideList(true);
+    setTimeout(() => {
+      flatListRef.current?.forceUpdate(() => {
+        const data = (flatListRef.current?.props.data || []) as ActionItem[];
+        let offset = HEADER_TOP_AREA_HEIGHT;
+        let index = 0;
+        if (key === 'defi') {
+          index = data.findIndex(item => item.type === 'defi_header');
+        }
+        if (key === 'nft') {
+          index = data.findIndex(item => item.type === 'nft_header');
+        }
+        const headerLength = data.slice(0, index).filter(i => !i.data).length;
+        if (index > -1 && key !== 'token') {
+          offset +=
+            index * (ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT) -
+            (ASSETS_ITEM_HEIGHT_NEW - ASSETS_SECTION_HEADER) *
+              (headerLength + 1);
+        }
+        flatListRef.current?.scrollToOffset({
+          animated: true,
+          offset,
+        });
+      });
+    }, 0);
   };
 
-  const ListEmptyComponent = useMemo(() => {
-    return loading ? (
-      <PositionLoader space={8} />
-    ) : hasAssets ? null : (
-      <View style={styles.emptyHolder}>
-        <EmptyHolder
-          imgStyle={styles.emptyImg}
-          textStyle={styles.emptyText}
-          text="No Assets"
-          type="default"
-        />
-      </View>
-    );
-  }, [
-    loading,
-    hasAssets,
-    styles.emptyHolder,
-    styles.emptyImg,
-    styles.emptyText,
-  ]);
   const icons = React.useMemo(
     () => ({
       unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -184,23 +277,20 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           : 'ic_rabby_menu_fold',
         key: 'fold',
         action() {
-          if (!currentAccount?.address) {
-            return;
-          }
           if (data._isFold) {
-            preferenceService.manualUnFoldToken(currentAccount.address, {
+            preferenceService.manualUnFoldToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
           } else {
-            preferenceService.manualFoldToken(currentAccount.address, {
+            preferenceService.manualFoldToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
-          refreshTags(currentAccount?.address);
+          refreshTagToken();
         },
       },
       {
@@ -219,105 +309,249 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           : 'ic_rabby_menu_pin',
         key: 'pin',
         action() {
-          if (!currentAccount?.address) {
-            return;
-          }
           if (data._isPined) {
-            preferenceService.removePinedToken(currentAccount?.address, {
+            preferenceService.removePinedToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
             toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
           } else {
-            preferenceService.pinToken(currentAccount?.address, {
+            preferenceService.pinToken({
               tokenId: data._tokenId,
               chainId: data.chain,
             });
+            flatListRef.current?.scrollToOffset({
+              animated: true,
+              offset: HEADER_TOP_AREA_HEIGHT,
+            });
             toast.success(t('page.tokenDetail.actionsTips.pin_success'));
           }
-          refreshTags(currentAccount?.address);
+          refreshTagToken();
+        },
+      },
+    ];
+  };
+  const getDefiOrNftMenuAction = (
+    type: 'nft' | 'defi',
+    data: DisplayedProject | DisplayNftItem,
+  ): MenuAction[] => {
+    return [
+      {
+        title: data._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: data._isFold
+          ? isDarkTheme
+            ? icons.unfoldDark
+            : icons.unfoldLight
+          : isDarkTheme
+          ? icons.foldDark
+          : icons.foldLight,
+        androidIconName: data._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (data._isFold) {
+            if (type === 'defi') {
+              preferenceService.manualUnFoldDefi(data.id);
+              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+            } else if (type === 'nft' && data.chain) {
+              preferenceService.manualUnFoldNft({
+                chain: data.chain,
+                id: data.id,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+            }
+          } else {
+            if (type === 'defi') {
+              preferenceService.manualFoldDefi(data.id);
+              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+            } else if (type === 'nft' && data.chain) {
+              preferenceService.manualFoldNft({
+                chain: data.chain,
+                id: data.id,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+            }
+          }
+          if (type === 'defi') {
+            refreshTagPortfolio();
+          } else if (type === 'nft') {
+            refreshTagNft();
+          }
         },
       },
     ];
   };
 
-  const renderItem = ({ item, section }) => {
-    switch (section.type) {
+  const renderItem = ({ item: _item }: { item: ActionItem }) => {
+    const { type, data } = _item;
+    switch (type) {
       case 'unfold_token':
-        return (
-          <TokenRow
-            data={item}
-            onTokenPress={handleOpenTokenDetail}
-            menuActions={getTokenMenuActions(item)}
-            logoSize={40}
-          />
-        );
       case 'fold_token':
         return (
           <TokenRow
-            data={item}
+            data={data}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
             onTokenPress={handleOpenTokenDetail}
-            menuActions={getTokenMenuActions(item)}
-            logoSize={40}
+            menuActions={getTokenMenuActions(data)}
+            logoSize={46}
+            chainLogoSize={18}
           />
         );
-      case 'nft':
-        return <NftRow item={item} onPress={() => handlePressNft(item)} />;
-      case 'defi':
+      case 'unfold_defi':
+      case 'fold_defi':
         return (
           <DefiRow
-            data={item}
+            data={data}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
+            menuActions={getDefiOrNftMenuAction('defi', data)}
+            logoSize={46}
+            chainLogoSize={18}
             onPress={() =>
-              handleOpenDefiDetail(item, [...(item._portfolios || [])])
+              handleOpenDefiDetail(data, [...(data._portfolios || [])])
             }
+          />
+        );
+      case 'unfold_nft':
+      case 'fold_nft':
+        return (
+          <NftRow
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              isDarkTheme && styles.bg2,
+            ])}
+            menuActions={getDefiOrNftMenuAction('nft', data)}
+            logoSize={46}
+            chainLogoSize={18}
+            item={data}
+            onPress={() => handlePressNft(data)}
+          />
+        );
+      /** header */
+      case 'asset_header':
+        return (
+          <AssestAllHeader
+            style={styles.assetHeader}
+            showToken={!!tokens?.length}
+            hasAssets={hasAssets}
+            loading={loading}
+            currentSection={currentSection}
+            setCurrentSection={setCurrentSection}
+            showDefi={!!portfolios.length}
+            showNft={!!nftList?.length}
+            onPress={handleSwitchTab}
+          />
+        );
+      case 'toggle_token_fold':
+        return (
+          <TokenRowSectionHeader
+            str={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+            fold={foldHideList}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
+            onPressFold={() => setFoldHideList(pre => !pre)}
+          />
+        );
+      case 'defi_header':
+        return (
+          <Text style={styles.symbol}>
+            {t('page.singleHome.sectionHeader.Defi')}
+          </Text>
+        );
+      case 'toggle_defi_fold':
+        return (
+          <TokenRowSectionHeader
+            str={getAllDefiCount(portfolios.filter(i => i._isFold))}
+            fold={foldDefi}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
+            onPressFold={() => setFoldDefi(pre => !pre)}
+          />
+        );
+      case 'nft_header':
+        return (
+          <Text style={styles.symbol}>
+            {t('page.singleHome.sectionHeader.Nft')}
+          </Text>
+        );
+      case 'toggle_nft_fold':
+        return (
+          <TokenRowSectionHeader
+            str={'' + getAllNftCount(nftList.filter(i => i._isFold))}
+            fold={foldNft}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
+            onPressFold={() => setFoldNft(pre => !pre)}
           />
         );
       default:
         return null;
     }
   };
-  const { refreshTags } = useRefreshTags();
 
-  const renderSectionHeader = ({ section }) => {
-    switch (section.type) {
-      case 'fold_token':
-        return (
-          <TokenRowSectionHeader
-            usdStr={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'defi':
-        return (
-          <DefiSectionHeader
-            usdStr={getAllDefiCount(portfolios || [])}
-            fold={foldDefi}
-            onPress={() => setFoldDefi(pre => !pre)}
-          />
-        );
-      case 'nft':
-        return (
-          <NftSectionHeader
-            amount={getAllNftCount(nftList || [])}
-            fold={foldNft}
-            onPress={() => setFoldNft(pre => !pre)}
-          />
-        );
-      default:
-        return <View style={{ height: 0 }} />;
-    }
-  };
-
-  const getItemLayout = useCallback(
-    (_data: any, index: number) => ({
-      length: ASSETS_ITEM_HEIGHT,
-      offset: ASSETS_ITEM_HEIGHT * index,
-      index,
-    }),
-    [],
+  const header = useCallback(
+    () => <HomeTopArea currentAccount={currentAccount} />,
+    [currentAccount],
   );
-  const header = useCallback(() => <HomeTopArea />, []);
+  const flatListRef = useRef<FlatList>(null);
+  const preAccount = useRef<KeyringAccountWithAlias | null>(null);
+
+  const setFlatListRef = useSetAtom(flatListRefAtom);
+
+  React.useEffect(() => {
+    setFlatListRef(flatListRef);
+  }, [flatListRef, setFlatListRef]);
+
+  useFocusEffect(
+    useMemoizedFn(() => {
+      if (preAccount.current) {
+        switchAccount(preAccount.current);
+      } else {
+        preAccount.current = currentAccount;
+      }
+    }),
+  );
+
+  const viewabilityConfigRef = useRef({
+    viewAreaCoveragePercentThreshold: 300,
+    minimumViewTime: 100,
+    waitForInteraction: false,
+  });
+  const onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
+    if (!changed) {
+      return;
+    }
+    const type = (viewableItems?.[0]?.item?.type || '') as string;
+    if (type.includes('token')) {
+      setCurrentSection('token');
+      return;
+    }
+    if (type.includes('defi')) {
+      setCurrentSection('defi');
+      return;
+    }
+    if (type.includes('nft')) {
+      setCurrentSection('nft');
+      return;
+    }
+  }, []);
 
   if (!currentAccount?.address) {
     return null;
@@ -325,18 +559,31 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   return (
     <>
-      <SectionList
-        sections={sections.filter(i => !!i.originData?.length)}
-        renderItem={renderItem}
+      <FlatList<ActionItem>
+        data={dataList}
+        ref={flatListRef}
+        viewabilityConfig={viewabilityConfigRef.current}
+        onViewableItemsChanged={onViewableItemsChanged}
         ListHeaderComponent={header}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
+        ItemSeparatorComponent={ItemSeparatorComponent}
+        keyExtractor={item =>
+          `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
+            item.data?.chain || ''
+          }`
+        }
         contentContainerStyle={styles.bgContainer}
-        keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
+        showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[1]}
         windowSize={10}
-        getItemLayout={getItemLayout}
-        ListEmptyComponent={ListEmptyComponent}
-        stickySectionHeadersEnabled={!foldDefi || !foldNft || !foldHideList}
-        renderSectionHeader={renderSectionHeader}
+        onScrollToIndexFailed={info => {
+          console.warn('Scroll to index failed', info);
+          if (info.highestMeasuredFrameIndex < info.index) {
+            toast.info(
+              `Ops! The asset wasn't shown yet, please scroll down manually`,
+            );
+          }
+        }}
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
@@ -365,23 +612,44 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   );
 };
 
+const ItemSeparatorComponent = () => <View style={{ height: 8 }} />;
+
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
+    // backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  renderItemWrapper: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    height: ASSETS_ITEM_HEIGHT_NEW,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
+  bg2: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  sectionHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-gray'],
+    paddingRight: 8,
+    height: ASSETS_SECTION_HEADER,
+  },
+  buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  emptyHolder: {
-    marginTop: 65,
+  assetHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-gray'],
+    height: ASSETS_SECTION_HEADER,
+    paddingBottom: 8,
+    paddingLeft: 12,
   },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
-  emptyText: {
-    marginTop: 21,
+  symbol: {
     fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
+    height: ASSETS_SECTION_HEADER,
+    lineHeight: ASSETS_SECTION_HEADER,
+    paddingLeft: 9,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-info'],
+    color: ctx.colors2024['neutral-secondary'],
+    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
 }));

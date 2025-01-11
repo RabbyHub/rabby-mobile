@@ -1,6 +1,18 @@
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { IS_IOS } from '../native/utils';
-import { StyleProp, TextStyle } from 'react-native';
+import { IS_ANDROID, IS_IOS } from '../native/utils';
+import type { StyleProp, TextStyle } from 'react-native';
+import { TextInput, Text } from 'react-native';
+
+if (IS_ANDROID) {
+  // @ts-expect-error
+  Text.defaultProps = Object.assign({}, Text.defaultProps, {
+    allowFontScaling: false,
+  });
+  // @ts-expect-error
+  TextInput.defaultProps = Object.assign({}, TextInput.defaultProps, {
+    allowFontScaling: false,
+  });
+}
 
 export const enum FontWeightEnum {
   thin = 100,

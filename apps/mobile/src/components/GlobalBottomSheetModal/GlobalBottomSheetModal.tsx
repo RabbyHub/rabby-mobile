@@ -18,6 +18,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '../AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '../Approval/components/map';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -161,6 +162,7 @@ export const GlobalBottomSheetModal = () => {
   );
 
   const { panResponder } = useRefreshAutoLockPanResponder();
+  const { androidOnlyBottomOffset } = useSafeSizes();
 
   return (
     <View>
@@ -177,6 +179,7 @@ export const GlobalBottomSheetModal = () => {
         return (
           <AppBottomSheetModal
             topInset={height.top}
+            bottomInset={androidOnlyBottomOffset}
             enableContentPanningGesture={false}
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}

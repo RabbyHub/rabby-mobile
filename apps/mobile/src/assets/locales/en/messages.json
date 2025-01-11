@@ -908,7 +908,7 @@
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Transaction might be frontrun because of high slippage tolerance",
       "recommend-slippage": "To prevent front-running, we recommend a slippage of <2>{{ slippage }}</2>%",
       "slippage-tolerance": "Slippage tolerance",
-      "select-token": "Select",
+      "select-token": "Select Token",
       "enable-exchanges": "Enable Exchanges",
       "exchanges": "Exchanges",
       "view-quotes": "View quotes",
@@ -929,7 +929,7 @@
       "process-with-two-step-approve": "Proceed with two step approve",
       "fetch-best-quote": "Fetching the Best quote",
       "usd-after-fees": "≈ {{usd}} ",
-      "no-fees-for-wrap": "No Rabby fees for Wrap",
+      "no-fees-for-wrap": "No Rabby fee for Wrap",
       "No-available-quote": "No available quote",
       "price-impact": "Price Impact",
       "loss-tips": "You're losing {{usd}}. Try a smaller amount in a small market.",
@@ -940,8 +940,8 @@
       "insufficient": "Insufficient Balance:",
       "rabbyFee": {
         "title": "Rabby fee",
-        "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a 0.25% fee (0% for wrapping), which is automatically included in the quote.",
-        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a 0.25% fee, which is automatically included in the quote.",
+        "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee (0% for wrapping), which is automatically included in the quote.",
+        "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee, which is automatically included in the quote.",
         "wallet": "Wallet",
         "rate": "Fee rate",
         "button": "Got it"
@@ -1109,7 +1109,8 @@
         "importType": "Imported by {{type}}",
         "missingDataTooltip": "Balance may not be updated due to current network issues with {{text}}.",
         "chain": " chain, ",
-        "chainEnd": " chain"
+        "chainEnd": " chain",
+        "search": "Search"
       },
       "recentConnection": {
         "disconnected": "Disconnected",
@@ -2383,10 +2384,15 @@
       }
     },
     "tokenDetail": {
+      "notSupportedOnChain": "Not supported on this chain",
+      "noBalance": "No Balance",
       "transactions": "Transactions",
+      "relateDefi": "Related DeFi",
       "action": {
         "swap": "Swap",
         "send": "Send",
+        "Buy": "Buy",
+        "Sell": "Sell",
         "pin": "Pin",
         "unpin": "Unpin",
         "fold": "Fold",
@@ -2411,8 +2417,30 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Recipient Address",
+      "title": "Select Receive Address",
       "selectChainTitle": "Select Chain"
+    },
+    "singleHome": {
+      "sectionHeader": {
+        "Defi": "DeFi",
+        "Nft": "NFT",
+        "Token": "Token"
+      }
+    },
+    "search": {
+      "sectionHeader": {
+        "token": "Tokens",
+        "Defi": "DeFi",
+        "NFT": "NFT"
+      },
+      "header": {
+        "placeHolder": "Search"
+      },
+      "searchWeb": {
+        "noResult": "No Results for",
+        "title": "All Results",
+        "searchTips": "Search the web"
+      }
     }
   },
   "component": {
@@ -2668,6 +2696,8 @@
     "next": "Next",
     "back": "Back",
     "ok": "OK",
+    "pin": "Pin",
+    "folded": "Folded",
     "refresh": "Refresh",
     "failed": "Failed",
     "scamTx": "Scam tx",

@@ -15,6 +15,7 @@ import { AbstractPortfolioToken } from './screens/Home/types';
 
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
+  [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {};
@@ -22,7 +23,7 @@ export type RootStackParamsList = {
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
-  [RootNames.StackFavoriteDapps]: NavigatorScreenParams<FavoriteDappsNavigatorParamList>;
+  [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
   [RootNames.DeFiDetail]?: {};
@@ -30,8 +31,14 @@ export type RootStackParamsList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.TokenDetail]: {
-    token: AbstractPortfolioToken;
+    token:
+      | AbstractPortfolioToken
+      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    fromPortfolio?: boolean;
+    needUseCacheToken?: boolean;
+    isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias;
+    unHold?: boolean;
   };
 };
 
@@ -43,11 +50,20 @@ export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
-  [RootNames.Dapps]?: {};
-  [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+  [RootNames.DappWebViewStubOnHome]?: {
+    dappsWebViewFromRoute?:
+      | typeof RootNames.Dapps
+      | typeof RootNames.FavoriteDapps;
   };
-  [RootNames.DappWebViewStubOnHome]?: {};
+};
+
+export type HomeNonTabNavigatorParamsList = {
+  [RootNames.Search]?: {};
+};
+
+export type DappsNavigatorParamsList = {
+  [RootNames.Dapps]?: {};
+  [RootNames.FavoriteDapps]?: {};
 };
 
 type GetStartedNavigatorParamsList = {
@@ -182,6 +198,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;
     collectionName?: string;
+    address?: string;
   };
   [RootNames.Swap]?: {};
   [RootNames.MultiSwap]?: {};
@@ -194,6 +211,9 @@ export type TransactionNavigatorParamList = {
 };
 
 export type SettingNavigatorParamList = {
+  [RootNames.Settings]?: {
+    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+  };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
     | {
@@ -219,8 +239,4 @@ export type SettingNavigatorParamList = {
     chainId: number;
     rpcUrl: string;
   };
-};
-
-export type FavoriteDappsNavigatorParamList = {
-  [RootNames.FavoriteDapps]?: {};
 };

@@ -20,10 +20,12 @@ export const DataHeaderInfo = ({
   currentIsLoss,
   currentBalance,
   isOffline,
+  isPin,
   data,
   isLoading,
   isNoAssets,
 }: {
+  isPin?: boolean;
   currentPercentChange: string;
   currentIsLoss: boolean;
   currentBalance: string;
@@ -89,10 +91,21 @@ export const DataHeaderInfo = ({
         <View style={styles.balanceChangeWrapper}>
           {!isLoading ? (
             <>
-              <AnimateableText
-                style={styles.usdValue}
-                animatedProps={usdValueAnimatedProps}
-              />
+              <View
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <AnimateableText
+                  style={styles.usdValue}
+                  animatedProps={usdValueAnimatedProps}
+                />
+                {isPin && (
+                  <View style={styles.pinBadge}>
+                    <Text style={styles.pinText} numberOfLines={1}>
+                      {'Pin'}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <AnimateableText
                 style={lossStyleProps}
                 animatedProps={percentChangeAnimatedProps}
@@ -148,6 +161,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 36,
     lineHeight: 42,
     fontWeight: '800',
+  },
+  pinBadge: {
+    // paddingHorizontal: 6,
+    // paddingVertical: 4,
+    // gap: 4,
+    borderRadius: 6,
+    backgroundColor: colors2024['brand-light-1'],
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 33,
+    height: 20,
+    flexWrap: 'nowrap',
+  },
+  pinText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['brand-default'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   percent: {
     fontFamily: 'SF Pro Rounded',

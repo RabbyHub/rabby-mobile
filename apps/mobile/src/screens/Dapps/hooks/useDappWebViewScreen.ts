@@ -20,9 +20,14 @@ import {
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { useRefState } from '@/hooks/common/useRefState';
 import { useDappsViewConfig } from './useDappView';
-import { getLatestNavigationName, navigate } from '@/utils/navigation';
+import {
+  getLatestNavigationName,
+  navigate,
+  naviPush,
+} from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
+import { HomeNavigatorParamsList } from '@/navigation-type';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -250,9 +255,16 @@ export function useDappWebViewScreen() {
         /** @default {true} */
         isActiveDapp?: boolean;
         forceReopen?: boolean;
+        /** @default {RootNames.Dapps} */
+        dappsWebViewFromRoute?: (HomeNavigatorParamsList['DappWebViewStubOnHome'] &
+          object)['dappsWebViewFromRoute'];
       },
     ) => {
-      const { isActiveDapp = true, forceReopen = false } = options || {};
+      const {
+        isActiveDapp = true,
+        forceReopen = false,
+        dappsWebViewFromRoute = RootNames.Dapps,
+      } = options || {};
       let useLatestWebViewId = true;
       if (forceReopen) useLatestWebViewId = false;
 
@@ -344,8 +356,13 @@ export function useDappWebViewScreen() {
       const needRedirect =
         routeName && routeName !== RootNames.DappWebViewStubOnHome;
       if (needRedirect)
-        navigate(RootNames.StackRoot, {
+        /**
+         * @description always push here, because we put RootNames.DappWebViewStubOnHome
+         * at top level home-navigator (which's bottom-tabs-navigator)
+         **/
+        naviPush(RootNames.StackRoot, {
           screen: RootNames.DappWebViewStubOnHome,
+          params: { dappsWebViewFromRoute },
         });
 
       return true;

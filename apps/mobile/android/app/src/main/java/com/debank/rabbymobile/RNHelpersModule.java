@@ -17,7 +17,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.LifecycleEventListener;
 import android.view.WindowManager;
 
-public class RNHelpersModule extends EventEmitterPackageSpec implements LifecycleEventListener {
+public class RNHelpersModule extends EventEmitterPackageSpec /* implements LifecycleEventListener */ {
   public static final String NAME = "RNHelpers";
   private final ReactApplicationContext reactContext;
 
@@ -25,7 +25,7 @@ public class RNHelpersModule extends EventEmitterPackageSpec implements Lifecycl
     super(reactContext);
     this.reactContext = reactContext;
 
-    reactContext.addLifecycleEventListener(this);
+    // reactContext.addLifecycleEventListener(this);
   }
 
   @Override
@@ -38,10 +38,4 @@ public class RNHelpersModule extends EventEmitterPackageSpec implements Lifecycl
   public void forceExitApp() {
     android.os.Process.killProcess(android.os.Process.myPid());
   }
-  @Override
-  public void onHostResume() {}
-  @Override
-  public void onHostPause() {}
-  @Override
-  public void onHostDestroy() {}
 }

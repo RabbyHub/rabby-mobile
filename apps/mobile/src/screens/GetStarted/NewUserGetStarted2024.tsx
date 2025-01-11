@@ -141,7 +141,7 @@ function GetStartedScreen2024(): JSX.Element {
                   }
                   onPress={() => {
                     navigation.dispatch(
-                      StackActions.push(RootNames.StackRoot, {
+                      StackActions.push(RootNames.StackSettings, {
                         screen: RootNames.Settings,
                         params: {},
                       }),

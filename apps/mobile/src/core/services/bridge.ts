@@ -4,6 +4,7 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import { TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 
 export type BridgeRecord = {
   aggregator_id: string;
@@ -37,7 +38,7 @@ export class BridgeService {
   constructor(options?: StorageAdapaterOptions) {
     const storage = createPersistStore<BridgeServiceStore>(
       {
-        name: 'bridge',
+        name: APP_STORE_NAMES.bridge,
         template: {
           selectedChain: null,
           txQuotes: {},

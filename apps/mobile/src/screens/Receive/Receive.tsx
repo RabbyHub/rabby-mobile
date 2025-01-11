@@ -12,7 +12,13 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigationState } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, View, Pressable } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
@@ -20,28 +26,83 @@ import QRCode from 'react-native-qrcode-svg';
 import IconMCopy from '@/assets2024/icons/address/mcopy.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
-import { ellipsisAddress } from '@/utils/address';
-
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RcIconEyeCC, RcIconEyeCloseCC } from '@/assets/icons/common';
 function ReceiveScreen(): JSX.Element {
   const [chainTokenInfo, setChainTokenInfo] = useState({
     chainEnum: CHAINS_ENUM.ETH,
     tokenSymbol: null as TokenItem['id'] | null,
   });
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { currentAccount: account } = useCurrentAccount();
   useLastUsedAccountInScreen({ disableAutoEffect: false });
 
-  const name = useMemo(
-    () => ellipsisAddress(account?.address || ''),
-    [account],
-  );
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
   );
   const [isShowWatchModeModal, setIsShowWatchModeModal] = useState(isWatchMode);
+
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const [showName, setShowName] = useState(true);
+
+  const headerTitle = useMemo(
+    () =>
+      showName ? (
+        <View style={styles.headerTitle}>
+          <WalletIcon
+            type={account?.type as KEYRING_TYPE}
+            width={styles.walletIcon.width}
+            height={styles.walletIcon.height}
+            style={styles.walletIcon}
+          />
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {account?.aliasName}
+          </Text>
+        </View>
+      ) : (
+        <>{null}</>
+      ),
+    [
+      account?.aliasName,
+      account?.type,
+      showName,
+      styles.headerTitle,
+      styles.titleText,
+      styles.walletIcon,
+    ],
+  );
+
+  const headerRight = useMemo(
+    () => (
+      <Pressable onPress={() => setShowName(e => !e)}>
+        {showName ? (
+          <RcIconEyeCC
+            width={24}
+            height={24}
+            color={colors2024['neutral-title-1']}
+          />
+        ) : (
+          <RcIconEyeCloseCC
+            width={24}
+            height={24}
+            color={colors2024['neutral-title-1']}
+          />
+        )}
+      </Pressable>
+    ),
+    [colors2024, showName],
+  );
+
+  useLayoutEffect(() => {
+    setNavigationOptions({
+      headerTitle: () => headerTitle,
+      headerRight: () => headerRight,
+    });
+  }, [setNavigationOptions, headerTitle, headerRight]);
 
   useEffect(() => {
     // force disapper when not watch address
@@ -130,7 +191,7 @@ function ReceiveScreen(): JSX.Element {
                 <View style={styles.qrCodePlaceholder} />
               )}
             </View>
-            <View style={styles.accountBox}>
+            {/* <View style={styles.accountBox}>
               <View className="relative">
                 <WalletIcon
                   type={account?.type as KEYRING_TYPE}
@@ -145,7 +206,7 @@ function ReceiveScreen(): JSX.Element {
                 style={styles.titleText}>
                 {name}
               </Text>
-            </View>
+            </View> */}
 
             <Pressable
               style={styles.addressDetailContainer}
@@ -187,6 +248,12 @@ function ReceiveScreen(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  headerTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
   screen: {
     backgroundColor: colors2024['neutral-bg-2'],
   },
@@ -231,6 +298,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   addressDetailContainer: {
     width: '100%',
+    marginBottom: 27,
   },
   qrCardAddress: {
     width: '100%',
@@ -286,7 +354,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   walletIcon: {
     width: 25,
     height: 25,
-    borderRadius: 6.3,
+    borderRadius: 7,
   },
 }));
 

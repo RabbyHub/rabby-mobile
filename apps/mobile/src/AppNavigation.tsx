@@ -18,18 +18,17 @@ import {
 } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
 
-import NotFoundScreen from './screens/NotFound';
-
-import MyBundleScreen from './screens/Assets/MyBundle';
-
-import { AddressNavigator } from './screens/Navigators/AddressNavigator';
-import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
-
-import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
-import { NFTDetailScreen } from './screens/NftDetail';
-import { DeFiDetailScreen } from './screens/DeFiDetail';
-
-import { HomeScreenNavigator } from './screens/Navigators/rootNavigator';
+import { TestkitsNavigator } from './screens/Navigators/index.lazy';
+import {
+  AddressNavigator,
+  SettingNavigator,
+  GetStartedNavigator,
+  HomeScreenNavigator,
+  TransactionNavigator,
+  SingleAddressNavigator,
+  DappsNavigator,
+  HomeNonTabNavigator,
+} from './screens/Navigators/index.eager';
 
 import usePrevious from 'ahooks/lib/usePrevious';
 import {
@@ -42,33 +41,40 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
-import {
+
+import type {
   AccountNavigatorParamList,
-  FavoriteDappsNavigatorParamList,
+  DappsNavigatorParamsList,
   RootStackParamsList,
 } from './navigation-type';
+
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
-import { FavoriteDappsScreen } from './screens/Dapps/FavoriteDappsScreen';
-import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
+
 import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
 import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
-import TransactionNavigator from './screens/Navigators/TransactionNavigator';
-import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
-import UnlockScreen from './screens/Unlock/Unlock';
-import { SingleAddressNavigator } from './screens/Navigators/SingleAddressNavigator';
-import { TokenDetailScreen } from './screens/TokenDetail';
+
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
 
+import {
+  UnlockScreen,
+  FavoriteDappsScreen,
+  NotFoundScreen,
+  MyBundleScreen,
+} from '@/screens/index.lazy';
+import {
+  ScannerScreen,
+  TokenDetailScreen,
+  NFTDetailScreen,
+  DeFiDetailScreen,
+} from '@/screens/index.eager';
+
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
-
-const FavoriteDappsStack =
-  createNativeStackNavigator<FavoriteDappsNavigatorParamList>();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
@@ -127,10 +133,10 @@ function useDetermineExitAppOnPressBack() {
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
       if (navigationInst && !navigationInst?.canGoBack()) {
-        if (restCount > REST_COUNTS.PRE_EXIT) {
+        /* if (restCount > REST_COUNTS.PRE_EXIT) {
           toast.info('Press back 2 times to exit');
-          setBackStage(REST_COUNTS.PRE_EXIT);
-        } else if (restCount === REST_COUNTS.PRE_EXIT) {
+          setBackStage(REST_COUNTS.ON_EXIT);
+        } else  */ if (restCount >= REST_COUNTS.PRE_EXIT) {
           toast.info('Press back again to exit');
           setBackStage(REST_COUNTS.ON_EXIT);
         } else if (restCount === REST_COUNTS.ON_EXIT) {
@@ -286,6 +292,11 @@ export default function AppNavigation({
             options={RootOptions}
           />
           <RootStack.Screen
+            name={RootNames.StackHomeNonTab}
+            component={HomeNonTabNavigator}
+            options={RootOptions}
+          />
+          <RootStack.Screen
             name={RootNames.SingleAddressStack}
             component={SingleAddressNavigator}
           />
@@ -343,8 +354,8 @@ export default function AppNavigation({
             component={AddressNavigator}
           />
           <RootStack.Screen
-            name={RootNames.StackFavoriteDapps}
-            component={FavoriteDappsNavigator}
+            name={RootNames.StackDapps}
+            component={DappsNavigator}
           />
           <RootStack.Screen
             name={RootNames.NftDetail}
@@ -365,7 +376,7 @@ export default function AppNavigation({
             options={mergeScreenOptions({
               headerShown: true,
               headerTitleAlign: 'center',
-              headerTitle: 'DeFi Detail',
+              headerTitle: '',
               headerLeft: () => null,
               headerStyle: {
                 backgroundColor: 'transparent',
@@ -438,39 +449,5 @@ function AccountNavigator() {
         }}
       />
     </AccountStack.Navigator>
-  );
-}
-
-function FavoriteDappsNavigator() {
-  const { mergeScreenOptions } = useStackScreenConfig();
-  const { colors } = useTheme2024();
-  // console.log('============== FavoritePopularNavigator Render =========');
-
-  return (
-    <FavoriteDappsStack.Navigator
-      screenOptions={mergeScreenOptions({
-        gestureEnabled: false,
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-        headerTitleStyle: {
-          color: colors['neutral-title-1'],
-          fontWeight: 'normal',
-        },
-        headerTintColor: colors['neutral-title-1'],
-      })}>
-      <FavoriteDappsStack.Screen
-        name={RootNames.FavoriteDapps}
-        component={FavoriteDappsScreen}
-        options={mergeScreenOptions({
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontWeight: '800',
-            color: colors['neutral-title-1'],
-          },
-        })}
-      />
-    </FavoriteDappsStack.Navigator>
   );
 }

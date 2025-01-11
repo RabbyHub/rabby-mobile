@@ -1,14 +1,13 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { AssetAvatar, Text } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
@@ -23,6 +22,28 @@ import { useTranslation } from 'react-i18next';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import {
+  useCurrentAccount,
+  useMyAccounts,
+  KeyringAccountWithAlias,
+  useAccounts,
+} from '@/hooks/account';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useAssetsMap } from '../Home/hooks/store';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { ellipsisAddress } from '@/utils/address';
+import { DropDownMenuView } from '@/components2024/DropDownMenu';
+import { DisplayNftItem } from '../Home/types';
+import { useRefreshTags } from '../Home/hooks/token';
+import { trigger } from 'react-native-haptic-feedback';
+import { preferenceService } from '@/core/services';
+import { RcIconMore } from '@/assets/icons/home';
+import { toast } from '@/components2024/Toast';
+import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 const ListItem = (props: {
   title: string;
@@ -30,7 +51,7 @@ const ListItem = (props: {
   showBorderTop?: boolean;
 }) => {
   const { title, value, showBorderTop } = props;
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View style={[styles.listItem, showBorderTop && styles.borderTop]}>
@@ -46,20 +67,98 @@ const ListItem = (props: {
   );
 };
 
-export const NFTDetailScreen = () => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
+const hitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+
+const RightMore: React.FC<{
+  nft: DisplayNftItem;
+}> = ({ nft }) => {
+  const { refreshTagNft } = useRefreshTags();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { token } = useNavigationState(
+
+  const menuActions = React.useMemo(() => {
+    return [
+      {
+        title: nft._isFold
+          ? t('page.tokenDetail.action.unfold')
+          : t('page.tokenDetail.action.fold'),
+        icon: nft._isFold
+          ? isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
+          : isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+        androidIconName: nft._isFold
+          ? 'ic_rabby_menu_unfold'
+          : 'ic_rabby_menu_fold',
+        key: 'fold',
+        action() {
+          if (nft._isFold) {
+            preferenceService.manualUnFoldNft({
+              chain: nft.chain,
+              id: nft.id,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+          } else {
+            preferenceService.manualFoldNft({
+              chain: nft.chain,
+              id: nft.id,
+            });
+            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+          }
+          nft._isFold = !nft._isFold;
+          refreshTagNft();
+        },
+      },
+    ] as MenuAction[];
+  }, [nft, t, isDarkTheme, refreshTagNft]);
+  const onPress = () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
+
+  return (
+    <DropDownMenuView
+      menuConfig={{
+        menuActions: menuActions,
+      }}
+      triggerProps={{ action: 'press' }}>
+      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+        <RcIconMore width={24} height={24} />
+      </CustomTouchableOpacity>
+    </DropDownMenuView>
+  );
+};
+
+export const NFTDetailScreen = () => {
+  const { styles, colors } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const {
+    token,
+    isSingleAddress,
+    account: routeAccount,
+  } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
   ) as {
     token: NFTItem;
+    account: KeyringAccountWithAlias;
+    isSingleAddress?: boolean;
   };
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
-  const collectionName = token.contract_name || token?.collection?.name || '';
+  const getHeaderRight = useMemoizedFn(() => {
+    return <RightMore nft={token} />;
+  });
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
@@ -103,94 +202,228 @@ export const NFTDetailScreen = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
+      headerRight: getHeaderRight,
       headerTitleAlign: 'center',
     });
-  }, [TokenDetailHeaderArea, setNavigationOptions]);
+  }, [TokenDetailHeaderArea, getHeaderRight, setNavigationOptions]);
 
-  const price = useMemo(() => {
-    if (token?.usd_price) {
-      return `$${new BigNumber(token?.usd_price).toFormat(2, 4)}`;
+  const calPrice = useCallback((iToken: NFTItem) => {
+    if (iToken?.usd_price) {
+      return `$${new BigNumber(iToken?.usd_price).toFormat(2, 4)}`;
     }
     return 'Unable to get price';
-  }, [token?.usd_price]);
+  }, []);
 
-  const date = useMemo(
-    () =>
-      token?.pay_token?.time_at
-        ? dayjs(token?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
+  const calDate = useCallback(
+    (iToken: NFTItem) =>
+      iToken?.pay_token?.time_at
+        ? dayjs(iToken?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
         : 'Unable to get Date',
-
-    [token?.pay_token?.time_at],
+    [],
   );
 
-  const handleSend = useCallback(() => {
-    navigate(RootNames.StackTransaction, {
-      screen: RootNames.SendNFT,
-      params: {
-        collectionName,
-        nftItem: token,
-      },
+  const { currentAccount } = useCurrentAccount();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const finalAccount = useMemo(
+    () => routeAccount || currentAccount,
+    [routeAccount, currentAccount],
+  );
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  const handleSend = useCallback(
+    async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
+      const toAccount =
+        address && accountType
+          ? accounts.find(i => isSameAddress(address, i.address)) ||
+            currentAccount
+          : currentAccount;
+      await switchSceneCurrentAccount('SendNFT', toAccount);
+      navigate(RootNames.StackTransaction, {
+        screen: RootNames.SendNFT,
+        params: {
+          collectionName:
+            iToken.contract_name || iToken?.collection?.name || '',
+          nftItem: iToken,
+          address,
+        },
+      });
+    },
+    [accounts, currentAccount, switchSceneCurrentAccount],
+  );
+
+  const [asssest] = useAssetsMap();
+  const itemList = useMemo(() => {
+    const resList: {
+      data: NFTItem;
+      address: string;
+      index: number;
+      type: KEYRING_TYPE;
+      aliasName: string;
+    }[] = [];
+    if (isSingleAddress) {
+      console.debug('relateNFTList isSingleAddress');
+      resList.push({
+        data: token,
+        index: 0,
+        type: finalAccount.type,
+        address: finalAccount.address,
+        aliasName:
+          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
+      });
+      return resList;
+    }
+
+    const tempList: {
+      data: NFTItem;
+      address: string;
+      index: number;
+    }[] = [];
+
+    Object.keys(asssest).map((address, index) => {
+      const { nfts } = asssest[address];
+
+      nfts?.map(item => {
+        if (
+          item.id === token.id &&
+          item.chain === token.chain &&
+          item.contract_id === token.contract_id
+        ) {
+          tempList.push({
+            data: item,
+            address,
+            index,
+          });
+        }
+      });
     });
-  }, [collectionName, token]);
+
+    accounts.map(account => {
+      const idx = tempList.findIndex(
+        item =>
+          item.address === account.address &&
+          account.type !== KEYRING_TYPE.WatchAddressKeyring,
+      );
+      if (idx > -1) {
+        resList.push({
+          ...tempList[idx],
+          type: account.type,
+          aliasName: account.aliasName || ellipsisAddress(account.address),
+          index: idx,
+        });
+      }
+    });
+    console.log('relateNFTList length:', resList.length);
+    return resList;
+  }, [asssest, token, accounts, finalAccount, isSingleAddress]);
+
+  const renderAccountHeader = useCallback(
+    (type: KEYRING_TYPE, aliasName: string) => {
+      return (
+        <View style={styles.accountBox}>
+          <View className="relative">
+            <WalletIcon
+              type={type as KEYRING_TYPE}
+              width={styles.walletIcon.width}
+              height={styles.walletIcon.height}
+              style={styles.walletIcon}
+            />
+          </View>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {aliasName}
+          </Text>
+        </View>
+      );
+    },
+    [styles.accountBox, styles.titleText, styles.walletIcon],
+  );
+
+  const renderSingeleNft = useCallback(
+    ({
+      address,
+      iToken,
+      type,
+      aliasName,
+    }: {
+      address: string;
+      type: KEYRING_TYPE;
+      aliasName: string;
+      iToken: NFTItem;
+    }) => {
+      if (!address) {
+        return null;
+      }
+
+      return (
+        <View key={`${address}-${iToken.id}`}>
+          {renderAccountHeader(type, aliasName)}
+          <Media
+            failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
+            type={iToken?.content_type}
+            src={iToken?.content}
+            style={styles.images}
+            mediaStyle={styles.innerImages}
+            playable={true}
+            poster={iToken?.content}
+          />
+          <View style={styles.bottom}>
+            <View style={styles.titleView}>
+              <Text style={styles.title} numberOfLines={1}>
+                {iToken?.name || 'Unable to get NFT name'}
+              </Text>
+              {iToken?.amount > 1 ? (
+                <View style={styles.subtitle}>
+                  <IconNumberNFT color={colors['neutral-title-1']} width={15} />
+                  <View>
+                    <Text style={styles.numbernft}>
+                      {'Number of NFTs '}{' '}
+                      <Text
+                        style={{
+                          color: colors['neutral-title-1'],
+                        }}>
+                        {iToken.amount}
+                      </Text>
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+            <ListItem
+              title="Collection"
+              value={iToken.contract_name || iToken?.collection?.name || ''}
+              showBorderTop
+            />
+            <ListItem
+              title="Chain"
+              value={
+                getCHAIN_ID_LIST().get(iToken?.chain || CHAINS_ENUM.ETH)?.name
+              }
+            />
+            <ListItem title="Purchase Date" value={calDate(iToken)} />
+            <ListItem title="Last Price" value={calPrice(iToken)} />
+          </View>
+          <View style={[styles.buttonContainer]}>
+            <Button
+              onPress={() => handleSend(iToken, address, type)}
+              title={t('page.sendNFT.sendButton')}
+              titleStyle={styles.btnTitle}
+            />
+          </View>
+        </View>
+      );
+    },
+    [calDate, calPrice, renderAccountHeader, t, handleSend, colors, styles],
+  );
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       <ScrollView style={styles.scrollContainer}>
-        <Media
-          failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
-          type={token?.content_type}
-          src={token?.content}
-          style={styles.images}
-          mediaStyle={styles.innerImages}
-          playable={true}
-          poster={token?.content}
-        />
-        <View style={styles.bottom}>
-          <View style={styles.titleView}>
-            <Text style={styles.title} numberOfLines={1}>
-              {token?.name || 'Unable to get NFT name'}
-            </Text>
-            {token?.amount > 1 ? (
-              <View style={styles.subtitle}>
-                <IconNumberNFT color={colors['neutral-title-1']} width={15} />
-                <View>
-                  <Text style={styles.numbernft}>
-                    {'Number of NFTs '}{' '}
-                    <Text
-                      style={{
-                        color: colors['neutral-title-1'],
-                      }}>
-                      {token.amount}
-                    </Text>
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-          </View>
-          <ListItem title="Collection" value={collectionName} showBorderTop />
-          <ListItem
-            title="Chain"
-            value={
-              getCHAIN_ID_LIST().get(token?.chain || CHAINS_ENUM.ETH)?.name
-            }
-          />
-          <ListItem title="Purchase Date" value={date} />
-          <ListItem title="Last Price" value={price} />
-        </View>
+        {itemList.map(({ data, address, type, aliasName }) =>
+          renderSingeleNft({ address, iToken: data, type, aliasName }),
+        )}
+        <View style={{ height: 40 }} />
       </ScrollView>
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            paddingBottom: Math.max(bottom, 50),
-          },
-        ]}>
-        <Button
-          onPress={handleSend}
-          title={t('page.sendNFT.sendButton')}
-          titleStyle={styles.btnTitle}
-        />
-      </View>
     </NormalScreenContainer2024>
   );
 };
@@ -202,8 +435,29 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     marginTop: 8,
     // backgroundColor: colors2024['neutral-bg-4'],
   },
+  accountBox: {
+    flexDirection: 'row',
+    marginLeft: 25,
+    gap: 4,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  titleText: {
+    flexShrink: 1,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexWrap: 'nowrap',
+  },
+  walletIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+  },
   buttonContainer: {
-    height: 140,
+    height: 100,
     width: '100%',
     padding: 20,
   },

@@ -7,9 +7,7 @@ import { Text } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 
-export default function NotFoundScreen({
-  navigation,
-}: NativeStackScreenProps<any>) {
+export default function NotFoundScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 

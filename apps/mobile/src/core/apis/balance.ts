@@ -14,7 +14,7 @@ const getTotalBalanceCached = cached(async address => {
   if (filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))) {
     core = true;
   }
-  const tokenSetting = await getTokenSettings(address);
+  const tokenSetting = await getTokenSettings();
   const data = await openapi.getTotalBalanceV2({
     address,
     isCore: core,
@@ -25,7 +25,7 @@ const getTotalBalanceCached = cached(async address => {
 }, 5000);
 
 const getTestnetTotalBalanceCached = cached(async address => {
-  const tokenSetting = await getTokenSettings(address);
+  const tokenSetting = await getTokenSettings();
   const testnetData = await testOpenapi.getTotalBalanceV2({
     address,
     isCore: false,

@@ -14,10 +14,18 @@ import { useTheme2024 } from '@/hooks/theme';
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
+  isForMultipleAdderss?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export const HistoryItem = React.memo(
-  ({ data, cateDict, projectDict, tokenDict, style }: HistoryItemProps) => {
+  ({
+    data,
+    cateDict,
+    projectDict,
+    tokenDict,
+    style,
+    isForMultipleAdderss,
+  }: HistoryItemProps) => {
     const isFailed = data.tx?.status === 0;
     const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
@@ -57,6 +65,7 @@ export const HistoryItem = React.memo(
             isScam={isScam}
           />
           <TxChange
+            isForMultipleAdderss={isForMultipleAdderss}
             style={styles.txChange}
             data={data}
             tokenDict={tokenDict}
