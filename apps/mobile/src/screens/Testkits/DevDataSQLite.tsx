@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from 'react';
 import {
   Alert,
   Dimensions,
@@ -11,6 +12,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useSQLiteInfo } from '@/core/databases/hooks';
+import { Button } from '@/components2024/Button';
+import { syncRemoteTokens } from '@/databases/sync/assets';
+import { useCurrentAccount } from '@/hooks/account';
+import { useAssetsBasicInfo } from '@/databases/hooks/assets';
 
 function DevDataSQLite() {
   const { styles, colors2024, colors } = useTheme2024({
@@ -18,7 +23,11 @@ function DevDataSQLite() {
     isLight: true,
   });
 
+  const { currentAccount } = useCurrentAccount();
   const { sqliteInfo } = useSQLiteInfo({ enableAutoFetch: true });
+  const { assetsInfo, fetchAssetsInfo } = useAssetsBasicInfo({
+    enableAutoFetch: true,
+  });
 
   return (
     <NormalScreenContainer
@@ -49,39 +58,21 @@ function DevDataSQLite() {
               styles.propertyDesc,
               { marginVertical: 12, flexWrap: 'wrap' },
             ]}>
-            <View
-              style={{
-                marginBottom: 8,
-                maxWidth: '100%',
-                height: 20,
-                flexWrap: 'wrap',
-              }}>
+            <View style={styles.propertyView}>
               <Text>
                 version: {sqliteInfo?.version || '-'}
                 {' '.repeat(100)}
               </Text>
             </View>
 
-            <View
-              style={{
-                marginBottom: 8,
-                maxWidth: '100%',
-                height: 20,
-                flexWrap: 'wrap',
-              }}>
+            <View style={styles.propertyView}>
               <Text>
                 source_id: {sqliteInfo?.source_id || '-'}
                 {' '.repeat(50)}
               </Text>
             </View>
 
-            <View
-              style={{
-                marginBottom: 8,
-                maxWidth: '100%',
-                height: 20,
-                flexWrap: 'wrap',
-              }}>
+            <View style={styles.propertyView}>
               <Text>
                 thread_safe:{' '}
                 {typeof sqliteInfo?.thread_safe === 'boolean'
@@ -91,6 +82,45 @@ function DevDataSQLite() {
               </Text>
             </View>
           </Text>
+        </View>
+
+        <View style={styles.showCaseRowsContainer}>
+          <Text
+            style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+            Account's data
+          </Text>
+          <View style={[styles.propertyDesc, { marginVertical: 12 }]}>
+            <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
+              Table tokenitem{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginTop: 12 }}>
+              Address: {currentAccount?.address || '-'} {' '.repeat(50)}
+            </Text>
+            <View style={styles.propertyView}>
+              <Text style={{ marginTop: 12 }}>
+                uniq id on tokenitem table:{' '}
+                {assetsInfo.uniqueChainAddressCount || 0} {' '.repeat(100)}
+              </Text>
+            </View>
+            <View style={styles.propertyView}>
+              <Text style={{ marginTop: 12 }}>
+                Total records: {assetsInfo.totalRecords || 0} {' '.repeat(100)}
+              </Text>
+            </View>
+          </View>
+          <Button
+            title={'Sync Tokens'}
+            containerStyle={{ marginBottom: 12 }}
+            onPress={() =>
+              currentAccount?.address &&
+              syncRemoteTokens(currentAccount?.address)
+            }
+          />
+          <Button
+            title={'Fetch Assets Info'}
+            containerStyle={{ marginBottom: 12 }}
+            onPress={() => fetchAssetsInfo()}
+          />
         </View>
       </ScrollView>
     </NormalScreenContainer>
@@ -134,6 +164,11 @@ const getStyles = createGetStyles2024(ctx =>
       color: ctx.colors2024['blue-default'],
       textAlign: 'left',
       fontSize: 24,
+    },
+    propertyView: {
+      marginBottom: 8,
+      maxWidth: '100%',
+      flexWrap: 'wrap',
     },
     propertyDesc: {
       flexDirection: 'row',

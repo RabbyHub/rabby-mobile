@@ -42,6 +42,7 @@ import {
 } from './useSearch';
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
@@ -86,7 +87,13 @@ export const useAssets = (filterText?: string) => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
 
-    const tokenRes = await batchQueryTokens(address);
+    const tokenRes = await TokenItemEntity.batchQueryTokens(address).then(
+      res => {
+        if (res.length > 0) return res;
+
+        return batchQueryTokens(address);
+      },
+    );
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {

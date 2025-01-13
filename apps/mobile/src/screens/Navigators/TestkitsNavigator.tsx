@@ -56,14 +56,14 @@ const DevDataSQLite = registerAppScreen<
 
 const Stack = createCustomNativeStackNavigator();
 
-devOnlyDelayNavi(
-  ({ naviPush, RootNames }) => {
-    naviPush(RootNames.StackTestkits, {
-      screen: RootNames.DevDataSQLite,
-    });
-  },
-  { timeout: 5 * 1e3 },
-);
+// devOnlyDelayNavi(
+//   ({ naviPush, RootNames }) => {
+//     naviPush(RootNames.StackTestkits, {
+//       screen: RootNames.DevDataSQLite,
+//     });
+//   },
+//   { timeout: 5 * 1e3 },
+// );
 
 export function TestkitsNavigator() {
   // const { mergeScreenOptions } = useStackScreenConfig();
