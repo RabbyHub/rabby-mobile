@@ -443,7 +443,6 @@ export const getCardStyles = createGetStyles2024(ctx => {
   return {
     container: {
       borderRadius: 24,
-      backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,

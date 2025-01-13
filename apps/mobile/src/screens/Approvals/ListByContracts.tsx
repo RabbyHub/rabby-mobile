@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Dimensions,
   ActivityIndicator,
   RefreshControl,
   Platform,
@@ -12,8 +11,8 @@ import {
   NotMatchedHolder,
   getScrollableSectionHeight,
 } from './components/Layout';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   type ContractApprovalItem,
   useApprovalsPage,
@@ -25,12 +24,12 @@ import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
-import { IS_IOS } from '@/core/native/utils';
+import { IOS_SWIPABLE_LEFT_OFFSET } from './constant';
 
 const isIOS = Platform.OS === 'ios';
 
 export default function ListByContracts() {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle });
 
   const {
     isLoading,
@@ -59,7 +58,7 @@ export default function ListByContracts() {
             {
               paddingHorizontal:
                 ApprovalsLayouts.innerContainerHorizontalOffset -
-                (IS_IOS ? 2 : 0),
+                IOS_SWIPABLE_LEFT_OFFSET,
             },
           ]}>
           <ApprovalContractRow contract={item} />
@@ -174,7 +173,7 @@ export default function ListByContracts() {
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyle = createGetStyles2024(() => {
   return {
     emptyHolderContainer: {
       // ...makeDebugBorder(),

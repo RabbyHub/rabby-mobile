@@ -6,6 +6,7 @@ import { getCardStyles } from './ApprovalCardContract';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import LinearGradient from 'react-native-linear-gradient';
+import { IOS_SWIPABLE_LEFT_OFFSET } from '../constant';
 
 const getSkeletonStyles = createGetStyles2024(({ colors2024 }) => {
   return {
@@ -33,7 +34,9 @@ export const SkeletonListByContracts = memo(() => {
   return (
     <View
       style={{
-        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+        paddingHorizontal:
+          ApprovalsLayouts.innerContainerHorizontalOffset -
+          IOS_SWIPABLE_LEFT_OFFSET,
       }}>
       {Array(5)
         .fill(0)

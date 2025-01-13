@@ -28,6 +28,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisAddress } from '@/utils/address';
 import { HeaderRight } from './components/Headers/HeaderRight';
 import { HeaderCenter } from './components/Headers/HeaderCenter';
+import { IOS_SWIPABLE_LEFT_OFFSET } from './constant';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
@@ -169,8 +170,6 @@ const ApprovalScreenContainer = () => {
     </Tabs.Container>
   );
 };
-
-const IOS_SWIPABLE_LEFT_OFFSET = !IS_IOS ? 0 : 2;
 
 export default function ApprovalsScreen() {
   const { styles } = useTheme2024({ getStyle });
