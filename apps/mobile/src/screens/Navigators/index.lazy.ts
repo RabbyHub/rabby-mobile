@@ -1,13 +1,12 @@
-import { registerAppScreen } from '@/perfs/apis';
-
-export const TestkitsNavigator = registerAppScreen<
-  typeof import('@/screens/Navigators/TestkitsNavigator').TestkitsNavigator
->({
-  loader: () =>
-    import('@/screens/Navigators/TestkitsNavigator').then(
-      m => m.TestkitsNavigator,
-    ),
-});
+// export const TestkitsNavigator = registerAppScreen<
+//   typeof import('@/screens/Navigators/TestkitsNavigator').TestkitsNavigator
+// >({
+//   loader: () =>
+//     import('@/screens/Navigators/TestkitsNavigator').then(
+//       m => m.TestkitsNavigator,
+//     ),
+//   name: NON_PROD_NAVIGATORS.StackTestkits,
+// });
 // const AddressNavigator = registerAppScreen<typeof import('@/screens/Navigators/AddressNavigator').AddressNavigator>({
 //   loader: () => import('@/screens/Navigators/AddressNavigator').then(m => m.AddressNavigator),
 // });
