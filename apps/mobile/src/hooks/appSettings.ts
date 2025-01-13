@@ -91,7 +91,7 @@ export function useGlobalAppPreventScreenrecordOnDev() {
   usePreventScreenshot(__DEV__ && !forceAllowScreenshot);
 
   useEffect(() => {
-    if (!isIOS && !__DEV__) return;
+    if (!isIOS || !__DEV__) return;
 
     if (!forceAllowScreenshot) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();

@@ -4,6 +4,7 @@
     "noImplicitAny": false,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    // "strictPropertyInitialization": false,
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {

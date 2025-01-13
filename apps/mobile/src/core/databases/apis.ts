@@ -13,10 +13,9 @@ const rabbyTestDBRef = {
 export function onTestDbReady() {
   if (!rabbyTestDBRef.current) {
     rabbyTestDBRef.current = SQLite.openDatabase({
-      // name: 'test.db',
-      name: ':memory:',
+      name: 'test.db',
       location: 'default',
-      createFromLocation: 1,
+      // createFromLocation: 1,
     });
   }
 

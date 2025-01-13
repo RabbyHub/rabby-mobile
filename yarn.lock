@@ -2023,10 +2023,10 @@ __metadata:
 
 "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 7.0.0
-  resolution: "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::version=7.0.0&hash=ed55e5&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::version=7.0.0&hash=f1f4a1&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react-native: ">=0.14.0"
-  checksum: da8971841c67e517da295525b30d2c6643ce721a1336cd40bf11d60ecd4379830d537b7b7e2c2dd26b9a8a439a5b8c874987d064c8306c5d2bdc5d2655296057
+  checksum: 3951f22fbf66a26859f15464e1fd40a95d978aef3dab9c47539062d2302fe8f15a3a2233931ebbfbace39a0eb08ff759dbd41994d8ec133f9a0a32e2081d3372
   languageName: node
   linkType: hard
 
@@ -28969,7 +28969,7 @@ __metadata:
 
 "react-native@npm:0.72.7":
   version: 0.72.7
-  resolution: "react-native@npm:0.72.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native%2F-%2Freact-native-0.72.7.tgz"
+  resolution: "react-native@npm:0.72.7"
   dependencies:
     "@jest/create-cache-key-function": ^29.2.1
     "@react-native-community/cli": 11.3.10
@@ -29012,6 +29012,54 @@ __metadata:
   bin:
     react-native: cli.js
   checksum: 587490c63bba709347e99edbe29f2a10d5a358e296d214960e066bd803d5a71a49b5e199208cf85cd6f6d3ce5fdbe5134e9480eb268b41b29807c833f7d45a34
+  languageName: node
+  linkType: hard
+
+"react-native@patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.72.7
+  resolution: "react-native@patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch::version=0.72.7&hash=9f940e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@jest/create-cache-key-function": ^29.2.1
+    "@react-native-community/cli": 11.3.10
+    "@react-native-community/cli-platform-android": 11.3.10
+    "@react-native-community/cli-platform-ios": 11.3.10
+    "@react-native/assets-registry": ^0.72.0
+    "@react-native/codegen": ^0.72.7
+    "@react-native/gradle-plugin": ^0.72.11
+    "@react-native/js-polyfills": ^0.72.1
+    "@react-native/normalize-colors": ^0.72.0
+    "@react-native/virtualized-lists": ^0.72.8
+    abort-controller: ^3.0.0
+    anser: ^1.4.9
+    base64-js: ^1.1.2
+    deprecated-react-native-prop-types: ^4.2.3
+    event-target-shim: ^5.0.1
+    flow-enums-runtime: ^0.0.5
+    invariant: ^2.2.4
+    jest-environment-node: ^29.2.1
+    jsc-android: ^250231.0.0
+    memoize-one: ^5.0.0
+    metro-runtime: 0.76.8
+    metro-source-map: 0.76.8
+    mkdirp: ^0.5.1
+    nullthrows: ^1.1.1
+    pretty-format: ^26.5.2
+    promise: ^8.3.0
+    react-devtools-core: ^4.27.2
+    react-refresh: ^0.4.0
+    react-shallow-renderer: ^16.15.0
+    regenerator-runtime: ^0.13.2
+    scheduler: 0.24.0-canary-efb381bbf-20230505
+    stacktrace-parser: ^0.1.10
+    use-sync-external-store: ^1.0.0
+    whatwg-fetch: ^3.0.0
+    ws: ^6.2.2
+    yargs: ^17.6.2
+  peerDependencies:
+    react: 18.2.0
+  bin:
+    react-native: cli.js
+  checksum: 48c2bcaf971374148d3102ce94556103ee43b8f1b49492203403a44c80d90c446467d8a14455e351977078b1a50a75c5aa02a30aec0cd823dd7be7f644024c22
   languageName: node
   linkType: hard
 
@@ -33245,7 +33293,7 @@ __metadata:
 
 "typeorm@patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.3.20
-  resolution: "typeorm@patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch::version=0.3.20&hash=6941ac&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "typeorm@patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch::version=0.3.20&hash=8d87c8&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@sqltools/formatter": ^1.2.5
     app-root-path: ^3.1.0
@@ -33319,7 +33367,7 @@ __metadata:
     typeorm: cli.js
     typeorm-ts-node-commonjs: cli-ts-node-commonjs.js
     typeorm-ts-node-esm: cli-ts-node-esm.js
-  checksum: 159b2b3b3c8a31a78f1ff65615be05e87ced971215c19ccb4dc55b95519028e8f5416a55c93969052df29e784602f950be4f325988e76008ca638e2c320414af
+  checksum: 4c8fdf2a0afb8eaab9363f39d904a8e39ad6e4f25a7964d88dee40b992b7d3372ae8ecb1cdaa7e75e87f112169318afe2a3a8e03f8ee842f012b50d9937737d1
   languageName: node
   linkType: hard
 

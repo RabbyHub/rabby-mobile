@@ -1,3 +1,3 @@
-import SQLite from '@boltcode/react-native-sqlite-storage';
+import SQLite from 'react-native-sqlite-storage';
 
 export { SQLite };
