@@ -80,6 +80,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIAccountShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
+  [RootNames.DevDataSQLite]?: {};
 };
 
 export type AddressNavigatorParamList = {

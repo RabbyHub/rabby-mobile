@@ -20,6 +20,7 @@ export const TESTKITS_PRELOAD_SCREENS = {
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
   [RootNames.DevUIDapps]: 'DevUIDapps',
+  [RootNames.DevDataSQLite]: 'DevDataSQLite',
 };
 
 export async function preloadNonProductionScreens() {

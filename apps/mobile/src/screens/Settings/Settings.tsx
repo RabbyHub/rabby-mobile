@@ -95,6 +95,9 @@ import WalletLockTestItemModal, {
 import DevUIPlaygroundModal, {
   useDevUIPlaygroundModalVisible,
 } from './sheetModals/DevUIPlayground';
+import DevDataPlayground, {
+  useDevDataPlaygroundModalVisible,
+} from './sheetModals/DevDataPlayground';
 import DevUIWipModal, {
   useUIDevWipModalVisiable,
 } from './sheetModals/DevUIWip';
@@ -433,6 +436,7 @@ function DevSettingsBlocks() {
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
+  const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -511,10 +515,17 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: '[UI] Playground',
+              label: 'UI Playground',
               icon: RcCode,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'Data Playground',
+              icon: RcCode,
+              onPress: () => {
+                setDataPlaygroundModalVisible(true);
               },
             },
             {
@@ -661,6 +672,7 @@ function DevSettingsBlocks() {
       <WalletLockTestItemModal />
       <DevUIWipModal />
       <DevUIPlaygroundModal />
+      <DevDataPlayground />
     </>
   );
 }

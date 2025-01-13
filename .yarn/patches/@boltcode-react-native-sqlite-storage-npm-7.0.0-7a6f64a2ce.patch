@@ -1,3 +1,22 @@
+diff --git a/index.d.ts b/index.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3cd9c8c5108719d08e117a3895cf264fec6c91d9
+--- /dev/null
++++ b/index.d.ts
+@@ -0,0 +1 @@
++export * from 'react-native-sqlite-storage'
+diff --git a/package.json b/package.json
+index 7626cc55d3edc1e2bf5495e8e4ac6e99ecaaed37..7c615fb0be105956aeedeb46d44d64e6b9e9c8ba 100644
+--- a/package.json
++++ b/package.json
+@@ -3,6 +3,7 @@
+   "version": "7.0.0",
+   "description": "SQLite3 bindings for React Native (Android & iOS)",
+   "main": "sqlite.js",
++  "types": "index.d.ts",
+   "scripts": {
+     "test": "echo \"Error: no test specified yet\" && exit 1"
+   },
 diff --git a/react-native.config.js b/react-native.config.js
 index de490c41aeef077c0fe2653ea91b984b0de27981..2d6407ededabbd0a4428eef98e562689494f3574 100644
 --- a/react-native.config.js

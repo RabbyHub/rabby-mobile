@@ -94,6 +94,7 @@ export const RootNames = {
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIDapps: 'DevUIDapps',
+  DevDataSQLite: 'DevDataSQLite',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',

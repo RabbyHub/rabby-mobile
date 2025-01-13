@@ -9,6 +9,7 @@ import {
   TESTKITS_PRELOAD_SCREENS,
 } from '@/perfs/preloads';
 import { useLayoutEffect } from 'react';
+import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
 
 const GetStartedScreen2024 = registerAppScreen<
   typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
@@ -46,8 +47,23 @@ const DevUIDapps = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUIDapps'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIDapps,
 });
+const DevDataSQLite = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataSQLite').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataSQLite'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
+});
 
 const Stack = createCustomNativeStackNavigator();
+
+devOnlyDelayNavi(
+  ({ naviPush, RootNames }) => {
+    naviPush(RootNames.StackTestkits, {
+      screen: RootNames.DevDataSQLite,
+    });
+  },
+  { timeout: 5 * 1e3 },
+);
 
 export function TestkitsNavigator() {
   // const { mergeScreenOptions } = useStackScreenConfig();
@@ -88,6 +104,8 @@ export function TestkitsNavigator() {
         component={DevUIScreenContainerShowCase}
       />
       <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
+
+      <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
     </Stack.Navigator>
   );
 }
