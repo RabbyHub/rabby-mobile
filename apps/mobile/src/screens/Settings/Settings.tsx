@@ -109,13 +109,7 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
-import {
-  deleteAllBackups,
-  getBackupsFromCloud,
-  saveMnemonicToCloud,
-} from '@/core/utils/cloudBackup';
-import { IS_ANDROID } from '@/core/native/utils';
-import { useGoogleSign } from '@/hooks/cloudStorage';
+
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -132,6 +126,9 @@ import WalletLockTestItemModal, {
 import DevUIPlaygroundModal, {
   useDevUIPlaygroundModalVisible,
 } from './sheetModals/DevUIPlayground';
+import DevDataPlayground, {
+  useDevDataPlaygroundModalVisible,
+} from './sheetModals/DevDataPlayground';
 import DevUIWipModal, {
   useUIDevWipModalVisiable,
 } from './sheetModals/DevUIWip';
@@ -512,6 +509,7 @@ function DevSettingsBlocks() {
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
+  const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -604,10 +602,17 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: '[UI] Playground',
+              label: 'UI Playground',
               icon: RcCode,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'Data Playground',
+              icon: RcCode,
+              onPress: () => {
+                setDataPlaygroundModalVisible(true);
               },
             },
             {
@@ -754,6 +759,7 @@ function DevSettingsBlocks() {
       <WalletLockTestItemModal />
       <DevUIWipModal />
       <DevUIPlaygroundModal />
+      <DevDataPlayground />
     </>
   );
 }

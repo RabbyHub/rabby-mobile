@@ -3,3 +3,5 @@ export type FieldNilable<T> = {
 };
 
 export type ItOrItsPromise<T> = T | Promise<T>;
+
+export type MakeSurePromise<T> = T extends Promise<any> ? T : Promise<T>;
