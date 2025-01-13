@@ -4,6 +4,11 @@ import 'node-libs-react-native/globals';
 
 import 'src/utils/date';
 
+/**
+ * @see https://www.npmjs.com/package/@walletconnect/react-native-compat?activeTab=code
+ *
+ * imported here to patch some issues from crypto-about library such as ether.js, no matter if we use walletconnect or not
+ */
 import '@walletconnect/react-native-compat';
 
 import 'reflect-metadata';

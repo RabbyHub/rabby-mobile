@@ -74,7 +74,10 @@
     "@rabby-wallet/eth-hd-keyring@4.3.1": "patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch",
     "react-native-quick-crypto@^0.7.7": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
     "react-native-quick-crypto@0.7.10": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
-    "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch"
+    "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch",
+    "typeorm@^0.3.20": "patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch",
+    "react-native-nitro-modules@^0.21.0": "patch:react-native-nitro-modules@npm%3A0.21.0#./.yarn/patches/react-native-nitro-modules-npm-0.21.0-6d9cf3db54.patch",
+    "react-native-nitro-sqlite@^9.1.1": "patch:react-native-nitro-sqlite@npm%3A9.1.1#./.yarn/patches/react-native-nitro-sqlite-npm-9.1.1-0cb00756bf.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",

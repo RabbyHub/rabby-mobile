@@ -1,9 +1,9 @@
 PODS:
-  - AppAuth (1.7.5):
-    - AppAuth/Core (= 1.7.5)
-    - AppAuth/ExternalUserAgent (= 1.7.5)
-  - AppAuth/Core (1.7.5)
-  - AppAuth/ExternalUserAgent (1.7.5):
+  - AppAuth (1.7.6):
+    - AppAuth/Core (= 1.7.6)
+    - AppAuth/ExternalUserAgent (= 1.7.6)
+  - AppAuth/Core (1.7.6)
+  - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
   - boost (1.83.0)
   - BVLinearGradient (2.8.3):
@@ -135,13 +135,19 @@ PODS:
     - React-Core
   - MMKV (1.3.5):
     - MMKVCore (~> 1.3.5)
-  - MMKVCore (1.3.9)
+  - MMKVCore (1.3.13)
   - MultiplatformBleAdapter (0.2.0)
   - nanopb (2.30909.1):
     - nanopb/decode (= 2.30909.1)
     - nanopb/encode (= 2.30909.1)
   - nanopb/decode (2.30909.1)
   - nanopb/encode (2.30909.1)
+  - NitroModules (0.21.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-callinvoker
+    - React-Core
+    - React-jsi
   - OpenSSL-Universal (3.3.2000)
   - PromisesObjC (2.4.0)
   - RCT-Folly (2022.05.16.00):
@@ -1243,8 +1249,6 @@ PODS:
     - React-perflogger (= 0.73.11)
   - ReactNativeExceptionHandler (2.10.10):
     - React-Core
-  - RNCAsyncStorage (1.21.0):
-    - React-Core
   - RNCClipboard (1.13.2):
     - React-Core
   - RNCMaskedView (0.3.1):
@@ -1274,6 +1278,11 @@ PODS:
   - RNInAppBrowser (3.7.0):
     - React-Core
   - RNKeychain (8.0.0):
+    - React-Core
+  - RNNitroSQLite (9.1.1):
+    - glog
+    - NitroModules
+    - RCT-Folly (= 2022.05.16.00)
     - React-Core
   - RNNotifee (7.8.2):
     - React-Core
@@ -1332,6 +1341,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
   - lottie-react-native (from `../node_modules/lottie-react-native`)
+  - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
@@ -1395,7 +1405,6 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeExceptionHandler (from `../node_modules/react-native-exception-handler`)
-  - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
@@ -1407,6 +1416,7 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
+  - RNNitroSQLite (from `../node_modules/react-native-nitro-sqlite`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
@@ -1464,6 +1474,8 @@ EXTERNAL SOURCES:
     :tag: hermes-2024-04-29-RNv0.73.8-644c8be78af1eae7c138fa4093fb87f0f4f8db85
   lottie-react-native:
     :path: "../node_modules/lottie-react-native"
+  NitroModules:
+    :path: "../node_modules/react-native-nitro-modules"
   RCT-Folly:
     :podspec: "../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTRequired:
@@ -1586,8 +1598,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeExceptionHandler:
     :path: "../node_modules/react-native-exception-handler"
-  RNCAsyncStorage:
-    :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
@@ -1610,6 +1620,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-reborn"
   RNKeychain:
     :path: "../node_modules/react-native-keychain"
+  RNNitroSQLite:
+    :path: "../node_modules/react-native-nitro-sqlite"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
   RNPermissions:
@@ -1632,7 +1644,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
+  AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
   BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
@@ -1656,9 +1668,10 @@ SPEC CHECKSUMS:
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 15575751e4e67fe2a88eb27a3362ede5791e1df3
   MMKV: 506311d0494023c2f7e0b62cc1f31b7370fa3cfb
-  MMKVCore: af055b00e27d88cd92fad301c5fecd1ff9b26dd9
+  MMKVCore: edbad9714bb70344544148f086a4a69061ff31b6
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
+  NitroModules: 4d8d595c10efe756b53add1467ba66d2b0f11adc
   OpenSSL-Universal: b60a3702c9fea8b3145549d421fdb018e53ab7b4
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
@@ -1722,7 +1735,6 @@ SPEC CHECKSUMS:
   React-utils: 7ea0aecc0aec186197ba41491992c7d0d4d77660
   ReactCommon: cd1a327b37af7f7c17fda8125faf3f7865320b05
   ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
-  RNCAsyncStorage: 618d03a5f52fbccb3d7010076bc54712844c18ef
   RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
   RNCMaskedView: 090213d32d8b3bb83a4dcb7d12c18f0152591906
   RNDeviceInfo: db5c64a060e66e5db3102d041ebe3ef307a85120
@@ -1734,6 +1746,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 97d8ec68fbbe6beb4820b374acf4470acac21756
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNKeychain: 4f63aada75ebafd26f4bc2c670199461eab85d94
+  RNNitroSQLite: d43445348bca31d1de17726f9448561a09fa1de4
   RNNotifee: 8e2d3df3f0e9ce8f5d1fe4c967431138190b6175
   RNPermissions: 2d82571768dcc029f99859f4cacca1ad1efadedc
   RNReactNativeHapticFeedback: c1461e1e377bd0f4e042f64cf61e534c261db81d

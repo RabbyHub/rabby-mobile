@@ -103,6 +103,7 @@ module.exports = {
           '@': './src',
           'styled-components/native': 'styled-components/native',
           'styled-components': 'styled-components/native',
+          'react-native-sqlite-storage': 'react-native-nitro-sqlite',
 
           // 'crypto': 'react-native-quick-crypto',
           // // 'stream': 'stream-browserify',

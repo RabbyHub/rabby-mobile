@@ -1,0 +1,126 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 38a958dd38ca0e3747ba5ea88cc134e9ebe994f5..50fda42b357b67a5bed59452cb77860ce7fd8b1c 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -4,8 +4,13 @@ buildscript {
+     mavenCentral()
+   }
+ 
++  // get project or use default 1.9.24
++  ext.kotlin_version = rootProject.ext.has("kotlin_version") ? rootProject.ext.get("kotlin_version") : "1.9.24"
++
+   dependencies {
+     classpath "com.android.tools.build:gradle:8.7.3"
++    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
++    classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
+   }
+ }
+ 
+@@ -18,15 +23,20 @@ def isNewArchitectureEnabled() {
+   return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
+ }
+ 
++// plugins {
++//   id 'com.android.library'
++//   id 'kotlin-android'
++// }
+ apply plugin: "com.android.library"
+ apply plugin: 'org.jetbrains.kotlin.android'
++// apply plugin: 'kotlin-android-extensions'
+ 
+ if (isNewArchitectureEnabled()) {
+   apply plugin: "com.facebook.react"
+ }
+ 
+ def getExtOrDefault(name) {
+-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["Nitro_" + name]
++  return project.properties["Nitro_" + name] ? project.properties["Nitro_" + name] : rootProject.ext.has(name)
+ }
+ 
+ def getExtOrIntegerDefault(name) {
+@@ -144,6 +154,8 @@ dependencies {
+   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
+   //noinspection GradleDynamicVersion
+   implementation "com.facebook.react:react-native:+"
++  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
++  implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0"
+ }
+ 
+ if (isNewArchitectureEnabled()) {
+diff --git a/android/src/main/java/com/margelo/nitro/NitroModules.kt b/android/src/main/java/com/margelo/nitro/NitroModules.kt
+index 3e300fb38bb9f6b66efb9c3a1761658d88b66393..da7e73447c29749ceea1935f7eb65fbf28c12875 100644
+--- a/android/src/main/java/com/margelo/nitro/NitroModules.kt
++++ b/android/src/main/java/com/margelo/nitro/NitroModules.kt
+@@ -5,13 +5,13 @@ import com.facebook.jni.HybridData
+ import com.facebook.proguard.annotations.DoNotStrip
+ import com.facebook.react.bridge.ReactApplicationContext
+ import com.facebook.react.bridge.ReactMethod
+-import com.facebook.react.common.annotations.FrameworkAPI
++// import com.facebook.react.common.annotations.FrameworkAPI
+ import com.facebook.react.turbomodule.core.CallInvokerHolderImpl
+ import com.facebook.react.turbomodule.core.interfaces.CallInvokerHolder
+ 
+ @DoNotStrip
+ @Keep
+-@OptIn(FrameworkAPI::class)
++// @OptIn(FrameworkAPI::class)
+ @Suppress("KotlinJniMissingFunction")
+ class NitroModules internal constructor(val context: ReactApplicationContext) : NitroModulesSpec(context) {
+     private val mHybridData: HybridData
+@@ -33,8 +33,8 @@ class NitroModules internal constructor(val context: ReactApplicationContext) :
+                 ?: return "ReactApplicationContext.javaScriptContextHolder is null!"
+ 
+             // 2. Get CallInvokerHolder
+-            val callInvokerHolder = context.jsCallInvokerHolder as? CallInvokerHolderImpl
+-                ?: return "ReactApplicationContext.jsCallInvokerHolder is null!"
++            val callInvokerHolder = context.catalystInstance.jsCallInvokerHolder as? CallInvokerHolderImpl
++                ?: return "ReactApplicationContext.catalystInstance.jsCallInvokerHolder is null!"
+ 
+             // 3. Install Nitro
+             install(jsContext.get(), callInvokerHolder)
+diff --git a/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt b/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt
+index 995e7d070ed32da3a1ae368ae68e87839f04a15e..e2b97972ead8b5a404b9686d0f27792b273b71ed 100644
+--- a/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt
++++ b/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt
+@@ -22,11 +22,11 @@ class NitroModulesPackage : TurboReactPackage() {
+             moduleInfos[NitroModules.NAME] = ReactModuleInfo(
+                 NitroModules.NAME,
+                 NitroModules.NAME,
+-                canOverrideExistingModule = false,
+-                needsEagerInit = false,
+-                hasConstants = false,
+-                isCxxModule = false,
+-                isTurboModule = isTurboModule
++                /* canOverrideExistingModule =  */false,
++                /* needsEagerInit =  */false,
++                /* hasConstants =  */false,
++                /* isCxxModule =  */false,
++                /* isTurboModule =  */isTurboModule
+             )
+             moduleInfos
+         }
+diff --git a/cpp/core/HybridObject.cpp b/cpp/core/HybridObject.cpp
+index dfef5c17bedd3c12f793c84786f71739fdf54154..691c94b2e119c1e8cf3ef227733045b18013be79 100644
+--- a/cpp/core/HybridObject.cpp
++++ b/cpp/core/HybridObject.cpp
+@@ -2,6 +2,7 @@
+ // Created by Marc Rousavy on 21.02.24.
+ //
+ 
++#include <android/api-level.h>
+ #include "HybridObject.hpp"
+ #include "JSIConverter.hpp"
+ #include "NitroDefines.hpp"
+@@ -69,7 +70,11 @@ jsi::Value HybridObject::toObject(jsi::Runtime& runtime) {
+   object.setNativeState(runtime, shared_from_this());
+ 
+   // 6. Set memory size so Hermes GC knows about actual memory
+-  object.setExternalMemoryPressure(runtime, getExternalMemorySize());
++  // int apiLevel = android_getSdkVersion();
++  // #if __ANDROID_API__ >= 31
++  // #if __ANDROID_API__ >= __ANDROID_API_S_V2__
++  //   object.setExternalMemoryPressure(runtime, getExternalMemorySize());
++  // #endif
+ 
+ #ifdef NITRO_DEBUG
+   // 7. Assign a private __type property for debugging - this will be used so users know it's not just an empty object.

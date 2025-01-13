@@ -12,6 +12,9 @@ buildscript {
         // Only using Android Support libraries
         supportLibVersion = "34.0.0"
         googlePlayServicesAuthVersion = "20.7.0"
+        // @see https://kotlinlang.org/docs/releases.html#release-details
+        kotlin_version = '1.8.22'
+        // kotlin_version = '1.9.24'
     }
     repositories {
         google()
@@ -23,12 +26,10 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("com.google.gms:google-services:4.4.0")
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
     }
 }
-
-// plugins {
-//     id 'com.google.gms.google-services' version '4.4.2' apply false
-// }
 
 allprojects {
     repositories {

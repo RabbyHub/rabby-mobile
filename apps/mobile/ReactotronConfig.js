@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 import Reactotron from 'reactotron-react-native';
-import { AsyncStorage } from '@react-native-async-storage/async-storage';
+// import { AsyncStorage } from '@react-native-async-storage/async-storage';
 
 let scriptHostname;
 if (__DEV__) {
@@ -9,7 +9,8 @@ if (__DEV__) {
   // console.debug('[ReactotronConfig] scriptHostname %s', scriptHostname)
 }
 
-Reactotron.setAsyncStorageHandler(AsyncStorage)
+Reactotron
+  // .setAsyncStorageHandler(AsyncStorage)
   // controls connection & communication settings
   .configure({
     name: 'Rabby Mobile',

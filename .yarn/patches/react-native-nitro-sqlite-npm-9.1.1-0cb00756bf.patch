@@ -1,0 +1,34 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index f5b83265ca345a0bc3a3bca7f8ba3107af90c269..48008d4358f5800140333c28d07f66000fd116c9 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -24,7 +24,7 @@ def isNewArchitectureEnabled() {
+ }
+ 
+ def getExtOrDefault(name) {
+-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["RNNitroSQLite_" + name]
++  return project.properties["RNNitroSQLite_" + name] ? project.properties["RNNitroSQLite_" + name] : rootProject.ext.get(name)
+ }
+ 
+ def getExtOrIntegerDefault(name) {
+diff --git a/android/src/main/java/com/margelo/rnnitrosqlite/RNNitroSQLitePackage.kt b/android/src/main/java/com/margelo/rnnitrosqlite/RNNitroSQLitePackage.kt
+index 2b83f70d021e653119c67463b9cfde0a588602c5..5f6370f44dbce7450feeffd4ee5fba3d53127d3d 100644
+--- a/android/src/main/java/com/margelo/rnnitrosqlite/RNNitroSQLitePackage.kt
++++ b/android/src/main/java/com/margelo/rnnitrosqlite/RNNitroSQLitePackage.kt
+@@ -22,11 +22,11 @@ class RNNitroSQLitePackage : TurboReactPackage() {
+           moduleInfos[RNNitroSQLiteOnLoadModule.NAME] = ReactModuleInfo(
+             RNNitroSQLiteOnLoadModule.NAME,
+             RNNitroSQLiteOnLoadModule.NAME,
+-            canOverrideExistingModule=false,
+-            needsEagerInit=true,
+-            hasConstants=true,
+-            isCxxModule=false,
+-            isTurboModule=isTurboModule
++            /* canOverrideExistingModule =  */false,
++            /* needsEagerInit =  */true,
++            /* hasConstants =  */true,
++            /* isCxxModule =  */false,
++            /* isTurboModule =  */isTurboModule
+           )
+           moduleInfos
+         }

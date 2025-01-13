@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
+apply plugin: 'kotlin-android'
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -167,14 +168,29 @@ android {
         }
       }
     }
-    // packagingOptions {
-    //   jniLibs {
-    //     pickFirsts += [
-    //       'lib/**/libssl.so',
-    //       'lib/**/libcrypto.so'
-    //     ]
-    //   }
-    // }
+    packagingOptions {
+      jniLibs {
+        pickFirsts += [
+          '**/libreact_nativemodule_core.so',
+          '**/libturbomodulejsijni.so'
+          // 'lib/**/libssl.so',
+          // 'lib/**/libcrypto.so'
+        ]
+      }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+        freeCompilerArgs = [
+            // If you need to use the @OptIn annotation
+            "-Xopt-in=kotlin.RequiresOptIn",
+            // // If you need to use experimental coroutine API
+            // "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi"
+        ]
+    }
 }
 
 androidComponents {
