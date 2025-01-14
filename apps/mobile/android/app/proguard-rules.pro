@@ -23,6 +23,9 @@
    *;
 }
 
+# Keep SQLite classes
+-keep class io.liteglue.** { *; }
+
 # # react-native-svg https://github.com/react-native-svg/react-native-svg#problems-with-proguard
 # # https://github.com/software-mansion/react-native-svg/blob/main/android/proguard-rules.pro
 # -keep public class com.horcrux.svg.** {*;}
