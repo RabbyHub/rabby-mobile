@@ -33,9 +33,39 @@
       "goToHome": "Go to Home"
     },
     "transactions": {
+      "title": "Transactions",
+      "itemTitle": {
+        "Swap": "Swapped",
+        "Send": "Sent",
+        "Recieve": "Received",
+        "Bridge": "Bridged",
+        "Approve": "Approved",
+        "Revoke": "Revoke Approval",
+        "Contract": "Deploy Contract",
+        "Cancel": "Cancel Pending Transction",
+        "Default": "Interaction"
+      },
+      "empty": {
+        "title": "No transactions",
+        "desc": " No transactions found on <1>supported chains</1>"
+      },
       "explain": {
         "unknown": "Contract Interaction",
         "cancel": "Canceled a pending transaction"
+      },
+      "txHistory": {
+        "tipInputData": "The transaction includes a message",
+        "parseInputDataError": "Parse message failed",
+        "scamToolTip": "This transaction is initiated by scammers to send scam tokens and NFTs. Please refrain from interacting with it."
+      },
+      "modalViewMessage": {
+        "title": "View Message"
+      },
+
+      "filterScam": {
+        "title": "Hide scam transactions",
+        "loading": "Loading may take a moment, and data delays are possible",
+        "btn": "Hide scam transactions"
       }
     },
     "signTx": {

@@ -33,7 +33,7 @@ export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
 
-  const { colors, colors2024 } = useTheme2024();
+  const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
   return (
@@ -111,7 +111,7 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
+            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
           },
         }}
       />
@@ -130,7 +130,7 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
+            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
           },
         }}
       />

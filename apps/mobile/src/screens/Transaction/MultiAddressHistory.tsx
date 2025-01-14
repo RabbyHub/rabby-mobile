@@ -54,7 +54,7 @@ import {
   useSyncHistoryOnBoot,
 } from '@/databases/hooks/history';
 
-const PAGE_COUNT = 10;
+const PAGE_COUNT = 50;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -150,7 +150,7 @@ function History({
         if (result.list.length < PAGE_COUNT) {
           hasMoreMap.current[addr] = false;
         } else {
-          hasMoreMap.current[addr] = true;
+          hasMoreMap.current[addr] = false;
         }
         lastMap.current[addr] = result.last || 0;
         list.push(
@@ -425,12 +425,13 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   } = useGeneralTokenDetailSheetModal();
   useLastUsedAccountInScreen();
 
+  const { styles } = useTheme2024({ getStyle });
   const { isSceneUsingAllAccounts } = useSceneAccountInfo({
     forScene: 'MultiHistory',
   });
 
   return (
-    <NormalScreenContainer2024 type="bg1">
+    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       {isForMultipleAdderss && (
         <AccountSwitcherModal
           forScene="MultiHistory"
@@ -460,7 +461,10 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  container: {
+    backgroundColor: isLight ? '#F6F7F7' : colors2024['neutral-bg-1'],
+  },
   link: {
     marginHorizontal: 20,
     marginBottom: 8,
