@@ -70,3 +70,8 @@ export const realTransformer = {
   to: (val: any) => columnConverter.decimalsToInteger(val),
   from: (val: any) => columnConverter.intToDecimals(val),
 };
+
+export const jsonTransformer = {
+  to: (val: any) => JSON.stringify(val),
+  from: (val: any) => JSON.parse(val),
+};

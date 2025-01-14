@@ -6158,7 +6158,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.9.10
+    "@rabby-wallet/rabby-api": 0.9.1-1.beta.0
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
@@ -6529,9 +6529,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.10":
-  version: 0.9.10
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.10"
+"@rabby-wallet/rabby-api@npm:0.9.1-1.beta.0":
+  version: 0.9.1-1.beta.0
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.1-1.beta.0"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -6542,7 +6542,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 534f6598823bb2ab2b40c486cc0be2031e5d21839303dc5611710c894f8ed90ab383d8fceb9821146fc13c2e3ee62da7c34880e079ff42662f2a7b8f0280350f
+  checksum: fc8ed1d366cdaeb4f9b06796efa7b491a0100b9f8dd570c0288656c06daee06c43c6ea95c55c90cf9a47a6288a0897679cef3463aaa3be17516ec3ec05f5bfc2
   languageName: node
   linkType: hard
 
@@ -27669,7 +27669,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
-    "@rabby-wallet/rabby-api": 0.9.10
+    "@rabby-wallet/rabby-api": 0.9.1-1.beta.0
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.46
