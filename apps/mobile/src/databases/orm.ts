@@ -2,6 +2,7 @@ import { DataSource, DataSourceOptions } from 'typeorm/browser';
 
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { SQLite } from '@/core/databases/exports';
+import { HistoryItemEntity } from './entities/historyItem';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -11,7 +12,7 @@ const dbOptions: DataSourceOptions = {
   synchronize: false,
   driver: SQLite,
   entityPrefix: 'rabby_',
-  entities: [TokenItemEntity],
+  entities: [TokenItemEntity, HistoryItemEntity],
   maxQueryExecutionTime: 10000,
 };
 const appDataSource = new DataSource({ ...dbOptions });
@@ -25,10 +26,8 @@ export async function initializeAppDataSource() {
     appDataSourceInitRef.current = appDataSource.initialize();
     await appDataSourceInitRef.current;
     if (__DEV__) {
-      // await appDataSource.dropDatabase();
-      // // await Promise.allSettled([
-      // //   TokenItemEntity.clear(),
-      // // ]);
+      await appDataSource.dropDatabase();
+      await Promise.allSettled([TokenItemEntity.clear()]);
     }
 
     await appDataSource.synchronize();

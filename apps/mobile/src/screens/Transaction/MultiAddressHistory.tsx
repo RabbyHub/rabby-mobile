@@ -49,6 +49,10 @@ import { AbstractPortfolioToken } from '../Home/types';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import {
+  useHistoryBasicInfo,
+  useSyncHistoryOnBoot,
+} from '@/databases/hooks/history';
 
 const PAGE_COUNT = 10;
 
@@ -108,6 +112,11 @@ function History({
   } = useSceneAccountInfo({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
+  useSyncHistoryOnBoot({ enableAutoFetch: true });
+  const { assetsInfo, fetchAssetsInfo } = useHistoryBasicInfo({
+    enableAutoFetch: true,
+  });
+  console.log('assetsInfo', assetsInfo);
 
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
