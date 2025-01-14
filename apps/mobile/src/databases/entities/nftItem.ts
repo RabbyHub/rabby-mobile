@@ -66,7 +66,7 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   @Column('boolean', { default: '' })
   is_erc721: NFTItem['is_erc721'] = false;
   // is_core
-  @Column('boolean')
+  @Column('boolean', { default: false })
   is_core: NFTItem['is_core'] = false;
   // thumbnail_url
   @Column('text', { default: '' })
