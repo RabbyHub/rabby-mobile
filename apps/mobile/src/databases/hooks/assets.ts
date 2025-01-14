@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useCurrentAccount } from '@/hooks/account';
-import { runOnJS } from 'react-native-reanimated';
-import usePrevious from 'react-use/lib/usePrevious';
-import { syncRemoteTokens } from '../sync/assets';
 import { TokenItemEntity } from '../entities/tokenitem';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {

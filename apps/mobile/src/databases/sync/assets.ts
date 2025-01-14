@@ -1,13 +1,13 @@
 import { Repository } from 'typeorm/browser';
 import PQueue from 'p-queue';
 
-import { batchQueryTokens } from '@/screens/Home/utils/token';
 import { type EntityAddressAssetBase } from '../entities/base';
 import { TokenItemEntity } from '../entities/tokenitem';
+import { NFTItemEntity } from '../entities/nftItem';
 import { prepareAppDataSource } from '../orm';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -201,4 +201,32 @@ export async function syncRemoteHistory(address: string) {
   } catch (e) {
     console.error('syncRemoteHistory', e);
   }
+}
+
+export async function syncRemoteNFTs(address: string, nfts: NFTItem[]) {
+  const nftItems = nfts.map(raw => {
+    const nftItem = new NFTItemEntity();
+    NFTItemEntity.fillEntity(nftItem, address, raw);
+
+    return nftItem;
+  });
+
+  await prepareAppDataSource();
+
+  await batchSaveWithPQueueAndTransaction(
+    NFTItemEntity.getRepository(),
+    nftItems,
+    {
+      key: address,
+      batchSize: 100,
+      concurrency: 1,
+      delayBetweenTasks: 1.5 * 1e3,
+    },
+  )
+    .then(() => {
+      console.debug('batch upsert tasks created');
+    })
+    .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
 }

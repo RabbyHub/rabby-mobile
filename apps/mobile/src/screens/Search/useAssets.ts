@@ -28,7 +28,6 @@ import {
   snapshot2Display,
 } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
-import { openapi } from '@/core/request';
 import { useMyAccounts } from '@/hooks/account';
 import { chunk } from 'lodash';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
@@ -42,7 +41,7 @@ import {
 } from './useSearch';
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { batchQueryNFTsWithLocalCache } from '../Home/utils/nft';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
@@ -174,12 +173,16 @@ export const useAssets = (filterText?: string) => {
 
   const loadNFT = async (address: string) => {
     try {
-      const ntfs = await openapi.listNFT(address, true, true);
+      const nfts = await batchQueryNFTsWithLocalCache({
+        id: address,
+        isAll: true,
+        sortByCredit: true,
+      });
       const tokenSetting = await preferenceService.getUserTokenSettings();
 
       updateNftList({
         address,
-        newNFTs: tagNfts(ntfs, tokenSetting),
+        newNFTs: tagNfts(nfts, tokenSetting),
       });
     } catch (e) {
       console.error(e);

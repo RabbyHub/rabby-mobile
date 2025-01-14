@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
 
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { SQLite } from '@/core/databases/exports';
 import { HistoryItemEntity } from './entities/historyItem';
 
@@ -10,10 +11,10 @@ const dbOptions: DataSourceOptions = {
   location: 'default',
   // logging: ['error', 'query', 'schema'],
   logging: [],
-  synchronize: false,
+  synchronize: true,
   driver: SQLite,
   entityPrefix: 'rabby_',
-  entities: [TokenItemEntity, HistoryItemEntity],
+  entities: [TokenItemEntity, NFTItemEntity, HistoryItemEntity],
   maxQueryExecutionTime: 10000,
 };
 const appDataSource = new DataSource({ ...dbOptions });
@@ -39,7 +40,9 @@ export async function initializeAppDataSource() {
   return appDataSourceInitRef.current;
 }
 
-initializeAppDataSource();
+initializeAppDataSource().catch(err => {
+  console.log('🔍 CUSTOM_LOGGER:=>: initializeAppDataSource error', err);
+});
 
 // const hasFirstInitializedRef = { current: false };
 export async function prepareAppDataSource() {
