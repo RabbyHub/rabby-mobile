@@ -13,7 +13,7 @@ import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../Home/utils/project';
 import { AbstractPortfolioToken } from '../Home/types';
 import {
-  batchQueryTokens,
+  batchQueryTokensWithLocalCache,
   setWalletTokens,
   sortWalletTokens,
   tagTokenList,
@@ -87,13 +87,9 @@ export const useAssets = (filterText?: string) => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
 
-    const tokenRes = await TokenItemEntity.batchQueryTokens(address).then(
-      res => {
-        if (res.length > 0) return res;
-
-        return batchQueryTokens(address);
-      },
-    );
+    const tokenRes = await batchQueryTokensWithLocalCache({
+      user_id: address,
+    });
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {

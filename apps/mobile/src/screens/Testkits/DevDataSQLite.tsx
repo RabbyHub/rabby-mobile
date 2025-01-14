@@ -16,6 +16,7 @@ import { Button } from '@/components2024/Button';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { useCurrentAccount } from '@/hooks/account';
 import { useAssetsBasicInfo } from '@/databases/hooks/assets';
+import { batchQueryTokensWithLocalCache } from '../Home/utils/token';
 
 function DevDataSQLite() {
   const { styles, colors2024, colors } = useTheme2024({
@@ -111,10 +112,12 @@ function DevDataSQLite() {
           <Button
             title={'Sync Tokens'}
             containerStyle={{ marginBottom: 12 }}
-            onPress={() =>
+            onPress={() => {
               currentAccount?.address &&
-              syncRemoteTokens(currentAccount?.address)
-            }
+                batchQueryTokensWithLocalCache({
+                  user_id: currentAccount?.address,
+                });
+            }}
           />
           <Button
             title={'Fetch Assets Info'}
