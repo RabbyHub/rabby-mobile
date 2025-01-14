@@ -52,7 +52,7 @@ const TxChangeItem = ({
 
   return (
     <View style={styles.item}>
-      {isNft ? (
+      {/* {isNft ? (
         <Media
           failedPlaceholder={<IconDefaultNFT width={14} height={14} />}
           type={token?.content_type}
@@ -71,7 +71,7 @@ const TxChangeItem = ({
         />
       ) : (
         <RcIconUnknown width={14} height={14} />
-      )}
+      )} */}
 
       <Text
         style={[tokenChangeStyle, styles.tokenChangeDelta]}
@@ -81,7 +81,7 @@ const TxChangeItem = ({
       </Text>
       <TokenLabel
         isForMultipleAdderss={isForMultipleAdderss}
-        disableClickToken={!canClickToken}
+        disableClickToken={true}
         style={[tokenChangeStyle, styles.tokenLabel]}
         {...(isNft
           ? { token: token as NFTItem, isNft }
@@ -107,10 +107,9 @@ export const TxChange = ({
   const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.container, style]}>
-      {data?.sends?.map(item => (
+      {data?.receives?.map(item => (
         <TxChangeItem
           isForMultipleAdderss={isForMultipleAdderss}
-          isSend
           canClickToken={canClickToken}
           key={item.token_id}
           data={data}
@@ -118,9 +117,10 @@ export const TxChange = ({
           item={item}
         />
       ))}
-      {data?.receives?.map(item => (
+      {data?.sends?.map(item => (
         <TxChangeItem
           isForMultipleAdderss={isForMultipleAdderss}
+          isSend
           canClickToken={canClickToken}
           key={item.token_id}
           data={data}
