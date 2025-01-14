@@ -1,13 +1,30 @@
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+
 const DECIMALS_INT_RATIO = 18;
 
 export const columnConverter = {
   numberToString(num?: number | string) {
-    if (num === undefined) return '';
+    if (num === undefined) {
+      return '';
+    }
     return num.toString();
   },
 
+  jsonObjToString(obj: any) {
+    if (!obj) {
+      return '';
+    }
+    return JSON.stringify(obj);
+  },
+
+  jsonStringToObj(str: string) {
+    return safeParseJSON(str);
+  },
+
   stringToNumber(str?: string, isFloat?: boolean) {
-    if (!str) return 0;
+    if (!str) {
+      return 0;
+    }
 
     const num = isFloat ? parseFloat(str) : parseInt(str);
 
@@ -19,7 +36,9 @@ export const columnConverter = {
   },
 
   decimalsToInteger(decimals?: number | string) {
-    if (!decimals) return 0;
+    if (!decimals) {
+      return 0;
+    }
     if (typeof decimals === 'string') {
       decimals = parseInt(decimals);
     }
@@ -32,7 +51,9 @@ export const columnConverter = {
   },
 
   intToDecimals(int?: number | string) {
-    if (!int) return 0;
+    if (!int) {
+      return 0;
+    }
     if (typeof int === 'string') {
       int = parseInt(int);
     }

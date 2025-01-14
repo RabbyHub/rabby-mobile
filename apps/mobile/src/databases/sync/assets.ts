@@ -5,6 +5,8 @@ import { batchQueryTokens } from '@/screens/Home/utils/token';
 import { type EntityAddressAssetBase } from '../entities/base';
 import { TokenItemEntity } from '../entities/tokenitem';
 import { prepareAppDataSource } from '../orm';
+import { HistoryItemEntity } from '../entities/historyItem';
+import { openapi } from '@/core/request';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -149,4 +151,60 @@ export async function syncRemoteTokens(address: string) {
     address,
     tokenList: tokenRes,
   };
+}
+
+export async function syncRemoteHistory(address: string) {
+  try {
+    const res = await openapi.listTxHisotry({
+      id: address,
+      start_time: 0,
+      page_count: 1000,
+      chain_id: undefined,
+      token_id: undefined,
+    });
+
+    console.debug(
+      'syncRemoteHistory res.history_list.length',
+      res.history_list.length,
+    );
+
+    const historyItems = res.history_list.map(raw => {
+      const item = new HistoryItemEntity();
+      HistoryItemEntity.fillEntity(item, address, raw);
+
+      return item;
+    });
+    await prepareAppDataSource();
+    // // leave here for debug save
+    // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
+    //   console.error('TokenItemEntity.save err', err);
+    //   throw err;
+    // });
+    console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction');
+    await batchSaveWithPQueueAndTransaction(
+      HistoryItemEntity.getRepository(),
+      historyItems,
+      {
+        key: address,
+        batchSize: 100,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+      },
+    )
+      .then(() => {
+        console.debug('batch upsert tasks created');
+      })
+      .catch(error => {
+        console.error('Batch upsert failed:', error);
+      });
+
+    console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
+    return {
+      address,
+      res,
+      history_list: res.history_list,
+    };
+  } catch (e) {
+    console.error('syncRemoteHistory', e);
+  }
 }
