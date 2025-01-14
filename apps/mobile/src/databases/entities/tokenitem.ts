@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, realTransformer } from './_helpers';
+import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 
 @Entity('tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -163,5 +164,20 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
   static async batchQueryTokens(address: string) {
     return this.getRepository().findBy({ address });
+  }
+
+  static async isExpired(address: string) {
+    const repo = this.getRepository();
+    const result = await repo
+      .createQueryBuilder('tokenitem')
+      .select('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
+      .where('tokenitem.address = :address', { address })
+      .getRawOne();
+
+    if (!result.minUpdatedAt) {
+      return true;
+    }
+    const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
+    return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
 }

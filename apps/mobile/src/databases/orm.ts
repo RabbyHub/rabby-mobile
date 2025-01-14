@@ -8,7 +8,8 @@ const dbOptions: DataSourceOptions = {
   type: 'react-native',
   database: 'rabby-app.db',
   location: 'default',
-  logging: ['error', 'query', 'schema'],
+  // logging: ['error', 'query', 'schema'],
+  logging: [],
   synchronize: false,
   driver: SQLite,
   entityPrefix: 'rabby_',
@@ -16,6 +17,8 @@ const dbOptions: DataSourceOptions = {
   maxQueryExecutionTime: 10000,
 };
 const appDataSource = new DataSource({ ...dbOptions });
+
+SQLite.DEBUG(false);
 
 const appDataSourceInitRef = {
   current: null as null | Promise<DataSource>,

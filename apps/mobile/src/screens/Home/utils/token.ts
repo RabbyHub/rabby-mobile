@@ -10,6 +10,9 @@ import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
+import { syncRemoteTokens } from '@/databases/sync/assets';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { runOnJS } from 'react-native-reanimated';
 
 export const queryTokensCache = async (user_id: string, isTestnet = false) => {
   return requestOpenApiWithChainId(
@@ -25,6 +28,10 @@ export const batchQueryTokens = async (
   chainId?: string,
   isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
 ) => {
+  console.log(
+    '🔍 CUSTOM_LOGGER:=>: batchQueryTokens true get )',
+    user_id.slice(-8),
+  );
   if (!chainId && !isTestnet) {
     const usedChains = await openapi.usedChainList(user_id);
     const chainIdList = usedChains.map(item => item.id);
@@ -48,6 +55,37 @@ export const batchQueryTokens = async (
       isTestnet,
     },
   );
+};
+
+export const batchQueryTokensWithLocalCache = async (
+  params: {
+    user_id: string;
+    chainId?: string;
+    isTestnet?: boolean;
+  },
+  force?: boolean,
+) => {
+  const {
+    user_id,
+    chainId,
+    isTestnet = !chainId ? false : checkIsTestnet(chainId),
+  } = params;
+  if (!chainId && !isTestnet) {
+    const isExpired = await TokenItemEntity.isExpired(user_id);
+    console.log('🔍 CUSTOM_LOGGER:=>: isExpired)', isExpired);
+    if (force || isExpired) {
+      const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
+      runOnJS(syncRemoteTokens)(user_id, tokens);
+      return tokens;
+    } else {
+      console.log(
+        '🔍 CUSTOM_LOGGER:=>: batchQueryTokens cached from local db',
+        user_id.slice(-8),
+      );
+      return TokenItemEntity.batchQueryTokens(user_id);
+    }
+  }
+  return batchQueryTokens(user_id, chainId, isTestnet);
 };
 
 export const batchQueryHistoryTokens = async (

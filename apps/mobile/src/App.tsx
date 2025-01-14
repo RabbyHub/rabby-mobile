@@ -32,7 +32,6 @@ import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
 import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { useCurrentAccountOnAppTop } from './hooks/account';
 import { useDetectLanguage } from './hooks/lang';
-import { useSyncAssetsOnBoot } from './databases/hooks/assets';
 
 const rneuiTheme = createTheme({
   lightColors: {

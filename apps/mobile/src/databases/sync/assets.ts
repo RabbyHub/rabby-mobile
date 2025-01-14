@@ -7,6 +7,7 @@ import { TokenItemEntity } from '../entities/tokenitem';
 import { prepareAppDataSource } from '../orm';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -113,10 +114,8 @@ async function batchSaveWithPQueueAndTransaction<
   console.debug(`${loggerPrefix}All batches have been processed.`);
 }
 
-export async function syncRemoteTokens(address: string) {
-  const tokenRes = await batchQueryTokens(address);
-
-  const tokenItems = tokenRes.map(raw => {
+export async function syncRemoteTokens(address: string, tokens: TokenItem[]) {
+  const tokenItems = tokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, address, raw);
 
@@ -146,11 +145,6 @@ export async function syncRemoteTokens(address: string) {
     .catch(error => {
       console.error('Batch upsert failed:', error);
     });
-
-  return {
-    address,
-    tokenList: tokenRes,
-  };
 }
 
 export async function syncRemoteHistory(address: string) {
