@@ -28,10 +28,7 @@ export const batchQueryTokens = async (
   chainId?: string,
   isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
 ) => {
-  console.log(
-    '🔍 CUSTOM_LOGGER:=>: batchQueryTokens true get )',
-    user_id.slice(-4),
-  );
+  console.log('🔍 CUSTOM_LOGGER:=>: fetch token', user_id.slice(-4));
   if (!chainId && !isTestnet) {
     const usedChains = await openapi.usedChainList(user_id);
     const chainIdList = usedChains.map(item => item.id);
@@ -72,7 +69,7 @@ export const batchQueryTokensWithLocalCache = async (
   } = params;
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
-    console.log('🔍 CUSTOM_LOGGER:=> token: isExpired)', isExpired);
+    console.log('🔍 CUSTOM_LOGGER:=>isExpired token:', isExpired);
     if (force || isExpired) {
       const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
       runOnJS(syncRemoteTokens)(user_id, tokens);

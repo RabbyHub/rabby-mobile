@@ -4,6 +4,7 @@ import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { jsonTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
+import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 
 @Entity('portocolitem')
 export class PortocolItemEntity extends EntityAddressAssetBase {
@@ -77,10 +78,12 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   }
 
   static async batchQueryPortocols(address: string) {
-    return (await this.getRepository().findBy({ address })).map(i => ({
-      ...i,
-      portfolio_item_list: JSON.parse(i.portfolio_item_list || '{}'),
-    }));
+    return (await this.getRepository().findBy({ address }))
+      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
+      .map(i => ({
+        ...i,
+        portfolio_item_list: JSON.parse(i.portfolio_item_list || '{}'),
+      }));
   }
 
   static async isExpired(address: string) {
@@ -96,5 +99,8 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     }
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
+  }
+  static async deleteForAddress(address: string) {
+    return this.getRepository().delete({ address });
   }
 }

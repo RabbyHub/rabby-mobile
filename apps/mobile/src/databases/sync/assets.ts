@@ -12,7 +12,12 @@ import {
   NFTItem,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { PortocolItemEntity } from '../entities/portfolios';
+import { PortocolItemEntity } from '../entities/portocolItem';
+import {
+  EMPTY_NFT_ITEM,
+  EMPTY_PROTOCOL_ITEM,
+  EMPTY_TOKEN_ITEM,
+} from '@/constant/assets';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -120,6 +125,9 @@ async function batchSaveWithPQueueAndTransaction<
 }
 
 export async function syncRemoteTokens(address: string, tokens: TokenItem[]) {
+  if (tokens.length === 0) {
+    tokens.push(EMPTY_TOKEN_ITEM);
+  }
   const tokenItems = tokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, address, raw);
@@ -129,11 +137,7 @@ export async function syncRemoteTokens(address: string, tokens: TokenItem[]) {
 
   await prepareAppDataSource();
 
-  // // leave here for debug save
-  // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
-  //   console.error('TokenItemEntity.save err', err);
-  //   throw err;
-  // });
+  await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(
     TokenItemEntity.getRepository(),
     tokenItems,
@@ -209,6 +213,9 @@ export async function syncRemoteHistory(address: string) {
 }
 
 export async function syncRemoteNFTs(address: string, nfts: NFTItem[]) {
+  if (nfts.length === 0) {
+    nfts.push(EMPTY_NFT_ITEM);
+  }
   const nftItems = nfts.map(raw => {
     const nftItem = new NFTItemEntity();
     NFTItemEntity.fillEntity(nftItem, address, raw);
@@ -217,7 +224,7 @@ export async function syncRemoteNFTs(address: string, nfts: NFTItem[]) {
   });
 
   await prepareAppDataSource();
-
+  await NFTItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(
     NFTItemEntity.getRepository(),
     nftItems,
@@ -240,6 +247,9 @@ export async function syncRemotePortocols(
   address: string,
   protocals: ComplexProtocol[],
 ) {
+  if (protocals.length === 0) {
+    protocals.push(EMPTY_PROTOCOL_ITEM);
+  }
   const items = protocals.map(raw => {
     const protocalItem = new PortocolItemEntity();
     PortocolItemEntity.fillEntity(protocalItem, address, raw);
@@ -248,7 +258,7 @@ export async function syncRemotePortocols(
   });
 
   await prepareAppDataSource();
-
+  await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(
     PortocolItemEntity.getRepository(),
     items,

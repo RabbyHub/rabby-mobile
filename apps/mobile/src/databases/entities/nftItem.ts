@@ -4,6 +4,7 @@ import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { realTransformer, jsonTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
+import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 
 @Entity('nftitem')
 export class NFTItemEntity extends EntityAddressAssetBase {
@@ -135,11 +136,17 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   }
 
   static async batchQueryNFTs(address: string) {
-    return (await this.getRepository().findBy({ address })).map(i => ({
-      ...i,
-      collection: JSON.parse(i.collection || '{}'),
-      pay_token: JSON.parse(i.pay_token || '{}'),
-    }));
+    return (
+      await this.getRepository().findBy({
+        address,
+      })
+    )
+      .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
+      .map(i => ({
+        ...i,
+        collection: JSON.parse(i.collection || '{}'),
+        pay_token: JSON.parse(i.pay_token || '{}'),
+      }));
   }
 
   static async isExpired(address: string) {
@@ -155,5 +162,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     }
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
+  }
+  static async deleteForAddress(address: string) {
+    return this.getRepository().delete({ address });
   }
 }

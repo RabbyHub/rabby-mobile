@@ -3,15 +3,15 @@ import { DataSource, DataSourceOptions } from 'typeorm/browser';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { HistoryItemEntity } from './entities/historyItem';
-import { PortocolItemEntity } from './entities/portfolios';
+import { PortocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
   database: 'rabby-app.db',
   location: 'default',
-  // logging: ['error', 'query', 'schema'],
-  logging: [],
+  logging: ['error'],
+  // logging: [],
   synchronize: true,
   driver: SQLite,
   entityPrefix: 'rabby_',
