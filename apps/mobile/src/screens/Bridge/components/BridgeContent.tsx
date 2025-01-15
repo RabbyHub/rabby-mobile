@@ -444,6 +444,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const handleBridge = useMemoizedFn(async () => {
     if (
       !toToken?.low_credit_score &&
+      !toToken?.is_scam &&
+      toToken?.is_verified &&
       [
         KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
