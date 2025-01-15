@@ -505,7 +505,6 @@ export function OpenedDappWebViewStub() {
         })}
         {openedDappItems.length > 0 && activeDapp && (
           <AccountSwitcherModalInDappWebView
-            forScene="@ActiveDappWebViewModal"
             activeDappId={finalActiveDappId}
             __IS_IN_SHEET_MODAL__
           />

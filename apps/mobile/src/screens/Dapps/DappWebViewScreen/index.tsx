@@ -252,10 +252,7 @@ export function DappWebViewStubScreen() {
           );
         })}
         {openedDappItems.length > 0 && activeDapp && (
-          <AccountSwitcherModalInDappWebView
-            forScene="@ActiveDappWebViewModal"
-            activeDappId={finalActiveDappId}
-          />
+          <AccountSwitcherModalInDappWebView activeDappId={finalActiveDappId} />
         )}
       </AutoLockView>
     </View>
