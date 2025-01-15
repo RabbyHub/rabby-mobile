@@ -2,6 +2,7 @@ import { PortfolioProject } from '../types';
 import { pQueue, DisplayedProject } from './project';
 import { getTokenHistoryPrice } from './price';
 import { openapi, testOpenapi } from '@/core/request';
+import { PortocolItemEntity } from '@/databases/entities/portfolios';
 
 export const snapshot2Display = (projects?: PortfolioProject[]) => {
   if (!projects) {
@@ -63,6 +64,20 @@ export const loadPortfolioSnapshot = (userAddr: string) => {
   return pQueue.add(() => {
     return openapi.getComplexProtocolList(userAddr);
   });
+};
+
+export const getCachedPortfolios = async (
+  userAddr: string,
+  force?: boolean,
+) => {
+  if (force) {
+    return false;
+  }
+  const isExpired = await PortocolItemEntity.isExpired(userAddr);
+  if (isExpired) {
+    return false;
+  }
+  return PortocolItemEntity.batchQueryPortocols(userAddr);
 };
 
 export const loadTestnetPortfolioSnapshot = (userAddr: string) => {

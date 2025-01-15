@@ -42,6 +42,9 @@ import {
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
 import { batchQueryNFTsWithLocalCache } from '../Home/utils/nft';
+import { PortocolItemEntity } from '@/databases/entities/portfolios';
+import { syncRemotePortocols } from '@/databases/sync/assets';
+import { runOnJS } from 'react-native-reanimated';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
@@ -115,20 +118,31 @@ export const useAssets = (filterText?: string) => {
       return;
     }
     let projectDict: Record<string, DisplayedProject> | null = {};
+    const isExpired = await PortocolItemEntity.isExpired(address);
 
-    const snapshotRes = await loadPortfolioSnapshot(address);
+    let snapshotRes;
+    console.log('🔍 CUSTOM_LOGGER:=>: loadDefi)', isExpired, address.slice(-4));
+    if (isExpired) {
+      snapshotRes = await loadPortfolioSnapshot(address);
+    } else {
+      snapshotRes = await PortocolItemEntity.batchQueryPortocols(address);
+    }
     const { list, netWorth: snapshotNetWorth } = snapshot2Display(
       snapshotRes || [],
     );
     const snapshotData = Object.values(list)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
-    const tokenSetting = await preferenceService.getUserTokenSettings();
 
+    const tokenSetting = await preferenceService.getUserTokenSettings();
     updatePortfolios({
       address,
       newPortfolios: tagProfiles(snapshotData, tokenSetting),
     });
+    if (!isExpired) {
+      return;
+    }
+
     const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
       snapshotData,
       snapshotNetWorth,
@@ -144,13 +158,15 @@ export const useAssets = (filterText?: string) => {
 
     await Promise.all(
       chunkIds.map(async ids => {
-        const projectListRes = await batchLoadProjects(address, ids);
-
-        const projects = projectListRes;
+        const projects = await batchLoadProjects(address, ids);
 
         if (!projects?.length) {
           return;
         }
+        runOnJS(syncRemotePortocols)(
+          address,
+          projects.filter(x => !!x),
+        );
 
         projects.forEach(project => {
           if (projectDict) {
@@ -222,7 +238,7 @@ export const useAssets = (filterText?: string) => {
             });
           } catch (error) {
             console.error(
-              `Error fetching data for ${account.address.slice(-8)}:`,
+              `Error fetching data for ${account.address.slice(-4)}:`,
               error,
             );
           }

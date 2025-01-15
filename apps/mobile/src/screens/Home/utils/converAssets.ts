@@ -39,7 +39,7 @@ export const getTotalFoldToken = (tokens?: AbstractPortfolioToken[]) => {
 
 export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
   let tokensTotalValue = 0;
-  portfolios.forEach(portfolio => {
+  portfolios?.forEach(portfolio => {
     // portfolio._isExcludeBalance
     tokensTotalValue += portfolio._isExcludeBalance
       ? 0

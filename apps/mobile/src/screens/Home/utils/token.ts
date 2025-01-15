@@ -30,7 +30,7 @@ export const batchQueryTokens = async (
 ) => {
   console.log(
     '🔍 CUSTOM_LOGGER:=>: batchQueryTokens true get )',
-    user_id.slice(-8),
+    user_id.slice(-4),
   );
   if (!chainId && !isTestnet) {
     const usedChains = await openapi.usedChainList(user_id);
@@ -78,10 +78,6 @@ export const batchQueryTokensWithLocalCache = async (
       runOnJS(syncRemoteTokens)(user_id, tokens);
       return tokens;
     } else {
-      console.log(
-        '🔍 CUSTOM_LOGGER:=>: batchQueryTokens cached from local db',
-        user_id.slice(-8),
-      );
       return TokenItemEntity.batchQueryTokens(user_id);
     }
   }
