@@ -7,7 +7,12 @@ import { NFTItemEntity } from '../entities/nftItem';
 import { prepareAppDataSource } from '../orm';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
-import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  ComplexProtocol,
+  NFTItem,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { PortocolItemEntity } from '../entities/portfolios';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -216,6 +221,37 @@ export async function syncRemoteNFTs(address: string, nfts: NFTItem[]) {
   await batchSaveWithPQueueAndTransaction(
     NFTItemEntity.getRepository(),
     nftItems,
+    {
+      key: address,
+      batchSize: 100,
+      concurrency: 1,
+      delayBetweenTasks: 1.5 * 1e3,
+    },
+  )
+    .then(() => {
+      console.debug('batch upsert tasks created');
+    })
+    .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+}
+
+export async function syncRemotePortocols(
+  address: string,
+  protocals: ComplexProtocol[],
+) {
+  const items = protocals.map(raw => {
+    const protocalItem = new PortocolItemEntity();
+    PortocolItemEntity.fillEntity(protocalItem, address, raw);
+
+    return protocalItem;
+  });
+
+  await prepareAppDataSource();
+
+  await batchSaveWithPQueueAndTransaction(
+    PortocolItemEntity.getRepository(),
+    items,
     {
       key: address,
       batchSize: 100,

@@ -2,8 +2,9 @@ import { DataSource, DataSourceOptions } from 'typeorm/browser';
 
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
-import { SQLite } from '@/core/databases/exports';
 import { HistoryItemEntity } from './entities/historyItem';
+import { PortocolItemEntity } from './entities/portfolios';
+import { SQLite } from '@/core/databases/exports';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -14,7 +15,12 @@ const dbOptions: DataSourceOptions = {
   synchronize: true,
   driver: SQLite,
   entityPrefix: 'rabby_',
-  entities: [TokenItemEntity, NFTItemEntity, HistoryItemEntity],
+  entities: [
+    TokenItemEntity,
+    NFTItemEntity,
+    HistoryItemEntity,
+    PortocolItemEntity,
+  ],
   maxQueryExecutionTime: 10000,
 };
 const appDataSource = new DataSource({ ...dbOptions });

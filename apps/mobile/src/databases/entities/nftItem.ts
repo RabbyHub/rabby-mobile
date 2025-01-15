@@ -135,7 +135,11 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   }
 
   static async batchQueryNFTs(address: string) {
-    return this.getRepository().findBy({ address });
+    return (await this.getRepository().findBy({ address })).map(i => ({
+      ...i,
+      collection: JSON.parse(i.collection || '{}'),
+      pay_token: JSON.parse(i.pay_token || '{}'),
+    }));
   }
 
   static async isExpired(address: string) {
