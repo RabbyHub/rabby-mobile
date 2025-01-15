@@ -2,7 +2,7 @@ import { PortfolioProject } from '../types';
 import { pQueue, DisplayedProject } from './project';
 import { getTokenHistoryPrice } from './price';
 import { openapi, testOpenapi } from '@/core/request';
-import { PortocolItemEntity } from '@/databases/entities/portfolios';
+import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 
 export const snapshot2Display = (projects?: PortfolioProject[]) => {
   if (!projects) {

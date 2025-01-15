@@ -19,7 +19,7 @@ import {
   tagTokenList,
 } from '../Home/utils/token';
 import { preferenceService } from '@/core/services';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { ComplexProtocol, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { filterDisplayToken } from '../Home/hooks/token';
 import {
   batchLoadProjects,
@@ -42,7 +42,7 @@ import {
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
 import { batchQueryNFTsWithLocalCache } from '../Home/utils/nft';
-import { PortocolItemEntity } from '@/databases/entities/portfolios';
+import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncRemotePortocols } from '@/databases/sync/assets';
 import { runOnJS } from 'react-native-reanimated';
 
@@ -121,7 +121,11 @@ export const useAssets = (filterText?: string) => {
     const isExpired = await PortocolItemEntity.isExpired(address);
 
     let snapshotRes;
-    console.log('🔍 CUSTOM_LOGGER:=>: loadDefi)', isExpired, address.slice(-4));
+    console.log(
+      '🔍 CUSTOM_LOGGER:=>isExpired defi',
+      isExpired,
+      address.slice(-4),
+    );
     if (isExpired) {
       snapshotRes = await loadPortfolioSnapshot(address);
     } else {
@@ -156,6 +160,8 @@ export const useAssets = (filterText?: string) => {
 
     let realtimeData: DisplayedProject[] = [];
 
+    console.log('🔍 CUSTOM_LOGGER:=>: fetch protocol', address.slice(-4));
+    const protocols: ComplexProtocol[] = [];
     await Promise.all(
       chunkIds.map(async ids => {
         const projects = await batchLoadProjects(address, ids);
@@ -163,10 +169,7 @@ export const useAssets = (filterText?: string) => {
         if (!projects?.length) {
           return;
         }
-        runOnJS(syncRemotePortocols)(
-          address,
-          projects.filter(x => !!x),
-        );
+        protocols.push(...projects.filter(i => !!i));
 
         projects.forEach(project => {
           if (projectDict) {
@@ -177,6 +180,7 @@ export const useAssets = (filterText?: string) => {
         });
       }),
     );
+    runOnJS(syncRemotePortocols)(address, protocols);
 
     realtimeData = Object.values(projectDict)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),

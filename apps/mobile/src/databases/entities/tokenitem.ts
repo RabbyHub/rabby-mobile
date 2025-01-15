@@ -1,16 +1,10 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  JoinTable,
-  ManyToOne,
-} from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, realTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
+import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 
 @Entity('tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -107,7 +101,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return (this._db_id = `${this.address}-${[
       this.id,
       this.chain,
-      this.id,
       this.inner_id || '',
     ]
       .filter(Boolean)
@@ -163,7 +156,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   }
 
   static async batchQueryTokens(address: string) {
-    return this.getRepository().findBy({ address });
+    return (await this.getRepository().findBy({ address })).filter(
+      i => i.id !== EMPTY_TOKEN_ITEM_ID,
+    );
   }
 
   static async isExpired(address: string) {
@@ -179,5 +174,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     }
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
+  }
+  static async deleteForAddress(address: string) {
+    return this.getRepository().delete({ address });
   }
 }
