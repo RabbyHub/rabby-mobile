@@ -28,6 +28,7 @@ import {
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
+import { preferenceService } from '@/core/services';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -159,7 +160,10 @@ export function useDappWebViewScreen() {
       globalSetActiveDappState({ dappOrigin: origin });
       _setActiveDappOrigin(origin);
 
-      if (!origin) inactivate();
+      if (!origin) {
+        preferenceService.toggleAllowNotifyAccountsChanged(false);
+        inactivate();
+      }
     },
     [_setActiveDappOrigin, inactivate],
   );
@@ -350,12 +354,13 @@ export function useDappWebViewScreen() {
         setActiveDappOrigin(item.origin);
       }
 
+      preferenceService.toggleAllowNotifyAccountsChanged(true);
       activate(dapps[item.origin]);
 
       const routeName = getLatestNavigationName();
       const needRedirect =
         routeName && routeName !== RootNames.DappWebViewStubOnHome;
-      if (needRedirect)
+      if (needRedirect) {
         /**
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
@@ -364,6 +369,7 @@ export function useDappWebViewScreen() {
           screen: RootNames.DappWebViewStubOnHome,
           params: { dappsWebViewFromRoute },
         });
+      }
 
       return true;
     },

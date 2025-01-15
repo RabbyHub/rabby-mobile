@@ -182,6 +182,8 @@ export class PreferenceService {
   sessionService: import('./session').SessionService;
   // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
 
+  private _allowedToNotifyAccountsChanged = false;
+
   constructor(
     options: StorageAdapaterOptions & {
       keyringService: KeyringService;
@@ -347,17 +349,33 @@ export class PreferenceService {
     };
   };
 
+  toggleAllowNotifyAccountsChanged(allowed: boolean = false) {
+    this._allowedToNotifyAccountsChanged = allowed;
+  }
+
+  _notifyAccountsChanged(account: Account, doNotify: boolean = true) {
+    if (this._allowedToNotifyAccountsChanged && doNotify) {
+      this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
+        account.address.toLowerCase(),
+      ]);
+      console.debug(
+        '[PreferenceService::_notifyAccountsChanged] notify accountsChanged event',
+        account,
+      );
+    } else if (__DEV__ && doNotify && !this._allowedToNotifyAccountsChanged) {
+      console.error(
+        `[PreferenceService::_notifyAccountsChanged] You're trying to notify accountsChanged event, but it's not allowed now!`,
+      );
+    }
+  }
+
   setCurrentAccount = (
     account: Account | null,
     options?: SetCurrentAccountOptions,
   ) => {
     this.store.currentAccount = account;
     if (account) {
-      if (options?.needSyncToSession) {
-        this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
-          account.address.toLowerCase(),
-        ]);
-      }
+      this._notifyAccountsChanged(account, options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
     }
   };
