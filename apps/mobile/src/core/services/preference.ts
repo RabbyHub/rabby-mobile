@@ -172,6 +172,10 @@ const defaultAddressSortStore: AddressSortStore = {
   sortType: 'usd',
 };
 
+export type SetCurrentAccountOptions = {
+  needSyncToSession?: boolean;
+};
+
 export class PreferenceService {
   store!: PreferenceStore;
   keyringService: KeyringService;
@@ -343,12 +347,17 @@ export class PreferenceService {
     };
   };
 
-  setCurrentAccount = (account: Account | null) => {
+  setCurrentAccount = (
+    account: Account | null,
+    options?: SetCurrentAccountOptions,
+  ) => {
     this.store.currentAccount = account;
     if (account) {
-      this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
-        account.address.toLowerCase(),
-      ]);
+      if (options?.needSyncToSession) {
+        this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
+          account.address.toLowerCase(),
+        ]);
+      }
       appServiceEvents.emit('currentAccountChanged', account);
     }
   };
@@ -369,7 +378,7 @@ export class PreferenceService {
     this.store.lastUsedAccount = account;
   };
 
-  activateLastUsedAccount = async () => {
+  activateLastUsedAccount = async (options?: SetCurrentAccountOptions) => {
     const prevAccount = this.getCurrentAccount();
 
     if (prevAccount) {
@@ -378,7 +387,7 @@ export class PreferenceService {
 
     const account = await this.getLastUsedAccount();
     // console.debug('[LastUsedAccount] activate', account);
-    this.setCurrentAccount(account);
+    this.setCurrentAccount(account, options);
   };
 
   inactivateLastUsedAccount = () => {

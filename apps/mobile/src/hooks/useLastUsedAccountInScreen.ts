@@ -24,7 +24,9 @@ export const useLastUsedAccountInScreen = (options?: {
   }, [switchAccount]);
 
   const activate = React.useCallback(async () => {
-    preferenceService.activateLastUsedAccount().then(doSwitchAccount);
+    preferenceService
+      .activateLastUsedAccount({ needSyncToSession: false })
+      .then(doSwitchAccount);
   }, [doSwitchAccount]);
 
   const inactivate = React.useCallback(() => {
