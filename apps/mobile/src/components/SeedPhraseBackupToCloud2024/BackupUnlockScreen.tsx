@@ -3,9 +3,9 @@ import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, Keyboard } from 'react-native';
+import { Text, View } from 'react-native';
 import { BackupIcon } from './BackupIcon';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
@@ -46,11 +46,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
-    padding: 24,
+    paddingTop: 24,
+    paddingHorizontal: 20,
     height: '100%',
-    position: 'relative',
     display: 'flex',
-    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   inputWrapper: {
     width: '100%',
@@ -58,8 +58,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     width: '100%',
-    position: 'absolute',
-    bottom: 56,
+    marginTop: 20,
+    paddingBottom: 56,
   },
   inputStyle: {
     borderWidth: 0,
@@ -81,28 +81,6 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
   const { isCorrectPassword } = useCreateAddressProc();
-
-  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardVisible(false);
-      },
-    );
-
-    return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
-    };
-  }, []);
 
   const handleConfirm = React.useCallback(async () => {
     if (!password) {
@@ -142,6 +120,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
               value: password,
               secureTextEntry: true,
               inputMode: 'text',
+              returnKeyType: 'done',
               placeholderTextColor: colors2024['neutral-foot'],
               onChangeText: v => {
                 setPassword(v);
@@ -154,19 +133,17 @@ export const BackupUnlockScreen: React.FC<Props> = ({
           />
         </View>
       </View>
-      {!keyboardVisible && (
-        <Button
-          disabled={!password}
-          containerStyle={styles.btnContainer}
-          buttonStyle={{
-            borderRadius: 100,
-          }}
-          type="primary"
-          loading={loading}
-          title={t('page.nextComponent.createNewAddress.Confirm')}
-          onPress={handleConfirm}
-        />
-      )}
+      <Button
+        disabled={!password}
+        containerStyle={styles.btnContainer}
+        buttonStyle={{
+          borderRadius: 100,
+        }}
+        type="primary"
+        loading={loading}
+        title={t('page.nextComponent.createNewAddress.Confirm')}
+        onPress={handleConfirm}
+      />
     </View>
   );
 };
