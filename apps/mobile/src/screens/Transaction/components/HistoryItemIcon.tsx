@@ -30,6 +30,7 @@ export enum HistoryItemCateType {
   Bridge = 'bridge',
   Swap = 'swap',
   Contract = 'contract',
+  UnKnown = 'interaction',
   Cancel = 'cancel',
 }
 
@@ -39,6 +40,7 @@ interface ItemIconProps {
   token?: TokenItem | TokenItem[];
   isNft?: boolean;
   style?: StyleProp<ImageStyle>;
+  isInDetail?: boolean;
 }
 
 export const HistoryItemIcon = ({
@@ -46,14 +48,22 @@ export const HistoryItemIcon = ({
   type,
   token,
   isNft,
+  isInDetail,
 }: ItemIconProps) => {
   const RcSingleTokenBrIcon = useMemo(() => {
-    const IconApprove = <RcIconApproval style={[styles.iconBR]} />;
-    const IconSend = <RcIconSend style={[styles.iconBR]} />;
-    const IconRecieve = (
-      <RcIconReceive style={[styles.iconBR]} width={20} height={20} />
+    const size = isInDetail ? 24 : 20;
+    const IconApprove = (
+      <RcIconApproval width={size} height={size} style={[styles.iconBR]} />
     );
-    const IconRevoke = <RcIconRevoke style={[styles.iconBR]} />;
+    const IconSend = (
+      <RcIconSend width={size} height={size} style={[styles.iconBR]} />
+    );
+    const IconRecieve = (
+      <RcIconReceive style={[styles.iconBR]} width={size} height={size} />
+    );
+    const IconRevoke = (
+      <RcIconRevoke width={size} height={size} style={[styles.iconBR]} />
+    );
 
     return {
       [HistoryItemCateType.Approve]: IconApprove,
@@ -61,7 +71,7 @@ export const HistoryItemIcon = ({
       [HistoryItemCateType.Recieve]: IconRecieve,
       [HistoryItemCateType.Revoke]: IconRevoke,
     };
-  }, []);
+  }, [isInDetail]);
 
   // if (iconUri) {
   switch (type) {
@@ -69,11 +79,14 @@ export const HistoryItemIcon = ({
     case HistoryItemCateType.Approve:
     case HistoryItemCateType.Recieve:
       const singeToken = token as TokenItem;
+      const singleSize = isInDetail ? 58 : 46;
       return (
-        <View style={[styles.imageBox]}>
+        <View style={[styles.imageBox, isInDetail && styles.imageBoxInDetail]}>
           {isNft ? (
             <Media
-              failedPlaceholder={<IconDefaultNFT width={46} height={46} />}
+              failedPlaceholder={
+                <IconDefaultNFT width={singleSize} height={singleSize} />
+              }
               type="image_url"
               src={
                 singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
@@ -81,12 +94,12 @@ export const HistoryItemIcon = ({
               thumbnail={
                 singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
               }
-              mediaStyle={styles.media}
-              style={styles.media}
+              mediaStyle={isInDetail ? styles.mediaInDetail : styles.media}
+              style={isInDetail ? styles.mediaInDetail : styles.media}
               playIconSize={14}
             />
           ) : (
-            <AssetAvatar logo={singeToken?.logo_url} size={46} />
+            <AssetAvatar logo={singeToken?.logo_url} size={singleSize} />
           )}
           {RcSingleTokenBrIcon[type]}
         </View>
@@ -133,6 +146,11 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
   },
+  mediaInDetail: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+  },
   media: {
     width: 46,
     height: 46,
@@ -148,6 +166,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
     left: 12,
     top: 12,
+  },
+  imageBoxInDetail: {
+    width: 58,
+    height: 58,
   },
   imageBox: {
     width: 46,

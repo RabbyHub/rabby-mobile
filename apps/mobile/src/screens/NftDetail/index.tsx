@@ -193,7 +193,7 @@ export const NFTDetailScreen = () => {
         </View>
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
           {/* {token?.name} */}
-          {ellipsisOverflowedText(token?.name, 20)}
+          {ellipsisOverflowedText(token?.name || t('global.unknownNFT'), 20)}
         </Text>
       </View>
     );

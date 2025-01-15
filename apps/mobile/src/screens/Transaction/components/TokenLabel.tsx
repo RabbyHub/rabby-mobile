@@ -14,6 +14,7 @@ import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { View } from 'react-native-reanimated/lib/typescript/Animated';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 export default function TokenLabel({
   token,
@@ -45,7 +46,7 @@ export default function TokenLabel({
 
   return (
     <Text style={style} numberOfLines={1} ellipsizeMode="tail">
-      {symbolName}
+      {ellipsisOverflowedText(symbolName, 6)}
     </Text>
   );
 }

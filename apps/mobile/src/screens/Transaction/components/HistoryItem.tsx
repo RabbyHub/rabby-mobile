@@ -3,7 +3,13 @@ import { numberWithCommasIsLtOne } from '@/utils/number';
 import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { TxChange } from './TokenChange';
 import { TxId } from './TxId';
 import { TxInterAddressExplain } from './TxInterAddressExplain';
@@ -15,6 +21,9 @@ import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import { strings } from '@/utils/i18n';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
+import { getHistoryItemType } from './utils';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -37,10 +46,7 @@ export const HistoryItem = React.memo(
     const { styles } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
-      return data?.cate_id
-        ? (data?.cate_id as HistoryItemCateType)
-        : (data.tx?.name as HistoryItemCateType) ||
-            HistoryItemCateType.Contract;
+      return getHistoryItemType(data);
     }, [data]);
 
     const { formatToken, isNft } = useMemo(() => {
@@ -95,6 +101,8 @@ export const HistoryItem = React.memo(
           return strings('page.transactions.itemTitle.Contract');
         case HistoryItemCateType.Cancel:
           return strings('page.transactions.itemTitle.Cancel');
+        case HistoryItemCateType.UnKnown:
+          return strings('page.transactions.itemTitle.Default');
         default:
           return data.tx?.name
             ? ellipsisOverflowedText(data.tx?.name, 15)
@@ -105,10 +113,13 @@ export const HistoryItem = React.memo(
     const formatDescribe = useMemo(() => {
       const FromText = strings('page.swap.from') + ' ';
       const ToText = strings('page.swap.to') + ' ';
+      const projectName = data?.project_id
+        ? projectDict[data?.project_id]?.name
+        : '';
 
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return chainItem?.name;
+          return projectName || chainItem?.name;
 
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
@@ -121,7 +132,7 @@ export const HistoryItem = React.memo(
             (getAliasName(addr) || ellipsisAddress(addr))
           );
         case HistoryItemCateType.Approve:
-          return ToText + chainItem?.name;
+          return ToText + (projectName || chainItem?.name);
         case HistoryItemCateType.Revoke:
         case HistoryItemCateType.Contract:
           return FromText + chainItem?.name;
@@ -130,17 +141,30 @@ export const HistoryItem = React.memo(
         default:
           return strings('page.activities.signedTx.common.unknown');
       }
-    }, [formatType, data, chainItem]);
+    }, [formatType, data, chainItem, projectDict]);
+
+    const navigation = useRabbyAppNavigation();
+    const hanldeNavigateDetail = useCallback(() => {
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.HistoryDetail,
+        params: {
+          isForMultipleAdderss,
+          data,
+          title: formatTitle,
+        },
+      });
+    }, [isForMultipleAdderss, navigation, data, formatTitle]);
 
     return (
-      <View
-        style={[
-          styles.card,
-          style,
-          // isFailed || isScam ? styles.cardGray : null,
-        ]}>
-        <View style={styles.cardBody}>
-          {/* <TxInterAddressExplain
+      <TouchableOpacity onPress={hanldeNavigateDetail}>
+        <View
+          style={[
+            styles.card,
+            style,
+            // isFailed || isScam ? styles.cardGray : null,
+          ]}>
+          <View style={styles.cardBody}>
+            {/* <TxInterAddressExplain
             style={[
               styles.txInterAddressExplain,
               data?.cate_id === 'approve' &&
@@ -152,31 +176,32 @@ export const HistoryItem = React.memo(
             cateDict={cateDict}
             isScam={isScam}
           /> */}
-          <View style={styles.leftContent}>
-            <HistoryItemIcon
-              type={formatType as HistoryItemCateType}
-              token={formatToken}
-              isNft={isNft}
-            />
-            <View style={styles.textBox}>
-              <Text style={styles.titleText} numberOfLines={1}>
-                {formatTitle}
-              </Text>
-              <Text style={styles.describeText} numberOfLines={1}>
-                {formatDescribe}
-              </Text>
+            <View style={styles.leftContent}>
+              <HistoryItemIcon
+                type={formatType as HistoryItemCateType}
+                token={formatToken}
+                isNft={isNft}
+              />
+              <View style={styles.textBox}>
+                <Text style={styles.titleText} numberOfLines={1}>
+                  {formatTitle}
+                </Text>
+                <Text style={styles.describeText} numberOfLines={1}>
+                  {formatDescribe}
+                </Text>
+              </View>
             </View>
+            <TxChange
+              type={formatType as HistoryItemCateType}
+              isForMultipleAdderss={isForMultipleAdderss}
+              style={styles.txChange}
+              data={data}
+              tokenDict={tokenDict}
+              canClickToken
+            />
           </View>
-          <TxChange
-            isForMultipleAdderss={isForMultipleAdderss}
-            style={styles.txChange}
-            data={data}
-            tokenDict={tokenDict}
-            canClickToken
-          />
-        </View>
 
-        {/* {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
+          {/* {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
           <>
             <View style={styles.divider} />
             <View style={styles.cardFooter}>
@@ -191,7 +216,8 @@ export const HistoryItem = React.memo(
             </View>
           </>
         ) : null} */}
-      </View>
+        </View>
+      </TouchableOpacity>
     );
   },
 );

@@ -108,6 +108,7 @@ export const RootNames = {
   Approvals: 'Approvals',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
+  HistoryDetail: 'HistoryDetail',
   MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
