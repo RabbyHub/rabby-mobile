@@ -49,7 +49,6 @@ type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
 /**
  * send personal message without rpcFlow
  * @param data
- * @param wallet
  * @param onProgress callback
  */
 export const sendPersonalMessage = async ({
