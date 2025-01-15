@@ -889,7 +889,7 @@ class ProviderController extends BaseController {
     data: {
       params: SignTypeDataParams;
     };
-    approvalRes: ApprovalRes;
+    approvalRes: Pick<ApprovalRes, 'extra'>;
   }) => {
     if (!data.params) return;
     const currentAccount = preferenceService.getCurrentAccount()!;
