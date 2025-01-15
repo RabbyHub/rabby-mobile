@@ -122,9 +122,9 @@ export const HistoryList = ({
               {formatTimestamp(item.data.time_at * 1000)}
             </Text>
           ) : null}
-          {item.isFirst && isForMultipleAdderss ? (
+          {/* {item.isFirst && isForMultipleAdderss ? (
             <AddressInfo account={item.data.account} />
-          ) : null}
+          ) : null} */}
           <HistoryItem
             data={item.data}
             isForMultipleAdderss={isForMultipleAdderss}
@@ -149,7 +149,7 @@ export const HistoryList = ({
       );
       return (
         <>
-          {item.isFirst ? <AddressInfo account={account} /> : null}
+          {/* {item.isFirst ? <AddressInfo account={account} /> : null} */}
           <TransactionItem
             data={item.data}
             canCancel={canCancel}
@@ -222,12 +222,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   date: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
-    // paddingLeft: 0,
+    paddingLeft: 8,
     marginTop: 12,
-    marginBottom: 20,
-    color: colors2024['neutral-title-1'],
-    lineHeight: 22,
+    marginBottom: 8,
+    color: colors2024['neutral-secondary'],
+    lineHeight: 18,
   },
 }));

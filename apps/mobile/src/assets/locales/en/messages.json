@@ -45,6 +45,23 @@
         "Cancel": "Cancel Pending Transction",
         "Default": "Interaction"
       },
+      "detail": {
+        "Succeeded": "Succeeded",
+        "Failed": "Failed",
+        "SendAgain": "Send Again",
+        "SwapAgain": "Swap Again",
+        "Unlimited": "Unlimited",
+        "Revoke": "Revoke",
+        "Date": "Date",
+        "Status": "Status",
+        "From": "From",
+        "To": "To",
+        "Chain": "Chain",
+        "GasFee": "Gas Fee",
+        "ViewOn": "View on",
+        "InteractedContract": "Interacted contract",
+        "RecipientAddress": "Recipient address"
+      },
       "empty": {
         "title": "No transactions",
         "desc": " No transactions found on <1>supported chains</1>"

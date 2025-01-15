@@ -54,7 +54,7 @@ import {
   useSyncHistoryOnBoot,
 } from '@/databases/hooks/history';
 
-const PAGE_COUNT = 50;
+const PAGE_COUNT = 20;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -150,7 +150,7 @@ function History({
         if (result.list.length < PAGE_COUNT) {
           hasMoreMap.current[addr] = false;
         } else {
-          hasMoreMap.current[addr] = false;
+          hasMoreMap.current[addr] = true;
         }
         lastMap.current[addr] = result.last || 0;
         list.push(
@@ -382,8 +382,9 @@ function History({
   }
 
   return (
-    <View style={{ paddingBottom: bottom, paddingTop: 24 }}>
-      {isTestnet || isInTokenDetail ? null : (
+    // eslint-disable-next-line react-native/no-inline-styles
+    <View style={{ paddingBottom: bottom, paddingTop: 0 }}>
+      {/* {isTestnet || isInTokenDetail ? null : (
         <TouchableOpacity
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
@@ -400,7 +401,7 @@ function History({
           <Text style={styles.linkText}>Hide scam transactions</Text>
           <RcIconRight />
         </TouchableOpacity>
-      )}
+      )} */}
       <HistoryList
         list={[...(groups || []), ...(displayList || [])]}
         localTxList={groups}

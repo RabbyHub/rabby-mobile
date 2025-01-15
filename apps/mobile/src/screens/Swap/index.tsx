@@ -98,6 +98,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     bestQuoteDex,
     chain,
     switchChain,
+    switchSwapAgain,
 
     payToken,
     setPayToken,
@@ -188,6 +189,8 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         chainEnum?: CHAINS_ENUM | undefined;
         tokenId?: TokenItem['id'];
         type?: 'Buy' | 'Sell';
+        swapAgain?: boolean;
+        swapTokenId?: TokenItem['id'][];
       }
     | undefined;
 
@@ -198,6 +201,16 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
 
     const isBuy = navState?.type === 'Buy';
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
+
+    if (navState.swapAgain) {
+      switchSwapAgain(
+        chainItem?.enum || CHAINS_ENUM.ETH,
+        navState?.swapTokenId?.[0]!,
+        navState?.swapTokenId?.[1]!,
+      );
+      return;
+    }
+
     switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
       payTokenId: navState?.tokenId,
       changeTo: isBuy,

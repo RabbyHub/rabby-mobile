@@ -176,3 +176,23 @@ export function formatTimestamp(timestamp: number) {
 
   return `${month} ${day}, ${year}`;
 }
+
+export function formatIntlTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+
+  const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short', // "Dec"
+    day: 'numeric', // "13"
+    year: 'numeric', // "2004"
+  });
+  const datePart = dateFormatter.format(date);
+
+  const timeFormatter = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true, // 12 小时制
+  });
+  const timePart = timeFormatter.format(date);
+
+  return `${datePart} at ${timePart}`;
+}
