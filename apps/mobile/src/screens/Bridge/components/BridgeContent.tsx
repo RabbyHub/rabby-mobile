@@ -445,7 +445,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     if (
       !toToken?.low_credit_score &&
       !toToken?.is_scam &&
-      toToken?.is_verified &&
+      toToken?.is_verified !== false &&
       [
         KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
