@@ -1,36 +1,19 @@
-import {
-  combinedTokensAtom,
-  combinedDefiAtom,
-  combinedNFTAtom,
-  updateTokensAtom,
-  updatePortfoliosAtom,
-  updateNFTsAtom,
-  lastUpdateTimeAtom,
-} from '@/screens/Home/hooks/store';
+import { useAssetsMap } from '@/screens/Home/hooks/store';
 import { useSafeState } from '@/hooks/useSafeState';
-import { useAtom } from 'jotai';
 import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../Home/utils/project';
 import { AbstractPortfolioToken } from '../Home/types';
 import {
-  batchQueryTokensWithLocalCache,
   setWalletTokens,
   sortWalletTokens,
   tagTokenList,
 } from '../Home/utils/token';
 import { preferenceService } from '@/core/services';
-import { ComplexProtocol, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { filterDisplayToken } from '../Home/hooks/token';
-import {
-  batchLoadProjects,
-  loadPortfolioSnapshot,
-  portfolio2Display,
-  snapshot2Display,
-} from '../Home/utils/portfolio';
+import { portfolio2Display } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { useMyAccounts } from '@/hooks/account';
-import { chunk } from 'lodash';
-import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useMemo, useRef, useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
@@ -41,10 +24,7 @@ import {
 } from './useSearch';
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
-import { batchQueryNFTsWithLocalCache } from '../Home/utils/nft';
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
-import { syncRemotePortocols } from '@/databases/sync/assets';
-import { runOnJS } from 'react-native-reanimated';
+import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
@@ -53,15 +33,16 @@ export const useAssets = (filterText?: string) => {
   });
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
+  const {
+    tokens,
+    portfolios,
+    nftList,
+    updateNFTs,
+    updatePortfolios,
+    updateTokens,
+  } = useAssetsMap();
+  console.log('🔍 CUSTOM_LOGGER:=>: tokens)', tokens.length);
 
-  const [getUpdateTime, updateUpdateTime] = useAtom(lastUpdateTimeAtom);
-
-  const [tokens] = useAtom(combinedTokensAtom);
-  const [portfolios] = useAtom(combinedDefiAtom);
-  const [nftList] = useAtom(combinedNFTAtom);
-  const [, updateTokens] = useAtom(updateTokensAtom);
-  const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
-  const [, updateNftList] = useAtom(updateNFTsAtom);
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const abortRef = useRef(false);
   const loadToken = async (address: string, force?: boolean) => {
@@ -89,12 +70,7 @@ export const useAssets = (filterText?: string) => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
 
-    const tokenRes = await batchQueryTokensWithLocalCache(
-      {
-        user_id: address,
-      },
-      force,
-    );
+    const tokenRes = await syncTokens(address, force);
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {
@@ -121,73 +97,18 @@ export const useAssets = (filterText?: string) => {
       return;
     }
     let projectDict: Record<string, DisplayedProject> | null = {};
-    const isExpired = force || (await PortocolItemEntity.isExpired(address));
-
-    let snapshotRes;
-    console.log(
-      '🔍 CUSTOM_LOGGER:=>isExpired defi',
-      isExpired,
-      address.slice(-4),
-    );
-    if (isExpired) {
-      snapshotRes = await loadPortfolioSnapshot(address);
-    } else {
-      snapshotRes = await PortocolItemEntity.batchQueryPortocols(address);
-    }
-    const { list, netWorth: snapshotNetWorth } = snapshot2Display(
-      snapshotRes || [],
-    );
-    const snapshotData = Object.values(list)?.sort(
-      (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-    );
-
-    const tokenSetting = await preferenceService.getUserTokenSettings();
-    updatePortfolios({
-      address,
-      newPortfolios: tagProfiles(snapshotData, tokenSetting),
-    });
-    if (!isExpired) {
-      return;
-    }
-
-    const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
-      snapshotData,
-      snapshotNetWorth,
-    );
-
-    const realtimeIds = hasExpandSwitch
-      ? snapshotData.slice(0, thresholdIndex).map(x => x.id)
-      : snapshotRes?.map(x => x.id) || [];
-
-    const chunkIds = chunk(realtimeIds, 5);
-
-    let realtimeData: DisplayedProject[] = [];
-
-    console.log('🔍 CUSTOM_LOGGER:=>: fetch protocol', address.slice(-4));
-    const protocols: ComplexProtocol[] = [];
-    await Promise.all(
-      chunkIds.map(async ids => {
-        const projects = await batchLoadProjects(address, ids);
-
-        if (!projects?.length) {
-          return;
-        }
-        protocols.push(...projects.filter(i => !!i));
-
-        projects.forEach(project => {
-          if (projectDict) {
-            projectDict = produce(projectDict, draft => {
-              project && portfolio2Display(project, draft);
-            });
-          }
+    const protocols = await syncProtocols(address, force);
+    protocols.forEach(project => {
+      if (projectDict) {
+        projectDict = produce(projectDict, draft => {
+          project && portfolio2Display(project, draft);
         });
-      }),
-    );
-    runOnJS(syncRemotePortocols)(address, protocols);
-
-    realtimeData = Object.values(projectDict)?.sort(
+      }
+    });
+    const realtimeData = Object.values(projectDict)?.sort(
       (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
     );
+    const tokenSetting = await preferenceService.getUserTokenSettings();
     updatePortfolios({
       address,
       newPortfolios: tagProfiles(realtimeData, tokenSetting),
@@ -196,17 +117,10 @@ export const useAssets = (filterText?: string) => {
 
   const loadNFT = async (address: string, force?: boolean) => {
     try {
-      const nfts = await batchQueryNFTsWithLocalCache(
-        {
-          id: address,
-          isAll: true,
-          sortByCredit: true,
-        },
-        force,
-      );
+      const nfts = await syncNFTs(address, force);
       const tokenSetting = await preferenceService.getUserTokenSettings();
 
-      updateNftList({
+      updateNFTs({
         address,
         newNFTs: tagNfts(nfts, tokenSetting),
       });
@@ -219,12 +133,15 @@ export const useAssets = (filterText?: string) => {
     abortRef.current = true;
   };
 
-  const initFetchTop10Assets = async (force?: boolean) => {
+  const getCacheTop10Assets = async (force?: boolean) => {
     const top10Account = sortedAccounts.slice(0, 10);
+    const addresses = [
+      ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+    ];
     setLoading(true);
     try {
       await handleFetchTokens();
-      for (const account of top10Account) {
+      for (const address of addresses) {
         if (abortRef.current) {
           console.log('🔍 CUSTOM_LOGGER:=>: Fetching interrupted.');
           setLoading(false);
@@ -232,29 +149,17 @@ export const useAssets = (filterText?: string) => {
           break;
         }
 
-        const lastUpdateTime = getUpdateTime(account.address) || 0;
-        const currentTime = Date.now();
-
-        if (force || currentTime - lastUpdateTime >= 10 * 60 * 1000) {
-          try {
-            await Promise.all([
-              loadToken(account.address),
-              loadDefi(account.address),
-              loadNFT(account.address),
-            ]);
-            await updateUpdateTime({
-              address: account.address,
-              newLastUpdateTime: Date.now(),
-            });
-          } catch (error) {
-            console.error(
-              `Error fetching data for ${account.address.slice(-4)}:`,
-              error,
-            );
-          }
+        try {
+          await Promise.all([
+            loadToken(address, force),
+            loadDefi(address, force),
+            loadNFT(address, force),
+          ]);
+        } catch (error) {
+          console.error(`Error fetching data for ${address.slice(-4)}:`, error);
         }
-        await new Promise(resolve => setTimeout(resolve, 0));
       }
+      await new Promise(resolve => setTimeout(resolve, 0));
     } finally {
       setLoading(false);
       setIsFirstFetch(false);
@@ -279,7 +184,7 @@ export const useAssets = (filterText?: string) => {
     nftList: fNftList,
     isLoading,
     hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
-    initFetchTop10Assets,
+    getCacheTop10Assets,
     interrupt,
     refreshing: !!isLoading && !isFirstFetch,
   };

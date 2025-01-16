@@ -1,12 +1,13 @@
-import { openapi } from '@/core/request';
 import { useCallback, useEffect, useState } from 'react';
-import { useNFTsAtom } from './store';
 import { DisplayNftItem } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
+import { useSafeState } from 'ahooks';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { syncNFTs } from '@/databases/hooks/assets';
 
 export const tagNfts = (
-  nfts: DisplayNftItem[],
+  nfts: NFTItem[],
   tokenSetting: ITokenSetting,
 ): DisplayNftItem[] => {
   const { foldNfts, unfoldNfts } = tokenSetting;
@@ -37,33 +38,30 @@ export const tagNfts = (
 };
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [list, setList] = useNFTsAtom(addr);
+  const [list, setList] = useSafeState<DisplayNftItem[]>([]);
 
   const fetchData = useCallback(
-    async (id: string) => {
+    async (force?: boolean) => {
+      if (!addr) {
+        return;
+      }
       try {
         setIsLoading(true);
-        const ntfs = await openapi.listNFT(id, true, true);
+        const nfts = await syncNFTs(addr, force);
         const tokenSetting = await preferenceService.getUserTokenSettings();
-        setList(tagNfts(ntfs, tokenSetting));
+        setList(tagNfts(nfts, tokenSetting));
       } catch (e) {
         console.error(e);
       } finally {
         setIsLoading(false);
       }
     },
-    [setList],
+    [addr, setList],
   );
-
-  const reload = async () => {
-    if (addr) {
-      await fetchData(addr);
-    }
-  };
 
   useEffect(() => {
     if (addr && visible) {
-      fetchData(addr);
+      fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addr, visible]);
@@ -71,6 +69,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
   return {
     isLoading,
     list: list || [],
-    reload,
+    reload: fetchData,
   };
 };
