@@ -61,6 +61,7 @@ export const batchQueryTokensWithLocalCache = async (
     isTestnet?: boolean;
   },
   force?: boolean,
+  onlySync?: boolean,
 ) => {
   const {
     user_id,
@@ -81,7 +82,7 @@ export const batchQueryTokensWithLocalCache = async (
       runOnJS(syncRemoteTokens)(user_id, tokens);
       return tokens;
     } else {
-      return TokenItemEntity.batchQueryTokens(user_id);
+      return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
     }
   }
   return batchQueryTokens(user_id, chainId, isTestnet);

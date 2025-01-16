@@ -107,6 +107,7 @@ const TokenSelect = forwardRef<
       tokenSelectorVisible,
       updateNonce,
       queryConds.chainServerId,
+      true,
     );
 
     const { value: swapTokenList, loading: swapTokenListLoading } =

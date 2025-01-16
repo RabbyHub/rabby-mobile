@@ -20,6 +20,7 @@ import { IAssets, useAssetsMap } from './store';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
 import { tagNfts } from './nft';
 import { syncTokens } from '@/databases/hooks/assets';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
@@ -43,6 +44,7 @@ export const useTokens = (
   visible = true,
   updateNonce = 0,
   chainServerId?: string,
+  _force?: boolean,
 ) => {
   const abortProcess = useRef<AbortController>();
   const [isLoading, setLoading] = useSafeState(false);
@@ -54,7 +56,7 @@ export const useTokens = (
 
   useEffect(() => {
     if (updateNonce !== 0) {
-      loadProcess();
+      loadProcess(_force);
     }
     return () => {
       abortProcess.current?.abort();
@@ -75,7 +77,7 @@ export const useTokens = (
           abortProcess.current?.abort();
           userAddrRef.current = userAddr;
           chainIdRef.current = chainServerId;
-          loadProcess();
+          loadProcess(_force);
         }
       });
     }
@@ -110,42 +112,30 @@ export const useTokens = (
     });
 
     let _tokens: AbstractPortfolioToken[] = [];
-    // const snapshot = await queryTokensCache(userAddr, isTestnet);
 
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
+    if ((await TokenItemEntity.isExpired(userAddr)) || force) {
+      const snapshot = await queryTokensCache(userAddr);
+      if (snapshot?.length) {
+        const chainTokens = snapshot.reduce((m, n) => {
+          m[n.chain] = m[n.chain] || [];
+          m[n.chain].push(n);
 
-    // TODO: tmp delete fetch cache
-    // if (currentAbort.signal.aborted || !snapshot) {
-    //   log('--Terminate-tokens-snapshot-', userAddr);
-    //   setLoading(false);
-    //   return;
-    // }
+          return m;
+        }, {} as Record<string, TokenItem[]>);
+        _data = produce(_data, draft => {
+          setWalletTokens(draft, chainTokens);
+        });
 
-    // if (snapshot?.length) {
-    //   const chainTokens = snapshot.reduce((m, n) => {
-    //     m[n.chain] = m[n.chain] || [];
-    //     m[n.chain].push(n);
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-    //     return m;
-    //   }, {} as Record<string, TokenItem[]>);
-    //   _data = produce(_data, draft => {
-    //     setWalletTokens(draft, chainTokens);
-    //   });
-
-    //   _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
-
-    //   setMainnetTokens(filterDisplayToken(_tokens));
-    //   setLoading(false);
-    // }
+        setMainnetTokens(filterDisplayToken(_tokens));
+        setLoading(false);
+      }
+    }
 
     const tokenRes = await syncTokens(userAddr, force);
-
-    // if (currentAbort.signal.aborted || !tokenRes) {
-    //   log('--Terminate-tokens-', userAddr);
-    //   setLoading(false);
-    //   return;
-    // }
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {
