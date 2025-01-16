@@ -1,5 +1,5 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, SectionList, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -35,7 +35,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     tokens,
     portfolios,
     nftList,
-    initFetchTop10Assets,
+    getCacheTop10Assets,
     refreshing,
     isLoading,
   } = useAssets(filterText);
@@ -187,6 +187,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     }),
     [],
   );
+  useEffect(() => {
+    getCacheTop10Assets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const ListEmptyComponent = useMemo(() => {
     return isLoading ? <PositionLoader /> : null;
@@ -221,7 +225,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={() => {
-            initFetchTop10Assets(true);
+            getCacheTop10Assets(true);
           }}
           refreshing={refreshing}
         />

@@ -1,21 +1,9 @@
 import { AssetAvatar, Text } from '@/components';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import type {
-  CombineDefiItem,
-  CombineTokensItem,
-} from '@/screens/Home/hooks/store';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '@/screens/Home/types';
-import { ellipsisAddress } from '@/utils/address';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import { AbstractPortfolio, AbstractProject } from '@/screens/Home/types';
+import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconRightCC } from '@/assets/icons/common';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

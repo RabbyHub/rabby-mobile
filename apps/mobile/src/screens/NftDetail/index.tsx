@@ -17,7 +17,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
@@ -27,9 +26,7 @@ import {
   useCurrentAccount,
   useMyAccounts,
   KeyringAccountWithAlias,
-  useAccounts,
 } from '@/hooks/account';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
@@ -253,7 +250,8 @@ export const NFTDetailScreen = () => {
     [accounts, currentAccount, switchSceneCurrentAccount],
   );
 
-  const [asssest] = useAssetsMap();
+  // TODO: Search from db
+  const { assetsMap: asssest } = useAssetsMap();
   const itemList = useMemo(() => {
     const resList: {
       data: NFTItem;

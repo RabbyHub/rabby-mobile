@@ -1,12 +1,13 @@
 import { openapi } from '@/core/request';
 import { useCallback, useEffect, useState } from 'react';
-import { useNFTsAtom } from './store';
 import { DisplayNftItem } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
+import { useSafeState } from 'ahooks';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const tagNfts = (
-  nfts: DisplayNftItem[],
+  nfts: NFTItem[],
   tokenSetting: ITokenSetting,
 ): DisplayNftItem[] => {
   const { foldNfts, unfoldNfts } = tokenSetting;
@@ -37,7 +38,7 @@ export const tagNfts = (
 };
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [list, setList] = useNFTsAtom(addr);
+  const [list, setList] = useSafeState<DisplayNftItem[]>([]);
 
   const fetchData = useCallback(
     async (id: string) => {

@@ -15,7 +15,6 @@ import { DisplayedProject } from '../utils/project';
 import { produce } from '@/core/utils/produce';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
-import { usePortfoliosAtom } from './store';
 
 const chunkSize = 5;
 export const tagProfiles = (
@@ -78,7 +77,7 @@ export const usePortfolios = (
   visible = true,
   isTestnet = false,
 ) => {
-  const [data, setData] = usePortfoliosAtom(userAddr);
+  const [data, setData] = useSafeState<DisplayedProject[]>([]);
   const [hasValue, setHasValue] = useSafeState(false);
   const abortProcess = useRef<AbortController>();
   const [isLoading, setLoading] = useSafeState(false);

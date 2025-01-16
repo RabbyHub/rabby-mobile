@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  View,
-  ScrollView,
-  SectionList,
-  Keyboard,
-  RefreshControl,
-} from 'react-native';
+import { View, SectionList, RefreshControl } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
@@ -20,11 +14,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { toast } from '@/components2024/Toast';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '../Home/types';
+import { AbstractPortfolio, AbstractProject } from '../Home/types';
 import { useMemoizedFn } from 'ahooks';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { resetNavigationTo } from '@/hooks/navigation';
@@ -33,7 +23,6 @@ import { useRefreshTags } from '../Home/hooks/token';
 import { preferenceService } from '@/core/services';
 import {
   KeyringAccountWithAlias,
-  useAccounts,
   useCurrentAccount,
   useMyAccounts,
 } from '@/hooks/account';
@@ -41,8 +30,6 @@ import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAssetsMap } from '../Home/hooks/store';
-import { useSortAddressList } from '../Address/useSortAddressList';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { useAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
@@ -183,7 +170,6 @@ export const DeFiDetailScreen = () => {
     isSingleAddress?: boolean;
   };
 
-  // console.log('DefiDetail data:', JSON.stringify(data));
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
@@ -243,9 +229,10 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const [asssest] = useAssetsMap();
+  // TODO: Search from db
+  const { assetsMap: asssest } = useAssetsMap();
 
-  const { initFetchTop10Assets, refreshing } = useAssets();
+  const { getCacheTop10Assets, refreshing } = useAssets();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -379,7 +366,7 @@ export const DeFiDetailScreen = () => {
         refreshControl={
           <RefreshControl
             onRefresh={() => {
-              initFetchTop10Assets(true);
+              getCacheTop10Assets(true);
             }}
             refreshing={refreshing}
           />

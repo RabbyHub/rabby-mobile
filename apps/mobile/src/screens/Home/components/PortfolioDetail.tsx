@@ -247,7 +247,6 @@ export const TokenList = ({
     return result;
   }, [_fraction, _nfts, _tokens]);
 
-  // const { tokens: cacheAssets } = useAssets();
   const handleOpenTokenDetail = React.useCallback(
     (token: TokenItem) => {
       naviPush(RootNames.TokenDetail, {

@@ -70,7 +70,6 @@ import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { useAssetsMap } from './hooks/store';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ellipsisAddress } from '@/utils/address';
@@ -447,7 +446,6 @@ function MultiAddressHome(): JSX.Element {
     },
     [navigation, toggleUseAllAccountsOnScene],
   );
-  const [asssest] = useAssetsMap();
 
   const handleClickPinAccount = useCallback(
     (pinItem: KeyringAccountWithAlias) => {

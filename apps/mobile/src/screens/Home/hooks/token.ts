@@ -16,7 +16,7 @@ import {
 } from '../utils/token';
 import { log, tagProfiles } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
-import { IAssets, useAssetsMap, useTokensAtom } from './store';
+import { IAssets, useAssetsMap } from './store';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
 import { tagNfts } from './nft';
 const walletProject = new DisplayedProject({
@@ -46,7 +46,9 @@ export const useTokens = (
 ) => {
   const abortProcess = useRef<AbortController>();
   const [isLoading, setLoading] = useSafeState(false);
-  const [mainnetTokens, setMainnetTokens] = useTokensAtom(userAddr);
+  const [mainnetTokens, setMainnetTokens] = useSafeState<
+    AbstractPortfolioToken[]
+  >([]);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
 
@@ -172,7 +174,7 @@ export const useTokens = (
 };
 
 export const useRefreshTags = () => {
-  const [, setAssetsMap] = useAssetsMap();
+  const { setAssetsMap } = useAssetsMap();
   const { handleFetchTokens } = usePinTokens();
 
   const refreshTagToken = async () => {

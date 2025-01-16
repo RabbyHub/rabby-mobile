@@ -5,12 +5,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
+import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -43,16 +38,14 @@ import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { CombineTokensItem, useAssetsMap } from '../Home/hooks/store';
-import { DisplayedProject } from '../Home/utils/project';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import BigNumber from 'bignumber.js';
 import { RootStackParamsList } from '@/navigation-type';
 
@@ -204,7 +197,8 @@ export const TokenDetailScreen = () => {
     getStyle,
   });
 
-  const [asssest] = useAssetsMap();
+  // TODO: Search
+  const { assetsMap: asssest } = useAssetsMap();
   const { tokens: cacheAssets } = useAssets();
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio) {

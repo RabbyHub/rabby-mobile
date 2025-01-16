@@ -1,20 +1,14 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
-import { useLastUpdateTimeAtom } from './store';
 import { useSafeState } from '@/hooks/useSafeState';
 
 export const useQueryProjects = (
   userAddr: string | undefined,
   isTestnet = false,
 ) => {
-  const [lastUpdateTime, setLastUpdateTime] = useLastUpdateTimeAtom(userAddr);
   const [isLoading, setLoading] = useSafeState(false);
-
-  const shouldUseHistory = useMemo(() => {
-    return lastUpdateTime && Date.now() - lastUpdateTime < 10 * 60 * 1000;
-  }, [lastUpdateTime]);
 
   const { tokens, updateData: updateTokens } = useTokens(
     userAddr,
@@ -41,25 +35,17 @@ export const useQueryProjects = (
         console.error(error);
       } finally {
         setLoading(false);
-        setLastUpdateTime(Date.now());
       }
     }
-  }, [
-    isLoading,
-    setLoading,
-    updatePortfolio,
-    updateTokens,
-    reloadNftList,
-    setLastUpdateTime,
-  ]);
+  }, [isLoading, setLoading, updatePortfolio, updateTokens, reloadNftList]);
 
   useEffect(() => {
-    if (!shouldUseHistory && userAddr) {
+    if (userAddr) {
       refreshPositions();
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldUseHistory, userAddr]);
+  }, [userAddr]);
 
   return {
     refreshPositions,
@@ -68,7 +54,7 @@ export const useQueryProjects = (
     portfolios,
     nftList,
     loading: isLoading,
-    refreshing: !!isLoading && !!lastUpdateTime,
+    refreshing: !!isLoading,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
   };
 };
