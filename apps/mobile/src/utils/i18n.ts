@@ -102,3 +102,7 @@ i18n.on('languageChanged', function (lng: string) {
 });
 
 export default i18n;
+
+export function strings(...args: Parameters<typeof i18n.t>) {
+  return i18n.t(...args);
+}
