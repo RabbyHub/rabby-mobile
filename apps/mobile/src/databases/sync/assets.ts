@@ -4,7 +4,7 @@ import PQueue from 'p-queue';
 import { type EntityAddressAssetBase } from '../entities/base';
 import { TokenItemEntity } from '../entities/tokenitem';
 import { NFTItemEntity } from '../entities/nftItem';
-import { prepareAppDataSource } from '../orm';
+import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
 import {

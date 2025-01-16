@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, realTransformer } from './_helpers';
+import { prepareAppDataSource } from '../imports';
 
 @Entity('historyitem')
 export class HistoryItemEntity extends EntityAddressAssetBase {
@@ -91,10 +92,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static async getAllHistoryItem(address?: string) {
+    await prepareAppDataSource();
+
     return await this.getRepository().findBy({ address });
   }
 
   static async getCountOfAccount() {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
 
     const result = await repo
@@ -106,10 +111,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCount() {
+    await prepareAppDataSource();
+
     return this.getRepository().count();
   }
 
   static async getLatestTime(address: string) {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('historyitem')
@@ -125,10 +134,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static async batchQueryHistory(address: string) {
+    await prepareAppDataSource();
+
     return this.getRepository().findBy({ address });
   }
 
   static async deleteForAddress(address: string) {
+    await prepareAppDataSource();
+
     return this.getRepository().delete({ address });
   }
 }
