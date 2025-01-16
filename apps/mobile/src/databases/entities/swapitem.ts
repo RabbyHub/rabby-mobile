@@ -32,13 +32,13 @@ export class SwapItemEntity extends EntityAddressAssetBase {
   create_at: SwapItem['create_at'] = 0;
 
   makeDbId(): string {
-    return (this._db_id = `${this.address}-${[this.chain, this.tx_id]
+    return (this._db_id = `${this.owner_addr}-${[this.chain, this.tx_id]
       .filter(Boolean)
       .join('-')}`);
   }
 
-  static fillEntity(e: SwapItemEntity, address: string, input: SwapItem) {
-    e.address = address;
+  static fillEntity(e: SwapItemEntity, owner_addr: string, input: SwapItem) {
+    e.owner_addr = owner_addr;
     e.tx_id = input.tx_id;
     e.chain = input.chain;
     e.status = input.status;
@@ -47,10 +47,10 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  static async getAllHistoryItem(address?: string) {
+  static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
-    return await this.getRepository().findBy({ address });
+    return await this.getRepository().findBy({ owner_addr });
   }
 
   static async getCountOfAccount() {
@@ -60,7 +60,7 @@ export class SwapItemEntity extends EntityAddressAssetBase {
 
     const result = await repo
       .createQueryBuilder('swapitem')
-      .select('COUNT(DISTINCT (`address`))', 'uniqueChainAddressCount')
+      .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
     return result.uniqueChainAddressCount as number;
@@ -72,14 +72,14 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async getLatestTime(address: string) {
+  static async getLatestTime(owner_addr: string) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('swapitem')
       .select('MIN(swapitem.create_at)', 'minTimeAt')
-      .where('swapitem.address = :address', { address })
+      .where('swapitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
 
     if (!result.minTimeAt) {
@@ -89,15 +89,15 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     return result.minTimeAt;
   }
 
-  static async batchQueryHistory(address: string) {
+  static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().findBy({ address });
+    return this.getRepository().findBy({ owner_addr });
   }
 
-  static async deleteForAddress(address: string) {
+  static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().delete({ address });
+    return this.getRepository().delete({ owner_addr });
   }
 }
