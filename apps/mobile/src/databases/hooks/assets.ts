@@ -5,7 +5,7 @@ import { runOnJS } from 'react-native-reanimated';
 
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncRemotePortocols } from '@/databases/sync/assets';
-import { useMyAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
@@ -128,12 +128,12 @@ export const syncNFTs = async (address: string, force?: boolean) => {
   }
 };
 
-export const useSyncAssetsDB = () => {
+export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
+  // const { accounts } = useMyAccounts({
+  //   disableAutoFetch: true,
+  // });
+  // const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const abortRef = useRef(false);
 
