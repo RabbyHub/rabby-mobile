@@ -48,7 +48,11 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const syncTokens = async (address: string, force?: boolean) => {
+export const syncTokens = async (
+  address: string,
+  force?: boolean,
+  onlySync?: boolean,
+) => {
   if (!address) {
     return [];
   }
@@ -57,11 +61,16 @@ export const syncTokens = async (address: string, force?: boolean) => {
       user_id: address,
     },
     force,
+    onlySync,
   );
   return tokenRes || [];
 };
 
-export const syncProtocols = async (address: string, force?: boolean) => {
+export const syncProtocols = async (
+  address: string,
+  force?: boolean,
+  onlySync?: boolean,
+) => {
   if (!address) {
     return [];
   }
@@ -75,7 +84,7 @@ export const syncProtocols = async (address: string, force?: boolean) => {
   );
 
   if (!isExpired && !force) {
-    return PortocolItemEntity.batchQueryPortocols(address);
+    return onlySync ? [] : PortocolItemEntity.batchQueryPortocols(address);
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { list, netWorth: snapshotNetWorth } = snapshot2Display(
@@ -111,7 +120,11 @@ export const syncProtocols = async (address: string, force?: boolean) => {
   return protocols;
 };
 
-export const syncNFTs = async (address: string, force?: boolean) => {
+export const syncNFTs = async (
+  address: string,
+  force?: boolean,
+  onlySync?: boolean,
+) => {
   try {
     const nfts = await batchQueryNFTsWithLocalCache(
       {
@@ -120,6 +133,7 @@ export const syncNFTs = async (address: string, force?: boolean) => {
         sortByCredit: true,
       },
       force,
+      onlySync,
     );
     return nfts;
   } catch (e) {
@@ -154,9 +168,9 @@ export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
 
         try {
           await Promise.all([
-            syncTokens(address, force),
-            syncProtocols(address, force),
-            syncNFTs(address, force),
+            syncTokens(address, force, true),
+            syncProtocols(address, force, true),
+            syncNFTs(address, force, true),
           ]);
         } catch (error) {
           console.error(`Error fetching data for ${address.slice(-4)}:`, error);

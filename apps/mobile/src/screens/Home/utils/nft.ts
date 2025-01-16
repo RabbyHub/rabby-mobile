@@ -7,6 +7,7 @@ import { runOnJS } from 'react-native-reanimated';
 export const batchQueryNFTsWithLocalCache = async (
   params: { id: string; isAll?: boolean; sortByCredit?: boolean },
   force?: boolean,
+  onlySync?: boolean,
 ): Promise<NFTItem[]> => {
   const { id, isAll, sortByCredit } = params;
   if (isAll && sortByCredit) {
@@ -23,7 +24,7 @@ export const batchQueryNFTsWithLocalCache = async (
       runOnJS(syncRemoteNFTs)(id, nfts);
       return nfts;
     } else {
-      return NFTItemEntity.batchQueryNFTs(id);
+      return onlySync ? [] : NFTItemEntity.batchQueryNFTs(id);
     }
   }
   return openapi.listNFT(id, isAll, sortByCredit);

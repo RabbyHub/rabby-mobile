@@ -86,6 +86,7 @@ function useLoadTokenList({
     tokenSelectorVisible,
     updateNonce,
     chainServerId,
+    true,
   );
 
   const { loading: isSearchTestnetLoading, testnetTokenList } =
