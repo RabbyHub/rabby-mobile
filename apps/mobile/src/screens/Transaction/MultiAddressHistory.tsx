@@ -54,7 +54,7 @@ import {
   useSyncHistoryOnBoot,
 } from '@/databases/hooks/history';
 
-const PAGE_COUNT = 20;
+const PAGE_COUNT = 2000;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -145,7 +145,7 @@ function History({
               tokenItem.chain,
               tokenItem._tokenId,
             )
-          : await fetchData(addr, lastMap.current[addr] || 0);
+          : await fetchDataV2(addr, lastMap.current[addr] || 0);
 
         if (result.list.length < PAGE_COUNT) {
           hasMoreMap.current[addr] = false;
@@ -168,6 +168,59 @@ function History({
       await waitQueueFinished(queue);
     }
     return { list };
+  };
+
+  const fetchDataV2 = async (
+    address: string,
+    startTime = 0,
+  ): Promise<IFetchHistory> => {
+    if (isTestnet) {
+      return {
+        last: 0,
+        list: [],
+      };
+    }
+    if (!address) {
+      throw new Error('no account');
+    }
+
+    console.log('fetchDataV2', address, startTime);
+    const getHistory = openapi.getAllTxHistory;
+    try {
+      const res = await getHistory({
+        id: address,
+        start_time: startTime,
+      });
+
+      const {
+        project_dict,
+        cate_dict,
+        token_uuid_dict: token_dict,
+        history_list: list,
+      } = res;
+      const displayList = list
+        .map(item => ({
+          ...item,
+          projectDict: project_dict,
+          cateDict: cate_dict,
+          tokenDict: token_dict,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+
+      console.debug('fetchDataV2', displayList.length);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
+      };
+    } catch (e) {
+      toast.error(`${address} fetch failed, ${e}`);
+      return {
+        last: 0,
+        list: [],
+      };
+    }
   };
 
   const fetchData = async (

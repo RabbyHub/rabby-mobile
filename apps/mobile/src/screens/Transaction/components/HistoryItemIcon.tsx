@@ -77,6 +77,7 @@ export const HistoryItemIcon = ({
   switch (type) {
     case HistoryItemCateType.Send:
     case HistoryItemCateType.Approve:
+    case HistoryItemCateType.Revoke:
     case HistoryItemCateType.Recieve:
       const singeToken = token as TokenItem;
       const singleSize = isInDetail ? 58 : 46;
@@ -111,7 +112,7 @@ export const HistoryItemIcon = ({
       return (
         <View style={[styles.imageBox]}>
           <View style={[styles.fromTokenBox]}>
-            <AssetAvatar logo={doubleToken?.[0].logo_url} size={30} />
+            <AssetAvatar logo={doubleToken?.[0]?.logo_url} size={30} />
             {/* <FastImage
                 style={tokenFromStyle}
                 source={{
@@ -120,7 +121,7 @@ export const HistoryItemIcon = ({
               /> */}
           </View>
           <View style={[styles.toTokenBox]}>
-            <AssetAvatar logo={doubleToken?.[1].logo_url} size={32} />
+            <AssetAvatar logo={doubleToken?.[1]?.logo_url} size={32} />
             {/* <FastImage
                 style={tokenToStyle}
                 source={{

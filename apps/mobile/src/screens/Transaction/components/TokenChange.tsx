@@ -110,12 +110,14 @@ export const TxChange = ({
   canClickToken?: boolean;
 } & RNViewProps) => {
   const { styles } = useTheme2024({ getStyle });
-  const isApprove = type === HistoryItemCateType.Approve;
+  const isApprove =
+    type === HistoryItemCateType.Approve || type === HistoryItemCateType.Revoke;
   const singleAmount = data?.token_approve?.value;
-  const appvoveAmmountStr =
-    singleAmount && singleAmount < 1e9
+  const appvoveAmmountStr = singleAmount
+    ? singleAmount < 1e9
       ? numberWithCommasIsLtOne(singleAmount, 2)
-      : strings('page.transactions.detail.Unlimited');
+      : strings('page.transactions.detail.Unlimited')
+    : '';
   const tokenId = data?.token_approve?.token_id || '';
   const tokenUUID = `${data?.chain}_token:${tokenId}`;
   const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];

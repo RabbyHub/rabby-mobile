@@ -34,26 +34,29 @@ import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
-import { naviPush } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { Button } from '@/components2024/Button';
 import { strings } from '@/utils/i18n';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
-import { chain } from 'lodash';
 import { findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
+import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
+import { resetNavigationTo } from '@/hooks/navigation';
+import { HistoryDisplayItem } from '../MultiAddressHistory';
 
 interface ItemProps {
   status: number;
   tokenDict: Record<string, TokenItem | NFTItem>;
   className?: string;
   type: HistoryItemCateType;
-  isNft?: boolean;
+  chain: string;
   receives: TxDisplayItem['receives'];
   sends: TxDisplayItem['sends'];
   approve: TxDisplayItem['token_approve'];
+  data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
 }
 
@@ -61,9 +64,10 @@ export const HistoryBottomBtn = ({
   tokenDict,
   status,
   type,
-  isNft,
   sends,
+  data,
   approve,
+  chain,
   receives,
   isForMultipleAdderss = true,
 }: ItemProps) => {
@@ -76,6 +80,7 @@ export const HistoryBottomBtn = ({
 
   switch (type) {
     case HistoryItemCateType.Send: {
+      const isNft = sends[0]?.token_id?.length === 32;
       return isNft ? null : (
         <View style={styles.buttonContainer}>
           <Button
@@ -109,18 +114,42 @@ export const HistoryBottomBtn = ({
           : '';
       const tokenId = approve?.token_id || '';
       const tokenUUID = `${chain}_token:${tokenId}`;
+      const tokenIsNft = tokenId?.length === 32;
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
-      const name = isNft
+      const name = tokenIsNft
         ? strings('page.nft.title')
         : getTokenSymbol(singeToken as TokenItem);
 
-      return isNft ? null : (
+      return (
         <View style={styles.buttonContainer}>
           <Button
             buttonStyle={styles.ghostButton}
             titleStyle={styles.ghostTitle}
-            onPress={() => {
-              // todo revoke approve
+            onPress={async () => {
+              if (tokenIsNft) {
+                // ？ confrim revoke nft approve
+                await revokeNFTApprove(
+                  {
+                    chainServerId: chain,
+                    nftTokenId: tokenId,
+                    spender: approve?.spender!,
+                    contractId: (data.tx as any)?.id,
+                    abi: 'ERC721',
+                    isApprovedForAll: true,
+                  },
+                  {
+                    ga: { category: 'Security', source: 'tokenApproval' },
+                  },
+                );
+              } else {
+                await approveToken(chain, tokenId, approve?.spender!, 0, {
+                  ga: {
+                    category: 'Security',
+                    source: 'tokenApproval',
+                  },
+                });
+              }
+              resetNavigationTo(navigation, 'Home');
             }}
             type={'ghost'}
             title={`${strings(
@@ -136,11 +165,7 @@ export const HistoryBottomBtn = ({
         <View style={styles.buttonContainer}>
           <Button
             onPress={() => {
-              const sendToken = tokenDict[sends[0]?.token_id];
-              // const recieveToken = tokenDict[receives[0]?.token_id];
-              const chainItem = !sendToken?.chain
-                ? null
-                : findChainByServerID(sendToken?.chain);
+              const chainItem = !chain ? null : findChainByServerID(chain);
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss

@@ -43,7 +43,7 @@ import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { HistoryItemCateType } from './components/HistoryItemIcon';
 import { HistoryTokenList } from './components/HistoryTokenList';
-import { getHistoryItemType } from './components/utils';
+import { getApproveTokeName, getHistoryItemType } from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { strings } from '@/utils/i18n';
@@ -51,6 +51,7 @@ import { Button } from '@/components2024/Button';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
+import { format } from 'path';
 
 const TxStatusItem = ({
   status,
@@ -269,6 +270,46 @@ function HistoryDetailScreen(): JSX.Element {
     }
   }, [data]);
 
+  const isApproveOrRevoke = useMemo(() => {
+    return (
+      formatType === HistoryItemCateType.Approve ||
+      formatType === HistoryItemCateType.Revoke
+    );
+  }, [formatType]);
+
+  const ProjecRenderItem = useCallback(
+    (titleText: string) => {
+      return formatProject ? (
+        <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>{titleText}</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 4,
+              }}>
+              <AssetAvatar logo={formatProject?.logo_url} size={16} />
+              <Text style={[styles.itemContentText]}>
+                {formatProject?.name}
+              </Text>
+            </View>
+            <Text style={styles.itemAddressText}>
+              {ellipsisAddress(data?.tx?.id || '')}
+            </Text>
+          </View>
+        </View>
+      ) : null;
+    },
+    [
+      data,
+      styles.detailItem,
+      formatProject,
+      styles.itemAddressText,
+      styles.itemContentText,
+      styles.itemTitleText,
+    ],
+  );
+
   return (
     <NormalScreenContainer2024
       type="bg2"
@@ -278,11 +319,11 @@ function HistoryDetailScreen(): JSX.Element {
         paddingHorizontal: 16,
       }}>
       <HistoryTokenList
+        data={data}
         chain={data.chain}
         receives={data.receives}
         sends={data.sends}
         approve={data.token_approve}
-        isNft={isNft}
         type={formatType}
         token={formatToken}
         status={status}
@@ -305,6 +346,25 @@ function HistoryDetailScreen(): JSX.Element {
             <TxStatusItem status={status} withText={true} />
           </View>
         </View>
+        {isApproveOrRevoke &&
+          ProjecRenderItem(
+            formatType === HistoryItemCateType.Approve
+              ? strings('page.transactions.detail.ApproveTo')
+              : strings('page.transactions.detail.RevokeFrom'),
+          )}
+        {formatType === HistoryItemCateType.Approve && (
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {strings('page.transactions.detail.ApproveToken')}
+            </Text>
+            <Text style={styles.itemContentText}>
+              {data.token_approve?.value! < 1e9
+                ? data.token_approve?.value.toFixed(4)
+                : strings('page.transactions.detail.Unlimited')}{' '}
+              {getApproveTokeName(data)}
+            </Text>
+          </View>
+        )}
         {fromAddr && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
@@ -356,28 +416,10 @@ function HistoryDetailScreen(): JSX.Element {
             )} USD`}</Text>
           </View>
         )}
-        {Boolean(formatProject) && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.InteractedContract')}
-            </Text>
-            <View style={{ alignItems: 'flex-end' }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: 4,
-                }}>
-                <AssetAvatar logo={formatProject?.logo_url} size={16} />
-                <Text style={[styles.itemContentText]}>
-                  {formatProject?.name}
-                </Text>
-              </View>
-              <Text style={styles.itemAddressText}>
-                {ellipsisAddress(data?.tx?.id || '')}
-              </Text>
-            </View>
-          </View>
-        )}
+        {!isApproveOrRevoke &&
+          ProjecRenderItem(
+            strings('page.transactions.detail.InteractedContract'),
+          )}
         {
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>Hash</Text>
@@ -401,9 +443,10 @@ function HistoryDetailScreen(): JSX.Element {
         approve={data.token_approve}
         receives={data.receives}
         sends={data.sends}
-        isNft={isNft}
         type={formatType}
+        chain={data.chain}
         status={status}
+        data={data}
         tokenDict={data.tokenDict}
       />
     </NormalScreenContainer2024>
