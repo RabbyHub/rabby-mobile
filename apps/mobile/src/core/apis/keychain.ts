@@ -6,9 +6,10 @@ import { MMKV } from 'react-native-mmkv';
 import { appEncryptor } from '../services';
 import { strings } from '@/utils/i18n';
 import * as apisLock from './lock';
+import { MMKV_FILE_NAMES } from '../utils/appFS';
 
 const storage = new MMKV({
-  id: 'mmkv.keychain',
+  id: MMKV_FILE_NAMES.KEYCHAIN,
 });
 
 const KEYCHAIN_AUTH_TYPES_KEY = 'KEYCHAIN_AUTH_TYPES';
