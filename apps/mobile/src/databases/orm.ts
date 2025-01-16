@@ -12,6 +12,7 @@ const dbOptions: DataSourceOptions = {
   location: 'default',
   logging: ['error'],
   // logging: [],
+  // logger: 'file',
   synchronize: true,
   driver: SQLite,
   entityPrefix: 'rabby_',
@@ -36,8 +37,8 @@ export async function initializeAppDataSource() {
     appDataSourceInitRef.current = appDataSource.initialize();
     await appDataSourceInitRef.current;
     if (__DEV__) {
-      await appDataSource.dropDatabase();
-      await Promise.allSettled([TokenItemEntity.clear()]);
+      // await appDataSource.dropDatabase();
+      // await Promise.allSettled([TokenItemEntity.clear()]);
     }
 
     await appDataSource.synchronize();

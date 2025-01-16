@@ -64,7 +64,7 @@ export const useAssets = (filterText?: string) => {
   const [, updateNftList] = useAtom(updateNFTsAtom);
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const abortRef = useRef(false);
-  const loadToken = async (address: string) => {
+  const loadToken = async (address: string, force?: boolean) => {
     if (!address) {
       return;
     }
@@ -89,9 +89,12 @@ export const useAssets = (filterText?: string) => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
 
-    const tokenRes = await batchQueryTokensWithLocalCache({
-      user_id: address,
-    });
+    const tokenRes = await batchQueryTokensWithLocalCache(
+      {
+        user_id: address,
+      },
+      force,
+    );
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {
@@ -113,12 +116,12 @@ export const useAssets = (filterText?: string) => {
     });
   };
 
-  const loadDefi = async (address: string) => {
+  const loadDefi = async (address: string, force?: boolean) => {
     if (!address) {
       return;
     }
     let projectDict: Record<string, DisplayedProject> | null = {};
-    const isExpired = await PortocolItemEntity.isExpired(address);
+    const isExpired = force || (await PortocolItemEntity.isExpired(address));
 
     let snapshotRes;
     console.log(
@@ -191,13 +194,16 @@ export const useAssets = (filterText?: string) => {
     });
   };
 
-  const loadNFT = async (address: string) => {
+  const loadNFT = async (address: string, force?: boolean) => {
     try {
-      const nfts = await batchQueryNFTsWithLocalCache({
-        id: address,
-        isAll: true,
-        sortByCredit: true,
-      });
+      const nfts = await batchQueryNFTsWithLocalCache(
+        {
+          id: address,
+          isAll: true,
+          sortByCredit: true,
+        },
+        force,
+      );
       const tokenSetting = await preferenceService.getUserTokenSettings();
 
       updateNftList({

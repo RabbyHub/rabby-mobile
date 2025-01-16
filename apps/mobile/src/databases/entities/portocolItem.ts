@@ -93,7 +93,6 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .select('MIN(portocolitem._local_updated_at)', 'minUpdatedAt')
       .where('portocolitem.address = :address', { address })
       .getRawOne();
-
     if (!result.minUpdatedAt) {
       return true;
     }
