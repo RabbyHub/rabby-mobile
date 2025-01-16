@@ -9,6 +9,7 @@ import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
 import { APP_DB_PREFIX } from './constant';
 import { initializeAppDataSource } from './imports';
+import { SwapItemEntity } from './entities/swapitem';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -28,6 +29,7 @@ const dbOptions: DataSourceOptions = {
     TokenItemEntity,
     NFTItemEntity,
     HistoryItemEntity,
+    SwapItemEntity,
     PortocolItemEntity,
   ],
   maxQueryExecutionTime: 10000,

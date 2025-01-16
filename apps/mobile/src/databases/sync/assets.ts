@@ -10,6 +10,7 @@ import { openapi } from '@/core/request';
 import {
   ComplexProtocol,
   NFTItem,
+  SwapTradeList,
   TokenItem,
   TxAllHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -19,6 +20,7 @@ import {
   EMPTY_PROTOCOL_ITEM,
   EMPTY_TOKEN_ITEM,
 } from '@/constant/assets';
+import { SwapItemEntity } from '../entities/swapitem';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -195,6 +197,53 @@ export async function syncRemoteHistory(
       });
 
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
+    return {
+      address,
+      history_list: history_list,
+    };
+  } catch (e) {
+    console.error('syncRemoteHistory', e);
+  }
+}
+
+export async function syncRemoteSwapHistory(
+  address: string,
+  history_list: SwapTradeList['history_list'],
+) {
+  try {
+    console.debug('syncRemoteSwapHistory length', history_list.length);
+
+    const historyItems = history_list.map(raw => {
+      const item = new SwapItemEntity();
+      SwapItemEntity.fillEntity(item, address, raw);
+
+      return item;
+    });
+    await prepareAppDataSource();
+    // // leave here for debug save
+    // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
+    //   console.error('TokenItemEntity.save err', err);
+    //   throw err;
+    // });
+    console.debug('syncRemoteSwapHistory batchSaveWithPQueueAndTransaction');
+    await batchSaveWithPQueueAndTransaction(
+      SwapItemEntity.getRepository(),
+      historyItems,
+      {
+        key: address,
+        batchSize: 100,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+      },
+    )
+      .then(() => {
+        console.debug('batch upsert tasks created');
+      })
+      .catch(error => {
+        console.error('Batch upsert failed:', error);
+      });
+
+    console.debug('syncSwapHistory batchSaveWithPQueueAndTransaction done');
     return {
       address,
       history_list: history_list,

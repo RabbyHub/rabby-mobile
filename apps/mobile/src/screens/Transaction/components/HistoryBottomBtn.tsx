@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
-import { AssetAvatar } from '@/components';
+import { AssetAvatar, Tip } from '@/components';
 import {
   NFTItem,
   TokenItem,
@@ -35,11 +35,15 @@ interface ItemProps {
   sends: TxDisplayItem['sends'];
   approve: TxDisplayItem['token_approve'];
   data: HistoryDisplayItem;
+  currentApprove: number;
+  noRemainValue: boolean;
   isForMultipleAdderss?: boolean;
 }
 
 export const HistoryBottomBtn = ({
   tokenDict,
+  noRemainValue,
+  currentApprove,
   status,
   type,
   sends,
@@ -85,7 +89,7 @@ export const HistoryBottomBtn = ({
       );
     }
     case HistoryItemCateType.Approve:
-      const singleAmount = approve?.value;
+      const singleAmount = currentApprove || approve?.value;
       const revokeAmountStr =
         singleAmount && singleAmount < 1e9
           ? numberWithCommasIsLtOne(singleAmount, 2)
@@ -100,40 +104,53 @@ export const HistoryBottomBtn = ({
 
       return tokenIsNft ? null : (
         <View style={styles.buttonContainer}>
-          <Button
-            buttonStyle={styles.ghostButton}
-            titleStyle={styles.ghostTitle}
-            onPress={async () => {
-              if (tokenIsNft) {
-                // ？to confrim revoke nft approve
-                await revokeNFTApprove(
-                  {
-                    chainServerId: chain,
-                    nftTokenId: tokenId,
-                    spender: approve?.spender!,
-                    contractId: (data.tx as any)?.id,
-                    abi: 'ERC721',
-                    isApprovedForAll: true,
-                  },
-                  {
-                    ga: { category: 'Security', source: 'tokenApproval' },
-                  },
-                );
-              } else {
-                await approveToken(chain, tokenId, approve?.spender!, 0, {
-                  ga: {
-                    category: 'Security',
-                    source: 'tokenApproval',
-                  },
-                });
-              }
-              resetNavigationTo(navigation, 'Home');
-            }}
-            type={'ghost'}
-            title={`${strings(
-              'page.transactions.detail.Revoke',
-            )} ${revokeAmountStr} ${name}`}
-          />
+          <Tip
+            placement="top"
+            content={
+              noRemainValue
+                ? strings('page.transactions.detail.NoApproveNeed')
+                : undefined
+            }>
+            <Button
+              // loading={btnLoading}
+              disabled={noRemainValue}
+              buttonStyle={[styles.ghostButton]}
+              titleStyle={[
+                styles.ghostTitle,
+                noRemainValue && styles.ghostDisableButton,
+              ]}
+              onPress={async () => {
+                if (tokenIsNft) {
+                  // ？to confrim revoke nft approve
+                  await revokeNFTApprove(
+                    {
+                      chainServerId: chain,
+                      nftTokenId: tokenId,
+                      spender: approve?.spender!,
+                      contractId: (data.tx as any)?.id,
+                      abi: 'ERC721',
+                      isApprovedForAll: true,
+                    },
+                    {
+                      ga: { category: 'Security', source: 'tokenApproval' },
+                    },
+                  );
+                } else {
+                  await approveToken(chain, tokenId, approve?.spender!, 0, {
+                    ga: {
+                      category: 'Security',
+                      source: 'tokenApproval',
+                    },
+                  });
+                }
+                resetNavigationTo(navigation, 'Home');
+              }}
+              type={'primary'}
+              title={`${strings(
+                'page.transactions.detail.Revoke',
+              )} ${revokeAmountStr} ${name}`}
+            />
+          </Tip>
         </View>
       );
     case HistoryItemCateType.Recieve:
@@ -183,6 +200,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderColor: colors2024['neutral-info'],
+  },
+  ghostDisableButton: {
+    color: colors2024['neutral-info'],
   },
   ghostTitle: {
     color: colors2024['neutral-title-1'],

@@ -25,7 +25,7 @@ export function getHistoryItemType(
   } else {
     // todo revoke  bridge  contract
     const tokenList = [...data.receives, ...data.sends];
-    const isSwap = tokenList.length > 1; // need filter in swap history
+    const isSwap = data.isLocalSwap; // need filter in swap history
     if (isSwap) {
       return HistoryItemCateType.Swap;
     }
