@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, SectionList, RefreshControl } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
@@ -29,7 +29,6 @@ import {
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useAssetsMap } from '../Home/hooks/store';
 import BigNumber from 'bignumber.js';
 import { useAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
@@ -229,10 +228,7 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  // TODO: Search from db
-  const { assetsMap: asssest } = useAssetsMap();
-
-  const { getCacheTop10Assets, refreshing } = useAssets();
+  const { getCacheTop10Assets, refreshing, assetsMap } = useAssets();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -264,8 +260,8 @@ export const DeFiDetailScreen = () => {
       totalUsdValue: SectionListItem['totalUsdValue'];
       address: SectionListItem['address'];
     }[] = [];
-    Object.keys(asssest).map(address => {
-      const { portfolios } = asssest[address];
+    Object.keys(assetsMap).map(address => {
+      const { portfolios } = assetsMap[address];
 
       portfolios?.map(portfolio => {
         if (portfolio.id === data.id && portfolio.chain === data.chain) {
@@ -294,7 +290,7 @@ export const DeFiDetailScreen = () => {
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [data, asssest, accounts, isSingleAddress, finalAccount, portfolioList]);
+  }, [data, assetsMap, accounts, isSingleAddress, finalAccount, portfolioList]);
 
   const sumNetWorth = useMemo(() => {
     const res = sectionsMultiProject.reduce((pre, cur) => {
@@ -317,6 +313,13 @@ export const DeFiDetailScreen = () => {
   );
 
   const { bottom } = useSafeAreaInsets();
+  useEffect(() => {
+    getCacheTop10Assets(false, {
+      disableNFT: true,
+      disableToken: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
 
@@ -366,7 +369,10 @@ export const DeFiDetailScreen = () => {
         refreshControl={
           <RefreshControl
             onRefresh={() => {
-              getCacheTop10Assets(true);
+              getCacheTop10Assets(true, {
+                disableNFT: true,
+                disableToken: true,
+              });
             }}
             refreshing={refreshing}
           />

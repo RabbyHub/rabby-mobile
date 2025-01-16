@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
@@ -30,7 +30,7 @@ import {
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useAssetsMap } from '../Home/hooks/store';
+import { useAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
@@ -250,8 +250,7 @@ export const NFTDetailScreen = () => {
     [accounts, currentAccount, switchSceneCurrentAccount],
   );
 
-  // TODO: Search from db
-  const { assetsMap: asssest } = useAssetsMap();
+  const { assetsMap, getCacheTop10Assets } = useAssets();
   const itemList = useMemo(() => {
     const resList: {
       data: NFTItem;
@@ -279,8 +278,8 @@ export const NFTDetailScreen = () => {
       index: number;
     }[] = [];
 
-    Object.keys(asssest).map((address, index) => {
-      const { nfts } = asssest[address];
+    Object.keys(assetsMap).map((address, index) => {
+      const { nfts } = assetsMap[address];
 
       nfts?.map(item => {
         if (
@@ -314,7 +313,14 @@ export const NFTDetailScreen = () => {
     });
     console.log('relateNFTList length:', resList.length);
     return resList;
-  }, [asssest, token, accounts, finalAccount, isSingleAddress]);
+  }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+  useEffect(() => {
+    getCacheTop10Assets(false, {
+      disableToken: true,
+      disableDefi: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const renderAccountHeader = useCallback(
     (type: KEYRING_TYPE, aliasName: string) => {

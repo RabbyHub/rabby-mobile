@@ -37,11 +37,11 @@ export const useAssets = (filterText?: string) => {
     tokens,
     portfolios,
     nftList,
+    assetsMap,
     updateNFTs,
     updatePortfolios,
     updateTokens,
   } = useAssetsMap();
-  console.log('🔍 CUSTOM_LOGGER:=>: tokens)', tokens.length);
 
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const abortRef = useRef(false);
@@ -133,11 +133,19 @@ export const useAssets = (filterText?: string) => {
     abortRef.current = true;
   };
 
-  const getCacheTop10Assets = async (force?: boolean) => {
+  const getCacheTop10Assets = async (
+    force?: boolean,
+    options?: {
+      disableToken?: boolean;
+      disableDefi?: boolean;
+      disableNFT?: boolean;
+    },
+  ) => {
     const top10Account = sortedAccounts.slice(0, 10);
     const addresses = [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
+    const { disableToken, disableDefi, disableNFT } = options || {};
     setLoading(true);
     try {
       await handleFetchTokens();
@@ -151,9 +159,9 @@ export const useAssets = (filterText?: string) => {
 
         try {
           await Promise.all([
-            loadToken(address, force),
-            loadDefi(address, force),
-            loadNFT(address, force),
+            !disableToken && loadToken(address, force),
+            !disableDefi && loadDefi(address, force),
+            !disableNFT && loadNFT(address, force),
           ]);
         } catch (error) {
           console.error(`Error fetching data for ${address.slice(-4)}:`, error);
@@ -182,6 +190,7 @@ export const useAssets = (filterText?: string) => {
     tokens: fTokens,
     portfolios: fPortfolios,
     nftList: fNftList,
+    assetsMap,
     isLoading,
     hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
     getCacheTop10Assets,

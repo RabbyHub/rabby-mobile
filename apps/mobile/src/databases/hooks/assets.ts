@@ -5,10 +5,9 @@ import { runOnJS } from 'react-native-reanimated';
 
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncRemotePortocols } from '@/databases/sync/assets';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
   batchLoadProjects,
@@ -131,10 +130,6 @@ export const syncNFTs = async (address: string, force?: boolean) => {
 
 export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
-  // const { accounts } = useMyAccounts({
-  //   disableAutoFetch: true,
-  // });
-  // const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const abortRef = useRef(false);
 
@@ -145,8 +140,11 @@ export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
   const syncTop10Assets = async (force?: boolean) => {
     const top10Account = sortedAccounts.slice(0, 10);
     setIsSyncing(true);
+    const addresses = [
+      ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+    ];
     try {
-      for (const account of top10Account) {
+      for (const address of addresses) {
         if (abortRef.current) {
           console.log('🔍 CUSTOM_LOGGER:=>: Fetching interrupted.');
           setIsSyncing(false);
@@ -156,15 +154,12 @@ export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
 
         try {
           await Promise.all([
-            syncTokens(account.address, force),
-            syncProtocols(account.address, force),
-            syncNFTs(account.address, force),
+            syncTokens(address, force),
+            syncProtocols(address, force),
+            syncNFTs(address, force),
           ]);
         } catch (error) {
-          console.error(
-            `Error fetching data for ${account.address.slice(-4)}:`,
-            error,
-          );
+          console.error(`Error fetching data for ${address.slice(-4)}:`, error);
         }
         await new Promise(resolve => setTimeout(resolve, 0));
       }
