@@ -19,6 +19,7 @@ import { produce } from '@/core/utils/produce';
 import { IAssets, useAssetsMap } from './store';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
 import { tagNfts } from './nft';
+import { syncTokens } from '@/databases/hooks/assets';
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
@@ -42,7 +43,6 @@ export const useTokens = (
   visible = true,
   updateNonce = 0,
   chainServerId?: string,
-  isTestnet = false,
 ) => {
   const abortProcess = useRef<AbortController>();
   const [isLoading, setLoading] = useSafeState(false);
@@ -89,7 +89,7 @@ export const useTokens = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible, chainServerId]);
 
-  const loadProcess = async () => {
+  const loadProcess = async (force?: boolean) => {
     if (!userAddr) {
       return;
     }
@@ -110,41 +110,42 @@ export const useTokens = (
     });
 
     let _tokens: AbstractPortfolioToken[] = [];
-    const snapshot = await queryTokensCache(userAddr, isTestnet);
+    // const snapshot = await queryTokensCache(userAddr, isTestnet);
 
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
 
-    if (currentAbort.signal.aborted || !snapshot) {
-      log('--Terminate-tokens-snapshot-', userAddr);
-      setLoading(false);
-      return;
-    }
+    // TODO: tmp delete fetch cache
+    // if (currentAbort.signal.aborted || !snapshot) {
+    //   log('--Terminate-tokens-snapshot-', userAddr);
+    //   setLoading(false);
+    //   return;
+    // }
 
-    if (snapshot?.length) {
-      const chainTokens = snapshot.reduce((m, n) => {
-        m[n.chain] = m[n.chain] || [];
-        m[n.chain].push(n);
+    // if (snapshot?.length) {
+    //   const chainTokens = snapshot.reduce((m, n) => {
+    //     m[n.chain] = m[n.chain] || [];
+    //     m[n.chain].push(n);
 
-        return m;
-      }, {} as Record<string, TokenItem[]>);
-      _data = produce(_data, draft => {
-        setWalletTokens(draft, chainTokens);
-      });
+    //     return m;
+    //   }, {} as Record<string, TokenItem[]>);
+    //   _data = produce(_data, draft => {
+    //     setWalletTokens(draft, chainTokens);
+    //   });
 
-      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+    //   _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-      setMainnetTokens(filterDisplayToken(_tokens));
-      setLoading(false);
-    }
+    //   setMainnetTokens(filterDisplayToken(_tokens));
+    //   setLoading(false);
+    // }
 
-    const tokenRes = await batchQueryTokens(userAddr, chainServerId, isTestnet);
+    const tokenRes = await syncTokens(userAddr, force);
 
-    if (currentAbort.signal.aborted || !tokenRes) {
-      log('--Terminate-tokens-', userAddr);
-      setLoading(false);
-      return;
-    }
+    // if (currentAbort.signal.aborted || !tokenRes) {
+    //   log('--Terminate-tokens-', userAddr);
+    //   setLoading(false);
+    //   return;
+    // }
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {

@@ -588,7 +588,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
-              refreshPositions();
+              refreshPositions(true);
               onRefresh();
             }}
             refreshing={refreshing}

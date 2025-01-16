@@ -4,10 +4,7 @@ import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import { useSafeState } from '@/hooks/useSafeState';
 
-export const useQueryProjects = (
-  userAddr: string | undefined,
-  isTestnet = false,
-) => {
+export const useQueryProjects = (userAddr: string | undefined) => {
   const [isLoading, setLoading] = useSafeState(false);
 
   const { tokens, updateData: updateTokens } = useTokens(
@@ -15,29 +12,35 @@ export const useQueryProjects = (
     false,
     0,
     undefined,
-    isTestnet,
   );
 
   const {
     data: portfolios,
     hasValue: hasPortfolios,
     updateData: updatePortfolio,
-  } = usePortfolios(userAddr, false, isTestnet);
+  } = usePortfolios(userAddr, false);
 
   const { list: nftList, reload: reloadNftList } = useQueryNft(userAddr, false);
 
-  const refreshPositions = useCallback(async () => {
-    if (!isLoading) {
-      setLoading(true);
-      try {
-        await Promise.all([updatePortfolio(), updateTokens(), reloadNftList()]);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+  const refreshPositions = useCallback(
+    async (force?: boolean) => {
+      if (!isLoading) {
+        setLoading(true);
+        try {
+          await Promise.all([
+            updatePortfolio(force),
+            updateTokens(force),
+            reloadNftList(force),
+          ]);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-  }, [isLoading, setLoading, updatePortfolio, updateTokens, reloadNftList]);
+    },
+    [isLoading, setLoading, updatePortfolio, updateTokens, reloadNftList],
+  );
 
   useEffect(() => {
     if (userAddr) {
