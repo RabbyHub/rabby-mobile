@@ -42,7 +42,7 @@ export const DataHeaderInfo = ({
     return data?.[currentIndex?.value]?.value
       ? data?.[currentIndex.value].netWorth
       : currentBalance;
-  }, [data, currentBalance, currentIndex.value]);
+  }, [data, currentBalance, currentIndex.value, currentPercentChange]);
 
   const usdValueAnimatedProps = useAnimatedProps(() => {
     return {
