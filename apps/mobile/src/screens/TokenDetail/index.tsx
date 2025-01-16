@@ -21,7 +21,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
@@ -37,7 +37,7 @@ import { useRefreshTags } from '../Home/hooks/token';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
-import { CombineTokensItem, useAssetsMap } from '../Home/hooks/store';
+import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
 import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
@@ -197,9 +197,7 @@ export const TokenDetailScreen = () => {
     getStyle,
   });
 
-  // TODO: Search
-  const { assetsMap: asssest } = useAssetsMap();
-  const { tokens: cacheAssets } = useAssets();
+  const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio) {
       const iToken = cacheAssets.find(
@@ -223,7 +221,7 @@ export const TokenDetailScreen = () => {
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
-    Object.keys(asssest).map((address, index) => {
+    Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
       }
@@ -236,7 +234,7 @@ export const TokenDetailScreen = () => {
         return;
       }
 
-      const { portfolios } = asssest[address];
+      const { portfolios } = assetsMap[address];
       portfolios?.map(portfolio => {
         if (portfolio.chain !== token.chain) {
           return;
@@ -264,7 +262,7 @@ export const TokenDetailScreen = () => {
     });
     console.debug('relateDefiList length:', resList.length);
     return resList;
-  }, [token, asssest, isSingleAddress, finalAccount, accounts]);
+  }, [token, assetsMap, isSingleAddress, finalAccount, accounts]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -279,6 +277,12 @@ export const TokenDetailScreen = () => {
     },
     [token, isSingleAddress, finalAccount],
   );
+  useEffect(() => {
+    getCacheTop10Assets(false, {
+      disableNFT: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
