@@ -163,7 +163,7 @@ export const HistoryList = ({
   if (loading) {
     return (
       <View style={styles.skeletonContainer}>
-        {range(0, 4).map(i => {
+        {range(0, 8).map(i => {
           return <SkeletonCard key={i} />;
         })}
       </View>
