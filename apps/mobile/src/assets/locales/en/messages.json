@@ -497,7 +497,14 @@
       },
       "GasSelector": {
         "confirm": "Confirm",
-        "popupDesc": "The gas cost will be reserved from the transfer amount based on the gas price you set"
+        "popupDesc": "The gas cost will be reserved from the transfer amount based on the gas price you set",
+        "level": {
+          "$unknown": "Unknown",
+          "custom": "Custom",
+          "fast": "Instant",
+          "normal": "Fast",
+          "slow": "Normal"
+        }
       },
       "modalConfirmAddToContacts": {
         "title": "Add to contacts"

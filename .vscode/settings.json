@@ -26,6 +26,12 @@
     "native.biometrics.enable_faceid",
     "native.biometrics.enable_touchid",
     "global.appName",
-    "global.appDescription"
+    "global.appDescription",
+    "component.AuthenticationModals.processBiometrics.cancel",
+    "page.sendToken.GasSelector.level.$unknown",
+    "page.sendToken.GasSelector.level.custom",
+    "page.sendToken.GasSelector.level.fast",
+    "page.sendToken.GasSelector.level.normal",
+    "page.sendToken.GasSelector.level.slow"
   ],
 }
