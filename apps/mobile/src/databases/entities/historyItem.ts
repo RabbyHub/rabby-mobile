@@ -21,6 +21,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   // id
   @Column('text', { default: '' })
   txHash: TxHistoryItem['id'] = '0x';
+
+  // project_id
+  @Column('text', { default: '' })
+  project_id: TxHistoryItem['project_id'] = '0x';
+
   // chain
   @Column('text', { default: '' })
   chain: TxHistoryItem['chain'] = 'eth';
@@ -59,9 +64,25 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   // token_approve_id
   @Column('text', { default: '' })
   token_approve_id: string = '0x';
+
+  // token_approve_spender
+  @Column('text', { default: '' })
+  token_approve_spender: string = '0x';
   // token_approve_value
-  @Column('integer', { default: '' })
+  @Column('real', {
+    transformer: realTransformer,
+  })
   token_approve_value: number = 0;
+
+  // tx_from_address
+  @Column('text', { default: '' })
+  tx_from_address: string = '0x';
+
+  // tx_usd_gas_fee
+  @Column('real', {
+    transformer: realTransformer,
+  })
+  tx_usd_gas_fee: number = 0;
 
   makeDbId(): string {
     return (this._db_id = `${this.address}-${[this.chain, this.txHash]
@@ -87,6 +108,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.tx_name = input.tx?.name ?? '';
     e.token_approve_id = input.token_approve?.token_id ?? '0x';
     e.token_approve_value = input.token_approve?.value ?? 0;
+    e.token_approve_spender = input.token_approve?.spender ?? '0x';
+
+    e.tx_from_address = input.tx?.from_addr ?? '0x';
+    e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
 
     e.makeDbId();
   }

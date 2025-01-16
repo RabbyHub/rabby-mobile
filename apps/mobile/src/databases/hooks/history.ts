@@ -3,11 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
 import usePrevious from 'react-use/lib/usePrevious';
-import { syncRemoteHistory } from '../sync/assets';
+import { syncRemoteHistory, syncRemoteSwapHistory } from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
 import { transactionHistoryService } from '@/core/services';
+import { SwapItemEntity } from '../entities/swapitem';
 
 export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -47,6 +48,7 @@ export const syncUserAllHistory = async (
   if (!address) {
     return [];
   }
+  console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: start');
 
   let time = lastTime;
   if (!lastTime) {
@@ -78,21 +80,42 @@ export const syncUserAllHistory = async (
   }
 };
 
-// export const syncSwapHistory = async (address: string, force?: boolean) => {
-//   try {
-//     const nfts = await batchQueryNFTsWithLocalCache(
-//       {
-//         id: address,
-//         isAll: true,
-//         sortByCredit: true,
-//       },
-//       force,
-//     );
-//     return nfts;
-//   } catch (e) {
-//     console.error(e);
-//   }
-// };
+export const syncSwapHistory = async (
+  address: string,
+  force?: boolean,
+  lastTime: number = 0,
+) => {
+  if (!address) {
+    return [];
+  }
+
+  let time = lastTime;
+  if (!lastTime) {
+    const localLastTime = await SwapItemEntity.getLatestTime(address);
+    time = localLastTime || 0;
+  }
+
+  console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', time);
+  const res = await openapi.getSwapTradeListV2({
+    user_addr: address,
+    start_time: Math.floor(time),
+    limit: 100,
+  });
+
+  console.debug('getSwapTradeListV2', res.history_list.length, res.total_cnt);
+  if (!res.history_list.length) {
+    // interupt loop
+    console.debug('syncSwapHistory CUSTOM_LOGGER:=>: No more history');
+    return true;
+  } else {
+    runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+    await syncSwapHistory(
+      address,
+      force,
+      res.history_list[res.history_list.length - 1].create_at,
+    );
+  }
+};
 
 export const useSyncHistoryDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
@@ -110,6 +133,7 @@ export const useSyncHistoryDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
     try {
       if (force) {
         await HistoryItemEntity.clear();
+        await SwapItemEntity.clear();
       }
       for (const account of top10Account) {
         if (abortRef.current) {
@@ -122,9 +146,9 @@ export const useSyncHistoryDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
         }
 
         try {
-          await Promise.all([
+          await Promise.allSettled([
             syncUserAllHistory(account.address, force),
-            // syncProtocols(account.address, force),
+            syncSwapHistory(account.address, force),
           ]);
         } catch (error) {
           console.error(

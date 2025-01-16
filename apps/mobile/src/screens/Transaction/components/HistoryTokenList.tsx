@@ -41,6 +41,7 @@ interface ItemProps {
 const TokenItemInlist = ({
   tokenDict,
   token_id,
+  chain,
   amount,
   isNft,
   isSend,
@@ -48,6 +49,7 @@ const TokenItemInlist = ({
 }: {
   isSend?: boolean;
   amount: number;
+  chain: string;
   isNft: boolean;
   token_id: string;
   hanldePress: (singeToken: TokenItem | NFTItem, tokenIsNft: boolean) => void;
@@ -55,9 +57,11 @@ const TokenItemInlist = ({
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const tokenUUID = `${chain}_token:${token_id}`;
+  const token = tokenDict[token_id] || tokenDict[tokenUUID];
 
   return (
-    <TouchableOpacity onPress={() => hanldePress(tokenDict[token_id], isNft)}>
+    <TouchableOpacity onPress={() => hanldePress(token, isNft)}>
       <View style={styles.listItem}>
         <View
           style={{
@@ -69,22 +73,17 @@ const TokenItemInlist = ({
             <Media
               failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
               type="image_url"
-              src={
-                tokenDict[token_id]?.content?.endsWith('.svg')
-                  ? ''
-                  : tokenDict[token_id]?.content
-              }
-              thumbnail={
-                tokenDict[token_id]?.content?.endsWith('.svg')
-                  ? ''
-                  : tokenDict[token_id]?.content
-              }
+              src={token?.content?.endsWith('.svg') ? '' : token?.content}
+              thumbnail={token?.content?.endsWith('.svg') ? '' : token?.content}
               mediaStyle={styles.media}
               style={styles.media}
               playIconSize={12}
             />
           ) : (
-            <AssetAvatar logo={tokenDict[token_id]?.logo_url || ''} size={33} />
+            <AssetAvatar
+              logo={(token as TokenItem)?.logo_url || ''}
+              size={33}
+            />
           )}
           <View style={[styles.colomnBox]}>
             <Text
@@ -94,9 +93,7 @@ const TokenItemInlist = ({
               ]}>
               {isSend ? '-' : '+'}{' '}
               {isNft ? amount : numberWithCommasIsLtOne(amount, 2)}{' '}
-              {isNft
-                ? t('page.nft.title')
-                : getTokenSymbol(tokenDict[token_id] as TokenItem)}
+              {isNft ? t('page.nft.title') : getTokenSymbol(token as TokenItem)}
             </Text>
           </View>
         </View>
@@ -278,6 +275,7 @@ export const HistoryTokenList = ({
             {sends?.map(({ token_id, amount }) => (
               <TokenItemInlist
                 isSend={true}
+                chain={chain}
                 token_id={token_id}
                 amount={amount}
                 isNft={token_id.length === 32}
@@ -288,6 +286,7 @@ export const HistoryTokenList = ({
             {receives?.map(({ token_id, amount }) => (
               <TokenItemInlist
                 token_id={token_id}
+                chain={chain}
                 amount={amount}
                 isNft={token_id.length === 32}
                 tokenDict={tokenDict}

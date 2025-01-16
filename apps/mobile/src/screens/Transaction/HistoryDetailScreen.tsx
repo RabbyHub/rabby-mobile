@@ -1,9 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HistoryList } from './components/HistoryGroupList';
 import { openapi } from '@/core/request';
-import { unionBy, orderBy, isUndefined } from 'lodash';
+import { unionBy, orderBy, isUndefined, set } from 'lodash';
 import { useRequest } from 'ahooks';
 import PQueue from 'p-queue';
 import { AppColorsVariants } from '@/constant/theme';
@@ -52,6 +52,8 @@ import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
 import { format } from 'path';
+import { getERC20Allowance } from '@/core/apis/provider';
+import BigNumber from 'bignumber.js';
 
 const TxStatusItem = ({
   status,
@@ -167,11 +169,16 @@ function HistoryDetailScreen(): JSX.Element {
   };
   console.debug(
     'HistoryDetailScreen',
-    JSON.stringify(data),
+    data.projectDict[data.project_id!],
+    data.tx?.status,
     isForMultipleAdderss,
   );
+
+  const [currentApprove, setCurrentApprove] = useState(0);
+  const [noRemainValue, setNoRemainValue] = useState(false);
   const status = useMemo(() => data.tx?.status || 0, [data]);
   const { switchAccount } = useCurrentAccount();
+
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
 
@@ -258,6 +265,31 @@ function HistoryDetailScreen(): JSX.Element {
       return projectDict[data.project_id];
     }
   }, [data]);
+
+  const fetchApproveAllowance = useCallback(async () => {
+    const tokenId = data.token_approve?.token_id || '';
+    const tokenUUID = `${data.chain}_token:${tokenId}`;
+    const singeToken = data.tokenDict[tokenId] || data.tokenDict[tokenUUID];
+
+    const allowance = await getERC20Allowance(
+      data.chain,
+      singeToken.id,
+      data.token_approve?.spender!,
+    );
+
+    const amount = new BigNumber(allowance)
+      .div(10 ** singeToken.decimals)
+      .toNumber();
+
+    setNoRemainValue(!amount);
+    setCurrentApprove(amount);
+  }, [data]);
+
+  useEffect(() => {
+    if (formatType === HistoryItemCateType.Approve) {
+      fetchApproveAllowance();
+    }
+  }, [fetchApproveAllowance, formatType]);
 
   const onOpenTxId = useCallback(() => {
     const info =
@@ -365,13 +397,13 @@ function HistoryDetailScreen(): JSX.Element {
             </Text>
           </View>
         )}
-        {fromAddr && (
+        {Boolean(fromAddr) && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
               {strings('page.transactions.detail.From')}
             </Text>
             <AddressItemInDetail
-              address={fromAddr}
+              address={fromAddr!}
               accounts={unionAccounts}
               switchAccount={switchAccount}
             />
@@ -379,7 +411,7 @@ function HistoryDetailScreen(): JSX.Element {
         )}
         {(formatType === HistoryItemCateType.Send ||
           formatType === HistoryItemCateType.Recieve) &&
-          toAddr && (
+          Boolean(toAddr) && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
                 {formatType === HistoryItemCateType.Recieve
@@ -387,7 +419,7 @@ function HistoryDetailScreen(): JSX.Element {
                   : strings('page.transactions.detail.To')}
               </Text>
               <AddressItemInDetail
-                address={toAddr}
+                address={toAddr!}
                 accounts={unionAccounts}
                 switchAccount={switchAccount}
               />
@@ -406,13 +438,13 @@ function HistoryDetailScreen(): JSX.Element {
             <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
           </View>
         </View>
-        {usdGasFee && (
+        {Boolean(usdGasFee) && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
               {strings('page.transactions.detail.GasFee')}
             </Text>
             <Text style={[styles.itemContentText]}>{`-${formatPrice(
-              usdGasFee,
+              usdGasFee!,
             )} USD`}</Text>
           </View>
         )}
@@ -440,6 +472,8 @@ function HistoryDetailScreen(): JSX.Element {
         }
       </View>
       <HistoryBottomBtn
+        noRemainValue={noRemainValue}
+        currentApprove={currentApprove}
         approve={data.token_approve}
         receives={data.receives}
         sends={data.sends}

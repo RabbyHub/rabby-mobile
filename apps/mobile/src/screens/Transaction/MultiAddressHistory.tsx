@@ -57,6 +57,7 @@ import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { strings } from '@/utils/i18n';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import { SwapItemEntity } from '@/databases/entities/swapitem';
 
 const PAGE_COUNT = 2000;
 
@@ -67,6 +68,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   key: string;
   account?: KeyringAccountWithAlias;
+  isLocalSwap?: boolean;
 }
 
 interface IFetchHistory {
@@ -127,27 +129,46 @@ function History({
     const list: HistoryDisplayItem[] = [];
 
     if (!isInTokenDetail) {
-      const historyList = await HistoryItemEntity.getAllHistoryItem();
+      const [historyList, swapList] = await Promise.all([
+        HistoryItemEntity.getAllHistoryItem(),
+        SwapItemEntity.getAllHistoryItem(),
+      ]);
+      // const historyList = await HistoryItemEntity.getAllHistoryItem();
       const tokenDict = await transactionHistoryService.getTokenDict();
       const projectDict = await transactionHistoryService.getProjectDict();
       console.log('tokenDict', Object.keys(tokenDict).length);
-      console.log('projectDict', Object.keys(projectDict).length);
+      console.log(
+        'projectDict',
+        Object.keys(projectDict).length,
+        Object.values(projectDict)[0],
+      );
+      console.log('swapList', swapList.length);
 
-      return {
+      const res = {
         list: historyList.map(item => ({
           ...item,
           receives: isString(item.receives) && safeParseJSON(item.receives),
           sends: isString(item.sends) && safeParseJSON(item.sends),
           id: item.txHash,
+          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+          tx: {
+            id: item.txHash,
+            status: item.status,
+            from_addr: item.tx_from_address,
+            usd_gas_fee: item.tx_usd_gas_fee,
+          },
+          token_approve: {
+            token_id: item.token_approve_id,
+            spender: item.token_approve_spender,
+            value: item.token_approve_value,
+          },
           tokenDict,
           projectDict,
           key: `${item.address}_${item.chain}_${item.txHash}`,
-          // account: accounts.find(account =>
-          //   isSameAddress(account.address, item.address),
-          // ),
           address: item.address,
         })),
       };
+      return res;
       // return batchFetchLocalTx();
     }
     const accountList = isSceneUsingAllAccounts
@@ -175,7 +196,7 @@ function History({
               tokenItem.chain,
               tokenItem._tokenId,
             )
-          : await fetchDataV2(addr, lastMap.current[addr] || 0);
+          : await fetchData(addr, lastMap.current[addr] || 0);
 
         if (result.list.length < PAGE_COUNT) {
           hasMoreMap.current[addr] = false;

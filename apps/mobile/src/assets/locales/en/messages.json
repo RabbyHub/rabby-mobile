@@ -20,6 +20,7 @@
         "Default": "Interaction"
       },
       "detail": {
+        "NoApproveNeed": "No need to revoke: No allowance remaining.",
         "Succeeded": "Succeeded",
         "Failed": "Failed",
         "SendAgain": "Send Again",
