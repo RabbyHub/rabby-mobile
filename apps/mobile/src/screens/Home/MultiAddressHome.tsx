@@ -60,7 +60,11 @@ import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
 import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  useMyAccounts,
+} from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
@@ -71,6 +75,8 @@ import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuVie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ellipsisAddress } from '@/utils/address';
 import { useSyncAssetsDB } from '@/databases/hooks/assets';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -252,7 +258,12 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
-  const { syncTop10Assets } = useSyncAssetsDB();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const sortedAccounts = useSortAddressList(accounts);
+  const { syncTop10Assets } = useSyncAssetsDB(sortedAccounts);
+  const { syncTop10History } = useSyncHistoryDB(sortedAccounts);
 
   const { pinAccountsFirstFour, isShowPin } =
     useHomePinAddress(balanceAccounts);
@@ -308,6 +319,7 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdate();
         triggerUpdateAlert();
         syncTop10Assets();
+        syncTop10History();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [triggerUpdate, triggerUpdateAlert, appState]),
@@ -317,7 +329,8 @@ function MultiAddressHome(): JSX.Element {
     triggerUpdate(true); // force update balance from server api
     forceUpdate();
     syncTop10Assets(true);
-  }, [triggerUpdate, forceUpdate, syncTop10Assets]);
+    syncTop10History(true);
+  }, [triggerUpdate, forceUpdate, syncTop10Assets, syncTop10History]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(

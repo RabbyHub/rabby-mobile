@@ -8,7 +8,7 @@ import React, {
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
-
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { transactionHistoryService } from '@/core/services';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -21,7 +21,7 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, set } from 'lodash';
+import { last, unionBy, orderBy, set, isString } from 'lodash';
 import { Text, TouchableWithoutFeedback, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -56,6 +56,7 @@ import {
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { strings } from '@/utils/i18n';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 
 const PAGE_COUNT = 2000;
 
@@ -117,7 +118,6 @@ function History({
   } = useSceneAccountInfo({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
-  useSyncHistoryOnBoot({ enableAutoFetch: true });
   const { assetsInfo, fetchAssetsInfo } = useHistoryBasicInfo({
     enableAutoFetch: true,
   });
@@ -125,6 +125,31 @@ function History({
 
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
+
+    if (!isInTokenDetail) {
+      const historyList = await HistoryItemEntity.getAllHistoryItem();
+      const tokenDict = await transactionHistoryService.getTokenDict();
+      const projectDict = await transactionHistoryService.getProjectDict();
+      console.log('tokenDict', Object.keys(tokenDict).length);
+      console.log('projectDict', Object.keys(projectDict).length);
+
+      return {
+        list: historyList.map(item => ({
+          ...item,
+          receives: isString(item.receives) && safeParseJSON(item.receives),
+          sends: isString(item.sends) && safeParseJSON(item.sends),
+          id: item.txHash,
+          tokenDict,
+          projectDict,
+          key: `${item.address}_${item.chain}_${item.txHash}`,
+          // account: accounts.find(account =>
+          //   isSameAddress(account.address, item.address),
+          // ),
+          address: item.address,
+        })),
+      };
+      // return batchFetchLocalTx();
+    }
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
       : [finalSceneCurrentAccount];

@@ -90,6 +90,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  static async getAllHistoryItem(address?: string) {
+    return await this.getRepository().findBy({ address });
+  }
+
   static async getCountOfAccount() {
     const repo = this.getRepository();
 
@@ -105,7 +109,26 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
+  static async getLatestTime(address: string) {
+    const repo = this.getRepository();
+    const result = await repo
+      .createQueryBuilder('historyitem')
+      .select('MIN(historyitem.time_at)', 'minTimeAt')
+      .where('historyitem.address = :address', { address })
+      .getRawOne();
+
+    if (!result.minTimeAt) {
+      return false;
+    }
+    // const firstUpdateTime = parseInt(result.minTimeAt, 10);
+    return result.minTimeAt;
+  }
+
   static async batchQueryHistory(address: string) {
     return this.getRepository().findBy({ address });
+  }
+
+  static async deleteForAddress(address: string) {
+    return this.getRepository().delete({ address });
   }
 }

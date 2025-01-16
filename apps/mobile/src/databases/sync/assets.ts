@@ -11,6 +11,7 @@ import {
   ComplexProtocol,
   NFTItem,
   TokenItem,
+  TxAllHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { PortocolItemEntity } from '../entities/portocolItem';
 import {
@@ -156,22 +157,14 @@ export async function syncRemoteTokens(address: string, tokens: TokenItem[]) {
     });
 }
 
-export async function syncRemoteHistory(address: string) {
+export async function syncRemoteHistory(
+  address: string,
+  history_list: TxAllHistoryResult['history_list'],
+) {
   try {
-    const res = await openapi.listTxHisotry({
-      id: address,
-      start_time: 0,
-      page_count: 1000,
-      chain_id: undefined,
-      token_id: undefined,
-    });
+    console.debug('syncRemoteHistory history_list.length', history_list.length);
 
-    console.debug(
-      'syncRemoteHistory res.history_list.length',
-      res.history_list.length,
-    );
-
-    const historyItems = res.history_list.map(raw => {
+    const historyItems = history_list.map(raw => {
       const item = new HistoryItemEntity();
       HistoryItemEntity.fillEntity(item, address, raw);
 
@@ -189,7 +182,7 @@ export async function syncRemoteHistory(address: string) {
       historyItems,
       {
         key: address,
-        batchSize: 100,
+        batchSize: 2000,
         concurrency: 1,
         delayBetweenTasks: 1.5 * 1e3,
       },
@@ -204,8 +197,7 @@ export async function syncRemoteHistory(address: string) {
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
     return {
       address,
-      res,
-      history_list: res.history_list,
+      history_list: history_list,
     };
   } catch (e) {
     console.error('syncRemoteHistory', e);
