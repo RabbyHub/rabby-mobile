@@ -21,8 +21,8 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy } from 'lodash';
-import { Text, View } from 'react-native';
+import { last, unionBy, orderBy, set } from 'lodash';
+import { Text, TouchableWithoutFeedback, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,8 +53,11 @@ import {
   useHistoryBasicInfo,
   useSyncHistoryOnBoot,
 } from '@/databases/hooks/history';
+import { HistoryFilterMenu } from './components/HistoryFilterMenu';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { strings } from '@/utils/i18n';
 
-const PAGE_COUNT = 10;
+const PAGE_COUNT = 2000;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -102,6 +105,8 @@ function History({
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
+  const [isShowAll, setIsShowAll] = useState(false);
+  const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
@@ -145,7 +150,7 @@ function History({
               tokenItem.chain,
               tokenItem._tokenId,
             )
-          : await fetchData(addr, lastMap.current[addr] || 0);
+          : await fetchDataV2(addr, lastMap.current[addr] || 0);
 
         if (result.list.length < PAGE_COUNT) {
           hasMoreMap.current[addr] = false;
@@ -168,6 +173,59 @@ function History({
       await waitQueueFinished(queue);
     }
     return { list };
+  };
+
+  const fetchDataV2 = async (
+    address: string,
+    startTime = 0,
+  ): Promise<IFetchHistory> => {
+    if (isTestnet) {
+      return {
+        last: 0,
+        list: [],
+      };
+    }
+    if (!address) {
+      throw new Error('no account');
+    }
+
+    console.log('fetchDataV2', address, startTime);
+    const getHistory = openapi.getAllTxHistory;
+    try {
+      const res = await getHistory({
+        id: address,
+        start_time: startTime,
+      });
+
+      const {
+        project_dict,
+        cate_dict,
+        token_uuid_dict: token_dict,
+        history_list: list,
+      } = res;
+      const displayList = list
+        .map(item => ({
+          ...item,
+          projectDict: project_dict,
+          cateDict: cate_dict,
+          tokenDict: token_dict,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+
+      console.debug('fetchDataV2', displayList.length);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
+      };
+    } catch (e) {
+      toast.error(`${address} fetch failed, ${e}`);
+      return {
+        last: 0,
+        list: [],
+      };
+    }
   };
 
   const fetchData = async (
@@ -320,6 +378,9 @@ function History({
   const displayList = useMemo(() => {
     return allTxHistory
       .filter(tx => {
+        if (!isShowAll) {
+          return !tx.is_scam;
+        }
         if (isSceneUsingAllAccounts) {
           return true;
         }
@@ -331,6 +392,7 @@ function History({
       .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
+    isShowAll,
     currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -341,6 +403,10 @@ function History({
     return () => {
       eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
     };
+  });
+
+  const getHeaderRight = useMemoizedFn(() => {
+    return <HistoryFilterMenu setIsShowMenu={setIsShowMenu} />;
   });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -370,10 +436,15 @@ function History({
     if (isInTokenDetail && tokenItem) {
       setNavigationOptions({
         headerTitle: getHeaderTitle,
+        headerRight: getHeaderRight,
+      });
+    } else {
+      setNavigationOptions({
+        headerRight: getHeaderRight,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setNavigationOptions, getHeaderTitle]);
+  }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
   const isFirstLoading = loading && !allTxHistory.length;
 
@@ -382,8 +453,24 @@ function History({
   }
 
   return (
-    <View style={{ paddingBottom: bottom, paddingTop: 24 }}>
-      {isTestnet || isInTokenDetail ? null : (
+    <View
+      // onPress={() => {
+      //   setIsShowMenu(false);
+      // }}
+      // eslint-disable-next-line react-native/no-inline-styles
+      style={{ paddingBottom: bottom, paddingTop: 0, position: 'relative' }}>
+      <>
+        {isShowMenu && (
+          <View style={styles.menuContainer}>
+            <Text style={styles.menuItemText}>
+              {strings('page.transactions.ViewHiddenItems')}
+            </Text>
+            <View style={styles.valueView}>
+              <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
+            </View>
+          </View>
+        )}
+        {/* {isTestnet || isInTokenDetail ? null : (
         <TouchableOpacity
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
@@ -400,17 +487,18 @@ function History({
           <Text style={styles.linkText}>Hide scam transactions</Text>
           <RcIconRight />
         </TouchableOpacity>
-      )}
-      <HistoryList
-        list={[...(groups || []), ...(displayList || [])]}
-        localTxList={groups}
-        loading={isFirstLoading}
-        loadingMore={loadingMore}
-        refreshLoading={loading}
-        isForMultipleAdderss={isForMultipleAdderss}
-        loadMore={loadMore}
-        onRefresh={refresh}
-      />
+      )} */}
+        <HistoryList
+          list={[...(groups || []), ...(displayList || [])]}
+          localTxList={groups}
+          loading={isFirstLoading}
+          loadingMore={loadingMore}
+          refreshLoading={loading}
+          isForMultipleAdderss={isForMultipleAdderss}
+          loadMore={loadMore}
+          onRefresh={refresh}
+        />
+      </>
     </View>
   );
 }
@@ -425,12 +513,13 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   } = useGeneralTokenDetailSheetModal();
   useLastUsedAccountInScreen();
 
+  const { styles } = useTheme2024({ getStyle });
   const { isSceneUsingAllAccounts } = useSceneAccountInfo({
     forScene: 'MultiHistory',
   });
 
   return (
-    <NormalScreenContainer2024 type="bg1">
+    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       {isForMultipleAdderss && (
         <AccountSwitcherModal
           forScene="MultiHistory"
@@ -460,7 +549,44 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  container: {
+    backgroundColor: isLight ? '#F6F7F7' : colors2024['neutral-bg-1'],
+  },
+  menuContainer: {
+    elevation: 5,
+    shadowColor: 'rgba(25, 35, 60, 0.2)', // Shadow color
+    shadowOffset: { width: 0, height: 12 }, // Horizontal and vertical offsets
+    shadowOpacity: 0.2, // Shadow opacity
+    shadowRadius: 8, // Blur radius
+    flexDirection: 'row',
+    zIndex: 1,
+    justifyContent: 'space-between',
+    position: 'absolute',
+    top: 0,
+    right: 16,
+    alignItems: 'center',
+    width: 250,
+    height: 56,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 12,
+    // paddingVertical: 16,
+    borderRadius: 16,
+  },
+  menuItemText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  valueView: {
+    // width: '50%',
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
   link: {
     marginHorizontal: 20,
     marginBottom: 8,

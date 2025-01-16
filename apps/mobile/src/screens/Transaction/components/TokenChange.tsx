@@ -15,11 +15,14 @@ import {
   View,
 } from 'react-native';
 import RcIconUnknown from '@/assets/icons/token/default.svg';
-import { numberWithCommasIsLtOne } from '@/utils/number';
+import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
+import { HistoryItemCateType } from './HistoryItemIcon';
+import { strings } from '@/utils/i18n';
+import { getTokenSymbol } from '@/utils/token';
 
 const TxChangeItem = ({
   item,
@@ -52,7 +55,7 @@ const TxChangeItem = ({
 
   return (
     <View style={styles.item}>
-      {isNft ? (
+      {/* {isNft ? (
         <Media
           failedPlaceholder={<IconDefaultNFT width={14} height={14} />}
           type={token?.content_type}
@@ -71,7 +74,7 @@ const TxChangeItem = ({
         />
       ) : (
         <RcIconUnknown width={14} height={14} />
-      )}
+      )} */}
 
       <Text
         style={[tokenChangeStyle, styles.tokenChangeDelta]}
@@ -81,7 +84,7 @@ const TxChangeItem = ({
       </Text>
       <TokenLabel
         isForMultipleAdderss={isForMultipleAdderss}
-        disableClickToken={!canClickToken}
+        disableClickToken={true}
         style={[tokenChangeStyle, styles.tokenLabel]}
         {...(isNft
           ? { token: token as NFTItem, isNft }
@@ -94,23 +97,46 @@ const TxChangeItem = ({
 };
 export const TxChange = ({
   data,
+  type,
   tokenDict,
   canClickToken,
   style,
   isForMultipleAdderss,
 }: {
+  type: HistoryItemCateType;
   isForMultipleAdderss?: boolean;
   data: HistoryDisplayItem;
   tokenDict: TxDisplayItem['tokenDict'];
   canClickToken?: boolean;
 } & RNViewProps) => {
   const { styles } = useTheme2024({ getStyle });
+  const isApprove =
+    type === HistoryItemCateType.Approve || type === HistoryItemCateType.Revoke;
+  const singleAmount = data?.token_approve?.value;
+  const appvoveAmmountStr = singleAmount
+    ? singleAmount < 1e9
+      ? numberWithCommasIsLtOne(singleAmount, 2)
+      : strings('page.transactions.detail.Unlimited')
+    : '';
+  const tokenId = data?.token_approve?.token_id || '';
+  const tokenUUID = `${data?.chain}_token:${tokenId}`;
+  const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
+  const tokenIsNft = tokenId?.length === 32;
+
   return (
     <View style={[styles.container, style]}>
-      {data?.sends?.map(item => (
+      {isApprove && (
+        <Text style={[styles.approveText]}>
+          {' '}
+          {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
+          {tokenIsNft
+            ? strings('page.nft.title')
+            : getTokenSymbol(singeToken as TokenItem)}
+        </Text>
+      )}
+      {data?.receives?.map(item => (
         <TxChangeItem
           isForMultipleAdderss={isForMultipleAdderss}
-          isSend
           canClickToken={canClickToken}
           key={item.token_id}
           data={data}
@@ -118,9 +144,10 @@ export const TxChange = ({
           item={item}
         />
       ))}
-      {data?.receives?.map(item => (
+      {data?.sends?.map(item => (
         <TxChangeItem
           isForMultipleAdderss={isForMultipleAdderss}
+          isSend
           canClickToken={canClickToken}
           key={item.token_id}
           data={data}
@@ -165,6 +192,13 @@ const getStyle = createGetStyles2024(({ colors }) => ({
   },
   tokenChangeDelta: {
     justifyContent: 'flex-end',
+  },
+  approveText: {
+    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   textNegative: {
     color: colors['neutral-body'],

@@ -8,7 +8,7 @@ import { findChain } from '@/utils/chain';
 import { TokenSpenderPair } from '@rabby-wallet/biz-utils/dist/isomorphic/permit2';
 import { approvalUtils, permit2Utils } from '@rabby-wallet/biz-utils';
 
-async function approveToken(
+export async function approveToken(
   chainServerId: string,
   id: string,
   spender: string,
@@ -73,7 +73,7 @@ async function approveToken(
   );
 }
 
-async function revokeNFTApprove(
+export async function revokeNFTApprove(
   {
     chainServerId,
     contractId,
