@@ -14,6 +14,7 @@ import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { trigger } from 'react-native-haptic-feedback';
 
 const { isSameAddress } = addressUtils;
 
@@ -45,7 +46,7 @@ export const DuplicateAddressModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { accounts } = useAccounts();
-  // const { switchAccount } = useCurrentAccount();
+  const { switchAccount } = useCurrentAccount({ disableAutoFetch: true });
 
   const currentAccount = React.useMemo(() => {
     if (!account) {
@@ -62,10 +63,16 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const handleSwitch = React.useCallback(async () => {
     if (currentAccount) {
-      // switchAccount(currentAccount);
-      navigate(RootNames.StackRoot, { screen: RootNames.Home });
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+      switchAccount(currentAccount);
+      navigate(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+      });
     }
-  }, [currentAccount]);
+  }, [currentAccount, switchAccount]);
 
   const onCancel = React.useCallback(() => {
     setVisible(false);
