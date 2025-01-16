@@ -1,26 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useMemo } from 'react';
-import RcIconSend from '@/assets2024/icons/history/IconSend.svg';
-import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
-// import RcIconContract from '@/assets/icons/history/contract.svg';
-import RcIconApproval from '@/assets2024/icons/history/IconApprove.svg';
-import RcIconReceive from '@/assets2024/icons/history/IconReceive.svg';
-import RcIconRevoke from '@/assets2024/icons/history/IconRevoke.svg';
-import RcIconContract from '@/assets2024/icons/history/IconContract.svg';
-import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
-import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import {
-  Image,
-  ImageStyle,
-  StyleProp,
-  StyleSheet,
-  ViewStyle,
-  Text,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import { AssetAvatar } from '@/components';
 import {
   NFTItem,

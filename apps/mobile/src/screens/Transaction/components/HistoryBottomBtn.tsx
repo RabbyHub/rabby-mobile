@@ -1,33 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import RcIconSend from '@/assets2024/icons/history/IconSend.svg';
-import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
-// import RcIconContract from '@/assets/icons/history/contract.svg';
-import RcIconApproval from '@/assets2024/icons/history/IconApprove.svg';
-import RcIconReceive from '@/assets2024/icons/history/IconReceive.svg';
-import RcIconRevoke from '@/assets2024/icons/history/IconRevoke.svg';
-import RcIconContract from '@/assets2024/icons/history/IconContract.svg';
-import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
-import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
-import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import {
-  Image,
-  ImageStyle,
-  StyleProp,
-  StyleSheet,
-  ViewStyle,
-  Text,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import { View } from 'react-native';
 import { AssetAvatar } from '@/components';
 import {
   NFTItem,
   TokenItem,
   TxDisplayItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { Media } from '@/components/Media';
-import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
@@ -120,14 +98,14 @@ export const HistoryBottomBtn = ({
         ? strings('page.nft.title')
         : getTokenSymbol(singeToken as TokenItem);
 
-      return (
+      return tokenIsNft ? null : (
         <View style={styles.buttonContainer}>
           <Button
             buttonStyle={styles.ghostButton}
             titleStyle={styles.ghostTitle}
             onPress={async () => {
               if (tokenIsNft) {
-                // ？ confrim revoke nft approve
+                // ？to confrim revoke nft approve
                 await revokeNFTApprove(
                   {
                     chainServerId: chain,
