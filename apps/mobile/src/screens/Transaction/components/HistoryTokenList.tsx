@@ -39,6 +39,8 @@ import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { strings } from '@/utils/i18n';
+import { HistoryDisplayItem } from '../MultiAddressHistory';
+import { fetchHistoryTokenUUId } from './utils';
 
 interface ItemProps {
   status: number;
@@ -46,8 +48,8 @@ interface ItemProps {
   className?: string;
   type?: HistoryItemCateType | undefined;
   token?: TokenItem | TokenItem[];
-  isNft?: boolean;
   chain: TxDisplayItem['chain'];
+  data: HistoryDisplayItem;
   approve: TxDisplayItem['token_approve'];
   receives: TxDisplayItem['receives'];
   sends: TxDisplayItem['sends'];
@@ -133,6 +135,7 @@ export const HistoryTokenList = ({
   token,
   sends,
   chain,
+  data,
   receives,
   approve,
   isForMultipleAdderss,
@@ -172,9 +175,12 @@ export const HistoryTokenList = ({
 
   switch (type) {
     case HistoryItemCateType.Send:
+    case HistoryItemCateType.Revoke:
     case HistoryItemCateType.Approve:
     case HistoryItemCateType.Recieve:
-      const isApprove = type === HistoryItemCateType.Approve;
+      const isApprove =
+        type === HistoryItemCateType.Approve ||
+        type === HistoryItemCateType.Revoke;
       const tokenId = isApprove
         ? approve?.token_id || ''
         : receives?.[0]?.token_id || sends?.[0]?.token_id;
@@ -182,10 +188,11 @@ export const HistoryTokenList = ({
       const singleAmount = isApprove
         ? approve?.value
         : receives?.[0]?.amount || sends?.[0]?.amount;
-      const appvoveAmmountStr =
-        singleAmount && singleAmount < 1e9
+      const appvoveAmmountStr = singleAmount
+        ? singleAmount < 1e9
           ? numberWithCommasIsLtOne(singleAmount, 2)
-          : strings('page.transactions.detail.Unlimited');
+          : strings('page.transactions.detail.Unlimited')
+        : '';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const isSend = type === HistoryItemCateType.Send;
       const tokenIsNft = tokenId?.length === 32;
@@ -197,7 +204,7 @@ export const HistoryTokenList = ({
               <HistoryItemIcon
                 isInDetail={true}
                 type={type}
-                token={token}
+                token={singeToken as TokenItem}
                 isNft={tokenIsNft}
               />
               <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
@@ -229,9 +236,14 @@ export const HistoryTokenList = ({
     case HistoryItemCateType.Swap:
       const sendAmount = sends?.[0]?.amount;
       const recieveAmount = receives?.[0]?.amount;
-      const sendToken = tokenDict[sends?.[0]?.token_id] as TokenItem;
-      const recieveToken = tokenDict[receives?.[0]?.token_id] as TokenItem;
-      console.log('HistoryTokenList sends', sends, sendToken);
+      const sendToken = (tokenDict[sends?.[0]?.token_id] ||
+        tokenDict[
+          fetchHistoryTokenUUId(sends?.[0]?.token_id, chain)
+        ]) as TokenItem;
+      const recieveToken = (tokenDict[receives?.[0]?.token_id] ||
+        tokenDict[
+          fetchHistoryTokenUUId(receives?.[0]?.token_id, chain)
+        ]) as TokenItem;
       return (
         <View style={[styles.doubleBox]}>
           <TouchableOpacity

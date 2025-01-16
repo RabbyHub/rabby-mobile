@@ -23,7 +23,7 @@ import { strings } from '@/utils/i18n';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { getHistoryItemType } from './utils';
+import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -57,13 +57,21 @@ export const HistoryItem = React.memo(
       if (isDoubleToken) {
         const send = data.sends[0];
         const receive = data.receives[0];
+        const sendToken =
+          tokenDict[send.token_id] ||
+          tokenDict[fetchHistoryTokenUUId(send.token_id, data.chain)];
+        const receiveToken =
+          tokenDict[receive.token_id] ||
+          tokenDict[fetchHistoryTokenUUId(receive.token_id, data.chain)];
 
         return {
-          formatToken: [tokenDict[send.token_id], tokenDict[receive.token_id]],
+          formatToken: [sendToken, receiveToken],
           isNft: false,
         };
       } else {
-        const isApprove = cate === HistoryItemCateType.Approve;
+        const isApprove =
+          cate === HistoryItemCateType.Approve ||
+          cate === HistoryItemCateType.Revoke;
         const commonItem =
           cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
 
@@ -131,9 +139,9 @@ export const HistoryItem = React.memo(
             (isSend ? ToText : FromText) +
             (getAliasName(addr) || ellipsisAddress(addr))
           );
+        case HistoryItemCateType.Revoke:
         case HistoryItemCateType.Approve:
           return ToText + (projectName || chainItem?.name);
-        case HistoryItemCateType.Revoke:
         case HistoryItemCateType.Contract:
           return FromText + chainItem?.name;
         case HistoryItemCateType.Cancel:

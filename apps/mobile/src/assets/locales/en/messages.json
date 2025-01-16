@@ -32,6 +32,9 @@
         "Chain": "Chain",
         "GasFee": "Gas Fee",
         "ViewOn": "View on",
+        "ApproveToken": "Approve token",
+        "ApproveTo": "Approve to",
+        "RevokeFrom": "Revoke from",
         "InteractedContract": "Interacted contract",
         "RecipientAddress": "Recipient address"
       },
