@@ -48,7 +48,9 @@ export const CreateAddressList = () => {
 
   return (
     <View>
-      <WalletHeadline Icon={RcIconAddCircle}>Create new Address</WalletHeadline>
+      <WalletHeadline Icon={RcIconAddCircle}>
+        {t('page.newAddress.createNewAddress')}
+      </WalletHeadline>
       {hadSeedPhrase && (
         <WalletItem
           style={styles.walletItem}

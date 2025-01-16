@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { getLocales } from 'react-native-localize';
 import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
 import {
@@ -229,10 +228,6 @@ export class PreferenceService {
         storage: options?.storageAdapter,
       },
     );
-    const languageCode = getLocales()[0]?.languageTag || defaultLang;
-    if (languageCode in SupportedLang) {
-      this.setLocale(languageCode);
-    }
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;

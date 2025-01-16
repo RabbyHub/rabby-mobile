@@ -7,9 +7,14 @@ import codeConfig from '@/assets/locales/index.json';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
 export enum SupportedLang {
-  'en' = 'en',
+  'en-US' = 'en-US',
   'zh-CN' = 'zh-CN',
 }
+
+const locales = {
+  [SupportedLang['en-US']]: enLocale,
+  [SupportedLang['zh-CN']]: zh_CNLocale,
+};
 
 export const SupportedLangs = (
   codeConfig as { code: SupportedLang; name: string }[]
@@ -30,7 +35,7 @@ export const SupportedLangs = (
 export function coerceLang(lang: SupportedLang): SupportedLang {
   if (isNonPublicProductionEnv) return lang;
 
-  return 'en' as SupportedLang;
+  return 'en-US' as SupportedLang;
 }
 
 export function filterSupportedLang(lang: string): SupportedLang {
@@ -38,24 +43,13 @@ export function filterSupportedLang(lang: string): SupportedLang {
     return coerceLang(lang as SupportedLang);
   }
 
-  return coerceLang(SupportedLang.en);
-}
-
-export function getLocale(locale: SupportedLang) {
-  // ONLY support en for now
-  switch (locale) {
-    default:
-    case SupportedLang.en:
-      return enLocale;
-    case SupportedLang['zh-CN']:
-      return zh_CNLocale;
-  }
+  return coerceLang(SupportedLang['en-US']);
 }
 
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
-    fallbackLng: 'en',
+    fallbackLng: 'en-US',
     defaultNS: 'translations',
     interpolation: {
       escapeValue: false, // react already safes from xss
@@ -66,18 +60,14 @@ i18n
 
 export const I18N_NS = 'translations';
 
-export function strings(...args: Parameters<typeof i18n.t>) {
-  return i18n.t(...args);
-}
-
 export function addResourceBundle(locale: SupportedLang) {
   if (i18n.hasResourceBundle(locale, I18N_NS)) return;
-  const bundle = getLocale(locale);
+  const bundle = locales[locale];
 
   i18n.addResourceBundle(locale, I18N_NS, bundle);
 }
 
-addResourceBundle('en' as SupportedLang);
+addResourceBundle('en-US' as SupportedLang);
 
 i18n.on('languageChanged', function (lng: string) {
   addResourceBundle(filterSupportedLang(lng));

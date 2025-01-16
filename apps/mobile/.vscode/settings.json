@@ -1,0 +1,9 @@
+{
+  "i18n-ally.localesPaths": [
+    "src/assets/locales",
+    "src/components2024/i18n",
+    "ios/Pods/RCT-Folly/folly/lang",
+    "ios/Pods/boost/boost/locale",
+    "ios/Pods/boost/boost/predef/language"
+  ]
+}

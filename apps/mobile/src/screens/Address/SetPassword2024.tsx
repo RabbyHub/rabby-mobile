@@ -340,7 +340,7 @@ function MainListBlocks() {
             </View>
             <View style={styles.switchContainer}>
               <Text style={styles.labelText}>
-                {t('page.createPassword.enable', { type: defaultTypeLabel })}
+                {t('page.createPassword.enable', { bioType: defaultTypeLabel })}
               </Text>
               <View style={styles.valueView}>
                 <AppSwitch2024
@@ -380,7 +380,9 @@ function MainListBlocks() {
                   }}>
                   {t('page.createPassword.termOfUse')}
                 </TouchableText>
-                <Text style={styles.agreementText}> and </Text>
+                <Text style={styles.agreementText}>
+                  {' ' + t('page.createPassword.and') + ' '}
+                </Text>
                 <TouchableText
                   style={styles.userAgreementTouchText}
                   touchableProps={{ style: styles.userAgreementTouchable }}
