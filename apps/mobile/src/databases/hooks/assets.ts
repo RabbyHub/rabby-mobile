@@ -125,6 +125,7 @@ export const syncNFTs = async (address: string, force?: boolean) => {
     return nfts;
   } catch (e) {
     console.error(e);
+    return [];
   }
 };
 

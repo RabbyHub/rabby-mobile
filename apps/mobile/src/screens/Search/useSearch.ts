@@ -1,6 +1,5 @@
 import { useDebounce } from 'ahooks';
 import { useState } from 'react';
-import { AbstractPortfolioToken } from '../Home/types';
 import {
   CombineDefiItem,
   CombineNFTItem,

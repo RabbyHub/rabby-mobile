@@ -25,7 +25,6 @@ import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
-import { useDeleteAssets } from '@/screens/Home/hooks/store';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -289,14 +288,13 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 
 export function useRemoveAccount() {
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const deleteAssetInStore = useDeleteAssets();
+  // TODO: delete in db
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
       await fetchAccounts();
-      deleteAssetInStore(account?.address?.toLowerCase());
     },
-    [deleteAssetInStore, fetchAccounts],
+    [fetchAccounts],
   );
 }
 
