@@ -5,6 +5,7 @@ import { EntityAddressAssetBase } from './base';
 import { columnConverter, realTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
+import { prepareAppDataSource } from '../imports';
 
 @Entity('tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -98,7 +99,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   low_credit_score: TokenItem['low_credit_score'] = false;
 
   makeDbId(): string {
-    return (this._db_id = `${this.address}-${[
+    return (this._db_id = `${[
+      this.address,
       this.id,
       this.chain,
       this.inner_id || '',
@@ -141,6 +143,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCountOfAccount() {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
 
     const result = await repo
@@ -152,16 +156,22 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCount() {
+    await prepareAppDataSource();
+
     return this.getRepository().count();
   }
 
   static async batchQueryTokens(address: string) {
+    await prepareAppDataSource();
+
     return (await this.getRepository().findBy({ address })).filter(
       i => i.id !== EMPTY_TOKEN_ITEM_ID,
     );
   }
 
   static async isExpired(address: string) {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('tokenitem')
@@ -176,6 +186,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
   static async deleteForAddress(address: string) {
+    await prepareAppDataSource();
+
     return this.getRepository().delete({ address });
   }
 }

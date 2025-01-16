@@ -15,11 +15,11 @@ export class EntityBaseWithoutId extends BaseEntity {
   @UpdateDateColumn({ type: 'integer' }) _local_updated_at: number = Date.now();
 }
 
-type AddressPrefix = `${string}-`;
+type OwnerAddress = string;
 
 export abstract class EntityAddressAssetBase extends EntityBaseWithoutId {
   @PrimaryColumn({ type: 'text' })
-  _db_id: `${AddressPrefix}${string}` = '0x-';
+  _db_id: `${OwnerAddress}${string}` = '0x-';
 
   abstract makeDbId(): string;
 

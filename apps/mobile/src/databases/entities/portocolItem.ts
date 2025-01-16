@@ -5,6 +5,7 @@ import { EntityAddressAssetBase } from './base';
 import { jsonTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
+import { prepareAppDataSource } from '../imports';
 
 @Entity('portocolitem')
 export class PortocolItemEntity extends EntityAddressAssetBase {
@@ -63,6 +64,8 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCountOfAccount() {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
 
     const result = await repo
@@ -74,10 +77,14 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCount() {
+    await prepareAppDataSource();
+
     return this.getRepository().count();
   }
 
   static async batchQueryPortocols(address: string) {
+    await prepareAppDataSource();
+
     return (await this.getRepository().findBy({ address }))
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
@@ -87,6 +94,8 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   }
 
   static async isExpired(address: string) {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('portocolitem')
@@ -100,6 +109,8 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
   static async deleteForAddress(address: string) {
+    await prepareAppDataSource();
+
     return this.getRepository().delete({ address });
   }
 }

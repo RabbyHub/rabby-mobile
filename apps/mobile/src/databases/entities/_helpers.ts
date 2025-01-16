@@ -1,4 +1,7 @@
+import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import BigNumber from 'bignumber.js';
+import { ValueTransformer } from 'typeorm/browser';
 
 const DECIMALS_INT_RATIO = 18;
 
@@ -66,12 +69,24 @@ export const columnConverter = {
   },
 };
 
-export const realTransformer = {
+export const realTransformer: ValueTransformer = {
   to: (val: any) => columnConverter.decimalsToInteger(val),
   from: (val: any) => columnConverter.intToDecimals(val),
 };
 
-export const jsonTransformer = {
+/**
+ * @description should used with TEXT column type
+ */
+export const jsonTransformer: ValueTransformer = {
   to: (val: any) => JSON.stringify(val),
-  from: (val: any) => JSON.parse(val),
+  from: (val: any) => stringUtils.safeParseJSON(val),
+};
+
+/**
+ * @description should used with TEXT column type
+ */
+export const bigNumberTransformer: ValueTransformer = {
+  to: (val: any) =>
+    BigNumber.isBigNumber(val) ? val.toString() : new BigNumber(val).toString(),
+  from: (val: any) => new BigNumber(val),
 };

@@ -5,6 +5,7 @@ import { EntityAddressAssetBase } from './base';
 import { realTransformer, jsonTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
+import { prepareAppDataSource } from '../imports';
 
 @Entity('nftitem')
 export class NFTItemEntity extends EntityAddressAssetBase {
@@ -121,6 +122,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCountOfAccount() {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
 
     const result = await repo
@@ -132,10 +135,14 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   }
 
   static async getCount() {
+    await prepareAppDataSource();
+
     return this.getRepository().count();
   }
 
   static async batchQueryNFTs(address: string) {
+    await prepareAppDataSource();
+
     return (
       await this.getRepository().findBy({
         address,
@@ -150,6 +157,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   }
 
   static async isExpired(address: string) {
+    await prepareAppDataSource();
+
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('nftitem')
@@ -164,6 +173,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
   static async deleteForAddress(address: string) {
+    await prepareAppDataSource();
+
     return this.getRepository().delete({ address });
   }
 }
