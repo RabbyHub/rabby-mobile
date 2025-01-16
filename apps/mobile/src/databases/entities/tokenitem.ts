@@ -100,7 +100,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
   makeDbId(): string {
     return (this._db_id = `${[
-      this.address,
+      this.owner_addr,
       this.id,
       this.chain,
       this.inner_id || '',
@@ -109,8 +109,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .join('-')}`);
   }
 
-  static fillEntity(e: TokenItemEntity, address: string, input: TokenItem) {
-    e.address = address;
+  static fillEntity(e: TokenItemEntity, owner_addr: string, input: TokenItem) {
+    e.owner_addr = owner_addr;
 
     // content_type, content, inner_id, amount, chain, decimals, display_symbol, id, is_core, is_verified, is_wallet, is_scam, is_infinity, is_suspicious, logo_url, name, optimized_symbol, price, symbol, time_at, usd_value, raw_amount, raw_amount_hex_str, price_24h_change, low_credit_score
     e.content_type = input.content_type;
@@ -149,7 +149,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     const result = await repo
       .createQueryBuilder('tokenitem')
-      .select('COUNT(DISTINCT (`address`))', 'uniqueChainAddressCount')
+      .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
     return result.uniqueChainAddressCount as number;
@@ -161,22 +161,22 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async batchQueryTokens(address: string) {
+  static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ address })).filter(
+    return (await this.getRepository().findBy({ owner_addr })).filter(
       i => i.id !== EMPTY_TOKEN_ITEM_ID,
     );
   }
 
-  static async isExpired(address: string) {
+  static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('tokenitem')
       .select('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
-      .where('tokenitem.address = :address', { address })
+      .where('tokenitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
 
     if (!result.minUpdatedAt) {
@@ -185,9 +185,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
-  static async deleteForAddress(address: string) {
+  static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().delete({ address });
+    return this.getRepository().delete({ owner_addr });
   }
 }

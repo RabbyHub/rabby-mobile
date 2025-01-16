@@ -39,17 +39,17 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   portfolio_item_list: string = '{}';
 
   makeDbId(): string {
-    return (this._db_id = `${this.address}-${[this.chain, this.id]
+    return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
       .filter(Boolean)
       .join('-')}`);
   }
 
   static fillEntity(
     e: PortocolItemEntity,
-    address: string,
+    owner_addr: string,
     input: ComplexProtocol,
   ) {
-    e.address = address;
+    e.owner_addr = owner_addr;
 
     e.id = input.id ?? '';
     e.chain = input.chain ?? '';
@@ -70,7 +70,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
 
     const result = await repo
       .createQueryBuilder('portocolitem')
-      .select('COUNT(DISTINCT (`address`))', 'uniqueChainAddressCount')
+      .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
     return result.uniqueChainAddressCount as number;
@@ -82,10 +82,10 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async batchQueryPortocols(address: string) {
+  static async batchQueryPortocols(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ address }))
+    return (await this.getRepository().findBy({ owner_addr }))
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,
@@ -93,14 +93,14 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  static async isExpired(address: string) {
+  static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('portocolitem')
       .select('MIN(portocolitem._local_updated_at)', 'minUpdatedAt')
-      .where('portocolitem.address = :address', { address })
+      .where('portocolitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
     if (!result.minUpdatedAt) {
       return true;
@@ -108,9 +108,9 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
-  static async deleteForAddress(address: string) {
+  static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().delete({ address });
+    return this.getRepository().delete({ owner_addr });
   }
 }

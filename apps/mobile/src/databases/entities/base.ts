@@ -24,5 +24,5 @@ export abstract class EntityAddressAssetBase extends EntityBaseWithoutId {
   abstract makeDbId(): string;
 
   @Column('text')
-  address: string = '0x';
+  owner_addr: string = '0x';
 }

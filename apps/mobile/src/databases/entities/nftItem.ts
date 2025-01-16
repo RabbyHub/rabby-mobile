@@ -88,13 +88,13 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   })
   collection: string = '{}';
   makeDbId(): string {
-    return (this._db_id = `${this.address}-${[this.chain, this.id]
+    return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
       .filter(Boolean)
       .join('-')}`);
   }
 
-  static fillEntity(e: NFTItemEntity, address: string, input: NFTItem) {
-    e.address = address;
+  static fillEntity(e: NFTItemEntity, owner_addr: string, input: NFTItem) {
+    e.owner_addr = owner_addr;
 
     e.chain = input.chain ?? '';
     e.id = input.id ?? '';
@@ -140,12 +140,12 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async batchQueryNFTs(address: string) {
+  static async batchQueryNFTs(owner_addr: string) {
     await prepareAppDataSource();
 
     return (
       await this.getRepository().findBy({
-        address,
+        owner_addr,
       })
     )
       .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
@@ -156,14 +156,14 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  static async isExpired(address: string) {
+  static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('nftitem')
       .select('MIN(nftitem._local_updated_at)', 'minUpdatedAt')
-      .where('nftitem.address = :address', { address })
+      .where('nftitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
 
     if (!result.minUpdatedAt) {
@@ -172,9 +172,9 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
-  static async deleteForAddress(address: string) {
+  static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().delete({ address });
+    return this.getRepository().delete({ owner_addr });
   }
 }

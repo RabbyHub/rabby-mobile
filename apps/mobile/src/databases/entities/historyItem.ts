@@ -85,17 +85,17 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   tx_usd_gas_fee: number = 0;
 
   makeDbId(): string {
-    return (this._db_id = `${this.address}-${[this.chain, this.txHash]
+    return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
       .filter(Boolean)
       .join('-')}`);
   }
 
   static fillEntity(
     e: HistoryItemEntity,
-    address: string,
+    owner_addr: string,
     input: TxHistoryItem,
   ) {
-    e.address = address;
+    e.owner_addr = owner_addr;
 
     e.is_scam = input.is_scam ?? false;
     e.txHash = input.id ?? '0x';
@@ -116,10 +116,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  static async getAllHistoryItem(address?: string) {
+  static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
-    return await this.getRepository().findBy({ address });
+    return await this.getRepository().findBy({ owner_addr });
   }
 
   static async getCountOfAccount() {
@@ -129,7 +129,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
     const result = await repo
       .createQueryBuilder('historyitem')
-      .select('COUNT(DISTINCT (`address`))', 'uniqueChainAddressCount')
+      .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
     return result.uniqueChainAddressCount as number;
@@ -141,14 +141,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async getLatestTime(address: string) {
+  static async getLatestTime(owner_addr: string) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('historyitem')
       .select('MIN(historyitem.time_at)', 'minTimeAt')
-      .where('historyitem.address = :address', { address })
+      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
 
     if (!result.minTimeAt) {
@@ -158,15 +158,15 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.minTimeAt;
   }
 
-  static async batchQueryHistory(address: string) {
+  static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().findBy({ address });
+    return this.getRepository().findBy({ owner_addr });
   }
 
-  static async deleteForAddress(address: string) {
+  static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
-    return this.getRepository().delete({ address });
+    return this.getRepository().delete({ owner_addr });
   }
 }
