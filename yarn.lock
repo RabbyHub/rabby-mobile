@@ -2023,10 +2023,10 @@ __metadata:
 
 "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 7.0.0
-  resolution: "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::version=7.0.0&hash=f1f4a1&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::version=7.0.0&hash=ba898e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react-native: ">=0.14.0"
-  checksum: 3951f22fbf66a26859f15464e1fd40a95d978aef3dab9c47539062d2302fe8f15a3a2233931ebbfbace39a0eb08ff759dbd41994d8ec133f9a0a32e2081d3372
+  checksum: 54aff605d1747bed7d9edc86f16b49b31f89da607ae6757a065dc2f5e788bbc15a1367bc0c644c19abb703aea9184f8a6d5ac0b1b6a4b5d98978252e62df8132
   languageName: node
   linkType: hard
 

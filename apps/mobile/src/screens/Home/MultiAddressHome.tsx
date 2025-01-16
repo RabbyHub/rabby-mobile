@@ -67,10 +67,10 @@ import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useAssetsMap } from './hooks/store';
-import { useAssets } from '../Search/useAssets';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ellipsisAddress } from '@/utils/address';
+import { useSyncAssetsDB } from '@/databases/hooks/assets';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -252,8 +252,9 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
-  const { initFetchTop10Assets } = useAssets();
-  const { pinAccountsFirstFour, isShowPin, unPinAddress } =
+  const { syncTop10Assets } = useSyncAssetsDB();
+
+  const { pinAccountsFirstFour, isShowPin } =
     useHomePinAddress(balanceAccounts);
 
   const fetchHistory = useCallback(() => {
@@ -306,7 +307,7 @@ function MultiAddressHome(): JSX.Element {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
-        initFetchTop10Assets();
+        syncTop10Assets();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [triggerUpdate, triggerUpdateAlert, appState]),
@@ -315,8 +316,8 @@ function MultiAddressHome(): JSX.Element {
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
     forceUpdate();
-    initFetchTop10Assets(true);
-  }, [forceUpdate, triggerUpdate, initFetchTop10Assets]);
+    syncTop10Assets(true);
+  }, [triggerUpdate, forceUpdate, syncTop10Assets]);
 
   const needSmallNum = useMemo(() => {
     const num = balanceAccounts.reduce(
