@@ -11,13 +11,13 @@ import {
   Animated,
   TouchableOpacity,
   Easing,
-  TouchableWithoutFeedback,
   RefreshControl,
   ScrollView,
   Dimensions,
   StyleSheet,
   Pressable,
 } from 'react-native';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -27,7 +27,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
 import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
@@ -107,6 +111,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
         </Animated.View>
       </View>
       <TouchableWithoutFeedback
+        hitSlop={15}
         onPress={() => {
           navigation.navigate(RootNames.StackSettings, {
             screen: RootNames.Settings,
