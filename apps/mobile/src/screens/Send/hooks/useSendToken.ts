@@ -26,11 +26,7 @@ import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
-import {
-  formatSpeicalAmount,
-  formatTokenAmount,
-  formatUsdValue,
-} from '@/utils/number';
+import { formatPrice, formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
@@ -135,7 +131,7 @@ export function useSendTokenScreenChainToken() {
 
   const { currentTokenPrice } = useMemo(() => {
     return {
-      currentTokenPrice: formatUsdValue(currentToken.price),
+      currentTokenPrice: formatPrice(currentToken.price),
     };
   }, [currentToken]);
 
