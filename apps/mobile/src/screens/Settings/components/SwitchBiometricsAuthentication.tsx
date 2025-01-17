@@ -5,28 +5,29 @@ import { useBiometrics } from '@/hooks/biometrics';
 import { useThemeColors } from '@/hooks/theme';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
-import { strings } from '@/utils/i18n';
+import { useTranslation } from 'react-i18next';
 
 function useToggleBiometricsEnabled() {
   const { computed, toggleBiometrics } = useBiometrics();
+  const { t } = useTranslation();
 
   const requestToggleBiometricsEnabled = React.useCallback(
     async (nextEnabled: boolean) => {
       AuthenticationModal.show({
-        confirmText: strings('global.confirm'),
-        cancelText: strings('global.cancel'),
+        confirmText: t('global.confirm'),
+        cancelText: t('global.cancel'),
         title: nextEnabled
-          ? strings('component.AuthenticationModals.biometrics.enable', {
+          ? t('component.AuthenticationModals.biometrics.enable', {
               bioType: computed.defaultTypeLabel,
             })
-          : strings('component.AuthenticationModals.biometrics.disable', {
+          : t('component.AuthenticationModals.biometrics.disable', {
               bioType: computed.defaultTypeLabel,
             }),
         // description: nextEnabled
-        //   ? strings('component.AuthenticationModals.biometrics.enableTip', {
+        //   ? t('component.AuthenticationModals.biometrics.enableTip', {
         //       bioType: computed.defaultTypeLabel,
         //     })
-        //   : strings('component.AuthenticationModals.biometrics.disableTip', {
+        //   : t('component.AuthenticationModals.biometrics.disableTip', {
         //       bioType: computed.defaultTypeLabel,
         //     }),
         authType: nextEnabled ? ['password'] : ['none'],
@@ -38,6 +39,7 @@ function useToggleBiometricsEnabled() {
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [toggleBiometrics, computed.defaultTypeLabel],
   );
 

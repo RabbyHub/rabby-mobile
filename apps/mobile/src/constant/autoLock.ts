@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 export const TIME_SETTINGS: {
   key: string;
   label: string;
@@ -5,32 +6,32 @@ export const TIME_SETTINGS: {
 }[] = [
   {
     key: '24h',
-    label: '24 hours',
+    label: t('global.time.hours', { t: 24 }),
     milliseconds: 24 * 60 * 60 * 1000,
   },
   {
     key: '12h',
-    label: '12 hours',
+    label: t('global.time.hours', { t: 12 }),
     milliseconds: 12 * 60 * 60 * 1000,
   },
   {
     key: '4h',
-    label: '4 hours',
+    label: t('global.time.hours', { t: 4 }),
     milliseconds: 4 * 60 * 60 * 1000,
   },
   {
     key: '1h',
-    label: '1 hour',
+    label: t('global.time.hour', { t: 1 }),
     milliseconds: 60 * 60 * 1000,
   },
   {
     key: '10m',
-    label: '10 minutes',
+    label: t('global.time.mins', { t: 10 }),
     milliseconds: 10 * 60 * 1000,
   },
   {
     key: '5m',
-    label: '5 minutes',
+    label: t('global.time.mins', { t: 5 }),
     milliseconds: 5 * 60 * 1000,
   },
 ];

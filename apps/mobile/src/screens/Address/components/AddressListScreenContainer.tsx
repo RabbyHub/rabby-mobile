@@ -21,6 +21,7 @@ import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 import { colord } from 'colord';
+import { useTranslation } from 'react-i18next';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -32,6 +33,7 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   // const { openUrlAsDapp } = useOpenDappView();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const { t } = useTranslation();
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.AddressList)?.params,
@@ -103,7 +105,9 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
                 height={20}
                 color={colors2024['brand-default']}
               />
-              <Text style={styles.buttonTitleText}>Add an Address</Text>
+              <Text style={styles.buttonTitleText}>
+                {t('page.addressDetail.addressListScreen.addAddress')}
+              </Text>
             </View>
           }
         />

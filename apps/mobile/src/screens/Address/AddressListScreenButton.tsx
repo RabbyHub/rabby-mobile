@@ -8,6 +8,7 @@ import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dimensions, Text, TouchableOpacity } from 'react-native';
 
 export interface Props {
@@ -43,6 +44,7 @@ export const AddressListScreenButton: React.FC<Props> = ({
   });
   const maxHeight = Dimensions.get('window').height - 104;
   const contentHeight = accounts.length * (94 + 12) + 60 + 56;
+  const { t } = useTranslation();
 
   const onPress = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
@@ -62,7 +64,9 @@ export const AddressListScreenButton: React.FC<Props> = ({
       style={styles.headerRight}
       hitSlop={hitSlop}
       onPress={onPress}>
-      <Text style={styles.headerRightText}>Edit</Text>
+      <Text style={styles.headerRightText}>
+        {t('page.addressDetail.addressListScreen.edit')}
+      </Text>
     </TouchableOpacity>
   );
 };

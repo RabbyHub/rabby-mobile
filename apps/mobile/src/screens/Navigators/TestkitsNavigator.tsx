@@ -4,42 +4,47 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
+import {
+  preloadNonProductionScreens,
+  TESTKITS_PRELOAD_SCREENS,
+} from '@/perfs/preloads';
+import { useLayoutEffect } from 'react';
 
 const GetStartedScreen2024 = registerAppScreen<
   typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
 >({
   loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
-  name: RootNames.NewUserGetStarted2024,
+  name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
 });
 const DevUIFontShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFontShowCase').default
 >({
   loader: () => import('@/screens/Testkits/DevUIFontShowCase'),
-  name: RootNames.DevUIFontShowCase,
+  name: TESTKITS_PRELOAD_SCREENS.DevUIFontShowCase,
 });
 const DevUIFormShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFormShowCase').default
 >({
   loader: () => import('@/screens/Testkits/DevUIFormShowCase'),
-  name: RootNames.DevUIFormShowCase,
+  name: TESTKITS_PRELOAD_SCREENS.DevUIFormShowCase,
 });
 const DevUIAccountShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIAccountShowCase').default
 >({
   loader: () => import('@/screens/Testkits/DevUIAccountShowCase'),
-  name: RootNames.DevUIAccountShowCase,
+  name: TESTKITS_PRELOAD_SCREENS.DevUIAccountShowCase,
 });
 const DevUIScreenContainerShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIScreenContainerShowCase').default
 >({
   loader: () => import('@/screens/Testkits/DevUIScreenContainerShowCase'),
-  name: RootNames.DevUIScreenContainerShowCase,
+  name: TESTKITS_PRELOAD_SCREENS.DevUIScreenContainerShowCase,
 });
 const DevUIDapps = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIDapps').default
 >({
   loader: () => import('@/screens/Testkits/DevUIDapps'),
-  name: RootNames.DevUIDapps,
+  name: TESTKITS_PRELOAD_SCREENS.DevUIDapps,
 });
 
 const Stack = createCustomNativeStackNavigator();
@@ -48,6 +53,10 @@ export function TestkitsNavigator() {
   // const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
+
+  useLayoutEffect(() => {
+    preloadNonProductionScreens();
+  }, []);
 
   return (
     <Stack.Navigator

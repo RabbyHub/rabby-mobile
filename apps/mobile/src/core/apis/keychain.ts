@@ -4,7 +4,7 @@ import RNKeychain from 'react-native-keychain';
 import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
-import { strings } from '@/utils/i18n';
+import i18n from '@/utils/i18n';
 import * as apisLock from './lock';
 
 const storage = new MMKV({
@@ -107,14 +107,14 @@ async function waitInstance() {
 }
 
 /* ===================== Biometrics:start ===================== */
-const CANCELSTR = strings('native.authentication.auth_prompt_cancel');
+const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
 const DEFAULT_OPTIONS: RNKeychain.Options = {
   service: 'com.debank',
   authenticationPrompt: {
-    title: strings('native.authentication.auth_prompt_title'),
+    title: i18n.t('native.authentication.auth_prompt_title'),
     // subtitle: '',
-    description: strings('native.authentication.auth_prompt_desc'),
-    cancel: strings('native.authentication.auth_prompt_cancel'),
+    description: i18n.t('native.authentication.auth_prompt_desc'),
+    cancel: i18n.t('native.authentication.auth_prompt_cancel'),
   },
   authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
   // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
