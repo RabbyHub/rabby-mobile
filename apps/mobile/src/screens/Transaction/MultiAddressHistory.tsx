@@ -58,6 +58,7 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { strings } from '@/utils/i18n';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const PAGE_COUNT = 2000;
 
@@ -120,6 +121,8 @@ function History({
   } = useSceneAccountInfo({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
+
+  const { projectDict, tokenDict } = useHistoryTokenDict();
   const { assetsInfo, fetchAssetsInfo } = useHistoryBasicInfo({
     enableAutoFetch: true,
   });
@@ -134,8 +137,6 @@ function History({
         SwapItemEntity.getAllHistoryItem(),
       ]);
       // const historyList = await HistoryItemEntity.getAllHistoryItem();
-      const tokenDict = await transactionHistoryService.getTokenDict();
-      const projectDict = await transactionHistoryService.getProjectDict();
       console.log('tokenDict', Object.keys(tokenDict).length);
       console.log(
         'projectDict',

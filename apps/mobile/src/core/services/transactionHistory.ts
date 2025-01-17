@@ -100,8 +100,6 @@ export class TransactionHistoryService {
         name: APP_STORE_NAMES.txHistory,
         template: {
           transactions: [],
-          tokenDict: {},
-          projectDict: {},
         },
       },
       {
@@ -110,8 +108,6 @@ export class TransactionHistoryService {
     );
     if (!Array.isArray(this.store.transactions)) {
       this.store.transactions = [];
-      this.store.tokenDict = {};
-      this.store.projectDict = {};
     }
 
     this.init();
@@ -131,28 +127,6 @@ export class TransactionHistoryService {
     recipe: (draft: TransactionHistoryItem[]) => TransactionHistoryItem[],
   ) => {
     this.store.transactions = recipe(this.store.transactions || []);
-  };
-
-  updateTokenDict = (dict: TxAllHistoryResult['token_uuid_dict']) => {
-    this.store.tokenDict = {
-      ...this.store.tokenDict,
-      ...dict,
-    };
-  };
-
-  updateProjectDict = (dict: TxAllHistoryResult['project_dict']) => {
-    this.store.projectDict = {
-      ...this.store.projectDict,
-      ...dict,
-    };
-  };
-
-  getTokenDict = () => {
-    return this.store.tokenDict;
-  };
-
-  getProjectDict = () => {
-    return this.store.projectDict;
   };
 
   getPendingCount(address: string) {
