@@ -26,6 +26,7 @@ import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -288,14 +289,19 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export function useRemoveAccount() {
-  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  // TODO: delete in db
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
       await fetchAccounts();
+      if (
+        accounts.filter(acc => isSameAddress(acc.address, account.address))
+          .length === 1
+      ) {
+        await deleteDBResourceForAddress(account.address);
+      }
     },
-    [fetchAccounts],
+    [accounts, fetchAccounts],
   );
 }
 
