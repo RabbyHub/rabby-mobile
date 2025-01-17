@@ -262,7 +262,10 @@ function MultiAddressHome(): JSX.Element {
   });
   const sortedAccounts = useSortAddressList(accounts);
   const { syncTop10Assets } = useSyncAssetsDB(sortedAccounts);
-  const { syncTop10History } = useSyncHistoryDB(sortedAccounts);
+  const { syncTop10History } = useSyncHistoryDB(
+    sortedAccounts,
+    HOME_REFRESH_INTERVAL,
+  );
 
   const { pinAccountsFirstFour, isShowPin } =
     useHomePinAddress(balanceAccounts);

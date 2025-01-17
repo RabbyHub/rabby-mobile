@@ -164,6 +164,56 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
     return this.getRepository().findBy({ owner_addr });
   }
+  // static async getAllHistoryItemSortedByTime(
+  //   limit: number = 100,
+  //   lastTimeAt?: number,
+  // ) {
+  //   await prepareAppDataSource();
+
+  //   const repo = this.getRepository();
+
+  //   const queryBuilder = repo
+  //     .createQueryBuilder('historyitem')
+  //     .orderBy('historyitem.time_at', 'DESC')
+  //     .take(limit);
+
+  //   if (lastTimeAt) {
+  //     queryBuilder.where('historyitem.time_at > :lastTimeAt', { lastTimeAt });
+  //   }
+
+  //   const items = await queryBuilder.getMany();
+
+  //   const totalCount = await repo
+  //     .createQueryBuilder('historyitem')
+  //     .select('COUNT(*)', 'count')
+  //     .getRawOne();
+
+  //   const hasMore = totalCount.count > limit + items.length;
+
+  //   return {
+  //     items,
+  //     hasMore,
+  //   };
+  // }
+
+  static async getAllHistoryItemSortedByTime(owner_addr?: string) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+
+    if (!owner_addr) {
+      return await repo
+        .createQueryBuilder('historyitem')
+        .orderBy('historyitem.time_at', 'DESC')
+        .getMany();
+    }
+
+    return await repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
+      .orderBy('historyitem.time_at', 'DESC')
+      .getMany();
+  }
 
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
