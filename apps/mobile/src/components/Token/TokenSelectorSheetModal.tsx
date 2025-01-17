@@ -258,7 +258,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
 
       return [...varied.natural, ...varied.disabled];
-    }, [list, supportChains, chainServerId, isBridgeTo]);
+    }, [isBridgeTo, supportChains, list, chainServerId]);
 
     const isFromModalType = useMemo(
       () =>
@@ -330,6 +330,31 @@ export const TokenSelectorSheetModal = React.forwardRef<
       ({ item: token }) => {
         if (isLoading) {
           return null;
+        }
+
+        if (token.$origin.recentList?.length && token.$origin.TokenRender) {
+          const TokenRender = token.$origin.TokenRender;
+          return (
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 12,
+                paddingHorizontal: 8,
+                marginHorizontal: 12,
+              }}>
+              {token.$origin.recentList?.map(tokenItem => (
+                <TouchableOpacity
+                  key={tokenItem.id}
+                  onPress={() => {
+                    onConfirm(tokenItem);
+                    toggleShowSheetModal('collapse');
+                  }}>
+                  <TokenRender token={tokenItem} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          );
         }
 
         if (token.$origin.headerRender) {
