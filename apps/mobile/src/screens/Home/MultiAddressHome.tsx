@@ -99,7 +99,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 
   return (
     <View style={styles.headerBox}>
-      <View style={styles.headerBox}>
+      <View style={styles.leftBox}>
         <Text style={styles.balanceTextBox}>
           {t('page.nextComponent.multiAddressHome.totalBalance')}
         </Text>
@@ -479,6 +479,8 @@ function MultiAddressHome(): JSX.Element {
         <MultiAddressHomeHeader loading={balanceLoading} />
         <ScrollView
           showsVerticalScrollIndicator={false}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContainer}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
@@ -600,27 +602,30 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
+                : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[
+              styles.floatBottom,
+              { paddingBottom: androidBottomOffset },
+            ]}>
+            <Pressable onPress={handlePressSearch} style={styles.search}>
+              <RcNextSearchCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+              <Text style={styles.searchText}>
+                {t('page.dashboard.home.search')}
+              </Text>
+            </Pressable>
+          </LinearGradient>
         </ScrollView>
-        <LinearGradient
-          colors={
-            isLight
-              ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
-              : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
-          <Pressable onPress={handlePressSearch} style={styles.search}>
-            <RcNextSearchCC
-              width={20}
-              height={20}
-              color={colors2024['neutral-secondary']}
-            />
-            <Text style={styles.searchText}>
-              {t('page.dashboard.home.search')}
-            </Text>
-          </Pressable>
-        </LinearGradient>
       </View>
     </NormalScreenContainer2024>
   );
@@ -628,7 +633,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   paddingContainer: {
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    paddingHorizontal: 0,
     flex: 1,
     flexGrow: 1,
   },
@@ -653,9 +658,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
+  },
+  leftBox: {
+    height: ScreenLayouts.headerAreaHeight,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   balanceTextBox: {
     marginRight: 12,
@@ -667,7 +678,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   balanceBox: {
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginTop: 10,
     marginBottom: 20,
     flexDirection: 'row',
@@ -726,12 +737,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
   menuHeader: {
     height: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
     marginTop: 10,
@@ -783,6 +800,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     marginBottom: 20,
   },
   emptyItem: {
@@ -812,6 +830,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     marginBottom: 20,
     paddingBottom: 100,
   },
