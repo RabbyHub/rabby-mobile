@@ -39,10 +39,18 @@ export const DataHeaderInfo = ({
   const { currentIndex } = LineChart.useChart();
 
   const usdValue = useDerivedValue(() => {
-    return data?.[currentIndex?.value]?.value
+    return isLoading
+      ? '$0'
+      : data?.[currentIndex?.value]?.value
       ? data?.[currentIndex.value].netWorth
       : currentBalance;
-  }, [data, currentBalance, currentIndex.value, currentPercentChange]);
+  }, [
+    isLoading,
+    data,
+    currentBalance,
+    currentIndex.value,
+    currentPercentChange,
+  ]);
 
   const usdValueAnimatedProps = useAnimatedProps(() => {
     return {
