@@ -29,6 +29,7 @@ import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
+import { apisDapp } from '@/core/apis';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -301,7 +302,14 @@ export function useDappWebViewScreen() {
         );
       }
 
+      // this will change data in dapps backend, maybe not sync with dappInfo, but we don't need basic info later
       syncBasicDappInfo(item.origin);
+
+      const dappInfo: DappInfo = dapps[item.origin];
+      if (!dappInfo.currentAccount) {
+        const account = apisDapp.setCurrentAccountForDapp(item.origin);
+        dappInfo.currentAccount = account;
+      }
 
       const needTriggerWebViewReload =
         forceReopen || item.$openParams?.initialUrl !== newUrl;
@@ -356,6 +364,8 @@ export function useDappWebViewScreen() {
 
       preferenceService.toggleAllowNotifyAccountsChanged(true);
 
+      activate(dappInfo);
+
       const routeName = getLatestNavigationName();
       const needRedirect =
         routeName && routeName !== RootNames.DappWebViewStubOnHome;
@@ -371,6 +381,7 @@ export function useDappWebViewScreen() {
             // nextOpenDappInfo: dapps[item.origin],
           },
         });
+        // try trigger notify again
         setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
       } else {
         activate(dapps[item.origin]);
