@@ -109,6 +109,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.token_approve_id = input.token_approve?.token_id ?? '0x';
     e.token_approve_value = input.token_approve?.value ?? 0;
     e.token_approve_spender = input.token_approve?.spender ?? '0x';
+    e.project_id = input.project_id ?? '0x';
 
     e.tx_from_address = input.tx?.from_addr ?? '0x';
     e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
