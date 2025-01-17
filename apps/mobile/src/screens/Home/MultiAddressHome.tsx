@@ -111,7 +111,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
         </Animated.View>
       </View>
       <TouchableWithoutFeedback
-        hitSlop={15}
+        style={styles.settingEntry}
         onPress={() => {
           navigation.navigate(RootNames.StackSettings, {
             screen: RootNames.Settings,
@@ -673,6 +673,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  settingEntry: {
+    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    flexDirection: 'row',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 12,
+    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    ...makeDebugBorder(),
   },
   usdText: {
     fontSize: 36,
