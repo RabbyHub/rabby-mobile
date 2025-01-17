@@ -349,6 +349,8 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         KEYRING_CLASS.HARDWARE.LEDGER,
       ].includes((currentAccount?.type || '') as any) &&
       !receiveToken?.low_credit_score &&
+      !receiveToken?.is_scam &&
+      receiveToken?.is_verified !== false &&
       !isSlippageHigh &&
       !isSlippageLow &&
       !showLoss
