@@ -9,7 +9,7 @@ import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GnosisAdminItem } from './GnosisAdminItem';
@@ -101,12 +101,14 @@ export const GnosisSafeInfoBar = ({
           </View>
 
           <Text style={styles.listItemDesc}>
-            Any transaction requires{' '}
-            <Text
-              style={
-                styles.listItemDescStrong
-              }>{`${activeData?.data?.threshold}/${activeData?.data?.owners.length}`}</Text>{' '}
-            confirmations
+            <Trans key="page.addressDetail.tx-requires">
+              Any transaction requires{' '}
+              <Text
+                style={
+                  styles.listItemDescStrong
+                }>{`${activeData?.data?.threshold}/${activeData?.data?.owners.length}`}</Text>{' '}
+              confirmations
+            </Trans>
           </Text>
         </View>
       </Item>

@@ -311,7 +311,7 @@ export const ImportSeedPhraseScreen2024 = () => {
                       },
                 )}
                 inputProps={{
-                  placeholder: 'Enter your seed phrase',
+                  placeholder: t('page.importSeedPhrase.enterYourSeedPhrase'),
                   value: mnemonics,
                   secureTextEntry: true,
                   textContentType: 'none',
@@ -353,26 +353,30 @@ export const ImportSeedPhraseScreen2024 = () => {
             onPress={() => {
               const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
-                title: "What's a Seed Phrase",
+                title: t('page.newAddress.whatIsSeedPhrase.title'),
                 sections: [
                   {
-                    description:
-                      'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
+                    description: t(
+                      'page.newAddress.whatIsSeedPhrase.description1',
+                    ),
                   },
                   {
-                    title: 'Backup',
-                    description:
-                      'If you lose your seed phrase, you won’t be able to restore your wallet.',
+                    title: t('page.newAddress.whatIsSeedPhrase.title1'),
+                    description: t(
+                      'page.newAddress.whatIsSeedPhrase.description2',
+                    ),
                   },
                   {
-                    title: 'Never Share It',
-                    description:
-                      'Never share your seed phrase—anyone with access to it can control your funds.',
+                    title: t('page.newAddress.whatIsSeedPhrase.title2'),
+                    description: t(
+                      'page.newAddress.whatIsSeedPhrase.description3',
+                    ),
                   },
                   {
-                    title: 'Safety',
-                    description:
-                      'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
+                    title: t('page.newAddress.whatIsSeedPhrase.title3'),
+                    description: t(
+                      'page.newAddress.whatIsSeedPhrase.description4',
+                    ),
                   },
                 ],
                 bottomSheetModalProps: {
@@ -390,7 +394,9 @@ export const ImportSeedPhraseScreen2024 = () => {
                 },
               });
             }}>
-            <Text style={styles.tip}>What's a Seed Phrase</Text>
+            <Text style={styles.tip}>
+              {t('page.newAddress.whatIsSeedPhrase.title')}
+            </Text>
             <HelpIcon style={styles.tipIcon} />
           </Pressable>
         </View>

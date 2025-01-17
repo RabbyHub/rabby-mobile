@@ -9,7 +9,7 @@ import {
   isAuthenticatedByBiometrics,
   parseKeychainError,
 } from '@/core/apis/keychain';
-import { strings } from '@/utils/i18n';
+import { useTranslation } from 'react-i18next';
 import { useAtomCallback } from 'jotai/utils';
 import {
   ValidationBehaviorProps,
@@ -30,6 +30,7 @@ biometricsInfoAtom.onMount = setter => {
 };
 export function useBiometricsComputed() {
   const biometrics = useAtomValue(biometricsInfoAtom);
+  const { t } = useTranslation();
 
   const computed = useMemo(() => {
     const { authEnabled, supportedBiometryType } = biometrics;
@@ -40,12 +41,13 @@ export function useBiometricsComputed() {
       couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
       defaultTypeLabel: isFaceID
-        ? 'Face ID'
+        ? t('page.setting.faceId')
         : IS_IOS
-        ? 'Touch ID'
-        : 'Fingerprint',
+        ? t('page.setting.touchId')
+        : t('page.setting.fingerPrint'),
       isFaceID,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [biometrics]);
 
   return computed;
@@ -168,6 +170,7 @@ export function useVerifyByBiometrics() {
   const getAtomValue = useAtomCallback(get =>
     get(biometricsStubModalStateAtom),
   );
+  const { t } = useTranslation();
 
   const {
     computed: { isBiometricsEnabled },
@@ -177,9 +180,7 @@ export function useVerifyByBiometrics() {
     async (options?: ValidationBehaviorProps) => {
       if (!isBiometricsEnabled) {
         toast.info(
-          strings(
-            'component.AuthenticationModals.processBiometrics.notEnabled',
-          ),
+          t('component.AuthenticationModals.processBiometrics.notEnabled'),
         );
         return;
       }
@@ -219,9 +220,7 @@ export function useVerifyByBiometrics() {
           toast.info(parsedInfo.sysMessage);
         } else {
           toast.info(
-            strings(
-              'component.AuthenticationModals.processBiometrics.authFailed',
-            ),
+            t('component.AuthenticationModals.processBiometrics.authFailed'),
           );
         }
         // vibration here
@@ -240,6 +239,7 @@ export function useVerifyByBiometrics() {
         setState(prev => ({ ...prev, status: 'failed' }));
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isBiometricsEnabled, getAtomValue, setState],
   );
 
