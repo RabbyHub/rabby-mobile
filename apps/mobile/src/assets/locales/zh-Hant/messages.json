@@ -586,7 +586,8 @@
       "Select-from-supported-tokens": "從支持的代幣中選擇",
       "InsufficientBalanceTips": "餘額不足",
       "Token": "Token",
-      "Loading_Tokens": "正在加載代幣..."
+      "Loading_Tokens": "正在加載代幣...",
+      "Balance": "Balance\n"
     },
     "approvals": {
       "search": {
@@ -1375,7 +1376,54 @@
       "logoutConfirmModal": {
         "logout": "登出",
         "desc": "一旦退出登入，您將無法再使用 GasAccount 支付 gas 費用。",
-        "title": "退出當前 GasAccount"
+        "title": "退出當前 GasAccount",
+        "logoutSuccess": "登出成功"
+      },
+      "withdraw": "提款",
+      "noBalance": "無餘額可提領",
+      "gasExceed": "GasAccount 餘額不能超過 $1000",
+      "history": {
+        "noHistory": "過去30天內無歷史記錄"
+      },
+      "depositPopup": {
+        "title": "存款",
+        "desc": "將資金存入 Rabby 的 DeBank L2 Account 並且無需支付額外費用—隨時提取。",
+        "zeroInvalidAmount": "數量不能為零",
+        "invalidAmount": "必須少於 500",
+        "amount": "Amount",
+        "token": "Token",
+        "paymentAddress": "Payment Address（支付地址）",
+        "selectToken": "選擇 Token",
+        "inSufficientTip1": "此地址的代幣餘額不足，請選擇其他地址。",
+        "followingTokenInSufficient": "以下代幣餘額不足"
+      },
+      "paymentAddressPopup": {
+        "title": "選擇 Payment 地址",
+        "address": "付款地址",
+        "balance": "Balance",
+        "confirm": "確認"
+      },
+      "withdrawPopup": {
+        "noEnoughValuetBalance": "Vault Balance 不足。切換鏈或者稍後再試。",
+        "noEnoughGas": "金額過低，無法支付 gas 費用",
+        "riskMessageFromChain": "由於風險控制，提幣限制取決於從此鏈存入的總金額。",
+        "riskMessageFromAddress": "由於風險控制，提款限額取決於此地址已存入的總金額。",
+        "selectDestinationChain": "選擇目標鏈",
+        "selectRecipientAddress": "選擇接收者地址",
+        "withdrawalLimit": "提現限額",
+        "title": "提領",
+        "desc": "您可以將您的 GasAccount 餘額提取到您的 DeBank L2 Wallet。登錄到您的 DeBank L2 Wallet 以根據需要將資金轉移到受支持的區塊鏈上。",
+        "amount": "Amount\n",
+        "to": "至",
+        "selectChain": "選擇鏈",
+        "recipientAddress": "Recipient address 接收者地址",
+        "destinationChain": "目標鏈",
+        "deductGasFees": "收到的金額將扣除 gas 費用",
+        "tipsBtn": "我知道了"
+      },
+      "withdrawConfirmModal": {
+        "title": "已轉移到你的 DeBank L2 Wallet",
+        "button": "在 DeBank 上查看"
       }
     },
     "receiveAddressList": {

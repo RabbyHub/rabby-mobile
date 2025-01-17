@@ -500,7 +500,8 @@
       "Value": "バリュー",
       "No_Tokens": "トークンなし",
       "Select-from-supported-tokens": "サポートされているトークンから選択してください",
-      "Loading_Tokens": "トークンを読み込み中..."
+      "Loading_Tokens": "トークンを読み込み中...",
+      "Balance": "残高"
     },
     "approvals": {
       "list": {
@@ -1200,14 +1201,60 @@
       "logoutConfirmModal": {
         "logout": "ログアウト",
         "title": "現在のGasAccountからログアウト",
-        "desc": "ログアウトすると、GasAccountを使ってガス代を支払うことができなくなります。"
+        "desc": "ログアウトすると、GasAccountを使ってガス代を支払うことができなくなります。",
+        "logoutSuccess": "ログアウトしました"
       },
       "risk": "ご使用のアドレスはリスクがあると検出されたため、この機能は利用できません。",
       "logout": "現在のGasAccountをログアウトします",
       "loginInTip": {
         "title": "USDC / USDT を入金",
         "desc": "すべてのチェーンでGas料金を支払う"
-      }
+      },
+      "history": {
+        "noHistory": "過去30日間の履歴はありません。"
+      },
+      "depositPopup": {
+        "token": "トークン",
+        "selectToken": "トークンを選択",
+        "inSufficientTip1": "このアドレスには十分なトークンがありません 別のアドレスを選択してください",
+        "paymentAddress": "支払いアドレス",
+        "amount": "量",
+        "followingTokenInSufficient": "以下のトークン残高が不十分です",
+        "invalidAmount": "500 未満でなければなりません",
+        "zeroInvalidAmount": "金額はゼロにできません",
+        "title": "預け入れ",
+        "desc": "追加料金なしでRabbyのDeBank L2アカウントに預け入れ—いつでも引き出し可能。"
+      },
+      "paymentAddressPopup": {
+        "title": "支払いアドレスを選択",
+        "balance": "バランス",
+        "confirm": "確認",
+        "address": "支払いアドレス"
+      },
+      "withdrawPopup": {
+        "tipsBtn": "理解しました",
+        "recipientAddress": "受取人アドレス",
+        "to": "に",
+        "amount": "量",
+        "destinationChain": "送金先链",
+        "selectChain": "チェーンを選択",
+        "title": "引き出し",
+        "withdrawalLimit": "引き出し制限",
+        "riskMessageFromChain": "リスク管理のため、引き出し制限はこのチェーンから預け入れた総金額に依存します。",
+        "selectRecipientAddress": "受取人のアドレスを選択",
+        "selectDestinationChain": "送信先のチェーンを選択",
+        "deductGasFees": "受け取った金額からガス料金が差し引かれます",
+        "noEnoughValuetBalance": "Vault Balance が不足しています。チェーンを切り替えるか、後でもう一度お試しください。",
+        "riskMessageFromAddress": "リスク管理のため、出金限度額はこのアドレスが入金した総額に依存します。",
+        "desc": "GasAccountの残高をDeBank L2 Walletに引き出すことができます。必要に応じて、資金をサポートされているブロックチェーンに転送するために、DeBank L2 Walletにログインしてください。"
+      },
+      "withdrawConfirmModal": {
+        "button": "DeBankで表示",
+        "title": "DeBank L2 Wallet に転送しました。"
+      },
+      "withdraw": "出金",
+      "gasExceed": "GasAccountの残高は$1000を超えることはできません。",
+      "noBalance": "残高がないため、引き出せません。"
     },
     "customRpc": {
       "closed": "クローズド",

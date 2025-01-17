@@ -647,7 +647,8 @@
       "Token": "Token",
       "Select-from-supported-tokens": "Chọn từ các token được hỗ trợ",
       "Value": "Giá trị",
-      "InsufficientBalanceTips": "Số dư không đủ"
+      "InsufficientBalanceTips": "Số dư không đủ",
+      "Balance": "Số dư"
     },
     "sendTokenComponents": {
       "GasReserved": "Dành riêng <1>0</1> {{ tokenName }} cho chi phí gas"
@@ -1256,7 +1257,8 @@
       "logoutConfirmModal": {
         "logout": "Đăng xuất",
         "desc": "Khi đã đăng xuất, bạn sẽ không thể sử dụng GasAccount để thanh toán phí gas.",
-        "title": "Đăng xuất GasAccount hiện tại"
+        "title": "Đăng xuất GasAccount hiện tại",
+        "logoutSuccess": "Đăng xuất thành công"
       },
       "GasAccountDepositTipPopup": {
         "gotIt": "Đã hiểu",
@@ -1265,7 +1267,53 @@
       "loginInTip": {
         "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi",
         "title": "Nạp USDC / USDT"
-      }
+      },
+      "history": {
+        "noHistory": "Không có lịch sử trong 30 ngày qua"
+      },
+      "depositPopup": {
+        "invalidAmount": "Phải dưới 500",
+        "inSufficientTip1": "Địa chỉ này không có đủ token Vui lòng chọn một địa chỉ khác",
+        "selectToken": "Chọn Token",
+        "zeroInvalidAmount": "Số tiền không thể bằng 0",
+        "paymentAddress": "Địa chỉ Thanh toán",
+        "amount": "Số lượng",
+        "token": "Token",
+        "followingTokenInSufficient": "Số dư token sau đây không đủ",
+        "desc": "Gửi tiền vào Tài khoản DeBank L2 của Rabby mà không mất phí—rút bất kỳ lúc nào.",
+        "title": "Nạp tiền"
+      },
+      "paymentAddressPopup": {
+        "confirm": "Xác nhận",
+        "address": "Địa chỉ thanh toán",
+        "balance": "Số dư",
+        "title": "Chọn địa chỉ Payment"
+      },
+      "withdrawPopup": {
+        "noEnoughGas": "Số tiền quá thấp để chi trả phí gas",
+        "selectRecipientAddress": "Chọn địa chỉ người nhận",
+        "selectDestinationChain": "Chọn chuỗi đích",
+        "title": "Rút tiền",
+        "withdrawalLimit": "Giới hạn rút tiền",
+        "noEnoughValuetBalance": "Số dư Vault không đủ. Chuyển chuỗi hoặc thử lại sau.",
+        "desc": "Bạn có thể rút số dư GasAccount của mình về ví DeBank L2. Đăng nhập vào ví DeBank L2 của bạn để chuyển tiền sang một chuỗi khối được hỗ trợ khi cần.",
+        "riskMessageFromAddress": "Do yếu tố kiểm soát rủi ro, hạn mức rút tiền phụ thuộc vào tổng số tiền mà địa chỉ này đã nạp",
+        "to": "Để",
+        "amount": "Số lượng",
+        "tipsBtn": "Tôi hiểu rồi",
+        "deductGasFees": "Số tiền nhận sẽ trừ phí gas",
+        "destinationChain": "Chuỗi đích",
+        "riskMessageFromChain": "Do kiểm soát rủi ro, hạn mức rút tiền phụ thuộc vào tổng số tiền gửi từ chuỗi này.",
+        "selectChain": "Chọn Chain",
+        "recipientAddress": "Địa chỉ người nhận"
+      },
+      "withdrawConfirmModal": {
+        "button": "Xem trên DeBank",
+        "title": "Đã chuyển vào Ví DeBank L2 của bạn"
+      },
+      "withdraw": "Rút tiền",
+      "noBalance": "Không có số dư để rút",
+      "gasExceed": "Số dư GasAccount không thể vượt quá $1000"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",

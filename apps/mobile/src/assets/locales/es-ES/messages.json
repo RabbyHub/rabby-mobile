@@ -744,7 +744,8 @@
       "Select-from-supported-tokens": "Seleccionar entre los tokens compatibles",
       "Token": "Token",
       "Loading_Tokens": "Cargando Tokens...",
-      "InsufficientBalanceTips": "Saldo insuficiente"
+      "InsufficientBalanceTips": "Saldo insuficiente",
+      "Balance": "Balance"
     },
     "home": {
       "services": {
@@ -1561,8 +1562,54 @@
       "logoutConfirmModal": {
         "logout": "Cerrar sesión",
         "title": "Cerrar sesión en la GasAccount actual",
-        "desc": "Una vez que cierre sesión, ya no podrá usar GasAccount para pagar las tarifas de gas."
-      }
+        "desc": "Una vez que cierre sesión, ya no podrá usar GasAccount para pagar las tarifas de gas.",
+        "logoutSuccess": "Cierre de sesión exitoso"
+      },
+      "history": {
+        "noHistory": "Sin historial en los últimos 30 días"
+      },
+      "depositPopup": {
+        "token": "Token",
+        "amount": "Cantidad",
+        "invalidAmount": "Debe estar por debajo de 500",
+        "title": "Depósito",
+        "selectToken": "Seleccionar Token",
+        "followingTokenInSufficient": "El saldo de los siguientes tokens es insuficiente",
+        "inSufficientTip1": "Esta dirección no tiene suficientes tokens. Por favor, elige una dirección diferente.",
+        "zeroInvalidAmount": "El importe no puede ser cero",
+        "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento."
+      },
+      "paymentAddressPopup": {
+        "confirm": "Confirmar",
+        "address": "Dirección de pago",
+        "title": "Seleccionar dirección de pago",
+        "balance": "Balance"
+      },
+      "withdrawPopup": {
+        "title": "Retirar",
+        "amount": "Cantidad",
+        "selectDestinationChain": "Seleccionar cadena de destino",
+        "noEnoughValuetBalance": "Saldo del Vault insuficiente. Cambie de cadena o inténtelo de nuevo más tarde.",
+        "withdrawalLimit": "Límite de retirada",
+        "selectRecipientAddress": "Seleccionar dirección del destinatario",
+        "riskMessageFromChain": "Debido al control de riesgos, el límite de retiro depende del monto total depositado desde esta cadena.",
+        "noEnoughGas": "Cantidad insuficiente para cubrir las tarifas de gas",
+        "riskMessageFromAddress": "Debido al control de riesgos, el límite de retirada depende del monto total que esta dirección haya depositado",
+        "desc": "Puede retirar el saldo de su GasAccount a su Wallet DeBank L2. Inicie sesión en su Wallet DeBank L2 para transferir los fondos a una blockchain compatible según sea necesario.",
+        "to": "A",
+        "destinationChain": "Cadena de destino",
+        "recipientAddress": "Dirección del destinatario",
+        "tipsBtn": "Lo tengo",
+        "selectChain": "Seleccionar cadena",
+        "deductGasFees": "La cantidad recibida deducirá las tarifas de gas."
+      },
+      "withdrawConfirmModal": {
+        "button": "Ver en DeBank",
+        "title": "Transferido a tu DeBank L2 Wallet"
+      },
+      "withdraw": "Retirar",
+      "noBalance": "Sin saldo para retirar",
+      "gasExceed": "El saldo de GasAccount no puede exceder los $1000."
     }
   },
   "global": {

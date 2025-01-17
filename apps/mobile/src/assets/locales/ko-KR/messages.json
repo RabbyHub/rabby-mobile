@@ -114,7 +114,8 @@
       "Token": "토큰",
       "Loading_Tokens": "토큰 로드 중...",
       "No_Tokens": "토큰 없음",
-      "Select-from-supported-tokens": "지원되는 토큰 중에서 선택"
+      "Select-from-supported-tokens": "지원되는 토큰 중에서 선택",
+      "Balance": "잔액"
     },
     "receive": {
       "title": "{{chain}}에서 {{token}} 받기",
@@ -1115,12 +1116,59 @@
       "logoutConfirmModal": {
         "title": "현재 GasAccount 로그아웃",
         "logout": "로그 아웃",
-        "desc": "로그아웃한 후에는 GasAccount를 사용하여 가스 요금을 지불할 수 없습니다."
+        "desc": "로그아웃한 후에는 GasAccount를 사용하여 가스 요금을 지불할 수 없습니다.",
+        "logoutSuccess": "로그아웃 성공"
       },
       "GasAccountDepositTipPopup": {
         "gotIt": "알겠습니다.",
         "title": "GasAccount을 열고 예금하기"
-      }
+      },
+      "history": {
+        "noHistory": "지난 30일 동안 기록이 없습니다."
+      },
+      "depositPopup": {
+        "title": "예금",
+        "paymentAddress": "결제 주소",
+        "token": "토큰",
+        "selectToken": "토큰 선택",
+        "invalidAmount": "500 이하여야 합니다.",
+        "zeroInvalidAmount": "금액은 0이 될 수 없습니다.",
+        "followingTokenInSufficient": "다음 토큰 잔액이 부족합니다",
+        "inSufficientTip1": "이 주소에 토큰이 충분하지 않습니다. 다른 주소를 선택하세요.",
+        "desc": "Rabby의 DeBank L2 계정에 추가 수수료 없이 입금하세요 - 언제든 출금 가능합니다.",
+        "amount": "금액"
+      },
+      "paymentAddressPopup": {
+        "balance": "잔액",
+        "address": "지불 주소",
+        "title": "결제 주소 선택",
+        "confirm": "확인"
+      },
+      "withdrawPopup": {
+        "to": "에",
+        "title": "출금",
+        "selectDestinationChain": "대상 체인 선택",
+        "selectRecipientAddress": "수신인 주소 선택",
+        "recipientAddress": "수취인 주소",
+        "destinationChain": "대상 체인",
+        "noEnoughGas": "금액이 가스 요금을 충당하기에 너무 낮습니다.",
+        "tipsBtn": "알겠습니다.",
+        "riskMessageFromChain": "위험 관리를 위해 출금 한도는 이 체인에서 입금된 총액에 따라 달라집니다.",
+        "noEnoughValuetBalance": "볼트 잔액이 불충분합니다. 체인을 전환하거나 나중에 다시 시도하십시오.",
+        "riskMessageFromAddress": "위험 관리로 인해 출금 한도는 이 주소에 입금된 총액에 따라 달라집니다.",
+        "desc": "GasAccount 잔액을 DeBank L2 Wallet으로 인출할 수 있습니다. 필요한 경우 지원되는 블록체인으로 자금을 이체하려면 DeBank L2 Wallet에 로그인하세요.",
+        "amount": "수량",
+        "selectChain": "체인 선택",
+        "deductGasFees": "수신된 금액은 gas 수수료를 공제합니다.",
+        "withdrawalLimit": "출금 한도"
+      },
+      "withdrawConfirmModal": {
+        "title": "DeBank L2 Wallet로 전송되었습니다.",
+        "button": "DeBank에서 보기"
+      },
+      "withdraw": "출금",
+      "gasExceed": "GasAccount balance cannot exceed $1000",
+      "noBalance": "출금 가능한 잔액 없음"
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -1586,7 +1634,8 @@
     },
     "NoLongerSupports": {
       "title": "모바일 지갑 주소는 더 이상 지원되지 않습니다.",
-      "desc": "다음 주소는 삭제됩니다. 원래의 월렛 앱에서 여전히 찾을 수 있습니다. 여기에서 사용하려면 시드 구문 또는 개인 키를 가져오세요."
+      "desc": "다음 주소는 삭제됩니다. 원래의 월렛 앱에서 여전히 찾을 수 있습니다. 여기에서 사용하려면 시드 구문 또는 개인 키를 가져오세요.",
+      "button": "알겠습니다"
     },
     "NFTDetailModal": {
       "FieldLabel": {
