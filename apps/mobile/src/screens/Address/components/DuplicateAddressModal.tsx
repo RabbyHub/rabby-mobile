@@ -95,7 +95,7 @@ export const DuplicateAddressModal: React.FC = () => {
             {t('page.newAddress.privateKey.repeatImportTips')}
           </Text>
           <View style={styles.body}>
-            {currentAccount && <AddressItem address={currentAccount.address} />}
+            {currentAccount && <AddressItem account={currentAccount} />}
           </View>
 
           <FooterButtonGroup
