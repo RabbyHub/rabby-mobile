@@ -322,9 +322,11 @@ const RecipientAddressInner = ({
     ],
   );
 
-  const confirm = () => {
-    onChange?.(list?.find(item => isSameAddress(item.recharge_addr, address))!);
-  };
+  const confirm = React.useCallback(() => {
+    onChange?.(
+      list?.find(item => isSameAddress(item.recharge_addr, selectedAddress))!,
+    );
+  }, [onChange, list, selectedAddress]);
 
   return (
     <LinearGradient
@@ -334,11 +336,11 @@ const RecipientAddressInner = ({
       end={{ x: 0, y: 1 }}
       style={{ flex: 1, paddingHorizontal: 20 }}>
       <Text style={styles.title}>
-        {t('page.gasAccount.withdrawPopup.selectDestinationChain')}
+        {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
       </Text>
       <View style={styles.headerRow}>
         <Text style={[styles.text, styles.label]}>
-          {t('page.gasAccount.withdrawPopup.destinationChain')}
+          {t('page.gasAccount.withdrawPopup.recipientAddress')}
         </Text>
         <View style={styles.help}>
           <Text style={[styles.text, styles.label]}>
@@ -520,6 +522,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   label: {
     color: colors2024['neutral-secondary'],
+    fontWeight: '400',
   },
 
   selectRow: {

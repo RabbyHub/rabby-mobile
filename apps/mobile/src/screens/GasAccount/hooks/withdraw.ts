@@ -3,7 +3,7 @@ import { useGasAccountSign } from './atom';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useMemo } from 'react';
 
 export const useWithdrawData = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -16,22 +16,23 @@ export const useWithdrawData = () => {
       id: accountId!,
     });
 
-    return data
+    return data;
+  }, [sig, accountId]);
+
+  const withdrawList = useMemo(() => {
+    return value
       ?.filter(item => {
         const { recharge_addr } = item;
-        const idx = accountsList.findIndex(
-          i =>
-            isSameAddress(i.address, recharge_addr) &&
-            i.type !== KEYRING_CLASS.WATCH &&
-            i.type !== KEYRING_CLASS.GNOSIS,
+        const idx = accountsList.findIndex(i =>
+          isSameAddress(i.address, recharge_addr),
         );
         return idx > -1;
       })
       .sort((a, b) => b.total_withdraw_limit - a.total_withdraw_limit);
-  }, [sig, accountId, accountsList]);
+  }, [value, accountsList]);
 
   return {
-    withdrawList: value,
+    withdrawList,
     loading,
   };
 };

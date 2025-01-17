@@ -12,6 +12,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Keyboard,
+  TextInput,
 } from 'react-native';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +22,6 @@ import {
   BottomSheetFlatList,
   BottomSheetModalProps,
   BottomSheetSectionList,
-  BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -45,12 +45,14 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { Button } from '@/components2024/Button';
-import { gasAccountService } from '@/core/services';
+import { gasAccountService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { Skeleton } from '@rneui/themed';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { toast } from '@/components2024/Toast';
 
 const amountList = [10, 100];
 
@@ -122,48 +124,75 @@ const TokenSelector = ({
     setQuery(value);
   };
 
-  const { value: list, loading } = useAsync(
-    () => openapi.getGasAccountTokenList(address),
-    [address],
-  );
+  const {
+    value: list,
+    loading,
+    error,
+  } = useAsync(() => openapi.getGasAccountTokenList(address), [address]);
+
+  if (error) {
+    toast.error(error?.message ? String(error?.message) : String(error));
+  }
+
+  const { value: pinedQueue } = useAsync(async () => {
+    const data = await preferenceService.getUserTokenSettings();
+    return data?.pinedQueue || [];
+  }, []);
 
   const sortedList = useMemo(() => {
-    const _list = list?.sort((a, b) => b.amount - a.amount) || [];
+    const _list =
+      list
+        ?.map(i => ({
+          ...i,
+          pinned: pinedQueue?.some(
+            pin => pin.chainId === i.chain && pin.tokenId === i.id,
+          ),
+        }))
+        ?.sort((a, b) => b.amount - a.amount) || [];
     const index = _list.findIndex(i => new BigNumber(i.amount || 0).lt(cost));
     const k = query?.trim()?.toLowerCase();
+
+    const sortAndFilter = (l: (TokenItem & { pinned?: boolean })[]) =>
+      l
+        .filter(item =>
+          k
+            ? item.symbol?.toLowerCase().includes(k) ||
+              item.id?.toLowerCase().includes(k)
+            : true,
+        )
+        .sort((a, b) => {
+          const a1 = a.pinned ? 1 : 0;
+          const b1 = b?.pinned ? 1 : 0;
+          return b1 - a1;
+        });
 
     if (!_list.length) {
       return [];
     }
 
+    if (_list.slice(index).length === 0) {
+      return [
+        {
+          title: '',
+          data: sortAndFilter(_list.slice(0, index)),
+        },
+      ];
+    }
+
     return [
       {
         title: '',
-        data: _list
-          .slice(0, index)
-          .filter(item =>
-            k
-              ? item.symbol?.toLowerCase().includes(k) ||
-                item.id?.toLowerCase().includes(k)
-              : true,
-          ),
+        data: sortAndFilter(_list.slice(0, index)),
       },
       {
         title: 'insufficient',
-        data: _list
-          .slice(index)
-          .filter(item =>
-            k
-              ? item.symbol?.toLowerCase().includes(k) ||
-                item.id?.toLowerCase().includes(k)
-              : true,
-          ),
+        data: sortAndFilter(_list.slice(index)),
       },
     ];
-  }, [cost, list, query]);
+  }, [cost, list, pinedQueue, query]);
 
   const Row = useCallback(
-    ({ item }) => {
+    ({ item }: { item: TokenItem & { pinned?: boolean } }) => {
       const disabled = new BigNumber(item.amount || 0).lt(cost);
 
       return (
@@ -192,6 +221,11 @@ const TokenSelector = ({
               ])}>
               {getTokenSymbol(item)}
             </Text>
+            {!!item.pinned && (
+              <View style={styles.pinnedWrapper}>
+                <Text style={styles.pinText}>Pin</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.text}>
             {formatUsdValue(item.amount * item.price || 0)}
@@ -255,9 +289,6 @@ const TokenSelector = ({
             <View>
               <Text style={styles.insufficientTip}>
                 {t('page.gasAccount.depositPopup.inSufficientTip1')}
-              </Text>
-              <Text style={styles.insufficientTip}>
-                {t('page.gasAccount.depositPopup.inSufficientTip2')}
               </Text>
             </View>
           </View>
@@ -357,7 +388,7 @@ const SelectAccount = ({
   }, [account, list]);
 
   return (
-    <BottomSheetView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.paymentAddressPopup.title')}
@@ -395,71 +426,67 @@ const SelectAccount = ({
             {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
           </View>
         </View>
-
-        <BottomSheetFlatList
-          style={{ flex: 1, width: '100%' }}
-          data={list}
-          keyExtractor={(item, index) => item.type + item.address + index}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity
-              style={{
-                marginVertical: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-                height: 96,
-                backgroundColor: colors2024['neutral-bg-1'],
-                borderRadius: 30,
-                borderWidth: 1,
-                borderColor: colors2024['neutral-line'],
-                paddingHorizontal: 24,
-              }}
-              onPress={() => {
-                setTmpSelectAccount(item);
-              }}>
-              <AddressItem account={item} fetchAccount={false}>
-                {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
-                  <View
+      </View>
+      <BottomSheetFlatList
+        style={{ flex: 1, width: '100%' }}
+        contentContainerStyle={styles.containerHorizontal}
+        data={list}
+        keyExtractor={(item, index) => item.type + item.address + index}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            style={styles.accountItem}
+            onPress={() => {
+              setTmpSelectAccount(item);
+            }}>
+            <AddressItem account={item} fetchAccount={false}>
+              {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+                <View
+                  style={{
+                    width: '100%',
+                    flexDirection: 'row',
+                    gap: 8,
+                    alignItems: 'center',
+                  }}>
+                  <WalletIcon
                     style={{
-                      flexDirection: 'row',
-                      gap: 8,
-                      alignItems: 'center',
-                    }}>
-                    <WalletIcon
+                      width: 30,
+                      height: 30,
+                      borderRadius: 10,
+                    }}
+                  />
+                  <View style={{ gap: 4 }}>
+                    <View
                       style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 10,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        height: 24,
+                      }}>
+                      <WalletName />
+                      {tmpSelectAccount?.address === item.address ? (
+                        <RcIconCheck />
+                      ) : null}
+                    </View>
+
+                    <WalletAddress
+                      style={{
+                        fontSize: 17,
+                        fontWeight: '500',
+                        lineHeight: 22,
+                        fontFamily: 'SF Pro Rounded',
                       }}
                     />
-                    <View style={{ gap: 4 }}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                        }}>
-                        <WalletName />
-                        {tmpSelectAccount?.address === item.address ? (
-                          <RcIconCheck />
-                        ) : null}
-                      </View>
-
-                      <WalletAddress
-                        style={{
-                          fontSize: 17,
-                          fontWeight: '500',
-                          lineHeight: 22,
-                          fontFamily: 'SF Pro Rounded',
-                        }}
-                      />
-                    </View>
                   </View>
-                )}
-              </AddressItem>
-            </TouchableOpacity>
-          )}
-          extraData={tmpSelectAccount}
-        />
-
+                  <View style={{ marginLeft: 'auto' }}>
+                    <WalletBalance />
+                  </View>
+                </View>
+              )}
+            </AddressItem>
+          </TouchableOpacity>
+        )}
+        extraData={tmpSelectAccount}
+      />
+      <View style={styles.containerHorizontal}>
         <Button
           onPress={() => {
             onChange(tmpSelectAccount);
@@ -471,7 +498,7 @@ const SelectAccount = ({
           title={t('page.gasAccount.paymentAddressPopup.confirm')}
         />
       </View>
-    </BottomSheetView>
+    </View>
   );
 };
 
@@ -616,7 +643,11 @@ const GasAccountDepositContent = ({ onClose }) => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAwareScrollView
+      enableOnAndroid
+      scrollEnabled={false}
+      keyboardOpeningTime={0}
+      style={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.title')}
@@ -641,7 +672,7 @@ const GasAccountDepositContent = ({ onClose }) => {
             </CustomTouchableOpacity>
           ))}
 
-          <BottomSheetTextInput
+          <TextInput
             placeholder="$1-500"
             placeholderTextColor={
               selectedAmount === CUSTOM_AMOUNT
@@ -660,6 +691,9 @@ const GasAccountDepositContent = ({ onClose }) => {
                 : {},
               errorTips ? { borderColor: colors2024['red-default'] } : {},
             ]}
+            keyboardType="numeric"
+            inputMode="numeric"
+            onBlur={() => Keyboard.dismiss()}
           />
         </View>
 
@@ -669,6 +703,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           {t('page.gasAccount.depositPopup.paymentAddress')}
         </Text>
         <ListItem
+          disabled={!amountPass}
           title=""
           content={
             <AddressItem account={depositAccount}>
@@ -708,6 +743,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           {t('page.gasAccount.depositPopup.token')}
         </Text>
         <ListItem
+          disabled={!amountPass}
           title=""
           content={
             token ? (
@@ -730,7 +766,6 @@ const GasAccountDepositContent = ({ onClose }) => {
           onPress={openTokenList}
         />
       </View>
-
       <View style={styles.btnContainer}>
         <Button
           loading={loading}
@@ -760,7 +795,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           defaultAccount={depositAccount}
         />
       </BottomSheetWrapper>
-    </View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -802,9 +837,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     flex: 1,
   },
   containerHorizontal: {
-    width: '100%',
-    flex: 1,
-    alignItems: 'center',
     paddingHorizontal: 20,
   },
   title: {
@@ -923,6 +955,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   confirmButton: {
     width: '100%',
     height: 52,
+    marginBottom: 35,
   },
   popup: {
     // justifyContent: 'flex-end',
@@ -933,11 +966,12 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   },
   btnContainer: {
     paddingHorizontal: 20,
-    marginBottom: 12,
     paddingVertical: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginTop: 200,
+    flex: 1,
   },
 
   box: { flexDirection: 'row', alignItems: 'center' },
@@ -1048,5 +1082,38 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     lineHeight: 22,
     fontSize: 17,
     color: colors2024['neutral-title-1'],
+  },
+
+  accountItem: {
+    marginVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 96,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    paddingHorizontal: 24,
+  },
+
+  pinnedWrapper: {
+    flexShrink: 0,
+    marginLeft: 4,
+    borderRadius: 6,
+    width: 33,
+    height: 20,
+    flexWrap: 'nowrap',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  pinText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
   },
 }));

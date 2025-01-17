@@ -2368,8 +2368,7 @@
         "token": "Token",
         "paymentAddress": "Payment Address",
         "selectToken": "Select Token",
-        "inSufficientTip1": "All tokens are insufficient under this address",
-        "inSufficientTip2": "Please choose another address",
+        "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
         "followingTokenInSufficient": "The following token balance is insufficient"
       },
       "paymentAddressPopup": {

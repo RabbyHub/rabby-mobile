@@ -64,7 +64,7 @@ const WithDrawInitContent = ({
     setSelectAddressChainList(withdrawList[0]);
   }
 
-  const withdraw = async () => {
+  const withdraw = React.useCallback(async () => {
     if (!sig || !accountId || loading) {
       return;
     }
@@ -98,7 +98,18 @@ const WithDrawInitContent = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    sig,
+    accountId,
+    loading,
+    balance,
+    selectAddressChainList,
+    chain,
+    onClose,
+    onAfterConfirm,
+    refreshGasAccountHistory,
+    refreshGasAccountBalance,
+  ]);
 
   const BalanceSuffix = useMemo(() => {
     if (!chain) {
@@ -200,7 +211,7 @@ const WithDrawInitContent = ({
           </View>
         )}
 
-        {!!BalanceSuffix && (
+        {!withdrawBtnDisabledTips && !!BalanceSuffix && (
           <View
             style={[
               styles.receiveTipsRow,
@@ -299,9 +310,12 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   title: {
     marginTop: 12,
     marginBottom: 16,
-    fontSize: 20,
-    fontWeight: '500',
     color: colors['neutral-title1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '800',
+    lineHeight: 24,
   },
   confirmTitle: {
     fontSize: 16,

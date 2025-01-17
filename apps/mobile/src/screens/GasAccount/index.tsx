@@ -140,6 +140,7 @@ export const GasAccountScreen = () => {
               if (!balance) {
                 toast.show(t('page.gasAccount.noBalance'), {
                   position: toast.positions.CENTER,
+                  textStyle: styles.toastStyle,
                 });
                 return;
               }
@@ -280,5 +281,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-InvertHighlight'],
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  toastStyle: {
+    color: colors2024['neutral-title-2'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
 }));

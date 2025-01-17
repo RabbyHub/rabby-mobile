@@ -90,10 +90,6 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
               <Text style={styles.confirmTitle}>
                 {t('component.gasAccount.loginConfirmModal.title')}
               </Text>
-              {/* <GasAccountCurrentAddress /> */}
-              <Text style={styles.confirmDescription}>
-                {t('component.gasAccount.loginConfirmModal.desc')}
-              </Text>
             </View>
           </BottomSheetHandlableView>
 

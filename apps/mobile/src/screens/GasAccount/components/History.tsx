@@ -246,7 +246,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 50,
-    marginVertical: 10,
   },
   pendingContainer: {
     flexDirection: 'row',
