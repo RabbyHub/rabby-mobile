@@ -19,6 +19,7 @@ export function useAppLanguage() {
     async (lang: SupportedLang) => {
       const nextVal = filterSupportedLang(lang);
       await i18n.changeLanguage(nextVal);
+      console.log('nextVal', nextVal);
       _setCurrentLanguage(nextVal);
     },
     [_setCurrentLanguage],
@@ -35,7 +36,7 @@ export function useDetectLanguage() {
   useEffect(() => {
     let appLang = appStorage.getItem('@AppLang');
     try {
-      JSON.parse(appLang as unknown as string);
+      appLang = JSON.parse(appLang as unknown as string);
     } catch (e) {
       // NOTHING
     }
