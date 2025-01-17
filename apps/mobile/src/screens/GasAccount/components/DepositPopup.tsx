@@ -53,6 +53,7 @@ import { SearchInput } from '@/components/Form/SearchInput';
 import { Skeleton } from '@rneui/themed';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toast } from '@/components2024/Toast';
+import { useAlias } from '@/hooks/alias';
 
 const amountList = [10, 100];
 
@@ -650,6 +651,8 @@ const GasAccountDepositContent = ({ onClose }) => {
     setAccountListVisible(false);
   }, []);
 
+  const [aliasName] = useAlias(depositAccount.address);
+
   return (
     <KeyboardAwareScrollView
       enableOnAndroid
@@ -716,7 +719,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           title=""
           content={
             <AddressItem account={depositAccount}>
-              {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+              {({ WalletIcon, WalletAddress }) => (
                 <View
                   style={{
                     flexDirection: 'row',
@@ -731,7 +734,7 @@ const GasAccountDepositContent = ({ onClose }) => {
                     }}
                   />
                   <View style={{ gap: 3 }}>
-                    <WalletName />
+                    <Text style={styles.walletName}>{aliasName}</Text>
                     <WalletAddress
                       style={{
                         fontSize: 12,
@@ -1121,5 +1124,14 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 18,
+  },
+  walletName: {
+    color: colors2024['neutral-title-1'],
+
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
   },
 }));
