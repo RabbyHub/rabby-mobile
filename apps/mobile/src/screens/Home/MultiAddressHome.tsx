@@ -23,7 +23,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
@@ -68,7 +68,9 @@ import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useAssetsMap } from './hooks/store';
 import { useAssets } from '../Search/useAssets';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ellipsisAddress } from '@/utils/address';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -251,8 +253,7 @@ function MultiAddressHome(): JSX.Element {
   });
 
   const { initFetchTop10Assets } = useAssets();
-
-  const { pinAccountsFirstFour, isShowPin } =
+  const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
 
   const fetchHistory = useCallback(() => {
@@ -453,6 +454,7 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const { bottom } = useSafeAreaInsets();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
   const handlePressSearch = () => {
@@ -522,26 +524,53 @@ function MultiAddressHome(): JSX.Element {
             <View style={[styles.pinGrid]}>
               {pinAccountsFirstFour.map((item, index) => {
                 return item ? (
-                  <TouchableOpacity
-                    style={StyleSheet.flatten([styles.pinGridItem])}
-                    key={index}
-                    onPress={() => {
-                      handleClickPinAccount(item);
-                      matomoRequestEvent({
-                        category: 'Click_Pin',
-                        action: `Click_${index}`,
-                      });
-                    }}>
-                    <WalletIcon
-                      type={item.brandName}
-                      width={18}
-                      height={18}
-                      borderRadius={5}
-                    />
-                    <Text style={styles.pinGridText}>
-                      {calcPinPercent(item.balance || 0)}
-                    </Text>
-                  </TouchableOpacity>
+                  <ContextMenuView
+                    menuConfig={{
+                      menuTitle: item.alias || ellipsisAddress(item.address),
+                      menuActions: [
+                        {
+                          title: 'UnPin',
+                          icon: isDarkTheme
+                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+                          androidIconName: 'ic_rabby_menu_un_pin',
+                          key: 'pin',
+                          action() {
+                            unPinAddress(item.address, item.brandName);
+                          },
+                        },
+                      ],
+                    }}
+                    preViewBorderRadius={10}
+                    triggerProps={{ action: 'longPress' }}>
+                    <TouchableOpacity
+                      style={StyleSheet.flatten([styles.pinGridItem])}
+                      key={index}
+                      delayLongPress={200} // long press delay
+                      onLongPress={() => {
+                        trigger('impactLight', {
+                          enableVibrateFallback: true,
+                          ignoreAndroidSystemSettings: false,
+                        });
+                      }}
+                      onPress={() => {
+                        handleClickPinAccount(item);
+                        matomoRequestEvent({
+                          category: 'Click_Pin',
+                          action: `Click_${index}`,
+                        });
+                      }}>
+                      <WalletIcon
+                        type={item.brandName}
+                        width={18}
+                        height={18}
+                        borderRadius={5}
+                      />
+                      <Text style={styles.pinGridText}>
+                        {calcPinPercent(item.balance || 0)}
+                      </Text>
+                    </TouchableOpacity>
+                  </ContextMenuView>
                 ) : (
                   <View
                     key={index}
@@ -813,11 +842,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 10,
     flexShrink: 0,
     flex: 1,
-    // padding: 10,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
     height: 46,
     gap: 8,
     position: 'relative',

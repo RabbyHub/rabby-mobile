@@ -13,6 +13,7 @@ export interface balanceAccountType {
   balance: number;
   type: KeyringTypeName;
   brandName: string;
+  alias?: string;
 }
 
 const waitQueueFinished = (q: PQueue) => {
