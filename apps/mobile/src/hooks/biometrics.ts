@@ -30,6 +30,7 @@ biometricsInfoAtom.onMount = setter => {
 };
 export function useBiometricsComputed() {
   const biometrics = useAtomValue(biometricsInfoAtom);
+  const { t } = useTranslation();
 
   const computed = useMemo(() => {
     const { authEnabled, supportedBiometryType } = biometrics;
@@ -40,12 +41,13 @@ export function useBiometricsComputed() {
       couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
       defaultTypeLabel: isFaceID
-        ? 'Face ID'
+        ? t('page.setting.faceId')
         : IS_IOS
-        ? 'Touch ID'
-        : 'Fingerprint',
+        ? t('page.setting.touchId')
+        : t('page.setting.fingerPrint'),
       isFaceID,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [biometrics]);
 
   return computed;

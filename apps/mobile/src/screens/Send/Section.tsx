@@ -80,20 +80,12 @@ export function BalanceSection({ style }: RNViewProps) {
     }
   }, [putScreenState, currentToken, screenState.gasList]);
 
-  // devLog('BalanceSection:: balanceError', balanceError);
-  // devLog('BalanceSection:: formValues.amount', formValues.amount);
-  // devLog('BalanceSection:: showGasReserved', showGasReserved);
-  // devLog(
-  //   'BalanceSection:: screenState.selectedGasLevel',
-  //   screenState.selectedGasLevel,
-  // );
-
   if (!chainItem || !currentToken) return null;
 
   return (
     <View style={style}>
       <View style={styles.titleSection}>
-        <Text style={styles.sectionTitle}>Amount:</Text>
+        <Text style={styles.sectionTitle}>{t('page.sendToken.Amount')}</Text>
 
         <View style={styles.titleRight}>
           <View style={styles.issueBlock}>
@@ -168,7 +160,9 @@ export function BalanceSection({ style }: RNViewProps) {
           <View style={styles.tokenDetailTriangle} />
           {!isNativeToken && (
             <View style={styles.tokenDetailLine}>
-              <Text style={styles.tokenDetailText}>Contract Address</Text>
+              <Text style={styles.tokenDetailText}>
+                {t('page.sendToken.ContractAddress')}
+              </Text>
               <View style={styles.tokenDetailCopy}>
                 <AddressViewer
                   addressStyle={styles.tokenDetailValue}
@@ -180,7 +174,9 @@ export function BalanceSection({ style }: RNViewProps) {
             </View>
           )}
           <View style={[styles.tokenDetailLine]}>
-            <Text style={styles.tokenDetailText}>Chain</Text>
+            <Text style={styles.tokenDetailText}>
+              {t('page.sendToken.Chain')}
+            </Text>
             {tokenChain && (
               <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
                 {tokenChain.name}
@@ -188,7 +184,7 @@ export function BalanceSection({ style }: RNViewProps) {
             )}
           </View>
           <View style={[styles.tokenDetailLine]}>
-            <Text style={styles.tokenDetailText}>Price</Text>
+            <Text style={styles.tokenDetailText}>{t('global.Price')}</Text>
             <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
               {currentTokenPrice}
             </Text>

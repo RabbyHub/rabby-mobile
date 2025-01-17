@@ -13,6 +13,8 @@ import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useAppLanguage } from '@/hooks/lang';
 import { SupportedLangs } from '@/utils/i18n';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const currentLanguageModalVisibleAtom = atom(false);
 export function useCurrentLanguageModalVisible() {
@@ -67,7 +69,7 @@ export default function CurrentLanguageSelectorModal({
       backgroundStyle={styles.sheet}
       ref={modalRef}
       index={0}
-      snapPoints={[safeSizes.sheetHeight]}
+      snapPoints={[640]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
       enableContentPanningGesture={false}>
@@ -79,8 +81,10 @@ export default function CurrentLanguageSelectorModal({
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Current Language</Text>
-        <View style={styles.mainContainer}>
+        <BottomSheetHandlableView>
+          <Text style={styles.title}>Current Language</Text>
+        </BottomSheetHandlableView>
+        <BottomSheetScrollView style={styles.mainContainer}>
           {SupportedLangs.map((item, idx) => {
             const itemKey = `thememode-${item.lang}`;
             const isSelected = currentLanguage === item.lang;
@@ -102,7 +106,7 @@ export default function CurrentLanguageSelectorModal({
               </TouchableView>
             );
           })}
-        </View>
+        </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
   );

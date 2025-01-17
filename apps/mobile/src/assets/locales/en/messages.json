@@ -1,8 +1,5 @@
 {
   "screens": {
-    "settings": {
-      "screenTitle": "Settings"
-    },
     "addressStackTitle": {
       "WatchAddressList": "Watch-Only Address",
       "SafeAddressList": "Safe Address",
@@ -481,6 +478,9 @@
       "watchModeAlert": "This is a watch-only address. Are you sure you want to use it to receive assets?"
     },
     "sendToken": {
+      "Chain": "Chain",
+      "To": "To",
+      "Amount": "Amount:",
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
       "AddToContactsModal": {
         "addedAsContacts": "Added as contacts",
@@ -527,7 +527,8 @@
       },
       "balanceError": {
         "insufficientBalance": "Insufficient balance"
-      }
+      },
+      "ContractAddress": "Contract Address"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"
@@ -1400,6 +1401,26 @@
         "title": "All Results",
         "searchTips": "Search the web"
       }
+    },
+    "setting": {
+      "screenTitle": "Settings",
+      "enableWhitelist": "Enable whitelist for sending assets",
+      "faceId": "Face ID",
+      "touchId": "Touch ID",
+      "fingerPrint": "Fingerprint",
+      "autoLockTime": "Auto lock time",
+      "addCustomNetwork": "Add Custom Network",
+      "modifyRPCURL": "Modify RPC URL",
+      "themeMode": "Theme Mode",
+      "clearPending": "Clear Pending",
+      "aboutUs": "About Us",
+      "currentVersion": "Current Version",
+      "feedback": "Feedback",
+      "followUs": "Follow Us",
+      "tou": "Term Of Use",
+      "policy": "Privacy Policy",
+      "clearPendingDesc1": "This will clear all your pending transactions. This can help you solve the problem that in some cases the state of the transaction in Rabby does not match the state on-chain.",
+      "clearPendingDesc2": "This will not change the balances in your accounts or require you to re-enter your seed phrase. All your assets and accounts information will remain secure."
     }
   },
   "component": {
@@ -1569,7 +1590,13 @@
     "Done": "Done",
     "Nonce": "Nonce",
     "cancel": "Cancel",
-    "Paste": "Paste"
+    "Paste": "Paste",
+    "Price": "Price",
+    "time": {
+      "hour": "{{t}} hour",
+      "hours": "{{t}} hours",
+      "mins": "{{t}} mins"
+    }
   },
   "background": {
     "error": {

@@ -37,15 +37,10 @@ export function useDetectLanguage() {
 
     const langs = SupportedLangs.map(item => item.lang);
     const bestLang = findBestLanguageTag(langs);
-    console.log('appLang', appLang);
-    console.log('bestLang', bestLang);
-    console.log('langs', langs);
     if (appLang) {
       setCurrentLanguage(appLang as unknown as SupportedLang);
-    }
-    if (bestLang) {
+    } else if (bestLang) {
       const lang = langs.find(item => item === bestLang.languageTag);
-      console.log(lang, bestLang);
       if (lang) {
         setCurrentLanguage(lang);
       }

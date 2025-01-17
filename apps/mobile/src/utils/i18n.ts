@@ -2,6 +2,16 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enLocale from '@/assets/locales/en/messages.json';
 import zh_CNLocale from '@/assets/locales/zh-CN/messages.json';
+import zh_Hant from '@/assets/locales/zh-Hant/messages.json';
+import ko_KR from '@/assets/locales/ko-KR/messages.json';
+import ja_JP from '@/assets/locales/ja-JP/messages.json';
+import th_TH from '@/assets/locales/th-TH/messages.json';
+import ru_RU from '@/assets/locales/ru-RU/messages.json';
+import vi_VN from '@/assets/locales/vi-VN/messages.json';
+import fr_FR from '@/assets/locales/fr-FR/messages.json';
+import es_ES from '@/assets/locales/es-ES/messages.json';
+import de_DE from '@/assets/locales/de-DE/messages.json';
+import pt_PT from '@/assets/locales/pt-PT/messages.json';
 
 import codeConfig from '@/assets/locales/index.json';
 import { isNonPublicProductionEnv } from '@/constant/env';
@@ -9,11 +19,31 @@ import { isNonPublicProductionEnv } from '@/constant/env';
 export enum SupportedLang {
   'en-US' = 'en-US',
   'zh-CN' = 'zh-CN',
+  'zh-Hant' = 'zh-Hant',
+  'ko-KR' = 'ko-KR',
+  'ja-JP' = 'ja-JP',
+  'th-TH' = 'th-TH',
+  'ru-RU' = 'ru-RU',
+  'vi-VN' = 'vi-VN',
+  'fr-FR' = 'fr-FR',
+  'es-ES' = 'es-ES',
+  'de-DE' = 'de-DE',
+  'pt-PT' = 'pt-PT',
 }
 
 const locales = {
   [SupportedLang['en-US']]: enLocale,
   [SupportedLang['zh-CN']]: zh_CNLocale,
+  [SupportedLang['zh-Hant']]: zh_Hant,
+  [SupportedLang['ko-KR']]: ko_KR,
+  [SupportedLang['ja-JP']]: ja_JP,
+  [SupportedLang['th-TH']]: th_TH,
+  [SupportedLang['ru-RU']]: ru_RU,
+  [SupportedLang['vi-VN']]: vi_VN,
+  [SupportedLang['fr-FR']]: fr_FR,
+  [SupportedLang['es-ES']]: es_ES,
+  [SupportedLang['de-DE']]: de_DE,
+  [SupportedLang['pt-PT']]: pt_PT,
 };
 
 export const SupportedLangs = (
