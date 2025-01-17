@@ -24,6 +24,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
+import { TxStatusItem } from '../HistoryDetailScreen';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -191,9 +192,12 @@ export const HistoryItem = React.memo(
                 isNft={isNft}
               />
               <View style={styles.textBox}>
-                <Text style={styles.titleText} numberOfLines={1}>
-                  {formatTitle}
-                </Text>
+                <View style={styles.titleBox}>
+                  <Text style={styles.titleText} numberOfLines={1}>
+                    {formatTitle}
+                  </Text>
+                  <TxStatusItem status={data.tx?.status || 0} />
+                </View>
                 <Text style={styles.describeText} numberOfLines={1}>
                   {formatDescribe}
                 </Text>
@@ -239,6 +243,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 12,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
+  },
+  titleBox: {
+    flexDirection: 'row',
+    gap: 6,
   },
   cardGray: {
     opacity: 0.5,

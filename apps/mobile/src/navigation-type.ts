@@ -194,6 +194,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.MultiAddressHistory]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]?: {};
+  [RootNames.HistoryLocalDetail]?: {};
   [RootNames.Send]?: {};
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {

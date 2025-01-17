@@ -109,6 +109,7 @@ export const RootNames = {
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   HistoryDetail: 'HistoryDetail',
+  HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
