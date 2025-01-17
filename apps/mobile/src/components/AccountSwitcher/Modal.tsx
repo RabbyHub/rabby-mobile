@@ -136,6 +136,7 @@ export function AccountSwitcherModalInDappWebView({
   activeDappId,
   __IS_IN_SHEET_MODAL__ = false,
 }: {
+  // activeDapp: DappInfo | null;
   activeDappId?: DappInfo['origin'];
   /** @deprecated */
   forScene?: AccountSwitcherAopProps['forScene'];
@@ -203,6 +204,7 @@ export function AccountSwitcherModalInDappWebView({
       />
       <View style={[styles.panelContainer]}>
         <AccountsPanelInModal
+          allowNullCurrentAccount
           forScene={'@ActiveDappWebViewModal'}
           onSwitchSceneAccount={async ctx => {
             if (!activeDappId) {

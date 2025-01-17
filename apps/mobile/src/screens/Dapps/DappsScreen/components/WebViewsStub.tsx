@@ -467,7 +467,7 @@ export function OpenedDappWebViewStub() {
                 allowsInlineMediaPlayback: true,
                 disableJsPromptLike: !isActiveDapp,
               }}
-              headerRight={<WebViewHeaderRight />}
+              headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
               onPressHeaderLeftClose={ctx => {
                 hideDappSheetModal(ctx);
               }}

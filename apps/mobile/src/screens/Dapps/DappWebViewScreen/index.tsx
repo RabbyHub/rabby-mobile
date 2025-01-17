@@ -217,7 +217,7 @@ export function DappWebViewStubScreen() {
                 allowsInlineMediaPlayback: true,
                 disableJsPromptLike: !isActiveDapp,
               }}
-              headerRight={<WebViewHeaderRight />}
+              headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
               onPressHeaderLeftClose={ctx => {
                 hideDappWebViewScreen(ctx);
               }}
