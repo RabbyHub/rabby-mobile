@@ -64,6 +64,7 @@ import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import useDebounce from 'react-use/lib/useDebounce';
+import { useSwapRecentToTokens } from './hooks/recent';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -341,7 +342,12 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     receiveToken: receiveToken,
   });
 
+  const [_, setRecentSwapToToken] = useSwapRecentToTokens();
+
   const handleSwap = useMemoizedFn(() => {
+    if (receiveToken) {
+      setRecentSwapToToken(receiveToken);
+    }
     if (
       [
         KEYRING_TYPE.SimpleKeyring,
