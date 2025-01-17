@@ -246,7 +246,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       const {
         nextPinned = !pinAddresses.some(
           highlighted =>
-            highlighted.address === payload.address &&
+            isSameAddress(highlighted.address, payload.address) &&
             highlighted.brandName === payload.brandName,
         ),
       } = payload;
