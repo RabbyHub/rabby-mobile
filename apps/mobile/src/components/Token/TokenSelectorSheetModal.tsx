@@ -25,7 +25,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount, formatUsdValue } from '@/utils/number';
+import { formatAmount, formatPrice } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import { findChainByServerID } from '@/utils/chain';
@@ -284,7 +284,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _logo: x.logo_url,
           _symbol: getTokenSymbol(x),
           _amount: formatAmount(x.amount),
-          _price: formatUsdValue(x.price),
+          _price: formatPrice(x.price),
           _netWorth: _netWorth,
           _netWorthStr: formatNetworth(_netWorth),
           _chain: x.chain,

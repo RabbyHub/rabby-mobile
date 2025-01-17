@@ -12,7 +12,7 @@ import {
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getCustomTxParamsData } from '@/utils/transaction';
-import { formatAmount, formatUsdValue } from '@/utils/number';
+import { formatAmount, formatPrice } from '@/utils/number';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
@@ -165,7 +165,7 @@ const ApproveAmountModal = ({
               <Text style={styles.addonText}>
                 ≈{' '}
                 {ellipsisOverflowedText(
-                  formatUsdValue(new BigNumber(tokenPrice).toFixed()),
+                  formatPrice(new BigNumber(tokenPrice).toFixed()),
                   18,
                   true,
                 )}
