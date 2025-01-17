@@ -136,6 +136,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
               value: password,
               secureTextEntry: true,
               inputMode: 'text',
+              returnKeyType: 'done',
               placeholderTextColor: colors2024['neutral-foot'],
               onChangeText: v => {
                 setPassword(v);
