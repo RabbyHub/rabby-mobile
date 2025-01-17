@@ -517,51 +517,40 @@ function MultiAddressHome(): JSX.Element {
             </TouchableOpacity>
           </View>
           {isShowPin && (
-            <>
-              <View style={[styles.menuHeader, styles.pinHeader]}>
-                <View style={styles.pinBox}>
-                  <RcIconVectorCC color={colors2024['neutral-title-1']} />
-                  <Text style={styles.headerText}>
-                    {t('page.nextComponent.multiAddressHome.pin')}
-                  </Text>
-                </View>
-                <View />
-              </View>
-              <View style={[styles.pinGrid]}>
-                {pinAccountsFirstFour.map((item, index) => {
-                  return item ? (
-                    <TouchableOpacity
-                      style={StyleSheet.flatten([styles.pinGridItem])}
-                      key={index}
-                      onPress={() => {
-                        handleClickPinAccount(item);
-                        matomoRequestEvent({
-                          category: 'Click_Pin',
-                          action: `Click_${index}`,
-                        });
-                      }}>
-                      <WalletIcon
-                        type={item.brandName}
-                        width={18}
-                        height={18}
-                        borderRadius={5}
-                      />
-                      <Text style={styles.pinGridText}>
-                        {calcPinPercent(item.balance || 0)}
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <View
-                      key={index}
-                      style={StyleSheet.flatten([
-                        styles.pinGridItem,
-                        styles.emptyItem,
-                      ])}
+            <View style={[styles.pinGrid]}>
+              {pinAccountsFirstFour.map((item, index) => {
+                return item ? (
+                  <TouchableOpacity
+                    style={StyleSheet.flatten([styles.pinGridItem])}
+                    key={index}
+                    onPress={() => {
+                      handleClickPinAccount(item);
+                      matomoRequestEvent({
+                        category: 'Click_Pin',
+                        action: `Click_${index}`,
+                      });
+                    }}>
+                    <WalletIcon
+                      type={item.brandName}
+                      width={18}
+                      height={18}
+                      borderRadius={5}
                     />
-                  );
-                })}
-              </View>
-            </>
+                    <Text style={styles.pinGridText}>
+                      {calcPinPercent(item.balance || 0)}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View
+                    key={index}
+                    style={StyleSheet.flatten([
+                      styles.pinGridItem,
+                      styles.emptyItem,
+                    ])}
+                  />
+                );
+              })}
+            </View>
           )}
           <View style={styles.menuHeader}>
             <Text style={styles.headerText}>
@@ -680,7 +669,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceBox: {
     paddingHorizontal: 4,
     marginTop: 10,
-    marginBottom: 40,
+    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -745,6 +734,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     marginHorizontal: 4,
     margin: 12,
+    marginTop: 10,
   },
   pinHeader: {
     marginTop: -8,
