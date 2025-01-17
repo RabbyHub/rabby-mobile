@@ -19,7 +19,6 @@ export function useAppLanguage() {
     async (lang: SupportedLang) => {
       const nextVal = filterSupportedLang(lang);
       await i18n.changeLanguage(nextVal);
-      console.log('nextVal', nextVal);
       _setCurrentLanguage(nextVal);
     },
     [_setCurrentLanguage],
