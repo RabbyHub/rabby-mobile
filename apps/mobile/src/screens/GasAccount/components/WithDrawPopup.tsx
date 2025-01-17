@@ -177,7 +177,7 @@ const WithDrawInitContent = ({
             style={[
               styles.receiveTipsRow,
               {
-                marginTop: 18,
+                marginBottom: 18,
               },
             ]}>
             <Text style={[styles.receiveTips, styles.errorTips]}>

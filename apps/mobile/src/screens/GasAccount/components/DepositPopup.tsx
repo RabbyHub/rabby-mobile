@@ -376,6 +376,65 @@ const SelectAccount = ({
   const [tmpSelectAccount, setTmpSelectAccount] =
     useState<(typeof list)[number]>(defaultAccount);
 
+  const renderItem = useCallback(
+    ({ item }: { item: Account }) => (
+      <TouchableOpacity
+        style={styles.accountItem}
+        onPress={() => {
+          setTmpSelectAccount(item);
+        }}>
+        <AddressItem account={item} fetchAccount={false}>
+          {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+            <View
+              style={{
+                width: '100%',
+                flexDirection: 'row',
+                gap: 8,
+                alignItems: 'center',
+              }}>
+              <WalletIcon
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 10,
+                }}
+              />
+              <View style={{ gap: 4 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    height: 24,
+                  }}>
+                  <WalletName />
+                  {isSameAddress(
+                    tmpSelectAccount?.address || '',
+                    item.address,
+                  ) && tmpSelectAccount.type === item.type ? (
+                    <RcIconCheck />
+                  ) : null}
+                </View>
+
+                <WalletAddress
+                  style={{
+                    fontSize: 17,
+                    fontWeight: '500',
+                    lineHeight: 22,
+                    fontFamily: 'SF Pro Rounded',
+                  }}
+                />
+              </View>
+              <View style={{ marginLeft: 'auto' }}>
+                <WalletBalance />
+              </View>
+            </View>
+          )}
+        </AddressItem>
+      </TouchableOpacity>
+    ),
+    [tmpSelectAccount, styles.accountItem],
+  );
+
   useEffect(() => {
     const v = gasAccountService.getLastDepositAccount();
     if (
@@ -432,58 +491,7 @@ const SelectAccount = ({
         contentContainerStyle={styles.containerHorizontal}
         data={list}
         keyExtractor={(item, index) => item.type + item.address + index}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={styles.accountItem}
-            onPress={() => {
-              setTmpSelectAccount(item);
-            }}>
-            <AddressItem account={item} fetchAccount={false}>
-              {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
-                <View
-                  style={{
-                    width: '100%',
-                    flexDirection: 'row',
-                    gap: 8,
-                    alignItems: 'center',
-                  }}>
-                  <WalletIcon
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 10,
-                    }}
-                  />
-                  <View style={{ gap: 4 }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        height: 24,
-                      }}>
-                      <WalletName />
-                      {tmpSelectAccount?.address === item.address ? (
-                        <RcIconCheck />
-                      ) : null}
-                    </View>
-
-                    <WalletAddress
-                      style={{
-                        fontSize: 17,
-                        fontWeight: '500',
-                        lineHeight: 22,
-                        fontFamily: 'SF Pro Rounded',
-                      }}
-                    />
-                  </View>
-                  <View style={{ marginLeft: 'auto' }}>
-                    <WalletBalance />
-                  </View>
-                </View>
-              )}
-            </AddressItem>
-          </TouchableOpacity>
-        )}
+        renderItem={renderItem}
         extraData={tmpSelectAccount}
       />
       <View style={styles.containerHorizontal}>
@@ -958,10 +966,8 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     marginBottom: 35,
   },
   popup: {
-    // justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
-    // paddingHorizontal: 20,
     paddingVertical: 10,
   },
   btnContainer: {

@@ -250,7 +250,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   loginConfirmContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     height: '100%',
@@ -260,7 +259,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '800',
     color: colors['neutral-title1'],
-    marginBottom: 18,
+    paddingTop: 16,
+    paddingBottom: 0,
   },
   confirmDescription: {
     // marginTop: 28,

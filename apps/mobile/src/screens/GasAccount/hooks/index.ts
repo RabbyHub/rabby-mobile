@@ -6,8 +6,8 @@ import { preferenceService } from '@/core/services';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { uniqBy } from 'lodash';
 import pRetry from 'p-retry';
-import React, { useEffect } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import {
   useGasAccountHistoryRefresh,
@@ -179,6 +179,14 @@ export const useGasAccountHistory = () => {
     totalCount: number;
   }>(
     async d => {
+      if (!sig || !accountId) {
+        return {
+          rechargeList: [],
+          withdrawList: [],
+          list: [],
+          totalCount: 0,
+        };
+      }
       const data = await openapi.getGasAccountHistory({
         sig: sig!,
         account_id: accountId!,
@@ -223,7 +231,7 @@ export const useGasAccountHistory = () => {
         limit: 5,
       });
     }
-  }, [sig, refreshTxListCount]);
+  }, [sig, refreshTxListCount, accountId]);
 
   useEffect(() => {
     if (value?.history_list) {
