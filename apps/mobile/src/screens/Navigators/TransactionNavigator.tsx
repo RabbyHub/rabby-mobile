@@ -16,7 +16,8 @@ import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
-import HistoryDetailScreen from '../Transaction/HistoryDetailScreen';
+import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
+import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
@@ -158,6 +159,23 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.HistoryDetail}
         component={HistoryDetailScreen}
+        options={mergeScreenOptions({
+          title: '',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+          headerStyle: {
+            backgroundColor: colors2024?.['neutral-bg-2'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.HistoryLocalDetail}
+        component={HistoryLocalDetailScreen}
         options={mergeScreenOptions({
           title: '',
           headerTintColor: colors['neutral-title-1'],

@@ -1,6 +1,6 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Spin } from './Spin';
@@ -10,6 +10,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Tip } from '@/components';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const TransactionPendingDetail = ({
   data,
@@ -17,8 +18,7 @@ export const TransactionPendingDetail = ({
   data?: TransactionGroup;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const txs = useMemo(() => {
     return sortBy(data?.txs || [], item => -item.createdAt);
   }, [data?.txs]);
@@ -57,7 +57,7 @@ export const TransactionPendingDetail = ({
                     1e9}{' '}
                   Gwei
                 </Text>
-                <Spin color={colors['neutral-body']} style={styles.spin} />
+                <Spin color={colors2024['neutral-body']} style={styles.spin} />
               </View>
             );
           })}
@@ -67,50 +67,50 @@ export const TransactionPendingDetail = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {
-      paddingHorizontal: 4,
-    },
-    detail: {
-      backgroundColor: colors['neutral-card2'],
-      padding: 8,
-      borderBottomStartRadius: 4,
-      borderBottomEndRadius: 4,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      marginBottom: 8,
-    },
-    title: {
-      color: colors['neutral-foot'],
-      fontSize: 13,
-      lineHeight: 16,
-    },
-    list: {
-      flexDirection: 'column',
-      gap: 8,
-    },
-    row: {
-      flexDirection: 'row',
-    },
-    rowGray: {
-      opacity: 0.5,
-    },
-    txType: {
-      color: colors['neutral-foot'],
-      fontSize: 13,
-      lineHeight: 16,
-      width: 142,
-    },
-    gas: {
-      color: colors['neutral-foot'],
-      fontSize: 13,
-      lineHeight: 16,
-    },
-    spin: {
-      marginLeft: 'auto',
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
+  container: {
+    paddingHorizontal: 4,
+  },
+  detail: {
+    backgroundColor: colors['neutral-card2'],
+    padding: 12,
+    borderRadius: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  title: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  list: {
+    flexDirection: 'column',
+    gap: 8,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  rowGray: {
+    opacity: 0.5,
+  },
+  txType: {
+    color: colors['neutral-foot'],
+    fontSize: 13,
+    lineHeight: 16,
+    width: 142,
+  },
+  gas: {
+    color: colors['neutral-foot'],
+    fontSize: 13,
+    lineHeight: 16,
+  },
+  spin: {
+    marginLeft: 'auto',
+  },
+}));

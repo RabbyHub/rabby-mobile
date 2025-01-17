@@ -5,7 +5,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import dayjs from 'dayjs';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
-import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem';
+import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';

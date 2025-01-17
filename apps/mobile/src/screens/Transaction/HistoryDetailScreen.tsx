@@ -1,15 +1,27 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { HistoryList } from './components/HistoryGroupList';
-import { openapi } from '@/core/request';
-import { unionBy, orderBy, isUndefined, set } from 'lodash';
-import { useRequest } from 'ahooks';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { unionBy, orderBy, isUndefined, maxBy } from 'lodash';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import PQueue from 'p-queue';
 import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Empty } from './components/Empty';
 import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
+import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -28,8 +40,9 @@ import {
   TxHistoryItem,
   NFTItem,
   TokenItem,
+  GasLevel,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { formatPrice, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatPrice, intToHex, numberWithCommasIsLtOne } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
@@ -55,24 +68,67 @@ import { format } from 'path';
 import { getERC20Allowance } from '@/core/apis/provider';
 import BigNumber from 'bignumber.js';
 
-const TxStatusItem = ({
+export const TxStatusItem = ({
   status,
   withText,
+  isPending,
 }: {
+  isPending?: boolean;
   status: number;
   withText?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    ).start();
+  }, [spinValue]);
+
+  if (isPending) {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Animated.View
+          style={{
+            transform: [{ rotate: spin }],
+          }}>
+          <RcIconPending width={18} height={18} />
+        </Animated.View>
+        {withText && (
+          <Text
+            style={[
+              styles.statuItemText,
+              { color: colors2024['orange-default'] },
+            ]}>
+            {strings('page.transactions.detail.Pending')}
+          </Text>
+        )}
+      </View>
+    );
+  }
+
   return status === 1 ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <RcIconSuccess width={18} height={18} />
-      {withText && (
-        <Text style={styles.statuItemText}>
-          {strings('page.transactions.detail.Succeeded')}
-        </Text>
-      )}
-    </View>
+    !withText ? null : (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <RcIconSuccess width={18} height={18} />
+        {withText && (
+          <Text style={styles.statuItemText}>
+            {strings('page.transactions.detail.Succeeded')}
+          </Text>
+        )}
+      </View>
+    )
   ) : (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <RcIconFail width={18} height={18} />
@@ -86,7 +142,7 @@ const TxStatusItem = ({
   );
 };
 
-const AddressItemInDetail = ({
+export const AddressItemInDetail = ({
   address,
   accounts,
   switchAccount,
@@ -497,9 +553,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buttonContainer: {
     position: 'absolute',
-    height: 100,
-    bottom: 50,
+    flexDirection: 'row',
+    height: 60,
+    bottom: 40,
     width: '100%',
+    gap: 16,
     left: 16,
   },
   itemAliaName: {
@@ -555,4 +613,4 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerItem: {},
 }));
 
-export default HistoryDetailScreen;
+export { HistoryDetailScreen };
