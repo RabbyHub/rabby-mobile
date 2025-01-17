@@ -428,7 +428,7 @@ export const RecipientAddress = ({
                   <WalletIcon style={styles.outerWallet} />
                   <View style={{ gap: 4 }}>
                     <WalletName style={styles.outerName} />
-                    <WalletAddress style={styles.outerAddr} />
+                    <WalletBalance style={styles.outerBalance} />
                   </View>
                 </View>
               )}
@@ -593,11 +593,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontFamily: 'SF Pro Rounded',
   },
-  outerAddr: {
+  outerBalance: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
+    fontStyle: 'normal',
     fontWeight: '500',
     lineHeight: 16,
-    fontFamily: 'SF Pro Rounded',
   },
 
   innerRow: {

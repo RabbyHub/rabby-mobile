@@ -278,9 +278,6 @@ const TokenSelect = forwardRef<
             <Text style={styles.headerBoxText}>
               {t('component.TokenSelector.recent')}
             </Text>
-            <Text style={styles.headerBoxText}>
-              <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
-            </Text>
           </View>
         );
       }
