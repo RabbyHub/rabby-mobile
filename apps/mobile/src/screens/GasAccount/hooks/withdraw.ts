@@ -15,7 +15,7 @@ export const useWithdrawData = () => {
       sig: sig!,
       id: accountId!,
     });
-
+    console.log('useWithdrawData', data, sig, accountId);
     return data;
   }, [sig, accountId]);
 

@@ -1363,7 +1363,7 @@
         "confirm": "Confirm"
       },
       "withdrawPopup": {
-        "noEnoughValuetBalance": "Vault Balance insufficient. Switch chain or try again later.",
+        "noEnoughValueBalance": "Vault Balance insufficient. Switch chain or try again later.",
         "noEnoughGas": "Amount too low to cover gas fees",
         "riskMessageFromChain": "Due to risk control, the withdrawal limit depends on the total amount deposited from this chain.",
         "riskMessageFromAddress": "Due to risk control, the withdrawal limit depends on the total amount this address has deposited",
@@ -1378,7 +1378,8 @@
         "recipientAddress": "Recipient address",
         "destinationChain": "Destination chain",
         "deductGasFees": "Received amount will deduct gas fees",
-        "tipsBtn": "I Got It"
+        "tipsBtn": "I Got It",
+        "noRecipient": "No Recipient address available"
       },
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
