@@ -9,6 +9,7 @@ import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
 import { transactionHistoryService } from '@/core/services';
 import { SwapItemEntity } from '../entities/swapitem';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -40,90 +41,92 @@ export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const syncUserAllHistory = async (
-  address: string,
-  force?: boolean,
-  lastTime: number = 0,
-) => {
-  if (!address) {
-    return [];
-  }
-  console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: start');
-
-  let time = lastTime;
-  if (!lastTime) {
-    const localLastTime = await HistoryItemEntity.getLatestTime(address);
-    time = localLastTime || 0;
-  }
-
-  console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: lastTime', time);
-  const res = await openapi.getAllTxHistory({
-    id: address,
-    start_time: time,
-  });
-
-  console.debug('getAllTxHistory', res.history_list.length);
-  if (!res.history_list.length) {
-    // interupt loop
-    console.debug('🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history');
-    return true;
-  } else {
-    runOnJS(syncRemoteHistory)(address, res.history_list);
-    transactionHistoryService.updateProjectDict(res.project_dict);
-    transactionHistoryService.updateTokenDict(res.token_uuid_dict);
-
-    syncUserAllHistory(
-      address,
-      force,
-      res.history_list[res.history_list.length - 1].time_at,
-    );
-  }
-};
-
-export const syncSwapHistory = async (
-  address: string,
-  force?: boolean,
-  lastTime: number = 0,
-) => {
-  if (!address) {
-    return [];
-  }
-
-  let time = lastTime;
-  if (!lastTime) {
-    const localLastTime = await SwapItemEntity.getLatestTime(address);
-    time = localLastTime || 0;
-  }
-
-  console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', time);
-  const res = await openapi.getSwapTradeListV2({
-    user_addr: address,
-    start_time: Math.floor(time),
-    limit: 100,
-  });
-
-  console.debug('getSwapTradeListV2', res.history_list.length, res.total_cnt);
-  if (!res.history_list.length) {
-    // interupt loop
-    console.debug('syncSwapHistory CUSTOM_LOGGER:=>: No more history');
-    return true;
-  } else {
-    runOnJS(syncRemoteSwapHistory)(address, res.history_list);
-    await syncSwapHistory(
-      address,
-      force,
-      res.history_list[res.history_list.length - 1].create_at,
-    );
-  }
-};
-
 export const useSyncHistoryDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
+  const { projectDict, setProjectDict, tokenDict, setTokenDict } =
+    useHistoryTokenDict();
   const abortRef = useRef(false);
 
   const interrupt = () => {
     abortRef.current = true;
+  };
+
+  const syncSwapHistory = async (
+    address: string,
+    force?: boolean,
+    lastTime: number = 0,
+  ) => {
+    if (!address) {
+      return [];
+    }
+
+    let time = lastTime;
+    if (!lastTime) {
+      const localLastTime = await SwapItemEntity.getLatestTime(address);
+      time = localLastTime || 0;
+    }
+
+    console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', time);
+    const res = await openapi.getSwapTradeListV2({
+      user_addr: address,
+      start_time: Math.floor(time),
+      limit: 100,
+    });
+
+    console.debug('getSwapTradeListV2', res.history_list.length, res.total_cnt);
+    if (!res.history_list.length) {
+      // interupt loop
+      console.debug('syncSwapHistory CUSTOM_LOGGER:=>: No more history');
+      return true;
+    } else {
+      runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+      await syncSwapHistory(
+        address,
+        force,
+        res.history_list[res.history_list.length - 1].create_at,
+      );
+    }
+  };
+
+  const syncUserAllHistory = async (
+    address: string,
+    force?: boolean,
+    lastTime: number = 0,
+  ) => {
+    if (!address) {
+      return [];
+    }
+    console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: start');
+
+    let time = lastTime;
+    if (!lastTime) {
+      const localLastTime = await HistoryItemEntity.getLatestTime(address);
+      time = localLastTime || 0;
+    }
+
+    console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: lastTime', time);
+    const res = await openapi.getAllTxHistory({
+      id: address,
+      start_time: time,
+    });
+
+    console.debug('getAllTxHistory', res.history_list.length);
+    if (!res.history_list.length) {
+      // interupt loop
+      console.debug('🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history');
+      return true;
+    } else {
+      runOnJS(syncRemoteHistory)(address, res.history_list);
+      setProjectDict(prev => ({ ...prev, ...res.project_dict }));
+      setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
+
+      syncUserAllHistory(
+        address,
+        force,
+        res.history_list[res.history_list.length - 1].time_at,
+      );
+    }
   };
 
   const syncTop10History = async (force?: boolean) => {
