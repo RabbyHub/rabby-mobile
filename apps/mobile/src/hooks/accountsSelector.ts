@@ -7,19 +7,6 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 export type AccountSwitcherScene = 'Receive' | 'GasAccount';
 
-export function isSameAccount(
-  account: Account,
-  saccount?: SceneAccount | null,
-) {
-  if (!saccount) return false;
-
-  return (
-    saccount?.address === account.address &&
-    saccount?.brandName === account.brandName &&
-    saccount?.type === account.type
-  );
-}
-
 type SceneAccount = Account & {
   isPinned?: boolean;
 };

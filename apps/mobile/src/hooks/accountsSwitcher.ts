@@ -467,6 +467,7 @@ export function useSceneAccountInfo(options: {
 
   return {
     ...computed,
+    sceneAccountInfo,
     sceneSigingAccount: sceneAccountInfo?.signingAccount,
     sceneCurrentAccountDepKey: computed.isSceneUsingAllAccounts
       ? 'all'

@@ -353,7 +353,7 @@ export class PreferenceService {
     this._allowedToNotifyAccountsChanged = allowed;
   }
 
-  _notifyAccountsChanged(account: Account, doNotify: boolean = true) {
+  private _notifyAccountsChanged(account: Account, doNotify: boolean = true) {
     if (this._allowedToNotifyAccountsChanged && doNotify) {
       this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
         account.address.toLowerCase(),
@@ -375,7 +375,7 @@ export class PreferenceService {
   ) => {
     this.store.currentAccount = account;
     if (account) {
-      this._notifyAccountsChanged(account, options?.needSyncToSession);
+      this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
     }
   };

@@ -355,7 +355,6 @@ export function useDappWebViewScreen() {
       }
 
       preferenceService.toggleAllowNotifyAccountsChanged(true);
-      activate(dapps[item.origin]);
 
       const routeName = getLatestNavigationName();
       const needRedirect =
@@ -367,8 +366,14 @@ export function useDappWebViewScreen() {
          **/
         naviPush(RootNames.StackRoot, {
           screen: RootNames.DappWebViewStubOnHome,
-          params: { dappsWebViewFromRoute },
+          params: {
+            dappsWebViewFromRoute,
+            // nextOpenDappInfo: dapps[item.origin],
+          },
         });
+        setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
+      } else {
+        activate(dapps[item.origin]);
       }
 
       return true;
