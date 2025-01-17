@@ -541,6 +541,7 @@ function MultiAddressHome(): JSX.Element {
                         },
                       ],
                     }}
+                    key={`${item.address}-${item.brandName}`}
                     preViewBorderRadius={10}
                     triggerProps={{ action: 'longPress' }}>
                     <TouchableOpacity

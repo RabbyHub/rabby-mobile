@@ -26,6 +26,7 @@ import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
 import { useDeleteAssets } from '@/screens/Home/hooks/store';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -262,7 +263,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
         const toggleIdx = addresses.findIndex(
           addr =>
             addr.brandName === payload.brandName &&
-            addr.address === payload.address,
+            isSameAddress(addr.address, payload.address),
         );
         if (toggleIdx > -1) {
           addresses.splice(toggleIdx, 1);
