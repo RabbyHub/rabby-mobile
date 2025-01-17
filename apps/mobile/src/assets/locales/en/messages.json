@@ -48,6 +48,9 @@
       },
       "detail": {
         "NoApproveNeed": "No need to revoke: No allowance remaining.",
+        "Cancel": "Cancel",
+        "SpeedUp": "Speed Up",
+        "Pending": "Pending",
         "Succeeded": "Succeeded",
         "Failed": "Failed",
         "SendAgain": "Send Again",

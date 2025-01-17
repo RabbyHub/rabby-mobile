@@ -634,6 +634,10 @@ export class TransactionGroup {
     return this.maxGasTx.$ctx;
   }
 
+  get action() {
+    return this.txs[0].action;
+  }
+
   get address() {
     return this.txs[0].address;
   }
