@@ -1,19 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountWrapperBg } from './WrapperBg';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { Button } from '@/components2024/Button';
-
-const tipPngSource = require('@/assets/icons/gas-account/gas-account-deposit-tip-2024.png');
 
 const loginTipPngSource = require('@/assets/icons/gas-account/gas-account-deposit-tip-2024-new.png');
 
@@ -34,7 +32,11 @@ const GasAccountDepositTipContent = ({ onClose }: { onClose: () => void }) => {
           {t('page.gasAccount.GasAccountDepositTipPopup.title')}
         </Text>
       </BottomSheetHandlableView>
-      <Image source={tipPngSource} style={styles.image} resizeMode="contain" />
+      <Image
+        source={loginTipPngSource}
+        style={styles.loginImage}
+        resizeMode="contain"
+      />
       <View style={styles.buttonContainer}>
         <Button
           title={t('page.gasAccount.GasAccountDepositTipPopup.gotIt')}
@@ -66,7 +68,7 @@ export const GasAccountDepositTipPopup = ({
   }, [visible]);
   return (
     <AppBottomSheetModal
-      snapPoints={[380]}
+      snapPoints={[600]}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
