@@ -95,6 +95,22 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     return this.getRepository().findBy({ owner_addr });
   }
 
+  static async getAllHistoryItemSortedByTime(
+    owner_addr?: string,
+    count: number = 100,
+  ) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+
+    return await repo
+      .createQueryBuilder('historyitem')
+      // .where('historyitem.owner_addr = :owner_addr', { owner_addr })
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(count) // limit 100
+      .getMany();
+  }
+
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

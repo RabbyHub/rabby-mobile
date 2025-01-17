@@ -51,6 +51,7 @@ import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import {
   useHistoryBasicInfo,
+  useSyncHistoryDB,
   useSyncHistoryOnBoot,
 } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
@@ -59,8 +60,9 @@ import { strings } from '@/utils/i18n';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useSortAddressList } from '../Address/useSortAddressList';
 
-const PAGE_COUNT = 2000;
+const PAGE_COUNT = 20;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -95,6 +97,7 @@ function History({
   isForMultipleAdderss: boolean;
 }): JSX.Element {
   const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
   const route = useRoute();
   const { tokenItem, isInTokenDetail, isMultiAddress } = (route.params ||
     {}) as {
@@ -103,11 +106,13 @@ function History({
     isMultiAddress?: boolean;
   };
   const unionAccounts = useMemo(() => {
-    return unionBy(accounts, account => account.address.toLowerCase());
-  }, [accounts]);
+    return unionBy(sortedAccounts, account => account.address.toLowerCase());
+  }, [sortedAccounts]);
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
+  const cacheSwapHistory = useRef<SwapItemEntity[]>([]);
+
   const [currentPage, setCurrentPage] = useState(0);
   const [isShowAll, setIsShowAll] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
@@ -122,55 +127,79 @@ function History({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
 
+  const { syncTop10History, isSyncing, refreshing } =
+    useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
-  const { assetsInfo, fetchAssetsInfo } = useHistoryBasicInfo({
-    enableAutoFetch: true,
-  });
-  console.log('assetsInfo', assetsInfo);
+  const getSwapHistory = async () => {
+    if (cacheSwapHistory.current.length) {
+      return cacheSwapHistory.current;
+    }
+
+    const swapList = await SwapItemEntity.getAllHistoryItem();
+    cacheSwapHistory.current = swapList;
+    return swapList;
+  };
+
+  useEffect(() => {
+    if (!refreshing) {
+      batchFetchDataV2();
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshing]);
+
+  const batchFetchDataV2 = async () => {
+    if (refreshing) {
+      return { list: [] };
+    }
+
+    // juset not in single token history
+    const [historyList, swapList] = await Promise.all([
+      HistoryItemEntity.getAllHistoryItemSortedByTime(),
+      getSwapHistory(),
+    ]);
+    console.log('tokenDict', Object.keys(tokenDict).length);
+    console.log(
+      'projectDict',
+      Object.keys(projectDict).length,
+      Object.values(projectDict)[0],
+    );
+    console.log('historyList', historyList.length);
+    console.log('swapList', swapList.length);
+
+    const res = {
+      list: historyList.map(item => ({
+        ...item,
+        receives: isString(item.receives) && safeParseJSON(item.receives),
+        sends: isString(item.sends) && safeParseJSON(item.sends),
+        id: item.txHash,
+        isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+        tx: {
+          id: item.txHash,
+          status: item.status,
+          from_addr: item.tx_from_address,
+          usd_gas_fee: item.tx_usd_gas_fee,
+        },
+        token_approve: {
+          token_id: item.token_approve_id,
+          spender: item.token_approve_spender,
+          value: item.token_approve_value,
+        },
+        tokenDict,
+        projectDict,
+        key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
+        address: item.owner_addr,
+      })),
+    };
+    return res;
+  };
 
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
 
     if (!isInTokenDetail) {
-      const [historyList, swapList] = await Promise.all([
-        HistoryItemEntity.getAllHistoryItem(),
-        SwapItemEntity.getAllHistoryItem(),
-      ]);
-      // const historyList = await HistoryItemEntity.getAllHistoryItem();
-      console.log('tokenDict', Object.keys(tokenDict).length);
-      console.log(
-        'projectDict',
-        Object.keys(projectDict).length,
-        Object.values(projectDict)[0],
-      );
-      console.log('swapList', swapList.length);
-
-      const res = {
-        list: historyList.map(item => ({
-          ...item,
-          receives: isString(item.receives) && safeParseJSON(item.receives),
-          sends: isString(item.sends) && safeParseJSON(item.sends),
-          id: item.txHash,
-          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-          tx: {
-            id: item.txHash,
-            status: item.status,
-            from_addr: item.tx_from_address,
-            usd_gas_fee: item.tx_usd_gas_fee,
-          },
-          token_approve: {
-            token_id: item.token_approve_id,
-            spender: item.token_approve_spender,
-            value: item.token_approve_value,
-          },
-          tokenDict,
-          projectDict,
-          key: `${item.address}_${item.chain}_${item.txHash}`,
-          address: item.address,
-        })),
-      };
+      const res = await batchFetchDataV2();
       return res;
-      // return batchFetchLocalTx();
     }
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
@@ -220,59 +249,6 @@ function History({
       await waitQueueFinished(queue);
     }
     return { list };
-  };
-
-  const fetchDataV2 = async (
-    address: string,
-    startTime = 0,
-  ): Promise<IFetchHistory> => {
-    if (isTestnet) {
-      return {
-        last: 0,
-        list: [],
-      };
-    }
-    if (!address) {
-      throw new Error('no account');
-    }
-
-    console.log('fetchDataV2', address, startTime);
-    const getHistory = openapi.getAllTxHistory;
-    try {
-      const res = await getHistory({
-        id: address,
-        start_time: startTime,
-      });
-
-      const {
-        project_dict,
-        cate_dict,
-        token_uuid_dict: token_dict,
-        history_list: list,
-      } = res;
-      const displayList = list
-        .map(item => ({
-          ...item,
-          projectDict: project_dict,
-          cateDict: cate_dict,
-          tokenDict: token_dict,
-          address,
-          key: `${address}_${item.chain}_${item.id}`,
-        }))
-        .sort((v1, v2) => v2.time_at - v1.time_at);
-
-      console.debug('fetchDataV2', displayList.length);
-      return {
-        last: last(displayList)?.time_at || 0,
-        list: displayList,
-      };
-    } catch (e) {
-      toast.error(`${address} fetch failed, ${e}`);
-      return {
-        last: 0,
-        list: [],
-      };
-    }
   };
 
   const fetchData = async (
@@ -392,6 +368,7 @@ function History({
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
   const refresh = useMemoizedFn(() => {
+    syncTop10History(true);
     lastMap.current = {};
     hasMoreMap.current = {};
     setCurrentPage(0);
@@ -410,6 +387,9 @@ function History({
   const { data, loading, loadingMore, loadMore, reloadAsync, cancel } =
     useInfiniteScroll(() => batchFetchData(), {
       isNoMore: () => {
+        if (!isInTokenDetail) {
+          return true;
+        }
         return Object.values(hasMoreMap.current).every(item => !item);
       },
       onSuccess() {
@@ -423,24 +403,20 @@ function History({
   }, [data]);
 
   const displayList = useMemo(() => {
-    return allTxHistory
-      .filter(tx => {
-        if (!isShowAll) {
-          return !tx.is_scam;
-        }
-        if (isSceneUsingAllAccounts) {
-          return true;
-        }
-        return isSameAddress(
-          finalSceneCurrentAccount?.address || '',
-          tx.address,
-        );
-      })
-      .slice(0, (currentPage + 1) * PAGE_COUNT);
+    return allTxHistory.filter(tx => {
+      if (!isShowAll) {
+        return !tx.is_scam;
+      }
+      if (isSceneUsingAllAccounts) {
+        return true;
+      }
+      return isSameAddress(finalSceneCurrentAccount?.address || '', tx.address);
+    });
+    // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
     isShowAll,
-    currentPage,
+    // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
   ]);

@@ -10,6 +10,7 @@ import { openapi } from '@/core/request';
 import { transactionHistoryService } from '@/core/services';
 import { SwapItemEntity } from '../entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useMemoizedFn } from 'ahooks';
 
 export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -41,133 +42,161 @@ export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const useSyncHistoryDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
+export const useSyncHistoryDB = (
+  sortedAccounts: KeyringAccountWithAlias[],
+  cacheTime: number = 10 * 60 * 1000,
+) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const { projectDict, setProjectDict, tokenDict, setTokenDict } =
-    useHistoryTokenDict();
+  const { setProjectDict, setTokenDict } = useHistoryTokenDict();
   const abortRef = useRef(false);
+  const lastTimeStamps = useRef<number>(0);
+
+  const isNeedFetchData = useMemoizedFn(() => {
+    const currentTime = Date.now();
+    const diff = currentTime - lastTimeStamps.current;
+    if (diff > cacheTime) {
+      lastTimeStamps.current = currentTime;
+      return true;
+    }
+    return false;
+  });
 
   const interrupt = () => {
     abortRef.current = true;
   };
 
-  const syncSwapHistory = async (
-    address: string,
-    force?: boolean,
-    lastTime: number = 0,
-  ) => {
-    if (!address) {
-      return [];
-    }
-
-    let time = lastTime;
-    if (!lastTime) {
-      const localLastTime = await SwapItemEntity.getLatestTime(address);
-      time = localLastTime || 0;
-    }
-
-    console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', time);
-    const res = await openapi.getSwapTradeListV2({
-      user_addr: address,
-      start_time: Math.floor(time),
-      limit: 100,
-    });
-
-    console.debug('getSwapTradeListV2', res.history_list.length, res.total_cnt);
-    if (!res.history_list.length) {
-      // interupt loop
-      console.debug('syncSwapHistory CUSTOM_LOGGER:=>: No more history');
-      return true;
-    } else {
-      runOnJS(syncRemoteSwapHistory)(address, res.history_list);
-      await syncSwapHistory(
-        address,
-        force,
-        res.history_list[res.history_list.length - 1].create_at,
-      );
-    }
-  };
-
-  const syncUserAllHistory = async (
-    address: string,
-    force?: boolean,
-    lastTime: number = 0,
-  ) => {
-    if (!address) {
-      return [];
-    }
-    console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: start');
-
-    let time = lastTime;
-    if (!lastTime) {
-      const localLastTime = await HistoryItemEntity.getLatestTime(address);
-      time = localLastTime || 0;
-    }
-
-    console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: lastTime', time);
-    const res = await openapi.getAllTxHistory({
-      id: address,
-      start_time: time,
-    });
-
-    console.debug('getAllTxHistory', res.history_list.length);
-    if (!res.history_list.length) {
-      // interupt loop
-      console.debug('🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history');
-      return true;
-    } else {
-      runOnJS(syncRemoteHistory)(address, res.history_list);
-      setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-      setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
-
-      syncUserAllHistory(
-        address,
-        force,
-        res.history_list[res.history_list.length - 1].time_at,
-      );
-    }
-  };
-
-  const syncTop10History = async (force?: boolean) => {
-    console.log('🔍syncTop10History CUSTOM_LOGGER:=>: Fetching action');
-    const top10Account = sortedAccounts.slice(0, 10);
-    setIsSyncing(true);
-    try {
-      if (force) {
-        await HistoryItemEntity.clear();
-        await SwapItemEntity.clear();
+  const syncSwapHistory = useMemoizedFn(
+    async (address: string, force?: boolean, lastTime: number = 0) => {
+      if (!address) {
+        return [];
       }
-      for (const account of top10Account) {
-        if (abortRef.current) {
-          console.log(
-            '🔍syncTop10History CUSTOM_LOGGER:=>: Fetching interrupted.',
-          );
-          setIsSyncing(false);
-          setIsFirstFetch(false);
-          break;
+
+      let time = lastTime;
+      if (!lastTime) {
+        const localLastTime = await SwapItemEntity.getLatestTime(address);
+        time = localLastTime || 0;
+      }
+
+      console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', time);
+      const res = await openapi.getSwapTradeListV2({
+        user_addr: address,
+        start_time: Math.floor(time),
+        limit: 100,
+      });
+
+      console.debug(
+        'getSwapTradeListV2',
+        res.history_list.length,
+        res.total_cnt,
+      );
+      if (!res.history_list.length) {
+        // interupt loop
+        console.debug('syncSwapHistory CUSTOM_LOGGER:=>: No more history');
+        return true;
+      } else {
+        runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+        await syncSwapHistory(
+          address,
+          force,
+          res.history_list[res.history_list.length - 1].create_at,
+        );
+      }
+    },
+  );
+
+  const syncUserAllHistory = useMemoizedFn(
+    async (address: string, lastTime: number = 0) => {
+      if (!address) {
+        return [];
+      }
+      console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: start');
+
+      let time = lastTime;
+      if (!lastTime) {
+        const localLastTime = await HistoryItemEntity.getLatestTime(address);
+        time = localLastTime || 0;
+      }
+
+      console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: lastTime', time);
+      const res = await openapi.getAllTxHistory({
+        id: address,
+        start_time: time,
+      });
+
+      console.debug('getAllTxHistory', res.history_list.length);
+      if (!res.history_list.length) {
+        // interupt loop
+        console.debug('🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history');
+        return true;
+      } else {
+        runOnJS(syncRemoteHistory)(address, res.history_list);
+        setProjectDict(prev => ({ ...prev, ...res.project_dict }));
+        setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
+
+        syncUserAllHistory(
+          address,
+          res.history_list[res.history_list.length - 1].time_at,
+        );
+      }
+    },
+  );
+
+  const syncTop10History = useMemoizedFn(
+    async (force?: boolean, resetEntity?: boolean) => {
+      const isForceFetchFromApi = isNeedFetchData() || force;
+      if (!isForceFetchFromApi) {
+        console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: not update');
+        return;
+      } else {
+        lastTimeStamps.current = Date.now();
+      }
+
+      console.log('🔍syncTop10History CUSTOM_LOGGER:=>: Fetching action');
+      const top10Account = sortedAccounts.slice(0, 10);
+      setIsSyncing(true);
+
+      try {
+        if (isSyncing) {
+          console.debug('🔍syncTop10History  isSyncing return this sync');
+          return;
         }
 
-        try {
-          await Promise.allSettled([
-            syncUserAllHistory(account.address, force),
-            syncSwapHistory(account.address, force),
-          ]);
-        } catch (error) {
-          console.error(
-            `syncTop10History Error fetching data for ${account.address.slice(
-              -4,
-            )}:`,
-            error,
-          );
+        if (resetEntity) {
+          await HistoryItemEntity.clear();
+          await SwapItemEntity.clear();
         }
-        await new Promise(resolve => setTimeout(resolve, 0));
+        for (const account of top10Account) {
+          if (abortRef.current) {
+            console.log(
+              '🔍syncTop10History CUSTOM_LOGGER:=>: Fetching interrupted.',
+            );
+            setIsSyncing(false);
+            setIsFirstFetch(false);
+            break;
+          }
+
+          try {
+            await Promise.allSettled([
+              syncUserAllHistory(account.address),
+              syncSwapHistory(account.address),
+            ]);
+          } catch (error) {
+            console.error(
+              `syncTop10History Error fetching data for ${account.address.slice(
+                -4,
+              )}:`,
+              error,
+            );
+          }
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      } finally {
+        setIsSyncing(false);
+        setIsFirstFetch(false);
       }
-    } finally {
-      setIsSyncing(false);
-      setIsFirstFetch(false);
-    }
-  };
+    },
+  );
 
   return {
     isSyncing,
