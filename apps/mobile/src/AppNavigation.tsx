@@ -18,8 +18,8 @@ import {
 } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
 
-import { TestkitsNavigator } from './screens/Navigators/index.lazy';
 import {
+  TestkitsNavigator,
   AddressNavigator,
   SettingNavigator,
   GetStartedNavigator,

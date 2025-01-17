@@ -186,7 +186,6 @@ const getStyles = createGetStyles2024(ctx =>
 
     openedDappRecord: {
       borderBottomColor: ctx.colors2024['neutral-line'],
-      borderBottomStyle: 'solid',
       borderBottomWidth: 1,
     },
   }),
