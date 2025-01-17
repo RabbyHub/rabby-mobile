@@ -655,7 +655,8 @@ const GasAccountDepositContent = ({ onClose }) => {
       enableOnAndroid
       scrollEnabled={false}
       keyboardOpeningTime={0}
-      style={styles.container}>
+      // style={styles.container}
+      contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.title')}
@@ -774,6 +775,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           onPress={openTokenList}
         />
       </View>
+
       <View style={styles.btnContainer}>
         <Button
           loading={loading}
@@ -784,6 +786,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           title={t('global.confirm')}
         />
       </View>
+
       <BottomSheetWrapper
         visible={tokenListVisible}
         onClose={() => setTokenListVisible(false)}>
@@ -973,10 +976,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   btnContainer: {
     paddingHorizontal: 20,
     paddingVertical: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    marginTop: 200,
+    justifyContent: 'flex-end',
     flex: 1,
   },
 
