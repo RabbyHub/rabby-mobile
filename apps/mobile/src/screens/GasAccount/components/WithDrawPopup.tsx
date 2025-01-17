@@ -21,7 +21,6 @@ import {
   RechargeChainItem,
   WithdrawListAddressItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import RcHelpCC from '@/assets2024/icons/common/help.svg';
 
 const WithDrawInitContent = ({
   balance,
@@ -35,7 +34,7 @@ const WithDrawInitContent = ({
   const { t } = useTranslation();
   const { sig, accountId } = useGasAccountSign();
   const [loading, setLoading] = useState(false);
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
 
@@ -43,7 +42,7 @@ const WithDrawInitContent = ({
 
   const [chain, setChain] = useState<RechargeChainItem>();
 
-  const { withdrawList, loading: withdrawDataLoading } = useWithdrawData();
+  const { withdrawList, loading: withdrawLoading } = useWithdrawData();
 
   const [selectAddressChainList, setSelectAddressChainList] =
     useState<WithdrawListAddressItem>();
@@ -134,36 +133,11 @@ const WithDrawInitContent = ({
     }
 
     if (withdrawTotal > chain.l1_balance) {
-      return t('page.gasAccount.withdrawPopup.noEnoughValuetBalance');
+      return t('page.gasAccount.withdrawPopup.noEnoughValueBalance');
     }
 
     return '';
   }, [t, chain, balance]);
-
-  // const receiveTips = () => {
-  //   const modalId = createGlobalBottomSheetModal2024({
-  //     name: MODAL_NAMES.DESCRIPTION,
-  //     title: t('page.gasAccount.withdrawPopup.riskMessageFromChain'),
-  //     sections: [],
-  //     bottomSheetModalProps: {
-  //       enableContentPanningGesture: true,
-  //       enablePanDownToClose: true,
-  //       enableDismissOnClose: true,
-  //       snapPoints: ['30%'],
-  //     },
-  //     titleStyle: styles.tips,
-  //     nextButtonProps: {
-  //       title: (
-  //         <Text style={styles.closeModalBtnText}>
-  //           {t('page.gasAccount.withdrawPopup.tipsBtn')}
-  //         </Text>
-  //       ),
-  //       onPress: () => {
-  //         removeGlobalBottomSheetModal2024(modalId);
-  //       },
-  //     },
-  //   });
-  // };
 
   return (
     <View style={styles.container}>
@@ -181,6 +155,7 @@ const WithDrawInitContent = ({
             address={selectAddressChainList?.recharge_addr}
             onChange={changeSelectedWithdraw}
             list={withdrawList}
+            loading={withdrawLoading}
           />
         </View>
 
@@ -188,26 +163,26 @@ const WithDrawInitContent = ({
           {t('page.gasAccount.withdrawPopup.destinationChain')}
         </Text>
 
-        <View style={styles.labelContent}>
+        <View style={[styles.labelContent]}>
           <DestinationChain
             chain={chain}
             onSelect={setChain}
             list={selectAddressChainList?.recharge_chain_list}
           />
         </View>
-
+      </View>
+      <View style={styles.btnContainer}>
         {!!withdrawBtnDisabledTips && (
           <View
             style={[
               styles.receiveTipsRow,
               {
-                marginTop: 44,
+                marginTop: 18,
               },
             ]}>
             <Text style={[styles.receiveTips, styles.errorTips]}>
               {withdrawBtnDisabledTips}
             </Text>
-            <RcHelpCC width={20} color={colors2024['neutral-info']} />
           </View>
         )}
 
@@ -216,18 +191,15 @@ const WithDrawInitContent = ({
             style={[
               styles.receiveTipsRow,
               {
-                marginTop: 30,
+                marginBottom: 22,
               },
             ]}>
             <Text style={styles.receiveTips}>
               {t('page.gasAccount.withdrawPopup.deductGasFees')}{' '}
               {` ~$${chain?.withdraw_fee.toFixed(2)}`}
             </Text>
-            <RcHelpCC width={20} color={colors2024['neutral-info']} />
           </View>
         )}
-      </View>
-      <View style={styles.btnContainer}>
         <Button
           type="primary"
           containerStyle={styles.confirmButton}
@@ -300,6 +272,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   paddingContainer: {
     width: '100%',
     flex: 1,
@@ -307,6 +280,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
+
   title: {
     marginTop: 12,
     marginBottom: 16,
@@ -317,17 +291,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '800',
     lineHeight: 24,
   },
-  confirmTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 12,
-    color: colors['green-default'],
-  },
-  description: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: colors['neutral-body'],
-  },
+
   label: {
     marginTop: 24,
     marginBottom: 8,
@@ -349,49 +313,28 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     height: 62,
     paddingHorizontal: 20,
   },
-  textContent: {
-    fontSize: 15,
-    color: colors['neutral-title1'],
-    fontWeight: '500',
-  },
+
   btnContainer: {
     paddingVertical: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 35,
   },
+
   confirmButton: {
     width: '100%',
     height: 52,
   },
-  debankBtn: {
-    color: colors['neutral-title2'],
-    backgroundColor: '#FF7C60', //colors['orange-dbk'],
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  jumpBtnIcon: {
-    width: 16,
-    height: 16,
-  },
+
   popup: {
-    // justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
-    // paddingVertical: 10,
   },
-  confirmIcon: {
-    marginTop: 16,
-    width: 32,
-    height: 32,
-  },
+
   receiveTipsRow: {
     flexDirection: 'row',
     gap: 2,
     alignItems: 'center',
-    marginTop: 30,
   },
 
   receiveTips: {
@@ -411,22 +354,5 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '400',
     lineHeight: 18,
     textAlign: 'center',
-  },
-
-  tips: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    lineHeight: 24,
-    textAlign: 'left',
-  },
-
-  closeModalBtnText: {
-    fontSize: 20,
-    color: colors2024['neutral-InvertHighlight'],
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
   },
 }));

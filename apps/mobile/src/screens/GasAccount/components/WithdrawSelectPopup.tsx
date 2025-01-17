@@ -387,10 +387,12 @@ export const RecipientAddress = ({
   address,
   onChange,
   list,
+  loading,
 }: {
   address?: string;
   onChange?: (address: WithdrawListAddressItem) => void;
   list?: WithdrawListAddressItem[];
+  loading?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -431,7 +433,7 @@ export const RecipientAddress = ({
                 </View>
               )}
             </AddressItem>
-          ) : (
+          ) : loading ? (
             <View style={styles.outerWalletRow}>
               <Skeleton
                 width={30}
@@ -446,14 +448,24 @@ export const RecipientAddress = ({
                 <Skeleton height={16} width={100} />
               </View>
             </View>
+          ) : (
+            <View style={{ width: '100%' }}>
+              <Text style={styles.noRecipientAddress}>
+                {t('page.gasAccount.withdrawPopup.noRecipient')}
+              </Text>
+            </View>
           )
         }
-        onPress={() => {
-          // onChange(address);
-          if (list && address) {
-            setVisible(true);
-          }
-        }}
+        onPress={
+          !account && !loading
+            ? undefined
+            : () => {
+                // onChange(address);
+                if (list && address) {
+                  setVisible(true);
+                }
+              }
+        }
       />
       {list && address && (
         <BottomSheetWrapper
@@ -598,7 +610,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: 6,
   },
 
   selected: {
@@ -642,5 +654,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noRecipientAddress: {
+    textAlign: 'center',
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
   },
 }));

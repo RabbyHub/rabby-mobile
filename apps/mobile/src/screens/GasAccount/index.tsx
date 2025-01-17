@@ -176,7 +176,7 @@ export const GasAccountScreen = () => {
                 }
               }}
               titleStyle={styles.btnTitle}
-              disabled={!canDesposit}
+              disabled={!canDesposit || loading}
               title={t('component.gasAccount.deposit')}
             />
           </Pressable>
