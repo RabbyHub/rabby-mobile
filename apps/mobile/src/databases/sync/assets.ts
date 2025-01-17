@@ -317,3 +317,18 @@ export async function syncRemotePortocols(
       console.error('Batch upsert failed:', error);
     });
 }
+
+export const deleteDBResourceForAddress = async (_address: string) => {
+  const address = _address.toLowerCase();
+  try {
+    await Promise.all([
+      TokenItemEntity.deleteForAddress(address),
+      NFTItemEntity.deleteForAddress(address),
+      PortocolItemEntity.deleteForAddress(address),
+      HistoryItemEntity.deleteForAddress(address),
+      SwapItemEntity.deleteForAddress(address),
+    ]);
+  } catch (error) {
+    console.log('🔍 CUSTOM_LOGGER:=>: deleteDBResourceForAddress)', error);
+  }
+};
