@@ -22,6 +22,7 @@ import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
+import { keyringService } from '@/core/services/shared';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -101,6 +102,15 @@ export default function WalletLockTestItemModal({
             <LastUnlockTimeLabel />
           </Text>
         ),
+      },
+      {
+        label: 'Check unencryptedKeyringData',
+        icon: <RcIconCheckmarkCC style={styles.labelIcon} />,
+        onPress: async () => {
+          const keyringData =
+            await keyringService.DEV_GET_UNENCRYPTED_KEYRING_DATA();
+          Alert.alert('Unencrypted Keyring Data', JSON.stringify(keyringData));
+        },
       },
     ];
 

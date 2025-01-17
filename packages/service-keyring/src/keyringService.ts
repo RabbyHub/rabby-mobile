@@ -27,9 +27,16 @@ import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 
+const UNENCRYPTED_IGNORE_KEYRING = [
+  KEYRING_TYPE.SimpleKeyring,
+  KEYRING_TYPE.HdKeyring,
+];
+
 type KeyringState = {
   booted?: string;
   vault?: string;
+  unencryptedKeyringData?: KeyringSerializedData[];
+  hasEncryptedKeyringData: boolean;
 };
 
 type MemStoreState = {
@@ -79,9 +86,12 @@ export class KeyringService extends RNEventEmitter {
   #password: string | null = null;
 
   private readonly encryptor: EncryptorAdapter;
+
   private readonly contactService?: ContactBookService;
-  private onSetAddressAlias?: OnSetAddressAlias;
-  private onCreateKeyring?: OnCreateKeyring;
+
+  private readonly onSetAddressAlias?: OnSetAddressAlias;
+
+  private readonly onCreateKeyring?: OnCreateKeyring;
 
   constructor(
     options?: KeyringServiceOptions & {
@@ -118,6 +128,8 @@ export class KeyringService extends RNEventEmitter {
     this.store = new ObservableStore({
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
+      unencryptedKeyringData: initState.unencryptedKeyringData || undefined,
+      hasEncryptedKeyringData: initState.hasEncryptedKeyringData || false,
     });
   }
 
@@ -165,7 +177,6 @@ export class KeyringService extends RNEventEmitter {
 
   /**
    * @description on no keyrings stored, force reset password
-   *
    * @param newPassword
    */
   async resetPassword(newPassword: string) {
@@ -184,6 +195,21 @@ export class KeyringService extends RNEventEmitter {
       console.error(error);
     }
     this.memStore.updateState({ keyrings: [] });
+
+    // TODO: forgot password
+    // update vault and boted with new password
+    // const { unencryptedKeyringData } = this.store.getState();
+    // const booted = await this.encryptor.encrypt(newPassword, 'true');
+    // const vault = await this.encryptor.encrypt(
+    //   newPassword,
+    //   unencryptedKeyringData || [],
+    // );
+
+    // this.store.updateState({ vault, booted, hasEncryptedKeyringData: false });
+
+    // this.emit('resetPassword');
+    // // lock wallet
+    // await this.setLocked();
   }
 
   async dangerouslyResetPasswordAndKeyrings(
@@ -369,6 +395,11 @@ export class KeyringService extends RNEventEmitter {
     } finally {
       this.setUnlocked();
       this._isSubmittingPassword = false;
+    }
+
+    // force store unencrypted keyring data if not exist
+    if (!this.store.getState().unencryptedKeyringData) {
+      await this.persistAllKeyrings();
     }
 
     return this.fullUpdate();
@@ -708,7 +739,7 @@ export class KeyringService extends RNEventEmitter {
       );
     }
 
-    return Promise.all(
+    const serializedKeyrings = await Promise.all(
       this.keyrings.map(async keyring => {
         return Promise.all([keyring.type, keyring.serialize()]).then(
           serializedKeyringArray => {
@@ -716,21 +747,42 @@ export class KeyringService extends RNEventEmitter {
             return {
               type: serializedKeyringArray[0],
               data: serializedKeyringArray[1],
-            };
+            } as KeyringSerializedData;
           },
         );
       }),
-    )
-      .then(serializedKeyrings => {
-        return this.encryptor.encrypt(
-          this.#password as string,
-          serializedKeyrings as unknown as Buffer,
-        );
+    );
+
+    let hasEncryptedKeyringData = false;
+    const unencryptedKeyringData = serializedKeyrings
+      .map(({ type, data }) => {
+        if (!UNENCRYPTED_IGNORE_KEYRING.includes(type as any)) {
+          return { type, data };
+        }
+
+        // maybe empty keyring
+        // TODO: maybe need remove simple keyring if empty
+        if (type === KEYRING_TYPE.SimpleKeyring && !data.length) {
+          return undefined;
+        }
+
+        hasEncryptedKeyringData = true;
+        return undefined;
       })
-      .then(encryptedString => {
-        this.store.updateState({ vault: encryptedString });
-        return true;
-      });
+      .filter(Boolean) as KeyringSerializedData[];
+
+    const encryptedString = await this.encryptor.encrypt(
+      this.#password as string,
+      serializedKeyrings as unknown as Buffer,
+    );
+
+    this.store.updateState({
+      vault: encryptedString,
+      unencryptedKeyringData,
+      hasEncryptedKeyringData,
+    });
+
+    return true;
   }
 
   /**
@@ -1022,10 +1074,7 @@ export class KeyringService extends RNEventEmitter {
     return bip39.generateMnemonic();
   }
 
-  async generatePreMnemonic(options?: {
-    /** @default {true} */
-    persist?: boolean;
-  }): Promise<string> {
+  async generatePreMnemonic(): Promise<string> {
     if (!this.#password) {
       throw new Error('background.error.unlock');
     }
@@ -1111,6 +1160,46 @@ export class KeyringService extends RNEventEmitter {
         ...keryings.map(item => (item as any).index),
         keryings.length - 1,
       ) + 1;
+  }
+
+  DEV_GET_UNENCRYPTED_KEYRING_DATA() {
+    const { unencryptedKeyringData, hasEncryptedKeyringData } =
+      this.store.getState();
+    return {
+      unencryptedKeyringData,
+      hasEncryptedKeyringData,
+    };
+  }
+
+  /**
+   * unencryptedKeyringData is saved in the store
+   */
+  savedUnencryptedKeyringData(): boolean {
+    return 'unencryptedKeyringData' in this.store.getState();
+  }
+
+  /**
+   * has seed phrase or private key in the store
+   */
+  hasEncryptedKeyringData(): boolean {
+    return this.store.getState().hasEncryptedKeyringData;
+  }
+
+  /**
+   * has unencrypted keyring data (not seed phrase or private key) in the store
+   */
+  hasUnencryptedKeyringData(): boolean {
+    return (this.store.getState().unencryptedKeyringData?.length ?? 0) > 0;
+  }
+
+  async resetBooted() {
+    this.store.updateState({ booted: undefined });
+  }
+
+  async getUnencryptedKeyringTypes() {
+    return (this.store
+      .getState()
+      .unencryptedKeyringData?.map(item => item.type) ?? []) as string[];
   }
 }
 /* eslint-enable jsdoc/check-tag-names */

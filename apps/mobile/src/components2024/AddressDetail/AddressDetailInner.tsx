@@ -15,6 +15,7 @@ import DeleteSVG from '@/assets2024/icons/common/delete-cc.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
+import { useTranslation } from 'react-i18next';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -58,6 +59,7 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
   );
   const removeAccount = useDeleteAccountModal();
   const qrCodeModal = useQrCodeModal();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.root}>
@@ -81,7 +83,7 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
         <AddressBackupItem onCancel={onCancel} account={account} />
         <Card style={styles.card}>
           <Item
-            label="Add to Whitelist"
+            label={t('page.addressDetail.add-to-whitelist')}
             value={
               <AppSwitch2024
                 onValueChange={setInWhitelist}
@@ -92,7 +94,7 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
         </Card>
         <Card style={styles.card}>
           <Item
-            label="Pin in list"
+            label={t('page.addressDetail.pin-in-list')}
             value={<AppSwitch2024 onValueChange={setPinned} value={pinned} />}
           />
         </Card>
@@ -102,7 +104,7 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
             removeAccount({ account, onFinished: onCancel });
           }}>
           <Item
-            label="Delete Address"
+            label={t('page.addressDetail.delete-address')}
             labelStyle={styles.labelText}
             value={<DeleteSVG width={20} height={20} />}
           />

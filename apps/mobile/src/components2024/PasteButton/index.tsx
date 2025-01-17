@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { trigger } from 'react-native-haptic-feedback';
+import { useTranslation } from 'react-i18next';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -21,6 +22,7 @@ interface IProps {
 
 const PasteButton: React.FC<IProps> = ({ onPaste, style, disableTrigger }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const onPressPaste = () => {
     if (!disableTrigger) {
       trigger('impactLight', {
@@ -39,7 +41,7 @@ const PasteButton: React.FC<IProps> = ({ onPaste, style, disableTrigger }) => {
       onPress={onPressPaste}
       style={StyleSheet.flatten([styles.button, style])}>
       <IconPaste width={16} height={16} color={colors2024['neutral-foot']} />
-      <Text style={styles.pasteButtonText}>Paste</Text>
+      <Text style={styles.pasteButtonText}>{t('global.Paste')}</Text>
     </TouchableOpacity>
   );
 };

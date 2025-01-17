@@ -8,13 +8,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
 import { useMemoizedFn } from 'ahooks';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useAppUnlocked } from '@/hooks/useLock';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { trigger } from 'react-native-haptic-feedback';
 import {
@@ -27,6 +24,7 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
   const [getStaretd, setGetStaretd] = useState<{
     localHasAccounts: boolean;
@@ -164,7 +162,7 @@ function GetStartedScreen2024(): JSX.Element {
             <>
               <Button
                 type="primary"
-                title="Create New Address"
+                title={t('page.getStart.createNewAddress')}
                 disabled={
                   !getStaretd.processedInit || getStaretd.localHasAccounts
                 }
@@ -176,13 +174,13 @@ function GetStartedScreen2024(): JSX.Element {
                   !getStaretd.processedInit || getStaretd.localHasAccounts
                 }
                 onPress={handleGoToImport}>
-                I already have an address
+                {t('page.getStart.alreadyHaveAddress')}
               </TouchableText>
             </>
           ) : (
             <Button
               type="primary"
-              title="Go to Home"
+              title={t('page.getStart.goToHome')}
               disabled={
                 !getStaretd.processedInit || !getStaretd.localHasAccounts
               }

@@ -8,6 +8,7 @@ import {
   useNavigationState,
 } from '@react-navigation/native';
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Dimensions,
@@ -36,11 +37,7 @@ import { Chain } from '@/constant/chains';
 import { Button } from '@/components2024/Button';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
 import Lottie from 'lottie-react-native';
 import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
@@ -69,6 +66,7 @@ export const ImportSuccessScreen2024 = () => {
   const [animationFinished, setAnimationFinished] = useState(false);
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+  const { t } = useTranslation();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess2024)?.params,
@@ -348,9 +346,14 @@ export const ImportSuccessScreen2024 = () => {
           )}
           <Text style={styles.resultTip}>
             {importAddresses.length > 1
-              ? `${importAddresses.length} Addresses`
+              ? t('page.importSuccess.addressCount', {
+                  count: importAddresses.length,
+                })
               : ''}
-            &nbsp;{state?.isFirstCreate ? 'Created' : 'Imported'} successfully!
+            &nbsp;
+            {t('page.importSuccess.success', {
+              type: state?.isFirstCreate ? 'Created' : 'Imported',
+            })}
           </Text>
         </View>
 
@@ -358,7 +361,9 @@ export const ImportSuccessScreen2024 = () => {
           <TouchableOpacity
             onPress={handleImportMore}
             style={styles.ledgerButton}>
-            <Text style={styles.ledgerButtonText}>Import more addresses</Text>
+            <Text style={styles.ledgerButtonText}>
+              {t('page.importSuccess.importMore')}
+            </Text>
             <RcIconRightCC
               width={16}
               height={16}
@@ -369,7 +374,7 @@ export const ImportSuccessScreen2024 = () => {
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
-          title="Done"
+          title={t('global.Done')}
           // noShadow={true}
           onPress={handleDone}
         />

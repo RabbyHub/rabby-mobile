@@ -152,57 +152,72 @@ function MultiAddressHome(): JSX.Element {
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
 
-  const MENU_ARR = [
-    {
-      title: MultiHomeFeatTitle.Swap,
-      icon: RcIconSwap,
-    },
-    {
-      title: MultiHomeFeatTitle.Send,
-      icon: RcIconSend,
-    },
-    {
-      title: MultiHomeFeatTitle.Receive,
-      icon: RcIconReceive,
-    },
-    {
-      title: MultiHomeFeatTitle.Bridge,
-      icon: RcIconBridge,
-    },
-    {
-      title: MultiHomeFeatTitle.History,
-      icon: RcIconHistory,
-    },
-    {
-      title: MultiHomeFeatTitle.Approvals,
-      icon: RcIconApprovals,
-      badge: alertInfo.total,
-    },
-    {
-      title: MultiHomeFeatTitle.GasAccount,
-      icon: RcIconGasAccount,
-    },
-    // __DEV__ && {
-    //   title: MultiHomeFeatTitle.TEST_DAPP,
-    //   icon: RcIconDapps,
-    // },
-    {
-      title: MultiHomeFeatTitle.Dapps,
-      icon: RcIconDapps,
-    },
-    // {
-    //   title: MultiHomeFeatTitle.Ecosystem,
-    //   icon: RcIconEcosystem,
-    // },
-    // {
-    //   title: MultiHomeFeatTitle.Points,
-    //   icon: RcIconPoints,
-    // },
-  ].filter(Boolean) as {
-    title: MultiHomeFeatTitle;
-    icon: React.FC<import('react-native-svg').SvgProps>;
-    badge?: number;
-  }[];
+  const MENU_ARR = useMemo(
+    () =>
+      [
+        {
+          key: MultiHomeFeatTitle.Swap,
+          title: t('page.home.services.swap'),
+          icon: RcIconSwap,
+        },
+        {
+          key: MultiHomeFeatTitle.Send,
+          title: t('page.home.services.send'),
+          icon: RcIconSend,
+        },
+        {
+          key: MultiHomeFeatTitle.Receive,
+          title: t('page.home.services.receive'),
+          icon: RcIconReceive,
+        },
+        {
+          key: MultiHomeFeatTitle.Bridge,
+          title: t('page.home.services.bridge'),
+          icon: RcIconBridge,
+        },
+        {
+          key: MultiHomeFeatTitle.History,
+          title: t('page.home.services.history'),
+          icon: RcIconHistory,
+        },
+        {
+          key: MultiHomeFeatTitle.Approvals,
+          title: t('page.home.services.approvals'),
+          icon: RcIconApprovals,
+          badge: alertInfo.total,
+        },
+        {
+          key: MultiHomeFeatTitle.GasAccount,
+          title: t('page.home.services.gasAccount'),
+          icon: RcIconGasAccount,
+        },
+        // __DEV__ && {
+        //   title: MultiHomeFeatTitle.TEST_DAPP,
+        //   icon: RcIconDapps,
+        // },
+        {
+          key: MultiHomeFeatTitle.Dapps,
+          title: IS_IOS
+            ? t('page.home.services.websites')
+            : t('page.home.services.dapps'),
+          icon: RcIconDapps,
+        },
+        // {
+        //   title: MultiHomeFeatTitle.Ecosystem,
+        //   icon: RcIconEcosystem,
+        // },
+        // {
+        //   title: MultiHomeFeatTitle.Points,
+        //   icon: RcIconPoints,
+        // },
+      ].filter(Boolean) as {
+        key: MultiHomeFeatTitle;
+        title: string;
+        icon: React.FC<import('react-native-svg').SvgProps>;
+        badge?: number;
+      }[],
+    [alertInfo.total, t],
+  );
 
   useEffect(() => {
     if (pendingTxCount) {
@@ -337,12 +352,12 @@ function MultiAddressHome(): JSX.Element {
   const { openUrlAsDapp } = useDappWebViewScreen();
 
   const handleClickMenu = useCallback(
-    (title: MultiHomeFeatTitle) => {
+    (key: MultiHomeFeatTitle) => {
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      switch (title) {
+      switch (key) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
@@ -574,10 +589,10 @@ function MultiAddressHome(): JSX.Element {
                   ])}
                   key={index}
                   onPress={e => {
-                    handleClickMenu(el.title);
+                    handleClickMenu(el.key);
                     matomoRequestEvent({
                       category: 'Click_Services',
-                      action: `Click_${el.title}`,
+                      action: `Click_${el.key}`,
                     });
                   }}>
                   <View style={styles.iconWrapper}>
@@ -586,11 +601,7 @@ function MultiAddressHome(): JSX.Element {
                       <BadgeText count={el.badge} style={styles.badgeStyle} />
                     )}
                   </View>
-                  <Text style={styles.gridText}>
-                    {el.title === MultiHomeFeatTitle.Dapps && IS_IOS
-                      ? 'Websites'
-                      : el.title}
-                  </Text>
+                  <Text style={styles.gridText}>{el.title}</Text>
                 </TouchableOpacity>
               );
             })}

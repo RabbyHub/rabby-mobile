@@ -7,7 +7,7 @@ import {
 import TouchableView from '@/components/Touchable/TouchableView';
 import { BridgeTxHistory } from './BridgeHistory';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
-import { View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 // import { RcIconSwapHistory } from '@/assets/icons/swap';
 import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -41,6 +41,7 @@ export const BridgeHeader = () => {
   }, []);
 
   const openHistory = useCallback(() => {
+    Keyboard.dismiss();
     setHistoryVisible(true);
   }, []);
 

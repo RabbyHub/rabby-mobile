@@ -313,10 +313,12 @@ export const addKeyringAndactiveAndPersistAccounts = async (
     };
     if (addAlias) {
       accountsToImport.forEach(({ address, aliasName }) => {
-        contactService.setAlias({
+        const curAccount = {
           address,
-          alias: aliasName,
-        });
+          type: keyring.type as KeyringTypeName,
+          brandName: keyring.type,
+        };
+        onSetAddressAlias(undefined, curAccount, contactService);
       });
     }
     preferenceService.setCurrentAccount(_account as any);

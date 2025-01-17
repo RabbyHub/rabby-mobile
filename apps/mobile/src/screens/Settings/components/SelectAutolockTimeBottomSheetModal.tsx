@@ -5,25 +5,21 @@ import {
   useImperativeHandle,
   useCallback,
 } from 'react';
-import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 
-import { AppBottomSheetModal, Button } from '@/components';
+import { AppBottomSheetModal } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import {
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { createGetStyles } from '@/utils/styles';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { TIME_SETTINGS } from '@/constant/autoLock';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useAutoLockTimeMs } from '@/hooks/appSettings';
-import { IS_ANDROID } from '@/core/native/utils';
 import AutoLockView from '@/components/AutoLockView';
+import { useTranslation } from 'react-i18next';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
@@ -58,6 +54,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
     sheetHeight: SIZES.FULL_HEIGHT,
     containerPaddingBottom: SIZES.containerPb,
   });
+  const { t } = useTranslation();
 
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -98,7 +95,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Auto lock time</Text>
+        <Text style={styles.title}>{t('page.setting.autoLockTime')}</Text>
         <View style={styles.mainContainer}>
           {TIME_SETTINGS.map((item, idx) => {
             const itemKey = `timesetting-${item.label}-${item.milliseconds}`;

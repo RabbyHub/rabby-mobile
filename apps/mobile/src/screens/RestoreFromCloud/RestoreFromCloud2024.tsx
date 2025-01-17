@@ -131,7 +131,9 @@ export const RestoreFromCloud2024: React.FC<{
         <View style={styles.empty}>
           <BackupIcon status="info" isGray />
           <Text style={styles.restoreTitle}>
-            {`Restore From ${IS_IOS ? 'iCloud' : 'Google Drive'}`}
+            {t('screens.addressStackTitle.RestoreFromCloud', {
+              type: IS_IOS ? 'iCloud' : 'Google Drive',
+            })}
           </Text>
           <Text style={styles.loadingText}>
             {t('page.newAddress.seedPhrase.backupRestoreEmpty')}
