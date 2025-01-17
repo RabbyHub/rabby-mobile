@@ -63,9 +63,7 @@ export const SupportedLangs = (
 );
 
 export function coerceLang(lang: SupportedLang): SupportedLang {
-  if (isNonPublicProductionEnv) return lang;
-
-  return 'en-US' as SupportedLang;
+  return lang;
 }
 
 export function filterSupportedLang(lang: string): SupportedLang {

@@ -33,8 +33,12 @@ export function useAppLanguage() {
 export function useDetectLanguage() {
   const { setCurrentLanguage } = useAppLanguage();
   useEffect(() => {
-    const appLang = appStorage.getItem('@AppLang');
-
+    let appLang = appStorage.getItem('@AppLang');
+    try {
+      JSON.parse(appLang as unknown as string);
+    } catch (e) {
+      // NOTHING
+    }
     const langs = SupportedLangs.map(item => item.lang);
     const bestLang = findBestLanguageTag(langs);
     if (appLang) {
