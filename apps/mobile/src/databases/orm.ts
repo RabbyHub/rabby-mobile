@@ -1,6 +1,5 @@
-import { DataSource, DataSourceOptions } from 'typeorm/browser';
+import { DataSourceOptions } from 'typeorm/browser';
 
-import { isNonPublicProductionEnv } from '@/constant/env';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { HistoryItemEntity } from './entities/historyItem';
@@ -10,6 +9,7 @@ import { getMigrations } from './migrations';
 import { APP_DB_PREFIX } from './constant';
 import { initializeAppDataSource } from './imports';
 import { SwapItemEntity } from './entities/swapitem';
+import { BalanceEntity } from './entities/balance';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -30,6 +30,7 @@ const dbOptions: DataSourceOptions = {
     NFTItemEntity,
     HistoryItemEntity,
     SwapItemEntity,
+    BalanceEntity,
     PortocolItemEntity,
   ],
   maxQueryExecutionTime: 10000,

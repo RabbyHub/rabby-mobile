@@ -1,9 +1,10 @@
 import { cached } from '@/utils/cache';
 import { preferenceService, keyringService } from '../services';
-import { openapi, testOpenapi } from '../request';
+import { testOpenapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { getTokenSettings } from '@/utils/getTokenSettings';
+import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 
 const getTotalBalanceCached = cached(async address => {
   const addresses = await keyringService.getAllAddresses();
@@ -15,7 +16,7 @@ const getTotalBalanceCached = cached(async address => {
     core = true;
   }
   const tokenSetting = await getTokenSettings();
-  const data = await openapi.getTotalBalanceV2({
+  const data = await batchBalanceWithLocalCache({
     address,
     isCore: core,
     ...tokenSetting,
