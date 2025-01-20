@@ -6,6 +6,7 @@ import { KEYRING_CLASS, KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { unionBy } from 'lodash';
 
 export interface balanceAccountType {
   address: string;
@@ -71,9 +72,7 @@ export default function useAccountsBalance(opts?: {
         setAccountsLength(formatList.length);
 
         const uniqueList = accountsNoUnique
-          ? formatList.filter(
-              (value, index, self) => self.indexOf(value) === index,
-            )
+          ? unionBy(formatList, account => account.address.toLowerCase())
           : formatList;
 
         // deault first get from cache store
