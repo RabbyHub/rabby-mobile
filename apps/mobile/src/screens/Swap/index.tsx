@@ -526,6 +526,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
             chainEnum={chain}
             onChange={switchChain}
             supportChains={SWAP_SUPPORT_CHAINS}
+            hideTestnetTab
           />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
