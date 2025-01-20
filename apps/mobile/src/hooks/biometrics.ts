@@ -47,8 +47,7 @@ export function useBiometricsComputed() {
         : t('page.setting.fingerPrint'),
       isFaceID,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [biometrics]);
+  }, [biometrics, t]);
 
   return computed;
 }
