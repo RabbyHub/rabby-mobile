@@ -130,19 +130,19 @@ function History({
   const { syncTop10History, isSyncing, refreshing } =
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
-  const getSwapHistory = async () => {
+  const getSwapHistory = async (add?: string) => {
     if (cacheSwapHistory.current.length) {
       return cacheSwapHistory.current;
     }
 
-    const swapList = await SwapItemEntity.getAllHistoryItem();
+    const swapList = await SwapItemEntity.getAllHistoryItem(add);
     cacheSwapHistory.current = swapList;
     return swapList;
   };
 
   useEffect(() => {
-    if (!refreshing) {
-      batchFetchDataV2();
+    if (!refreshing && !isInTokenDetail) {
+      reloadAsync(); // again fetch local db data
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -153,10 +153,14 @@ function History({
       return { list: [] };
     }
 
+    const address = isSceneUsingAllAccounts
+      ? undefined
+      : finalSceneCurrentAccount?.address.toLowerCase();
+
     // juset not in single token history
     const [historyList, swapList] = await Promise.all([
-      HistoryItemEntity.getAllHistoryItemSortedByTime(),
-      getSwapHistory(),
+      HistoryItemEntity.getAllHistoryItemSortedByTime(address),
+      getSwapHistory(address),
     ]);
     console.log('tokenDict', Object.keys(tokenDict).length);
     console.log(
@@ -200,55 +204,58 @@ function History({
     if (!isInTokenDetail) {
       const res = await batchFetchDataV2();
       return res;
-    }
-    const accountList = isSceneUsingAllAccounts
-      ? unionAccounts
-      : [finalSceneCurrentAccount];
-    const queue = new PQueue({
-      interval: 2000,
-      intervalCap: 10,
-    });
-    for (let i = 0; i < accountList.length; i++) {
-      queue.add(async () => {
-        const account = accountList[i];
-        if (!account) {
-          return;
-        }
-        const addr = account.address.toLowerCase();
-        if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
-          return;
-        }
-        const needFilter = isInTokenDetail && tokenItem;
-        const result = needFilter
-          ? await fetchData(
-              addr,
-              lastMap.current[addr] || 0,
-              tokenItem.chain,
-              tokenItem._tokenId,
-            )
-          : await fetchData(addr, lastMap.current[addr] || 0);
-
-        if (result.list.length < PAGE_COUNT) {
-          hasMoreMap.current[addr] = false;
-        } else {
-          hasMoreMap.current[addr] = true;
-        }
-        lastMap.current[addr] = result.last || 0;
-        list.push(
-          ...result.list.map(item => ({
-            ...item,
-            account,
-          })),
-        );
+    } else {
+      const swapList = await getSwapHistory(); // just for single token history
+      const accountList = isSceneUsingAllAccounts
+        ? unionAccounts
+        : [finalSceneCurrentAccount];
+      const queue = new PQueue({
+        interval: 2000,
+        intervalCap: 10,
       });
+      for (let i = 0; i < accountList.length; i++) {
+        queue.add(async () => {
+          const account = accountList[i];
+          if (!account) {
+            return;
+          }
+          const addr = account.address.toLowerCase();
+          if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+            return;
+          }
+          const needFilter = isInTokenDetail && tokenItem;
+          const result = needFilter
+            ? await fetchData(
+                addr,
+                lastMap.current[addr] || 0,
+                tokenItem.chain,
+                tokenItem._tokenId,
+              )
+            : await fetchData(addr, lastMap.current[addr] || 0);
+
+          if (result.list.length < PAGE_COUNT) {
+            hasMoreMap.current[addr] = false;
+          } else {
+            hasMoreMap.current[addr] = true;
+          }
+          lastMap.current[addr] = result.last || 0;
+          list.push(
+            ...result.list.map(item => ({
+              ...item,
+              isLocalSwap: swapList.some(e => e.tx_id === item.id),
+              account,
+            })),
+          );
+        });
+      }
+      if (!isReady.current) {
+        isReady.current = true;
+      }
+      if (accountList.length > 0) {
+        await waitQueueFinished(queue);
+      }
+      return { list };
     }
-    if (!isReady.current) {
-      isReady.current = true;
-    }
-    if (accountList.length > 0) {
-      await waitQueueFinished(queue);
-    }
-    return { list };
   };
 
   const fetchData = async (
@@ -353,9 +360,9 @@ function History({
             }
 
             return (
-              item.createdAt >= Date.now() - 3600000 &&
-              !item.isSubmitFailed &&
-              !isSynced
+              item.createdAt >= Date.now() - 3600000 && // gap smaller 1 hour
+              !item.isSubmitFailed && // not submit failed
+              !isSynced // not has synced and not in history list
             );
           })),
     ];
@@ -403,15 +410,22 @@ function History({
   }, [data]);
 
   const displayList = useMemo(() => {
-    return allTxHistory.filter(tx => {
-      if (!isShowAll) {
-        return !tx.is_scam;
-      }
-      if (isSceneUsingAllAccounts) {
+    return allTxHistory
+      .filter(tx => {
+        if (!isShowAll) {
+          return !tx.is_scam;
+        }
         return true;
-      }
-      return isSameAddress(finalSceneCurrentAccount?.address || '', tx.address);
-    });
+      })
+      .filter(tx => {
+        if (isSceneUsingAllAccounts) {
+          return true;
+        }
+        return isSameAddress(
+          finalSceneCurrentAccount?.address || '',
+          tx.address,
+        );
+      });
     // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
@@ -468,6 +482,8 @@ function History({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
+
+  console.log('displayList', displayList.length);
 
   const isFirstLoading = loading && !allTxHistory.length;
 

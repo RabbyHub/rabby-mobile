@@ -11,6 +11,17 @@ import { transactionHistoryService } from '@/core/services';
 import { SwapItemEntity } from '../entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
+import PQueue from 'p-queue';
+
+const waitQueueFinished = (q: PQueue) => {
+  return new Promise(resolve => {
+    q.on('empty', () => {
+      if (q.pending <= 0) {
+        resolve(null);
+      }
+    });
+  });
+};
 
 export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -92,7 +103,10 @@ export const useSyncHistoryDB = (
       );
       if (!res.history_list.length) {
         // interupt loop
-        console.debug('syncSwapHistory CUSTOM_LOGGER:=>: No more history');
+        console.debug(
+          'syncSwapHistory CUSTOM_LOGGER:=>: No more history',
+          address,
+        );
         return true;
       } else {
         runOnJS(syncRemoteSwapHistory)(address, res.history_list);
@@ -110,7 +124,6 @@ export const useSyncHistoryDB = (
       if (!address) {
         return [];
       }
-      console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: start');
 
       let time = lastTime;
       if (!lastTime) {
@@ -118,7 +131,12 @@ export const useSyncHistoryDB = (
         time = localLastTime || 0;
       }
 
-      console.log('🔍syncUserAllHistory CUSTOM_LOGGER:=>: lastTime', time);
+      console.log(
+        '🔍syncUserAllHistory CUSTOM_LOGGER:=>: start',
+        address,
+        'lastTime:',
+        time,
+      );
       const res = await openapi.getAllTxHistory({
         id: address,
         start_time: time,
@@ -127,7 +145,10 @@ export const useSyncHistoryDB = (
       console.debug('getAllTxHistory', res.history_list.length);
       if (!res.history_list.length) {
         // interupt loop
-        console.debug('🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history');
+        console.debug(
+          '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
+          address,
+        );
         return true;
       } else {
         runOnJS(syncRemoteHistory)(address, res.history_list);
@@ -166,31 +187,38 @@ export const useSyncHistoryDB = (
           await HistoryItemEntity.clear();
           await SwapItemEntity.clear();
         }
-        for (const account of top10Account) {
-          if (abortRef.current) {
-            console.log(
-              '🔍syncTop10History CUSTOM_LOGGER:=>: Fetching interrupted.',
-            );
-            setIsSyncing(false);
-            setIsFirstFetch(false);
-            break;
-          }
 
-          try {
-            await Promise.allSettled([
-              syncUserAllHistory(account.address),
-              syncSwapHistory(account.address),
-            ]);
-          } catch (error) {
-            console.error(
-              `syncTop10History Error fetching data for ${account.address.slice(
-                -4,
-              )}:`,
-              error,
-            );
-          }
-          await new Promise(resolve => setTimeout(resolve, 0));
+        const queue = new PQueue({
+          interval: 2000,
+          intervalCap: 5,
+        });
+        for (const account of top10Account) {
+          queue.add(async () => {
+            if (abortRef.current) {
+              console.log(
+                '🔍syncTop10History CUSTOM_LOGGER:=>: Fetching interrupted.',
+              );
+              setIsSyncing(false);
+              setIsFirstFetch(false);
+            }
+
+            try {
+              await Promise.allSettled([
+                syncUserAllHistory(account.address),
+                syncSwapHistory(account.address),
+              ]);
+            } catch (error) {
+              console.error(
+                `syncTop10History Error fetching data for ${account.address.slice(
+                  -4,
+                )}:`,
+                error,
+              );
+            }
+            await new Promise(resolve => setTimeout(resolve, 0));
+          });
         }
+        await waitQueueFinished(queue);
       } finally {
         setIsSyncing(false);
         setIsFirstFetch(false);

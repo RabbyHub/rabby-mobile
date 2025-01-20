@@ -274,6 +274,7 @@ export const HistoryTokenList = ({
           <View style={[styles.mutliBox]}>
             {sends?.map(({ token_id, amount }) => (
               <TokenItemInlist
+                key={token_id}
                 isSend={true}
                 chain={chain}
                 token_id={token_id}
@@ -285,6 +286,7 @@ export const HistoryTokenList = ({
             ))}
             {receives?.map(({ token_id, amount }) => (
               <TokenItemInlist
+                key={token_id}
                 token_id={token_id}
                 chain={chain}
                 amount={amount}

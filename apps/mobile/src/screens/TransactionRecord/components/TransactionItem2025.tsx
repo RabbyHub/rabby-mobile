@@ -268,6 +268,18 @@ export const TransactionItem = ({
       return HistoryItemCateType.Swap;
     }
 
+    if (
+      data.$ctx?.ga?.category === 'Security' &&
+      data.$ctx?.ga?.source === 'tokenApproval'
+    ) {
+      const revokeToken = data.action?.actionData.revokeToken;
+      if (revokeToken && !revokeToken.token?.amount) {
+        return HistoryItemCateType.Revoke;
+      } else {
+        return HistoryItemCateType.Approve;
+      }
+    }
+
     if (data.txs?.[0]?.$ctx.ga.category === 'Bridge') {
       return HistoryItemCateType.Bridge;
     }
@@ -275,7 +287,7 @@ export const TransactionItem = ({
     return HistoryItemCateType.UnKnown;
   }, [data]);
 
-  const { sendToken, receiveToken, isNft } = useMemo(() => {
+  const { sendToken, receiveToken, isNft, approveToken } = useMemo(() => {
     switch (formatType) {
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
@@ -294,7 +306,22 @@ export const TransactionItem = ({
           receiveToken: receive,
           isNft: false,
         };
+      case HistoryItemCateType.Revoke: {
+        const reToken = data.txs?.[0]?.action?.actionData.revokeToken;
 
+        return {
+          approveToken: reToken?.token!,
+          isNft: reToken?.token?.id.length === 32,
+        };
+      }
+      case HistoryItemCateType.Approve: {
+        const apToken = data.txs?.[0]?.action?.actionData.approveToken;
+
+        return {
+          approveToken: apToken?.token!,
+          isNft: apToken?.token?.id.length === 32,
+        };
+      }
       default:
         return {
           isNft: false,
@@ -312,8 +339,11 @@ export const TransactionItem = ({
       case HistoryItemCateType.Bridge:
         return strings('page.transactions.itemTitle.Bridge');
 
-      // case HistoryItemCateType.Approve:
-      //   return strings('page.transactions.itemTitle.Approve');
+      case HistoryItemCateType.Approve:
+        return strings('page.transactions.itemTitle.Approve');
+
+      case HistoryItemCateType.Revoke:
+        return strings('page.transactions.itemTitle.Revoke');
       // case HistoryItemCateType.Cancel:
       //   return strings('page.transactions.itemTitle.Cancel');
       case HistoryItemCateType.UnKnown:
@@ -327,11 +357,11 @@ export const TransactionItem = ({
     const FromText = strings('page.swap.from') + ' ';
     const ToText = strings('page.swap.to') + ' ';
 
+    const requiredData = data.txs?.[0]?.action?.requiredData as SwapRequireData;
+    const projectName = requiredData.protocol?.name || '';
+
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        const requiredData = data.txs?.[0]?.action
-          ?.requiredData as SwapRequireData;
-        const projectName = requiredData.protocol?.name || '';
         return (
           projectName || strings('page.activities.signedTx.common.unknown')
         );
@@ -354,9 +384,14 @@ export const TransactionItem = ({
       //     (isSend ? ToText : FromText) +
       //     (getAliasName(addr) || ellipsisAddress(addr))
       //   );
-      // case HistoryItemCateType.Revoke:
-      // case HistoryItemCateType.Approve:
-      //   return ToText + (projectName || chainItem?.name);
+      case HistoryItemCateType.Revoke:
+      case HistoryItemCateType.Approve:
+        const isApprove = formatType === HistoryItemCateType.Approve;
+        return projectName
+          ? isApprove
+            ? ToText
+            : FromText + projectName
+          : strings('page.activities.signedTx.common.unknown');
       // case HistoryItemCateType.Contract:
       //   return FromText + chainItem?.name;
       // case HistoryItemCateType.Cancel:
@@ -394,12 +429,14 @@ export const TransactionItem = ({
         canCancel,
         sendsToken,
         recievesToken,
+        approveToken,
         formatType,
         title: formatTitle,
       },
     });
   }, [
     formatType,
+    approveToken,
     isForMultipleAdderss,
     navigation,
     canCancel,
@@ -409,8 +446,25 @@ export const TransactionItem = ({
     sendsToken,
   ]);
 
+  const approveTokenAmountStr = useMemo(() => {
+    const amount = approveToken?.amount;
+    if (!amount) {
+      return '';
+    } else {
+      if (isNft) {
+        return approveToken.amount;
+      } else {
+        return amount >= 1e9
+          ? strings('page.transactions.detail.Unlimited')
+          : numberWithCommasIsLtOne(amount, 2);
+      }
+    }
+  }, [approveToken, isNft]);
+
   const formatToken = useMemo(() => {
-    const tempArr = [sendToken!, receiveToken!].filter(token => token);
+    const tempArr = [sendToken!, receiveToken!, approveToken!].filter(
+      token => token,
+    );
     if (tempArr.length === 0) {
       return undefined;
     }
@@ -420,7 +474,7 @@ export const TransactionItem = ({
     } else {
       return tempArr;
     }
-  }, [sendToken, receiveToken]);
+  }, [sendToken, receiveToken, approveToken]);
 
   return (
     <TouchableOpacity
@@ -455,24 +509,21 @@ export const TransactionItem = ({
       </View>
 
       <View style={styles.rightContent}>
-        {recievesToken.map(
-          (token, index) =>
-            token && (
-              <View key={index} style={styles.txChange}>
-                <Text style={[styles.tokenText]} numberOfLines={1}>
-                  {'+'}{' '}
-                  {isNft
-                    ? token.amount
-                    : numberWithCommasIsLtOne(token.amount, 2)}
-                </Text>
-                <Text
-                  style={styles.tokenText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {formatSymbolName(token)}
-                </Text>
-              </View>
-            ),
+        {approveToken && (
+          <View style={styles.txChange}>
+            <Text style={[styles.tokenText]} numberOfLines={1}>
+              {approveTokenAmountStr}
+            </Text>
+            <Text
+              style={[
+                styles.tokenText,
+                !approveToken.amount && styles.sendText,
+              ]}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {formatSymbolName(approveToken)}
+            </Text>
+          </View>
         )}
         {sendsToken.map(
           (token, index) =>

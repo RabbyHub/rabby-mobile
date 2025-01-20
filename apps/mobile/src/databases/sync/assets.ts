@@ -183,7 +183,7 @@ export async function syncRemoteHistory(
       HistoryItemEntity.getRepository(),
       historyItems,
       {
-        key: address,
+        key: address + '-all-history',
         batchSize: 2000,
         concurrency: 1,
         delayBetweenTasks: 1.5 * 1e3,
@@ -230,7 +230,7 @@ export async function syncRemoteSwapHistory(
       SwapItemEntity.getRepository(),
       historyItems,
       {
-        key: address,
+        key: address + '-swap-history',
         batchSize: 100,
         concurrency: 1,
         delayBetweenTasks: 1.5 * 1e3,

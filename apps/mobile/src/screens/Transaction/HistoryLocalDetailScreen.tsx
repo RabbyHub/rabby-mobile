@@ -1,25 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { HistoryList } from './components/HistoryGroupList';
-import { openapi } from '@/core/request';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { unionBy, orderBy, isUndefined, maxBy } from 'lodash';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import PQueue from 'p-queue';
+import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
-import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { Empty } from './components/Empty';
-import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
-import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
-import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   KeyringAccountWithAlias,
@@ -28,24 +13,18 @@ import {
   useMyAccounts,
 } from '@/hooks/account';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
-  TxDisplayItem,
-  TxHistoryItem,
   NFTItem,
   TokenItem,
   GasLevel,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, intToHex, numberWithCommasIsLtOne } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import { formatIntlTimestamp } from '@/utils/time';
-import { useRoute } from '@react-navigation/native';
-import { getAlianName } from '@/core/apis/contact';
-import { ellipsisAddress } from '@/utils/address';
+import { StackActions, useRoute } from '@react-navigation/native';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { navigate, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -56,17 +35,13 @@ import {
   HistoryItemCateType,
   HistoryItemIcon,
 } from './components/HistoryItemIcon';
-import { HistoryTokenList } from './components/HistoryTokenList';
-import { getApproveTokeName, getHistoryItemType } from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { strings } from '@/utils/i18n';
 import { Button } from '@/components2024/Button';
-import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { SwapRequireData } from '@rabby-wallet/rabby-action';
 import { useFindChain } from '@/hooks/useFindChain';
 import { TransactionPendingDetail } from '../TransactionRecord/components/TransactionPendingDetail';
 import {
@@ -83,33 +58,61 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { AddressItemInDetail, TxStatusItem } from './HistoryDetailScreen';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
-import { color } from '@rneui/base';
+import { transactionHistoryService } from '@/core/services';
+import { CHAINS_ENUM } from '@debank/common';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route = useRoute();
   const {
-    data,
+    data: _data,
     canCancel,
     isForMultipleAdderss,
     title,
     formatType,
     sendsToken,
     recievesToken,
+    approveToken,
   } = (route.params || {}) as {
     data: TransactionGroup;
     canCancel?: boolean;
     isForMultipleAdderss?: boolean;
     sendsToken: TokenItem[];
+    approveToken?: TokenItem;
     formatType: HistoryItemCateType;
     recievesToken: TokenItem[];
     title?: string;
   };
+  const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
+  const isFailed = useMemo(() => data.isFailed, [data]);
   console.debug('HistoryLocalDetailScreen isPending', isPending);
   console.debug('HistoryLocalDetailScreen data', JSON.stringify(data));
   const { switchAccount } = useCurrentAccount();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
+
+  const fetchRefreshData = useCallback(() => {
+    if (!isPending) {
+      // has done
+      return;
+    }
+
+    const address = data.address;
+    const chainId = data.chainId;
+    const nonce = data.nonce;
+    const groups = transactionHistoryService.getPendingTxsByNonce(
+      address,
+      chainId,
+      nonce,
+    );
+
+    console.debug('fetchRefreshData groups', groups);
+    if (groups.length?.[0]) {
+      setData(groups[0]);
+    }
+  }, [isPending, data]);
+
+  useInterval(fetchRefreshData, 5000);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
@@ -434,12 +437,62 @@ function HistoryLocalDetailScreen(): JSX.Element {
             </View>
           </View>
         );
+      case HistoryItemCateType.Approve:
+      case HistoryItemCateType.Revoke: {
+        const isNft = approveToken?.id.length === 32;
+        const amount = approveToken?.amount;
+
+        let str = '';
+        if (amount) {
+          if (isNft) {
+            str = approveToken.amount.toString();
+          } else {
+            str =
+              amount >= 1e9
+                ? strings('page.transactions.detail.Unlimited')
+                : numberWithCommasIsLtOne(amount, 2);
+          }
+        }
+        return (
+          <TouchableOpacity
+            onPress={() => handlePressToken(approveToken!, isNft)}>
+            <View style={[styles.singleBox]}>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={formatType}
+                  token={approveToken as TokenItem}
+                  isNft={isNft}
+                />
+                <View style={[styles.colomnBox]}>
+                  <Text
+                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
+                    {str}{' '}
+                    {isNft
+                      ? strings('page.nft.title')
+                      : getTokenSymbol(approveToken as TokenItem)}
+                  </Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <RcIconSingleArrow
+                  width={32}
+                  height={32}
+                  color={colors2024['neutral-bg-2']}
+                />
+              </View>
+            </View>
+          </TouchableOpacity>
+        );
+      }
       default:
         return null;
     }
   }, [
     formatType,
     sendsToken,
+    approveToken,
     recievesToken,
     handlePressToken,
     styles.colomnBox,
@@ -454,6 +507,103 @@ function HistoryLocalDetailScreen(): JSX.Element {
     styles.tokenAmountText,
   ]);
 
+  const BtnContainer = useMemo(() => {
+    if (isPending) {
+      return (
+        <View style={styles.buttonContainer}>
+          <View style={{ flex: 1 }}>
+            <Button
+              titleStyle={[styles.ghostTitle]}
+              buttonStyle={[styles.ghostButton]}
+              onPress={handleTxCancel}
+              title={strings('page.transactions.detail.Cancel')}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              titleStyle={[styles.primaryTitle]}
+              buttonStyle={[styles.primaryButton]}
+              onPress={handleTxSpeedUp}
+              title={strings('page.transactions.detail.SpeedUp')}
+            />
+          </View>
+        </View>
+      );
+    } else {
+      switch (formatType) {
+        case HistoryItemCateType.Send:
+          const singeToken = sendsToken[0];
+          const tokenIsNft = singeToken?.id.length === 32;
+          return tokenIsNft ? null : (
+            <View style={styles.buttonContainer}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  onPress={() => {
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackTransaction, {
+                        screen: isForMultipleAdderss
+                          ? RootNames.MultiSend
+                          : RootNames.Send,
+                        params: {
+                          chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                          tokenId: singeToken[0]?.id,
+                        },
+                      }),
+                    );
+                  }}
+                  title={strings('page.transactions.detail.SwapAgain')}
+                />
+              </View>
+            </View>
+          );
+        case HistoryItemCateType.Swap:
+          return (
+            <View style={styles.buttonContainer}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  onPress={() => {
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackTransaction, {
+                        screen: isForMultipleAdderss
+                          ? RootNames.MultiSwap
+                          : RootNames.Swap,
+                        params: {
+                          swapAgain: true,
+                          chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                          swapTokenId: [
+                            sendsToken[0]?.id,
+                            recievesToken[0]?.id,
+                          ],
+                        },
+                      }),
+                    );
+                  }}
+                  title={strings('page.transactions.detail.SwapAgain')}
+                />
+              </View>
+            </View>
+          );
+        default:
+          return null;
+      }
+    }
+  }, [
+    handleTxSpeedUp,
+    handleTxCancel,
+    navigation,
+    chainItem,
+    isForMultipleAdderss,
+    styles.buttonContainer,
+    styles.ghostButton,
+    styles.ghostTitle,
+    styles.primaryButton,
+    styles.primaryTitle,
+    isPending,
+    formatType,
+    sendsToken,
+    recievesToken,
+  ]);
+
   return (
     <NormalScreenContainer2024
       type="bg2"
@@ -465,7 +615,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
       }}>
       {TokenContainer}
       <View style={styles.detailContainer}>
-        {!isPending && (
+        {/* {!isPending && data?.time_at && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>Date</Text>
             <View>
@@ -474,13 +624,17 @@ function HistoryLocalDetailScreen(): JSX.Element {
               </Text>
             </View>
           </View>
-        )}
+        )} */}
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {strings('page.transactions.detail.Status')}
           </Text>
           <View>
-            <TxStatusItem status={1} isPending={isPending} withText={true} />
+            <TxStatusItem
+              status={isFailed ? 0 : 1}
+              isPending={isPending}
+              withText={true}
+            />
           </View>
         </View>
         {isPending && <TransactionPendingDetail data={data} />}
@@ -545,21 +699,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
           </View>
         }
       </View>
-      <View style={styles.buttonContainer}>
-        <View style={{ flex: 1 }}>
-          <Button
-            onPress={handleTxCancel}
-            title={strings('page.transactions.detail.Cancel')}
-            type="ghost"
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            onPress={handleTxSpeedUp}
-            title={strings('page.transactions.detail.SpeedUp')}
-          />
-        </View>
-      </View>
+      {BtnContainer}
     </NormalScreenContainer2024>
   );
 }
@@ -571,6 +711,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 20,
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  ghostButton: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderColor: colors2024['neutral-info'],
+  },
+  primaryButton: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderColor: colors2024['brand-default'],
+  },
+  primaryTitle: {
+    color: colors2024['brand-default'],
+  },
+  ghostTitle: {
+    color: colors2024['neutral-title-1'],
   },
   iconSwitchArrow: {
     backgroundColor: colors2024['neutral-bg-2'],
