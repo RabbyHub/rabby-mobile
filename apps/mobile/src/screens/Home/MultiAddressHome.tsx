@@ -23,7 +23,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
@@ -68,7 +68,9 @@ import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useAssetsMap } from './hooks/store';
 import { useAssets } from '../Search/useAssets';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ellipsisAddress } from '@/utils/address';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -99,7 +101,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 
   return (
     <View style={styles.headerBox}>
-      <View style={styles.headerBox}>
+      <View style={styles.leftBox}>
         <Text style={styles.balanceTextBox}>
           {t('page.nextComponent.multiAddressHome.totalBalance')}
         </Text>
@@ -251,8 +253,7 @@ function MultiAddressHome(): JSX.Element {
   });
 
   const { initFetchTop10Assets } = useAssets();
-
-  const { pinAccountsFirstFour, isShowPin } =
+  const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
 
   const fetchHistory = useCallback(() => {
@@ -453,6 +454,7 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const { bottom } = useSafeAreaInsets();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
   const handlePressSearch = () => {
@@ -479,6 +481,8 @@ function MultiAddressHome(): JSX.Element {
         <MultiAddressHomeHeader loading={balanceLoading} />
         <ScrollView
           showsVerticalScrollIndicator={false}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContainer}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
@@ -517,22 +521,39 @@ function MultiAddressHome(): JSX.Element {
             </TouchableOpacity>
           </View>
           {isShowPin && (
-            <>
-              <View style={[styles.menuHeader, styles.pinHeader]}>
-                <View style={styles.pinBox}>
-                  <RcIconVectorCC color={colors2024['neutral-title-1']} />
-                  <Text style={styles.headerText}>
-                    {t('page.nextComponent.multiAddressHome.pin')}
-                  </Text>
-                </View>
-                <View />
-              </View>
-              <View style={[styles.pinGrid]}>
-                {pinAccountsFirstFour.map((item, index) => {
-                  return item ? (
+            <View style={[styles.pinGrid]}>
+              {pinAccountsFirstFour.map((item, index) => {
+                return item ? (
+                  <ContextMenuView
+                    menuConfig={{
+                      menuTitle: item.alias || ellipsisAddress(item.address),
+                      menuActions: [
+                        {
+                          title: 'UnPin',
+                          icon: isDarkTheme
+                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+                          androidIconName: 'ic_rabby_menu_un_pin',
+                          key: 'pin',
+                          action() {
+                            unPinAddress(item.address, item.brandName);
+                          },
+                        },
+                      ],
+                    }}
+                    key={`${item.address}-${item.brandName}`}
+                    preViewBorderRadius={10}
+                    triggerProps={{ action: 'longPress' }}>
                     <TouchableOpacity
                       style={StyleSheet.flatten([styles.pinGridItem])}
                       key={index}
+                      delayLongPress={200} // long press delay
+                      onLongPress={() => {
+                        trigger('impactLight', {
+                          enableVibrateFallback: true,
+                          ignoreAndroidSystemSettings: false,
+                        });
+                      }}
                       onPress={() => {
                         handleClickPinAccount(item);
                         matomoRequestEvent({
@@ -550,18 +571,18 @@ function MultiAddressHome(): JSX.Element {
                         {calcPinPercent(item.balance || 0)}
                       </Text>
                     </TouchableOpacity>
-                  ) : (
-                    <View
-                      key={index}
-                      style={StyleSheet.flatten([
-                        styles.pinGridItem,
-                        styles.emptyItem,
-                      ])}
-                    />
-                  );
-                })}
-              </View>
-            </>
+                  </ContextMenuView>
+                ) : (
+                  <View
+                    key={index}
+                    style={StyleSheet.flatten([
+                      styles.pinGridItem,
+                      styles.emptyItem,
+                    ])}
+                  />
+                );
+              })}
+            </View>
           )}
           <View style={styles.menuHeader}>
             <Text style={styles.headerText}>
@@ -611,27 +632,30 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
+                : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[
+              styles.floatBottom,
+              { paddingBottom: androidBottomOffset },
+            ]}>
+            <Pressable onPress={handlePressSearch} style={styles.search}>
+              <RcNextSearchCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+              <Text style={styles.searchText}>
+                {t('page.dashboard.home.search')}
+              </Text>
+            </Pressable>
+          </LinearGradient>
         </ScrollView>
-        <LinearGradient
-          colors={
-            isLight
-              ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
-              : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
-          <Pressable onPress={handlePressSearch} style={styles.search}>
-            <RcNextSearchCC
-              width={20}
-              height={20}
-              color={colors2024['neutral-secondary']}
-            />
-            <Text style={styles.searchText}>
-              {t('page.dashboard.home.search')}
-            </Text>
-          </Pressable>
-        </LinearGradient>
       </View>
     </NormalScreenContainer2024>
   );
@@ -639,7 +663,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   paddingContainer: {
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    paddingHorizontal: 0,
     flex: 1,
     flexGrow: 1,
   },
@@ -664,9 +688,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
+  },
+  leftBox: {
+    height: ScreenLayouts.headerAreaHeight,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   balanceTextBox: {
     marginRight: 12,
@@ -678,9 +708,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   balanceBox: {
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginTop: 10,
-    marginBottom: 40,
+    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -737,14 +767,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
   menuHeader: {
     height: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
+    marginTop: 10,
   },
   pinHeader: {
     marginTop: -8,
@@ -793,6 +830,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     marginBottom: 20,
   },
   emptyItem: {
@@ -805,11 +843,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 10,
     flexShrink: 0,
     flex: 1,
-    // padding: 10,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
     height: 46,
     gap: 8,
     position: 'relative',
@@ -822,6 +860,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     marginBottom: 20,
     paddingBottom: 100,
   },
