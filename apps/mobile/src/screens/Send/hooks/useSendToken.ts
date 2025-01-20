@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { Alert, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
@@ -488,15 +489,40 @@ export function useSendTokenForm() {
     [chainItem, formValues, putScreenState],
   );
 
+  const loadGasListAndResolve = useCallback(async () => {
+    const result = {
+      isValidArray: true,
+      gasList: [] as GasLevel[],
+      instantGasLevel: null as null | GasLevel,
+      normalGasLevel: null as null | GasLevel,
+    };
+    let reqResult: GasLevel[] = [];
+    try {
+      reqResult = await loadGasList();
+      result.isValidArray = Array.isArray(reqResult);
+    } catch (err) {
+      result.isValidArray = false;
+      console.error(err);
+      Sentry.captureException(err);
+    } finally {
+      result.gasList = result.isValidArray ? reqResult : [];
+      result.instantGasLevel = findInstanceLevel(result.gasList) || null;
+      result.normalGasLevel =
+        result.gasList.find(item => item.level === 'normal') || null;
+    }
+
+    return result;
+  }, [loadGasList]);
+
   if (__DEV__ && loadGasListError) {
     console.error(loadGasListError);
   }
 
   useEffect(() => {
-    loadGasList().then(list => {
-      putScreenState({ gasList: list });
+    loadGasListAndResolve().then(result => {
+      result.isValidArray && putScreenState({ gasList: result.gasList });
     });
-  }, [loadGasList, putScreenState]);
+  }, [loadGasListAndResolve, putScreenState]);
 
   const handleSubmit = useCallback(
     async ({
@@ -985,9 +1011,11 @@ export function useSendTokenForm() {
 
       const {
         gasLevel = screenState.selectedGasLevel ||
-          (await loadGasList().then(findInstanceLevel)),
+          (await loadGasListAndResolve().then(
+            result => result.instantGasLevel,
+          )),
       } = input || {};
-      const needReserveGasOnSendToken = gasLevel.price > 0;
+      const needReserveGasOnSendToken = !!gasLevel && gasLevel?.price > 0;
 
       if (couldReserveGas && needReserveGasOnSendToken) {
         putScreenState({ showGasReserved: true, isEstimatingGas: true });
@@ -1051,7 +1079,7 @@ export function useSendTokenForm() {
       currentToken,
       estimateGasOnChain,
       screenState.selectedGasLevel,
-      loadGasList,
+      loadGasListAndResolve,
       formik,
       patchFormValues,
       onGasChange,
@@ -1065,18 +1093,20 @@ export function useSendTokenForm() {
   );
   const handleGasLevelChanged = useCallback(
     async (gl?: GasLevel | null) => {
-      const gasLevel = gl
+      let gasLevel = gl
         ? gl
-        : await loadGasList().then(
-            res =>
-              res.find(item => item.level === 'normal') ||
-              findInstanceLevel(res),
+        : await loadGasListAndResolve().then(
+            result => result.normalGasLevel || result.instantGasLevel,
           );
 
-      putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
-      handleMaxInfoChanged({ gasLevel });
+      if (gasLevel) {
+        putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
+        handleMaxInfoChanged({ gasLevel });
+      } else {
+        putScreenState({ reserveGasOpen: false });
+      }
     },
-    [putScreenState, handleMaxInfoChanged, loadGasList],
+    [putScreenState, handleMaxInfoChanged, loadGasListAndResolve],
   );
   const handleClickMaxButton = useCallback(async () => {
     putScreenState(prev => ({ ...prev, clickedMax: true }));
