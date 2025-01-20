@@ -197,13 +197,8 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   }, [isLoading]);
 
   const ListFooterComponent = useMemo(() => {
-    return (
-      <SearchOnTheChain
-        existTokensIds={tokens.map(token => `${token.chain}:${token._tokenId}`)}
-        filterText={filterText}
-      />
-    );
-  }, [filterText, tokens]);
+    return <SearchOnTheChain filterText={filterText} />;
+  }, [filterText]);
 
   return (
     <SectionList

@@ -27,11 +27,7 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
 import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
@@ -39,7 +35,6 @@ import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import RcIconVectorCC from '@/assets2024/icons/home/IconVectorCC.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
@@ -59,7 +54,6 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
-import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
 import {
   KeyringAccountWithAlias,
   useCurrentAccount,
@@ -395,8 +389,6 @@ function MultiAddressHome(): JSX.Element {
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
 
-  const { openUrlAsDapp } = useDappWebViewScreen();
-
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
       trigger('impactLight', {
@@ -653,7 +645,7 @@ function MultiAddressHome(): JSX.Element {
                     { width: itemWidth },
                   ])}
                   key={index}
-                  onPress={e => {
+                  onPress={() => {
                     handleClickMenu(el.key);
                     matomoRequestEvent({
                       category: 'Click_Services',

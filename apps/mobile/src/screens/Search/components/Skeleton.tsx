@@ -5,7 +5,7 @@ import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 
-const ItemLoader = memo(() => {
+export const ItemLoader = memo(() => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.positionLoader]}>

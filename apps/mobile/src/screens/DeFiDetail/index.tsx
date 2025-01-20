@@ -36,6 +36,7 @@ import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_ANDROID } from '@/core/native/utils';
 import { ellipsisAddress } from '@/utils/address';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 type SectionListItem = {
   data: AbstractPortfolio[];

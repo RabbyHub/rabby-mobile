@@ -152,7 +152,7 @@ export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
   };
 
   const syncTop10Assets = async (force?: boolean) => {
-    const top10Account = sortedAccounts.slice(0, 10);
+    const top10Account = sortedAccounts.filter(i => !!i.balance).slice(0, 10);
     setIsSyncing(true);
     const addresses = [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
