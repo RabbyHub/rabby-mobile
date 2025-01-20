@@ -48,8 +48,8 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     isRemoveEmptyKeyring,
   );
 
-  const hasRestSameAddress = await keyringService.hasAddress(account.address);
-  if (!hasRestSameAddress) {
+  const hasSameAddressLeft = await keyringService.hasAddress(account.address);
+  if (!hasSameAddressLeft) {
     preferenceService.removeAddressBalance(account.address);
 
     contactService.removeAlias(account.address);
