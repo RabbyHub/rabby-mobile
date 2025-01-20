@@ -18,6 +18,7 @@ import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
+  useMount,
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
@@ -72,6 +73,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   key: string;
   account?: KeyringAccountWithAlias;
   isLocalSwap?: boolean;
+  isShowSuccess?: boolean;
 }
 
 interface IFetchHistory {
@@ -126,6 +128,9 @@ function History({
   } = useSceneAccountInfo({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
+  const [historySuccessList, setHistorySuccessList] = useState<string[]>(
+    transactionHistoryService.getSucceedList(),
+  );
 
   const { syncTop10History, isSyncing, refreshing } =
     useSyncHistoryDB(unionAccounts);
@@ -147,6 +152,12 @@ function History({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshing]);
+
+  useMount(() => {
+    const list = transactionHistoryService.getSucceedList();
+    setHistorySuccessList(list);
+    transactionHistoryService.clearSuccessAndFailList();
+  });
 
   const batchFetchDataV2 = async () => {
     if (refreshing) {
@@ -191,6 +202,7 @@ function History({
         },
         tokenDict,
         projectDict,
+        isShowSuccess: historySuccessList.includes(item.txHash),
         key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
         address: item.owner_addr,
       })),
@@ -483,8 +495,6 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  console.log('displayList', displayList.length);
-
   const isFirstLoading = loading && !allTxHistory.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
@@ -528,6 +538,7 @@ function History({
         </TouchableOpacity>
       )} */}
         <HistoryList
+          historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
           loading={isFirstLoading}

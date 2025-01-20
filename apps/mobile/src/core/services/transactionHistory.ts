@@ -81,8 +81,8 @@ export interface TransactionSigningItem {
 
 interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
-  tokenDict: TxAllHistoryResult['token_uuid_dict'];
-  projectDict: TxAllHistoryResult['project_dict'];
+  successList: string[];
+  failList: string[];
 }
 
 // TODO
@@ -100,6 +100,8 @@ export class TransactionHistoryService {
         name: APP_STORE_NAMES.txHistory,
         template: {
           transactions: [],
+          successList: [],
+          failList: [],
         },
       },
       {
@@ -108,6 +110,14 @@ export class TransactionHistoryService {
     );
     if (!Array.isArray(this.store.transactions)) {
       this.store.transactions = [];
+    }
+
+    if (!Array.isArray(this.store.successList)) {
+      this.store.successList = [];
+    }
+
+    if (!Array.isArray(this.store.failList)) {
+      this.store.failList = [];
     }
 
     this.init();
@@ -141,6 +151,23 @@ export class TransactionHistoryService {
       chainId,
       nonce,
     });
+  }
+
+  getSucceedCount() {
+    return this.store.successList.length;
+  }
+
+  getSucceedList() {
+    return this.store.successList;
+  }
+
+  getFailedCount() {
+    return this.store.failList.length;
+  }
+
+  clearSuccessAndFailList() {
+    this.store.successList = [];
+    this.store.failList = [];
   }
 
   getTransactionGroups(args?: {
@@ -383,6 +410,12 @@ export class TransactionHistoryService {
           isCompleted: true,
           gasUsed,
         });
+        const id = tx.hash || tx.reqId;
+        if (success) {
+          id && this.store.successList.push(id);
+        } else {
+          id && this.store.failList.push(id);
+        }
       }
     });
 

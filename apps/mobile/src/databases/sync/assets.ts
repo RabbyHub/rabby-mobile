@@ -184,7 +184,7 @@ export async function syncRemoteHistory(
       historyItems,
       {
         key: address + '-all-history',
-        batchSize: 2000,
+        batchSize: 200,
         concurrency: 1,
         delayBetweenTasks: 1.5 * 1e3,
       },

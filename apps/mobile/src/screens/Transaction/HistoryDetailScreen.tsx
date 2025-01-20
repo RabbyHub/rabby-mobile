@@ -72,7 +72,9 @@ export const TxStatusItem = ({
   status,
   withText,
   isPending,
+  showSuccess,
 }: {
+  showSuccess?: boolean;
   isPending?: boolean;
   status: number;
   withText?: boolean;
@@ -119,7 +121,7 @@ export const TxStatusItem = ({
   }
 
   return status === 1 ? (
-    !withText ? null : (
+    !withText && !showSuccess ? null : (
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <RcIconSuccess width={18} height={18} />
         {withText && (

@@ -93,7 +93,9 @@ const TokenItemInlist = ({
               ]}>
               {isSend ? '-' : '+'}{' '}
               {isNft ? amount : numberWithCommasIsLtOne(amount, 2)}{' '}
-              {isNft ? t('page.nft.title') : getTokenSymbol(token as TokenItem)}
+              {isNft
+                ? t('page.singleHome.sectionHeader.Nft')
+                : getTokenSymbol(token as TokenItem)}
             </Text>
           </View>
         </View>
@@ -195,7 +197,7 @@ export const HistoryTokenList = ({
                   {!isApprove && (isSend ? '-' : '+')}{' '}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
-                    ? t('page.nft.title')
+                    ? t('page.singleHome.sectionHeader.Nft')
                     : getTokenSymbol(singeToken as TokenItem)}
                 </Text>
               </View>

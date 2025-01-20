@@ -77,91 +77,69 @@ export const useSyncHistoryDB = (
     abortRef.current = true;
   };
 
-  const syncSwapHistory = useMemoizedFn(
-    async (address: string, force?: boolean, lastTime: number = 0) => {
-      if (!address) {
-        return [];
-      }
+  const syncSwapHistory = useMemoizedFn(async (address: string) => {
+    if (!address) {
+      return [];
+    }
 
-      let time = lastTime;
-      if (!lastTime) {
-        const localLastTime = await SwapItemEntity.getLatestTime(address);
-        time = localLastTime || 0;
-      }
+    const latestTime = await SwapItemEntity.getLatestTime(address);
+    // const threeMonthAgo = new Date().getTime() - 90 * 24 * 60 * 60 * 1000;
+    const time = latestTime || 0;
 
-      console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', time);
-      const res = await openapi.getSwapTradeListV2({
-        user_addr: address,
-        start_time: Math.floor(time),
-        limit: 100,
-      });
+    console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', address, time);
+    const res = await openapi.getSwapTradeListV2({
+      user_addr: address,
+      start_time: Math.floor(time),
+      limit: 500,
+    });
 
-      console.debug(
-        'getSwapTradeListV2',
-        res.history_list.length,
-        res.total_cnt,
-      );
-      if (!res.history_list.length) {
-        // interupt loop
-        console.debug(
-          'syncSwapHistory CUSTOM_LOGGER:=>: No more history',
-          address,
-        );
-        return true;
-      } else {
-        runOnJS(syncRemoteSwapHistory)(address, res.history_list);
-        await syncSwapHistory(
-          address,
-          force,
-          res.history_list[res.history_list.length - 1].create_at,
-        );
-      }
-    },
-  );
+    console.debug('getSwapTradeListV2 length:', res.history_list.length);
+    if (res.history_list.length) {
+      runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+      return res.history_list;
+    }
+  });
 
-  const syncUserAllHistory = useMemoizedFn(
-    async (address: string, lastTime: number = 0) => {
-      if (!address) {
-        return [];
-      }
-
-      let time = lastTime;
-      if (!lastTime) {
-        const localLastTime = await HistoryItemEntity.getLatestTime(address);
-        time = localLastTime || 0;
-      }
+  const syncUserAllHistory = useMemoizedFn(async (address: string) => {
+    try {
+      const latestTime = await HistoryItemEntity.getLatestTime(address);
+      // const threeMonthAgo = new Date().getTime() - 90 * 24 * 60 * 60 * 1000;
+      const time = latestTime || 0;
 
       console.log(
         '🔍syncUserAllHistory CUSTOM_LOGGER:=>: start',
         address,
         'lastTime:',
+        latestTime,
+        'time:',
         time,
       );
+      // init time gap
       const res = await openapi.getAllTxHistory({
         id: address,
         start_time: time,
       });
 
-      console.debug('getAllTxHistory', res.history_list.length);
-      if (!res.history_list.length) {
+      console.debug('getAllTxHistory length:', res.history_list.length);
+      if (res.history_list.length) {
         // interupt loop
         console.debug(
           '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
           address,
         );
-        return true;
-      } else {
         runOnJS(syncRemoteHistory)(address, res.history_list);
         setProjectDict(prev => ({ ...prev, ...res.project_dict }));
         setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
 
-        syncUserAllHistory(
-          address,
-          res.history_list[res.history_list.length - 1].time_at,
-        );
+        return res.history_list;
       }
-    },
-  );
+    } catch (error) {
+      console.error('syncUserAllHistory Error fetching data:', error);
+    }
+    if (!address) {
+      return [];
+    }
+  });
 
   const syncTop10History = useMemoizedFn(
     async (force?: boolean, resetEntity?: boolean) => {

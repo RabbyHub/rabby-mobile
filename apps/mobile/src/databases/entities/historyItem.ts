@@ -148,6 +148,22 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('historyitem')
+      .select('MAX(historyitem.time_at)', 'maxTimeAt')
+      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
+      .getRawOne();
+
+    if (!result.maxTimeAt) {
+      return false;
+    }
+    return result.maxTimeAt;
+  }
+
+  static async getLastTime(owner_addr: string) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const result = await repo
+      .createQueryBuilder('historyitem')
       .select('MIN(historyitem.time_at)', 'minTimeAt')
       .where('historyitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
@@ -155,7 +171,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     if (!result.minTimeAt) {
       return false;
     }
-    // const firstUpdateTime = parseInt(result.minTimeAt, 10);
     return result.minTimeAt;
   }
 

@@ -78,15 +78,14 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
     const result = await repo
       .createQueryBuilder('swapitem')
-      .select('MIN(swapitem.create_at)', 'minTimeAt')
+      .select('MAX(swapitem.create_at)', 'maxTimeAt')
       .where('swapitem.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
 
-    if (!result.minTimeAt) {
+    if (!result.maxTimeAt) {
       return false;
     }
-    // const firstUpdateTime = parseInt(result.minTimeAt, 10);
-    return result.minTimeAt;
+    return result.maxTimeAt;
   }
 
   static async batchQueryHistory(owner_addr: string) {
