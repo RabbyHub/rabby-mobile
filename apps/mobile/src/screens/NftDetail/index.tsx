@@ -299,7 +299,7 @@ export const NFTDetailScreen = () => {
     accounts.map(account => {
       const idx = tempList.findIndex(
         item =>
-          item.address === account.address &&
+          isSameAddress(item.address, account.address) &&
           account.type !== KEYRING_TYPE.WatchAddressKeyring,
       );
       if (idx > -1) {

@@ -362,16 +362,14 @@ export const TransactionItem = ({
 
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        return (
-          projectName || strings('page.activities.signedTx.common.unknown')
-        );
+        return projectName || strings('page.transactions.detail.Unknown');
 
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
         const addr = acData?.to;
 
         if (!addr) {
-          return strings('page.activities.signedTx.common.unknown');
+          return strings('page.transactions.detail.Unknown');
         }
 
         return ToText + (getAlianName(addr) || ellipsisOverflowedText(addr));
@@ -391,12 +389,12 @@ export const TransactionItem = ({
           ? isApprove
             ? ToText
             : FromText + projectName
-          : strings('page.activities.signedTx.common.unknown');
+          : strings('page.transactions.detail.Unknown');
       // case HistoryItemCateType.Contract:
       //   return FromText + chainItem?.name;
       // case HistoryItemCateType.Cancel:
       default:
-        return strings('page.activities.signedTx.common.unknown');
+        return strings('page.transactions.detail.Unknown');
     }
   }, [formatType, data]);
 

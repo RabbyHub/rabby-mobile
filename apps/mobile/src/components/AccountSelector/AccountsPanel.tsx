@@ -504,6 +504,9 @@ export function AccountsPanelInSheetModal({
                         isReceive={isReceive}
                         showCopyAndQR={!isGasAccount}
                         defaultPressAction={defaultPressItemAction}
+                        style={
+                          isGasAccount ? { backgroundColor: 'transparent' } : {}
+                        }
                       />
                     </AddressItemShadowView>
                   )}

@@ -65,10 +65,10 @@ function MainListBlocks() {
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText2024 style={styles.title}>
-        {state?.title || '1. Name Your Address'}
+        {state?.title || t('screens.addressStackTitle.CreateNewAddress')}
       </HeaderTitleText2024>
     );
-  }, [state?.title, styles.title]);
+  }, [state?.title, styles.title, t]);
 
   React.useEffect(() => {
     setNavigationOptions({

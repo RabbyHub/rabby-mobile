@@ -2,14 +2,49 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enLocale from '@/assets/locales/en/messages.json';
 import zh_CNLocale from '@/assets/locales/zh-CN/messages.json';
+import zh_Hant from '@/assets/locales/zh-Hant/messages.json';
+import ko_KR from '@/assets/locales/ko-KR/messages.json';
+import ja_JP from '@/assets/locales/ja-JP/messages.json';
+import th_TH from '@/assets/locales/th-TH/messages.json';
+import ru_RU from '@/assets/locales/ru-RU/messages.json';
+import vi_VN from '@/assets/locales/vi-VN/messages.json';
+import fr_FR from '@/assets/locales/fr-FR/messages.json';
+import es_ES from '@/assets/locales/es-ES/messages.json';
+import de_DE from '@/assets/locales/de-DE/messages.json';
+import pt_PT from '@/assets/locales/pt-PT/messages.json';
 
 import codeConfig from '@/assets/locales/index.json';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
 export enum SupportedLang {
-  'en' = 'en',
+  'en-US' = 'en-US',
   'zh-CN' = 'zh-CN',
+  'zh-Hant' = 'zh-Hant',
+  'ko-KR' = 'ko-KR',
+  'ja-JP' = 'ja-JP',
+  'th-TH' = 'th-TH',
+  'ru-RU' = 'ru-RU',
+  'vi-VN' = 'vi-VN',
+  'fr-FR' = 'fr-FR',
+  'es-ES' = 'es-ES',
+  'de-DE' = 'de-DE',
+  'pt-PT' = 'pt-PT',
 }
+
+const locales = {
+  [SupportedLang['en-US']]: enLocale,
+  [SupportedLang['zh-CN']]: zh_CNLocale,
+  [SupportedLang['zh-Hant']]: zh_Hant,
+  [SupportedLang['ko-KR']]: ko_KR,
+  [SupportedLang['ja-JP']]: ja_JP,
+  [SupportedLang['th-TH']]: th_TH,
+  [SupportedLang['ru-RU']]: ru_RU,
+  [SupportedLang['vi-VN']]: vi_VN,
+  [SupportedLang['fr-FR']]: fr_FR,
+  [SupportedLang['es-ES']]: es_ES,
+  [SupportedLang['de-DE']]: de_DE,
+  [SupportedLang['pt-PT']]: pt_PT,
+};
 
 export const SupportedLangs = (
   codeConfig as { code: SupportedLang; name: string }[]
@@ -28,9 +63,7 @@ export const SupportedLangs = (
 );
 
 export function coerceLang(lang: SupportedLang): SupportedLang {
-  if (isNonPublicProductionEnv) return lang;
-
-  return 'en' as SupportedLang;
+  return lang;
 }
 
 export function filterSupportedLang(lang: string): SupportedLang {
@@ -38,24 +71,13 @@ export function filterSupportedLang(lang: string): SupportedLang {
     return coerceLang(lang as SupportedLang);
   }
 
-  return coerceLang(SupportedLang.en);
-}
-
-export function getLocale(locale: SupportedLang) {
-  // ONLY support en for now
-  switch (locale) {
-    default:
-    case SupportedLang.en:
-      return enLocale;
-    case SupportedLang['zh-CN']:
-      return zh_CNLocale;
-  }
+  return coerceLang(SupportedLang['en-US']);
 }
 
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
-    fallbackLng: 'en',
+    fallbackLng: 'en-US',
     defaultNS: 'translations',
     interpolation: {
       escapeValue: false, // react already safes from xss
@@ -66,21 +88,21 @@ i18n
 
 export const I18N_NS = 'translations';
 
-export function strings(...args: Parameters<typeof i18n.t>) {
-  return i18n.t(...args);
-}
-
 export function addResourceBundle(locale: SupportedLang) {
   if (i18n.hasResourceBundle(locale, I18N_NS)) return;
-  const bundle = getLocale(locale);
+  const bundle = locales[locale];
 
   i18n.addResourceBundle(locale, I18N_NS, bundle);
 }
 
-addResourceBundle('en' as SupportedLang);
+addResourceBundle('en-US' as SupportedLang);
 
 i18n.on('languageChanged', function (lng: string) {
   addResourceBundle(filterSupportedLang(lng));
 });
 
 export default i18n;
+
+export function strings(...args: Parameters<typeof i18n.t>) {
+  return i18n.t(...args);
+}

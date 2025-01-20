@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import useMount from 'react-use/lib/useMount';
 
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
@@ -121,7 +120,7 @@ export function DappWebViewStubScreen() {
     };
   }, [backToDappsScreen]);
 
-  const hasOpenedDapps = !!openedDappItems.length && !!activeDapp;
+  // const hasOpenedDapps = !!openedDappItems.length && !!activeDapp;
 
   useLayoutEffect(() => {
     console.debug('DappWebViewStubScreen mounted');
@@ -218,7 +217,7 @@ export function DappWebViewStubScreen() {
                 allowsInlineMediaPlayback: true,
                 disableJsPromptLike: !isActiveDapp,
               }}
-              headerRight={<WebViewHeaderRight />}
+              headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
               onPressHeaderLeftClose={ctx => {
                 hideDappWebViewScreen(ctx);
               }}
@@ -252,10 +251,7 @@ export function DappWebViewStubScreen() {
           );
         })}
         {openedDappItems.length > 0 && activeDapp && (
-          <AccountSwitcherModalInDappWebView
-            forScene="@ActiveDappWebViewModal"
-            activeDappId={finalActiveDappId}
-          />
+          <AccountSwitcherModalInDappWebView activeDappId={finalActiveDappId} />
         )}
       </AutoLockView>
     </View>

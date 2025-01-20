@@ -1,6 +1,5 @@
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { preferenceService } from '../services';
-import { strings } from '@/utils/i18n';
 import { abiCoder, sendRequest } from './sendRequest';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { t } from 'i18next';
@@ -26,11 +25,11 @@ export async function transferNFT(
   $ctx?: any,
 ) {
   const account = await preferenceService.getCurrentAccount();
-  if (!account) throw new Error(strings('background.error.noCurrentAccount'));
+  if (!account) throw new Error(t('background.error.noCurrentAccount'));
   const chainId = findChain({
     serverId: chainServerId,
   })?.id;
-  if (!chainId) throw new Error(strings('background.error.invalidChainId'));
+  if (!chainId) throw new Error(t('background.error.invalidChainId'));
   if (abi === 'ERC721') {
     await sendRequest(
       {
@@ -118,7 +117,7 @@ export async function transferNFT(
       INTERNAL_REQUEST_SESSION,
     );
   } else {
-    throw new Error(strings('background.error.unknownAbi'));
+    throw new Error(t('background.error.unknownAbi'));
   }
 }
 

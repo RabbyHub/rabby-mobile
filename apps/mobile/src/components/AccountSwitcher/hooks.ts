@@ -11,6 +11,7 @@ type AccountSwitcherState = {
 };
 
 export type AccountSwitcherAopProps<T extends void | object = void> = {
+  allowNullCurrentAccount?: boolean;
   forScene: AccountSwitcherScene;
 } & (T extends void ? {} : T);
 

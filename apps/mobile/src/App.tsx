@@ -31,6 +31,7 @@ import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
 import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
 import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { useCurrentAccountOnAppTop } from './hooks/account';
+import { useDetectLanguage } from './hooks/lang';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -58,6 +59,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useAutoGoogleSignIfPreviousSignedOnTop();
   useNoLongerSupports();
   useCurrentAccountOnAppTop();
+  useDetectLanguage();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

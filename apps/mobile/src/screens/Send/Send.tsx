@@ -48,6 +48,7 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { ChainInfo2024 } from './components/ChainInfo2024';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import { useTranslation } from 'react-i18next';
 
 function SendScreen({
   isForMultipleAdderss = false,
@@ -55,6 +56,7 @@ function SendScreen({
   useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
   const navigation = useNavigation();
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const navParams = useNavigationState(
     s =>
@@ -108,44 +110,12 @@ function SendScreen({
 
   const initByCache = async () => {
     const account = (await preferenceService.getCurrentAccount())!;
-    // const qs = urlUtils.query2obj(history.location.search);
-    if (/* qs.token */ false) {
-      // const [tokenChain, id] = qs.token.split(':');
-      // if (!tokenChain || !id) return;
-      // const target = Object.values(CHAINS).find(
-      //   (item) => item.serverId === tokenChain
-      // );
-      // if (!target) {
-      //   loadCurrentToken(currentToken.id, currentToken.chain, account.address);
-      //   return;
-      // }
-      // setChain(target.enum);
-      // loadCurrentToken(id, tokenChain, account.address);
-    } else if (
+    if (
       navParams &&
       'safeInfo' in navParams &&
       typeof navParams.safeInfo === 'object'
     ) {
       const safeInfo = navParams.safeInfo;
-      // const safeInfo: {
-      //   nonce: number;
-      //   chainId: number;
-      // } = (history.location.state as any)?.safeInfo;
-      // const chain = findChainByID(safeInfo.chainId);
-      // let nativeToken: TokenItem | null = null;
-      // if (chain) {
-      //   setChain(chain.enum);
-      //   nativeToken = await loadCurrentToken(
-      //     chain.nativeTokenAddress,
-      //     chain.serverId,
-      //     account.address
-      //   );
-      // }
-      // setSafeInfo(safeInfo);
-      // persistPageStateCache({
-      //   safeInfo,
-      //   currentToken: nativeToken || currentToken,
-      // });
       const target = findChainByID(safeInfo.chainId);
       putScreenState({
         safeInfo: safeInfo,
@@ -232,25 +202,6 @@ function SendScreen({
 
       let needLoadToken: TokenItem =
         lastTimeToken || tokenFromOrder || currentToken;
-      if (await apiPageStateCache.hasPageStateCache()) {
-        // const cache = await apiPageStateCache.getPageStateCache();
-        // if (cache?.path === history.location.pathname) {
-        //   if (cache.states.values) {
-        //     form.setFieldsValue(cache.states.values);
-        //     handleFormValuesChange(cache.states.values, form.getFieldsValue(), {
-        //       token: cache.states.currentToken,
-        //       isInitFromCache: true,
-        //     });
-        //   }
-        //   if (cache.states.currentToken) {
-        //     setCurrentToken(cache.states.currentToken);
-        //     needLoadToken = cache.states.currentToken;
-        //   }
-        //   if (cache.states.safeInfo) {
-        //     setSafeInfo(cache.states.safeInfo);
-        //   }
-        // }
-      }
 
       if (chainItem && needLoadToken.chain !== chainItem.serverId) {
         const target = findChainByServerID(needLoadToken.chain);
@@ -265,19 +216,10 @@ function SendScreen({
 
   const init = async () => {
     const account = await preferenceService.getCurrentAccount()!;
-    // dispatch.whitelist.getWhitelistEnabled();
-    // dispatch.whitelist.getWhitelist();
-    // dispatch.contactBook.getContactBookAsync();
     if (!account) {
-      // history.replace('/');
       redirectBackErrorHandler(navigation);
       return;
     }
-    // setCurrentAccount(account);
-
-    // if (account.type === KEYRING_CLASS.GNOSIS) {
-    //   screenStatePatch.isGnosisSafe = false;
-    // }
     putScreenState({ inited: true });
   };
 
@@ -310,9 +252,6 @@ function SendScreen({
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
         resetScreenState();
-        // navigation.push(RootNames.StackRoot, {
-        //   screen: RootNames.Home,
-        // });
         navigation.dispatch(
           StackActions.replace(RootNames.StackRoot, {
             screen: RootNames.Home,
@@ -402,7 +341,9 @@ function SendScreen({
 
                 {/* ChainInfo */}
                 <View style={styles.chainSection}>
-                  <Text style={styles.sectionTitle}>Chain</Text>
+                  <Text style={styles.sectionTitle}>
+                    {t('page.sendToken.Chain')}
+                  </Text>
                   <ChainInfo2024
                     chainEnum={chainEnum}
                     onChange={handleChainChanged}

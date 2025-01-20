@@ -4,65 +4,71 @@ import React, {
   useCallback,
   useRef,
   useEffect,
+  PropsWithChildren,
 } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
-  Alert,
+  TouchableOpacity,
+  Keyboard,
+  TextInput,
 } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
-import { noop } from 'lodash';
-import { Tip } from '@/components/Tip';
-import { Button } from '@/components/Button';
-import clsx from 'clsx';
 import { formatUsdValue } from '@/utils/number';
-import { openapi, testOpenapi } from '@/core/request';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { openapi } from '@/core/request';
 import {
-  AppBottomSheetModal,
-  AppBottomSheetModalTitle,
-} from '@/components/customized/BottomSheet';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+  BottomSheetFlatList,
+  BottomSheetModalProps,
+  BottomSheetSectionList,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { getTokenSymbol } from '@/utils/token';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { findChainByServerID } from '@/utils/chain';
-import RcIconRightArrowCC from '@/assets/icons/gas-top-up/arrow-right-cc.svg';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { TokenAmountItem } from '@/components/Approval/components/Actions/components/TokenAmountItem';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import useAsync from 'react-use/lib/useAsync';
 import { topUpGasAccount } from '@/core/apis/gasAccount';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-// import { GasAccountCloseIcon } from './PopupCloseIcon';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { ListItem } from '@/components2024/ListItem/ListItem';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
+import { Button } from '@/components2024/Button';
+import { gasAccountService, preferenceService } from '@/core/services';
+import { Account } from '@/core/services/preference';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
+import { SearchInput } from '@/components/Form/SearchInput';
+import { Skeleton } from '@rneui/themed';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { toast } from '@/components2024/Toast';
+import { useAlias } from '@/hooks/alias';
 
-const amountList = [20, 100, 500];
+const amountList = [10, 100];
 
-const TokenSelector = ({ visible, onClose, cost, onChange }) => {
-  const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
-
-  const { account } = useGasAccountSign();
-  // const { currentAccount: account } = useCurrentAccount();
-
-  const { value: list, loading } = useAsync(
-    () => openapi.getGasAccountTokenList(account!.address),
-    [account?.address],
-  );
-
-  const sortedList = useMemo(
-    () => list?.sort((a, b) => b.amount - a.amount),
-    [list],
-  );
+const BottomSheetWrapper = (
+  props: PropsWithChildren<
+    {
+      visible: boolean;
+      onClose: () => void;
+    } & BottomSheetModalProps
+  >,
+) => {
+  const { visible, onClose, children, ...others } = props;
+  const { colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -73,127 +79,479 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
       modalRef.current?.present();
     }
   }, [visible]);
-
-  const Row = useCallback(
-    ({ item }) => {
-      const disabled = new BigNumber(item.amount || 0).lt(cost);
-
-      return (
-        <Tip
-          placement="top"
-          tooltipStyle={{
-            transform: [{ translateY: 30 }],
-          }}
-          content={
-            disabled ? t('page.gasTopUp.InsufficientBalanceTips') : undefined
-          }
-          // isVisible={!disabled}
-        >
-          <CustomTouchableOpacity
-            style={[styles.tokenListItem, { opacity: disabled ? 0.5 : 1 }]}
-            onPress={() => {
-              if (!disabled) {
-                onChange(item);
-                onClose();
-              }
-            }}
-            disabled={disabled}>
-            <View style={styles.box}>
-              <AssetAvatar
-                size={32}
-                chain={item.chain}
-                logo={item.logo_url}
-                chainSize={16}
-              />
-              <Text
-                style={StyleSheet.flatten([
-                  {
-                    marginLeft: 16,
-                  },
-                  styles.text,
-                ])}>
-                {getTokenSymbol(item)}
-              </Text>
-            </View>
-            <Text style={styles.text}>
-              {formatUsdValue(item.amount * item.price || 0)}
-            </Text>
-          </CustomTouchableOpacity>
-        </Tip>
-      );
-    },
-    [cost, onChange, onClose, styles, t],
-  );
-
   return (
     <AppBottomSheetModal
-      ref={modalRef}
+      snapPoints={['90%']}
       onDismiss={onClose}
-      snapPoints={[580]}
-      // isVisible={visible}
-    >
-      <BottomSheetView style={styles.popup}>
-        <View style={styles.modalContent}>
-          <Text style={styles.title}>
-            {t('page.gasTopUp.Select-from-supported-tokens')}
-          </Text>
-          <View style={styles.header}>
-            <Text style={styles.label}>{t('page.gasTopUp.Token')}</Text>
-            <Text style={styles.label}>{t('page.gasTopUp.Value')}</Text>
-          </View>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#7084ff" />
-              <Text>{t('page.gasTopUp.Loading_Tokens')}</Text>
-            </View>
-          ) : sortedList?.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text>{t('page.gasTopUp.No_Tokens')}</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={sortedList}
-              style={styles.flatList}
-              renderItem={({ item }) => <Row item={item} />}
-              keyExtractor={item => item.id}
-            />
-          )}
-        </View>
-      </BottomSheetView>
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
+      {...others}>
+      {children}
     </AppBottomSheetModal>
   );
 };
 
-const GasAccountDepositContent = ({ onClose }) => {
+const TokenSelector = ({
+  cost,
+  onChange,
+  address,
+  onClose,
+}: {
+  cost: number;
+  onChange: (token: TokenItem) => void;
+  address: string;
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
-  const [selectedAmount, setAmount] = useState(100);
-  const [tokenListVisible, setTokenListVisible] = useState(false);
-  const [token, setToken] = useState<TokenItem | undefined>(undefined);
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
+
+  const [query, setQuery] = useState('');
+  const [isInputActive, setIsInputActive] = useState(false);
+
+  const handleInputFocus = () => {
+    setIsInputActive(true);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputActive(false);
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+  };
+
+  const {
+    value: list,
+    loading,
+    error,
+  } = useAsync(() => openapi.getGasAccountTokenList(address), [address]);
+
+  if (error) {
+    toast.error(error?.message ? String(error?.message) : String(error));
+  }
+
+  const { value: pinedQueue } = useAsync(async () => {
+    const data = await preferenceService.getUserTokenSettings();
+    return data?.pinedQueue || [];
+  }, []);
+
+  const sortedList = useMemo(() => {
+    const _list =
+      list
+        ?.map(i => ({
+          ...i,
+          pinned: pinedQueue?.some(
+            pin => pin.chainId === i.chain && pin.tokenId === i.id,
+          ),
+        }))
+        ?.sort((a, b) => b.amount - a.amount) || [];
+    const index = _list.findIndex(i => new BigNumber(i.amount || 0).lt(cost));
+    const k = query?.trim()?.toLowerCase();
+
+    const sortAndFilter = (l: (TokenItem & { pinned?: boolean })[]) =>
+      l
+        .filter(item =>
+          k
+            ? item.symbol?.toLowerCase().includes(k) ||
+              item.id?.toLowerCase().includes(k)
+            : true,
+        )
+        .sort((a, b) => {
+          const a1 = a.pinned ? 1 : 0;
+          const b1 = b?.pinned ? 1 : 0;
+          return b1 - a1;
+        });
+
+    if (!_list.length) {
+      return [];
+    }
+
+    if (_list.slice(index).length === 0) {
+      return [
+        {
+          title: '',
+          data: sortAndFilter(_list.slice(0, index)),
+        },
+      ];
+    }
+
+    return [
+      {
+        title: '',
+        data: sortAndFilter(_list.slice(0, index)),
+      },
+      {
+        title: 'insufficient',
+        data: sortAndFilter(_list.slice(index)),
+      },
+    ];
+  }, [cost, list, pinedQueue, query]);
+
+  const Row = useCallback(
+    ({ item }: { item: TokenItem & { pinned?: boolean } }) => {
+      const disabled = new BigNumber(item.amount || 0).lt(cost);
+
+      return (
+        <CustomTouchableOpacity
+          style={[styles.tokenListItem, { opacity: disabled ? 0.5 : 1 }]}
+          onPress={() => {
+            if (!disabled) {
+              onChange(item);
+              onClose();
+            }
+          }}
+          disabled={disabled}>
+          <View style={styles.box}>
+            <AssetAvatar
+              size={40}
+              chain={item.chain}
+              logo={item.logo_url}
+              chainSize={16}
+            />
+            <Text
+              style={StyleSheet.flatten([
+                {
+                  marginLeft: 16,
+                },
+                styles.text,
+              ])}>
+              {getTokenSymbol(item)}
+            </Text>
+            {!!item.pinned && (
+              <View style={styles.pinnedWrapper}>
+                <Text style={styles.pinText}>Pin</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.text}>
+            {formatUsdValue(item.amount * item.price || 0)}
+          </Text>
+        </CustomTouchableOpacity>
+      );
+    },
+    [cost, onChange, onClose, styles],
+  );
+
+  const showInsufficientTip = useMemo(() => {
+    return (
+      !!list &&
+      list?.length > 0 &&
+      list?.every(item => new BigNumber(item.amount).lt(cost))
+    );
+  }, [cost, list]);
+
+  const ListHeader = useMemo(() => {
+    return loading ? (
+      <>
+        {Array.from({ length: 10 }).map((_, index) => (
+          <View key={index} style={styles.tokenListItem}>
+            <View style={[styles.box, { gap: 16 }]}>
+              <Skeleton circle width={40} height={40} />
+              <Skeleton width={70} height={20} />
+            </View>
+            <Skeleton width={50} height={20} />
+          </View>
+        ))}
+      </>
+    ) : null;
+  }, [loading, styles.box, styles.tokenListItem]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <Text style={styles.title}>
+          {t('page.gasTopUp.Select-from-supported-tokens')}
+        </Text>
+
+        <SearchInput
+          isActive={isInputActive}
+          containerStyle={styles.searchInputContainer}
+          searchIconWrapperStyle={styles.searchIconWrapperStyle}
+          inputStyle={styles.inputStyle}
+          searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
+          inputProps={{
+            value: query,
+            onChange: e => handleQueryChange(e.nativeEvent.text),
+            onFocus: handleInputFocus,
+            onBlur: handleInputBlur,
+            placeholder: 'Search Token',
+            placeholderTextColor: colors2024['neutral-info'],
+          }}
+        />
+
+        {showInsufficientTip && (
+          <View style={styles.insufficientWrapper}>
+            <View style={styles.insufficientDivider} />
+            <View>
+              <Text style={styles.insufficientTip}>
+                {t('page.gasAccount.depositPopup.inSufficientTip1')}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.header}>
+          <Text style={styles.label}>{t('page.gasTopUp.Token')}</Text>
+          <Text style={styles.label}>{t('page.gasTopUp.Balance')}</Text>
+        </View>
+      </View>
+      <BottomSheetSectionList
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={() => Keyboard.dismiss()}
+        sections={sortedList}
+        style={styles.flatList}
+        ListHeaderComponent={ListHeader}
+        renderItem={useCallback(
+          ({ item }) => (
+            <Row item={item} />
+          ),
+          [Row],
+        )}
+        renderSectionHeader={useCallback(
+          ({ section: { title } }) => {
+            if (title === 'insufficient' && !showInsufficientTip) {
+              return (
+                <View style={styles.tokenInsufficientWrapper}>
+                  <View style={styles.tokenInsufficientDivider} />
+                  <View>
+                    <Text style={styles.tokenInsufficientTip}>
+                      {t(
+                        'page.gasAccount.depositPopup.followingTokenInSufficient',
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              );
+            }
+            return null;
+          },
+          [
+            showInsufficientTip,
+            t,
+            styles.tokenInsufficientWrapper,
+            styles.tokenInsufficientDivider,
+            styles.tokenInsufficientTip,
+          ],
+        )}
+        keyExtractor={item => item.id + item.chain}
+        stickySectionHeadersEnabled={false}
+      />
+    </View>
+  );
+};
+
+const SelectAccount = ({
+  onChange,
+  defaultAccount,
+}: {
+  onChange: (account: Account) => void;
+  defaultAccount: Account;
+}) => {
+  const { t } = useTranslation();
+
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
 
   const { account } = useGasAccountSign();
-  const openTokenList = () => setTokenListVisible(true);
+
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+
+  const filterAccounts = React.useMemo(
+    () =>
+      [...accounts].filter(
+        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+      ),
+    [accounts],
+  );
+
+  const list = useSortAddressList(filterAccounts);
+
+  const [tmpSelectAccount, setTmpSelectAccount] =
+    useState<(typeof list)[number]>(defaultAccount);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Account }) => (
+      <TouchableOpacity
+        style={styles.accountItem}
+        onPress={() => {
+          setTmpSelectAccount(item);
+        }}>
+        <AddressItem account={item} fetchAccount={false}>
+          {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+            <View
+              style={{
+                width: '100%',
+                flexDirection: 'row',
+                gap: 8,
+                alignItems: 'center',
+              }}>
+              <WalletIcon
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 10,
+                }}
+              />
+              <View style={{ gap: 4 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    height: 24,
+                  }}>
+                  <WalletName />
+                  {isSameAddress(
+                    tmpSelectAccount?.address || '',
+                    item.address,
+                  ) && tmpSelectAccount.type === item.type ? (
+                    <RcIconCheck />
+                  ) : null}
+                </View>
+
+                <WalletAddress
+                  style={{
+                    fontSize: 17,
+                    fontWeight: '500',
+                    lineHeight: 22,
+                    fontFamily: 'SF Pro Rounded',
+                  }}
+                />
+              </View>
+              <View style={{ marginLeft: 'auto' }}>
+                <WalletBalance />
+              </View>
+            </View>
+          )}
+        </AddressItem>
+      </TouchableOpacity>
+    ),
+    [tmpSelectAccount, styles.accountItem],
+  );
+
+  useEffect(() => {
+    const v = gasAccountService.getLastDepositAccount();
+    if (
+      v &&
+      list &&
+      !list.some(a => a.address === v?.address && a.type === v.type)
+    ) {
+      setTmpSelectAccount(account as (typeof list)[number]);
+    }
+  }, [account, list]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.containerHorizontal}>
+        <Text style={styles.title}>
+          {t('page.gasAccount.paymentAddressPopup.title')}
+        </Text>
+
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 6,
+          }}>
+          <Text
+            style={{
+              color: colors2024['neutral-secondary'],
+              fontFamily: 'SF Pro Rounded',
+              fontSize: 17,
+              fontWeight: '400',
+              lineHeight: 22,
+            }}>
+            {t('page.gasAccount.paymentAddressPopup.address')}
+          </Text>
+          <View>
+            <Text
+              style={{
+                color: colors2024['neutral-secondary'],
+                fontFamily: 'SF Pro Rounded',
+                fontSize: 17,
+                fontWeight: '400',
+                lineHeight: 22,
+              }}>
+              {t('page.gasAccount.paymentAddressPopup.balance')}
+            </Text>
+            {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
+          </View>
+        </View>
+      </View>
+      <BottomSheetFlatList
+        style={{ flex: 1, width: '100%' }}
+        contentContainerStyle={styles.containerHorizontal}
+        data={list}
+        keyExtractor={(item, index) => item.type + item.address + index}
+        renderItem={renderItem}
+        extraData={tmpSelectAccount}
+      />
+      <View style={styles.containerHorizontal}>
+        <Button
+          onPress={() => {
+            onChange(tmpSelectAccount);
+          }}
+          containerStyle={{
+            width: '100%',
+            marginBottom: 35,
+          }}
+          title={t('page.gasAccount.paymentAddressPopup.confirm')}
+        />
+      </View>
+    </View>
+  );
+};
+
+const CUSTOM_AMOUNT = 0;
+
+const GasAccountDepositContent = ({ onClose }) => {
+  const { t } = useTranslation();
+  const [selectedAmount, setAmount] = useState(amountList[0]);
+  const [tokenListVisible, setTokenListVisible] = useState(false);
+  const [token, setToken] = useState<TokenItem | undefined>(undefined);
+  const [formattedValue, setFormattedValue] = useState('');
+  const [rawValue, setRawValue] = useState<number>();
+
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
+  const { account } = useGasAccountSign();
   const [loading, setLoading] = useState(false);
 
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
   const { refresh: refreshHistoryList } = useGasAccountHistoryRefresh();
 
+  const depositAmount = useMemo(() => {
+    if (selectedAmount === CUSTOM_AMOUNT && rawValue) {
+      return rawValue;
+    }
+    return selectedAmount;
+  }, [selectedAmount, rawValue]);
+
   const topUp = async () => {
-    if (token && account && !loading) {
+    if (token && depositAccount && !loading) {
       setLoading(true);
       const chainEnum = findChainByServerID(token.chain)!;
       await switchSceneSigningAccount(
         'GasAccount',
-        account as KeyringAccountWithAlias,
+        depositAccount as KeyringAccountWithAlias,
       );
       try {
         await topUpGasAccount({
           to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
           chainServerId: chainEnum.serverId,
           tokenId: token.id,
-          amount: selectedAmount,
-          rawAmount: new BigNumber(selectedAmount)
+          amount: depositAmount,
+          rawAmount: new BigNumber(depositAmount)
             .times(10 ** token.decimals)
             .toFixed(0),
         });
@@ -205,18 +563,113 @@ const GasAccountDepositContent = ({ onClose }) => {
     }
   };
 
+  const onInputChange = useCallback((value: string) => {
+    let inputValue = value.replace(/[^0-9]/g, '');
+    // only integer and no string
+    if (inputValue === '' || /^\d*$/.test(inputValue)) {
+      // no only 0
+      if (inputValue === '0') {
+        inputValue = '0';
+      } else {
+        inputValue = inputValue.replace(/^0+/, '') || ''; // remove 0
+      }
+
+      // add $ prefix
+      if (inputValue && !inputValue.startsWith('$')) {
+        inputValue = `$${inputValue}`;
+      }
+
+      setFormattedValue(inputValue);
+      const numericValue = inputValue.replace(/[^0-9]/g, '');
+      setRawValue(numericValue ? parseInt(numericValue, 10) : undefined);
+    }
+  }, []);
+
+  const selectCustomAmount = useCallback(() => {
+    setAmount(CUSTOM_AMOUNT);
+  }, []);
+
+  const errorTips = useMemo(() => {
+    if (
+      selectedAmount === CUSTOM_AMOUNT &&
+      rawValue !== undefined &&
+      rawValue === 0
+    ) {
+      return t('page.gasAccount.depositPopup.zeroInvalidAmount');
+    }
+    if (selectedAmount === CUSTOM_AMOUNT && rawValue && rawValue > 500) {
+      return t('page.gasAccount.depositPopup.invalidAmount');
+    }
+  }, [rawValue, selectedAmount, t]);
+
+  const amountPass = useMemo(() => {
+    if (selectedAmount === CUSTOM_AMOUNT) {
+      return !!rawValue && rawValue >= 1 && rawValue <= 500;
+    }
+    return true;
+  }, [rawValue, selectedAmount]);
+
+  const openTokenList = () => {
+    if (!amountPass) return;
+    setTokenListVisible(true);
+  };
+
+  useEffect(() => {
+    if (token && depositAmount && token.amount < depositAmount) {
+      setToken(undefined);
+    }
+  }, [depositAmount, token]);
+
+  const { accounts } = useAccounts({ disableAutoFetch: true });
+
+  const [accountListVisible, setAccountListVisible] = useState(false);
+
+  const openAccountList = () => {
+    if (!amountPass) return;
+    setAccountListVisible(true);
+  };
+
+  const [depositAccount, setDepositAccount] = useState(() => {
+    const last = gasAccountService.getLastDepositAccount() || account!;
+    if (
+      accounts.some(
+        a => isSameAddress(a.address, last.address) && a.type === last.type,
+      )
+    ) {
+      return last as Account;
+    }
+    return account! as Account;
+  });
+
+  const onChangeAccount = useCallback((account: Account) => {
+    setDepositAccount(pre => {
+      if (!isSameAddress(pre.address || '', account.address)) {
+        setToken(undefined);
+      }
+      return account;
+    });
+    setAccountListVisible(false);
+  }, []);
+
+  const [aliasName] = useAlias(depositAccount.address);
+
   return (
-    <View style={styles.container}>
+    <KeyboardAwareScrollView
+      enableOnAndroid
+      scrollEnabled={false}
+      keyboardOpeningTime={0}
+      // style={styles.container}
+      contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
-          {t('component.gasAccount.depositPopup.title')}
+          {t('page.gasAccount.depositPopup.title')}
         </Text>
         <Text style={styles.description}>
-          {t('component.gasAccount.depositPopup.desc')}
+          {t('page.gasAccount.depositPopup.desc')}
         </Text>
 
         <Text style={styles.tokenLabel}>
-          {t('component.gasAccount.depositPopup.amount')}
+          {t('page.gasAccount.depositPopup.amount')}
         </Text>
         <View style={styles.amountSelector}>
           {amountList.map(amount => (
@@ -227,45 +680,103 @@ const GasAccountDepositContent = ({ onClose }) => {
                 styles.amountButton,
                 selectedAmount === amount && styles.selectedAmountButton,
               ]}>
-              <Text
-                style={
-                  selectedAmount === amount
-                    ? styles.selectedAmountText
-                    : styles.amountText
-                }>
-                ${amount}
-              </Text>
+              <Text style={styles.amountText}>${amount}</Text>
             </CustomTouchableOpacity>
           ))}
+
+          <TextInput
+            placeholder="$1-500"
+            placeholderTextColor={
+              selectedAmount === CUSTOM_AMOUNT
+                ? colors2024['neutral-info']
+                : colors2024['neutral-body']
+            }
+            value={formattedValue}
+            onFocus={selectCustomAmount}
+            onChangeText={onInputChange}
+            style={[
+              styles.input,
+              selectedAmount === CUSTOM_AMOUNT
+                ? {
+                    borderColor: colors2024['brand-default'],
+                  }
+                : {},
+              errorTips ? { borderColor: colors2024['red-default'] } : {},
+            ]}
+            keyboardType="numeric"
+            inputMode="numeric"
+            onBlur={() => Keyboard.dismiss()}
+          />
         </View>
 
+        {errorTips && <Text style={styles.errorTips}>{errorTips}</Text>}
+
         <Text style={styles.tokenLabel}>
-          {t('component.gasAccount.depositPopup.token')}
+          {t('page.gasAccount.depositPopup.paymentAddress')}
         </Text>
-        <CustomTouchableOpacity
-          style={styles.tokenContainer}
-          onPress={openTokenList}>
-          {token ? (
-            <View style={styles.tokenContent}>
-              <AssetAvatar
-                size={24}
-                chain={token.chain}
-                logo={token.logo_url}
-                chainSize={16}
-              />
-              <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
-            </View>
-          ) : (
-            <Text style={styles.tokenPlaceholder}>
-              {t('component.gasAccount.depositPopup.selectToken')}
-            </Text>
-          )}
-          <RcIconRightArrowCC
-            width={16}
-            height={16}
-            color={colors['neutral-foot']}
-          />
-        </CustomTouchableOpacity>
+        <ListItem
+          disabled={!amountPass}
+          title=""
+          content={
+            <AddressItem account={depositAccount}>
+              {({ WalletIcon, WalletAddress }) => (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 8,
+                    alignItems: 'center',
+                  }}>
+                  <WalletIcon
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 8,
+                    }}
+                  />
+                  <View style={{ gap: 3 }}>
+                    <Text style={styles.walletName}>{aliasName}</Text>
+                    <WalletAddress
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '500',
+                        lineHeight: 16,
+                      }}
+                    />
+                  </View>
+                </View>
+              )}
+            </AddressItem>
+          }
+          style={[styles.tokenContainer]}
+          onPress={openAccountList}
+        />
+
+        <Text style={styles.tokenLabel}>
+          {t('page.gasAccount.depositPopup.token')}
+        </Text>
+        <ListItem
+          disabled={!amountPass}
+          title=""
+          content={
+            token ? (
+              <View style={styles.tokenContent}>
+                <AssetAvatar
+                  size={30}
+                  chain={token.chain}
+                  logo={token.logo_url}
+                  chainSize={12}
+                />
+                <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
+              </View>
+            ) : (
+              <Text style={styles.tokenPlaceholder}>
+                {t('page.gasAccount.depositPopup.selectToken')}
+              </Text>
+            )
+          }
+          style={[styles.tokenContainer]}
+          onPress={openTokenList}
+        />
       </View>
 
       <View style={styles.btnContainer}>
@@ -279,19 +790,33 @@ const GasAccountDepositContent = ({ onClose }) => {
         />
       </View>
 
-      <TokenSelector
+      <BottomSheetWrapper
         visible={tokenListVisible}
-        onClose={() => setTokenListVisible(false)}
-        cost={selectedAmount}
-        onChange={setToken}
-      />
-    </View>
+        onClose={() => setTokenListVisible(false)}>
+        <TokenSelector
+          onClose={() => setTokenListVisible(false)}
+          cost={depositAmount}
+          onChange={setToken}
+          address={depositAccount.address}
+        />
+      </BottomSheetWrapper>
+
+      <BottomSheetWrapper
+        visible={accountListVisible}
+        onClose={() => setAccountListVisible(false)}>
+        <SelectAccount
+          onChange={onChangeAccount}
+          defaultAccount={depositAccount}
+        />
+      </BottomSheetWrapper>
+    </KeyboardAwareScrollView>
   );
 };
 
 export const GasAccountDepositPopup = props => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
@@ -304,9 +829,15 @@ export const GasAccountDepositPopup = props => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={[440]}
+      snapPoints={['90%']}
       onDismiss={props.onCancel || props.onClose}
-      ref={modalRef}>
+      ref={modalRef}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}>
       <BottomSheetView style={styles.popup}>
         <GasAccountDepositContent onClose={props.onCancel || props.onClose} />
       </BottomSheetView>
@@ -314,31 +845,31 @@ export const GasAccountDepositPopup = props => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   containerHorizontal: {
-    width: '100%',
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: 20,
   },
   title: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '500',
-    marginBottom: 12,
-    color: colors['neutral-title1'],
+    fontStyle: 'normal',
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
+    marginBottom: 18,
+    textAlign: 'center',
   },
   description: {
     textAlign: 'center',
-    fontSize: 13,
-    marginHorizontal: 20,
-    color: colors['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    marginBottom: 10,
   },
   amountSelector: {
     flexDirection: 'row',
@@ -351,9 +882,9 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
     flex: 1,
     marginRight: 8,
-    height: 52,
+    height: 60,
     borderRadius: 6,
-    backgroundColor: colors['neutral-card2'],
+    backgroundColor: colors2024['neutral-bg-2'],
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -362,39 +893,54 @@ const getStyles = createGetStyles(colors => ({
     borderColor: colors['blue-default'],
   },
   amountText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
-  selectedAmountText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: colors['blue-default'],
+
+  input: {
+    flex: 1,
+    height: 60,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 10,
+    color: colors2024['neutral-body'],
   },
   tokenLabel: {
-    fontSize: 13,
-    marginTop: 12,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+    marginTop: 24,
     marginBottom: 8,
     textAlign: 'left',
     width: '100%',
-    color: colors['neutral-body'],
   },
   tokenContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors['neutral-card2'],
-    borderRadius: 6,
+    borderRadius: 30,
     width: '100%',
-    height: 52,
-    paddingHorizontal: 16,
-    marginBottom: 32,
+    height: 62,
+    paddingHorizontal: 20,
   },
   flatList: {
-    width: '100%',
+    flexShrink: 1,
+    paddingHorizontal: 20,
   },
   tokenListItem: {
-    height: 64,
+    paddingVertical: 14,
     flex: 1,
     width: '100%',
     flexDirection: 'row',
@@ -404,73 +950,188 @@ const getStyles = createGetStyles(colors => ({
   },
   tokenContent: { flexDirection: 'row', alignItems: 'center' },
   tokenSymbol: {
-    fontSize: 15,
-    fontWeight: '500',
     marginLeft: 12,
     color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
   },
   tokenPlaceholder: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
   confirmButton: {
     width: '100%',
     height: 52,
+    marginBottom: 35,
   },
   popup: {
-    justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
-    // paddingHorizontal: 20,
     paddingVertical: 10,
   },
   btnContainer: {
     paddingHorizontal: 20,
-    marginBottom: 12,
     paddingVertical: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopColor: colors['neutral-line'],
-    // borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopWidth: 0.5,
-    backgroundColor: colors['neutral-bg1'],
-  },
-  modalContent: {
-    paddingHorizontal: 20,
-    backgroundColor: colors['neutral-bg1'],
+    justifyContent: 'flex-end',
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 500,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-  },
+
   box: { flexDirection: 'row', alignItems: 'center' },
   text: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
+
+  errorTips: {
+    textAlign: 'left',
+    width: '100%',
+    color: colors2024['red-default'],
+    fontFamily: 'SF Pro',
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 20,
+  },
+
   header: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderBottomWidth: 0.5,
-    borderColor: colors['neutral-line'],
-    paddingVertical: 8,
+    paddingVertical: 16,
   },
+
   label: {
-    fontSize: 13,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 22,
+  },
+
+  insufficientWrapper: {
+    position: 'relative',
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  insufficientDivider: {
+    position: 'absolute',
+    top: 18,
+    left: 0,
+    width: '100%',
+    height: 1,
+    backgroundColor: colors2024['red-light-2'],
+  },
+
+  insufficientTip: {
+    color: colors2024['red-default'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+    backgroundColor: colors['neutral-bg-1'],
+    paddingHorizontal: 8,
+  },
+
+  tokenInsufficientWrapper: {
+    position: 'relative',
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+
+  tokenInsufficientDivider: {
+    position: 'absolute',
+    top: 9,
+    left: 0,
+    width: '100%',
+    height: 1,
+    backgroundColor: colors2024['neutral-line'],
+  },
+
+  tokenInsufficientTip: {
+    color: colors2024['neutral-info'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+    backgroundColor: colors['neutral-bg-1'],
+    paddingHorizontal: 8,
+  },
+
+  searchInputContainer: {
+    borderRadius: 30,
+    backgroundColor: colors2024['neutral-bg-2'],
+    paddingHorizontal: 12,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  searchIconWrapperStyle: {
+    paddingLeft: 0,
+  },
+  inputStyle: {
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 22,
+    fontSize: 17,
+    color: colors2024['neutral-title-1'],
+  },
+
+  accountItem: {
+    marginVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 96,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    paddingHorizontal: 24,
+  },
+
+  pinnedWrapper: {
+    flexShrink: 0,
+    marginLeft: 4,
+    borderRadius: 6,
+    width: 33,
+    height: 20,
+    flexWrap: 'nowrap',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  pinText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  walletName: {
+    color: colors2024['neutral-title-1'],
+
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
   },
 }));

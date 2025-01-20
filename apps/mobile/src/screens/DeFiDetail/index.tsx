@@ -276,7 +276,9 @@ export const DeFiDetailScreen = () => {
     });
 
     accounts.map(account => {
-      const idx = tempList.findIndex(item => item.address === account.address);
+      const idx = tempList.findIndex(item =>
+        isSameAddress(item.address, account.address),
+      );
       if (idx > -1) {
         sectionsList.push({
           ...tempList[idx],

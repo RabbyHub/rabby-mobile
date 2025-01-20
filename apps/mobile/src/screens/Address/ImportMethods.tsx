@@ -28,10 +28,12 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
+import { useTranslation } from 'react-i18next';
 
 function ImportMethods(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const { t } = useTranslation();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
@@ -59,7 +61,9 @@ function ImportMethods(): JSX.Element {
           ])}>
           <View style={styles.section}>
             {state?.isNotNewUserProc && (
-              <Text style={styles.titleText}>Import Address</Text>
+              <Text style={styles.titleText}>
+                {t('page.nextComponent.importAddress.importTitle')}
+              </Text>
             )}
             <Card
               style={styles.importItem}
@@ -84,7 +88,9 @@ function ImportMethods(): JSX.Element {
                 });
               }}>
               <SeedPhraseIcon style={styles.icon} />
-              <Text style={styles.importType}>Import Seed Phrase</Text>
+              <Text style={styles.importType}>
+                {t('page.nextComponent.importAddress.seedPhrase')}
+              </Text>
             </Card>
             <Card
               hasArrow={state?.isNotNewUserProc}
@@ -108,11 +114,15 @@ function ImportMethods(): JSX.Element {
                 });
               }}>
               <PrivateKeyIcon style={styles.icon} />
-              <Text style={styles.importType}>Import Private Key</Text>
+              <Text style={styles.importType}>
+                {t('page.nextComponent.importAddress.privateKey')}
+              </Text>
             </Card>
             {state?.isNotNewUserProc && (
               <>
-                <Text style={styles.titleText}>Import Safe Address</Text>
+                <Text style={styles.titleText}>
+                  {t('page.nextComponent.importAddress.safeTitle')}
+                </Text>
                 <Card
                   hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
@@ -132,9 +142,13 @@ function ImportMethods(): JSX.Element {
                     height={40}
                     style={styles.icon}
                   />
-                  <Text style={styles.importType}>Safe</Text>
+                  <Text style={styles.importType}>
+                    {t('page.nextComponent.importAddress.safe')}
+                  </Text>
                 </Card>
-                <Text style={styles.titleText}>Import Watch-only Address</Text>
+                <Text style={styles.titleText}>
+                  {t('page.nextComponent.importAddress.watchOnlyTitle')}
+                </Text>
                 <Card
                   hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
@@ -154,7 +168,9 @@ function ImportMethods(): JSX.Element {
                     height={40}
                     style={styles.icon}
                   />
-                  <Text style={styles.importType}>Watch-only Address</Text>
+                  <Text style={styles.importType}>
+                    {t('page.nextComponent.importAddress.watch')}
+                  </Text>
                 </Card>
               </>
             )}
@@ -174,7 +190,9 @@ function ImportMethods(): JSX.Element {
                   });
                 }}>
                 <Image source={HardWareIcon} style={styles.icon} />
-                <Text style={styles.importType}>Connect Hardware Wallets</Text>
+                <Text style={styles.importType}>
+                  {t('page.nextComponent.importAddress.hardWare')}
+                </Text>
               </Card>
             )}
           </View>
@@ -191,16 +209,19 @@ function ImportMethods(): JSX.Element {
                   enableContentPanningGesture: true,
                   enablePanDownToClose: true,
                 },
-                title: 'Is it safe to import into Rabby?',
+                title: t('page.nextComponent.importAddress.tips.title'),
                 sections: [
                   {
-                    description:
-                      'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
+                    description: t(
+                      'page.nextComponent.importAddress.tips.description',
+                    ),
                   },
                 ],
                 nextButtonProps: {
                   title: (
-                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                    <Text style={styles.modalNextButtonText}>
+                      {t('page.nextComponent.importAddress.tips.gotIt')}
+                    </Text>
                   ),
                   titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
                   onPress: () => {
@@ -209,7 +230,9 @@ function ImportMethods(): JSX.Element {
                 },
               });
             }}>
-            <Text style={styles.tip}>Is it safe to import into Rabby</Text>
+            <Text style={styles.tip}>
+              {t('page.nextComponent.importAddress.tips.entry')}
+            </Text>
             <HelpIcon style={styles.tipIcon} />
           </Pressable>
         )}

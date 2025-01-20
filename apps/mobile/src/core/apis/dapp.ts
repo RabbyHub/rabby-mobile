@@ -1,7 +1,7 @@
 import { SessionProp } from './../services/session';
 import { DappInfo } from '@/core/services/dappService';
 import { dappService } from '../services';
-import { sessionService } from '../services/shared';
+import { preferenceService, sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';
@@ -70,6 +70,22 @@ export const connect = ({
   });
   syncBasicDappInfo(origin);
 };
+
+export function setCurrentAccountForDapp(
+  origin: string,
+  currentAccount?: DappInfo['currentAccount'],
+) {
+  if (currentAccount === undefined) {
+    currentAccount = preferenceService.getCurrentAccount();
+  }
+  dappService.patchDapps({
+    [origin]: {
+      currentAccount,
+    },
+  });
+
+  return currentAccount || null;
+}
 
 export const fetchDappInfo = async (origin: string) => {
   const res = await openapi.getDappsInfo({

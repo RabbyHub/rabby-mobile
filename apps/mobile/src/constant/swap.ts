@@ -14,6 +14,7 @@ const LogoCoinbase = require('@/assets/icons/swap/coinbase.png');
 const LogoOkx = require('@/assets/icons/swap/okx.png');
 const LogoKyberSwap = require('@/assets/icons/swap/kyberswap.png');
 const LogoOdos = require('@/assets/icons/swap/odos.png');
+const LogoMagpie = require('@/assets/icons/swap/magpie.jpg');
 
 const LogoTokenDefault = require('@/assets/icons/swap/token-default.svg');
 
@@ -69,6 +70,12 @@ export const DEX = {
     logo: Logo0X,
     name: '0x',
     chains: DEX_SUPPORT_CHAINS[DEX_ENUM.ZEROXAPIV2],
+  },
+  [DEX_ENUM.MAGPIE]: {
+    id: DEX_ENUM.MAGPIE,
+    logo: LogoMagpie,
+    name: 'Magpie',
+    chains: DEX_SUPPORT_CHAINS[DEX_ENUM.MAGPIE],
   },
 };
 

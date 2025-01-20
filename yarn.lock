@@ -6592,9 +6592,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.45":
-  version: 0.0.45
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.45"
+"@rabby-wallet/rabby-swap@npm:0.0.46":
+  version: 0.0.46
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.46"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -6603,7 +6603,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 9e9cf82340cf65aebe4fa0cac243392cf448914ae11f967a4006961be6a58582fb5171f9e43fbe91a9f18d0797d770301b35c7b623266a12d62e93c01b6bbb83
+  checksum: 099d6614d389f611b51159098d0d15d4ac81a2ee27477d43dc461f7ece1eb7a2cf51118e9d4700f447bcd4dc22bcc3f1f77dc8a027f6826bfa85eb92ea0c98ac
   languageName: node
   linkType: hard
 
@@ -27689,7 +27689,7 @@ __metadata:
     "@rabby-wallet/rabby-api": 0.9.1-1.beta.1
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.45
+    "@rabby-wallet/rabby-swap": 0.0.46
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-clipboard/clipboard": ^1.13.0
@@ -27795,6 +27795,7 @@ __metadata:
     react-native-keyboard-aware-scroll-view: ^0.9.5
     react-native-keychain: 8.0.0
     react-native-linear-gradient: ^2.8.3
+    react-native-localize: 3.3.0
     react-native-mmkv: ^2.12.2
     react-native-pager-view: ^6.2.3
     react-native-permissions: ^4.1.2
@@ -28533,6 +28534,20 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: f980d324e551bbc475c6406bdc5250a08242020cbe653412fa169bbdf51e28a502e225de105b4d696d6a1a1b733d44782469020f4936d8b3ce0e2c78e51cf58f
+  languageName: node
+  linkType: hard
+
+"react-native-localize@npm:3.3.0":
+  version: 3.3.0
+  resolution: "react-native-localize@npm:3.3.0"
+  peerDependencies:
+    react: ">=18.1.0"
+    react-native: ">=0.70.0"
+    react-native-macos: ">=0.70.0"
+  peerDependenciesMeta:
+    react-native-macos:
+      optional: true
+  checksum: b6abffb3bbe3a47f171afb4d9a5ca1268576bf191d5ebe9f929308acd5892e67aedf4a5ef5d65eae67482ef357dc644791e8492c38c3d1cdfa449d63ab9b7df9
   languageName: node
   linkType: hard
 

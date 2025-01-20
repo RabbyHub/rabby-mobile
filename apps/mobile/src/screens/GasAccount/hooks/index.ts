@@ -6,8 +6,8 @@ import { preferenceService } from '@/core/services';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { uniqBy } from 'lodash';
 import pRetry from 'p-retry';
-import React, { useEffect } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import {
   useGasAccountHistoryRefresh,
@@ -174,10 +174,19 @@ export const useGasAccountHistory = () => {
     mutate,
   } = useInfiniteScroll<{
     rechargeList: History['recharge_list'];
+    withdrawList: History['recharge_list'];
     list: History['history_list'];
     totalCount: number;
   }>(
     async d => {
+      if (!sig || !accountId) {
+        return {
+          rechargeList: [],
+          withdrawList: [],
+          list: [],
+          totalCount: 0,
+        };
+      }
       const data = await openapi.getGasAccountHistory({
         sig: sig!,
         account_id: accountId!,
@@ -187,9 +196,10 @@ export const useGasAccountHistory = () => {
 
       const rechargeList = data.recharge_list;
       const historyList = data.history_list;
-
+      const withdrawList = data.withdraw_list;
       return {
         rechargeList: rechargeList || [],
+        withdrawList: withdrawList || [],
         list: historyList,
         totalCount: data.pagination.total,
       };
@@ -201,7 +211,9 @@ export const useGasAccountHistory = () => {
         if (data) {
           return (
             data.totalCount <=
-            (data.list.length || 0) + (data?.rechargeList?.length || 0)
+            (data.list.length || 0) +
+              (data?.rechargeList?.length || 0) +
+              (data?.withdrawList?.length || 0)
           );
         }
         return true;
@@ -219,7 +231,7 @@ export const useGasAccountHistory = () => {
         limit: 5,
       });
     }
-  }, [sig, refreshTxListCount]);
+  }, [sig, refreshTxListCount, accountId]);
 
   useEffect(() => {
     if (value?.history_list) {
@@ -228,10 +240,14 @@ export const useGasAccountHistory = () => {
           return;
         }
 
-        if (value?.recharge_list?.length !== d.rechargeList.length) {
+        if (
+          value?.recharge_list?.length !== d.rechargeList.length ||
+          value?.withdraw_list?.length !== d.withdrawList.length
+        ) {
           refreshGasAccountBalance();
         }
         return {
+          withdrawList: value?.withdraw_list,
           rechargeList: value?.recharge_list,
           totalCount: value.pagination.total,
           list: uniqBy(
@@ -245,7 +261,10 @@ export const useGasAccountHistory = () => {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (!loading && !loadingMore && !!txList?.rechargeList?.length) {
+    const hasSomePending = Boolean(
+      txList?.rechargeList?.length || txList?.withdrawList?.length,
+    );
+    if (!loading && !loadingMore && hasSomePending) {
       timer = setTimeout(refreshListTx, 2000);
     }
     return () => {

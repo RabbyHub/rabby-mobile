@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { addressUtils, urlUtils } from '@rabby-wallet/base-utils';
-
+import { addressUtils } from '@rabby-wallet/base-utils';
+import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
 import {
   TokenItem,
@@ -172,11 +172,17 @@ const defaultAddressSortStore: AddressSortStore = {
   sortType: 'usd',
 };
 
+export type SetCurrentAccountOptions = {
+  needSyncToSession?: boolean;
+};
+
 export class PreferenceService {
   store!: PreferenceStore;
   keyringService: KeyringService;
   sessionService: import('./session').SessionService;
   // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
+
+  private _allowedToNotifyAccountsChanged = false;
 
   constructor(
     options: StorageAdapaterOptions & {
@@ -228,7 +234,6 @@ export class PreferenceService {
         storage: options?.storageAdapter,
       },
     );
-
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
@@ -343,12 +348,33 @@ export class PreferenceService {
     };
   };
 
-  setCurrentAccount = (account: Account | null) => {
-    this.store.currentAccount = account;
-    if (account) {
+  toggleAllowNotifyAccountsChanged(allowed: boolean = false) {
+    this._allowedToNotifyAccountsChanged = allowed;
+  }
+
+  private _notifyAccountsChanged(account: Account, doNotify: boolean = true) {
+    if (this._allowedToNotifyAccountsChanged && doNotify) {
       this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
         account.address.toLowerCase(),
       ]);
+      console.debug(
+        '[PreferenceService::_notifyAccountsChanged] notify accountsChanged event',
+        account,
+      );
+    } else if (__DEV__ && doNotify && !this._allowedToNotifyAccountsChanged) {
+      console.error(
+        `[PreferenceService::_notifyAccountsChanged] You're trying to notify accountsChanged event, but it's not allowed now!`,
+      );
+    }
+  }
+
+  setCurrentAccount = (
+    account: Account | null,
+    options?: SetCurrentAccountOptions,
+  ) => {
+    this.store.currentAccount = account;
+    if (account) {
+      this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
     }
   };
@@ -369,7 +395,7 @@ export class PreferenceService {
     this.store.lastUsedAccount = account;
   };
 
-  activateLastUsedAccount = async () => {
+  activateLastUsedAccount = async (options?: SetCurrentAccountOptions) => {
     const prevAccount = this.getCurrentAccount();
 
     if (prevAccount) {
@@ -378,7 +404,7 @@ export class PreferenceService {
 
     const account = await this.getLastUsedAccount();
     // console.debug('[LastUsedAccount] activate', account);
-    this.setCurrentAccount(account);
+    this.setCurrentAccount(account, options);
   };
 
   inactivateLastUsedAccount = () => {
@@ -437,14 +463,14 @@ export class PreferenceService {
     return balanceMap[address.toLowerCase()] || null;
   };
 
-  // getLocale = () => {
-  //   return this.store.locale;
-  // };
+  getLocale = () => {
+    return this.store.locale;
+  };
 
-  // setLocale = (locale: string) => {
-  //   this.store.locale = locale;
-  //   i18n.changeLanguage(locale);
-  // };
+  setLocale = (locale: string) => {
+    this.store.locale = locale;
+    i18n.changeLanguage(locale);
+  };
 
   // getThemeMode = () => {
   //   return this.store.themeMode;

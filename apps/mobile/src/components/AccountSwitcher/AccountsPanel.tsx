@@ -72,6 +72,7 @@ const SectionCollapsableNav = function ({
 };
 
 export function AccountsPanelInModal({
+  allowNullCurrentAccount,
   forScene,
   containerStyle,
   linearContainerProps,
@@ -92,6 +93,7 @@ AccountSwitcherAopProps<{
 
   const {
     isPinnedAccount,
+    sceneCurrentAccount,
     finalSceneCurrentAccount,
 
     isSceneSupportAllAccounts,
@@ -105,6 +107,11 @@ AccountSwitcherAopProps<{
   } = useSceneAccountInfo({
     forScene,
   });
+
+  const finalCurrentAccount =
+    allowNullCurrentAccount && !sceneCurrentAccount
+      ? null
+      : finalSceneCurrentAccount;
 
   const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
     useSwitchSceneCurrentAccount();
@@ -196,7 +203,7 @@ AccountSwitcherAopProps<{
                 const key = `account-${account.address}-${account.brandName}-${index}`;
                 const isCurrent =
                   !isSceneUsingAllAccounts &&
-                  isSameAccount(account, finalSceneCurrentAccount);
+                  isSameAccount(account, finalCurrentAccount);
 
                 return (
                   <AddressItemInPanel

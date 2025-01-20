@@ -20,6 +20,7 @@ import { useAddressDetailModal } from '../useAddressDetailModal';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { AddressItemShadowView } from './AddressItemShadowView';
+import { useTranslation } from 'react-i18next';
 
 const { isSameAddress } = addressUtils;
 
@@ -81,11 +82,14 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
   }, [togglePinAddressAsync, account.address, account.brandName, pinned]);
 
+  const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: pinned ? 'UnPin' : 'Pin',
+        title: pinned
+          ? t('page.addressDetail.addressListScreen.unpin')
+          : t('page.addressDetail.addressListScreen.pin'),
         icon: pinned
           ? isDarkTheme
             ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
@@ -100,7 +104,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         },
       },
       {
-        title: 'Edit',
+        title: t('page.addressDetail.addressListScreen.edit'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
@@ -111,7 +115,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         },
       },
       {
-        title: 'Details',
+        title: t('page.addressDetail.addressListScreen.detail'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
@@ -122,7 +126,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         },
       },
       {
-        title: 'Delete',
+        title: t('page.addressDetail.addressListScreen.delete'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
@@ -135,6 +139,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       },
     ] as MenuAction[];
   }, [
+    t,
     isDarkTheme,
     editAliasName,
     account,

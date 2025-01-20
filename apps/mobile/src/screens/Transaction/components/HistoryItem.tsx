@@ -146,9 +146,9 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Contract:
           return FromText + chainItem?.name;
         case HistoryItemCateType.Cancel:
-          return strings('page.activities.signedTx.common.unknown');
+          return strings('page.transactions.detail.Unknown');
         default:
-          return strings('page.activities.signedTx.common.unknown');
+          return strings('page.transactions.detail.Unknown');
       }
     }, [formatType, data, chainItem, projectDict]);
 

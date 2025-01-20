@@ -151,6 +151,8 @@ export function useSwitchSceneCurrentAccount() {
       const prev = sceneAccountInfo;
       const { maybeReEntrant } = options || {};
 
+      const needSyncToSession = scene === '@ActiveDappWebViewModal';
+
       try {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
         const finalResult = {
@@ -165,6 +167,7 @@ export function useSwitchSceneCurrentAccount() {
             if (finalResult.nextEnableAccount) {
               await apisAccountSwitch.enableSceneAccount(
                 finalResult.nextEnableAccount,
+                { activeLastUsedAccountOptions: { needSyncToSession } },
               );
             } else if (finalResult.nextEnableAccount === null) {
               await apisAccountSwitch.inactivateSceneAccount();
@@ -319,7 +322,7 @@ const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
   'MultiHistory',
 ];
 
-export function computeSceneAccountInfo({
+function computeSceneAccountInfo({
   forScene,
   accounts = [],
   pinAddresses,
@@ -464,6 +467,7 @@ export function useSceneAccountInfo(options: {
 
   return {
     ...computed,
+    sceneCurrentAccount: sceneAccountInfo?.currentAccount,
     sceneSigingAccount: sceneAccountInfo?.signingAccount,
     sceneCurrentAccountDepKey: computed.isSceneUsingAllAccounts
       ? 'all'

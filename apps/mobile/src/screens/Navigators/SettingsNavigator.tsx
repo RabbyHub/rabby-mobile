@@ -52,7 +52,7 @@ export function SettingNavigator() {
           {
             headerTitle: () => (
               <I18nRouteScreenTitle
-                i18nTitle={({ t }) => t('screens.settings.screenTitle')}
+                i18nTitle={({ t }) => t('page.setting.screenTitle')}
               />
             ),
             headerTitleAlign: 'center',

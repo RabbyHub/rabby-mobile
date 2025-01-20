@@ -1,11 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { findBestLanguageTag, getLocales } from 'react-native-localize';
+import { useAtom } from 'jotai';
+import { atomByMMKV, appStorage } from '@/core/storage/mmkv';
 import i18n, {
   coerceLang,
   filterSupportedLang,
   SupportedLang,
+  SupportedLangs,
 } from '@/utils/i18n';
 
 const langAtom = atomByMMKV<SupportedLang>('@AppLang', 'en' as SupportedLang);
@@ -26,4 +28,27 @@ export function useAppLanguage() {
     currentLanguage: coerceLang(currentLanguage),
     setCurrentLanguage,
   };
+}
+
+export function useDetectLanguage() {
+  const { setCurrentLanguage } = useAppLanguage();
+  useEffect(() => {
+    let appLang = appStorage.getItem('@AppLang');
+    try {
+      appLang = JSON.parse(appLang as unknown as string);
+    } catch (e) {
+      // NOTHING
+    }
+    const langs = SupportedLangs.map(item => item.lang);
+    const bestLang = findBestLanguageTag(langs);
+    if (appLang) {
+      setCurrentLanguage(appLang as unknown as SupportedLang);
+    } else if (bestLang) {
+      const lang = langs.find(item => item === bestLang.languageTag);
+      if (lang) {
+        setCurrentLanguage(lang);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

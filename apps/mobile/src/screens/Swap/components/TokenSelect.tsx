@@ -247,12 +247,12 @@ const TokenSelect = forwardRef<
       excludeTokens,
     ]);
 
-    const { value: tokenSettings } = useAsync(async () => {
+    const { value: pinedQueue } = useAsync(async () => {
       if (currentAccount?.address) {
         const data = await preferenceService.getUserTokenSettings();
-        return data || {};
+        return data?.pinedQueue || [];
       }
-      return {};
+      return [];
     });
 
     const swapToHeader = useMemo(() => {
@@ -279,9 +279,6 @@ const TokenSelect = forwardRef<
             <Text style={styles.headerBoxText}>
               {t('component.TokenSelector.recent')}
             </Text>
-            <Text style={styles.headerBoxText}>
-              <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
-            </Text>
           </View>
         );
       }
@@ -305,13 +302,31 @@ const TokenSelect = forwardRef<
 
     const list = useMemo(() => {
       if (recentDisplayToTokens.length) {
-        if (tokenSettings) {
-          const { pinedQueue } = tokenSettings;
+        const recentObj = {
+          recentList: recentDisplayToTokens.map(e => ({
+            ...omit(e, ['isPined', 'pinIndex']),
+            group: 'recent',
+          })),
+          _chain: 'swapToRecentList',
+          TokenRender: ({ token }: { token: TokenItem }) => {
+            return (
+              <View style={styles.recentItemWrapper}>
+                <AssetAvatar
+                  size={26}
+                  chain={token.chain}
+                  logo={token.logo_url}
+                  // chainSize={0}
+                />
+                <Text numberOfLines={1} style={styles.tokenSymbol}>
+                  {ellipsisOverflowedText(getTokenSymbol(token), 5)}
+                </Text>
+              </View>
+            );
+          },
+        };
+        if (pinedQueue?.length) {
           return [
-            ...recentDisplayToTokens.map(e => ({
-              ...omit(e, ['isPined', 'pinIndex']),
-              group: 'recent',
-            })),
+            recentObj,
             {
               id: 'swapTo header',
               _chain: 'swapTo',
@@ -328,25 +343,19 @@ const TokenSelect = forwardRef<
                 ),
               }))
               .sort((a, b) => {
-                if (a.pinIndex && b.pinIndex) {
+                if (a.pinIndex > -1 && b.pinIndex > -1) {
                   return a.pinIndex - b.pinIndex;
                 }
-                if (a.isPined) {
-                  return -1;
-                }
-                if (b.isPined) {
-                  return 1;
-                }
-                return 0;
+
+                const a1 = a.isPined ? 1 : 0;
+                const b1 = b.isPined ? 1 : 0;
+                return b1 - a1;
               }),
           ] as TokenItem[];
         }
 
         return [
-          ...recentDisplayToTokens.map(e => ({
-            ...omit(e, ['isPined', 'pinIndex']),
-            group: 'recent',
-          })),
+          recentObj,
           {
             id: 'swapTo header',
             _chain: 'swapTo',
@@ -356,7 +365,14 @@ const TokenSelect = forwardRef<
         ] as TokenItem[];
       }
       return availableToken;
-    }, [availableToken, recentDisplayToTokens, swapToHeader, tokenSettings]);
+    }, [
+      recentDisplayToTokens,
+      availableToken,
+      pinedQueue,
+      swapToHeader,
+      styles.recentItemWrapper,
+      styles.tokenSymbol,
+    ]);
 
     return (
       <>
@@ -432,6 +448,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  recentItemWrapper: {
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-line'],
+    padding: 4,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 4,
   },
   token: {
     flexDirection: 'row',

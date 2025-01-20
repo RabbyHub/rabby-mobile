@@ -20,7 +20,6 @@ import { getTokenSymbol } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
 import { useSlippageStore } from './slippage';
-import { useSwapRecentToTokens } from './recent';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
@@ -191,7 +190,6 @@ export const useTokenPair = (userAddress: string) => {
     defaultToken: defaultSelectedToToken,
   });
 
-  const [_, setRecentSwapToToken] = useSwapRecentToTokens();
   const {
     lowCreditToken,
     lowCreditVisible,
@@ -203,19 +201,13 @@ export const useTokenPair = (userAddress: string) => {
     (token: TokenItem | undefined) => {
       _setReceiveToken(token);
       if (token) {
-        setRecentSwapToToken(token);
         if (token?.low_credit_score) {
           setLowCreditToken(token);
           setLowCreditVisible(true);
         }
       }
     },
-    [
-      _setReceiveToken,
-      setLowCreditToken,
-      setLowCreditVisible,
-      setRecentSwapToToken,
-    ],
+    [_setReceiveToken, setLowCreditToken, setLowCreditVisible],
   );
 
   const [bestQuoteDex, setBestQuoteDex] = useState<string>('');
@@ -729,8 +721,14 @@ export const useTokenPair = (userAddress: string) => {
           handleSlider100();
           return;
         }
+        const newAmountBn = new BigNumber(v)
+          .div(100)
+          .times(tokenAmountBn(payToken));
+        const isTooSmall = newAmountBn.lt(0.0001);
         setPayAmount(
-          new BigNumber(v).div(100).times(tokenAmountBn(payToken)).toString(10),
+          isTooSmall
+            ? newAmountBn.toString(10)
+            : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10),
         );
       }
     },
