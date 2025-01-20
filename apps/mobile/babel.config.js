@@ -39,12 +39,15 @@ const buildGitInfo = (function getBuildEnvVars() {
   // calculate commits count from v{version}
   let BUILD_GIT_COMMITS_COUNT = '';
   try {
-    BUILD_GIT_COMMITS_COUNT = child_process
-      .execSync(
-        `git fetch --tags; git rev-list --count v${BUILD_GIT_COMMITS_COUNT_BASEVER}..HEAD`,
-      )
-      .toString()
-      .trim();
+    BUILD_GIT_COMMITS_COUNT =
+      buildchannel !== 'selfhost-reg'
+        ? ''
+        : child_process
+            .execSync(
+              `git fetch --tags; git rev-list --count v${BUILD_GIT_COMMITS_COUNT_BASEVER}..HEAD`,
+            )
+            .toString()
+            .trim();
   } catch (error) {
     console.error('Error calculating commits count', error);
   }
