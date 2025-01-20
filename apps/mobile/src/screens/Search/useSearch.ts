@@ -6,6 +6,8 @@ import {
   CombineTokensItem,
 } from '../Home/hooks/store';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { DisplayedPortfolio } from '../Home/utils/project';
+import { formatAmount } from '@/utils/math';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -36,6 +38,41 @@ export const filterTokens = (
     );
   });
 };
+const findTokenWithHighestAmount = (
+  portfolios: DisplayedPortfolio[],
+  filterText: string,
+) => {
+  const symbolTotals = new Map();
+  const filterTextLower = filterText.toLowerCase();
+
+  portfolios.forEach(position => {
+    position._tokenList.forEach(token => {
+      if (token.symbol.toLowerCase().includes(filterTextLower)) {
+        const currentTotal = symbolTotals.get(token.symbol) || 0;
+        symbolTotals.set(token.symbol, currentTotal + token.amount);
+      }
+    });
+  });
+
+  if (symbolTotals.size === 0) {
+    return null;
+  }
+
+  let maxSymbol = '';
+  let maxAmount = 0;
+
+  symbolTotals.forEach((amount, symbol) => {
+    if (amount > maxAmount) {
+      maxAmount = amount;
+      maxSymbol = symbol;
+    }
+  });
+
+  return {
+    symbol: maxSymbol,
+    amount: maxAmount,
+  };
+};
 
 export const filterPortfolios = (
   portfolios: CombineDefiItem[],
@@ -44,17 +81,34 @@ export const filterPortfolios = (
   if (!filterText) {
     return portfolios;
   }
-  return portfolios.filter(portfolio => {
+  const res: CombineDefiItem[] = [];
+  portfolios.forEach(portfolio => {
     const portfolioNameLower = portfolio.name?.toLowerCase() || '';
     const portfolioAddressLower = portfolio.id?.toLowerCase() || '';
     // const portfolioChainLower = portfolio.chain?.toLowerCase() || '';
     const filterTextLower = filterText?.toLowerCase() || '';
-    return [
-      portfolioNameLower,
-      portfolioAddressLower,
-      // portfolioChainLower,
-    ].some(i => i.includes(filterTextLower));
+    const { symbol, amount } =
+      findTokenWithHighestAmount(portfolio._portfolios, filterText) || {};
+    if (
+      [portfolioNameLower, portfolioAddressLower].some(i =>
+        i.includes(filterTextLower),
+      ) ||
+      amount
+    ) {
+      res.push(
+        Object.assign(
+          portfolio,
+          amount
+            ? {
+                filterTokenDesc: `${formatAmount(amount)}${symbol}`,
+              }
+            : {},
+        ),
+      );
+      return;
+    }
   });
+  return res;
 };
 
 export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {

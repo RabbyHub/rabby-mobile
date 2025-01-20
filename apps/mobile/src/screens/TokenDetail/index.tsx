@@ -215,7 +215,7 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  const { currentAccount } = useCurrentAccount();
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const finalAccount = account || currentAccount;
 
   const relateDefiList = useMemo(() => {

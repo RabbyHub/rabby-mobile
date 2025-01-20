@@ -234,7 +234,7 @@ export const DeFiDetailScreen = () => {
     disableAutoFetch: true,
   });
 
-  const { currentAccount } = useCurrentAccount();
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const finalAccount = useMemo(
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],

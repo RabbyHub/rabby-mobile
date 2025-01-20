@@ -22,6 +22,7 @@ import {
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
+import { CombineDefiItem } from '../../hooks/store';
 
 const hitSlop = {
   top: 10,
@@ -42,7 +43,7 @@ export const DefiRow = memo(
     disableMenu,
     onPress,
   }: {
-    data: AbstractProject;
+    data: CombineDefiItem;
     style?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
@@ -123,13 +124,24 @@ export const DefiRow = memo(
           </View>
         </View>
         <View style={styles.projectHeaderUsd}>
-          <Text
-            style={[
-              styles.projectHeaderNetWorth,
-              data._isExcludeBalance && styles.exclude,
-            ]}>
-            {data._netWorth}
-          </Text>
+          {data.filterTokenDesc ? (
+            <HighlightText
+              style={styles.projectHeaderNetWorth}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={data?.filterTokenDesc}
+            />
+          ) : (
+            <Text
+              style={[
+                styles.projectHeaderNetWorth,
+                data._isExcludeBalance && styles.exclude,
+              ]}>
+              {data._netWorth}
+            </Text>
+          )}
           {data._isExcludeBalance && data._netWorth && (
             <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
               <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
