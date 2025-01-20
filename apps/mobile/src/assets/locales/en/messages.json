@@ -602,7 +602,8 @@
       "Loading_Tokens": "Loading Tokens...",
       "Select-from-supported-tokens": "Select from supported tokens",
       "Value": "Value",
-      "Token": "Token"
+      "Token": "Token",
+      "Balance": "Balance"
     },
     "swap": {
       "title": "Swap",
@@ -1325,16 +1326,64 @@
     },
     "gasAccount": {
       "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "noBalance": "No balance To Withdraw",
+      "gasExceed": "GasAccount balance cannot exceed $1000",
       "risk": "Your current address has been detected as risky, so this feature is unavailable.",
       "logout": "Log out current GasAccount",
+      "history": {
+        "noHistory": "No history in the past 30 days"
+      },
       "loginInTip": {
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains"
       },
       "logoutConfirmModal": {
         "title": "Log out current GasAccount",
-        "desc": "Once logged out, you will no longer be able to use GasAccount to pay for gas fees.",
-        "logout": "Log out"
+        "desc": "Logging out disables GasAccount. You can restore your GasAccount by logging in with this address.",
+        "logout": "Log out",
+        "logoutSuccess": "Log out Successful"
+      },
+      "depositPopup": {
+        "title": "Deposit",
+        "desc": "Make a deposit to Rabby's DeBank L2 Account with no extra fees—withdraw anytime.",
+        "zeroInvalidAmount": "The amount cannot be zero",
+        "invalidAmount": "Must be under 500",
+        "amount": "Amount",
+        "token": "Token",
+        "paymentAddress": "Payment Address",
+        "selectToken": "Select Token",
+        "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
+        "followingTokenInSufficient": "The following token balance is insufficient"
+      },
+      "paymentAddressPopup": {
+        "title": "Select Payment address",
+        "address": "Payment address",
+        "balance": "Balance",
+        "confirm": "Confirm"
+      },
+      "withdrawPopup": {
+        "noEnoughValueBalance": "Vault Balance insufficient. Switch chain or try again later.",
+        "noEnoughGas": "Amount too low to cover gas fees",
+        "riskMessageFromChain": "Due to risk control, the withdrawal limit depends on the total amount deposited from this chain.",
+        "riskMessageFromAddress": "Due to risk control, the withdrawal limit depends on the total amount this address has deposited",
+        "selectDestinationChain": "Select destination chain",
+        "selectRecipientAddress": "Select recipient address",
+        "withdrawalLimit": "Withdrawal limit",
+        "title": "Withdraw",
+        "desc": "You can withdraw your GasAccount balance to your DeBank L2 Wallet. Log in to your DeBank L2 Wallet to transfer the funds to a supported blockchain as needed.",
+        "amount": "Amount",
+        "to": "To",
+        "selectChain": "Select Chain",
+        "recipientAddress": "Recipient address",
+        "destinationChain": "Destination chain",
+        "deductGasFees": "Received amount will deduct gas fees",
+        "tipsBtn": "I Got It",
+        "noRecipient": "No Recipient address available"
+      },
+      "withdrawConfirmModal": {
+        "title": "Transferred to your DeBank L2 Wallet",
+        "button": "View on DeBank"
       },
       "GasAccountDepositTipPopup": {
         "title": "Open GasAccount and Deposit",

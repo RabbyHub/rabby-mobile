@@ -1,6 +1,6 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { createGetStyles } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { Pressable, Text, View } from 'react-native';
 import {
   useAml,
   useGasAccountGoBack,
@@ -8,13 +8,11 @@ import {
   useGasAccountLogin,
 } from './hooks';
 import { formatUsdValue } from '@/utils/number';
-import { useThemeColors } from '@/hooks/theme';
-import { Tip } from '@/components/Tip';
+import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GasAccountDepositPopup } from './components/DepositPopup';
 import { WithDrawPopup } from './components/WithDrawPopup';
-import { Button } from '@/components/Button';
 import RcIconGasAccountBalance from '@/assets/icons/gas-account/balance-acount.svg';
 import { GasAccountHistory } from './components/History';
 import { GasAccountLoginPopup } from './components/LoginPopup';
@@ -24,19 +22,24 @@ import GasAccountLogoutPopup from './components/LogoutPopup';
 import {
   useGasAccountLoginVisible,
   useGasAccountLogoutVisible,
-  useGasAccountSign,
 } from './hooks/atom';
 import { GasAccountWrapperBg } from './components/WrapperBg';
 import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
-import { useCurrentAccount } from '@/hooks/account';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import { Button } from '@/components2024/Button';
+import { trigger } from 'react-native-haptic-feedback';
+import { toast } from '@/components2024/Toast';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const DEPOSIT_LIMIT = 1000;
 
 export const GasAccountScreen = () => {
   useLastUsedAccountInScreen();
 
-  const colors = useThemeColors();
   const { t } = useTranslation();
   const [showDesposit, setShowDesposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -44,7 +47,7 @@ export const GasAccountScreen = () => {
 
   const [switchAddrVisible, setSwitchAddrVisible] = useState(false);
 
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { value, loading } = useGasAccountInfo();
 
   const usd = useMemo(() => {
@@ -56,17 +59,9 @@ export const GasAccountScreen = () => {
 
   const gotoDashboard = useGasAccountGoBack();
 
-  // const { accountId } = useGasAccountSign();
-
-  // const { currentAccount } = useCurrentAccount();
-
-  const gotoDesposit = () => {
-    // if (accountId && currentAccount?.address !== accountId) {
-    //   setSwitchAddrVisible(true);
-    //   return;
-    // }
+  const gotoDesposit = useCallback(() => {
     setShowDesposit(true);
-  };
+  }, []);
 
   const { isLogin } = useGasAccountLogin({ value, loading });
 
@@ -86,15 +81,42 @@ export const GasAccountScreen = () => {
 
   const headerRight = useCallback(() => <GasAccountHeader />, []);
 
+  const handleDepositTips = useCallback(() => {
+    if (!canDesposit) {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: 'why cant i deposit?',
+        sections: [
+          {
+            description: isRisk
+              ? t('page.gasAccount.risk')
+              : t('page.gasAccount.gasExceed'),
+          },
+        ],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: [300],
+        },
+        nextButtonProps: {
+          title: (
+            <Text style={styles.closeModalBtnText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: styles.tipTitle,
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    }
+  }, [canDesposit, isRisk, t, styles.closeModalBtnText, styles.tipTitle]);
+
   useEffect(() => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
-
-  // useEffect(() => {
-  //   if (!isLogin) {
-  //     setLoginVisible(true);
-  //   }
-  // }, [isLogin, setLoginVisible]);
 
   useEffect(() => {
     if (!loading && !isLogin) {
@@ -110,40 +132,54 @@ export const GasAccountScreen = () => {
           <Text style={styles.balanceText}>{usd}</Text>
         </View>
         <View style={styles.accountFooter}>
-          <View
+          <Pressable
             style={{
               flex: 1,
+            }}
+            onPress={() => {
+              if (!balance) {
+                toast.show(t('page.gasAccount.noBalance'), {
+                  position: toast.positions.CENTER,
+                  textStyle: styles.toastStyle,
+                });
+                return;
+              }
             }}>
             <Button
-              type="white"
-              ghost
-              onPress={() => setShowWithdraw(true)}
-              buttonStyle={[styles.whiteBtn, styles.buttonContainer]}
-              title={t('component.gasAccount.withdraw')}
+              type="ghost"
+              onPress={() => {
+                setShowWithdraw(true);
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+              }}
+              titleStyle={styles.btnTitle}
+              title={t('page.gasAccount.withdraw')}
+              disabled={!balance}
             />
-          </View>
-          <View
+          </Pressable>
+          <Pressable
             style={{
               flex: 1,
-            }}>
-            <Tip
-              placement="top"
-              content={
-                !canDesposit
-                  ? isRisk
-                    ? t('page.gasAccount.risk')
-                    : t('component.gasAccount.gasExceed')
-                  : undefined
-              }>
-              <Button
-                type="primary"
-                buttonStyle={styles.buttonContainer}
-                onPress={() => canDesposit && gotoDesposit()}
-                disabled={!canDesposit}
-                title={t('component.gasAccount.deposit')}
-              />
-            </Tip>
-          </View>
+            }}
+            onPress={handleDepositTips}>
+            <Button
+              type="primary"
+              onPress={() => {
+                if (canDesposit) {
+                  gotoDesposit();
+                  trigger('impactLight', {
+                    enableVibrateFallback: true,
+                    ignoreAndroidSystemSettings: false,
+                  });
+                }
+              }}
+              titleStyle={styles.btnTitle}
+              disabled={!canDesposit || loading}
+              title={t('component.gasAccount.deposit')}
+            />
+          </Pressable>
         </View>
       </GasAccountWrapperBg>
 
@@ -185,18 +221,20 @@ export const GasAccountScreen = () => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   accountContainer: {
-    height: 320,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    height: 296,
+    paddingVertical: 34,
+    paddingHorizontal: 20,
     marginHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
+    borderRadius: 30,
+    backgroundColor: colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
   },
   accountFooter: {
     marginTop: 'auto',
@@ -205,53 +243,51 @@ const getStyles = createGetStyles(colors => ({
     width: '100%',
   },
   content: {
-    height: 205,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
   },
   balanceText: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro',
     fontSize: 32,
+    fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 38,
-    color: colors['neutral-title1'],
   },
-  historyContainer: {
-    display: 'flex',
-    gap: 8,
-    flexDirection: 'column',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    height: 531,
-    padding: 12,
-    marginHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
-  },
+
   acountIcon: {
     width: 60,
     height: 60,
-    marginBottom: 24,
-  },
-  historyIcon: {
-    marginTop: 120,
-    width: 28,
-    height: 28,
-    marginBottom: 8,
-  },
-  historyText: {
-    color: colors['neutral-foot'],
-    fontWeight: '500',
-    fontSize: 13,
-  },
-  buttonContainer: {
-    height: 48,
+    marginVertical: 14,
   },
 
-  whiteBtn: {
-    borderWidth: 1,
-    borderColor: colors['blue-default'],
+  btnTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '600',
+  },
+
+  tipTitle: {
+    fontSize: 17,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
+  },
+  closeModalBtnText: {
+    fontSize: 20,
+    color: colors2024['neutral-InvertHighlight'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  toastStyle: {
+    color: colors2024['neutral-title-2'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
 }));

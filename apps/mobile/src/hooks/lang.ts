@@ -35,7 +35,7 @@ export function useDetectLanguage() {
   useEffect(() => {
     let appLang = appStorage.getItem('@AppLang');
     try {
-      JSON.parse(appLang as unknown as string);
+      appLang = JSON.parse(appLang as unknown as string);
     } catch (e) {
       // NOTHING
     }

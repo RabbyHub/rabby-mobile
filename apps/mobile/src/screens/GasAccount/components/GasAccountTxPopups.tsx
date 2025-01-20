@@ -1,18 +1,19 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountWrapperBg } from './WrapperBg';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { Button } from '@/components2024/Button';
 
-const tipPngSource = require('@/assets/icons/gas-account/gas-account-deposit-tip-2024.png');
+const loginTipPngSource = require('@/assets/icons/gas-account/gas-account-deposit-tip-2024-new.png');
 
 interface PopupProps {
   visible: boolean;
@@ -31,13 +32,17 @@ const GasAccountDepositTipContent = ({ onClose }: { onClose: () => void }) => {
           {t('page.gasAccount.GasAccountDepositTipPopup.title')}
         </Text>
       </BottomSheetHandlableView>
-      <Image source={tipPngSource} style={styles.image} resizeMode="contain" />
+      <Image
+        source={loginTipPngSource}
+        style={styles.loginImage}
+        resizeMode="contain"
+      />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={onClose}>
-          <Text style={styles.buttonText}>
-            {t('page.gasAccount.GasAccountDepositTipPopup.gotIt')}
-          </Text>
-        </TouchableOpacity>
+        <Button
+          title={t('page.gasAccount.GasAccountDepositTipPopup.gotIt')}
+          containerStyle={{ flex: 1 }}
+          onPress={onClose}
+        />
       </View>
     </View>
   );
@@ -63,7 +68,7 @@ export const GasAccountDepositTipPopup = ({
   }, [visible]);
   return (
     <AppBottomSheetModal
-      snapPoints={[380]}
+      snapPoints={[600]}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
@@ -99,13 +104,17 @@ const GasAccountLoginTipContent = ({ onClose }: { onClose: () => void }) => {
         </Text>
         <RcIconQuoteEnd style={styles.quoteEnd} />
       </View>
-      <Image source={tipPngSource} style={styles.image} resizeMode="contain" />
+      <Image
+        source={loginTipPngSource}
+        style={styles.loginImage}
+        resizeMode="contain"
+      />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={onClose}>
-          <Text style={styles.buttonText}>
-            {t('page.gasAccount.GasAccountDepositTipPopup.gotIt')}
-          </Text>
-        </TouchableOpacity>
+        <Button
+          title={t('page.gasAccount.GasAccountDepositTipPopup.gotIt')}
+          containerStyle={{ flex: 1 }}
+          onPress={onClose}
+        />
       </View>
     </GasAccountWrapperBg>
   );
@@ -126,7 +135,7 @@ export const GasAccountLogInTipPopup = ({ visible, onClose }: PopupProps) => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={[540]}
+      snapPoints={[734]}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
@@ -156,18 +165,18 @@ const getStyle = createGetStyles2024(ctx => ({
     color: ctx.colors['neutral-title1'],
     marginVertical: 24,
   },
-  image: {
+  loginImage: {
     marginTop: 16,
-    width: 337,
-    height: 144,
+    width: 257,
+    height: 335.142,
   },
+  image: { marginTop: 16, width: 337, height: 144 },
   buttonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     paddingVertical: 16,
-    borderTopWidth: 0.5,
     borderTopColor: ctx.colors['neutral-line'],
     marginTop: 'auto',
     paddingHorizontal: 20,
@@ -202,9 +211,12 @@ const getStyle = createGetStyles2024(ctx => ({
     left: -20,
   },
   quoteText: {
+    color: ctx.colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 18,
-    fontWeight: '500',
-    color: ctx.colors['blue-default'],
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
   },
   quoteEnd: {
     position: 'absolute',

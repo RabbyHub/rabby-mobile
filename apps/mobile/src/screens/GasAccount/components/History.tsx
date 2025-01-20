@@ -2,8 +2,6 @@ import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
-  ScrollView,
   FlatList,
   Animated,
   Easing,
@@ -12,15 +10,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import { findChainByServerID } from '@/utils/chain';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import RcIconHistoryLoading from '@/assets/icons/gas-account/IconHistoryLoading.svg';
-import { openExternalUrl } from '@/core/utils/linking';
 import { sinceTime } from '@/utils/time';
 import { useGasAccountHistory } from '../hooks';
-import RcIconHistoryIcon from '@/assets/icons/gas-account/history-icon.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { EmptyHolder } from '@/components/EmptyHolder';
 
 const HistoryItem = ({
   time,
@@ -30,6 +26,7 @@ const HistoryItem = ({
   borderT = false,
   chainServerId,
   txId,
+  isWithdraw = false,
 }: {
   time: number;
   value: number;
@@ -37,11 +34,11 @@ const HistoryItem = ({
   className?: string;
   isPending?: boolean;
   borderT?: boolean;
+  isWithdraw?: boolean;
   chainServerId?: string;
   txId?: string;
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const transAnim = React.useRef(new Animated.Value(0));
@@ -63,7 +60,12 @@ const HistoryItem = ({
   });
 
   return (
-    <View style={[styles.historyItem, borderT && styles.borderTop]}>
+    <View
+      style={[
+        styles.historyItem,
+        borderT && styles.borderTop,
+        isPending && { height: 64 },
+      ]}>
       {isPending ? (
         <View style={styles.pendingContainer}>
           <Animated.View
@@ -75,10 +77,14 @@ const HistoryItem = ({
                 },
               ],
             }}>
-            <RcIconHistoryLoading />
+            <RcIconHistoryLoading width={16} height={16} />
           </Animated.View>
 
-          <Text style={styles.pendingText}>{t('page.gasAccount.deposit')}</Text>
+          <Text style={styles.pendingText}>
+            {isWithdraw
+              ? t('page.gasAccount.withdraw')
+              : t('page.gasAccount.deposit')}
+          </Text>
         </View>
       ) : (
         <Text style={styles.timeText}>{sinceTime(time)}</Text>
@@ -92,11 +98,10 @@ const HistoryItem = ({
 };
 
 const LoadingItem = ({ borderT }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
-    <View style={[styles.loadingItem, borderT && styles.borderTop]}>
+    <View style={[styles.historyItem, borderT && styles.borderTop]}>
       <Skeleton width={68} height={16} style={styles.skeletonStyle} />
       <Skeleton width={68} height={16} style={styles.skeletonStyle} />
     </View>
@@ -105,37 +110,22 @@ const LoadingItem = ({ borderT }) => {
 
 export const GasAccountHistory = () => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const { loading, txList, loadingMore, loadMore, noMore } =
     useGasAccountHistory();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { bottom } = useSafeAreaInsets();
 
   const ListEmptyComponent = useMemo(
     () =>
-      !loading && (!txList || !txList?.list?.length) ? (
-        <View style={styles.historyContainer}>
-          <RcIconHistoryIcon style={styles.historyIcon} />
-          <Text style={styles.historyText}>
-            {t('component.gasAccount.history.noHistory')}
-          </Text>
-        </View>
-      ) : loading ? (
+      loading ? (
         <>
           {Array.from({ length: 10 }).map((_, idx) => (
             <LoadingItem key={idx} borderT={idx !== 0} />
           ))}
         </>
       ) : null,
-    [
-      loading,
-      txList,
-      styles.historyContainer,
-      styles.historyIcon,
-      styles.historyText,
-      t,
-    ],
+    [loading],
   );
 
   const ListEndLoader = useCallback(() => {
@@ -147,21 +137,41 @@ export const GasAccountHistory = () => {
 
   const ListHeaderComponent = useCallback(() => {
     return (
-      !loading &&
-      txList?.rechargeList?.map((item, index) => (
-        <HistoryItem
-          key={item.tx_id + item.chain_id}
-          time={item.create_at}
-          value={item.amount}
-          sign={'+'}
-          borderT={index !== 0}
-          isPending={true}
-          chainServerId={item?.chain_id}
-          txId={item?.tx_id}
-        />
-      ))
+      <>
+        {!loading &&
+          txList?.withdrawList?.map((item, index) => (
+            <HistoryItem
+              isWithdraw={true}
+              key={item.create_at}
+              time={item.create_at}
+              value={item.amount}
+              sign={'-'}
+              borderT={!txList.rechargeList.length ? index !== 0 : true}
+              isPending={true}
+              chainServerId={item?.chain_id}
+              txId={item?.tx_id}
+            />
+          ))}
+        {!loading &&
+          txList?.rechargeList?.map((item, index) => (
+            <HistoryItem
+              key={item.tx_id + item.chain_id}
+              time={item.create_at}
+              value={item.amount}
+              sign={'+'}
+              borderT={
+                !txList?.rechargeList.length && !txList?.withdrawList.length
+                  ? index !== 0
+                  : true
+              }
+              isPending={true}
+              chainServerId={item?.chain_id}
+              txId={item?.tx_id}
+            />
+          ))}
+      </>
     );
-  }, [loading, txList?.rechargeList]);
+  }, [loading, txList?.rechargeList, txList?.withdrawList]);
 
   const renderItem: ListRenderItem<{
     id: string;
@@ -186,13 +196,20 @@ export const GasAccountHistory = () => {
     [txList?.rechargeList],
   );
 
-  if (!loading && !txList?.rechargeList.length && !txList?.list.length) {
+  if (
+    !loading &&
+    !txList?.rechargeList.length &&
+    !txList?.withdrawList.length &&
+    !txList?.list.length
+  ) {
     return (
-      <View style={styles.historyContainer}>
-        <RcIconHistoryIcon style={styles.historyIcon} />
-        <Text style={styles.historyText}>
-          {t('component.gasAccount.history.noHistory')}
-        </Text>
+      <View style={[styles.container, { height: 254 }]}>
+        <EmptyHolder
+          text={t('page.gasAccount.history.noHistory')}
+          type="default"
+          imgStyle={styles.emptyImg}
+          textStyle={styles.emptyText}
+        />
       </View>
     );
   }
@@ -214,27 +231,30 @@ export const GasAccountHistory = () => {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    backgroundColor: colors['neutral-card-1'],
-    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 20,
     marginHorizontal: 20,
     marginBottom: 20,
-    // padding: 16,
-    paddingTop: 0,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
   },
   historyItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    height: 50,
   },
   pendingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors['orange-light'],
-    borderRadius: 50,
+    backgroundColor: colors2024['orange-light-1'],
+    borderRadius: 100,
     padding: 10,
+    borderWidth: 1,
+    borderColor: colors2024['orange-light-2'],
   },
   pendingIcon: {
     width: 16,
@@ -242,79 +262,68 @@ const getStyles = createGetStyles(colors => ({
     marginRight: 6,
   },
   pendingText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 19.73,
+    letterSpacing: 0.447,
+    color: colors2024['orange-default'],
   },
   externalIcon: {
     width: 12,
     height: 12,
   },
   timeText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    color: colors['neutral-foot'],
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+    color: colors2024['neutral-foot'],
   },
   valueText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
-    color: colors['neutral-title1'],
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
+    color: colors2024['neutral-title-1'],
   },
-  loadingItem: {
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
+  // loadingItem: {
+  //   paddingHorizontal: 20,
+  //   height: 50,
+
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   paddingVertical: 12,
+  // },
   skeletonStyle: {
     height: 16,
     borderRadius: 4,
     width: 68,
   },
   borderTop: {
-    borderTopWidth: 0.5,
-    borderTopColor: colors['neutral-card2'],
+    // borderTopWidth: 0.5,
+    // borderTopColor: colors['neutral-card2'],
   },
-  historyContainer: {
-    display: 'flex',
-    gap: 8,
-    flexDirection: 'column',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    height: 531,
-    padding: 12,
-    marginHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
+
+  emptyImg: {
+    width: 159,
+    height: 116.928,
   },
-  historyIcon: {
-    marginTop: 120,
-    width: 28,
-    height: 28,
-    marginBottom: 8,
-  },
-  historyText: {
-    color: colors['neutral-foot'],
-    fontWeight: '500',
-    fontSize: 13,
-  },
-  emptyView: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    paddingTop: 150,
-  },
-  emptyList: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: '100%',
-  },
+
   emptyText: {
+    color: colors2024['neutral-info'],
     textAlign: 'center',
-    color: colors['neutral-foot'],
-    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 20,
   },
+
   skeletonBlock: {
     width: '100%',
     height: 210,

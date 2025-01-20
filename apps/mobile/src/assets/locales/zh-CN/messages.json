@@ -599,7 +599,8 @@
       "Select-from-supported-tokens": "从支持的代币中选择",
       "Value": "价值",
       "InsufficientBalanceTips": "余额不足",
-      "No_Tokens": "无代币"
+      "No_Tokens": "无代币",
+      "Balance": "余额"
     },
     "home": {
       "services": {
@@ -1371,7 +1372,8 @@
       "logoutConfirmModal": {
         "logout": "登出",
         "title": "退出当前 GasAccount",
-        "desc": "一旦退出登录，您将无法再使用 GasAccount 支付 gas 费用。"
+        "desc": "一旦退出登录，您将无法再使用 GasAccount 支付 gas 费用。",
+        "logoutSuccess": "登出成功"
       },
       "loginInTip": {
         "desc": "支付所有链上的 Gas 费用",
@@ -1381,6 +1383,52 @@
       "GasAccountDepositTipPopup": {
         "title": "打开 GasAccount 并存入",
         "gotIt": "知道了"
+      },
+      "withdraw": "提款",
+      "noBalance": "没有余额可提取",
+      "gasExceed": "GasAccount余额不能超过$1000",
+      "history": {
+        "noHistory": "过去 30 天内无历史记录"
+      },
+      "depositPopup": {
+        "title": "存款",
+        "desc": "无需额外费用即可向 Rabby 的 DeBank L2 账户存款——随时提现。",
+        "zeroInvalidAmount": "金额不能为空。",
+        "invalidAmount": "必须在 500 以下",
+        "amount": "金额",
+        "token": "Token",
+        "paymentAddress": "支付地址",
+        "selectToken": "选择 Token",
+        "inSufficientTip1": "该地址的代币不足，请选择一个不同的地址。",
+        "followingTokenInSufficient": "以下代币余额不足"
+      },
+      "paymentAddressPopup": {
+        "title": "选择 Payment 地址",
+        "address": "支付地址",
+        "balance": "Balance",
+        "confirm": "确认"
+      },
+      "withdrawPopup": {
+        "noEnoughValuetBalance": "Vault Balance不足。请切换链或稍后重试。",
+        "noEnoughGas": "金额过低，无法支付 gas 费用",
+        "riskMessageFromChain": "由于风险控制，提现限额取决于从该链存入的总金额。",
+        "riskMessageFromAddress": "由于风险控制，提款限制取决于该地址的存款总额。",
+        "selectDestinationChain": "选择目标链",
+        "selectRecipientAddress": "选择接收地址",
+        "withdrawalLimit": "提取限额",
+        "title": "提取",
+        "desc": "您可以将GasAccount余额提现到您的DeBank L2 Wallet。登录DeBank L2 Wallet，根据需要将资金转移到支持的区块链上。",
+        "amount": "金额",
+        "to": "对于",
+        "selectChain": "选择链",
+        "recipientAddress": "Recipient address（收件人地址）",
+        "destinationChain": "目标链",
+        "deductGasFees": "接收金额将扣除 gas 费用",
+        "tipsBtn": "我知道了"
+      },
+      "withdrawConfirmModal": {
+        "title": "已转入您的 DeBank L2 钱包",
+        "button": "在 DeBank 上查看"
       }
     },
     "search": {

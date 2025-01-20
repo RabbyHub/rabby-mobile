@@ -717,7 +717,8 @@
       "No_Tokens": "Keine Tokens",
       "Token": "Token",
       "Select-from-supported-tokens": "Aus unterstützten Token auswählen",
-      "InsufficientBalanceTips": "Unzureichendes Guthaben"
+      "InsufficientBalanceTips": "Unzureichendes Guthaben",
+      "Balance": "Guthaben"
     },
     "approvals": {
       "search": {
@@ -1485,12 +1486,59 @@
       "logoutConfirmModal": {
         "logout": "Abmelden",
         "title": "Aktuelles GasAccount abmelden",
-        "desc": "Nach der Abmeldung können Sie GasAccount nicht mehr verwenden, um Gasgebühren zu bezahlen."
+        "desc": "Nach der Abmeldung können Sie GasAccount nicht mehr verwenden, um Gasgebühren zu bezahlen.",
+        "logoutSuccess": "Erfolgreich abgemeldet"
       },
       "loginInTip": {
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
         "title": "Einzahlung von USDC / USDT"
-      }
+      },
+      "history": {
+        "noHistory": "In den letzten 30 Tagen keine Historie."
+      },
+      "depositPopup": {
+        "token": "Token",
+        "selectToken": "Token auswählen",
+        "amount": "Betrag",
+        "zeroInvalidAmount": "Der Betrag darf nicht null sein",
+        "paymentAddress": "Zahlungsadresse",
+        "followingTokenInSufficient": "Das folgende Token-Guthaben ist unzureichend",
+        "title": "Einzahlung",
+        "inSufficientTip1": "Diese Adresse hat nicht genügend Tokens. Bitte wählen Sie eine andere Adresse.",
+        "invalidAmount": "Muss unter 500 sein",
+        "desc": "Machen Sie eine Einzahlung auf Rabby's DeBank L2 Account ohne zusätzliche Gebühren – jederzeit abheben."
+      },
+      "paymentAddressPopup": {
+        "title": "Zahlungsadresse auswählen",
+        "confirm": "Bestätigen",
+        "balance": "Guthaben",
+        "address": "Zahlungsadresse"
+      },
+      "withdrawPopup": {
+        "selectChain": "Kette auswählen",
+        "deductGasFees": "Erhaltener Betrag wird um Gasgebühren reduziert.",
+        "recipientAddress": "Empfängeradresse",
+        "title": "Abheben",
+        "selectDestinationChain": "Wählen Sie die Ziel-Chain aus",
+        "to": "Zum",
+        "selectRecipientAddress": "Wählen Sie die Empfängeradresse",
+        "tipsBtn": "Ich hab's!",
+        "amount": "Betrag",
+        "withdrawalLimit": "Auszahlungslimit",
+        "riskMessageFromChain": "Aufgrund der Risikokontrolle hängt das Auszahlungslimit von der insgesamt von dieser Chain eingezahlten Summe ab.",
+        "riskMessageFromAddress": "Aufgrund der Risikokontrolle hängt das Auszahlungslimit von dem Gesamtbetrag ab, den diese Adresse eingezahlt hat.",
+        "destinationChain": "Ziel-Chain",
+        "noEnoughGas": "Betrag zu niedrig, um die Gasgebühren zu decken",
+        "noEnoughValuetBalance": "Vault-Guthaben unzureichend. Wechsle die Kette oder versuche es später erneut.",
+        "desc": "Sie können Ihr GasAccount-Guthaben auf Ihr DeBank L2 Wallet abheben. Melden Sie sich bei Ihrem DeBank L2 Wallet an, um die Gelder bei Bedarf auf eine unterstützte Blockchain zu übertragen."
+      },
+      "withdrawConfirmModal": {
+        "button": "Auf DeBank ansehen",
+        "title": "An Ihre DeBank L2 Wallet übertragen"
+      },
+      "withdraw": "Abheben",
+      "gasExceed": "GasAccount-Guthaben darf $1000 nicht überschreiten",
+      "noBalance": "Kein Kontostand zum Abheben"
     },
     "search": {
       "sectionHeader": {

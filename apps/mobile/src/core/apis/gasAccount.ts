@@ -48,6 +48,8 @@ export const topUpGasAccount = async ({
   );
 
   if (tx) {
+    gasAccountService.setLastDepositAccount(account);
+
     openapi.rechargeGasAccount({
       sig: sig!,
       account_id: accountId!,

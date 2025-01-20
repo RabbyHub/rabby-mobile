@@ -29,6 +29,7 @@ export interface ListItemProps {
   disableArrow?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  content?: React.ReactNode;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -40,6 +41,7 @@ export const ListItem: React.FC<ListItemProps> = ({
   disableArrow = false,
   disabled,
   style,
+  content,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
@@ -66,10 +68,14 @@ export const ListItem: React.FC<ListItemProps> = ({
             Icon
           )
         ) : null}
-        <View style={styles.textContainer}>
-          <Text style={styles.text}>{title}</Text>
-          {subText ? <Text style={styles.subText}>{subText}</Text> : null}
-        </View>
+        {content ? (
+          content
+        ) : (
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>{title}</Text>
+            {subText ? <Text style={styles.subText}>{subText}</Text> : null}
+          </View>
+        )}
       </View>
       {onPress && !disableArrow ? <RcIconRight /> : null}
     </TouchableOpacity>

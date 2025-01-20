@@ -690,7 +690,8 @@
       "Select-from-supported-tokens": "เลือกจากโทเค็นที่รองรับ",
       "Value": "มูลค่า",
       "Loading_Tokens": "กำลังโหลดโทเค็น...",
-      "InsufficientBalanceTips": "ยอดเงินคงเหลือไม่เพียงพอ"
+      "InsufficientBalanceTips": "ยอดเงินคงเหลือไม่เพียงพอ",
+      "Balance": "ยอดคงเหลือ"
     },
     "activities": {
       "signedTx": {
@@ -1461,8 +1462,55 @@
       "logoutConfirmModal": {
         "logout": "ออกจากระบบ",
         "title": "ออกจาก GasAccount ปัจจุบัน",
-        "desc": "เมื่อออกจากระบบแล้ว คุณจะไม่สามารถใช้ GasAccount เพื่อชำระค่าธรรมเนียมแก๊สได้อีกต่อไป"
-      }
+        "desc": "เมื่อออกจากระบบแล้ว คุณจะไม่สามารถใช้ GasAccount เพื่อชำระค่าธรรมเนียมแก๊สได้อีกต่อไป",
+        "logoutSuccess": "ออกจากระบบสำเร็จ"
+      },
+      "history": {
+        "noHistory": "ไม่มีประวัติในช่วง 30 วันที่ผ่านมา"
+      },
+      "depositPopup": {
+        "amount": "จำนวนเงิน",
+        "title": "ฝากเงิน",
+        "token": "โทเค็น",
+        "invalidAmount": "ต้องต่ำกว่า 500",
+        "zeroInvalidAmount": "จำนวนเงินต้องไม่เป็นศูนย์",
+        "inSufficientTip1": "ที่อยู่นี้มีโทเค็นไม่เพียงพอ กรุณาเลือกที่อยู่อื่น",
+        "paymentAddress": "ที่อยู่การชำระเงิน",
+        "desc": "ทำการฝากเงินไปยังบัญชี DeBank L2 ของ Rabby ได้โดยไม่มีค่าใช้จ่ายเพิ่มเติม—ถอนเงินได้ทุกเวลา",
+        "selectToken": "เลือกโทเค็น",
+        "followingTokenInSufficient": "ยอดคงเหลือโทเค็นต่อไปนี้ไม่เพียงพอ"
+      },
+      "paymentAddressPopup": {
+        "title": "เลือกที่อยู่การชำระเงิน",
+        "balance": "ยอดเงิน",
+        "confirm": "ยืนยัน",
+        "address": "ที่อยู่การชำระเงิน"
+      },
+      "withdrawPopup": {
+        "noEnoughGas": "จำนวนเงินน้อยเกินกว่าที่จะครอบคลุมค่า gas",
+        "selectRecipientAddress": "เลือกที่อยู่ผู้รับ",
+        "noEnoughValuetBalance": "ยอดคงเหลือ Vault ไม่เพียงพอ เปลี่ยน chain หรือลองอีกครั้งในภายหลัง",
+        "title": "ถอนออก",
+        "amount": "จำนวน",
+        "selectDestinationChain": "เลือกเครือข่ายปลายทาง",
+        "withdrawalLimit": "ขีดจำกัดการถอน",
+        "riskMessageFromAddress": "เนื่องจากการควบคุมความเสี่ยง ขีดจำกัดการถอนขึ้นอยู่กับจำนวนเงินทั้งหมดที่ที่อยู่นี้ได้ฝากไว้",
+        "desc": "คุณสามารถถอนยอดเงินใน GasAccount ของคุณไปยัง DeBank L2 Wallet ได้ ลงชื่อเข้าใช้ DeBank L2 Wallet ของคุณเพื่อโอนเงินไปยังบล็อกเชนที่รองรับตามที่ต้องการ",
+        "to": "ถึง",
+        "riskMessageFromChain": "เนื่องจากการควบคุมความเสี่ยง ขีดจำกัดการถอนขึ้นอยู่กับยอดรวมที่ฝากจากเชนนี้",
+        "selectChain": "เลือก Chain",
+        "tipsBtn": "เข้าใจแล้ว",
+        "destinationChain": "เชนปลายทาง",
+        "deductGasFees": "จำนวนเงินที่ได้รับจะหักค่าธรรมเนียม gas",
+        "recipientAddress": "ที่อยู่ผู้รับ"
+      },
+      "withdrawConfirmModal": {
+        "button": "ดูบน DeBank",
+        "title": "โอนเงินไปยัง DeBank L2 Wallet ของคุณ"
+      },
+      "noBalance": "ไม่มียอดคงเหลือให้ถอน",
+      "withdraw": "ถอนเงิน",
+      "gasExceed": "ยอดคงเหลือ GasAccount ไม่เกิน $1000"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",

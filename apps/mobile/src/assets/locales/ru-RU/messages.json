@@ -650,7 +650,8 @@
       "Value": "Значение",
       "No_Tokens": "Нет токенов",
       "InsufficientBalanceTips": "Недостаточно средств",
-      "Select-from-supported-tokens": "Выберите из поддерживаемых токенов"
+      "Select-from-supported-tokens": "Выберите из поддерживаемых токенов",
+      "Balance": "Баланс"
     },
     "bridge": {
       "best": "Лучший",
@@ -1428,7 +1429,8 @@
       "logoutConfirmModal": {
         "desc": "После выхода из системы вы больше не сможете использовать GasAccount для оплаты комиссий за газ.",
         "title": "Выйти из текущего GasAccount",
-        "logout": "Выйти"
+        "logout": "Выйти",
+        "logoutSuccess": "Выход выполнен успешно"
       },
       "switchLoginAddressBeforeDeposit": {
         "desc": "Пожалуйста, переключитесь на ваш адрес для входа.",
@@ -1440,7 +1442,53 @@
         "desc": "Оплачивайте Gas сборы на всех цепочках"
       },
       "deposit": "Депозит",
-      "logout": "Выйти из текущего GasAccount"
+      "logout": "Выйти из текущего GasAccount",
+      "history": {
+        "noHistory": "За последние 30 дней данных нет"
+      },
+      "depositPopup": {
+        "paymentAddress": "Адрес для оплаты",
+        "amount": "Сумма",
+        "inSufficientTip1": "У этого адреса недостаточно токенов. Пожалуйста, выберите другой адрес.",
+        "selectToken": "Выбрать Token",
+        "followingTokenInSufficient": "Следующего баланса токена недостаточно",
+        "token": "Токен",
+        "title": "Депозит",
+        "invalidAmount": "Должно быть менее 500",
+        "desc": "Сделайте депозит на аккаунт Rabby's DeBank L2 без дополнительных комиссий — снимайте средства в любое время.",
+        "zeroInvalidAmount": "Сумма не может быть равна нулю"
+      },
+      "paymentAddressPopup": {
+        "address": "Платёжный адрес",
+        "confirm": "Подтвердить",
+        "title": "Выберите адрес оплаты",
+        "balance": "Баланс"
+      },
+      "withdrawPopup": {
+        "selectRecipientAddress": "Выберите адрес получателя",
+        "withdrawalLimit": "Лимит на снятие средств",
+        "selectDestinationChain": "Выберите целевую цепочку",
+        "noEnoughGas": "Сумма слишком мала, чтобы покрыть gas fees",
+        "riskMessageFromChain": "Из-за управления рисками лимит на снятие средств зависит от общей суммы, депонированной с этой цепочки.",
+        "riskMessageFromAddress": "Из-за контроля рисков лимит на снятие средств зависит от общей суммы, которую этот адрес внес.",
+        "amount": "Сумма",
+        "noEnoughValuetBalance": "Баланс Vault недостаточен. Переключите цепочку или попробуйте позже.",
+        "destinationChain": "Целевая сеть",
+        "tipsBtn": "Я понял",
+        "recipientAddress": "Адрес получателя",
+        "to": "К",
+        "title": "Вывод средств",
+        "selectChain": "Выбрать Chain",
+        "deductGasFees": "Полученная сумма будет за вычетом комиссии за газ",
+        "desc": "Вы можете вывести баланс GasAccount на ваш кошелек DeBank L2. Войдите в ваш кошелек DeBank L2, чтобы перевести средства на поддерживаемую блокчейн-сеть при необходимости."
+      },
+      "withdrawConfirmModal": {
+        "title": "Переведено на ваш DeBank L2 кошелек",
+        "button": "Просмотр на DeBank"
+      },
+      "noBalance": "Нет баланса для вывода",
+      "gasExceed": "Баланс GasAccount не может превышать $1000",
+      "withdraw": "Вывод средств"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",

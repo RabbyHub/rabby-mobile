@@ -1,102 +1,73 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, ViewProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import { useAlias } from '@/hooks/alias';
-import { AddressViewer } from '@/components/AddressViewer';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useGasAccountMethods } from '../hooks';
-import { getWalletIcon } from '@/utils/walletInfo';
 import { useGasAccountSign } from '../hooks/atom';
 import { toast } from '@/components/Toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { Button } from '@/components2024/Button';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 
 export const GasAccountCurrentAddress = ({
-  twoColumn,
-  transparent,
+  style,
 }: {
-  twoColumn?: boolean;
-  transparent?: boolean;
+  style?: ViewProps['style'];
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { currentAccount } = useCurrentAccount();
   const { account } = useGasAccountSign();
 
-  const [alias] = useAlias(account?.address || currentAccount?.address || '');
-
-  const WalletIcon = useMemo(() => {
-    return getWalletIcon(
-      account?.brandName ? account?.brandName : currentAccount?.brandName || '',
-    );
-  }, [account?.brandName, currentAccount?.brandName]);
-
-  if (twoColumn) {
-    return (
-      <View
-        style={[
-          styles.currentAddressContainer,
-          { height: 56, paddingVertical: 0, alignItems: 'center', gap: 10 },
-          transparent && { backgroundColor: 'transparent' },
-        ]}>
-        <WalletIcon style={styles.icon} />
-        <View
-          style={{
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 2,
-          }}>
-          <Text
-            style={[styles.aliasText, { fontSize: 13, marginLeft: 0 }]}
-            numberOfLines={1}>
-            {alias}
-          </Text>
+  return (
+    <View style={[styles.currentAddressContainer, style]}>
+      <AddressItem
+        account={(account as any) || currentAccount}
+        fetchAccount={false}>
+        {({ WalletIcon, WalletName, WalletBalance }) => (
           <View
             style={{
               flexDirection: 'row',
+              gap: 8,
               alignItems: 'center',
             }}>
-            <AddressViewer
-              address={account?.address || currentAccount!.address}
-              showArrow={false}
-              addressStyle={{ fontSize: 12 }}
+            <WalletIcon
+              style={{
+                width: 40,
+                height: 40,
+              }}
             />
-            <CopyAddressIcon
-              address={account?.address || currentAccount!.address}
-            />
-          </View>
-        </View>
-      </View>
-    );
-  }
+            <View style={{ gap: 4 }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <WalletName style={styles.addressText} />
+              </View>
 
-  return (
-    <View
-      style={[
-        styles.currentAddressContainer,
-        transparent && { backgroundColor: 'transparent' },
-      ]}>
-      <WalletIcon style={styles.icon} />
-      <Text style={styles.aliasText} numberOfLines={1}>
-        {alias}
-      </Text>
-      <AddressViewer
-        address={account?.address || currentAccount!.address}
-        showArrow={false}
-      />
-      <CopyAddressIcon address={account?.address || currentAccount!.address} />
+              <WalletBalance
+                style={[
+                  styles.addressText,
+                  {
+                    color: colors2024['neutral-secondary'],
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        )}
+      </AddressItem>
     </View>
   );
 };
 
 const GasAccountLogoutContent = ({ onClose }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const { logout } = useGasAccountMethods();
@@ -111,12 +82,15 @@ const GasAccountLogoutContent = ({ onClose }) => {
       setLoading(true);
       await logout();
       onClose();
+      setTimeout(() => {
+        toast.success(t('page.gasAccount.logoutConfirmModal.logoutSuccess'));
+      }, 200);
     } catch (error) {
       toast.info((error as any)?.message || String(error));
     } finally {
       setLoading(false);
     }
-  }, [loading, logout, onClose]);
+  }, [loading, logout, onClose, t]);
 
   const { bottom } = useSafeAreaInsets();
 
@@ -125,29 +99,29 @@ const GasAccountLogoutContent = ({ onClose }) => {
       <Text style={styles.logoutTitle}>
         {t('page.gasAccount.logoutConfirmModal.title')}
       </Text>
-      <GasAccountCurrentAddress />
+      {/* <GasAccountCurrentAddress /> */}
       <Text style={styles.logoutDesc}>
         {t('page.gasAccount.logoutConfirmModal.desc')}
       </Text>
-      <View style={[styles.buttonContainer, { marginBottom: bottom }]}>
+
+      <GasAccountCurrentAddress />
+
+      <View
+        style={[styles.buttonContainer, { marginBottom: bottom || 0 + 35 }]}>
         <Button
-          type="white"
-          ghost
+          type="ghost"
           title={t('global.Cancel')}
           onPress={onClose}
-          containerStyle={[styles.btnContainer]}
-          titleStyle={[styles.btnText]}
+          containerStyle={{ flex: 1 }}
+          titleStyle={styles.btnText}
         />
         <Button
-          type="white"
-          ghost
+          type="primary"
           loading={loading}
-          loadingProps={{ color: colors['red-default'] }}
+          containerStyle={{ flex: 1 }}
           title={t('page.gasAccount.logoutConfirmModal.logout')}
           onPress={handleLogout}
-          containerStyle={[styles.btnContainer]}
-          titleStyle={[styles.btnText, styles.logoutBtnText]}
-          buttonStyle={styles.logoutBtn}
+          titleStyle={styles.btnText}
         />
       </View>
     </View>
@@ -158,8 +132,7 @@ export const GasAccountLogoutPopup = (props: {
   visible: boolean;
   onClose?: () => void;
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
@@ -172,9 +145,13 @@ export const GasAccountLogoutPopup = (props: {
 
   return (
     <AppBottomSheetModal
-      snapPoints={[370]}
+      snapPoints={[420]}
       onDismiss={props.onClose}
-      ref={modalRef}>
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}>
       <BottomSheetView style={styles.popup}>
         <GasAccountLogoutContent onClose={props.onClose} />
       </BottomSheetView>
@@ -182,38 +159,28 @@ export const GasAccountLogoutPopup = (props: {
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   popup: {
     margin: 0,
     height: '100%',
   },
 
   currentAddressContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 30,
     flexDirection: 'row',
+    width: '100%',
     alignItems: 'center',
-    backgroundColor: colors['neutral-card-2'],
-    maxWidth: '100%',
-  },
-  icon: {
-    width: 24,
-    height: 24,
-  },
-  aliasText: {
-    flexShrink: 1,
-    marginLeft: 8,
-    marginRight: 4,
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    paddingHorizontal: 24,
+    height: 96,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
   },
 
-  confirmDescription: {
-    marginBottom: 30,
-    fontSize: 14,
-    borderTopColor: colors['neutral-body'],
+  addressText: {
+    fontSize: 17,
+    fontWeight: '500',
+    lineHeight: 22,
+    fontFamily: 'SF Pro Rounded',
   },
 
   btnContainer: {
@@ -222,31 +189,24 @@ const getStyles = createGetStyles(colors => ({
   logoutBtn: {
     borderColor: colors['red-default'],
   },
-  btnText: {
-    textAlign: 'center',
-    fontSize: 15,
-    fontWeight: '500',
-  },
+
   logoutBtnText: {
     color: colors['red-default'],
   },
   buttonContainer: {
     gap: 12,
-    width: '100%',
+    // width: '100%',
     paddingVertical: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopColor: colors['neutral-line'],
-    borderTopWidth: 0.5,
-    backgroundColor: colors['neutral-bg1'],
     paddingBottom: 20,
-    paddingHorizontal: 20,
+    marginTop: 'auto',
   },
 
   logoutContainer: {
+    paddingHorizontal: 20,
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     height: '100%',
@@ -254,26 +214,33 @@ const getStyles = createGetStyles(colors => ({
   },
 
   logoutTitle: {
-    color: colors['neutral-title-1'],
-    textAlign: 'center',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '500',
+    fontStyle: 'normal',
+    fontWeight: '800',
+    lineHeight: 24,
     marginTop: 20,
-    marginBottom: 28,
   },
 
   logoutDesc: {
-    color: colors['neutral-body'],
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
-    marginHorizontal: 20,
-    marginTop: 28,
-    marginBottom: 34,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 22,
+    marginVertical: 24,
   },
 
-  popupBody: {
-    padding: 0,
+  btnText: {
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 28,
   },
 }));
 

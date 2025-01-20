@@ -154,21 +154,25 @@ function FreeGasReady({
 interface ActivityFreeGasBgProps {
   width?: number;
   height?: number;
-  trianglePosition?: number;
   borderColor: string;
   borderWidth?: number;
   style?: ViewStyle;
+  position?: 'left' | 'right';
 }
 
 const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
   width: propsWidth,
   height = 45,
-  trianglePosition = 120,
   borderWidth = 1,
   borderColor,
   style,
+  position = 'right',
 }) => {
   const { width: defaultWidth } = useWindowDimensions();
+
+  const trianglePosition = useMemo(() => {
+    return (defaultWidth - 20 * 2) * (0.25 * (position === 'left' ? 1 : 3));
+  }, [defaultWidth, position]);
 
   const width = useMemo(
     () => propsWidth || defaultWidth - 20 * 2,
@@ -672,7 +676,7 @@ const getStyles = createGetStyles(colors => ({
   tipTriangle: {
     position: 'absolute',
     top: -13,
-    left: '33%',
+    right: '25%',
     width: 0,
     height: 0,
     backgroundColor: 'transparent',

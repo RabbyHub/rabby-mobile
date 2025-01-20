@@ -611,7 +611,8 @@
       "Token": "Token",
       "Loading_Tokens": "Chargement des Tokens...",
       "No_Tokens": "Pas de Tokens",
-      "Select-from-supported-tokens": "Sélectionnez parmi les tokens pris en charge"
+      "Select-from-supported-tokens": "Sélectionnez parmi les tokens pris en charge",
+      "Balance": "Solde"
     },
     "swap": {
       "Pending": "En attente",
@@ -1298,13 +1299,60 @@
       "logoutConfirmModal": {
         "title": "Déconnecter le GasAccount actuel",
         "logout": "Déconnexion",
-        "desc": "Une fois déconnecté, vous ne pourrez plus utiliser GasAccount pour payer les frais de gas."
+        "desc": "Une fois déconnecté, vous ne pourrez plus utiliser GasAccount pour payer les frais de gas.",
+        "logoutSuccess": "Déconnexion réussie"
       },
       "loginInTip": {
         "desc": "Payer les frais de Gas sur toutes les chaînes",
         "title": "Déposer USDC / USDT"
       },
-      "risk": "Votre adresse actuelle a été détectée comme risquée, cette fonctionnalité n'est donc pas disponible."
+      "risk": "Votre adresse actuelle a été détectée comme risquée, cette fonctionnalité n'est donc pas disponible.",
+      "history": {
+        "noHistory": "Aucun historique au cours des 30 derniers jours"
+      },
+      "depositPopup": {
+        "token": "Token",
+        "followingTokenInSufficient": "Le solde du jeton suivant est insuffisant",
+        "zeroInvalidAmount": "Le montant ne peut pas être zéro",
+        "title": "Dépôt",
+        "selectToken": "Sélectionner le Token",
+        "inSufficientTip1": "Cette adresse n'a pas assez de tokens. Veuillez choisir une adresse différente.",
+        "desc": "Effectuez un dépôt sur le compte DeBank L2 de Rabby sans frais supplémentaires - retirez à tout moment.",
+        "amount": "Montant",
+        "paymentAddress": "Adresse de paiement",
+        "invalidAmount": "Doit être inférieur à 500"
+      },
+      "paymentAddressPopup": {
+        "confirm": "Confirmer",
+        "balance": "Solde",
+        "title": "Sélectionner l'adresse de paiement",
+        "address": "Adresse de paiement"
+      },
+      "withdrawPopup": {
+        "amount": "Montant",
+        "withdrawalLimit": "Limite de retrait",
+        "selectDestinationChain": "Sélectionner la chaîne de destination",
+        "noEnoughValuetBalance": "Solde de Vault insuffisant. Changez de chaîne ou réessayez plus tard.",
+        "selectRecipientAddress": "Sélectionner l'adresse du destinataire",
+        "noEnoughGas": "Montant trop bas pour couvrir les frais de gas",
+        "riskMessageFromAddress": "En raison du contrôle des risques, la limite de retrait dépend du montant total déposé par cette adresse.",
+        "desc": "Vous pouvez retirer le solde de votre GasAccount vers votre portefeuille DeBank L2. Connectez-vous à votre portefeuille DeBank L2 pour transférer les fonds vers une blockchain prise en charge selon vos besoins.",
+        "title": "Retirer",
+        "to": "À",
+        "tipsBtn": "J'ai compris",
+        "recipientAddress": "Adresse du destinataire",
+        "selectChain": "Sélectionner la chaîne",
+        "riskMessageFromChain": "En raison du contrôle des risques, la limite de retrait dépend du montant total déposé à partir de cette chaîne.",
+        "destinationChain": "Chaîne de destination",
+        "deductGasFees": "Le montant reçu déduira les frais de gas"
+      },
+      "withdrawConfirmModal": {
+        "button": "Voir sur DeBank",
+        "title": "Transféré vers votre portefeuille DeBank L2"
+      },
+      "withdraw": "Retirer",
+      "gasExceed": "Le solde du GasAccount ne peut pas dépasser 1000 $.",
+      "noBalance": "Solde insuffisant pour le retrait"
     },
     "tokenDetail": {
       "relateDefi": "Lié au DeFi",
