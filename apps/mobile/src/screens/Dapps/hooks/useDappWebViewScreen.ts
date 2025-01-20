@@ -28,6 +28,8 @@ import {
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
+import { preferenceService } from '@/core/services';
+import { apisDapp } from '@/core/apis';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -159,7 +161,10 @@ export function useDappWebViewScreen() {
       globalSetActiveDappState({ dappOrigin: origin });
       _setActiveDappOrigin(origin);
 
-      if (!origin) inactivate();
+      if (!origin) {
+        preferenceService.toggleAllowNotifyAccountsChanged(false);
+        inactivate();
+      }
     },
     [_setActiveDappOrigin, inactivate],
   );
@@ -297,7 +302,14 @@ export function useDappWebViewScreen() {
         );
       }
 
+      // this will change data in dapps backend, maybe not sync with dappInfo, but we don't need basic info later
       syncBasicDappInfo(item.origin);
+
+      const dappInfo: DappInfo = dapps[item.origin];
+      if (!dappInfo.currentAccount) {
+        const account = apisDapp.setCurrentAccountForDapp(item.origin);
+        dappInfo.currentAccount = account;
+      }
 
       const needTriggerWebViewReload =
         forceReopen || item.$openParams?.initialUrl !== newUrl;
@@ -350,20 +362,30 @@ export function useDappWebViewScreen() {
         setActiveDappOrigin(item.origin);
       }
 
-      activate(dapps[item.origin]);
+      preferenceService.toggleAllowNotifyAccountsChanged(true);
+
+      activate(dappInfo);
 
       const routeName = getLatestNavigationName();
       const needRedirect =
         routeName && routeName !== RootNames.DappWebViewStubOnHome;
-      if (needRedirect)
+      if (needRedirect) {
         /**
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
          **/
         naviPush(RootNames.StackRoot, {
           screen: RootNames.DappWebViewStubOnHome,
-          params: { dappsWebViewFromRoute },
+          params: {
+            dappsWebViewFromRoute,
+            // nextOpenDappInfo: dapps[item.origin],
+          },
         });
+        // try trigger notify again
+        setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
+      } else {
+        activate(dapps[item.origin]);
+      }
 
       return true;
     },

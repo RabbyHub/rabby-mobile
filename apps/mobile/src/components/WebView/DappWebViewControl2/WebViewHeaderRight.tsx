@@ -12,11 +12,20 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { useEffect } from 'react';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { RcWalletCC } from '@/assets/icons/common';
+import { useTheme2024 } from '@/hooks/theme';
 
-export function WebViewHeaderRight() {
-  const { finalSceneCurrentAccount } = useSceneAccountInfo({
-    forScene: '@ActiveDappWebViewModal',
-  });
+export function WebViewHeaderRight({
+  activeDapp,
+}: {
+  activeDapp: DappInfo | null;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+  const { finalSceneCurrentAccount, sceneCurrentAccount } = useSceneAccountInfo(
+    {
+      forScene: '@ActiveDappWebViewModal',
+    },
+  );
 
   const { toggleSceneVisible } = useAccountSceneVisible(
     '@ActiveDappWebViewModal',
@@ -36,16 +45,26 @@ export function WebViewHeaderRight() {
       onPress={() => {
         toggleSceneVisible('@ActiveDappWebViewModal');
       }}>
-      <WalletIcon
-        type={finalSceneCurrentAccount?.type}
-        width={24}
-        height={24}
-        style={{ borderRadius: 6 }}
-      />
+      {!sceneCurrentAccount ? (
+        <RcWalletCC style={styles.walletIcon} />
+      ) : (
+        <WalletIcon
+          type={finalSceneCurrentAccount?.type}
+          width={24}
+          height={24}
+          style={{ borderRadius: 6 }}
+        />
+      )}
     </TouchableView>
   );
 }
 
 export const getStyle = createGetStyles2024(ctx => {
-  return {};
+  return {
+    walletIcon: {
+      color: ctx.colors['neutral-title-1'],
+      width: 24,
+      height: 24,
+    },
+  };
 });

@@ -467,7 +467,7 @@ export function OpenedDappWebViewStub() {
                 allowsInlineMediaPlayback: true,
                 disableJsPromptLike: !isActiveDapp,
               }}
-              headerRight={<WebViewHeaderRight />}
+              headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
               onPressHeaderLeftClose={ctx => {
                 hideDappSheetModal(ctx);
               }}
@@ -505,7 +505,6 @@ export function OpenedDappWebViewStub() {
         })}
         {openedDappItems.length > 0 && activeDapp && (
           <AccountSwitcherModalInDappWebView
-            forScene="@ActiveDappWebViewModal"
             activeDappId={finalActiveDappId}
             __IS_IN_SHEET_MODAL__
           />

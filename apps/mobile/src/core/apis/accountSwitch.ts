@@ -5,12 +5,21 @@ export async function getLastUsedAccount() {
   return preferenceService.getLastUsedAccount();
 }
 
-export async function enableSceneAccount(account?: Account) {
+export async function enableSceneAccount(
+  account?: Account,
+  options?: {
+    activeLastUsedAccountOptions?: Parameters<
+      typeof preferenceService.activateLastUsedAccount
+    >[0];
+  },
+) {
   if (account) {
     preferenceService.setLastUsedAccount(account);
   }
 
-  await preferenceService.activateLastUsedAccount();
+  await preferenceService.activateLastUsedAccount(
+    options?.activeLastUsedAccountOptions,
+  );
 
   return {
     currentAccount: preferenceService.getCurrentAccount(),

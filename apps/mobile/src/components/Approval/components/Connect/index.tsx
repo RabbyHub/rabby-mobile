@@ -24,7 +24,7 @@ import {
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import PQueue from 'p-queue';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
@@ -39,6 +39,11 @@ import { ChainSelector } from '@/components/ChainSelector';
 import { Spin } from '@/components/Spin';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { findChain } from '@/utils/chain';
+import {
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
+import { AccountSwitcherAopProps } from '@/components/AccountSwitcher/hooks';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -199,14 +204,25 @@ const SecurityLevelTipColor = {
   },
 };
 
-interface ConnectProps {
+type ConnectProps = AccountSwitcherAopProps<{
   params: any;
   onChainChange?(chain: CHAINS_ENUM): void;
   defaultChain?: CHAINS_ENUM;
-}
+}>;
 
-export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
-  const { currentAccount: account } = useCurrentAccount();
+export const Connect = ({
+  params: { icon, origin },
+}: /**
+ * @description in fact, it's always '@ActiveDappWebViewModal' now, just leave here to
+ * notice that it's a prop that can be passed in the future
+ */
+// forScene = '@ActiveDappWebViewModal'
+ConnectProps) => {
+  // const { currentAccount } = useCurrentAccount();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
+    forScene: '@ActiveDappWebViewModal',
+  });
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [, resolveApproval, rejectApproval] = useApproval();
@@ -527,12 +543,20 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
     rejectApproval('User rejected the request.');
   };
 
-  const handleAllow = async () => {
+  const handleAllow = useCallback(async () => {
     resolveApproval({
       defaultChain,
       signPermission,
+    }).then(() => {
+      switchSceneCurrentAccount('@ActiveDappWebViewModal', account);
     });
-  };
+  }, [
+    defaultChain,
+    resolveApproval,
+    signPermission,
+    switchSceneCurrentAccount,
+    account,
+  ]);
 
   const handleRuleDrawerClose = (update: boolean) => {
     if (update) {

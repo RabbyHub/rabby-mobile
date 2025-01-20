@@ -7,6 +7,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from './screens/Home/types';
+import type { DappInfo } from './core/services/dappService';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -54,6 +55,7 @@ export type HomeNavigatorParamsList = {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
       | typeof RootNames.FavoriteDapps;
+    nextOpenDappInfo?: DappInfo;
   };
 };
 
