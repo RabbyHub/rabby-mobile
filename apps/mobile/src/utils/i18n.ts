@@ -14,7 +14,6 @@ import de_DE from '@/assets/locales/de-DE/messages.json';
 import pt_PT from '@/assets/locales/pt-PT/messages.json';
 
 import codeConfig from '@/assets/locales/index.json';
-import { isNonPublicProductionEnv } from '@/constant/env';
 
 export enum SupportedLang {
   'en-US' = 'en-US',
@@ -30,6 +29,8 @@ export enum SupportedLang {
   'de-DE' = 'de-DE',
   'pt-PT' = 'pt-PT',
 }
+
+export const DEFAULT_LANG = SupportedLang['en-US'];
 
 const locales = {
   [SupportedLang['en-US']]: enLocale,
@@ -51,27 +52,24 @@ export const SupportedLangs = (
 ).reduce(
   (accu, item) => {
     if (SupportedLang.hasOwnProperty(item.code)) {
-      accu.push({ lang: item.code, label: item.name });
+      accu.push({ lang: item.code, label: item.name, isRTL: false });
     }
 
     return accu;
   },
   [] as {
+    isRTL: boolean;
     lang: SupportedLang;
     label: string;
   }[],
 );
 
-export function coerceLang(lang: SupportedLang): SupportedLang {
-  return lang;
-}
-
 export function filterSupportedLang(lang: string): SupportedLang {
   if (SupportedLang.hasOwnProperty(lang)) {
-    return coerceLang(lang as SupportedLang);
+    return lang as SupportedLang;
   }
 
-  return coerceLang(SupportedLang['en-US']);
+  return DEFAULT_LANG;
 }
 
 i18n
