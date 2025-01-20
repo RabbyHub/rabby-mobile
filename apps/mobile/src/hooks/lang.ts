@@ -1,54 +1,108 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { findBestLanguageTag, getLocales } from 'react-native-localize';
 import { useAtom } from 'jotai';
-import { atomByMMKV, appStorage } from '@/core/storage/mmkv';
+import { atomByMMKV, appJsonStore } from '@/core/storage/mmkv';
 import i18n, {
-  coerceLang,
+  DEFAULT_LANG,
   filterSupportedLang,
   SupportedLang,
   SupportedLangs,
 } from '@/utils/i18n';
+import useMount from 'react-use/lib/useMount';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
-const langAtom = atomByMMKV<SupportedLang>('@AppLang', 'en' as SupportedLang);
+let defaultLang = DEFAULT_LANG;
+(function iifeUpgradeAppLang() {
+  // leave here for test legacy data
+  if (!isNonPublicProductionEnv) {
+    appJsonStore.setItem('@AppLang', 'en');
+  }
+
+  const legacyAppLang = appJsonStore.getItem(
+    '@AppLang',
+    'en-US',
+  ) as SupportedLang;
+  if (legacyAppLang) {
+    appJsonStore.removeItem('@AppLang');
+    defaultLang =
+      coerceLang(legacyAppLang) || filterOutBestLang() || DEFAULT_LANG;
+  }
+  console.debug(
+    `[iifeUpgradeAppLang] legacy app lang: ${legacyAppLang}; default lang: ${defaultLang}`,
+  );
+})();
+
+function coerceLang(lang: string): SupportedLang {
+  switch (lang) {
+    case 'en':
+    case 'en-US':
+      return 'en-US' as SupportedLang;
+    case 'zh':
+    case 'zh-CN':
+      return 'zh-CN' as SupportedLang;
+    default:
+      return filterSupportedLang(lang);
+  }
+}
+
+function filterOutBestLang(): SupportedLang {
+  const langs = SupportedLangs.map(item => item.lang);
+  return findBestLanguageTag(langs)?.languageTag || DEFAULT_LANG;
+}
+
+type LangSetting = {
+  lang: SupportedLang;
+  isRTL?: boolean;
+};
+function makeLangSetting(lang: SupportedLang): LangSetting {
+  return { lang: filterSupportedLang(lang), isRTL: false };
+}
+
+const langAtom = atomByMMKV<{
+  lang: SupportedLang;
+  isRTL?: boolean;
+}>('@AppLangSetting', makeLangSetting(defaultLang));
 
 export function useAppLanguage() {
-  const [currentLanguage, _setCurrentLanguage] = useAtom(langAtom);
+  const [currentLangSetting, _setCurrentLangSetting] = useAtom(langAtom);
 
   const setCurrentLanguage = useCallback(
     async (lang: SupportedLang) => {
       const nextVal = filterSupportedLang(lang);
       await i18n.changeLanguage(nextVal);
-      _setCurrentLanguage(nextVal);
+      _setCurrentLangSetting(makeLangSetting(nextVal));
     },
-    [_setCurrentLanguage],
+    [_setCurrentLangSetting],
+  );
+
+  const currentLanguage = useMemo(
+    () => filterSupportedLang(currentLangSetting.lang),
+    [currentLangSetting.lang],
   );
 
   return {
-    currentLanguage: coerceLang(currentLanguage),
+    currentLanguage,
     setCurrentLanguage,
   };
 }
 
-export function useDetectLanguage() {
-  const { setCurrentLanguage } = useAppLanguage();
-  useEffect(() => {
-    let appLang = appStorage.getItem('@AppLang');
-    try {
-      appLang = JSON.parse(appLang as unknown as string);
-    } catch (e) {
-      // NOTHING
-    }
-    const langs = SupportedLangs.map(item => item.lang);
-    const bestLang = findBestLanguageTag(langs);
-    if (appLang) {
-      setCurrentLanguage(appLang as unknown as SupportedLang);
-    } else if (bestLang) {
-      const lang = langs.find(item => item === bestLang.languageTag);
-      if (lang) {
-        setCurrentLanguage(lang);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+/**
+ * @description only call this hook once in the app
+ */
+export function useTriggerI18nChangeOnAppTop() {
+  const { currentLanguage } = useAppLanguage();
+
+  useMount(() => {
+    i18n
+      .changeLanguage(currentLanguage)
+      .then(() => {
+        console.debug(
+          `[useTriggerI18nChangeOnAppTop] current language: ${currentLanguage}`,
+        );
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  });
 }

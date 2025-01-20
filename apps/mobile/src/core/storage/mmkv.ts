@@ -111,6 +111,10 @@ export function makeJsonStore<T = any>(options?: {
   return jsonStore;
 }
 
+export const appJsonStore = makeJsonStore<any>({
+  storage: appStorage as SyncStringStorage,
+});
+
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
