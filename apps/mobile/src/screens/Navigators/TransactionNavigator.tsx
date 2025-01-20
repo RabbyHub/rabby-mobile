@@ -4,13 +4,8 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import {
-  DEFAULT_NAVBAR_FONT_SIZE,
-  RootNames,
-  ScreenWithAccountSwitcherLayouts,
-  makeHeadersPresets,
-} from '@/constant/layout';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
@@ -27,7 +22,6 @@ import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
-import { strings } from '@/utils/i18n';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();

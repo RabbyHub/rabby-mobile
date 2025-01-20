@@ -3,14 +3,13 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import RcPlusCC from '../icons/plus-cc.svg';
 import RcMinusCC from '../icons/minus-cc.svg';
 import { NumericInput } from '@/components/Form/NumbericInput';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { strings } from '@/utils/i18n';
 import { Tip } from '@/components';
 import { useTranslation } from 'react-i18next';
 
