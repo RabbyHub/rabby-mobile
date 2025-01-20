@@ -12,25 +12,32 @@ import i18n, {
 import useMount from 'react-use/lib/useMount';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
-let defaultLang = DEFAULT_LANG;
+function filterOutBestLang() {
+  const langs = SupportedLangs.map(item => item.lang);
+  return findBestLanguageTag(langs);
+}
+
+let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
 (function iifeUpgradeAppLang() {
-  // leave here for test legacy data
+  // leave here for test fresh user
   if (!isNonPublicProductionEnv) {
-    appJsonStore.setItem('@AppLang', 'en');
+    appJsonStore.removeItem('@AppLangSetting');
+    appJsonStore.removeItem('@AppLang');
   }
 
-  const legacyAppLang = appJsonStore.getItem(
-    '@AppLang',
-    'en-US',
-  ) as SupportedLang;
+  // // leave here for test legacy data
+  // if (!isNonPublicProductionEnv) {
+  //   appJsonStore.setItem('@AppLang', 'en');
+  // }
+
+  const legacyAppLang = appJsonStore.getItem('@AppLang', null) as SupportedLang;
   if (legacyAppLang) {
     appJsonStore.removeItem('@AppLang');
-    defaultLang =
-      coerceLang(legacyAppLang) || filterOutBestLang() || DEFAULT_LANG;
+    defaultLang = coerceLang(legacyAppLang) || defaultLang;
+    console.debug(
+      `[iifeUpgradeAppLang] legacy app lang: ${legacyAppLang}; default lang: ${defaultLang}`,
+    );
   }
-  console.debug(
-    `[iifeUpgradeAppLang] legacy app lang: ${legacyAppLang}; default lang: ${defaultLang}`,
-  );
 })();
 
 function coerceLang(lang: string): SupportedLang {
@@ -44,11 +51,6 @@ function coerceLang(lang: string): SupportedLang {
     default:
       return filterSupportedLang(lang);
   }
-}
-
-function filterOutBestLang(): SupportedLang {
-  const langs = SupportedLangs.map(item => item.lang);
-  return findBestLanguageTag(langs)?.languageTag || DEFAULT_LANG;
 }
 
 type LangSetting = {
