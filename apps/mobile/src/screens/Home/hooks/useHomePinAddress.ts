@@ -1,11 +1,7 @@
 import React from 'react';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  usePinAddresses,
-} from '@/hooks/account';
+import { usePinAddresses } from '@/hooks/account';
 import { sortAccountsByBalance } from '@/utils/account';
 import { balanceAccountType } from '@/hooks/useAccountsBalance';
 
@@ -30,7 +26,6 @@ export default function useHomePinAddress(
       const idx = restAccounts.findIndex(
         account =>
           isSameAddress(account.address, highlighted.address) &&
-          account.brandName === highlighted.brandName &&
           account.type !== KEYRING_CLASS.WATCH &&
           account.type !== KEYRING_CLASS.GNOSIS &&
           account.type !== KEYRING_CLASS.WALLETCONNECT,
@@ -38,6 +33,7 @@ export default function useHomePinAddress(
       if (idx > -1) {
         highlightedAccounts.push({
           ...restAccounts[idx],
+          brandName: highlighted.brandName,
           balance: restAccounts[idx].balance ?? 0,
         });
       }
