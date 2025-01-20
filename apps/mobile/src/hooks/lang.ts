@@ -10,7 +10,6 @@ import i18n, {
   SupportedLangs,
 } from '@/utils/i18n';
 import useMount from 'react-use/lib/useMount';
-import { isNonPublicProductionEnv } from '@/constant/env';
 
 function filterOutBestLang() {
   const langs = SupportedLangs.map(item => item.lang);
@@ -19,14 +18,14 @@ function filterOutBestLang() {
 
 let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
 (function iifeUpgradeAppLang() {
-  // leave here for test fresh user
-  if (!isNonPublicProductionEnv) {
-    appJsonStore.removeItem('@AppLangSetting');
-    appJsonStore.removeItem('@AppLang');
-  }
+  // // leave here for test fresh user
+  // if (__DEV__) {
+  //   appJsonStore.removeItem('@AppLangSetting');
+  //   appJsonStore.removeItem('@AppLang');
+  // }
 
   // // leave here for test legacy data
-  // if (!isNonPublicProductionEnv) {
+  // if (__DEV__) {
   //   appJsonStore.setItem('@AppLang', 'en');
   // }
 
