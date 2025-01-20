@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { findBestLanguageTag, getLocales } from 'react-native-localize';
 import { useAtom } from 'jotai';
-import { atomByMMKV, appJsonStore } from '@/core/storage/mmkv';
+import { atomByMMKV, appJsonStore, IS_BOOTED_USER } from '@/core/storage/mmkv';
 import i18n, {
   DEFAULT_LANG,
   filterSupportedLang,
@@ -17,7 +17,19 @@ function filterOutBestLang() {
 }
 
 let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
+/**
+ * @notice
+ * - users with version<0.5.4 has '@AppLang' in storage, because this file is not lazy-loaded
+ * - users STARTING from 0.5.4~0.5.5 has no opportunity to set lang, so the '@AppLang' is always null
+ */
 (function iifeUpgradeAppLang() {
+  const currentAppLangSetting = appJsonStore.getItem('@AppLangSetting', null);
+  let legacyAppLang = appJsonStore.getItem('@AppLang', null) as string;
+  // for all used user, set default lang
+  if (!currentAppLangSetting && IS_BOOTED_USER && !legacyAppLang) {
+    appJsonStore.setItem('@AppLang', 'en');
+    legacyAppLang = 'en';
+  }
   // // leave here for test fresh user
   // if (__DEV__) {
   //   appJsonStore.removeItem('@AppLangSetting');
@@ -29,7 +41,6 @@ let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
   //   appJsonStore.setItem('@AppLang', 'en');
   // }
 
-  const legacyAppLang = appJsonStore.getItem('@AppLang', null) as SupportedLang;
   if (legacyAppLang) {
     appJsonStore.removeItem('@AppLang');
     defaultLang = coerceLang(legacyAppLang) || defaultLang;

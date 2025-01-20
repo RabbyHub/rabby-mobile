@@ -94,6 +94,10 @@ export function normalizeKeyringState() {
 
 export { appStorage, keyringStorage };
 
+export const IS_BOOTED_USER =
+  !!appStorage.getItem('keyringState') ||
+  !!keyringStorage.getItem('keyringState');
+
 export function makeJsonStore<T = any>(options?: {
   storage?: /* AsyncStringStorage |  */ SyncStringStorage;
 }) {
