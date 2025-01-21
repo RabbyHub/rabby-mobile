@@ -23,6 +23,8 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { strings } from '@/utils/i18n';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
+import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
+import { useCurrentAccount } from '@/hooks/account';
 
 interface ItemProps {
   status: number;
@@ -125,6 +127,7 @@ export const HistoryTokenList = ({
   console.log('HistoryTokenList type', type);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { currentAccount } = useCurrentAccount();
 
   const isFail = useMemo(() => status !== 1, [status]);
   const handlePress = useCallback(
@@ -200,6 +203,15 @@ export const HistoryTokenList = ({
                     ? t('page.singleHome.sectionHeader.Nft')
                     : getTokenSymbol(singeToken as TokenItem)}
                 </Text>
+                {Boolean(!tokenIsNft && singleAmount && singleAmount < 1e9) && (
+                  <HistoryItemTokenPrice
+                    tokenId={tokenId}
+                    chainId={chain}
+                    address={currentAccount?.address!}
+                    amount={singleAmount!}
+                    style={styles.tokenPriceText}
+                  />
+                )}
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -320,9 +332,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '700',
   },
+  tokenPriceText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
   colomnBox: {
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   isSendTextColor: {
     color: colors2024['neutral-title-1'],
