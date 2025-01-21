@@ -43,7 +43,7 @@ export const formatLittleNumber = (num: string, minLen = 6) => {
 };
 
 export const formatTokenAmount = (
-  amount: number | string,
+  amount: number | string | BigNumber,
   decimals = 4,
   moreDecimalsWhenNotEnough = false, // when number less then 0.0001, auto change decimals to 8
 ) => {

@@ -22,7 +22,12 @@ import {
   TokenItem,
   GasLevel,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { formatPrice, intToHex, numberWithCommasIsLtOne } from '@/utils/number';
+import {
+  formatPrice,
+  formatTokenAmount,
+  intToHex,
+  numberWithCommasIsLtOne,
+} from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { StackActions, useRoute } from '@react-navigation/native';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -60,6 +65,18 @@ import { AddressItemInDetail, TxStatusItem } from './HistoryDetailScreen';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { transactionHistoryService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
+import { findMaxGasTx } from '@/core/utils/tx';
+import BigNumber from 'bignumber.js';
+import { ApproveToken } from './components/Actions/ApproveToken';
+import { ApproveNFT } from './components/Actions/ApproveNFT';
+import { ApproveNFTCollection } from './components/Actions/ApproveNFTCollection';
+import { RevokeNFT } from './components/Actions/RevokeNFT';
+import { RevokeNFTCollection } from './components/Actions/RevokeNFTCollection';
+import { RevokeToken } from './components/Actions/RevokeToken';
+import { CancelTx } from './components/Actions/CancelTx';
+import { DeployContact } from './components/Actions/DeployContract';
+import { Swap } from './components/Actions/Swap';
+import { Send } from './components/Actions/Send';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route = useRoute();
@@ -353,257 +370,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
     });
   });
 
-  const TokenContainer = useMemo(() => {
-    switch (formatType) {
-      case HistoryItemCateType.Send:
-        const singeToken = sendsToken[0];
-        const tokenIsNft = singeToken?.id.length === 32;
-        return (
-          <TouchableOpacity
-            onPress={() => handlePressToken(singeToken, tokenIsNft)}>
-            <View style={[styles.singleBox]}>
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <HistoryItemIcon
-                  isInDetail={true}
-                  type={HistoryItemCateType.Send}
-                  token={singeToken as TokenItem}
-                  isNft={tokenIsNft}
-                />
-                <View style={[styles.colomnBox]}>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                    {'-'}{' '}
-                    {tokenIsNft
-                      ? 1
-                      : numberWithCommasIsLtOne(singeToken?.amount)}{' '}
-                    {tokenIsNft
-                      ? strings('page.nft.title')
-                      : getTokenSymbol(singeToken as TokenItem)}
-                  </Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <RcIconSingleArrow
-                  width={32}
-                  height={32}
-                  color={colors2024['neutral-bg-2']}
-                />
-              </View>
-            </View>
-          </TouchableOpacity>
-        );
-      case HistoryItemCateType.Swap:
-        const sendToken = sendsToken[0];
-        const reciToken = recievesToken[0];
-
-        return (
-          <View style={[styles.doubleBox]}>
-            <TouchableOpacity
-              style={[styles.fromTokenBox]}
-              onPress={() => handlePressToken(sendToken, false)}>
-              <AssetAvatar
-                logo={sendToken?.logo_url}
-                size={42}
-                chain={sendToken?.chain}
-                chainSize={16}
-              />
-              <View style={[styles.colomnBox]}>
-                <Text
-                  style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                  {'-'} {numberWithCommasIsLtOne(sendToken.amount, 2)}{' '}
-                  {getTokenSymbol(sendToken as TokenItem)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toTokenBox]}
-              onPress={() => handlePressToken(reciToken, false)}>
-              <AssetAvatar
-                logo={reciToken?.logo_url}
-                size={42}
-                chain={reciToken?.chain}
-                chainSize={16}
-              />
-              <View style={[styles.colomnBox]}>
-                <Text style={[styles.tokenAmountTextList]}>
-                  {'+'} {numberWithCommasIsLtOne(reciToken.amount, 2)}{' '}
-                  {getTokenSymbol(reciToken as TokenItem)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <View style={styles.iconSwitchArrow}>
-              <RcIconSwitchArrow />
-            </View>
-          </View>
-        );
-      case HistoryItemCateType.Approve:
-      case HistoryItemCateType.Revoke: {
-        const isNft = approveToken?.id.length === 32;
-        const amount = approveToken?.amount;
-
-        let str = '';
-        if (amount) {
-          if (isNft) {
-            str = approveToken.amount.toString();
-          } else {
-            str =
-              amount >= 1e9
-                ? strings('page.transactions.detail.Unlimited')
-                : numberWithCommasIsLtOne(amount, 2);
-          }
-        }
-        return (
-          <TouchableOpacity
-            onPress={() => handlePressToken(approveToken!, isNft)}>
-            <View style={[styles.singleBox]}>
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <HistoryItemIcon
-                  isInDetail={true}
-                  type={formatType}
-                  token={approveToken as TokenItem}
-                  isNft={isNft}
-                />
-                <View style={[styles.colomnBox]}>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                    {str}{' '}
-                    {isNft
-                      ? strings('page.nft.title')
-                      : getTokenSymbol(approveToken as TokenItem)}
-                  </Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <RcIconSingleArrow
-                  width={32}
-                  height={32}
-                  color={colors2024['neutral-bg-2']}
-                />
-              </View>
-            </View>
-          </TouchableOpacity>
-        );
-      }
-      default:
-        return null;
-    }
-  }, [
-    formatType,
-    sendsToken,
-    approveToken,
-    recievesToken,
-    handlePressToken,
-    styles.colomnBox,
-    styles.doubleBox,
-    styles.fromTokenBox,
-    styles.iconSwitchArrow,
-    styles.isSendTextColor,
-    styles.toTokenBox,
-    styles.tokenAmountTextList,
-    colors2024,
-    styles.singleBox,
-    styles.tokenAmountText,
-  ]);
-
-  const BtnContainer = useMemo(() => {
-    if (isPending) {
-      return (
-        <View style={styles.buttonContainer}>
-          <View style={{ flex: 1 }}>
-            <Button
-              titleStyle={[styles.ghostTitle]}
-              buttonStyle={[styles.ghostButton]}
-              onPress={handleTxCancel}
-              title={strings('page.transactions.detail.Cancel')}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button
-              titleStyle={[styles.primaryTitle]}
-              buttonStyle={[styles.primaryButton]}
-              onPress={handleTxSpeedUp}
-              title={strings('page.transactions.detail.SpeedUp')}
-            />
-          </View>
-        </View>
-      );
-    } else {
-      switch (formatType) {
-        case HistoryItemCateType.Send:
-          const singeToken = sendsToken[0];
-          const tokenIsNft = singeToken?.id.length === 32;
-          return tokenIsNft ? null : (
-            <View style={styles.buttonContainer}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  onPress={() => {
-                    navigation.dispatch(
-                      StackActions.push(RootNames.StackTransaction, {
-                        screen: isForMultipleAdderss
-                          ? RootNames.MultiSend
-                          : RootNames.Send,
-                        params: {
-                          chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                          tokenId: singeToken[0]?.id,
-                        },
-                      }),
-                    );
-                  }}
-                  title={strings('page.transactions.detail.SwapAgain')}
-                />
-              </View>
-            </View>
-          );
-        case HistoryItemCateType.Swap:
-          return (
-            <View style={styles.buttonContainer}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  onPress={() => {
-                    navigation.dispatch(
-                      StackActions.push(RootNames.StackTransaction, {
-                        screen: isForMultipleAdderss
-                          ? RootNames.MultiSwap
-                          : RootNames.Swap,
-                        params: {
-                          swapAgain: true,
-                          chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                          swapTokenId: [
-                            sendsToken[0]?.id,
-                            recievesToken[0]?.id,
-                          ],
-                        },
-                      }),
-                    );
-                  }}
-                  title={strings('page.transactions.detail.SwapAgain')}
-                />
-              </View>
-            </View>
-          );
-        default:
-          return null;
-      }
-    }
-  }, [
-    handleTxSpeedUp,
-    handleTxCancel,
-    navigation,
-    chainItem,
-    isForMultipleAdderss,
-    styles.buttonContainer,
-    styles.ghostButton,
-    styles.ghostTitle,
-    styles.primaryButton,
-    styles.primaryTitle,
-    isPending,
-    formatType,
-    sendsToken,
-    recievesToken,
-  ]);
-
   return (
     <NormalScreenContainer2024
       type="bg2"
@@ -613,93 +379,33 @@ function HistoryLocalDetailScreen(): JSX.Element {
         paddingTop: 24,
         paddingHorizontal: 16,
       }}>
-      {TokenContainer}
-      <View style={styles.detailContainer}>
-        {/* {!isPending && data?.time_at && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
-            <View>
-              <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.time_at * 1000)}
-              </Text>
-            </View>
-          </View>
-        )} */}
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {strings('page.transactions.detail.Status')}
-          </Text>
-          <View>
-            <TxStatusItem
-              status={isFailed ? 0 : 1}
-              isPending={isPending}
-              withText={true}
-            />
-          </View>
-        </View>
-        {isPending && <TransactionPendingDetail data={data} />}
-        {fromAddr && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.From')}
-            </Text>
-            <AddressItemInDetail
-              address={fromAddr}
-              accounts={unionAccounts}
-              switchAccount={switchAccount}
-            />
-          </View>
-        )}
-        {(formatType === HistoryItemCateType.Send ||
-          formatType === HistoryItemCateType.Recieve) &&
-          toAddr && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {formatType === HistoryItemCateType.Recieve
-                  ? strings('page.transactions.detail.RecipientAddress')
-                  : strings('page.transactions.detail.To')}
-              </Text>
-              <AddressItemInDetail
-                address={toAddr}
-                accounts={unionAccounts}
-                switchAccount={switchAccount}
-              />
-            </View>
-          )}
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {strings('page.transactions.detail.Chain')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <ChainIconImage
-              size={16}
-              chainEnum={chainItem?.enum}
-              isShowRPCStatus={true}
-            />
-            <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
-          </View>
-        </View>
-
-        {
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Hash</Text>
-            <TouchableOpacity
-              disabled={!chainItem?.scanLink}
-              onPress={onOpenTxId}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[styles.itemContentText]}>{`${strings(
-                'page.transactions.detail.ViewOn',
-              )} ${chainItem?.name || 'Unknown'}`}</Text>
-              <RcIconRightCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-        }
-      </View>
-      {BtnContainer}
+      {data.maxGasTx.action?.actionData?.approveToken ? (
+        <ApproveToken data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.approveNFT ? (
+        <ApproveNFT data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.approveNFTCollection ? (
+        <ApproveNFTCollection
+          data={data}
+          isSingleAddress={!isForMultipleAdderss}
+        />
+      ) : data.maxGasTx.action?.actionData?.revokeNFT ? (
+        <RevokeNFT data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.revokeNFTCollection ? (
+        <RevokeNFTCollection
+          data={data}
+          isSingleAddress={!isForMultipleAdderss}
+        />
+      ) : data.maxGasTx.action?.actionData?.revokeToken ? (
+        <RevokeToken data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.cancelTx ? (
+        <CancelTx data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.deployContract ? (
+        <DeployContact data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.swap ? (
+        <Swap data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : data.maxGasTx.action?.actionData?.send ? (
+        <Send data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : null}
     </NormalScreenContainer2024>
   );
 }

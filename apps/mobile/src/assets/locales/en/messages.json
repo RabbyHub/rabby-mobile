@@ -69,7 +69,9 @@
         "ApproveTo": "Approve to",
         "RevokeFrom": "Revoke from",
         "InteractedContract": "Interacted contract",
-        "RecipientAddress": "Recipient address"
+        "RecipientAddress": "Recipient address",
+        "name": "Name",
+        "RevokeToken": "Revoke Token"
       },
       "empty": {
         "title": "No transactions",
@@ -87,7 +89,6 @@
       "modalViewMessage": {
         "title": "View Message"
       },
-
       "filterScam": {
         "title": "Hide scam transactions",
         "loading": "Loading may take a moment, and data delays are possible",
@@ -1701,7 +1702,8 @@
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",
       "mins": "{{t}} mins"
-    }
+    },
+    "Unknown": "Unknown"
   },
   "background": {
     "error": {
