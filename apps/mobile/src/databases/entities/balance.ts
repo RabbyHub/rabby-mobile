@@ -12,7 +12,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
   @Column('real')
   balance: number = 0;
   // is_core
-  @Column('boolean', { default: '' })
+  @Column('boolean', { default: false })
   isCore: boolean = false;
   // chain_list
   @Column({
@@ -37,7 +37,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
     e.owner_addr = owner_addr;
     e.balance = input.total_usd_value;
     e.chain_list = input.chain_list || [];
-    e.isCore = isCore;
+    e.isCore = !!isCore;
     e.makeDbId();
   }
 

@@ -146,7 +146,7 @@ export async function syncRemoteTokens(address: string, tokens: TokenItem[]) {
     TokenItemEntity.getRepository(),
     tokenItems,
     {
-      key: address,
+      key: `${address}-token`,
       batchSize: 100,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
@@ -305,7 +305,7 @@ export async function syncRemotePortocols(
     PortocolItemEntity.getRepository(),
     items,
     {
-      key: address,
+      key: `${address}-portocols`,
       batchSize: 100,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
@@ -344,12 +344,12 @@ export async function syncBalance(
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
 
   await prepareAppDataSource();
-  await BalanceEntity.deleteForAddressCore(address, isCore);
+  await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(
     BalanceEntity.getRepository(),
     [balanceItem],
     {
-      key: address,
+      key: `${address}-balance`,
       batchSize: 100,
       concurrency: 1,
     },
