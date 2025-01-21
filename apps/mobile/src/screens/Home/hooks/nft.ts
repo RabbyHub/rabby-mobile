@@ -59,6 +59,12 @@ export const useQueryNft = (addr?: string, visible = true) => {
     [addr, setList],
   );
 
+  const refreshTagNft = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    setList(pre => tagNfts(pre || [], tokenSettings));
+  }, [setList]);
+
   useEffect(() => {
     if (addr && visible) {
       fetchData();
@@ -70,5 +76,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
     isLoading,
     list: list || [],
     reload: fetchData,
+    refreshTagNft,
   };
 };

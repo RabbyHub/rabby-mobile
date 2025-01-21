@@ -86,6 +86,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   // tx_eth_gas_fee
   @Column('real', {
+    default: 0,
     transformer: realTransformer,
   })
   tx_eth_gas_fee: number = 0;

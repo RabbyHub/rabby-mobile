@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { AbstractPortfolioToken } from '../types';
 import { useSafeState } from '@/hooks/useSafeState';
 import { findChain } from '@/utils/chain';
@@ -12,7 +12,6 @@ import {
   setWalletTokens,
   sortWalletTokens,
   tagTokenList,
-  batchQueryTokens,
 } from '../utils/token';
 import { log, tagProfiles } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
@@ -157,10 +156,17 @@ export const useTokens = (
     log('<<==Tokens-end==>>', userAddr);
   };
 
+  const refreshTagToken = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
+  }, [setMainnetTokens]);
+
   return {
     isLoading,
     tokens: mainnetTokens,
     updateData: loadProcess,
+    refreshTagToken,
   };
 };
 
