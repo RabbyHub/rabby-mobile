@@ -5,6 +5,8 @@ import { preferenceService } from '@/core/services';
 import { useSafeState } from 'ahooks';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { syncNFTs } from '@/databases/hooks/assets';
+import { singleNFTNounceAtom } from './refresh';
+import { useAtom } from 'jotai';
 
 export const tagNfts = (
   nfts: NFTItem[],
@@ -39,6 +41,7 @@ export const tagNfts = (
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(false);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
+  const [singleNFTNounce, setSingleNFTNounce] = useAtom(singleNFTNounceAtom);
 
   const fetchData = useCallback(
     async (force?: boolean) => {
@@ -66,6 +69,13 @@ export const useQueryNft = (addr?: string, visible = true) => {
   }, [setList]);
 
   useEffect(() => {
+    if (singleNFTNounce > 0) {
+      refreshTagNft();
+      setSingleNFTNounce(0);
+    }
+  }, [refreshTagNft, setSingleNFTNounce, singleNFTNounce]);
+
+  useEffect(() => {
     if (addr && visible) {
       fetchData();
     }
@@ -76,6 +86,5 @@ export const useQueryNft = (addr?: string, visible = true) => {
     isLoading,
     list: list || [],
     reload: fetchData,
-    refreshTagNft,
   };
 };

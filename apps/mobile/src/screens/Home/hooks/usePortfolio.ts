@@ -7,7 +7,8 @@ import { DisplayedProject } from '../utils/project';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { syncProtocols } from '@/databases/hooks/assets';
-
+import { singleDeFiNounceAtom } from './refresh';
+import { useAtom } from 'jotai';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -67,6 +68,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   const [data, setData] = useSafeState<DisplayedProject[]>([]);
   const [hasValue, setHasValue] = useSafeState(false);
   const [isLoading, setLoading] = useSafeState(false);
+  const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -118,11 +120,17 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     setData(pre => tagProfiles(pre || [], tokenSettings));
   }, [setData]);
 
+  useEffect(() => {
+    if (singleDeFiNounce > 0) {
+      refreshTagPortfolio();
+      setSingleDeFiNounce(0);
+    }
+  }, [refreshTagPortfolio, setSingleDeFiNounce, singleDeFiNounce]);
+
   return {
     data: data || [],
     hasValue,
     isLoading,
     updateData: loadProcess,
-    refreshTagPortfolio,
   };
 };

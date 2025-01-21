@@ -5,7 +5,7 @@ import { findChain } from '@/utils/chain';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { preferenceService } from '@/core/services';
-import { atom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 import { DisplayedProject } from '../utils/project';
 import {
   queryTokensCache,
@@ -13,13 +13,12 @@ import {
   sortWalletTokens,
   tagTokenList,
 } from '../utils/token';
-import { log, tagProfiles } from './usePortfolio';
+import { log } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
-import { IAssets, useAssetsMap } from './store';
-import { usePinTokens } from '@/screens/Search/usePinTokens';
-import { tagNfts } from './nft';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { singleTokenNounceAtom } from './refresh';
+
 const walletProject = new DisplayedProject({
   id: 'Wallet',
   name: 'Wallet',
@@ -50,6 +49,10 @@ export const useTokens = (
   const [mainnetTokens, setMainnetTokens] = useSafeState<
     AbstractPortfolioToken[]
   >([]);
+
+  const [singleTokenNounce, setSingleTokenNounce] = useAtom(
+    singleTokenNounceAtom,
+  );
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
 
@@ -162,91 +165,16 @@ export const useTokens = (
     setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
   }, [setMainnetTokens]);
 
+  useEffect(() => {
+    if (singleTokenNounce > 0) {
+      refreshTagToken();
+      setSingleTokenNounce(0);
+    }
+  }, [refreshTagToken, setSingleTokenNounce, singleTokenNounce]);
+
   return {
     isLoading,
     tokens: mainnetTokens,
     updateData: loadProcess,
-    refreshTagToken,
-  };
-};
-
-export const useRefreshTags = () => {
-  const { setAssetsMap } = useAssetsMap();
-  const { handleFetchTokens } = usePinTokens();
-
-  const refreshTagToken = async () => {
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-    handleFetchTokens();
-    setAssetsMap(prevAssetsMap => {
-      const updatedAssetsMap: { [address: string]: IAssets } = {};
-      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
-        updatedAssetsMap[address] = {
-          ...assets,
-          tokens: tagTokenList(assets.tokens || [], tokenSettings),
-        };
-      });
-
-      return updatedAssetsMap;
-    });
-  };
-  const refreshTagPortfolio = async () => {
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-
-    setAssetsMap(prevAssetsMap => {
-      const updatedAssetsMap: { [address: string]: IAssets } = {};
-      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
-        if (!assets) {
-          return;
-        }
-        updatedAssetsMap[address] = {
-          ...assets,
-          portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
-        };
-      });
-
-      return updatedAssetsMap;
-    });
-  };
-  const refreshTagNft = async () => {
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-    setAssetsMap(prevAssetsMap => {
-      const updatedAssetsMap: { [address: string]: IAssets } = {};
-      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
-        updatedAssetsMap[address] = {
-          ...assets,
-          nfts: tagNfts(assets.nfts || [], tokenSettings),
-        };
-      });
-
-      return updatedAssetsMap;
-    });
-  };
-
-  const refreshTags = async () => {
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-    handleFetchTokens();
-    setAssetsMap(prevAssetsMap => {
-      const updatedAssetsMap: { [address: string]: IAssets } = {};
-      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
-        updatedAssetsMap[address] = {
-          ...assets,
-          tokens: tagTokenList(assets.tokens || [], tokenSettings),
-          portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
-          nfts: tagNfts(assets.nfts || [], tokenSettings),
-        };
-      });
-
-      return updatedAssetsMap;
-    });
-  };
-  return {
-    refreshTags,
-    refreshTagNft,
-    refreshTagPortfolio,
-    refreshTagToken,
   };
 };
