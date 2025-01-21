@@ -35,6 +35,9 @@ import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { GasLevelType } from '@/components/ReserveGasPopup';
 import { apiProvider } from '@/core/apis';
+import { useMount } from 'ahooks';
+import { useNavigationState } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
 
 export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
   shouldApproveToken?: boolean;
@@ -123,7 +126,7 @@ const useToken = (type: 'from' | 'to') => {
   return [chain, token, setToken, switchChain] as const;
 };
 
-export const useBridge = () => {
+export const useBridge = (isForMultipleAdderss?: boolean) => {
   const { currentAccount } = useCurrentAccount();
   const userAddress = currentAccount?.address;
   const refreshId = useRefreshId();
@@ -243,6 +246,33 @@ export const useBridge = () => {
   //   },
   // });
 
+  const navState = useNavigationState(
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiBridge : RootNames.Bridge),
+      )?.params,
+  ) as
+    | {
+        chainEnum?: CHAINS_ENUM | undefined;
+        tokenId?: TokenItem['id'];
+      }
+    | undefined;
+
+  useMount(() => {
+    if (!navState?.chainEnum || !navState?.tokenId) {
+      return;
+    }
+
+    const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
+    switchToChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
+    setToToken({
+      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+      id: navState?.tokenId,
+    });
+  });
+
   const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
   const initChainByCache = useCallback(async () => {
     initIdRef.current += 1;
@@ -265,7 +295,7 @@ export const useBridge = () => {
           switchToChain(findChainByServerID(data.to_chain_id)?.enum);
       }
     };
-    if (userAddress) {
+    if (userAddress && !navState?.tokenId) {
       const latestTx = await openapi.getBridgeHistoryList({
         user_addr: userAddress,
         start: 0,
@@ -288,6 +318,7 @@ export const useBridge = () => {
       }
     }
   }, [
+    navState?.tokenId,
     fetchOrderedChainList,
     userAddress,
     setAmount,
