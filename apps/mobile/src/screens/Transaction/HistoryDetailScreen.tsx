@@ -228,13 +228,13 @@ function HistoryDetailScreen(): JSX.Element {
   console.debug(
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
-    data.tx?.status,
+    data.tx,
     isForMultipleAdderss,
   );
 
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
-  const status = useMemo(() => data.tx?.status || 0, [data]);
+  const status = useMemo(() => data.tx?.status || 1, [data]);
   const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -496,14 +496,19 @@ function HistoryDetailScreen(): JSX.Element {
             <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
           </View>
         </View>
-        {Boolean(usdGasFee) && (
+        {Boolean(usdGasFee) && status === 1 && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
               {strings('page.transactions.detail.GasFee')}
             </Text>
-            <Text style={[styles.itemContentText]}>{`-${formatPrice(
+            <Text style={styles.itemContentText}>
+              {numberWithCommasIsLtOne(data.tx?.eth_gas_fee, 2)}{' '}
+              {chainItem?.nativeTokenSymbol} ($
+              {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
+            </Text>
+            {/* <Text style={[styles.itemContentText]}>{`-${formatPrice(
               usdGasFee!,
-            )} USD`}</Text>
+            )} USD`}</Text> */}
           </View>
         )}
         {!isApproveOrRevoke &&

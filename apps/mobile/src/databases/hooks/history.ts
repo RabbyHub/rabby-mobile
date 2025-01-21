@@ -12,6 +12,7 @@ import { SwapItemEntity } from '../entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
+import { prepareAppDataSource } from '../imports';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -110,7 +111,7 @@ export const useSyncHistoryDB = (
         const latestTime =
           latest_time || (await HistoryItemEntity.getLatestTime(address));
         const isExpiredTimeAgo =
-          new Date().getTime() - 15 * 24 * 60 * 60 * 1000;
+          new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
         const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
 
         console.log(
@@ -132,8 +133,8 @@ export const useSyncHistoryDB = (
         if (res.history_list.length) {
           const lastItemTime =
             res.history_list[res.history_list.length - 1].time_at;
-          if (lastItemTime < latestTime) {
-            // update done   interup loop
+          if (lastItemTime < latestTime || !isAddUpdate) {
+            // update done or not all update  to  interup loop
             res.history_list = res.history_list.filter(
               i => i.time_at > latestTime,
             );
@@ -192,16 +193,18 @@ export const useSyncHistoryDB = (
         lastTimeStamps.current = Date.now();
       }
 
-      console.log('🔍syncTop10History CUSTOM_LOGGER:=>: Fetching action');
+      if (isSyncing) {
+        console.debug('🔍syncTop10History  isSyncing maybe error');
+      }
       const top10Account = sortedAccounts.slice(0, 10);
-      setIsSyncing(true);
-
+      if (top10Account.length === 0) {
+        console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
+        return;
+      }
       try {
-        if (isSyncing) {
-          console.debug('🔍syncTop10History  isSyncing return this sync');
-          return;
-        }
-
+        console.log('🔍syncTop10History CUSTOM_LOGGER:=>: Fetching action');
+        setIsSyncing(true);
+        await prepareAppDataSource();
         if (resetEntity) {
           await HistoryItemEntity.clear();
           await SwapItemEntity.clear();

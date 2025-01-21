@@ -194,6 +194,7 @@ function History({
           status: item.status,
           from_addr: item.tx_from_address,
           usd_gas_fee: item.tx_usd_gas_fee,
+          eth_gas_fee: item.tx_eth_gas_fee,
         },
         token_approve: {
           token_id: item.token_approve_id,

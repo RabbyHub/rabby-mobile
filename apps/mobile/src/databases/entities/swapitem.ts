@@ -72,7 +72,7 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async getLatestTime(owner_addr: string) {
+  static async getLatestTime(owner_addr: string): Promise<number> {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
@@ -83,7 +83,7 @@ export class SwapItemEntity extends EntityAddressAssetBase {
       .getRawOne();
 
     if (!result.maxTimeAt) {
-      return false;
+      return 0;
     }
     return result.maxTimeAt;
   }

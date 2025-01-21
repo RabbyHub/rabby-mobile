@@ -84,6 +84,12 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   })
   tx_usd_gas_fee: number = 0;
 
+  // tx_eth_gas_fee
+  @Column('real', {
+    transformer: realTransformer,
+  })
+  tx_eth_gas_fee: number = 0;
+
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
       .filter(Boolean)
@@ -113,6 +119,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
     e.tx_from_address = input.tx?.from_addr ?? '0x';
     e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
+    e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
 
     e.makeDbId();
   }
@@ -142,7 +149,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async getLatestTime(owner_addr: string) {
+  static async getLatestTime(owner_addr: string): Promise<number> {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
@@ -153,25 +160,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       .getRawOne();
 
     if (!result.maxTimeAt) {
-      return false;
+      return 0;
     }
     return result.maxTimeAt;
-  }
-
-  static async getLastTime(owner_addr: string) {
-    await prepareAppDataSource();
-
-    const repo = this.getRepository();
-    const result = await repo
-      .createQueryBuilder('historyitem')
-      .select('MIN(historyitem.time_at)', 'minTimeAt')
-      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
-      .getRawOne();
-
-    if (!result.minTimeAt) {
-      return false;
-    }
-    return result.minTimeAt;
   }
 
   static async batchQueryHistory(owner_addr: string) {
