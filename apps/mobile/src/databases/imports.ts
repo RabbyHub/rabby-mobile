@@ -1,4 +1,9 @@
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
+import { TokenItemEntity } from './entities/tokenitem';
+import BalanceChange from '@/components/Approval/components/TxComponents/BalanceChange';
+import { BalanceEntity } from './entities/balance';
+import { NFTItemEntity } from './entities/nftItem';
+import { PortocolItemEntity } from './entities/portocolItem';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -10,10 +15,15 @@ export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
     const appDataSource = new DataSource({ ...dbOptions });
 
     appDataSourceInitRef.current = appDataSource.initialize();
-    if (__DEV__) {
-      // await appDataSource.dropDatabase();
-      // await Promise.allSettled([TokenItemEntity.clear()]);
-    }
+    // if (__DEV__) {
+    //   await appDataSource.dropDatabase();
+    //   await Promise.allSettled([
+    //     TokenItemEntity.clear(),
+    //     BalanceEntity.clear(),
+    //     NFTItemEntity.clear(),
+    //     PortocolItemEntity.clear(),
+    //   ]);
+    // }
 
     appDataSourceInitRef.current = appDataSourceInitRef.current.then(
       async as => {

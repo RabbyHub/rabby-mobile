@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm/browser';
 

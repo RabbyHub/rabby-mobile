@@ -48,6 +48,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiBalance } from '@/core/apis';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -60,6 +61,7 @@ const DisMissKBWrapper = ({ children }) => (
 export const ImportSuccessScreen2024 = () => {
   const inputRef = React.useRef<TextInput>(null);
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { syncSingleAddress } = useSyncHistoryDB();
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
@@ -155,7 +157,16 @@ export const ImportSuccessScreen2024 = () => {
           }),
         ),
       );
+    } else {
+      if (addresses.length > 10) {
+        // just sync 10 addresses
+        const top10Account = addresses.slice(0, 10);
+        Promise.all(top10Account.map(address => syncSingleAddress(address)));
+      } else {
+        Promise.all(addresses.map(address => syncSingleAddress(address)));
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   React.useEffect(() => {

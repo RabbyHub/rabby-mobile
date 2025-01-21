@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useSafeState } from '@/hooks/useSafeState';
 import { portfolio2Display } from '../utils/portfolio';
@@ -111,10 +111,18 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     setLoading(false);
   };
 
+  const refreshTagPortfolio = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+
+    setData(pre => tagProfiles(pre || [], tokenSettings));
+  }, [setData]);
+
   return {
     data: data || [],
     hasValue,
     isLoading,
     updateData: loadProcess,
+    refreshTagPortfolio,
   };
 };

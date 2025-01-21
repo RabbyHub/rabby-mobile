@@ -8,7 +8,7 @@ import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
 import { FlatList } from 'react-native';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -26,6 +26,7 @@ type DisplayedProjectWithoutMethods = Omit<
 
 export type CombineDefiItem = DisplayedProjectWithoutMethods & {
   totalUsdValue: BigNumber;
+  filterTokenDesc?: string;
   fromAddress: Array<{
     address: string;
   }>;
@@ -222,72 +223,87 @@ export const useAssetsMap = () => {
   const [assetsMap, setAssetsMap] = useState<{ [address: string]: IAssets }>(
     {},
   );
-  const updateTokens = ({
-    address,
-    newTokens,
-  }: {
-    address: string;
-    newTokens: AbstractPortfolioToken[];
-  }) => {
-    const lowerAddress = address.toLowerCase();
-    setAssetsMap(pre => {
-      const currentAssets = pre[lowerAddress] || {};
-      return {
-        ...pre,
-        [address]: {
-          ...currentAssets,
-          tokens: newTokens,
-        },
-      };
-    });
-  };
+  const updateTokens = useCallback(
+    ({
+      address,
+      newTokens,
+    }: {
+      address: string;
+      newTokens: AbstractPortfolioToken[];
+    }) => {
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [address]: {
+            ...currentAssets,
+            tokens: newTokens,
+          },
+        };
+      });
+    },
+    [],
+  );
 
-  const updatePortfolios = ({
-    address,
-    newPortfolios,
-  }: {
-    address: string;
-    newPortfolios: DisplayedProject[];
-  }) => {
-    const lowerAddress = address.toLowerCase();
-    setAssetsMap(pre => {
-      const currentAssets = pre[lowerAddress] || {};
-      return {
-        ...pre,
-        [address]: {
-          ...currentAssets,
-          portfolios: newPortfolios,
-        },
-      };
-    });
-  };
-  const updateNFTs = ({
-    address,
-    newNFTs,
-  }: {
-    address: string;
-    newNFTs: NFTItem[];
-  }) => {
-    const lowerAddress = address.toLowerCase();
-    setAssetsMap(pre => {
-      const currentAssets = pre[lowerAddress] || {};
-      return {
-        ...pre,
-        [address]: {
-          ...currentAssets,
-          nfts: newNFTs,
-        },
-      };
-    });
-  };
+  const updatePortfolios = useCallback(
+    ({
+      address,
+      newPortfolios,
+    }: {
+      address: string;
+      newPortfolios: DisplayedProject[];
+    }) => {
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [address]: {
+            ...currentAssets,
+            portfolios: newPortfolios,
+          },
+        };
+      });
+    },
+    [],
+  );
+  const updateNFTs = useCallback(
+    ({ address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [address]: {
+            ...currentAssets,
+            nfts: newNFTs,
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const memoTokens = useMemo(() => {
+    return combinedTokens(assetsMap);
+  }, [assetsMap]);
+
+  const memoPortfolios = useMemo(() => {
+    return combinedProtocols(assetsMap);
+  }, [assetsMap]);
+
+  const memoNFTs = useMemo(() => {
+    return combinedNFTs(assetsMap);
+  }, [assetsMap]);
 
   return {
     updateTokens,
     updatePortfolios,
     updateNFTs,
-    tokens: combinedTokens(assetsMap),
-    portfolios: combinedProtocols(assetsMap),
-    nftList: combinedNFTs(assetsMap),
+    tokens: memoTokens,
+    portfolios: memoPortfolios,
+    nftList: memoNFTs,
     assetsMap,
     setAssetsMap,
   };

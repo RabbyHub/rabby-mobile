@@ -6,12 +6,12 @@ import { TokenItemEntity } from '../entities/tokenitem';
 import { NFTItemEntity } from '../entities/nftItem';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
-import { openapi } from '@/core/request';
 import {
   ComplexProtocol,
   NFTItem,
   SwapTradeList,
   TokenItem,
+  TotalBalanceResponse,
   TxAllHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { PortocolItemEntity } from '../entities/portocolItem';
@@ -21,6 +21,7 @@ import {
   EMPTY_TOKEN_ITEM,
 } from '@/constant/assets';
 import { SwapItemEntity } from '../entities/swapitem';
+import { BalanceEntity } from '../entities/balance';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -145,7 +146,7 @@ export async function syncRemoteTokens(address: string, tokens: TokenItem[]) {
     TokenItemEntity.getRepository(),
     tokenItems,
     {
-      key: address,
+      key: `${address}-token`,
       batchSize: 100,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
@@ -184,7 +185,7 @@ export async function syncRemoteHistory(
       historyItems,
       {
         key: address + '-all-history',
-        batchSize: 2000,
+        batchSize: 100,
         concurrency: 1,
         delayBetweenTasks: 1.5 * 1e3,
       },
@@ -304,7 +305,7 @@ export async function syncRemotePortocols(
     PortocolItemEntity.getRepository(),
     items,
     {
-      key: address,
+      key: `${address}-portocols`,
       batchSize: 100,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
@@ -327,8 +328,36 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       PortocolItemEntity.deleteForAddress(address),
       HistoryItemEntity.deleteForAddress(address),
       SwapItemEntity.deleteForAddress(address),
+      BalanceEntity.deleteForAddress(address),
     ]);
   } catch (error) {
     console.log('🔍 CUSTOM_LOGGER:=>: deleteDBResourceForAddress)', error);
   }
 };
+
+export async function syncBalance(
+  address: string,
+  isCore: boolean,
+  balance: TotalBalanceResponse,
+) {
+  const balanceItem = new BalanceEntity();
+  BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
+
+  await prepareAppDataSource();
+  await BalanceEntity.deleteForAddress(address);
+  await batchSaveWithPQueueAndTransaction(
+    BalanceEntity.getRepository(),
+    [balanceItem],
+    {
+      key: `${address}-balance`,
+      batchSize: 100,
+      concurrency: 1,
+    },
+  )
+    .then(() => {
+      console.debug('batch upsert tasks created');
+    })
+    .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+}

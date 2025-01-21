@@ -41,7 +41,7 @@ export default function TokenLabel({
   const symbolName = useMemo(() => {
     const symbol = isNft ? '' : getTokenSymbol(token);
 
-    return isNft ? t('page.nft.title') : symbol;
+    return isNft ? t('page.singleHome.sectionHeader.Nft') : symbol;
   }, [t, isNft, token]);
 
   return (

@@ -87,8 +87,10 @@ const triggerLight = () => {
 export function BadgeText({
   count,
   style,
+  isSuccess,
 }: {
   count?: number;
+  isSuccess?: boolean;
   style?: StyleProp<TextStyle>;
 }) {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -105,6 +107,7 @@ export function BadgeText({
           count > 9 && styles.badgeBgNeedPaddingHorizontal,
           styles.badgeText,
           style,
+          isSuccess && styles.successBgColor,
         ]}>
         {count}
       </Text>
@@ -118,6 +121,7 @@ export function BadgeText({
         styles.badgeBg,
         count > 9 && styles.badgeBgNeedPaddingHorizontal,
         style,
+        isSuccess && styles.successBgColor,
       ]}>
       <Text style={[styles.badgeText, style]}>{count}</Text>
     </View>
@@ -676,6 +680,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   badgeBgNeedPaddingHorizontal: {
     paddingHorizontal: 6,
+  },
+  successBgColor: {
+    backgroundColor: ctx.colors2024['green-default'],
   },
   badgeText: {
     color: ctx.colors2024['neutral-InvertHighlight'],

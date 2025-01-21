@@ -17,6 +17,9 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { SwapItemEntity } from '@/databases/entities/swapitem';
+import { prepareAppDataSource } from '@/databases/imports';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -70,6 +73,15 @@ export default function DevDataPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Clear history DB data',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          await prepareAppDataSource();
+          HistoryItemEntity.clear();
+          SwapItemEntity.clear();
+        },
+      },
     ];
 
     return list.filter(item => item.visible !== false);
@@ -108,8 +120,9 @@ export default function DevDataPlaygroundModal({
                 key={itemKey}
                 itemIndex={idx}
                 afterPress={async result => {
-                  if (!result?.keepModalVisible)
+                  if (!result?.keepModalVisible) {
                     setDataPlaygroundModalVisible(false);
+                  }
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>

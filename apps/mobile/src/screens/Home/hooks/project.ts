@@ -7,20 +7,24 @@ import { useSafeState } from '@/hooks/useSafeState';
 export const useQueryProjects = (userAddr: string | undefined) => {
   const [isLoading, setLoading] = useSafeState(false);
 
-  const { tokens, updateData: updateTokens } = useTokens(
-    userAddr,
-    false,
-    0,
-    undefined,
-  );
+  const {
+    tokens,
+    updateData: updateTokens,
+    refreshTagToken,
+  } = useTokens(userAddr, false, 0, undefined);
 
   const {
     data: portfolios,
     hasValue: hasPortfolios,
     updateData: updatePortfolio,
+    refreshTagPortfolio,
   } = usePortfolios(userAddr, false);
 
-  const { list: nftList, reload: reloadNftList } = useQueryNft(userAddr, false);
+  const {
+    list: nftList,
+    reload: reloadNftList,
+    refreshTagNft,
+  } = useQueryNft(userAddr, false);
 
   const refreshPositions = useCallback(
     async (force?: boolean) => {
@@ -59,5 +63,8 @@ export const useQueryProjects = (userAddr: string | undefined) => {
     loading: isLoading,
     refreshing: !!isLoading,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
+    refreshTagNft,
+    refreshTagToken,
+    refreshTagPortfolio,
   };
 };

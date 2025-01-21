@@ -139,6 +139,10 @@ function MultiAddressHome(): JSX.Element {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState<{
+    success: number;
+    fail: number;
+  }>();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { switchAccount } = useCurrentAccount();
   const appState = useAppState();
@@ -185,6 +189,8 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistory,
+          badge: historyCount?.fail || historyCount?.success,
+          isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
@@ -221,8 +227,9 @@ function MultiAddressHome(): JSX.Element {
         title: string;
         icon: React.FC<import('react-native-svg').SvgProps>;
         badge?: number;
+        isSuccess?: boolean;
       }[],
-    [alertInfo.total, t],
+    [alertInfo.total, t, historyCount],
   );
 
   useEffect(() => {
@@ -256,10 +263,7 @@ function MultiAddressHome(): JSX.Element {
   });
   const sortedAccounts = useSortAddressList(accounts);
   const { syncTop10Assets } = useSyncAssetsDB(sortedAccounts);
-  const { syncTop10History } = useSyncHistoryDB(
-    sortedAccounts,
-    HOME_REFRESH_INTERVAL,
-  );
+  const { syncTop10History } = useSyncHistoryDB(sortedAccounts);
 
   const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
@@ -274,7 +278,7 @@ function MultiAddressHome(): JSX.Element {
     setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [balanceCacheAccounts]);
+  }, [balanceCacheAccounts, setPendingTxCount]);
 
   const detectHasAccounts = useMemoizedFn(async () => {
     const result = { redirectAction: null as Function | null };
@@ -296,6 +300,16 @@ function MultiAddressHome(): JSX.Element {
   //   };
   // });
 
+  const getSuccessAndFailList = useCallback(() => {
+    const count = transactionHistoryService.getFailedCount();
+    const success = transactionHistoryService.getSucceedCount();
+
+    setHistoryCount({
+      success: success,
+      fail: count,
+    });
+  }, [setHistoryCount]);
+
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -311,6 +325,13 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      getSuccessAndFailList();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [getSuccessAndFailList, pendingTxCount]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
@@ -318,7 +339,13 @@ function MultiAddressHome(): JSX.Element {
         syncTop10History();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [triggerUpdate, triggerUpdateAlert, appState]),
+    }, [
+      triggerUpdate,
+      triggerUpdateAlert,
+      appState,
+      getSuccessAndFailList,
+      sortedAccounts.length,
+    ]),
   );
 
   const onRefresh = useCallback(() => {
@@ -631,7 +658,11 @@ function MultiAddressHome(): JSX.Element {
                   <View style={styles.iconWrapper}>
                     <el.icon />
                     {!!el.badge && el.badge > 0 && (
-                      <BadgeText count={el.badge} style={styles.badgeStyle} />
+                      <BadgeText
+                        count={el.badge}
+                        isSuccess={el.isSuccess}
+                        style={[styles.badgeStyle]}
+                      />
                     )}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>

@@ -86,6 +86,7 @@ const AddressInfo = ({ account }: { account?: KeyringAccountWithAlias }) => {
 
 export const HistoryList = ({
   loading,
+  historySuccessList,
   loadingMore,
   loadMore,
   refreshLoading,
@@ -94,6 +95,7 @@ export const HistoryList = ({
   onRefresh,
   isForMultipleAdderss = true,
 }: {
+  historySuccessList?: string[];
   localTxList?: TransactionGroup[];
   list?: (HistoryDisplayItem | TransactionGroup)[];
   loading?: boolean;
@@ -151,6 +153,7 @@ export const HistoryList = ({
         <>
           {/* {item.isFirst ? <AddressInfo account={account} /> : null} */}
           <TransactionItem
+            historySuccessList={historySuccessList}
             data={item.data}
             canCancel={canCancel}
             onRefresh={onRefresh}

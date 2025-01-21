@@ -71,11 +71,13 @@ export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
 }
 
 export const TransactionItem = ({
+  historySuccessList,
   data,
   canCancel,
   onRefresh,
   isForMultipleAdderss,
 }: {
+  historySuccessList?: string[];
   isForMultipleAdderss?: boolean;
   data: TransactionGroup;
   canCancel?: boolean;
@@ -90,6 +92,10 @@ export const TransactionItem = ({
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
+  const isShowSuccess = useMemo(
+    () => historySuccessList?.includes(data.maxGasTx.hash || ''),
+    [data.maxGasTx.hash, historySuccessList],
+  );
 
   const { accounts } = useAccounts();
 
@@ -494,6 +500,7 @@ export const TransactionItem = ({
             <Text style={styles.titleText} numberOfLines={1}>
               {formatTitle}
             </Text>
+            {isShowSuccess && <TxStatusItem status={1} showSuccess={true} />}
             <TxStatusItem
               isPending={data.isPending}
               withText={false}

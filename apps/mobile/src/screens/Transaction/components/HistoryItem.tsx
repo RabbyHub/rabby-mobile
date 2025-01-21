@@ -42,6 +42,7 @@ export const HistoryItem = React.memo(
     isForMultipleAdderss,
   }: HistoryItemProps) => {
     const isFailed = data.tx?.status === 0;
+    const isShowSuccess = data.isShowSuccess;
     const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
     const { styles } = useTheme2024({ getStyle });
@@ -196,7 +197,10 @@ export const HistoryItem = React.memo(
                   <Text style={styles.titleText} numberOfLines={1}>
                     {formatTitle}
                   </Text>
-                  <TxStatusItem status={data.tx?.status || 0} />
+                  {isShowSuccess && (
+                    <TxStatusItem status={1} showSuccess={true} />
+                  )}
+                  <TxStatusItem status={data.tx?.status || 1} />
                 </View>
                 <Text style={styles.describeText} numberOfLines={1}>
                   {formatDescribe}

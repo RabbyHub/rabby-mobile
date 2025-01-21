@@ -1,6 +1,6 @@
-import { openapi } from '@/core/request';
 import { Account } from './type';
 import { getTokenSettings } from '@/utils/getTokenSettings';
+import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 
 // cached chains, balance, firstTxTime
 const cachedAccountInfo = new Map<string, Account>();
@@ -18,11 +18,14 @@ export const getAccountBalance = async (
 
   try {
     const tokenSetting = await getTokenSettings();
-    const res = await openapi.getTotalBalanceV2({
-      address,
-      isCore: false,
-      ...tokenSetting,
-    });
+    const res = await batchBalanceWithLocalCache(
+      {
+        address,
+        isCore: false,
+        ...tokenSetting,
+      },
+      ignoreCached,
+    );
 
     cachedAccountInfo.set(address, {
       address,
@@ -60,7 +63,7 @@ export const fetchAccountsInfo = async (accounts: Account[]) => {
       try {
         // get balance from api
         const tokenSetting = await getTokenSettings();
-        const res = await openapi.getTotalBalanceV2({
+        const res = await batchBalanceWithLocalCache({
           address: account.address,
           isCore: false,
           ...tokenSetting,
