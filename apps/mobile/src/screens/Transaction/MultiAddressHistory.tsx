@@ -62,6 +62,7 @@ import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
+import { ensureHistoryListItemFromDb } from './components/utils';
 
 const PAGE_COUNT = 20;
 
@@ -117,6 +118,7 @@ function History({
 
   const [currentPage, setCurrentPage] = useState(0);
   const [isShowAll, setIsShowAll] = useState(false);
+  const [refreshSyncLoading, setRefreshSyncLoading] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
@@ -145,13 +147,14 @@ function History({
     return swapList;
   };
 
-  // useEffect(() => {
-  //   if (!refreshing && !isInTokenDetail) {
-  //     reloadAsync(); // again fetch local db data
-  //   }
+  useEffect(() => {
+    if (!refreshing && !isInTokenDetail && refreshSyncLoading) {
+      console.log('refreshSyncLoading reloadAsync exec');
+      reloadAsync(); // again fetch local db data
+    }
 
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [refreshing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshing]);
 
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
@@ -161,7 +164,8 @@ function History({
 
   const batchFetchDataV2 = async () => {
     if (refreshing) {
-      return { list: [] };
+      const res = [] as HistoryDisplayItem[];
+      return res;
     }
 
     const address = isSceneUsingAllAccounts
@@ -174,41 +178,22 @@ function History({
       getSwapHistory(address),
     ]);
     console.log('tokenDict', Object.keys(tokenDict).length);
-    console.log(
-      'projectDict',
-      Object.keys(projectDict).length,
-      Object.values(projectDict)[0],
-    );
+    console.log('projectDict', Object.keys(projectDict).length);
     console.log('historyList', historyList.length);
     console.log('swapList', swapList.length);
 
-    const res = {
-      list: historyList.map(item => ({
-        ...item,
-        receives: isString(item.receives) && safeParseJSON(item.receives),
-        sends: isString(item.sends) && safeParseJSON(item.sends),
-        id: item.txHash,
-        isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-        tx: {
-          id: item.txHash,
-          status: item.status,
-          from_addr: item.tx_from_address,
-          usd_gas_fee: item.tx_usd_gas_fee,
-          eth_gas_fee: item.tx_eth_gas_fee,
-        },
-        token_approve: {
-          token_id: item.token_approve_id,
-          spender: item.token_approve_spender,
-          value: item.token_approve_value,
-        },
-        tokenDict,
-        projectDict,
-        isShowSuccess: historySuccessList.includes(item.txHash),
-        key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
-        address: item.owner_addr,
-      })),
-    };
-    return res;
+    const list = historyList.map(
+      item =>
+        ({
+          ...ensureHistoryListItemFromDb(item),
+          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+          tokenDict,
+          projectDict,
+          isShowSuccess: historySuccessList.includes(item.txHash),
+        } as HistoryDisplayItem),
+    );
+    setRefreshSyncLoading(false);
+    return list;
   };
 
   const batchFetchData = async () => {
@@ -216,7 +201,7 @@ function History({
 
     if (!isInTokenDetail) {
       const res = await batchFetchDataV2();
-      return res;
+      return { list: res };
     } else {
       const swapList = await getSwapHistory(); // just for single token history
       const accountList = isSceneUsingAllAccounts
@@ -267,7 +252,7 @@ function History({
       if (accountList.length > 0) {
         await waitQueueFinished(queue);
       }
-      return { list };
+      return { list: list };
     }
   };
 
@@ -388,12 +373,15 @@ function History({
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
   const refresh = useMemoizedFn(() => {
+    if (!isInTokenDetail) {
+      setRefreshSyncLoading(true);
+    }
     syncTop10History(true);
     lastMap.current = {};
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    reloadAsync();
+    isInTokenDetail && reloadAsync();
   });
 
   useEffect(() => {
@@ -544,7 +532,7 @@ function History({
           localTxList={groups}
           loading={isFirstLoading}
           loadingMore={loadingMore}
-          refreshLoading={loading}
+          refreshLoading={loading || refreshSyncLoading}
           isForMultipleAdderss={isForMultipleAdderss}
           loadMore={loadMore}
           onRefresh={refresh}

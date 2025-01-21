@@ -2,6 +2,9 @@ import { strings } from '@/utils/i18n';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemCateType } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { isString } from 'lodash';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
@@ -50,4 +53,37 @@ export const fetchHistoryTokenUUId = (
   chain: string,
 ): string => {
   return `${chain}_token:${token_id}`;
+};
+
+export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
+  return {
+    ...item,
+    receives: isString(item.receives) && safeParseJSON(item.receives),
+    sends: isString(item.sends) && safeParseJSON(item.sends),
+    id: item.txHash,
+    tx: {
+      id: item.txHash,
+      status: item.status,
+      from_addr: item.tx_from_address,
+      usd_gas_fee: item.tx_usd_gas_fee,
+      eth_gas_fee: item.tx_eth_gas_fee,
+
+      name: '', // no use
+      params: [],
+      to_addr: '',
+      value: 0,
+      message: '',
+    },
+    token_approve: {
+      token_id: item.token_approve_id,
+      spender: item.token_approve_spender,
+      value: item.token_approve_value,
+    },
+    key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
+    address: item.owner_addr,
+
+    cateDict: {}, // no use
+    debt_liquidated: null,
+    other_addr: '',
+  };
 };

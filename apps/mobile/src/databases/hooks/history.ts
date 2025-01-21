@@ -58,7 +58,6 @@ export const useSyncHistoryDB = (
   sortedAccounts: KeyringAccountWithAlias[] = [],
 ) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { setProjectDict, setTokenDict } = useHistoryTokenDict();
   const abortRef = useRef(false);
 
@@ -221,7 +220,6 @@ export const useSyncHistoryDB = (
                 '🔍syncTop10History CUSTOM_LOGGER:=>: Fetching interrupted.',
               );
               setIsSyncing(false);
-              setIsFirstFetch(false);
             }
 
             try {
@@ -229,6 +227,8 @@ export const useSyncHistoryDB = (
                 syncUserAllHistory(account.address),
                 syncSwapHistory(account.address),
               ]);
+
+              // boradcast to update ui ?
             } catch (error) {
               console.error(
                 `syncTop10History Error fetching data for ${account.address.slice(
@@ -243,7 +243,6 @@ export const useSyncHistoryDB = (
         await waitQueueFinished(queue);
       } finally {
         setIsSyncing(false);
-        setIsFirstFetch(false);
       }
     },
   );
@@ -257,6 +256,6 @@ export const useSyncHistoryDB = (
     syncTop10History,
     interrupt,
     syncSingleAddress,
-    refreshing: !!isSyncing && !isFirstFetch,
+    refreshing: !!isSyncing,
   };
 };
