@@ -660,12 +660,8 @@ function MultiAddressHome(): JSX.Element {
                     {!!el.badge && el.badge > 0 && (
                       <BadgeText
                         count={el.badge}
-                        style={[
-                          styles.badgeStyle,
-                          el.isSuccess && {
-                            backgroundColor: colors2024['green-default'],
-                          },
-                        ]}
+                        isSuccess={el.isSuccess}
+                        style={[styles.badgeStyle]}
                       />
                     )}
                   </View>

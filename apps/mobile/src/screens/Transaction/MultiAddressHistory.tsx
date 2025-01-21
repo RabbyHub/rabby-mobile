@@ -145,13 +145,13 @@ function History({
     return swapList;
   };
 
-  useEffect(() => {
-    if (!refreshing && !isInTokenDetail) {
-      reloadAsync(); // again fetch local db data
-    }
+  // useEffect(() => {
+  //   if (!refreshing && !isInTokenDetail) {
+  //     reloadAsync(); // again fetch local db data
+  //   }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshing]);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [refreshing]);
 
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
