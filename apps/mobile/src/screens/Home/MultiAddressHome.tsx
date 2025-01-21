@@ -263,10 +263,7 @@ function MultiAddressHome(): JSX.Element {
   });
   const sortedAccounts = useSortAddressList(accounts);
   const { syncTop10Assets } = useSyncAssetsDB(sortedAccounts);
-  const { syncTop10History } = useSyncHistoryDB(
-    sortedAccounts,
-    HOME_REFRESH_INTERVAL,
-  );
+  const { syncTop10History } = useSyncHistoryDB(sortedAccounts);
 
   const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
@@ -342,7 +339,13 @@ function MultiAddressHome(): JSX.Element {
         syncTop10History();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [triggerUpdate, triggerUpdateAlert, appState, getSuccessAndFailList]),
+    }, [
+      triggerUpdate,
+      triggerUpdateAlert,
+      appState,
+      getSuccessAndFailList,
+      sortedAccounts.length,
+    ]),
   );
 
   const onRefresh = useCallback(() => {

@@ -55,24 +55,12 @@ export function useHistoryBasicInfo({ enableAutoFetch = false }) {
 }
 
 export const useSyncHistoryDB = (
-  sortedAccounts: KeyringAccountWithAlias[],
-  cacheTime: number = 10 * 60 * 1000,
+  sortedAccounts: KeyringAccountWithAlias[] = [],
 ) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { setProjectDict, setTokenDict } = useHistoryTokenDict();
   const abortRef = useRef(false);
-  const lastTimeStamps = useRef<number>(0);
-
-  const isNeedFetchData = useMemoizedFn(() => {
-    const currentTime = Date.now();
-    const diff = currentTime - lastTimeStamps.current;
-    if (diff > cacheTime) {
-      lastTimeStamps.current = currentTime;
-      return true;
-    }
-    return false;
-  });
 
   const interrupt = () => {
     abortRef.current = true;
@@ -183,22 +171,34 @@ export const useSyncHistoryDB = (
     },
   );
 
+  const isNeedSyncData = useMemoizedFn(async () => {
+    await prepareAppDataSource();
+
+    const latestTime = await HistoryItemEntity.getLatestTime();
+
+    const currentTime = Date.now();
+    const gap = currentTime - latestTime * 1000;
+    const expireTime = 1 * 24 * 60 * 60 * 1000; // 1 days ago
+    console.log('🔍syncTop10History isNeedSyncData time gap', gap);
+    return gap > expireTime;
+  });
+
   const syncTop10History = useMemoizedFn(
     async (force?: boolean, resetEntity?: boolean) => {
-      const isForceFetchFromApi = isNeedFetchData() || force;
+      const top10Account = sortedAccounts.slice(0, 10);
+      if (top10Account.length === 0) {
+        console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
+        return;
+      }
+
+      const isForceFetchFromApi = force || (await isNeedSyncData());
       if (!isForceFetchFromApi) {
         console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: not update');
         return;
-      } else {
-        lastTimeStamps.current = Date.now();
       }
 
       if (isSyncing) {
         console.debug('🔍syncTop10History  isSyncing maybe error');
-      }
-      const top10Account = sortedAccounts.slice(0, 10);
-      if (top10Account.length === 0) {
-        console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
         return;
       }
       try {
@@ -248,10 +248,15 @@ export const useSyncHistoryDB = (
     },
   );
 
+  const syncSingleAddress = useMemoizedFn(address => {
+    Promise.all([syncUserAllHistory(address), syncSwapHistory(address)]);
+  });
+
   return {
     isSyncing,
     syncTop10History,
     interrupt,
+    syncSingleAddress,
     refreshing: !!isSyncing && !isFirstFetch,
   };
 };

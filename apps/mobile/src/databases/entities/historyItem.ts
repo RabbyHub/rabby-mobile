@@ -149,19 +149,26 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async getLatestTime(owner_addr: string): Promise<number> {
+  static async getLatestTime(owner_addr?: string): Promise<number> {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
-    const result = await repo
+    const queryBuilder = repo
       .createQueryBuilder('historyitem')
-      .select('MAX(historyitem.time_at)', 'maxTimeAt')
-      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
-      .getRawOne();
+      .select('MAX(historyitem.time_at)', 'maxTimeAt');
 
-    if (!result.maxTimeAt) {
+    if (owner_addr) {
+      queryBuilder.where('historyitem.owner_addr = :owner_addr', {
+        owner_addr,
+      });
+    }
+
+    const result = await queryBuilder.getRawOne();
+
+    if (!result || !result.maxTimeAt) {
       return 0;
     }
+
     return result.maxTimeAt;
   }
 
