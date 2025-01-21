@@ -76,17 +76,17 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   // pay_token
   @Column({
     type: 'text',
-    default: '{}',
+    default: '[]',
     transformer: jsonTransformer,
   })
-  pay_token: string = '{}';
+  pay_token = {};
   // collection
   @Column({
     type: 'text',
-    default: '{}',
+    default: '[]',
     transformer: jsonTransformer,
   })
-  collection: string = '{}';
+  collection: object = {};
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
       .filter(Boolean)
@@ -111,8 +111,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     e.content = input.content ?? '';
     e.detail_url = input.detail_url ?? '';
     e.total_supply = input.total_supply ?? '';
-    e.collection = JSON.stringify(input.collection || {});
-    e.pay_token = JSON.stringify(input.pay_token || {});
+    e.collection = input.collection || {};
+    e.pay_token = input.pay_token || {};
     e.is_erc1155 = input.is_erc1155 ?? false;
     e.is_erc721 = input.is_erc721 ?? false;
     e.thumbnail_url = input.thumbnail_url ?? '';
@@ -151,8 +151,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
       .map(i => ({
         ...i,
-        collection: JSON.parse(i.collection || '{}'),
-        pay_token: JSON.parse(i.pay_token || '{}'),
+        collection: i.collection,
+        pay_token: i.pay_token,
       }));
   }
 

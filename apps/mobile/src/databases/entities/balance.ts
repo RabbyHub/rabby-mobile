@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
+import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { jsonTransformer } from './_helpers';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
@@ -17,10 +17,10 @@ export class BalanceEntity extends EntityAddressAssetBase {
   // chain_list
   @Column({
     type: 'text',
-    default: '{}',
+    default: '[]',
     transformer: jsonTransformer,
   })
-  chain_list: string = '{}';
+  chain_list: any[] = [];
 
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${
@@ -36,7 +36,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
   ) {
     e.owner_addr = owner_addr;
     e.balance = input.total_usd_value;
-    e.chain_list = JSON.stringify(input.chain_list || {});
+    e.chain_list = input.chain_list || [];
     e.isCore = isCore;
     e.makeDbId();
   }
@@ -72,7 +72,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
 
     return {
       total_usd_value: result?.balance || 0,
-      chain_list: JSON.parse(result?.chain_list || '{}'),
+      chain_list: result?.chain_list || [],
     };
   }
 
@@ -91,7 +91,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
       return true;
     }
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
-    return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
+    return Date.now() - firstUpdateTime > BALANCE_EXPIRED_TIME;
   }
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();

@@ -6,7 +6,7 @@ import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { getTokenSettings } from '@/utils/getTokenSettings';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 
-const getTotalBalanceCached = cached(async address => {
+const getTotalBalanceCached = async (address: string, force?: boolean) => {
   const addresses = await keyringService.getAllAddresses();
   const filtered = addresses.filter(item =>
     isSameAddress(item.address, address),
@@ -16,14 +16,17 @@ const getTotalBalanceCached = cached(async address => {
     core = true;
   }
   const tokenSetting = await getTokenSettings();
-  const data = await batchBalanceWithLocalCache({
-    address,
-    isCore: core,
-    ...tokenSetting,
-  });
+  const data = await batchBalanceWithLocalCache(
+    {
+      address,
+      isCore: core,
+      ...tokenSetting,
+    },
+    force,
+  );
   preferenceService.updateAddressBalance(address, data);
   return data;
-}, 5000);
+};
 
 const getTestnetTotalBalanceCached = cached(async address => {
   const tokenSetting = await getTokenSettings();
@@ -49,7 +52,7 @@ export const getAddressBalance = async (
   if (isTestnet) {
     return getTestnetTotalBalanceCached([address], address, force);
   }
-  return getTotalBalanceCached([address], address, force);
+  return getTotalBalanceCached(address, force);
 };
 
 export const getAddressCacheBalance = async (

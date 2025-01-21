@@ -328,6 +328,7 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       PortocolItemEntity.deleteForAddress(address),
       HistoryItemEntity.deleteForAddress(address),
       SwapItemEntity.deleteForAddress(address),
+      BalanceEntity.deleteForAddress(address),
     ]);
   } catch (error) {
     console.log('🔍 CUSTOM_LOGGER:=>: deleteDBResourceForAddress)', error);
@@ -351,7 +352,6 @@ export async function syncBalance(
       key: address,
       batchSize: 100,
       concurrency: 1,
-      delayBetweenTasks: 1.5 * 1e3,
     },
   )
     .then(() => {

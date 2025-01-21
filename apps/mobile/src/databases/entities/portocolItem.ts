@@ -36,7 +36,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     default: '{}',
     transformer: jsonTransformer,
   })
-  portfolio_item_list: string = '{}';
+  portfolio_item_list: any[] = [];
 
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
@@ -58,7 +58,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     e.logo_url = input.logo_url ?? '';
     e.has_supported_portfolio = input.has_supported_portfolio ?? false;
     e.tvl = input.tvl ?? 0;
-    e.portfolio_item_list = JSON.stringify(input.portfolio_item_list || {});
+    e.portfolio_item_list = input.portfolio_item_list || [];
 
     e.makeDbId();
   }
@@ -89,7 +89,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,
-        portfolio_item_list: JSON.parse(i.portfolio_item_list || '{}'),
+        portfolio_item_list: i.portfolio_item_list || [],
       }));
   }
 
