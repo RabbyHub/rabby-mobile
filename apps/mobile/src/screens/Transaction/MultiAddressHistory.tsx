@@ -134,7 +134,7 @@ function History({
     transactionHistoryService.getSucceedList(),
   );
 
-  const { syncTop10History, isSyncing, refreshing } =
+  const { syncTop10History, isSyncing, isFirstFetchLoading } =
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
   const getSwapHistory = async (add?: string) => {
@@ -148,13 +148,22 @@ function History({
   };
 
   useEffect(() => {
-    if (!refreshing && !isInTokenDetail && refreshSyncLoading) {
+    if (!isSyncing && !isInTokenDetail && refreshSyncLoading) {
       console.log('refreshSyncLoading reloadAsync exec');
       reloadAsync(); // again fetch local db data
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshing]);
+  }, [isSyncing]);
+
+  useEffect(() => {
+    if (!isFirstFetchLoading && !isInTokenDetail) {
+      console.log('isFirstFetchLoading reloadAsync exec');
+      reloadAsync(); // again fetch local db data
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFirstFetchLoading]);
 
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
@@ -163,8 +172,9 @@ function History({
   });
 
   const batchFetchDataV2 = async () => {
-    if (refreshing) {
+    if (isFirstFetchLoading) {
       const res = [] as HistoryDisplayItem[];
+      console.log('setRefreshSyncLoading');
       return res;
     }
 
@@ -488,7 +498,7 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = loading && !allTxHistory.length;
+  const isFirstLoading = loading && isFirstFetchLoading && !allTxHistory.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
     return <Empty />;
@@ -537,7 +547,7 @@ function History({
           localTxList={groups}
           loading={isFirstLoading}
           loadingMore={loadingMore}
-          refreshLoading={loading || refreshSyncLoading}
+          refreshLoading={loading}
           isForMultipleAdderss={isForMultipleAdderss}
           loadMore={loadMore}
           onRefresh={refresh}

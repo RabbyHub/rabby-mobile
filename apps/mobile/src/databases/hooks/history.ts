@@ -58,7 +58,12 @@ export const useSyncHistoryDB = (
   sortedAccounts: KeyringAccountWithAlias[] = [],
 ) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
-  const { setProjectDict, setTokenDict } = useHistoryTokenDict();
+  const {
+    setProjectDict,
+    setTokenDict,
+    isFristFetchData,
+    setIsFristFetchData,
+  } = useHistoryTokenDict();
   const abortRef = useRef(false);
 
   const interrupt = () => {
@@ -229,7 +234,7 @@ export const useSyncHistoryDB = (
             }
 
             try {
-              await Promise.allSettled([
+              await Promise.all([
                 syncUserAllHistory(account.address),
                 syncSwapHistory(account.address),
               ]);
@@ -249,6 +254,10 @@ export const useSyncHistoryDB = (
         await waitQueueFinished(queue);
       } finally {
         setIsSyncing(false);
+        isFristFetchData &&
+          setTimeout(() => {
+            setIsFristFetchData(false);
+          }, 1000);
       }
     },
   );
@@ -262,6 +271,6 @@ export const useSyncHistoryDB = (
     syncTop10History,
     interrupt,
     syncSingleAddress,
-    refreshing: !!isSyncing,
+    isFirstFetchLoading: isFristFetchData,
   };
 };
