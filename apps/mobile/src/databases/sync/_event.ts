@@ -3,7 +3,8 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { makeJsEEClass } from '@/core/services/_utils';
 import { EntityAddressAssetBase } from '../entities/base';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 
 export type SyncTaskOptions = {
   owner_addr: string;
@@ -12,7 +13,7 @@ export type SyncTaskOptions = {
     | 'all-history'
     | 'swap-history'
     | 'nfts'
-    | 'portocols'
+    | 'protocols'
     | 'balance';
 };
 
@@ -47,9 +48,22 @@ export function useAppOrmSyncEvents<
   onRemoteDataUpserted: (ctx: Omit<RemoteDataUpsertedCtx, 'items'>) => void;
 }) {
   const { taskFor, onRemoteDataUpserted } = options;
+  const taskForListStr = useMemo(
+    () => JSON.stringify(Array.isArray(taskFor) ? taskFor : [taskFor]),
+    [taskFor],
+  );
+
+  const fnsRef = useRef({ onRemoteDataUpserted });
+
   useEffect(() => {
-    const taskFors = Array.isArray(taskFor) ? taskFor : [taskFor];
+    fnsRef.current.onRemoteDataUpserted = onRemoteDataUpserted;
+  }, [onRemoteDataUpserted]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const taskFors = safeParseJSON(taskForListStr);
     const listener: Parameters<(typeof appOrmEvents)['on']>[1] = ctx => {
+      if (!isMounted) return;
       if (
         !taskFors.includes(ctx.taskFor as T) ||
         ['@unknown'].includes(ctx.taskFor)
@@ -57,12 +71,16 @@ export function useAppOrmSyncEvents<
         return;
 
       // console.debug('onRemoteDataUpserted:: ctx', ctx);
-      onRemoteDataUpserted(ctx);
+      fnsRef.current.onRemoteDataUpserted?.(ctx);
     };
+
+    console.warn('[feat] useAppOrmSyncEvents mounted');
     appOrmEvents.on('onRemoteDataUpserted', listener);
 
     return () => {
+      isMounted = false;
+      console.warn('[feat] useAppOrmSyncEvents cleanup: %s', taskFors);
       appOrmEvents.off('onRemoteDataUpserted', listener);
     };
-  }, [taskFor, onRemoteDataUpserted]);
+  }, [taskForListStr]);
 }

@@ -53,7 +53,6 @@ import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScre
 import {
   useHistoryBasicInfo,
   useSyncHistoryDB,
-  useSyncHistoryOnBoot,
 } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
@@ -164,13 +163,14 @@ function History({
     transactionHistoryService.clearSuccessAndFailList();
   });
 
+  let list: HistoryDisplayItem[] = [];
   const batchFetchDataV2 = async () => {
-    // fetch data from local database
-    if (isFirstFetchLoading) {
-      const res = [] as HistoryDisplayItem[];
-      console.log('setRefreshSyncLoading');
-      return res;
-    }
+    // // fetch data from local database
+    // if (isFirstFetchLoading) {
+    //   const res = [] as HistoryDisplayItem[];
+    //   console.log('setRefreshSyncLoading');
+    //   return res;
+    // }
 
     const address = isSceneUsingAllAccounts
       ? undefined
@@ -186,7 +186,7 @@ function History({
     console.log('historyList', historyList.length);
     console.log('swapList', swapList.length);
 
-    const list = historyList.map(
+    list = historyList.map(
       item =>
         ({
           ...ensureHistoryListItemFromDb(item),
@@ -417,18 +417,24 @@ function History({
     },
   });
 
-  // useAppOrmSyncEvents({
-  //   taskFor: ['all-history'],
-  //   onRemoteDataUpserted: ctx => {
-  //     switch (ctx.taskFor) {
-  //       case 'all-history':
-  //         batchFetchDataV2();
-  //         break;
-  //       default:
-  //         break;
-  //     }
-  //   },
-  // });
+  useAppOrmSyncEvents({
+    taskFor: ['all-history'],
+    onRemoteDataUpserted: useCallback(ctx => {
+      switch (ctx.taskFor) {
+        case 'all-history':
+          console.warn(
+            '[feat] ctx.taskFor: %s; ctx.owner_addr: %s',
+            ctx.taskFor,
+            ctx.owner_addr,
+          );
+          batchFetchDataV2();
+          break;
+        default:
+          break;
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  });
 
   const data = useMemo(() => {
     return isInTokenDetail ? _data : { list: dbData };
