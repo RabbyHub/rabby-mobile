@@ -157,9 +157,9 @@ function History({
   }, [refreshing]);
 
   useMount(() => {
-    // const list = transactionHistoryService.getSucceedList();
-    // setHistorySuccessList(list);
-    // transactionHistoryService.clearSuccessAndFailList();
+    const list = transactionHistoryService.getSucceedList();
+    setHistorySuccessList(list);
+    transactionHistoryService.clearSuccessAndFailList();
   });
 
   const batchFetchDataV2 = async () => {
