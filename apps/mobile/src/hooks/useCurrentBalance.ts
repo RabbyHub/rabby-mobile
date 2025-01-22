@@ -20,7 +20,6 @@ export const useTriggerHomeBalanceUpdate = () => {
   const [, setForceUpdate] = useAtom(forceUpdateAtom);
 
   const triggerUpdate = useCallback(() => {
-    console.log('🔍 CUSTOM_LOGGER:=>: triggerUpdate)');
     setNonce(n => n + 1);
     setForceUpdate(true);
   }, [setForceUpdate, setNonce]);

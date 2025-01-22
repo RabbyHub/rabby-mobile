@@ -55,11 +55,7 @@ const SearchOnTheChain = ({ filterText }: Props) => {
       );
       setSearched(true);
     } catch (error) {
-      console.log(
-        '🔍 CUSTOM_LOGGER:=>: get web chain error)',
-        filterText,
-        error,
-      );
+      console.log('get web chain error)', filterText, error);
     } finally {
       setLoading(false);
     }

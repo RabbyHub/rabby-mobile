@@ -105,7 +105,6 @@ export const syncProtocols = async (
 
   const chunkIds = chunk(realtimeIds, 5);
 
-  console.log('🔍 CUSTOM_LOGGER:=>: fetch protocol', address.slice(-4));
   const protocols: ComplexProtocol[] = [];
   await Promise.all(
     chunkIds.map(async ids => {
@@ -160,7 +159,7 @@ export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
     try {
       for (const address of addresses) {
         if (abortRef.current) {
-          console.log('🔍 CUSTOM_LOGGER:=>: Fetching interrupted.');
+          console.log('Fetching interrupted.');
           setIsSyncing(false);
           setIsFirstFetch(false);
           break;

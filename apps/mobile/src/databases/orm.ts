@@ -45,5 +45,5 @@ const dbOptions: DataSourceOptions = {
 };
 
 initializeAppDataSource(dbOptions).catch(err => {
-  console.log('🔍 CUSTOM_LOGGER:=>: initializeAppDataSource error', err);
+  console.log('initializeAppDataSource error', err);
 });
