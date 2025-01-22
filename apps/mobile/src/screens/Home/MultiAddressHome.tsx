@@ -71,6 +71,7 @@ import { useAssets } from '../Search/useAssets';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ellipsisAddress } from '@/utils/address';
+import { useUpgradeInfo } from '@/hooks/version';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -78,6 +79,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
+  const { remoteVersion } = useUpgradeInfo();
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -126,6 +128,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
           });
         }}>
         <RcIconSetting />
+        {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
       </TouchableWithoutFeedback>
     </View>
   );
@@ -674,6 +677,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: '100%',
   },
+  redDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['red-default'],
+    position: 'absolute',
+    top: 15,
+    right: 13,
+  },
   rootScreenContainer: {
     // ...makeDebugBorder(),
     // paddingHorizontal: 20,
@@ -723,7 +735,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     paddingLeft: 12,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    // ...makeDebugBorder(),
+    position: 'relative',
   },
   usdText: {
     fontSize: 36,
