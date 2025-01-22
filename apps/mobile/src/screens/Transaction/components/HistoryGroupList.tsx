@@ -90,11 +90,13 @@ export const HistoryList = ({
   loadingMore,
   loadMore,
   refreshLoading,
+  resetTopMenu,
   list,
   localTxList,
   onRefresh,
   isForMultipleAdderss = true,
 }: {
+  resetTopMenu?: () => void;
   historySuccessList?: string[];
   localTxList?: TransactionGroup[];
   list?: (HistoryDisplayItem | TransactionGroup)[];
@@ -178,6 +180,7 @@ export const HistoryList = ({
       data={markedList}
       renderItem={renderItem}
       windowSize={5}
+      onTouchStart={() => resetTopMenu && resetTopMenu()}
       style={styles.container}
       onEndReached={loadMore}
       onEndReachedThreshold={0.8}
