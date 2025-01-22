@@ -27,6 +27,10 @@ import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
+import { Button } from '@/components2024/Button';
+import { CHAINS_ENUM } from '@/constant/chains';
+import { StackActions } from '@react-navigation/native';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 interface Props {
   data: TransactionGroup;
@@ -37,6 +41,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
+  const navigation = useRabbyAppNavigation();
   const { actionData, requireData, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
     const actionData = maxGasTx.action!.actionData.swap!;
@@ -204,6 +209,32 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {data.isPending ? null : (
+        <View style={styles.buttonContainer}>
+          <View style={{ flex: 1 }}>
+            <Button
+              onPress={() => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTransaction, {
+                    screen: !isSingleAddress
+                      ? RootNames.MultiSwap
+                      : RootNames.Swap,
+                    params: {
+                      swapAgain: true,
+                      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                      swapTokenId: [
+                        actionData.payToken?.id,
+                        actionData.receiveToken?.id,
+                      ],
+                    },
+                  }),
+                );
+              }}
+              title={t('page.transactions.detail.SwapAgain')}
+            />
+          </View>
+        </View>
+      )}
     </>
   );
 };

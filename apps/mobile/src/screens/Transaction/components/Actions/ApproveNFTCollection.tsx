@@ -30,6 +30,7 @@ import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { RevokeNFTCollectionBtn } from './components/RevokeNFTCollectionBtn';
 
 interface Props {
   data: TransactionGroup;
@@ -253,6 +254,12 @@ export const ApproveNFTCollection: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
       </View>
+      {data.isPending ? null : (
+        <RevokeNFTCollectionBtn
+          actionData={actionData}
+          address={data.maxGasTx.address}
+        />
+      )}
     </>
   );
 };

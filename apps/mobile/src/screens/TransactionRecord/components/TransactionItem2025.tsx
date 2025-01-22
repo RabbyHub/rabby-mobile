@@ -266,29 +266,34 @@ export const TransactionItem = ({
   };
 
   const formatType: HistoryItemCateType = useMemo(() => {
-    if (data.txs?.[0]?.$ctx.ga.category === 'Send') {
+    if (data.maxGasTx.action?.actionData.send) {
       return HistoryItemCateType.Send;
     }
 
-    if (data.txs?.[0]?.$ctx.ga.category === 'Swap') {
+    if (data.maxGasTx.action?.actionData.swap) {
       return HistoryItemCateType.Swap;
     }
 
     if (
-      data.$ctx?.ga?.category === 'Security' &&
-      data.$ctx?.ga?.source === 'tokenApproval'
+      data.maxGasTx.action?.actionData.approveToken ||
+      data.maxGasTx.action?.actionData.approveNFT ||
+      data.maxGasTx.action?.actionData.approveNFTCollection
     ) {
-      const revokeToken = data.action?.actionData.revokeToken;
-      if (revokeToken && !revokeToken.token?.amount) {
-        return HistoryItemCateType.Revoke;
-      } else {
-        return HistoryItemCateType.Approve;
-      }
+      return HistoryItemCateType.Approve;
     }
 
-    if (data.txs?.[0]?.$ctx.ga.category === 'Bridge') {
-      return HistoryItemCateType.Bridge;
+    if (
+      data.maxGasTx.action?.actionData.revokeToken ||
+      data.maxGasTx.action?.actionData.revokeNFT ||
+      data.maxGasTx.action?.actionData.revokeNFTCollection ||
+      data.maxGasTx.action?.actionData.revokePermit2
+    ) {
+      return HistoryItemCateType.Revoke;
     }
+
+    // if (data.txs?.[0]?.$ctx.ga.category === 'Bridge') {
+    //   return HistoryItemCateType.Bridge;
+    // }
 
     return HistoryItemCateType.UnKnown;
   }, [data]);

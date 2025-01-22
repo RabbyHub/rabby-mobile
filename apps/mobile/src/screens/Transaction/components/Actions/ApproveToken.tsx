@@ -31,6 +31,7 @@ import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
+import { RevokeTokenBtn } from './components/RevokeTokenBtn';
 
 interface Props {
   data: TransactionGroup;
@@ -278,6 +279,12 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {data.isPending ? null : (
+        <RevokeTokenBtn
+          actionData={actionData}
+          address={data.maxGasTx.address}
+        />
+      )}
     </>
   );
 };

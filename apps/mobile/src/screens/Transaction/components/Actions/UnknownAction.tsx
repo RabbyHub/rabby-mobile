@@ -38,44 +38,27 @@ import { Button } from '@/components2024/Button';
 import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { BalanceChange } from './components/BalanceChange';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
 }
 
-export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
-  const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
-    const maxGasTx = data.maxGasTx;
-    const actionData = maxGasTx.action!.actionData.send!;
-    const requireData = maxGasTx.action?.requiredData as SendRequireData;
-
-    const amount = new BigNumber(actionData.token.raw_amount || '0').div(
-      10 ** actionData.token.decimals,
-    );
-    const sendAmount = formatTokenAmount(amount);
-
-    const sendUsdValue = formatUsdValue(
-      amount.times(actionData.token.price).toString(),
-    );
-
+  const { chain } = useMemo(() => {
     const chain =
       findChain({
         id: data.chainId,
       }) || undefined;
     return {
-      maxGasTx,
-      actionData,
-      requireData,
-      sendAmount,
-      sendUsdValue,
       chain,
     };
-  }, [data.chainId, data.maxGasTx]);
+  }, [data.chainId]);
 
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -97,44 +80,13 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
     }
   });
 
-  const handleGotoTokenDetail = useMemoizedFn(() => {
-    naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(actionData.token),
-      // account: address,
-      needUseCacheToken: true,
-      isSingleAddress,
-    });
-  });
-
   return (
     <>
-      <TouchableOpacity onPress={handleGotoTokenDetail}>
-        <View style={[styles.singleBox]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <HistoryItemIcon
-              isInDetail={true}
-              type={HistoryItemCateType.Send}
-              token={actionData.token}
-              isNft={false}
-            />
-            <View style={[styles.colomnBox]}>
-              <>
-                <Text style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                  - {sendAmount} {getTokenSymbol(actionData.token as TokenItem)}
-                </Text>
-                <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
-              </>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <RcIconSingleArrow
-              width={32}
-              height={32}
-              color={colors2024['neutral-bg-2']}
-            />
-          </View>
-        </View>
-      </TouchableOpacity>
+      <BalanceChange
+        data={data.maxGasTx.explain?.balance_change}
+        version={data.maxGasTx.explain?.pre_exec_version || 'v0'}
+        isSingleAddress={isSingleAddress}
+      />
       <View style={styles.detailContainer}>
         {/* todo get complete time */}
         {/* {!data.isPending && data.maxGasTx.createdAt && (
@@ -197,17 +149,6 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
 
         <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.To')}
-          </Text>
-          <AddressItemInDetail
-            address={actionData.to}
-            accounts={unionAccounts}
-            switchAccount={switchAccount}
-          />
-        </View>
-
-        <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>Hash</Text>
           <TouchableOpacity
             disabled={!chain?.scanLink}
@@ -224,28 +165,6 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
           </TouchableOpacity>
         </View>
       </View>
-      {data.isPending ? null : (
-        <View style={styles.buttonContainer}>
-          <View style={{ flex: 1 }}>
-            <Button
-              onPress={() => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackTransaction, {
-                    screen: !isSingleAddress
-                      ? RootNames.MultiSend
-                      : RootNames.Send,
-                    params: {
-                      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                      tokenId: actionData.token?.id,
-                    },
-                  }),
-                );
-              }}
-              title={t('page.transactions.detail.SendAgain')}
-            />
-          </View>
-        </View>
-      )}
     </>
   );
 };

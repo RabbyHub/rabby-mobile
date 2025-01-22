@@ -77,6 +77,8 @@ import { CancelTx } from './components/Actions/CancelTx';
 import { DeployContact } from './components/Actions/DeployContract';
 import { Swap } from './components/Actions/Swap';
 import { Send } from './components/Actions/Send';
+import { useTranslation } from 'react-i18next';
+import { UnknownAction } from './components/Actions/UnknownAction';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route = useRoute();
@@ -107,6 +109,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { switchAccount } = useCurrentAccount();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const fetchRefreshData = useCallback(() => {
     if (!isPending) {
@@ -153,25 +156,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const list = useSortAddressList(accounts);
-  const unionAccounts = useMemo(() => {
-    return unionBy(list, account => account.address.toLowerCase());
-  }, [list]);
-
-  const fromAddr = data.txs?.[0].rawTx?.from as string;
-  const toAddr = data.txs?.[0].rawTx?.to as string;
-
-  const onOpenTxId = useCallback(() => {
-    const tx = data.maxGasTx.hash;
-
-    const info = chainItem;
-
-    if (info?.scanLink) {
-      openTxExternalUrl({ chain: info, txHash: tx });
-    } else {
-      toast.error('Unknown chain');
-    }
-  }, [data, chainItem]);
 
   const handleQuickCancel = async () => {
     const maxGasTx = data.maxGasTx;
@@ -327,33 +311,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
     resetNavigationTo(navigation, 'Home');
   });
 
-  const handlePressToken = useCallback(
-    (singeToken: TokenItem | NFTItem, tokenIsNft: boolean) => {
-      if (!singeToken) {
-        return;
-      }
-
-      if (tokenIsNft) {
-        naviPush(RootNames.NftDetail, {
-          token: { ...singeToken },
-          isSingleAddress: !isForMultipleAdderss,
-        });
-      } else {
-        // if (address) {
-        //   setTokenDetailAddress(address);
-        // }
-        // openTokenDetailPopup(token as TokenItem);
-        naviPush(RootNames.TokenDetail, {
-          token: ensureAbstractPortfolioToken(singeToken as TokenItem),
-          // account: address,
-          needUseCacheToken: true,
-          isSingleAddress: !isForMultipleAdderss,
-        });
-      }
-    },
-    [isForMultipleAdderss],
-  );
-
   const handleTxCancel = useMemoizedFn(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CANCEL_TX_POPUP,
@@ -405,6 +362,28 @@ function HistoryLocalDetailScreen(): JSX.Element {
         <Swap data={data} isSingleAddress={!isForMultipleAdderss} />
       ) : data.maxGasTx.action?.actionData?.send ? (
         <Send data={data} isSingleAddress={!isForMultipleAdderss} />
+      ) : (
+        <UnknownAction data={data} isSingleAddress={!isForMultipleAdderss} />
+      )}
+      {isPending ? (
+        <View style={styles.buttonContainer}>
+          <View style={{ flex: 1 }}>
+            <Button
+              titleStyle={[styles.ghostTitle]}
+              buttonStyle={[styles.ghostButton]}
+              onPress={handleTxCancel}
+              title={strings('page.transactions.detail.Cancel')}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              titleStyle={[styles.primaryTitle]}
+              buttonStyle={[styles.primaryButton]}
+              onPress={handleTxSpeedUp}
+              title={strings('page.transactions.detail.SpeedUp')}
+            />
+          </View>
+        </View>
       ) : null}
     </NormalScreenContainer2024>
   );

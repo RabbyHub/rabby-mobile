@@ -27,6 +27,7 @@ import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { RevokeNFTBtn } from './components/RevokeNFTBtn';
 
 interface Props {
   data: TransactionGroup;
@@ -242,6 +243,7 @@ export const ApproveNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {data.isPending ? null : <RevokeNFTBtn actionData={actionData} />}
     </>
   );
 };

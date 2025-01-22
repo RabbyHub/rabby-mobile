@@ -71,7 +71,8 @@
         "InteractedContract": "Interacted contract",
         "RecipientAddress": "Recipient address",
         "name": "Name",
-        "RevokeToken": "Revoke Token"
+        "RevokeToken": "Revoke Token",
+        "InteractionResults": "Interaction Results"
       },
       "empty": {
         "title": "No transactions",
