@@ -27,11 +27,8 @@ export const useQueryProjects = (userAddr: string | undefined) => {
       if (!isLoading) {
         setLoading(true);
         try {
-          await Promise.all([
-            updateTokens(force),
-            updatePortfolio(force),
-            reloadNftList(force),
-          ]);
+          await updateTokens(force);
+          await Promise.all([updatePortfolio(force), reloadNftList(force)]);
         } catch (error) {
           console.error(error);
         } finally {
