@@ -25,7 +25,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     _tokens.push(EMPTY_TOKEN_ITEM);
   }
   const tokens = _tokens.sort((a, b) =>
-    b.is_core === a.is_core ? 0 : b.is_core ? -1 : 1,
+    b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
 
   const tokenItems = tokens.map(raw => {
@@ -146,7 +146,7 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
     _nfts.push(EMPTY_NFT_ITEM);
   }
   const nfts = _nfts.sort((a, b) =>
-    b.is_core === a.is_core ? 0 : b.is_core ? -1 : 1,
+    b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
   const nftItems = nfts.map(raw => {
     const nftItem = new NFTItemEntity();

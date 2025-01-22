@@ -56,7 +56,7 @@ export function useAppOrmSyncEvents<
       )
         return;
 
-      console.debug('onRemoteDataUpserted:: ctx', ctx);
+      // console.debug('onRemoteDataUpserted:: ctx', ctx);
       onRemoteDataUpserted(ctx);
     };
     appOrmEvents.on('onRemoteDataUpserted', listener);
