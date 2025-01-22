@@ -3,39 +3,26 @@ import type { Account } from './preference';
 
 type Listener = (resp?: any) => void;
 
+declare class BizEventEmitter<
+  Listeners extends { [key: string]: Listener },
+> extends EventEmitter {
+  on<T extends keyof Listeners & string>(
+    eventType: T,
+    listener: Listeners[T],
+  ): this;
+
+  emit<T extends keyof Listeners & string>(
+    eventType: T,
+    ...args: Parameters<Listeners[T]>
+  ): boolean;
+}
+
 export function makeJsEEClass<
   Listeners extends {
     [key: string]: Listener;
   },
 >() {
-  type EE = typeof EventEmitter & {
-    on<T extends keyof Listeners & string>(
-      eventName: T,
-      listener: Listeners[T],
-    ): ThisType<EE>;
-    emit<T extends keyof Listeners & string>(
-      eventName: T,
-      ...args: Parameters<Listeners[T]>
-    ): boolean;
-  };
-
-  class BizEventEmitter extends EventEmitter {
-    on<T extends keyof Listeners & string>(
-      eventType: T,
-      listener: Listeners[T],
-    ) {
-      return super.on(eventType, listener);
-    }
-
-    emit<T extends keyof Listeners & string>(
-      eventType: T,
-      ...args: Parameters<Listeners[T]>
-    ) {
-      return super.emit(eventType, ...args);
-    }
-  }
-
-  return { EventEmitter: BizEventEmitter };
+  return { EventEmitter: EventEmitter as typeof BizEventEmitter<Listeners> };
 }
 
 const { EventEmitter: AppServiceEvents } = makeJsEEClass<{
