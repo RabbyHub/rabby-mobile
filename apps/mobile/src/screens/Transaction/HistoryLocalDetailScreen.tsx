@@ -105,7 +105,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
   console.debug('HistoryLocalDetailScreen isPending', isPending);
-  console.debug('HistoryLocalDetailScreen data', JSON.stringify(data));
   const { switchAccount } = useCurrentAccount();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();

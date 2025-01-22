@@ -166,11 +166,11 @@ function History({
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
-    // if (isFirstFetchLoading) {
-    //   const res = [] as HistoryDisplayItem[];
-    //   console.log('setRefreshSyncLoading');
-    //   return res;
-    // }
+    if (isFirstFetchLoading) {
+      const res = [] as HistoryDisplayItem[];
+      console.log('setRefreshSyncLoading');
+      return res;
+    }
 
     const address = isSceneUsingAllAccounts
       ? undefined
