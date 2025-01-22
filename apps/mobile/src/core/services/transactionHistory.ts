@@ -84,6 +84,7 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   successList: string[];
   failList: string[];
+  isNeedFetchTxHistory?: boolean;
 }
 
 // TODO
@@ -103,6 +104,7 @@ export class TransactionHistoryService {
           transactions: [],
           successList: [],
           failList: [],
+          isNeedFetchTxHistory: false,
         },
       },
       {
@@ -164,6 +166,12 @@ export class TransactionHistoryService {
 
   getFailedCount() {
     return this.store.failList.length;
+  }
+
+  getIsNeedFetchTxHistory() {
+    const res = this.store.isNeedFetchTxHistory;
+    this.store.isNeedFetchTxHistory = false;
+    return res;
   }
 
   clearSuccessAndFailList() {
@@ -420,6 +428,7 @@ export class TransactionHistoryService {
         } else {
           id && this.store.failList.push(id);
         }
+        this.store.isNeedFetchTxHistory = true;
       }
     });
 

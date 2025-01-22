@@ -126,10 +126,13 @@ export const HistoryItem = React.memo(
       const projectName = data?.project_id
         ? projectDict[data?.project_id]?.name
         : '';
+      const other_addr = data.other_addr
+        ? ellipsisAddress(data.other_addr)
+        : '';
 
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return projectName || chainItem?.name;
+          return projectName || strings('page.transactions.detail.Unknown');
 
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
