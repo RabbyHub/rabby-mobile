@@ -28,7 +28,6 @@ export const batchQueryTokens = async (
   chainId?: string,
   isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
 ) => {
-  console.log('🔍 CUSTOM_LOGGER:=>: fetch token', user_id.slice(-4));
   if (!chainId && !isTestnet) {
     const usedChains = await openapi.usedChainList(user_id);
     const chainIdList = usedChains.map(item => item.id);

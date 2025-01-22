@@ -151,7 +151,7 @@ export const useAssets = (filterText?: string) => {
       await handleFetchTokens();
       for (const address of addresses) {
         if (abortRef.current) {
-          console.log('🔍 CUSTOM_LOGGER:=>: Fetching interrupted.');
+          console.log('Fetching interrupted.');
           setLoading(false);
           setIsFirstFetch(false);
           break;

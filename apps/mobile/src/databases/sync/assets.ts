@@ -215,7 +215,7 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       BalanceEntity.deleteForAddress(address),
     ]);
   } catch (error) {
-    console.log('🔍 CUSTOM_LOGGER:=>: deleteDBResourceForAddress)', error);
+    console.log('deleteDBResourceForAddress', error);
   }
 };
 
@@ -228,7 +228,7 @@ export const updateExpiredTime = async (_address: string, offest?: number) => {
       PortocolItemEntity.willExpired(address, offest),
     ]);
   } catch (error) {
-    console.log('🔍 CUSTOM_LOGGER:=>: update expired)', error);
+    console.log('update expired)', error);
   }
 };
 
