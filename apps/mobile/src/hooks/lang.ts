@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { findBestLanguageTag, getLocales } from 'react-native-localize';
 import { useAtom } from 'jotai';
@@ -105,7 +105,7 @@ export function useAppLanguage() {
 export function useTriggerI18nChangeOnAppTop() {
   const { currentLanguage } = useAppLanguage();
 
-  useMount(() => {
+  useEffect(() => {
     i18n
       .changeLanguage(currentLanguage)
       .then(() => {
@@ -116,5 +116,5 @@ export function useTriggerI18nChangeOnAppTop() {
       .catch(error => {
         console.error(error);
       });
-  });
+  }, [currentLanguage]);
 }
