@@ -51,6 +51,7 @@ import { flatListRefAtom } from './hooks/store';
 import { useSetAtom } from 'jotai';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
+import { useTriggerTagAssets } from './hooks/refresh';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -81,12 +82,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loading,
     refreshing,
     hasAssets,
-    refreshTagNft,
-    refreshTagToken,
-    refreshTagPortfolio,
   } = useQueryProjects(currentAccount?.address);
   const sortTokens = useSortToken(tokens);
-
+  const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
+    useTriggerTagAssets();
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
@@ -287,7 +286,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
               });
               toast.success(t('page.tokenDetail.actionsTips.fold_success'));
             }
-            refreshTagToken();
+            singleTokenRefresh();
           },
         },
         {
@@ -323,12 +322,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
               });
               toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
-            refreshTagToken();
+            singleTokenRefresh();
           },
         },
       ];
     },
-    [isDarkTheme, refreshTagToken, t],
+    [isDarkTheme, singleTokenRefresh, t],
   );
   const getDefiOrNftMenuAction = useCallback(
     (
@@ -376,15 +375,15 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
               }
             }
             if (type === 'defi') {
-              refreshTagPortfolio();
+              singleDeFiRefresh();
             } else if (type === 'nft') {
-              refreshTagNft();
+              singleNFTRefresh();
             }
           },
         },
       ];
     },
-    [isDarkTheme, refreshTagNft, refreshTagPortfolio, t],
+    [isDarkTheme, singleDeFiRefresh, singleNFTRefresh, t],
   );
 
   const renderItem = ({ item: _item }: { item: ActionItem }) => {

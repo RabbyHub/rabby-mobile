@@ -33,7 +33,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
 import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
-import { useRefreshTags } from '../Home/hooks/token';
+import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
@@ -73,9 +73,9 @@ export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   isMultiAddress?: boolean;
   triggerUpdate: () => void;
-}> = ({ token, triggerUpdate, isMultiAddress }) => {
+  refreshTags: () => void;
+}> = ({ token, triggerUpdate, isMultiAddress, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { refreshTagToken } = useRefreshTags();
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
@@ -110,7 +110,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTagToken();
+          refreshTags();
         },
       },
       {
@@ -149,12 +149,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTagToken();
+          refreshTags();
           triggerUpdate();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTagToken, triggerUpdate]);
+  }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -310,6 +310,15 @@ export const TokenDetailScreen = () => {
   );
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
+  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
+
+  const refreshTag = useCallback(() => {
+    if (isSingleAddress) {
+      singleTokenRefresh();
+    } else {
+      tokenRefresh();
+    }
+  }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderRight = useCallback(() => {
     return (
@@ -317,9 +326,10 @@ export const TokenDetailScreen = () => {
         token={token}
         triggerUpdate={triggerUpdate}
         isMultiAddress={!isSingleAddress}
+        refreshTags={refreshTag}
       />
     );
-  }, [token, triggerUpdate, isSingleAddress]);
+  }, [token, triggerUpdate, isSingleAddress, refreshTag]);
 
   const getHeaderTitle = useCallback(() => {
     return (
@@ -443,7 +453,7 @@ export const TokenDetailScreen = () => {
     <NormalScreenContainer2024 type="bg1" style={styles.root}>
       <ScrollView>
         <View style={{ position: 'relative' }}>
-          <HomePinBadge token={token} />
+          <HomePinBadge token={token} refreshTags={refreshTag} />
           <Text style={styles.currentText}>Current price</Text>
           <TokenPriceChart
             token={tokenWithAmount || token}

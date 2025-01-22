@@ -19,7 +19,7 @@ import { useMemoizedFn } from 'ahooks';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
-import { useRefreshTags } from '../Home/hooks/token';
+import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
 import {
   KeyringAccountWithAlias,
@@ -57,8 +57,8 @@ const hitSlop = {
 export const RightMore: React.FC<{
   token: AbstractProject;
   refreshBalance: () => void;
-}> = ({ token, refreshBalance }) => {
-  const { refreshTagPortfolio } = useRefreshTags();
+  refreshTags: () => void;
+}> = ({ token, refreshBalance, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -88,7 +88,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTagPortfolio();
+          refreshTags();
         },
       },
       {
@@ -127,12 +127,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTagPortfolio();
+          refreshTags();
           refreshBalance();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTagPortfolio, refreshBalance]);
+  }, [token, t, isDarkTheme, refreshTags, refreshBalance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -172,6 +172,15 @@ export const DeFiDetailScreen = () => {
 
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
+  const { deFiRefresh, singleDeFiRefresh } = useTriggerTagAssets();
+
+  const refreshTag = useCallback(() => {
+    if (isSingleAddress) {
+      singleDeFiRefresh();
+    } else {
+      deFiRefresh();
+    }
+  }, [deFiRefresh, isSingleAddress, singleDeFiRefresh]);
 
   const getHeaderTitle = useMemoizedFn(() => {
     return (
@@ -218,7 +227,13 @@ export const DeFiDetailScreen = () => {
   });
 
   const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore token={data} refreshBalance={triggerUpdate} />;
+    return (
+      <RightMore
+        token={data}
+        refreshBalance={triggerUpdate}
+        refreshTags={refreshTag}
+      />
+    );
   });
 
   React.useEffect(() => {

@@ -20,11 +20,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   is_scam: TxHistoryItem['is_scam'] = false;
   // id
   @Column('text', { default: '' })
-  txHash: TxHistoryItem['id'] = '0x';
+  txHash: TxHistoryItem['id'] = '';
 
   // project_id
   @Column('text', { default: '' })
-  project_id: TxHistoryItem['project_id'] = '0x';
+  project_id: TxHistoryItem['project_id'] = '';
 
   // chain
   @Column('text', { default: '' })
@@ -63,20 +63,24 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   tx_name: string = '';
   // token_approve_id
   @Column('text', { default: '' })
-  token_approve_id: string = '0x';
+  token_approve_id: string = '';
 
   // token_approve_spender
   @Column('text', { default: '' })
-  token_approve_spender: string = '0x';
+  token_approve_spender: string = '';
   // token_approve_value
   @Column('real', {
     transformer: realTransformer,
   })
   token_approve_value: number = 0;
 
+  // other_addr
+  @Column('text', { default: '' })
+  other_addr: string = '';
+
   // tx_from_address
   @Column('text', { default: '' })
-  tx_from_address: string = '0x';
+  tx_from_address: string = '';
 
   // tx_usd_gas_fee
   @Column('real', {
@@ -104,8 +108,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   ) {
     e.owner_addr = owner_addr;
 
+    e.other_addr = input.other_addr ?? '';
     e.is_scam = input.is_scam ?? false;
-    e.txHash = input.id ?? '0x';
+    e.txHash = input.id ?? '';
     e.receives = JSON.stringify(input.receives);
     e.sends = JSON.stringify(input.sends);
     e.chain = input.chain ?? 'eth';
@@ -113,12 +118,12 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.time_at = input.time_at ?? 0;
     e.cate_id = input.cate_id ?? '';
     e.tx_name = input.tx?.name ?? '';
-    e.token_approve_id = input.token_approve?.token_id ?? '0x';
+    e.token_approve_id = input.token_approve?.token_id ?? '';
     e.token_approve_value = input.token_approve?.value ?? 0;
-    e.token_approve_spender = input.token_approve?.spender ?? '0x';
-    e.project_id = input.project_id ?? '0x';
+    e.token_approve_spender = input.token_approve?.spender ?? '';
+    e.project_id = input.project_id ?? '';
 
-    e.tx_from_address = input.tx?.from_addr ?? '0x';
+    e.tx_from_address = input.tx?.from_addr ?? '';
     e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
 

@@ -1,6 +1,6 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { atom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
 import { AbstractPortfolioToken, DisplayNftItem } from '../types';
@@ -8,7 +8,13 @@ import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
 import { FlatList } from 'react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { preferenceService } from '@/core/services';
+import { usePinTokens } from '@/screens/Search/usePinTokens';
+import { tagTokenList } from '../utils/token';
+import { tagProfiles } from './usePortfolio';
+import { tagNfts } from './nft';
+import { tokenNounceAtom, deFiNounceAtom, nftNounceAtom } from './refresh';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -223,6 +229,11 @@ export const useAssetsMap = () => {
   const [assetsMap, setAssetsMap] = useState<{ [address: string]: IAssets }>(
     {},
   );
+  const { handleFetchTokens } = usePinTokens();
+  const [tokenNounce, setTokenNounce] = useAtom(tokenNounceAtom);
+  const [defiNounce, setDefiNounce] = useAtom(deFiNounceAtom);
+  const [nftNounce, setNftNounce] = useAtom(nftNounceAtom);
+
   const updateTokens = useCallback(
     ({
       address,
@@ -284,6 +295,78 @@ export const useAssetsMap = () => {
     },
     [],
   );
+
+  const refreshTagToken = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    handleFetchTokens();
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          tokens: tagTokenList(assets.tokens || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
+  }, [handleFetchTokens]);
+  const refreshTagPortfolio = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        if (!assets) {
+          return;
+        }
+        updatedAssetsMap[address] = {
+          ...assets,
+          portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
+  }, []);
+  const refreshTagNft = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          nfts: tagNfts(assets.nfts || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (tokenNounce > 0) {
+      refreshTagToken();
+      setTokenNounce(0);
+    }
+  }, [refreshTagToken, setTokenNounce, tokenNounce]);
+
+  useEffect(() => {
+    if (defiNounce > 0) {
+      refreshTagPortfolio();
+      setDefiNounce(0);
+    }
+  }, [refreshTagPortfolio, defiNounce, setDefiNounce]);
+
+  useEffect(() => {
+    if (nftNounce > 0) {
+      refreshTagNft();
+      setNftNounce(0);
+    }
+  }, [refreshTagNft, nftNounce, setNftNounce]);
 
   const memoTokens = useMemo(() => {
     return combinedTokens(assetsMap);

@@ -27,44 +27,36 @@ export const useGasAccountHistoryRefresh = () => {
 
 export const gasAccountSigAtom = atom<Partial<GasAccountServiceStore>>({});
 
-gasAccountSigAtom.onMount = set => {
-  const syncDeleteGasAccount = async (
-    address: string,
-    type: string,
-    brand?: string,
-  ) => {
-    if (type !== KEYRING_TYPE.WatchAddressKeyring) {
-      const restAddresses = await keyringService.getAllAddresses();
-      const gasAccount =
-        gasAccountService.getGasAccountData() as GasAccountServiceStore;
-      if (!gasAccount?.account?.address) return;
-      // check if there is another type address in wallet
-      const stillHasAddr = restAddresses.some(item => {
-        return (
-          isSameAddress(item.address, gasAccount.account!.address) &&
-          item.type !== KEYRING_TYPE.WatchAddressKeyring
-        );
-      });
-      if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
-        // if there is no another type address then reset signature
-        gasAccountService.setGasAccountSig();
-        const data =
-          gasAccountService.getGasAccountData() as GasAccountServiceStore;
-
-        set({
-          ...data,
-        });
-      }
+const syncDeleteGasAccount = async (
+  address: string,
+  type: string,
+  brand?: string,
+) => {
+  if (type !== KEYRING_TYPE.WatchAddressKeyring) {
+    const restAddresses = await keyringService.getAllAddresses();
+    const gasAccount =
+      gasAccountService.getGasAccountData() as GasAccountServiceStore;
+    if (!gasAccount?.account?.address) return;
+    // check if there is another type address in wallet
+    const stillHasAddr = restAddresses.some(item => {
+      return (
+        isSameAddress(item.address, gasAccount.account!.address) &&
+        item.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
+      // if there is no another type address then reset signature
+      gasAccountService.setGasAccountSig();
     }
-  };
-  keyringService.on('removedAccount', syncDeleteGasAccount);
-  set({
-    ...(gasAccountService.getGasAccountData() as GasAccountServiceStore),
-  });
+  }
+};
+keyringService.on('removedAccount', syncDeleteGasAccount);
 
-  return () => {
-    keyringService.off('removedAccount', syncDeleteGasAccount);
-  };
+gasAccountSigAtom.onMount = set => {
+  const data = gasAccountService.getGasAccountData() as GasAccountServiceStore;
+  set({
+    ...data,
+  });
 };
 
 export const useGasAccountSign = () => {

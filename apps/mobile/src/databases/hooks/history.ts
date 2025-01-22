@@ -171,6 +171,12 @@ export const useSyncHistoryDB = (
   );
 
   const isNeedSyncData = useMemoizedFn(async () => {
+    if (transactionHistoryService.getIsNeedFetchTxHistory()) {
+      // some tx done need to update
+      console.debug('🔍syncTop10History some tx done so isNeedSyncData');
+      return true;
+    }
+
     await prepareAppDataSource();
 
     const latestTime = await HistoryItemEntity.getLatestTime();

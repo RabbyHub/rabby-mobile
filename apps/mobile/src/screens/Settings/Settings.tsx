@@ -214,8 +214,6 @@ function SettingsBlocks() {
                 {currentLangLabel}
               </Text>
             ),
-            // TODO: only show in non-production mode
-            visible: NEED_DEVSETTINGBLOCKS,
           },
           {
             label: t('page.setting.addCustomNetwork'),
@@ -402,6 +400,8 @@ function SettingsBlocks() {
       />
 
       <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
+
+      <CurrentLanguageSelectorModal />
     </>
   );
 }
@@ -663,8 +663,6 @@ function DevSettingsBlocks() {
           </Block>
         );
       })}
-
-      <CurrentLanguageSelectorModal />
 
       <DevForceLocalVersionSelector />
 

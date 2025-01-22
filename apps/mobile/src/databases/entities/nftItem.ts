@@ -155,6 +155,18 @@ export class NFTItemEntity extends EntityAddressAssetBase {
         pay_token: i.pay_token,
       }));
   }
+  static async willExpired(owner_addr: string, offest?: number) {
+    if (await this.isExpired(owner_addr)) {
+      return;
+    }
+    const tenMinutesAgo = Date.now() - ASSET_EXPIRED_TIME + (offest || 0);
+    return this.getRepository()
+      .createQueryBuilder()
+      .update(NFTItemEntity)
+      .set({ _local_updated_at: tenMinutesAgo })
+      .where('owner_addr = :owner_addr', { owner_addr })
+      .execute();
+  }
 
   static async isExpired(owner_addr: string) {
     await prepareAppDataSource();

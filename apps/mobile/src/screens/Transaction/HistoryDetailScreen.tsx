@@ -229,6 +229,7 @@ function HistoryDetailScreen(): JSX.Element {
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
     data.tx,
+    data.other_addr,
     isForMultipleAdderss,
   );
 

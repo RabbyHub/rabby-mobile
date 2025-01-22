@@ -470,6 +470,10 @@ function History({
     );
   }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
 
+  const resetTopMenu = useCallback(() => {
+    setIsShowMenu(false);
+  }, [setIsShowMenu]);
+
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
       setNavigationOptions({
@@ -527,6 +531,7 @@ function History({
         </TouchableOpacity>
       )} */}
         <HistoryList
+          resetTopMenu={resetTopMenu}
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}

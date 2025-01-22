@@ -35,7 +35,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
 import { DisplayNftItem } from '../Home/types';
-import { useRefreshTags } from '../Home/hooks/token';
+import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { trigger } from 'react-native-haptic-feedback';
 import { preferenceService } from '@/core/services';
 import { RcIconMore } from '@/assets/icons/home';
@@ -73,8 +73,8 @@ const hitSlop = {
 
 const RightMore: React.FC<{
   nft: DisplayNftItem;
-}> = ({ nft }) => {
-  const { refreshTagNft } = useRefreshTags();
+  refreshTags: () => void;
+}> = ({ nft, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -110,11 +110,11 @@ const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           nft._isFold = !nft._isFold;
-          refreshTagNft();
+          refreshTags();
         },
       },
     ] as MenuAction[];
-  }, [nft, t, isDarkTheme, refreshTagNft]);
+  }, [nft, t, isDarkTheme, refreshTags]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -153,8 +153,17 @@ export const NFTDetailScreen = () => {
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
+  const { nftRefresh, singleNFTRefresh } = useTriggerTagAssets();
+
+  const refreshTag = useCallback(() => {
+    if (isSingleAddress) {
+      singleNFTRefresh();
+    } else {
+      nftRefresh();
+    }
+  }, [isSingleAddress, nftRefresh, singleNFTRefresh]);
   const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore nft={token} />;
+    return <RightMore nft={token} refreshTags={refreshTag} />;
   });
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {

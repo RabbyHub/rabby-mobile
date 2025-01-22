@@ -26,6 +26,7 @@ import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { updateExpiredTime } from '@/databases/sync/assets';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -83,6 +84,7 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   successList: string[];
   failList: string[];
+  isNeedFetchTxHistory?: boolean;
 }
 
 // TODO
@@ -102,6 +104,7 @@ export class TransactionHistoryService {
           transactions: [],
           successList: [],
           failList: [],
+          isNeedFetchTxHistory: false,
         },
       },
       {
@@ -163,6 +166,12 @@ export class TransactionHistoryService {
 
   getFailedCount() {
     return this.store.failList.length;
+  }
+
+  getIsNeedFetchTxHistory() {
+    const res = this.store.isNeedFetchTxHistory;
+    this.store.isNeedFetchTxHistory = false;
+    return res;
   }
 
   clearSuccessAndFailList() {
@@ -401,6 +410,9 @@ export class TransactionHistoryService {
       nonce,
     })?.[0];
 
+    if (success) {
+      updateExpiredTime(address.toLowerCase());
+    }
     target?.txs?.forEach(tx => {
       if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
         this.updateTx({
@@ -416,6 +428,7 @@ export class TransactionHistoryService {
         } else {
           id && this.store.failList.push(id);
         }
+        this.store.isNeedFetchTxHistory = true;
       }
     });
 
