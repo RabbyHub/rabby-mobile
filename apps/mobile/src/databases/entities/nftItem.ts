@@ -2,10 +2,11 @@ import 'reflect-metadata';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { realTransformer, jsonTransformer } from './_helpers';
+import { realTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 
 @Entity('nftitem')
 export class NFTItemEntity extends EntityAddressAssetBase {
@@ -76,19 +77,21 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   // pay_token
   @Column({
     type: 'text',
-    default: '[]',
-    transformer: jsonTransformer,
+    default: '{}',
   })
-  pay_token = {};
+  pay_token: string = '{}';
   // collection
   @Column({
     type: 'text',
-    default: '[]',
-    transformer: jsonTransformer,
+    default: '{}',
   })
-  collection: object = {};
+  collection: string = '{}';
   makeDbId(): string {
-    return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
+    return (this._db_id = `${this.owner_addr}-${[
+      this.chain,
+      this.id,
+      this.token_id,
+    ]
       .filter(Boolean)
       .join('-')}`);
   }
@@ -111,8 +114,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     e.content = input.content ?? '';
     e.detail_url = input.detail_url ?? '';
     e.total_supply = input.total_supply ?? '';
-    e.collection = input.collection || {};
-    e.pay_token = input.pay_token || {};
+    e.collection = JSON.stringify(input.collection || {});
+    e.pay_token = JSON.stringify(input.pay_token || {});
     e.is_erc1155 = input.is_erc1155 ?? false;
     e.is_erc721 = input.is_erc721 ?? false;
     e.thumbnail_url = input.thumbnail_url ?? '';
@@ -151,8 +154,8 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
       .map(i => ({
         ...i,
-        collection: i.collection,
-        pay_token: i.pay_token,
+        collection: safeParseJSON(i.collection),
+        pay_token: safeParseJSON(i.pay_token),
       }));
   }
   static async willExpired(owner_addr: string, offest?: number) {

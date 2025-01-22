@@ -2,10 +2,10 @@ import 'reflect-metadata';
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { jsonTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 
 @Entity('portocolitem')
 export class PortocolItemEntity extends EntityAddressAssetBase {
@@ -33,10 +33,9 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   // portfolio_item_list
   @Column({
     type: 'text',
-    default: '{}',
-    transformer: jsonTransformer,
+    default: '[]',
   })
-  portfolio_item_list: any[] = [];
+  portfolio_item_list: string = '[]';
 
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.id]
@@ -58,7 +57,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     e.logo_url = input.logo_url ?? '';
     e.has_supported_portfolio = input.has_supported_portfolio ?? false;
     e.tvl = input.tvl ?? 0;
-    e.portfolio_item_list = input.portfolio_item_list || [];
+    e.portfolio_item_list = JSON.stringify(input.portfolio_item_list || []);
 
     e.makeDbId();
   }
@@ -89,7 +88,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,
-        portfolio_item_list: i.portfolio_item_list || [],
+        portfolio_item_list: safeParseJSON(i.portfolio_item_list),
       }));
   }
 
