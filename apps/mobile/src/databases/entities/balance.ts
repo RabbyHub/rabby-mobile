@@ -4,7 +4,7 @@ import { EntityAddressAssetBase } from './base';
 import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import { columnConverter } from './_helpers';
 
 @Entity('balance')
 export class BalanceEntity extends EntityAddressAssetBase {
@@ -35,7 +35,9 @@ export class BalanceEntity extends EntityAddressAssetBase {
   ) {
     e.owner_addr = owner_addr;
     e.balance = input.total_usd_value;
-    e.chain_list = JSON.stringify(input.chain_list || []);
+    e.chain_list = columnConverter.jsonObjToString(
+      input.chain_list.slice(0, 2) || [],
+    );
     e.isCore = !!isCore;
     e.makeDbId();
   }
@@ -71,7 +73,8 @@ export class BalanceEntity extends EntityAddressAssetBase {
 
     return {
       total_usd_value: result?.balance || 0,
-      chain_list: safeParseJSON(result?.chain_list || '[]') || [],
+      chain_list:
+        columnConverter.jsonStringToObj(result?.chain_list || '[]') || [],
     };
   }
 

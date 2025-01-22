@@ -5,7 +5,7 @@ import { EntityAddressAssetBase } from './base';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
-import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import { columnConverter } from './_helpers';
 
 @Entity('portocolitem')
 export class PortocolItemEntity extends EntityAddressAssetBase {
@@ -57,7 +57,9 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     e.logo_url = input.logo_url ?? '';
     e.has_supported_portfolio = input.has_supported_portfolio ?? false;
     e.tvl = input.tvl ?? 0;
-    e.portfolio_item_list = JSON.stringify(input.portfolio_item_list || []);
+    e.portfolio_item_list = columnConverter.jsonObjToString(
+      input.portfolio_item_list || [],
+    );
 
     e.makeDbId();
   }
@@ -88,7 +90,9 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,
-        portfolio_item_list: safeParseJSON(i.portfolio_item_list),
+        portfolio_item_list: columnConverter.jsonStringToObj(
+          i.portfolio_item_list,
+        ),
       }));
   }
 
