@@ -39,15 +39,15 @@ export const SwapHistoryItem: React.FC<Props> = ({ data }) => {
       payTokenAmount={
         '+' +
         getTokenAmountText({
-          amount: data.actual.pay_token_amount,
-          token: data.pay_token,
+          amount: data.actual.receive_token_amount,
+          token: data.receive_token,
         })
       }
       receiveTokenAmount={
         '-' +
         getTokenAmountText({
-          amount: data.actual.receive_token_amount,
-          token: data.receive_token,
+          amount: data.actual.pay_token_amount,
+          token: data.pay_token,
         })
       }
     />

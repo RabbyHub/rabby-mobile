@@ -43,15 +43,15 @@ export const BridgeHistoryItem: React.FC<Props> = ({ data }) => {
       payTokenAmount={
         '+' +
         getTokenAmountText({
-          amount: data.actual.pay_token_amount,
-          token: data.from_token,
+          amount: data.actual.receive_token_amount,
+          token: data.to_token,
         })
       }
       receiveTokenAmount={
         '-' +
         getTokenAmountText({
-          amount: data.actual.receive_token_amount,
-          token: data.to_token,
+          amount: data.actual.pay_token_amount,
+          token: data.from_token,
         })
       }
     />
