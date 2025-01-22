@@ -11,6 +11,21 @@ async function sleep(ms: number) {
 
 const keyVaryUpsertQueue: Record<string, PQueue> = {};
 
+/**
+ * @description In most cases, you don't need call it manually,
+ * if you want to do that, make sure you know what you are doing.
+ */
+export const syncAbortControllers: {
+  [P in SyncTaskOptions['taskFor']]: AbortController | null;
+} = {
+  balance: null,
+  token: null,
+  nfts: null,
+  protocols: null,
+  'all-history': null,
+  'swap-history': null,
+};
+
 export async function batchSaveWithPQueueAndTransaction<
   T extends EntityAddressAssetBase,
 >(
@@ -20,7 +35,7 @@ export async function batchSaveWithPQueueAndTransaction<
     batchSize?: number;
     concurrency?: number;
     delayBetweenTasks?: number;
-    signal?: AbortSignal;
+    // signal?: AbortSignal;
   },
 ) {
   const {
@@ -29,25 +44,27 @@ export async function batchSaveWithPQueueAndTransaction<
     delayBetweenTasks = 1 * 1e3,
     owner_addr,
     taskFor,
-    signal,
+    // signal = syncAbortControllers[taskFor],
   } = options;
+
+  if (syncAbortControllers[taskFor]) {
+    syncAbortControllers[taskFor].abort();
+    syncAbortControllers[taskFor] = new AbortController();
+  }
+
+  const currentSignal = syncAbortControllers[taskFor]?.signal;
 
   const key = [owner_addr, taskFor].filter(Boolean).join('-');
   const loggerPrefix = !owner_addr
     ? ''
     : `[batchSaveWithPQueueAndTransaction::${key}] `;
 
-  if (signal?.aborted) {
-    console.warn(`${loggerPrefix}Batch upsert was aborted before starting.`);
-    return;
-  }
-
   if (key && keyVaryUpsertQueue[key]) {
     keyVaryUpsertQueue[key].clear();
     delete keyVaryUpsertQueue[key];
   }
 
-  const upsertQueue = !key
+  const thisTickUpsertQueue = !key
     ? new PQueue({ concurrency: 1 })
     : (keyVaryUpsertQueue[key] = new PQueue({ concurrency: 1 }));
 
@@ -58,24 +75,29 @@ export async function batchSaveWithPQueueAndTransaction<
     `${loggerPrefix}Starting to upsert ${data.length} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
   );
 
-  let previousTaskCompleted = Promise.resolve();
+  let waitTaskCompleted = Promise.resolve();
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize);
 
-    previousTaskCompleted = previousTaskCompleted.then(async () => {
+    if (currentSignal?.aborted) break;
+
+    waitTaskCompleted = waitTaskCompleted.then(async () => {
       await sleep(delayBetweenTasks);
-      if (signal?.aborted) {
+      if (currentSignal?.aborted) {
         console.warn(
-          `${loggerPrefix}Batch upsert was aborted before next task.`,
+          `${loggerPrefix}Batch upsertion was upsertion before next task.`,
         );
+        thisTickUpsertQueue.clear();
         return;
       }
 
-      upsertQueue.add(async () => {
+      thisTickUpsertQueue.add(async () => {
         const round = Math.floor(i / batchSize);
         const roundText = `${round + 1}`;
         const roundPercent = `${roundText} / ${totalRound}`;
-        console.debug(`${loggerPrefix}Batch ${roundPercent} upsert started.`);
+        console.debug(
+          `${loggerPrefix}Batch ${roundPercent} upsertion started.`,
+        );
 
         const eventPayload = {
           entityCls,
@@ -103,10 +125,10 @@ export async function batchSaveWithPQueueAndTransaction<
           //     // }
           //   }))
           //     .then(() => {
-          //       console.debug(`${loggerPrefix}Batch ${roundPercent} upsert successfully.`);
+          //       console.debug(`${loggerPrefix}Batch ${roundPercent} upsertion successfully.`);
           //     })
           //     .catch(error => {
-          //       console.error(`${loggerPrefix}Batch ${roundPercent} upsert failed.`);
+          //       console.error(`${loggerPrefix}Batch ${roundPercent} upsertion failed.`);
           //       throw error
           //     });
           // });
@@ -118,7 +140,7 @@ export async function batchSaveWithPQueueAndTransaction<
             { conflictPaths: ['_db_id'] },
           );
           console.debug(
-            `${loggerPrefix}Batch ${roundPercent} upsert successfully.`,
+            `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
           );
           appOrmEvents.emit('onRemoteDataUpserted', {
             ...eventPayload,
@@ -137,22 +159,29 @@ export async function batchSaveWithPQueueAndTransaction<
   }
 
   // Wait for all tasks to complete
-  const onIdlePromise = upsertQueue.onIdle();
-  if (signal) {
+  const waitFinalTask = await Promise.all([
+    thisTickUpsertQueue.onIdle(),
+    waitTaskCompleted,
+  ]);
+
+  if (currentSignal) {
     const abortListener = () => {
-      console.warn(`${loggerPrefix}Batch insertion was aborted.`);
-      upsertQueue.clear();
+      console.warn(`${loggerPrefix}Batch upsertion was aborted.`);
+      thisTickUpsertQueue.clear();
+      currentSignal.removeEventListener('abort', abortListener);
     };
 
-    signal.addEventListener('abort', abortListener);
+    currentSignal.addEventListener('abort', abortListener);
 
     try {
-      await onIdlePromise;
+      waitFinalTask;
+    } catch (error) {
+      console.error(`${loggerPrefix}Wait batch upsertion failed:`, error);
     } finally {
-      signal.removeEventListener('abort', abortListener);
+      currentSignal.removeEventListener('abort', abortListener);
     }
   } else {
-    await onIdlePromise;
+    waitFinalTask;
+    console.debug(`${loggerPrefix}All batches have been processed.`);
   }
-  console.debug(`${loggerPrefix}All batches have been processed.`);
 }
