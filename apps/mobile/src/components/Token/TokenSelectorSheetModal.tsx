@@ -59,6 +59,8 @@ import LinearGradient from 'react-native-linear-gradient';
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
 
+const hiddenZIndex = -9999;
+
 const ITEM_HEIGHT = 72;
 
 const hitSlop = {
@@ -335,7 +337,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[
               props.style,
               swapToTokenDetail && {
-                zIndex: -1000,
+                zIndex: hiddenZIndex,
               },
             ]}
             onPress={onCancel}
@@ -547,10 +549,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       height: '100%',
                     }}
                     onPress={() => {
-                      // setSwapToTokenDetail(true);
+                      setSwapToTokenDetail(true);
                       naviPush(RootNames.TokenDetail, {
                         token: ensureAbstractPortfolioToken(token.$origin),
-                        // account: address,
                         needUseCacheToken: true,
                         isSingleAddress,
                       });
@@ -656,7 +657,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         {...{
           containerStyle: swapToTokenDetail
             ? {
-                zIndex: -1000000,
+                zIndex: hiddenZIndex,
               }
             : {},
           style: {
