@@ -108,6 +108,18 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
+  static async willExpired(owner_addr: string, offest?: number) {
+    if (await this.isExpired(owner_addr)) {
+      return;
+    }
+    const tenMinutesAgo = Date.now() - ASSET_EXPIRED_TIME + (offest || 0);
+    return this.getRepository()
+      .createQueryBuilder()
+      .update(PortocolItemEntity)
+      .set({ _local_updated_at: tenMinutesAgo })
+      .where('owner_addr = :owner_addr', { owner_addr })
+      .execute();
+  }
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
