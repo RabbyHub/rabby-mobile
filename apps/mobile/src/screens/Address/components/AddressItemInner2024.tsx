@@ -19,6 +19,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 1,
     height: 96,
     backgroundColor: colors2024['neutral-bg-1'],
+    padding: 20,
   },
   rootItem: {
     flexDirection: 'row',
