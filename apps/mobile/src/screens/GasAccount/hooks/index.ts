@@ -104,7 +104,6 @@ export const useGasAccountMethods = () => {
         const { txHash } = await sendPersonalMessage({
           data: [text, account.address],
         });
-        console.log('fetch sendPersonalMessage txHash', txHash);
         signature = txHash;
       } else {
         signature = await sendRequest<string>(
