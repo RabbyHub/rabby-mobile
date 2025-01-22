@@ -20,6 +20,7 @@ import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
+import { TFunction } from 'i18next';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -59,6 +60,23 @@ export function useGetBinaryMode() {
   const colorScheme = useColorScheme();
 
   return coerceBinaryTheme(appTheme, colorScheme);
+}
+
+export function makeThemeOptions(t: TFunction) {
+  return [
+    {
+      title: t('global.themeMode.option_System'),
+      value: 'system' as const,
+    },
+    {
+      title: t('global.themeMode.option_Light'),
+      value: 'light' as const,
+    },
+    {
+      title: t('global.themeMode.option_Dark'),
+      value: 'dark' as const,
+    },
+  ] as const;
 }
 
 // The useColorScheme value is always either light or dark, but the built-in
@@ -119,14 +137,8 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     };
   }, [options?.isAppTop, appTheme]);
 
-  const appThemeText = React.useMemo(
-    () => stringUtils.ucfirst(appTheme),
-    [appTheme],
-  );
-
   return {
     appTheme,
-    appThemeText,
     binaryTheme,
     toggleThemeMode,
   };

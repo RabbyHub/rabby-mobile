@@ -5,11 +5,12 @@ import { RcIconCheckmarkCC } from '@/assets/icons/common';
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useAppTheme, useThemeStyles } from '@/hooks/theme';
+import { makeThemeOptions, useAppTheme, useThemeStyles } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { useTranslation } from 'react-i18next';
 
 const themeSelectorModalVisibleAtom = atom(false);
 export function useThemeSelectorModalVisible() {
@@ -23,29 +24,29 @@ export function useThemeSelectorModalVisible() {
   };
 }
 
-const ThemeModeOptions = [
-  {
-    title: 'System',
-    value: 'system',
-  },
-  {
-    title: 'Light',
-    value: 'light',
-  },
-  {
-    title: 'Dark',
-    value: 'dark',
-  },
-] as const;
-
 export default function ThemeSelectorModal({
   onCancel,
 }: RNViewProps & {
   onCancel?(): void;
 }) {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const { t } = useTranslation();
+
+  const { ThemeModeOptions, FULL_HEIGHT } = useMemo(() => {
+    const options = makeThemeOptions(t);
+    return {
+      ThemeModeOptions: options,
+      FULL_HEIGHT:
+        SIZES.HANDLE_HEIGHT +
+        (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
+        (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (options.length - 1) +
+        SIZES.ITEM_HEIGHT +
+        SIZES.containerPb,
+    };
+  }, [t]);
+
   const { safeSizes } = useSafeAndroidBottomSizes({
-    sheetHeight: SIZES.FULL_HEIGHT,
+    sheetHeight: FULL_HEIGHT,
     containerPaddingBottom: SIZES.containerPb,
   });
   const { toggleShowSheetModal } = useSheetModals({
@@ -85,7 +86,9 @@ export default function ThemeSelectorModal({
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Theme mode</Text>
+        <Text style={styles.title}>
+          {t('page.settingModal.themeMode.title')}
+        </Text>
         <View style={styles.mainContainer}>
           {ThemeModeOptions.map((item, idx) => {
             const itemKey = `thememode-${item.title}-${item.value}`;
@@ -122,15 +125,6 @@ const SIZES = {
   titleMb: 16,
   HANDLE_HEIGHT: 8,
   containerPb: 42,
-  get FULL_HEIGHT() {
-    return (
-      SIZES.HANDLE_HEIGHT +
-      (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
-      (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (ThemeModeOptions.length - 1) +
-      SIZES.ITEM_HEIGHT +
-      SIZES.containerPb
-    );
-  },
 };
 const getStyles = createGetStyles((colors, ctx) => {
   return {

@@ -72,7 +72,12 @@
       "hours": "{{t}} 小时",
       "hour": "{{t}} 小时"
     },
-    "Deleted": "删除"
+    "Deleted": "删除",
+    "themeMode": {
+      "option_System": "跟随系统",
+      "option_Light": "浅色",
+      "option_Dark": "深色"
+    }
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -1527,6 +1532,11 @@
       "clearPendingDesc1": "这将清除您所有的待处理交易。这样可以帮助您解决在某些情况下 Rabby 中的交易状态与链上状态不匹配的问题。",
       "touchId": "Touch ID",
       "appCache": "清空应用缓存"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "主题模式"
+      }
     }
   },
   "component": {

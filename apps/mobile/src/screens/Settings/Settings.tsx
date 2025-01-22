@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { Alert, Linking, Platform, ScrollView, Text, View } from 'react-native';
 
 import {
@@ -32,6 +32,7 @@ import {
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
 import {
+  makeThemeOptions,
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
   useTheme2024,
@@ -164,8 +165,13 @@ function SettingsBlocks() {
   }, [shouldRedirectToSetPasswordBefore]);
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
-  const { appThemeText } = useAppTheme();
+  const { appTheme } = useAppTheme();
   const { t } = useTranslation();
+  const appThemeText = useMemo(() => {
+    return (
+      makeThemeOptions(t).find(item => item.value === appTheme)?.title || ''
+    );
+  }, [appTheme, t]);
 
   const navigation = useRabbyAppNavigation();
 
