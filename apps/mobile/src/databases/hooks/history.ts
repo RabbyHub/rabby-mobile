@@ -202,6 +202,7 @@ export const useSyncHistoryDB = (
       }
 
       const isForceFetchFromApi = force || (await isNeedSyncData());
+      console.warn('[feat] isForceFetchFromApi', isForceFetchFromApi);
       if (!isForceFetchFromApi) {
         console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: not update');
         return;

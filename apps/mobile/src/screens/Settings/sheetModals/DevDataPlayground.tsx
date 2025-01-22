@@ -102,8 +102,10 @@ export default function DevDataPlaygroundModal({
         icon: <RcCode style={styles.labelIcon} />,
         onPress: async () => {
           await prepareAppDataSource();
-          HistoryItemEntity.clear();
-          SwapItemEntity.clear();
+          await Promise.all([
+            HistoryItemEntity.clear(),
+            SwapItemEntity.clear(),
+          ]);
           setIsFristFetchData(true);
         },
       },

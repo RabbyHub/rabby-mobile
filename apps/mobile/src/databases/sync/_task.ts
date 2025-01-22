@@ -112,6 +112,21 @@ export async function batchSaveWithPQueueAndTransaction<
           },
         };
 
+        const makeEmit = (success: boolean) => {
+          if (currentSignal?.aborted) return;
+
+          // leave here for debug
+          if (eventPayload.taskFor === 'all-history') {
+            console.warn(
+              `[debug] I will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
+            );
+          }
+          appOrmEvents.emit('onRemoteDataUpserted', {
+            ...eventPayload,
+            success,
+          });
+        };
+
         try {
           // await repo.manager.transaction(async transactionalEntityManager => {
           //   await Promise.all(batch.map(async item => {
@@ -142,11 +157,9 @@ export async function batchSaveWithPQueueAndTransaction<
           console.debug(
             `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
           );
-          appOrmEvents.emit('onRemoteDataUpserted', {
-            ...eventPayload,
-            success: true,
-          });
+          makeEmit(true);
         } catch (error) {
+          makeEmit(false);
           console.error(
             `${loggerPrefix}Error inserting batch ${roundText}:`,
             error,
@@ -159,8 +172,8 @@ export async function batchSaveWithPQueueAndTransaction<
   }
 
   // Wait for all tasks to complete
-  const waitFinalTask = await Promise.all([
-    thisTickUpsertQueue.onIdle(),
+  const waitFinalTask = Promise.all([
+    // thisTickUpsertQueue.onIdle(),
     waitTaskCompleted,
   ]);
 
@@ -168,20 +181,19 @@ export async function batchSaveWithPQueueAndTransaction<
     const abortListener = () => {
       console.warn(`${loggerPrefix}Batch upsertion was aborted.`);
       thisTickUpsertQueue.clear();
-      currentSignal.removeEventListener('abort', abortListener);
     };
 
     currentSignal.addEventListener('abort', abortListener);
 
     try {
-      waitFinalTask;
+      await waitFinalTask;
     } catch (error) {
       console.error(`${loggerPrefix}Wait batch upsertion failed:`, error);
     } finally {
       currentSignal.removeEventListener('abort', abortListener);
     }
   } else {
-    waitFinalTask;
+    await waitFinalTask;
     console.debug(`${loggerPrefix}All batches have been processed.`);
   }
 }
