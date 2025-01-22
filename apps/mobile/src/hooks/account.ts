@@ -111,7 +111,7 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 }
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const [accounts, setAccounts] = useAtom(accountsAtom);
+  const [allAccounts, setAccounts] = useAtom(accountsAtom);
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -132,11 +132,14 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
   }, [disableAutoFetch, fetchAccounts]);
 
   return {
-    accounts: [
-      ...accounts.filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
-    ],
+    accounts: useMemo(() => {
+      return [
+        ...allAccounts.filter(
+          a =>
+            a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+        ),
+      ];
+    }, [allAccounts]),
     fetchAccounts,
   };
 }
