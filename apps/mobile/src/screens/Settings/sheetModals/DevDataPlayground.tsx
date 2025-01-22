@@ -16,11 +16,12 @@ import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { useAccounts } from '@/hooks/account';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
-import { dropAppDataSource, prepareAppDataSource } from '@/databases/imports';
-import RNHelpers from '@/core/native/RNHelpers';
+import {
+  dropAppDataSourceAndQuitApp,
+  prepareAppDataSource,
+} from '@/databases/imports';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
@@ -77,7 +78,7 @@ export default function DevDataPlaygroundModal({
         },
       },
       {
-        label: 'Clear ALL SQLite Database',
+        label: 'Clear All SQLite and quit',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: async () => {
           Alert.alert(
@@ -89,15 +90,30 @@ export default function DevDataPlaygroundModal({
                 text: 'Clear',
                 style: 'destructive',
                 onPress: async () => {
-                  await prepareAppDataSource();
-                  await dropAppDataSource();
-                  RNHelpers.forceExitApp();
+                  await dropAppDataSourceAndQuitApp();
                 },
               },
             ],
           );
         },
       },
+      // {
+      //   label: 'Clear All SQLite (No restart)',
+      //   icon: <RcCode style={styles.labelIcon} />,
+      //   onPress: async () => {
+      //     exp_reConnectAppDataSource()
+      //       .then(() => {
+      //         Alert.alert('Clear All DB data (No restart)', 'Success');
+      //       })
+      //       .catch(error => {
+      //         console.error(error);
+      //         Alert.alert('Clear All DB data (No restart)', 'Failed');
+      //       })
+      //       .finally(() => {
+      //         fetchSqliteStatics();
+      //       });
+      //   },
+      // },
       {
         label: 'Clear history DB data',
         icon: <RcCode style={styles.labelIcon} />,
@@ -137,7 +153,7 @@ export default function DevDataPlaygroundModal({
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Component Playground</Text>
+        <Text style={styles.title}>Data Playground</Text>
         <View style={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;

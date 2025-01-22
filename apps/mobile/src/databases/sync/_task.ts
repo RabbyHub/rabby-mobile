@@ -15,7 +15,7 @@ const keyVaryUpsertQueue: Record<string, PQueue> = {};
  * @description In most cases, you don't need call it manually,
  * if you want to do that, make sure you know what you are doing.
  */
-export const syncAbortControllers: {
+const syncAbortControllers: {
   [P in SyncTaskOptions['taskFor']]: AbortController | null;
 } = {
   balance: null,
@@ -25,6 +25,13 @@ export const syncAbortControllers: {
   'all-history': null,
   'swap-history': null,
 };
+
+export function abortAllSyncTasks() {
+  for (const key in syncAbortControllers) {
+    const controller = syncAbortControllers[key] as AbortController | null;
+    controller?.abort();
+  }
+}
 
 export async function batchSaveWithPQueueAndTransaction<
   T extends EntityAddressAssetBase,

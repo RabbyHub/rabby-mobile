@@ -1,8 +1,6 @@
+import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
-import { TokenItemEntity } from './entities/tokenitem';
-import { BalanceEntity } from './entities/balance';
-import { NFTItemEntity } from './entities/nftItem';
-import { PortocolItemEntity } from './entities/portocolItem';
+import { removeDBFiles } from './dbfs';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -14,16 +12,6 @@ export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
     const appDataSource = new DataSource({ ...dbOptions });
 
     appDataSourceInitRef.current = appDataSource.initialize();
-    // if (__DEV__) {
-    //   await appDataSource.dropDatabase();
-    //   await Promise.allSettled([
-    //     TokenItemEntity.clear(),
-    //     BalanceEntity.clear(),
-    //     NFTItemEntity.clear(),
-    //     PortocolItemEntity.clear(),
-    //   ]);
-    // }
-
     appDataSourceInitRef.current = appDataSourceInitRef.current.then(
       async as => {
         console.debug(
@@ -70,6 +58,17 @@ export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
   return appDataSourceInitRef.current;
 }
 
+// export async function reInitAppDataSource(dbOptions?: DataSourceOptions) {
+//   if (appDataSourceInitRef.current) {
+//     const appDataSource = await appDataSourceInitRef.current;
+
+//     await appDataSource.destroy();
+//     appDataSourceInitRef.current = null;
+
+//     // await initializeAppDataSource(dbOptions);
+//   }
+// }
+
 export async function prepareAppDataSource() {
   const appDataSource = await initializeAppDataSource();
 
@@ -82,11 +81,48 @@ export async function prepareAppDataSource() {
   return appDataSource;
 }
 
-export async function dropAppDataSource() {
-  const appDataSource = await initializeAppDataSource();
+export async function dropAppDataSourceAndQuitApp() {
+  const appDataSource = await prepareAppDataSource();
 
   await appDataSource.dropDatabase();
   await appDataSource.query('VACUUM');
+  RNHelpers.forceExitApp();
+}
+
+export async function exp_dropAndResyncDataSource(
+  dbOptions?: DataSourceOptions,
+) {
+  let appDataSource = await appDataSourceInitRef.current;
+
+  if (!appDataSource || !appDataSource.isInitialized) {
+    console.error(
+      '[exp_dropAndResyncDataSource] appDataSource not initialized',
+    );
+    return;
+  }
+
+  // @important: set appDataSourceInitRef.current to a new Promise, then all calling to `await initializeAppDataSource()`;
+  // will wait for the new Promise to resolve
+  appDataSourceInitRef.current = new Promise<DataSource>(
+    async (resolve, reject) => {
+      try {
+        await appDataSource.dropDatabase();
+        await appDataSource.query('VACUUM');
+        console.debug('[exp_dropAndResyncDataSource] debug:: vacuum finished');
+        // await removeDBFiles();
+
+        // disconnet
+        await appDataSource.destroy();
+      } catch (error) {
+        // don't print error, because it's expected to be large
+        console.error('[exp_dropAndResyncDataSource] error');
+        // maybe there's error occurred, but we ignore it and continue
+      }
+
+      // reconnect, `initializeAppDataSource(dbOptions)` will provide a new connection
+      await initializeAppDataSource(dbOptions).then(resolve).then(reject);
+    },
+  );
 }
 
 // export const appDBRef = {

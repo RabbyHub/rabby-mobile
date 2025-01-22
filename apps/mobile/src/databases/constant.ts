@@ -30,4 +30,6 @@ export function getRabbyAppDbPath() {
   }
 }
 
-console.debug('getRabbyAppDbPath()', getRabbyAppDbPath());
+// if (__DEV__) {
+//   console.debug('getRabbyAppDbPath()', getRabbyAppDbPath());
+// }

@@ -107,6 +107,8 @@ import CurrentLanguageSelectorModal, {
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useSQLiteStatics } from '@/databases/hooks/_statics';
+import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
+import { AppCacheSizeText } from './components/SpecialText';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -170,10 +172,6 @@ function SettingsBlocks() {
   const biometricsComputed = useBiometricsComputed();
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
-
-  const { semanticBytes, clearDbCacheAndQuiteApp } = useSQLiteStatics({
-    enableAutoFetch: true,
-  });
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -278,19 +276,18 @@ function SettingsBlocks() {
           },
           {
             label: t('page.setting.appCache'),
-            icon: RcInfo,
+            icon: RcClearPending,
             rightNode: ({ rightIconNode }) => {
               return (
                 <View style={{ flexDirection: 'row' }}>
-                  <Text
+                  <AppCacheSizeText
                     style={{
                       color: colors['neutral-title-1'],
                       fontSize: 14,
                       fontWeight: '400',
                       paddingRight: 8,
-                    }}>
-                    {semanticBytes}
-                  </Text>
+                    }}
+                  />
                   {rightIconNode}
                 </View>
               );
@@ -298,14 +295,14 @@ function SettingsBlocks() {
             onPress: () => {
               Alert.alert(
                 'Clear App Cache',
-                'This will clear all app cache, sometimes this help to solve some problems. Restarting app is required, Do you want to continue?',
+                'This will only clear app cache, and never affect your sensitive data and settings. Restarting app is required, do you confirm to continue?',
                 [
                   { text: 'Cancel', onPress: () => {} },
                   {
                     text: 'Clear & Quit App',
                     style: 'destructive',
                     onPress: async () => {
-                      await clearDbCacheAndQuiteApp();
+                      await dropAppDataSourceAndQuitApp();
                     },
                   },
                 ],

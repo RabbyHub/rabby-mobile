@@ -7,9 +7,13 @@ import { PortocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
 import { APP_DB_PREFIX, getRabbyAppDbName } from './constant';
-import { initializeAppDataSource } from './imports';
+import {
+  exp_dropAndResyncDataSource,
+  initializeAppDataSource,
+} from './imports';
 import { SwapItemEntity } from './entities/swapitem';
 import { BalanceEntity } from './entities/balance';
+import { abortAllSyncTasks } from './sync/_task';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -46,3 +50,9 @@ const dbOptions: DataSourceOptions = {
 initializeAppDataSource(dbOptions).catch(err => {
   console.log('initializeAppDataSource error', err);
 });
+
+export async function exp_reConnectAppDataSource() {
+  abortAllSyncTasks();
+
+  return exp_dropAndResyncDataSource(dbOptions);
+}
