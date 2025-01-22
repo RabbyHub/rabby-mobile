@@ -22,6 +22,8 @@ import { Linking, Platform } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
 import { Account } from '@/core/services/preference';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -92,13 +94,27 @@ export const useGasAccountMethods = () => {
       }
       console.debug('selectAccount', account);
       const { text } = await openapi.getGasAccountSignText(account.address);
-      const signature = await sendRequest<string>(
-        {
-          method: 'personal_sign',
-          params: [text, account.address],
-        },
-        INTERNAL_REQUEST_SESSION,
-      );
+
+      const noSignType =
+        account?.type === KEYRING_CLASS.PRIVATE_KEY ||
+        account?.type === KEYRING_CLASS.MNEMONIC;
+
+      let signature = '';
+      if (noSignType) {
+        const { txHash } = await sendPersonalMessage({
+          data: [text, account.address],
+        });
+        console.log('fetch sendPersonalMessage txHash', txHash);
+        signature = txHash;
+      } else {
+        signature = await sendRequest<string>(
+          {
+            method: 'personal_sign',
+            params: [text, account.address],
+          },
+          INTERNAL_REQUEST_SESSION,
+        );
+      }
       if (signature) {
         const result = await pRetry(
           async () =>
