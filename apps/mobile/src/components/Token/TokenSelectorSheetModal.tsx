@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Pressable,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
-  BottomSheetFlatList,
+  BottomSheetSectionList,
 } from '@gorhom/bottom-sheet';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
@@ -32,7 +33,7 @@ import { findChainByServerID } from '@/utils/chain';
 import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
-import { ModalLayouts } from '@/constant/layout';
+import { ModalLayouts, RootNames } from '@/constant/layout';
 import { Skeleton } from '@rneui/themed';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
@@ -49,6 +50,11 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { useMemoizedFn } from 'ahooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import RcIconTipCC from '@/assets2024/icons/common/tips-cc.svg';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { naviPush } from '@/utils/navigation';
+import { useIsFocused, useRoute } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -89,6 +95,8 @@ export interface TokenSelectorProps {
   hideChainFilter?: boolean;
   headerTitle?: React.ReactNode;
   selectToken?: TokenItem & { tokenId?: string };
+  searchPlaceholder?: string;
+  unshiftList?: { data: TokenItem[]; header?: () => React.ReactNode }[];
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
@@ -118,6 +126,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
       disabledTips,
       isLoading,
       headerTitle: customHeaderTitle,
+      searchPlaceholder,
+      unshiftList,
     },
     ref,
   ) => {
@@ -167,10 +177,29 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
     const androidBottomOffset = isAndroid ? bottom : 0;
 
-    const { styles, colors2024 } = useTheme2024({ getStyle });
+    const { isLight, styles, colors2024 } = useTheme2024({ getStyle });
 
     const [query, setQuery] = useState('');
     const [isInputActive, setIsInputActive] = useState(false);
+
+    const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
+    const route = useRoute();
+    const isFocused = useIsFocused();
+
+    const isSingleAddress = useMemo(
+      () => route.name === RootNames.Swap,
+      [route.name],
+    );
+
+    if (
+      isSwapTo &&
+      swapToTokenDetail &&
+      visible &&
+      isFocused &&
+      ([RootNames.Swap, RootNames.MultiSwap] as string[]).includes(route.name)
+    ) {
+      setSwapToTokenDetail(false);
+    }
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
       const chain = !chainServerId ? null : findChainByServerID(chainServerId);
@@ -303,23 +332,33 @@ export const TokenSelectorSheetModal = React.forwardRef<
         return (
           <RefreshAutoLockBottomSheetBackdrop
             {...props}
+            style={[
+              props.style,
+              swapToTokenDetail && {
+                zIndex: -1000,
+              },
+            ]}
             onPress={onCancel}
             disappearsOnIndex={-1}
             appearsOnIndex={0}
           />
         );
       },
-      [onCancel],
+      [onCancel, swapToTokenDetail],
     );
 
     const ListHeader = useMemo(() => {
-      return isLoading ? (
+      return (
         <>
-          {Array.from({ length: 10 }).map((_, index) => (
-            <LoadingItem key={index} />
-          ))}
+          {isLoading ? (
+            <>
+              {Array.from({ length: 10 }).map((_, index) => (
+                <LoadingItem key={index} />
+              ))}
+            </>
+          ) : null}
         </>
-      ) : null;
+      );
     }, [isLoading]);
 
     const onPressToken = useCallback(() => {
@@ -342,6 +381,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 gap: 12,
                 paddingHorizontal: 8,
                 marginHorizontal: 12,
+                marginBottom: 16,
               }}>
               {token.$origin.recentList?.map(tokenItem => (
                 <TouchableOpacity
@@ -357,9 +397,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (token.$origin.headerRender) {
-          return token.$origin.headerRender();
-        }
         const isPined = token?.$origin.isPined;
         const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
@@ -422,8 +459,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
             }}
             style={[
               styles.tokenItem,
+              isSwapTo && { paddingRight: 0, paddingVertical: 0 },
               disabled && styles.tokenItemDisabled,
-              isSelected && styles.isSelected,
             ]}>
             <View style={styles.tokenLeft}>
               <AssetAvatar
@@ -439,9 +476,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   </Text>
                   {isPined && <TextBadge />}
                   {isManualFold && <TextBadge type="folded" />}
-                  <View style={{ marginLeft: 8 }}>
-                    {isSelected ? <RcIconChecked /> : null}
-                  </View>
                 </View>
                 <Text
                   style={[styles.tokenPrice, { marginTop: 4 }]}
@@ -476,49 +510,137 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 </Text>
               </View>
             ) : (
-              <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                <Text
-                  style={[
-                    styles.tokenHeaderAmount,
-                    isExcludeBalanceShowTips && styles.textSecondary,
-                  ]}>
-                  {token._amount}
-                </Text>
-                <Text style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
-                  {isExcludeBalanceShowTips ? (
-                    <TouchableOpacity
-                      hitSlop={hitSlop}
-                      onPress={handleShowExcludeTips}>
-                      <RcTipCC
-                        style={styles.tips}
-                        color={colors2024['neutral-info']}
-                      />
-                    </TouchableOpacity>
-                  ) : (
-                    token._netWorthStr
-                  )}
-                </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+                  <Text
+                    style={[
+                      styles.tokenHeaderAmount,
+                      isExcludeBalanceShowTips && styles.textSecondary,
+                    ]}>
+                    {token._amount}
+                  </Text>
+                  <Text style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
+                    {isExcludeBalanceShowTips ? (
+                      <TouchableOpacity
+                        hitSlop={hitSlop}
+                        onPress={handleShowExcludeTips}>
+                        <RcTipCC
+                          style={styles.tips}
+                          color={colors2024['neutral-info']}
+                        />
+                      </TouchableOpacity>
+                    ) : (
+                      token._netWorthStr
+                    )}
+                  </Text>
+                </View>
+                {isSwapTo ? (
+                  <Pressable
+                    style={{
+                      padding: 16,
+                      paddingLeft: 12,
+                      height: '100%',
+                    }}
+                    onPress={() => {
+                      // setSwapToTokenDetail(true);
+                      naviPush(RootNames.TokenDetail, {
+                        token: ensureAbstractPortfolioToken(token.$origin),
+                        // account: address,
+                        needUseCacheToken: true,
+                        isSingleAddress,
+                      });
+                    }}>
+                    <RcIconTipCC
+                      width={20}
+                      height={20}
+                      color={colors2024['neutral-secondary']}
+                    />
+                  </Pressable>
+                ) : null}
               </View>
             )}
           </TouchableOpacity>
         );
       },
       [
-        handleShowExcludeTips,
-        isFromModalType,
         isLoading,
+        selectToken,
         supportChains,
-        disabledTips,
+        isFromModalType,
+        styles.tokenItem,
+        styles.tokenItemDisabled,
+        styles.tokenLeft,
+        styles.tokenInfoCol,
+        styles.tokenNameBox,
+        styles.tokenName,
+        styles.tokenPrice,
+        styles.tokenInfoColRight,
+        styles.tardeLevel,
+        styles.tardeLevelText,
+        styles.tokenHeaderAmount,
+        styles.textSecondary,
+        styles.tokenHeaderNetworth,
+        styles.tips,
+        styles.tokenRowWrap,
+        styles.tokenRowTokenWrap,
+        styles.tokenRowTokenInner,
+        styles.tokenRowTokenInnerSmallToken,
+        styles.actionText,
+        styles.arrow,
+        styles.tokenRowUsdValueWrap,
+        styles.tokenRowUsdValue,
+        isBridgeTo,
+        colors2024,
+        handleShowExcludeTips,
+        isSwapTo,
         onConfirm,
         toggleShowSheetModal,
-        styles,
-        selectToken,
-        colors2024,
-        isBridgeTo,
-        fold,
         onPressToken,
+        fold,
+        disabledTips,
+        isSingleAddress,
       ],
     );
+
+    const section = useMemo(() => {
+      if (unshiftList) {
+        return [
+          ...unshiftList.map(e => ({
+            ...e,
+            data: (e.data ?? []).map(x => {
+              const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
+
+              return {
+                id: x.id,
+                amount: x.amount,
+                _logo: x.logo_url,
+                _symbol: getTokenSymbol(x),
+                _amount: formatAmount(x.amount),
+                _price: formatPrice(x.price),
+                _netWorth: _netWorth,
+                _netWorthStr: formatNetworth(_netWorth),
+                _chain: x.chain,
+                trade_volume_level: x?.trade_volume_level,
+                $origin: x,
+              };
+            }),
+          })),
+          {
+            data: tokens,
+          },
+        ];
+      }
+      return [
+        {
+          data: tokens,
+        },
+      ];
+    }, [isBridgeTo, tokens, unshiftList]);
 
     return (
       <AppBottomSheetModal
@@ -531,14 +653,51 @@ export const TokenSelectorSheetModal = React.forwardRef<
             onCancel();
           }
         }}
-        {...makeBottomSheetProps({
-          linearGradientType: 'linear',
-          colors: colors2024,
-        })}
+        {...{
+          containerStyle: swapToTokenDetail
+            ? {
+                zIndex: -1000000,
+              }
+            : {},
+          style: {
+            overflow: 'hidden',
+            borderRadius: 32,
+          },
+          handleStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+            paddingVertical: 18,
+          },
+          backgroundStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        }}
         backdropComponent={renderBackdrop}>
+        <LinearGradient
+          start={{ x: 0.5, y: 0.64 }}
+          end={{ x: 0.5, y: 1 }}
+          colors={
+            isLight
+              ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-0']]
+              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
+          }
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: 120,
+          }}
+        />
         <AutoLockView
           as="BottomSheetView"
-          style={[styles.container, { paddingBottom: androidBottomOffset }]}>
+          style={[
+            styles.container,
+            {
+              paddingBottom: androidBottomOffset,
+            },
+          ]}>
           <View style={[styles.titleArea, styles.internalBlock]}>
             <BottomSheetHandlableView>
               <Text style={[styles.modalTitle, styles.modalMainTitle]}>
@@ -557,7 +716,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 onChange: e => handleQueryChange(e.nativeEvent.text),
                 onFocus: handleInputFocus,
                 onBlur: handleInputBlur,
-                placeholder: 'Search Token',
+                placeholder:
+                  searchPlaceholder ||
+                  t('component.TokenSelector.searchPlaceHolder2'),
                 placeholderTextColor: colors2024['neutral-info'],
               }}
             />
@@ -579,18 +740,34 @@ export const TokenSelectorSheetModal = React.forwardRef<
               />
             </View>
           )}
-          {customHeaderTitle || DefaultHeaderTitle}
-          <BottomSheetFlatList
+          {!isSwapTo && <>{customHeaderTitle || DefaultHeaderTitle}</>}
+          <BottomSheetSectionList
+            contentInset={{ bottom: 30 }}
+            sections={section}
             keyboardShouldPersistTaps="handled"
             style={[styles.scrollView]}
             onScrollBeginDrag={() => Keyboard.dismiss()}
-            data={tokens}
             windowSize={5}
             keyExtractor={token =>
               `${token.id}-${token._symbol}-${token._chain}-${
-                (token.$origin as any).group
+                (token.$origin as any)?.group
               }`
             }
+            renderSectionHeader={
+              isSwapTo
+                ? ({ section }) => {
+                    const { header } = section;
+                    return (
+                      <>
+                        {header
+                          ? header()
+                          : customHeaderTitle || DefaultHeaderTitle}
+                      </>
+                    );
+                  }
+                : undefined
+            }
+            stickySectionHeadersEnabled={true}
             ListHeaderComponent={ListHeader}
             ListEmptyComponent={
               <NotMatchedHolder
@@ -614,7 +791,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
   },
 );
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     arrow: {
       width: 10,
@@ -669,7 +846,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-body'],
     },
     container: {
-      paddingTop: ModalLayouts.titleTopOffset,
       flex: 1,
     },
     headerBox: {
@@ -680,9 +856,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
-      // borderTopWidth: 0,
-      backgroundColor: colors2024['neutral-bg-1'],
-      // borderBottomWidth: 0.5,
+      // backgroundColor: isLight
+      //   ? colors2024['neutral-bg-0']
+      //   : colors2024['neutral-bg-1'],
       marginHorizontal: 24,
       marginBottom: 16,
     },
@@ -716,6 +892,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       marginBottom: 24,
+      paddingTop: ModalLayouts.titleTopOffset,
     },
     modalMainTitle: {
       fontSize: 20,
@@ -758,7 +935,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       height: ITEM_HEIGHT,
       paddingHorizontal: 8,
+      paddingRight: 16,
       marginHorizontal: 12,
+      marginTop: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderRadius: 16,
       // // leave here for debug
       // borderWidth: 1,
       // borderColor: 'blue',
