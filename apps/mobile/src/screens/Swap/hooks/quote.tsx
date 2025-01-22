@@ -326,8 +326,10 @@ export const useQuoteMethods = () => {
       chain,
       dexId,
       setQuote,
+      onFinishedQuote,
     }: getDexQuoteParams & {
       setQuote?: (quote: TDexQuoteData) => void;
+      onFinishedQuote: () => void;
     }): Promise<TDexQuoteData> => {
       const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
@@ -436,6 +438,7 @@ export const useQuoteMethods = () => {
           preExecResult,
         };
         setQuote?.(quote);
+        onFinishedQuote();
         return quote;
       } catch (error) {
         stats.report('swapQuoteResult', {
@@ -453,6 +456,7 @@ export const useQuoteMethods = () => {
           preExecResult: null,
         };
         setQuote?.(quote);
+        onFinishedQuote();
         return quote;
       }
     },
@@ -467,6 +471,7 @@ export const useQuoteMethods = () => {
     async (
       params: Omit<getDexQuoteParams, 'dexId'> & {
         setQuote: (quote: TDexQuoteData) => void;
+        onFinishedQuote: () => void;
       },
     ) => {
       if (

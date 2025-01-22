@@ -1,5 +1,5 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { QuoteProvider } from '../hooks';
+import { QuoteProvider, useSwapSupportedDexList } from '../hooks';
 import { useTranslation } from 'react-i18next';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
@@ -48,6 +48,7 @@ interface SwapTokenItemProps {
   inSufficient?: boolean;
   valueLoading?: boolean;
   currentQuote?: QuoteProvider;
+  finishedQuotes?: number;
 }
 
 export const SwapTokenItem = (props: SwapTokenItemProps) => {
@@ -64,12 +65,22 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     inSufficient,
     valueLoading,
     currentQuote,
+    finishedQuotes,
   } = props;
   const { t } = useTranslation();
 
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFrom = type === 'from';
+
+  const dexLength = useSwapSupportedDexList()[0].length;
+
+  const percent = useMemo(() => {
+    if (finishedQuotes && !isFrom) {
+      return (finishedQuotes / dexLength) * 100;
+    }
+    return 0;
+  }, [dexLength, finishedQuotes, isFrom]);
 
   const openTokenModalRef = useRef<{
     openTokenModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -171,6 +182,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         {isFrom && (
           <View style={styles.sliderContainer}>
             <Slider
+              allowTouchTrack
               style={styles.slider}
               value={slider}
               onSlidingStart={onSlidingStart}
@@ -224,16 +236,29 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             excludeTokens={excludeTokens}
             useSwapTokenList={!isFrom}
             supportChains={SWAP_SUPPORT_CHAINS}
+            searchPlaceholder={
+              isFrom
+                ? undefined
+                : t('component.TokenSelector.searchPlaceHolder1')
+            }
           />
           <Divider color={colors2024['neutral-line']} />
         </View>
 
         {valueLoading ? (
-          <Skeleton
-            animation="wave"
-            LinearGradientComponent={Linear}
-            style={styles.skeleton}
-          />
+          <View style={styles.skeleton}>
+            <LinearGradient
+              locations={[0, 1]}
+              style={{
+                width: `${percent}%`,
+                height: '100%',
+                backgroundColor: colors2024['brand-light-1'],
+              }}
+              start={{ x: 1, y: 0.5 }}
+              end={{ x: 0, y: 0.5 }}
+              colors={['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)']}
+            />
+          </View>
         ) : isFrom ? (
           <TextInput
             numberOfLines={1}
@@ -275,11 +300,13 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         </View>
         <View style={styles.usdValueContainer}>
           {valueLoading ? (
-            <Skeleton
-              animation="wave"
-              LinearGradientComponent={Linear}
-              style={styles.skeleton2}
-            />
+            !isFrom ? null : (
+              <Skeleton
+                animation="wave"
+                LinearGradientComponent={Linear}
+                style={styles.skeleton2}
+              />
+            )
           ) : (
             <Text style={styles.usdValue}>{usdValue}</Text>
           )}
@@ -381,7 +408,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   skeleton: {
-    backgroundColor: colors2024['neutral-line'],
+    overflow: 'hidden',
+    backgroundColor: colors2024['brand-light-1'],
     height: 36,
     width: 138,
     borderRadius: 100,

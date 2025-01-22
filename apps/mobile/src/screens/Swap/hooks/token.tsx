@@ -10,7 +10,7 @@ import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
 import { swapService } from '@/core/services';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
@@ -19,7 +19,7 @@ import { formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
-import { useSlippageStore } from './slippage';
+import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
@@ -366,7 +366,7 @@ export const useTokenPair = (userAddress: string) => {
 
   useEffect(() => {
     if (autoSlippage) {
-      setSlippage(isStableCoin ? '0.1' : '0.5');
+      setSlippage(getSwapAutoSlippageValue(isStableCoin));
     }
   }, [autoSlippage, isStableCoin, setSlippage]);
 
@@ -391,6 +391,7 @@ export const useTokenPair = (userAddress: string) => {
 
   const fetchIdRef = useRef(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
+  const [finishedQuotes, setFinishedQuotes] = useState(0);
 
   const [quoteLoading, setQuoteLoading] = useState(false);
 
@@ -421,6 +422,9 @@ export const useTokenPair = (userAddress: string) => {
           payAmount,
           fee: feeRate,
           setQuote: setQuote(currentFetchId),
+          onFinishedQuote: () => {
+            setFinishedQuotes(e => e + 1);
+          },
         }).finally(() => {
           // enableSwapBySlippageChanged(currentFetchId);
         });
@@ -450,6 +454,7 @@ export const useTokenPair = (userAddress: string) => {
       feeRate &&
       !inSufficient
     ) {
+      setFinishedQuotes(0);
       setQuoteLoading(true);
 
       setActiveProvider(undefined);
@@ -774,6 +779,8 @@ export const useTokenPair = (userAddress: string) => {
     setLowCreditVisible,
 
     clearExpiredTimer,
+
+    finishedQuotes,
   };
 };
 

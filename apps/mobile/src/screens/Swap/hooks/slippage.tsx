@@ -51,3 +51,7 @@ export const useSlippageStore = () => {
     setIsCustomSlippage,
   };
 };
+
+export const getSwapAutoSlippageValue = (isStableCoin: boolean) => {
+  return isStableCoin ? '0.1' : '3';
+};
