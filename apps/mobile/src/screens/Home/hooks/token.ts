@@ -93,71 +93,74 @@ export const useTokens = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible, chainServerId]);
 
-  const loadProcess = async (force?: boolean) => {
-    if (!userAddr) {
-      return;
-    }
-    const currentAbort = new AbortController();
-    abortProcess.current = currentAbort;
-
-    setLoading(true);
-    log('======Start-Tokens======', userAddr);
-    let _data = produce(walletProject, draft => {
-      draft.netWorth = 0;
-      draft._netWorth = '$0';
-      draft._netWorthChange = '-';
-      draft.netWorthChange = 0;
-      draft._netWorthChangePercent = '';
-      draft._portfolioDict = {};
-      draft._portfolios = [];
-      draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-    });
-
-    let _tokens: AbstractPortfolioToken[] = [];
-
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-    if ((await TokenItemEntity.isExpired(userAddr)) || force) {
-      const snapshot = await queryTokensCache(userAddr);
-      if (snapshot?.length) {
-        const chainTokens = snapshot.reduce((m, n) => {
-          m[n.chain] = m[n.chain] || [];
-          m[n.chain].push(n);
-
-          return m;
-        }, {} as Record<string, TokenItem[]>);
-        _data = produce(_data, draft => {
-          setWalletTokens(draft, chainTokens);
-        });
-
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
-
-        setMainnetTokens(filterDisplayToken(_tokens));
-        setLoading(false);
+  const loadProcess = useCallback(
+    async (force?: boolean) => {
+      if (!userAddr) {
+        return;
       }
-    }
+      const currentAbort = new AbortController();
+      abortProcess.current = currentAbort;
 
-    const tokenRes = await syncTokens(userAddr, force);
+      setLoading(true);
+      log('======Start-Tokens======', userAddr);
+      let _data = produce(walletProject, draft => {
+        draft.netWorth = 0;
+        draft._netWorth = '$0';
+        draft._netWorthChange = '-';
+        draft.netWorthChange = 0;
+        draft._netWorthChangePercent = '';
+        draft._portfolioDict = {};
+        draft._portfolios = [];
+        draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+      });
 
-    const tokensDict: Record<string, TokenItem[]> = {};
-    tokenRes.forEach(token => {
-      if (!tokensDict[token.chain]) {
-        tokensDict[token.chain] = [];
+      let _tokens: AbstractPortfolioToken[] = [];
+
+      const tokenSettings =
+        (await preferenceService.getUserTokenSettings()) || {};
+      if ((await TokenItemEntity.isExpired(userAddr)) || force) {
+        const snapshot = await queryTokensCache(userAddr);
+        if (snapshot?.length) {
+          const chainTokens = snapshot.reduce((m, n) => {
+            m[n.chain] = m[n.chain] || [];
+            m[n.chain].push(n);
+
+            return m;
+          }, {} as Record<string, TokenItem[]>);
+          _data = produce(_data, draft => {
+            setWalletTokens(draft, chainTokens);
+          });
+
+          _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+
+          setMainnetTokens(filterDisplayToken(_tokens));
+          setLoading(false);
+        }
       }
-      tokensDict[token.chain].push(token);
-    });
 
-    _data = produce(_data, draft => {
-      setWalletTokens(draft, tokensDict);
-    });
+      const tokenRes = await syncTokens(userAddr, force);
 
-    _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+      const tokensDict: Record<string, TokenItem[]> = {};
+      tokenRes.forEach(token => {
+        if (!tokensDict[token.chain]) {
+          tokensDict[token.chain] = [];
+        }
+        tokensDict[token.chain].push(token);
+      });
 
-    setMainnetTokens([...filterDisplayToken(_tokens)]);
+      _data = produce(_data, draft => {
+        setWalletTokens(draft, tokensDict);
+      });
 
-    setLoading(false);
-    log('<<==Tokens-end==>>', userAddr);
-  };
+      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+
+      setMainnetTokens([...filterDisplayToken(_tokens)]);
+
+      setLoading(false);
+      log('<<==Tokens-end==>>', userAddr);
+    },
+    [setLoading, setMainnetTokens, userAddr],
+  );
 
   const refreshTagToken = useCallback(async () => {
     const tokenSettings =

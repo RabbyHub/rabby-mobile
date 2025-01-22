@@ -89,29 +89,32 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible]);
 
-  const loadProcess = async (force?: boolean) => {
-    if (!userAddr) {
-      return;
-    }
-    setHasValue(false);
-
-    let projectDict: Record<string, DisplayedProject> | null = {};
-    const protocols = await syncProtocols(userAddr, force);
-    protocols.forEach(project => {
-      if (projectDict) {
-        projectDict = produce(projectDict, draft => {
-          project && portfolio2Display(project, draft);
-        });
+  const loadProcess = useCallback(
+    async (force?: boolean) => {
+      if (!userAddr) {
+        return;
       }
-    });
-    const realtimeData = Object.values(projectDict)?.sort(
-      (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-    );
-    const tokenSetting = await preferenceService.getUserTokenSettings();
-    setData(tagProfiles(realtimeData, tokenSetting));
-    setHasValue(!!protocols.length);
-    setLoading(false);
-  };
+      setHasValue(false);
+
+      let projectDict: Record<string, DisplayedProject> | null = {};
+      const protocols = await syncProtocols(userAddr, force);
+      protocols.forEach(project => {
+        if (projectDict) {
+          projectDict = produce(projectDict, draft => {
+            project && portfolio2Display(project, draft);
+          });
+        }
+      });
+      const realtimeData = Object.values(projectDict)?.sort(
+        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+      );
+      const tokenSetting = await preferenceService.getUserTokenSettings();
+      setData(tagProfiles(realtimeData, tokenSetting));
+      setHasValue(!!protocols.length);
+      setLoading(false);
+    },
+    [setData, setHasValue, setLoading, userAddr],
+  );
 
   const refreshTagPortfolio = useCallback(async () => {
     const tokenSettings =
