@@ -12,7 +12,6 @@ export function makeJsEEClass<
     on<T extends keyof Listeners & string>(
       eventName: T,
       listener: Listeners[T],
-      context?: Object,
     ): ThisType<EE>;
     emit<T extends keyof Listeners & string>(
       eventName: T,
@@ -24,9 +23,8 @@ export function makeJsEEClass<
     on<T extends keyof Listeners & string>(
       eventType: T,
       listener: Listeners[T],
-      context?: Object,
     ) {
-      return super.on(eventType, listener.bind(context));
+      return super.on(eventType, listener);
     }
 
     emit<T extends keyof Listeners & string>(
