@@ -82,6 +82,12 @@ export async function prepareAppDataSource() {
   return appDataSource;
 }
 
+export async function dropAppDataSource() {
+  const appDataSource = await initializeAppDataSource();
+
+  await appDataSource.dropDatabase();
+}
+
 // export const appDBRef = {
 //   current: null as null | MakeSurePromise<ReturnType<typeof createConnection>>
 // }

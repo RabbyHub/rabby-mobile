@@ -6,14 +6,19 @@ import { HistoryItemEntity } from './entities/historyItem';
 import { PortocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
-import { APP_DB_PREFIX } from './constant';
+import { APP_DB_PREFIX, getRabbyAppDbName } from './constant';
 import { initializeAppDataSource } from './imports';
 import { SwapItemEntity } from './entities/swapitem';
 import { BalanceEntity } from './entities/balance';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
+  // database: getRabbyAppDbName(),
   database: 'rabby-app.db',
+  /**
+   * @notice set to 'default' to use the default database path on iOS
+   * @see https://github.com/boltcode-js/react-native-sqlite-storage?tab=readme-ov-file#opening-a-database
+   */
   location: 'default',
   // "query" | "schema" | "error" | "warn" | "info" | "log" | "migration"
   logging: __DEV__

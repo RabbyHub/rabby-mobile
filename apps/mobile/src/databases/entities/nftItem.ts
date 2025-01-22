@@ -15,7 +15,7 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   chain: NFTItem['chain'] = 'eth';
   // id
   @Column('text', { default: '' })
-  id: NFTItem['id'] = '0x';
+  id: NFTItem['id'] = '';
   // contract_id
   @Column('text', { default: '' })
   contract_id: NFTItem['contract_id'] = '';

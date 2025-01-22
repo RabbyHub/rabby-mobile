@@ -17,11 +17,11 @@ import { prepareAppDataSource } from '../imports';
 export class SwapItemEntity extends EntityAddressAssetBase {
   // tx_id
   @Column('text', { default: '' })
-  tx_id: SwapItem['tx_id'] = '0x';
+  tx_id: SwapItem['tx_id'] = '';
 
   // chain
   @Column('text', { default: '' })
-  chain: SwapItem['chain'] = '0x';
+  chain: SwapItem['chain'] = '';
 
   // status
   @Column('text', { default: '' })

@@ -19,7 +19,8 @@ import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
-import { prepareAppDataSource } from '@/databases/imports';
+import { dropAppDataSource, prepareAppDataSource } from '@/databases/imports';
+import RNHelpers from '@/core/native/RNHelpers';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -70,6 +71,27 @@ export default function DevDataPlaygroundModal({
             StackActions.push(RootNames.StackTestkits, {
               screen: RootNames.DevDataSQLite,
             }),
+          );
+        },
+      },
+      {
+        label: 'Clear ALL SQLite Database',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          Alert.alert(
+            'Clear',
+            `This will clear all SQLite database data, restart app is required, are you sure?`,
+            [
+              { text: 'Cancel', onPress: makeNoop },
+              {
+                text: 'Clear',
+                onPress: async () => {
+                  await prepareAppDataSource();
+                  await dropAppDataSource();
+                  RNHelpers.forceExitApp();
+                },
+              },
+            ],
           );
         },
       },

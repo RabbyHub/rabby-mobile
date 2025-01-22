@@ -36,7 +36,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   display_symbol: TokenItem['display_symbol'] = 'ETH';
   // id
   @Column('text', { default: '' })
-  id: TokenItem['id'] = '0x';
+  id: TokenItem['id'] = '';
   // is_core
   @Column('boolean')
   is_core: TokenItem['is_core'] = false;
@@ -135,7 +135,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.time_at = input.time_at ?? 0;
     e.usd_value = input.usd_value ?? 0;
     e.raw_amount = input.raw_amount;
-    e.raw_amount_hex_str = input.raw_amount_hex_str ?? '0x';
+    e.raw_amount_hex_str = input.raw_amount_hex_str ?? '';
     e.price_24h_change = input.price_24h_change ?? 0;
     e.low_credit_score = input.low_credit_score ?? false;
 
