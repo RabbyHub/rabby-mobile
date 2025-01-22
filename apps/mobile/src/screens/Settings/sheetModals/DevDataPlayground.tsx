@@ -87,6 +87,7 @@ export default function DevDataPlaygroundModal({
               { text: 'Cancel', onPress: makeNoop },
               {
                 text: 'Clear',
+                style: 'destructive',
                 onPress: async () => {
                   await prepareAppDataSource();
                   await dropAppDataSource();

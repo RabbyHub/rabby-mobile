@@ -13,8 +13,7 @@ import { BalanceEntity } from './entities/balance';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
-  // database: getRabbyAppDbName(),
-  database: 'rabby-app.db',
+  database: getRabbyAppDbName(),
   /**
    * @notice set to 'default' to use the default database path on iOS
    * @see https://github.com/boltcode-js/react-native-sqlite-storage?tab=readme-ov-file#opening-a-database

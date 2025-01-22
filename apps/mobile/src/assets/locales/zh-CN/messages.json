@@ -1525,7 +1525,8 @@
       "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的种子短语。您所有的资产和账户信息都将保持安全。",
       "currentVersion": "当前版本",
       "clearPendingDesc1": "这将清除您所有的待处理交易。这样可以帮助您解决在某些情况下 Rabby 中的交易状态与链上状态不匹配的问题。",
-      "touchId": "Touch ID"
+      "touchId": "Touch ID",
+      "appCache": "应用缓存"
     }
   },
   "component": {

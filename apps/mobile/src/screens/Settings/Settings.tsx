@@ -106,6 +106,7 @@ import CurrentLanguageSelectorModal, {
 } from './sheetModals/LanguageSelector';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { useSQLiteStatics } from '@/databases/hooks/_statics';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -169,6 +170,10 @@ function SettingsBlocks() {
   const biometricsComputed = useBiometricsComputed();
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
+
+  const { semanticBytes, clearDbCacheAndQuiteApp } = useSQLiteStatics({
+    enableAutoFetch: true,
+  });
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -269,6 +274,42 @@ function SettingsBlocks() {
             icon: RcClearPending,
             onPress: () => {
               clearPendingRef.current?.present();
+            },
+          },
+          {
+            label: t('page.setting.appCache'),
+            icon: RcInfo,
+            rightNode: ({ rightIconNode }) => {
+              return (
+                <View style={{ flexDirection: 'row' }}>
+                  <Text
+                    style={{
+                      color: colors['neutral-title-1'],
+                      fontSize: 14,
+                      fontWeight: '400',
+                      paddingRight: 8,
+                    }}>
+                    {semanticBytes}
+                  </Text>
+                  {rightIconNode}
+                </View>
+              );
+            },
+            onPress: () => {
+              Alert.alert(
+                'Clear App Cache',
+                'This will clear all app cache, sometimes this help to solve some problems. Restarting app is required, Do you want to continue?',
+                [
+                  { text: 'Cancel', onPress: () => {} },
+                  {
+                    text: 'Clear & Quit App',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await clearDbCacheAndQuiteApp();
+                    },
+                  },
+                ],
+              );
             },
           },
         ],
