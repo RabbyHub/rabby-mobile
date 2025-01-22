@@ -335,6 +335,19 @@ export const deleteDBResourceForAddress = async (_address: string) => {
   }
 };
 
+export const updateExpiredTime = async (_address: string, offest?: number) => {
+  const address = _address.toLowerCase();
+  try {
+    await Promise.all([
+      TokenItemEntity.willExpired(address, offest),
+      NFTItemEntity.willExpired(address, offest),
+      PortocolItemEntity.willExpired(address, offest),
+    ]);
+  } catch (error) {
+    console.log('🔍 CUSTOM_LOGGER:=>: update expired)', error);
+  }
+};
+
 export async function syncBalance(
   address: string,
   isCore: boolean,

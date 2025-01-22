@@ -26,6 +26,7 @@ import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { updateExpiredTime } from '@/databases/sync/assets';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -401,6 +402,9 @@ export class TransactionHistoryService {
       nonce,
     })?.[0];
 
+    if (success) {
+      updateExpiredTime(address.toLowerCase());
+    }
     target?.txs?.forEach(tx => {
       if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
         this.updateTx({
