@@ -90,7 +90,7 @@ function useCurrentAutoLockLabel() {
     const preset = TIME_SETTINGS.find(
       setting => setting.milliseconds === minutes * 60 * 1000,
     );
-    if (preset?.label) return preset?.label;
+    if (preset?.getLabel) return preset?.getLabel();
 
     const timeSpans = getTimeSpan(minutes);
 
