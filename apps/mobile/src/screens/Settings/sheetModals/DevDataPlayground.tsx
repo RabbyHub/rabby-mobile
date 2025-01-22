@@ -21,6 +21,7 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { dropAppDataSource, prepareAppDataSource } from '@/databases/imports';
 import RNHelpers from '@/core/native/RNHelpers';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -38,6 +39,7 @@ export default function DevDataPlaygroundModal({
 }: RNViewProps & {
   onCancel?(): void;
 }) {
+  const { setIsFristFetchData } = useHistoryTokenDict();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { toggleShowSheetModal } = useSheetModals({
     devUIPlayground: modalRef,
@@ -80,7 +82,7 @@ export default function DevDataPlaygroundModal({
         onPress: async () => {
           Alert.alert(
             'Clear',
-            `This will clear all SQLite database data, restart app is required, are you sure?`,
+            'This will clear all SQLite database data, restart app is required, are you sure?',
             [
               { text: 'Cancel', onPress: makeNoop },
               {
@@ -102,6 +104,7 @@ export default function DevDataPlaygroundModal({
           await prepareAppDataSource();
           HistoryItemEntity.clear();
           SwapItemEntity.clear();
+          setIsFristFetchData(true);
         },
       },
     ];

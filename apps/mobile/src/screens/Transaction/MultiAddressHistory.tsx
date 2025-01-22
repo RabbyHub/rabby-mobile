@@ -63,6 +63,7 @@ import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { ensureHistoryListItemFromDb } from './components/utils';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 const PAGE_COUNT = 20;
 
@@ -121,6 +122,7 @@ function History({
   const [refreshSyncLoading, setRefreshSyncLoading] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
+  const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
   const {
@@ -156,15 +158,6 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSyncing]);
 
-  useEffect(() => {
-    if (!isFirstFetchLoading && !isInTokenDetail) {
-      console.log('isFirstFetchLoading reloadAsync exec');
-      reloadAsync(); // again fetch local db data
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFirstFetchLoading]);
-
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
     setHistorySuccessList(list);
@@ -172,6 +165,7 @@ function History({
   });
 
   const batchFetchDataV2 = async () => {
+    // fetch data from local database
     if (isFirstFetchLoading) {
       const res = [] as HistoryDisplayItem[];
       console.log('setRefreshSyncLoading');
@@ -203,6 +197,7 @@ function History({
         } as HistoryDisplayItem),
     );
     setRefreshSyncLoading(false);
+    setDbData(list);
     return list;
   };
 
@@ -391,7 +386,7 @@ function History({
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    isInTokenDetail && reloadAsync();
+    isInTokenDetail ? reloadAsync() : batchFetchDataV2();
   });
 
   useEffect(() => {
@@ -402,19 +397,42 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
-  const { data, loading, loadingMore, loadMore, reloadAsync, cancel } =
-    useInfiniteScroll(() => batchFetchData(), {
-      isNoMore: () => {
-        if (!isInTokenDetail) {
-          return true;
-        }
-        return Object.values(hasMoreMap.current).every(item => !item);
-      },
-      onSuccess() {
-        setCurrentPage(currentPage + 1);
-        runFetchLocalTx();
-      },
-    });
+  const {
+    data: _data,
+    loading,
+    loadingMore,
+    loadMore,
+    reloadAsync,
+    cancel,
+  } = useInfiniteScroll(() => batchFetchData(), {
+    isNoMore: () => {
+      if (!isInTokenDetail) {
+        return true;
+      }
+      return Object.values(hasMoreMap.current).every(item => !item);
+    },
+    onSuccess() {
+      setCurrentPage(currentPage + 1);
+      runFetchLocalTx();
+    },
+  });
+
+  // useAppOrmSyncEvents({
+  //   taskFor: ['all-history'],
+  //   onRemoteDataUpserted: ctx => {
+  //     switch (ctx.taskFor) {
+  //       case 'all-history':
+  //         batchFetchDataV2();
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //   },
+  // });
+
+  const data = useMemo(() => {
+    return isInTokenDetail ? _data : { list: dbData };
+  }, [_data, isInTokenDetail, dbData]);
 
   const allTxHistory = useMemo(() => {
     return orderBy(data?.list || [], 'time_at', 'desc');
@@ -498,7 +516,8 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = loading && isFirstFetchLoading && !allTxHistory.length;
+  const isFirstLoading =
+    (loading || isFirstFetchLoading) && !allTxHistory.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
     return <Empty />;

@@ -76,7 +76,7 @@ export async function syncRemoteHistory(
     await batchSaveWithPQueueAndTransaction(HistoryItemEntity, historyItems, {
       owner_addr: address,
       taskFor: 'all-history',
-      batchSize: 100,
+      batchSize: 500,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
     })
