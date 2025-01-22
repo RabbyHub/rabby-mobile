@@ -67,6 +67,22 @@ const HistoryList = () => {
     ],
   );
 
+  const sortedList = useMemo(() => {
+    if (!txList) {
+      return [];
+    }
+    return txList.list.sort((a, b) => {
+      // status pending first
+      if (a.status === 'pending' && b.status !== 'pending') {
+        return -1;
+      }
+      if (a.status !== 'pending' && b.status === 'pending') {
+        return 1;
+      }
+      return 0;
+    });
+  }, [txList]);
+
   return (
     <BottomSheetFlatList
       contentContainerStyle={[
@@ -78,7 +94,7 @@ const HistoryList = () => {
       stickyHeaderIndices={[0]}
       ListHeaderComponent={ListHeaderComponent}
       ItemSeparatorComponent={ItemSeparator}
-      data={txList?.list}
+      data={sortedList}
       renderItem={renderItem}
       keyExtractor={item => item.detail_url}
       onEndReached={loadMore}
@@ -131,9 +147,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeletonBlock: {
     width: '100%',
-    height: 210,
+    height: 74,
     padding: 0,
-    borderRadius: 6,
+    borderRadius: 16,
+    marginTop: 8,
   },
   emptyView: {
     marginTop: '50%',

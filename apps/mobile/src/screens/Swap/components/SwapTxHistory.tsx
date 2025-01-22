@@ -1,9 +1,9 @@
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
-import { ModalLayouts } from '@/constant/layout';
+import { ModalLayouts, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -13,6 +13,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { navigate } from '@/utils/navigation';
+import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   flatList: {
@@ -32,8 +36,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 74,
     padding: 0,
     borderRadius: 16,
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 8,
   },
   emptyView: {
     flex: 1,
@@ -57,16 +60,22 @@ const ItemSeparator = () => {
   return <View style={styles.item} />;
 };
 
-const HistoryList = () => {
+const HistoryList = ({
+  onGotoDetail,
+}: {
+  onGotoDetail: (txId: string) => void;
+}) => {
   const { txList, loading, loadMore, noMore } = useSwapHistory();
-
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
   const renderItem = useCallback(
-    ({ item }) => <SwapHistoryItem data={item} />,
-
-    [],
+    ({ item }) => (
+      <TouchableOpacity onPress={() => onGotoDetail(item.tx_id)}>
+        <SwapHistoryItem data={item} />
+      </TouchableOpacity>
+    ),
+    [onGotoDetail],
   );
 
   const ListHeaderComponent = useCallback(() => {
@@ -111,6 +120,22 @@ const HistoryList = () => {
     ],
   );
 
+  const sortedList = useMemo(() => {
+    if (!txList) {
+      return [];
+    }
+    return txList.list.sort((a, b) => {
+      // status pending first
+      if (a.status === 'Pending' && b.status !== 'Pending') {
+        return -1;
+      }
+      if (a.status !== 'Pending' && b.status === 'Pending') {
+        return 1;
+      }
+      return 0;
+    });
+  }, [txList]);
+
   return (
     <BottomSheetFlatList
       contentContainerStyle={[
@@ -121,7 +146,7 @@ const HistoryList = () => {
       style={styles.flatList}
       stickyHeaderIndices={[0]}
       ListHeaderComponent={ListHeaderComponent}
-      data={txList?.list}
+      data={sortedList}
       ItemSeparatorComponent={ItemSeparator}
       renderItem={renderItem}
       keyExtractor={item => item.tx_id + item.chain}
@@ -138,14 +163,44 @@ export const SwapTxHistory = () => {
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapTxHistoryVisible();
   const { colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const { projectDict, tokenDict } = useHistoryTokenDict();
 
   const onDismiss = useCallback(() => {
     setVisible(false);
   }, [setVisible]);
 
+  const goToDetail = useCallback(
+    async (txId: string) => {
+      const historyItem = await HistoryItemEntity.findOne({
+        where: { txHash: txId },
+      });
+
+      if (historyItem) {
+        const detailData = {
+          ...ensureHistoryListItemFromDb(historyItem),
+          tokenDict,
+          projectDict,
+        };
+
+        onDismiss();
+        navigate(RootNames.StackTransaction, {
+          screen: RootNames.HistoryDetail,
+          params: {
+            data: detailData,
+            title: t('page.swap.swapped'),
+          },
+        });
+      }
+    },
+    [onDismiss, projectDict, t, tokenDict],
+  );
+
   useEffect(() => {
     if (visible) {
       bottomRef.current?.present();
+    } else {
+      bottomRef.current?.dismiss();
     }
   }, [visible]);
   return (
@@ -158,7 +213,7 @@ export const SwapTxHistory = () => {
         colors: colors2024,
         linearGradientType: 'bg2',
       })}>
-      <HistoryList />
+      <HistoryList onGotoDetail={goToDetail} />
     </AppBottomSheetModal>
   );
 };
