@@ -1,15 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import {
-  Alert,
-  Linking,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
-
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import { Alert, Linking, Platform, ScrollView, Text, View } from 'react-native';
 
 import {
   RcClearPending,
@@ -17,8 +7,6 @@ import {
   RcFeedback,
   RcLockWallet,
   RcAutoLockTime,
-  RcCountdown,
-  RcManagePassword,
   RcScreenshot,
   RcFollowUs,
   RcInfo,
@@ -30,7 +18,6 @@ import {
   RcAddCustomNetwork,
   RcRPC,
   RcGoogleDrive,
-  RcGoogleSignout,
   RcCode,
   RcI18n,
 } from '@/assets/icons/settings';
@@ -49,7 +36,6 @@ import {
   useAppTheme,
   useTheme2024,
   useThemeColors,
-  useThemeStyles,
 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { type SettingConfBlock, Block } from './Block';
@@ -66,38 +52,22 @@ import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useCurrentAccount } from '@/hooks/account';
-import {
-  requestLockWalletAndBackToUnlockScreen,
-  useRabbyAppNavigation,
-} from '@/hooks/navigation';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
-import { SettingNavigatorParamList } from '@/navigation-type';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigationState,
-} from '@react-navigation/native';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import {
   ManagePasswordSheetModal,
   ResetPasswordAndKeyringsSheetModal,
 } from '../ManagePassword/components/ManagePasswordSheetModal';
-import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
-import {
-  useBiometrics,
-  useBiometricsComputed,
-  useVerifyByBiometrics,
-} from '@/hooks/biometrics';
-import {
-  useIsForceAllowScreenshot,
-  useToggleShowAutoLockCountdown,
-} from '@/hooks/appSettings';
+
+import { useBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
+import { useIsForceAllowScreenshot } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
   AutoLockCountDownLabel,
   AutoLockSettingLabel,
-  LastUnlockTimeLabel,
 } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
@@ -109,13 +79,6 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
-import {
-  deleteAllBackups,
-  getBackupsFromCloud,
-  saveMnemonicToCloud,
-} from '@/core/utils/cloudBackup';
-import { IS_ANDROID } from '@/core/native/utils';
-import { useGoogleSign } from '@/hooks/cloudStorage';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -139,6 +102,7 @@ import CurrentLanguageSelectorModal, {
   useCurrentLanguageModalVisible,
 } from './sheetModals/LanguageSelector';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -177,6 +141,9 @@ function SettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
+  const { currentLangLabel, setCurrentLanguageModalVisible } =
+    useCurrentLanguageModalVisible();
+
   const disabledBiometrics =
     !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
 
@@ -192,29 +159,7 @@ function SettingsBlocks() {
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appThemeText } = useAppTheme();
-
-  // const navParams = useNavigationState(
-  //   s => s.routes.find(r => r.name === RootNames.Settings)?.params,
-  // ) as SettingNavigatorParamList['Settings'];
-
-  // useMount(() => {
-  //   console.debug(
-  //     'navParams?.enterActionType',
-  //     navParams?.enterActionType,
-  //   );
-  //   switch (navParams?.enterActionType) {
-  //     default:
-  //       break;
-  //     case 'setAutoLockTime': {
-  //       startSelectAutolockTime();
-  //       break;
-  //     }
-  //     case 'setBiometrics': {
-  //       startSwitchBiometrics();
-  //       break;
-  //     }
-  //   }
-  // });
+  const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
 
@@ -224,43 +169,11 @@ function SettingsBlocks() {
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
-      // features: {
-      //   label: 'Features',
-      //   items: [
-      //     {
-      //       label: 'Signature Record',
-      //       icon: RcSignatureRecord,
-
-      //       disabled: true,
-      //       onDisabledPress: () => {
-      //         toast.show('Coming Soon :)');
-      //       },
-      //     },
-      //     {
-      //       label: 'Manage Address',
-      //       icon: RcManageAddress,
-      //       onPress: () => {},
-      //       disabled: true,
-      //       onDisabledPress: () => {
-      //         toast.show('Coming Soon :)');
-      //       },
-      //     },
-      //     {
-      //       label: `Connect ${Platform.OS === 'ios' ? 'Websites' : 'Dapps'}`,
-      //       icon: RcConnectedDapp,
-      //       onPress: () => {},
-      //       disabled: true,
-      //       onDisabledPress: () => {
-      //         toast.show('Coming Soon :)');
-      //       },
-      //     },
-      //   ],
-      // },
       settings: {
-        label: 'Settings',
+        label: t('page.setting.screenTitle'),
         items: [
           {
-            label: 'Enable whitelist for sending assets',
+            label: t('page.setting.enableWhitelist'),
             icon: RcWhitelist,
             onPress: () => {
               switchWhitelistRef.current?.toggle();
@@ -280,7 +193,7 @@ function SettingsBlocks() {
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
-            label: 'Auto lock time',
+            label: t('page.setting.autoLockTime'),
             icon: RcAutoLockTime,
             onPress: () => {
               startSelectAutolockTime();
@@ -288,7 +201,19 @@ function SettingsBlocks() {
             rightTextNode: <AutoLockSettingLabel />,
           },
           {
-            label: 'Add Custom Network',
+            label: 'Current Language',
+            icon: RcI18n,
+            onPress: () => {
+              setCurrentLanguageModalVisible(true);
+            },
+            rightTextNode: (
+              <Text style={{ color: colors['neutral-body'] }}>
+                {currentLangLabel}
+              </Text>
+            ),
+          },
+          {
+            label: t('page.setting.addCustomNetwork'),
             icon: RcAddCustomNetwork,
             onPress: () => {
               navigation.dispatch(
@@ -302,7 +227,7 @@ function SettingsBlocks() {
             },
           },
           {
-            label: 'Modify RPC URL',
+            label: t('page.setting.modifyRPCURL'),
             icon: RcRPC,
             onPress: () => {
               navigation.dispatch(
@@ -317,7 +242,7 @@ function SettingsBlocks() {
           },
           {
             visible: SHOULD_SUPPORT_DARK_MODE,
-            label: 'Theme Mode',
+            label: t('page.setting.themeMode'),
             icon: RcThemeMode,
             onPress: () => {
               setThemeSelectorModalVisible(true);
@@ -337,7 +262,7 @@ function SettingsBlocks() {
             },
           },
           {
-            label: 'Clear Pending',
+            label: t('page.setting.clearPending'),
             icon: RcClearPending,
             onPress: () => {
               clearPendingRef.current?.present();
@@ -346,10 +271,10 @@ function SettingsBlocks() {
         ],
       },
       aboutus: {
-        label: 'About Us',
+        label: t('page.setting.aboutUs'),
         items: [
           {
-            label: 'Current Version',
+            label: t('page.setting.currentVersion'),
             icon: RcInfo,
             rightNode: ({ rightIconNode }) => {
               return (
@@ -381,7 +306,7 @@ function SettingsBlocks() {
             onPress: triggerCheckVersion,
           },
           {
-            label: 'Feedback',
+            label: t('page.setting.feedback'),
             icon: RcFeedback,
             onPress: () => {
               Linking.openURL('https://discord.gg/AvYmaTjrBu');
@@ -394,21 +319,21 @@ function SettingsBlocks() {
           //   onPress: () => {},
           // },
           {
-            label: 'Follow Us',
+            label: t('page.setting.followUs'),
             icon: RcFollowUs,
             onPress: () => {
               openExternalUrl(APP_URLS.TWITTER);
             },
           },
           {
-            label: 'Term Of Use',
+            label: t('page.setting.tou'),
             icon: RcTermsOfUse,
             onPress: async () => {
               viewTermsOfUse();
             },
           },
           {
-            label: 'Privacy Policy',
+            label: t('page.setting.policy'),
             icon: RcPrivacyPolicy,
             onPress: async () => {
               viewPrivacyPolicy();
@@ -448,7 +373,7 @@ function SettingsBlocks() {
       <ConfirmBottomSheetModal
         ref={clearPendingRef}
         height={422}
-        title={'Clear Pending'}
+        title={t('page.setting.clearPending')}
         onConfirm={() => {
           if (currentAccount?.address) {
             clearPendingTxs(currentAccount.address);
@@ -463,19 +388,17 @@ function SettingsBlocks() {
         }}
         desc={
           <Text>
-            This will clear all your pending transactions. This can help you
-            solve the problem that in some cases the state of the transaction in
-            Rabby does not match the state on-chain.
+            {t('page.setting.clearPendingDesc1')}
             {'\n'}
             {'\n'}
-            This will not change the balances in your accounts or require you to
-            re-enter your seed phrase. All your assets and accounts information
-            will remain secure.
+            {t('page.setting.clearPendingDesc2')}
           </Text>
         }
       />
 
       <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
+
+      <CurrentLanguageSelectorModal />
     </>
   );
 }
@@ -504,8 +427,6 @@ function DevSettingsBlocks() {
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
-  const { currentLangLabel, setCurrentLanguageModalVisible } =
-    useCurrentLanguageModalVisible();
 
   const { setCloudDriveTestItemModalVisible } =
     useCloudDriveTestItemModalVisible();
@@ -549,20 +470,6 @@ function DevSettingsBlocks() {
               rightNode: (
                 <Text style={{ color: colors['neutral-body'] }}>
                   {BUILD_CHANNEL} - {BUILD_GIT_INFO.BUILD_GIT_HASH}
-                </Text>
-              ),
-              // TODO: only show in non-production mode
-              visible: NEED_DEVSETTINGBLOCKS,
-            },
-            {
-              label: 'Current Language',
-              icon: RcI18n,
-              onPress: () => {
-                setCurrentLanguageModalVisible(true);
-              },
-              rightTextNode: (
-                <Text style={{ color: colors['neutral-body'] }}>
-                  {currentLangLabel}
                 </Text>
               ),
               // TODO: only show in non-production mode
@@ -745,8 +652,6 @@ function DevSettingsBlocks() {
           </Block>
         );
       })}
-
-      <CurrentLanguageSelectorModal />
 
       <DevForceLocalVersionSelector />
 

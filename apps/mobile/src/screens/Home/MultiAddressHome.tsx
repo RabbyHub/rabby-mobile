@@ -11,23 +11,27 @@ import {
   Animated,
   TouchableOpacity,
   Easing,
-  TouchableWithoutFeedback,
   RefreshControl,
   ScrollView,
   Dimensions,
   StyleSheet,
   Pressable,
 } from 'react-native';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
 import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
@@ -64,7 +68,9 @@ import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useAssetsMap } from './hooks/store';
 import { useAssets } from '../Search/useAssets';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ellipsisAddress } from '@/utils/address';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -95,7 +101,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
 
   return (
     <View style={styles.headerBox}>
-      <View style={styles.headerBox}>
+      <View style={styles.leftBox}>
         <Text style={styles.balanceTextBox}>
           {t('page.nextComponent.multiAddressHome.totalBalance')}
         </Text>
@@ -107,6 +113,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
         </Animated.View>
       </View>
       <TouchableWithoutFeedback
+        style={styles.settingEntry}
         onPress={() => {
           navigation.navigate(RootNames.StackSettings, {
             screen: RootNames.Settings,
@@ -152,57 +159,72 @@ function MultiAddressHome(): JSX.Element {
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
 
-  const MENU_ARR = [
-    {
-      title: MultiHomeFeatTitle.Swap,
-      icon: RcIconSwap,
-    },
-    {
-      title: MultiHomeFeatTitle.Send,
-      icon: RcIconSend,
-    },
-    {
-      title: MultiHomeFeatTitle.Receive,
-      icon: RcIconReceive,
-    },
-    {
-      title: MultiHomeFeatTitle.Bridge,
-      icon: RcIconBridge,
-    },
-    {
-      title: MultiHomeFeatTitle.History,
-      icon: RcIconHistory,
-    },
-    {
-      title: MultiHomeFeatTitle.Approvals,
-      icon: RcIconApprovals,
-      badge: alertInfo.total,
-    },
-    {
-      title: MultiHomeFeatTitle.GasAccount,
-      icon: RcIconGasAccount,
-    },
-    // __DEV__ && {
-    //   title: MultiHomeFeatTitle.TEST_DAPP,
-    //   icon: RcIconDapps,
-    // },
-    {
-      title: MultiHomeFeatTitle.Dapps,
-      icon: RcIconDapps,
-    },
-    // {
-    //   title: MultiHomeFeatTitle.Ecosystem,
-    //   icon: RcIconEcosystem,
-    // },
-    // {
-    //   title: MultiHomeFeatTitle.Points,
-    //   icon: RcIconPoints,
-    // },
-  ].filter(Boolean) as {
-    title: MultiHomeFeatTitle;
-    icon: React.FC<import('react-native-svg').SvgProps>;
-    badge?: number;
-  }[];
+  const MENU_ARR = useMemo(
+    () =>
+      [
+        {
+          key: MultiHomeFeatTitle.Swap,
+          title: t('page.home.services.swap'),
+          icon: RcIconSwap,
+        },
+        {
+          key: MultiHomeFeatTitle.Send,
+          title: t('page.home.services.send'),
+          icon: RcIconSend,
+        },
+        {
+          key: MultiHomeFeatTitle.Receive,
+          title: t('page.home.services.receive'),
+          icon: RcIconReceive,
+        },
+        {
+          key: MultiHomeFeatTitle.Bridge,
+          title: t('page.home.services.bridge'),
+          icon: RcIconBridge,
+        },
+        {
+          key: MultiHomeFeatTitle.History,
+          title: t('page.home.services.history'),
+          icon: RcIconHistory,
+        },
+        {
+          key: MultiHomeFeatTitle.Approvals,
+          title: t('page.home.services.approvals'),
+          icon: RcIconApprovals,
+          badge: alertInfo.total,
+        },
+        {
+          key: MultiHomeFeatTitle.GasAccount,
+          title: t('page.home.services.gasAccount'),
+          icon: RcIconGasAccount,
+        },
+        // __DEV__ && {
+        //   title: MultiHomeFeatTitle.TEST_DAPP,
+        //   icon: RcIconDapps,
+        // },
+        {
+          key: MultiHomeFeatTitle.Dapps,
+          title: IS_IOS
+            ? t('page.home.services.websites')
+            : t('page.home.services.dapps'),
+          icon: RcIconDapps,
+        },
+        // {
+        //   title: MultiHomeFeatTitle.Ecosystem,
+        //   icon: RcIconEcosystem,
+        // },
+        // {
+        //   title: MultiHomeFeatTitle.Points,
+        //   icon: RcIconPoints,
+        // },
+      ].filter(Boolean) as {
+        key: MultiHomeFeatTitle;
+        title: string;
+        icon: React.FC<import('react-native-svg').SvgProps>;
+        badge?: number;
+      }[],
+    [alertInfo.total, t],
+  );
 
   useEffect(() => {
     if (pendingTxCount) {
@@ -231,8 +253,7 @@ function MultiAddressHome(): JSX.Element {
   });
 
   const { initFetchTop10Assets } = useAssets();
-
-  const { pinAccountsFirstFour, isShowPin } =
+  const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
 
   const fetchHistory = useCallback(() => {
@@ -337,12 +358,12 @@ function MultiAddressHome(): JSX.Element {
   const { openUrlAsDapp } = useDappWebViewScreen();
 
   const handleClickMenu = useCallback(
-    (title: MultiHomeFeatTitle) => {
+    (key: MultiHomeFeatTitle) => {
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      switch (title) {
+      switch (key) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
@@ -433,6 +454,7 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const { bottom } = useSafeAreaInsets();
+  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
   const handlePressSearch = () => {
@@ -459,6 +481,8 @@ function MultiAddressHome(): JSX.Element {
         <MultiAddressHomeHeader loading={balanceLoading} />
         <ScrollView
           showsVerticalScrollIndicator={false}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContainer}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
@@ -497,22 +521,39 @@ function MultiAddressHome(): JSX.Element {
             </TouchableOpacity>
           </View>
           {isShowPin && (
-            <>
-              <View style={[styles.menuHeader, styles.pinHeader]}>
-                <View style={styles.pinBox}>
-                  <RcIconVectorCC color={colors2024['neutral-title-1']} />
-                  <Text style={styles.headerText}>
-                    {t('page.nextComponent.multiAddressHome.pin')}
-                  </Text>
-                </View>
-                <View />
-              </View>
-              <View style={[styles.pinGrid]}>
-                {pinAccountsFirstFour.map((item, index) => {
-                  return item ? (
+            <View style={[styles.pinGrid]}>
+              {pinAccountsFirstFour.map((item, index) => {
+                return item ? (
+                  <ContextMenuView
+                    menuConfig={{
+                      menuTitle: item.alias || ellipsisAddress(item.address),
+                      menuActions: [
+                        {
+                          title: 'UnPin',
+                          icon: isDarkTheme
+                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
+                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+                          androidIconName: 'ic_rabby_menu_un_pin',
+                          key: 'pin',
+                          action() {
+                            unPinAddress(item.address, item.brandName);
+                          },
+                        },
+                      ],
+                    }}
+                    key={`${item.address}-${item.brandName}`}
+                    preViewBorderRadius={10}
+                    triggerProps={{ action: 'longPress' }}>
                     <TouchableOpacity
                       style={StyleSheet.flatten([styles.pinGridItem])}
                       key={index}
+                      delayLongPress={200} // long press delay
+                      onLongPress={() => {
+                        trigger('impactLight', {
+                          enableVibrateFallback: true,
+                          ignoreAndroidSystemSettings: false,
+                        });
+                      }}
                       onPress={() => {
                         handleClickPinAccount(item);
                         matomoRequestEvent({
@@ -530,18 +571,18 @@ function MultiAddressHome(): JSX.Element {
                         {calcPinPercent(item.balance || 0)}
                       </Text>
                     </TouchableOpacity>
-                  ) : (
-                    <View
-                      key={index}
-                      style={StyleSheet.flatten([
-                        styles.pinGridItem,
-                        styles.emptyItem,
-                      ])}
-                    />
-                  );
-                })}
-              </View>
-            </>
+                  </ContextMenuView>
+                ) : (
+                  <View
+                    key={index}
+                    style={StyleSheet.flatten([
+                      styles.pinGridItem,
+                      styles.emptyItem,
+                    ])}
+                  />
+                );
+              })}
+            </View>
           )}
           <View style={styles.menuHeader}>
             <Text style={styles.headerText}>
@@ -574,10 +615,10 @@ function MultiAddressHome(): JSX.Element {
                   ])}
                   key={index}
                   onPress={e => {
-                    handleClickMenu(el.title);
+                    handleClickMenu(el.key);
                     matomoRequestEvent({
                       category: 'Click_Services',
-                      action: `Click_${el.title}`,
+                      action: `Click_${el.key}`,
                     });
                   }}>
                   <View style={styles.iconWrapper}>
@@ -586,36 +627,35 @@ function MultiAddressHome(): JSX.Element {
                       <BadgeText count={el.badge} style={styles.badgeStyle} />
                     )}
                   </View>
-                  <Text style={styles.gridText}>
-                    {el.title === MultiHomeFeatTitle.Dapps && IS_IOS
-                      ? 'Websites'
-                      : el.title}
-                  </Text>
+                  <Text style={styles.gridText}>{el.title}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
+                : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[
+              styles.floatBottom,
+              { paddingBottom: androidBottomOffset },
+            ]}>
+            <Pressable onPress={handlePressSearch} style={styles.search}>
+              <RcNextSearchCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+              <Text style={styles.searchText}>
+                {t('page.dashboard.home.search')}
+              </Text>
+            </Pressable>
+          </LinearGradient>
         </ScrollView>
-        <LinearGradient
-          colors={
-            isLight
-              ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
-              : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
-          <Pressable onPress={handlePressSearch} style={styles.search}>
-            <RcNextSearchCC
-              width={20}
-              height={20}
-              color={colors2024['neutral-secondary']}
-            />
-            <Text style={styles.searchText}>
-              {t('page.dashboard.home.search')}
-            </Text>
-          </Pressable>
-        </LinearGradient>
       </View>
     </NormalScreenContainer2024>
   );
@@ -623,7 +663,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   paddingContainer: {
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    paddingHorizontal: 0,
     flex: 1,
     flexGrow: 1,
   },
@@ -648,9 +688,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
+  },
+  leftBox: {
+    height: ScreenLayouts.headerAreaHeight,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   balanceTextBox: {
     marginRight: 12,
@@ -662,12 +708,22 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   balanceBox: {
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginTop: 10,
-    marginBottom: 40,
+    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  settingEntry: {
+    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    flexDirection: 'row',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 12,
+    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // ...makeDebugBorder(),
   },
   usdText: {
     fontSize: 36,
@@ -711,14 +767,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
   menuHeader: {
     height: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
+    marginTop: 10,
   },
   pinHeader: {
     marginTop: -8,
@@ -767,6 +830,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     marginBottom: 20,
   },
   emptyItem: {
@@ -779,11 +843,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 10,
     flexShrink: 0,
     flex: 1,
-    // padding: 10,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
     height: 46,
     gap: 8,
     position: 'relative',
@@ -796,6 +860,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
     marginBottom: 20,
     paddingBottom: 100,
   },

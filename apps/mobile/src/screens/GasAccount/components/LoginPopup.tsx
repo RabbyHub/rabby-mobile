@@ -1,37 +1,29 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from 'react';
-import { View, Text, FlatList } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+// import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useGasAccountMethods } from '../hooks';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { GasAccountCurrentAddress } from './LogoutPopup';
 import { GasAccountWrapperBg } from '../components/WrapperBg';
 import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { Card } from '@/components2024/Card';
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
 import { Account } from '@/core/services/preference';
-import { apisAccountSwitch } from '@/core/apis';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { Button } from '@/components2024/Button';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { trigger } from 'react-native-haptic-feedback';
 
 const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  // const [toConfirm, setToConfirm] = useState(false);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { login } = useGasAccountMethods();
   const { currentAccount } = useCurrentAccount();
@@ -40,6 +32,10 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
 
   const gotoLogin = () => {
     setToConfirm(true);
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
   };
 
   const { accounts } = useAccounts({
@@ -55,6 +51,10 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
       }
       setLoading(true);
       try {
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
         await switchSceneCurrentAccount('GasAccount', account);
         await login(account);
       } catch (error) {
@@ -74,7 +74,7 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
     [accounts],
   );
 
-  const list = useSortAddressList(filterAccounts);
+  // const list = useSortAddressList(filterAccounts);
 
   if (toConfirm && currentAccount) {
     return (
@@ -89,10 +89,6 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
             <View style={styles.handleView}>
               <Text style={styles.confirmTitle}>
                 {t('component.gasAccount.loginConfirmModal.title')}
-              </Text>
-              {/* <GasAccountCurrentAddress /> */}
-              <Text style={styles.confirmDescription}>
-                {t('component.gasAccount.loginConfirmModal.desc')}
               </Text>
             </View>
           </BottomSheetHandlableView>
@@ -135,7 +131,7 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
 };
 
 export const GasAccountLoginPopup = props => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [toConfirm, setToConfirm] = useState(false);
 
@@ -150,9 +146,13 @@ export const GasAccountLoginPopup = props => {
   return (
     <AppBottomSheetModal
       enableContentPanningGesture={false} // has scorll list
-      snapPoints={[toConfirm ? 694 : 380]}
+      snapPoints={[toConfirm ? '90%' : 420]}
       onDismiss={props.onCancel || props.onClose}
-      ref={modalRef}>
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}>
       <BottomSheetView style={styles.popup}>
         <GasAccountLoginContent
           onClose={props.onCancel || props.onClose}
@@ -221,14 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     height: '100%',
     // paddingVertical: 10,
   },
-  paddingContainer: {
-    width: '100%',
-    flex: 1,
-    backgroundColor: colors['neutral-bg-1'],
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
+
   currentAddressContainer: {
     marginBottom: 20,
     paddingVertical: 12,
@@ -257,7 +250,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   loginConfirmContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     height: '100%',
@@ -267,7 +259,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '800',
     color: colors['neutral-title1'],
-    marginBottom: 18,
+    paddingTop: 16,
+    paddingBottom: 0,
   },
   confirmDescription: {
     // marginTop: 28,
@@ -292,8 +285,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopColor: colors['neutral-line'],
-    borderTopWidth: 0.5,
     backgroundColor: colors['neutral-bg1'],
     paddingBottom: 20,
     paddingHorizontal: 20,
@@ -304,7 +295,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   loginContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     height: '100%',
@@ -316,19 +306,23 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     marginVertical: 24,
   },
   loginTip: {
-    color: colors['blue-default'],
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
     flexDirection: 'row',
     gap: 8,
     marginBottom: 16,
-    fontSize: 18,
-    fontWeight: '500',
   },
   loginDesc: {
-    color: colors['blue-default'],
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
     flexDirection: 'row',
     gap: 8,
-    fontSize: 18,
-    fontWeight: '500',
     marginBottom: 40,
   },
   popupBody: {

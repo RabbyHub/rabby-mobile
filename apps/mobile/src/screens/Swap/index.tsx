@@ -64,6 +64,7 @@ import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import useDebounce from 'react-use/lib/useDebounce';
+import { useSwapRecentToTokens } from './hooks/recent';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -341,7 +342,12 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
     receiveToken: receiveToken,
   });
 
+  const [_, setRecentSwapToToken] = useSwapRecentToTokens();
+
   const handleSwap = useMemoizedFn(() => {
+    if (receiveToken) {
+      setRecentSwapToToken(receiveToken);
+    }
     if (
       [
         KEYRING_TYPE.SimpleKeyring,
@@ -349,6 +355,8 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         KEYRING_CLASS.HARDWARE.LEDGER,
       ].includes((currentAccount?.type || '') as any) &&
       !receiveToken?.low_credit_score &&
+      !receiveToken?.is_scam &&
+      receiveToken?.is_verified !== false &&
       !isSlippageHigh &&
       !isSlippageLow &&
       !showLoss
@@ -518,6 +526,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
             chainEnum={chain}
             onChange={switchChain}
             supportChains={SWAP_SUPPORT_CHAINS}
+            hideTestnetTab
           />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>

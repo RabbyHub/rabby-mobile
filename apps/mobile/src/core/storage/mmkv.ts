@@ -94,6 +94,31 @@ export function normalizeKeyringState() {
 
 export { appStorage, keyringStorage };
 
+export const IS_BOOTED_USER =
+  !!appStorage.getItem('keyringState') ||
+  !!keyringStorage.getItem('keyringState');
+
+export function makeJsonStore<T = any>(options?: {
+  storage?: /* AsyncStringStorage |  */ SyncStringStorage;
+}) {
+  const { storage } = options || {};
+
+  const jsonStore = storage
+    ? createJSONStorage<T>(() => storage)
+    : createJSONStorage<T>(() => ({
+        getItem: appMethods.getItem,
+        setItem: appMethods.setItem,
+        removeItem: appMethods.removeItem,
+        clearAll: appMethods.clearAll,
+      }));
+
+  return jsonStore;
+}
+
+export const appJsonStore = makeJsonStore<any>({
+  storage: appStorage as SyncStringStorage,
+});
+
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
@@ -105,14 +130,7 @@ export const atomByMMKV = <T = any>(
   },
 ) => {
   const { storage } = options || {};
-  const jsonStore = storage
-    ? createJSONStorage<T>(() => storage)
-    : createJSONStorage<T>(() => ({
-        getItem: appMethods.getItem,
-        setItem: appMethods.setItem,
-        removeItem: appMethods.removeItem,
-        clearAll: appMethods.clearAll,
-      }));
+  const jsonStore = makeJsonStore<T>({ storage });
 
   if (typeof options?.setupSubscribe === 'function') {
     jsonStore.subscribe = options?.setupSubscribe({ jsonStore });

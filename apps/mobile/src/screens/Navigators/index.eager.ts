@@ -1,4 +1,4 @@
-// export { TestkitsNavigator } from '@/screens/Navigators/TestkitsNavigator';
+export { TestkitsNavigator } from '@/screens/Navigators/TestkitsNavigator';
 export { AddressNavigator } from '@/screens/Navigators/AddressNavigator';
 export { SettingNavigator } from '@/screens/Navigators/SettingsNavigator';
 export { GetStartedNavigator } from '@/screens/Navigators/GetStartedNavigator';

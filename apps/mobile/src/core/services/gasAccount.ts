@@ -2,6 +2,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { Account } from './preference';
 
 export type GasAccountRecord = {
   chain_id: string;
@@ -17,6 +18,7 @@ export type GasAccountServiceStore = {
     type: string;
     brandName: string;
   };
+  lastDepositAccount?: Account;
 };
 
 export class GasAccountService {
@@ -61,5 +63,13 @@ export class GasAccountService {
         ...account!,
       };
     }
+  };
+
+  getLastDepositAccount = () => {
+    return this.store.lastDepositAccount;
+  };
+
+  setLastDepositAccount = (account?: Account) => {
+    this.store.lastDepositAccount = account;
   };
 }

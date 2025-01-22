@@ -41,8 +41,6 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
   const isRemoveEmptyKeyring =
     account.type !== KEYRING_TYPE.WalletConnectKeyring;
 
-  preferenceService.removeAddressBalance(account.address);
-
   await keyringService.removeAccount(
     account.address,
     account.type as string,
@@ -50,7 +48,10 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     isRemoveEmptyKeyring,
   );
 
-  if (!(await keyringService.hasAddress(account.address))) {
+  const hasSameAddressLeft = await keyringService.hasAddress(account.address);
+  if (!hasSameAddressLeft) {
+    preferenceService.removeAddressBalance(account.address);
+
     contactService.removeAlias(account.address);
     whitelistService.removeWhitelist(account.address);
     transactionHistoryService.removeList(account.address);

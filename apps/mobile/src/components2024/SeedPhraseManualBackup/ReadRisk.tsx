@@ -39,7 +39,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dotItem: {
     marginLeft: 8,
     marginRight: 0,
-    fontSize: 32,
+    fontSize: 24,
     transform: [{ translateY: -12 }],
     width: 16,
     fontFamily: 'SF Pro Rounded',

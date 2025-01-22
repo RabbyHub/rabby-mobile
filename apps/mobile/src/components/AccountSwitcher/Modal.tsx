@@ -134,13 +134,17 @@ const getModalStyle = createGetStyles2024(ctx => {
 
 export function AccountSwitcherModalInDappWebView({
   activeDappId,
-  forScene,
   __IS_IN_SHEET_MODAL__ = false,
-}: AccountSwitcherAopProps<{
+}: {
+  // activeDapp: DappInfo | null;
   activeDappId?: DappInfo['origin'];
+  /** @deprecated */
+  forScene?: AccountSwitcherAopProps['forScene'];
   __IS_IN_SHEET_MODAL__?: boolean;
-}>) {
-  const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
+}) {
+  const { isVisible, toggleSceneVisible } = useAccountSceneVisible(
+    '@ActiveDappWebViewModal',
+  );
 
   const { styles } = useTheme2024({ getStyle: getModalInDappWebViewStyle });
 
@@ -150,15 +154,15 @@ export function AccountSwitcherModalInDappWebView({
 
   useLayoutEffect(() => {
     return () => {
-      toggleSceneVisible(forScene, false);
+      toggleSceneVisible('@ActiveDappWebViewModal', false);
     };
-  }, [forScene, toggleSceneVisible]);
+  }, [toggleSceneVisible]);
 
   const { setDappCurrentAccount } = useDappCurrentAccount();
 
   const handlePressToClose = useCallback(() => {
-    toggleSceneVisible(forScene, false);
-  }, [forScene, toggleSceneVisible]);
+    toggleSceneVisible('@ActiveDappWebViewModal', false);
+  }, [toggleSceneVisible]);
 
   const absoluteStyle = useMemo(() => {
     if (__IS_IN_SHEET_MODAL__) {
@@ -200,7 +204,8 @@ export function AccountSwitcherModalInDappWebView({
       />
       <View style={[styles.panelContainer]}>
         <AccountsPanelInModal
-          forScene={forScene}
+          allowNullCurrentAccount
+          forScene={'@ActiveDappWebViewModal'}
           onSwitchSceneAccount={async ctx => {
             if (!activeDappId) {
               return;

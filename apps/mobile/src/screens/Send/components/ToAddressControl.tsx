@@ -123,7 +123,7 @@ export default function ToAddressControl({
   return (
     <View style={[styles.control, style]}>
       <View style={styles.titleContainer}>
-        <Text style={styles.sectionTitle}>To</Text>
+        <Text style={styles.sectionTitle}>{t('page.sendToken.To')}</Text>
         <View style={styles.titleRight}>
           {showContactInfo && contactInfo?.name && (
             <TouchableOpacity
@@ -183,7 +183,7 @@ export default function ToAddressControl({
             handleFieldChange('to', value);
           },
           onBlur: formik.handleBlur('to'),
-          placeholder: 'Enter an address',
+          placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
           placeholderTextColor: colors2024['neutral-info'],
           style: {
             paddingTop: 0,

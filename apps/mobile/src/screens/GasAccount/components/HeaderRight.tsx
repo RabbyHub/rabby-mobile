@@ -1,17 +1,17 @@
 import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text } from 'react-native';
-import { default as RcIconLogout } from '@/assets/icons/gas-account/logout.svg';
+import { default as RcIconLogoutCC } from '@/assets/icons/gas-account/logout-cc.svg';
 import { Tip } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { useGasAccountLogoutVisible } from '../hooks/atom';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const GasAccountHeader = () => {
   const color = useThemeColors();
-  const styles = useMemo(() => getStyles(color), [color]);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const isDark = useGetBinaryMode() === 'dark';
@@ -31,11 +31,12 @@ export const GasAccountHeader = () => {
         styles.content,
         isDark && { backgroundColor: color['neutral-bg-1'] },
       ]}
+      tooltipStyle={styles.tooltipStyle}
       isVisible={visible}
       onClose={() => setVisible(false)}
       content={
         <CustomTouchableOpacity style={styles.logout} onPress={openLogout}>
-          <RcIconLogout />
+          <RcIconLogoutCC color={colors2024['neutral-body']} />
           <Text style={styles.text}>{t('page.gasAccount.logout')}</Text>
         </CustomTouchableOpacity>
       }>
@@ -46,7 +47,7 @@ export const GasAccountHeader = () => {
   );
 };
 
-const getStyles = createGetStyles(color => ({
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     width: 24,
     height: 24,
@@ -59,16 +60,31 @@ const getStyles = createGetStyles(color => ({
     gap: 6,
     padding: 14,
     paddingLeft: 12,
+    alignItems: 'center',
+  },
+  tooltipStyle: {
+    shadowColor: 'rgba(0,0,0,0.06)',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 20.7,
+    elevation: 20,
   },
   content: {
     width: 'auto',
-    backgroundColor: color['neutral-card-1'],
+    backgroundColor: colors['neutral-card1'],
     height: 'auto',
     marginLeft: 6,
+    borderRadius: 200,
+    shadowOpacity: 0,
   },
   text: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: color['red-default'],
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
   },
 }));

@@ -7,8 +7,14 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
-import { CEX, DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import {
+  CEX,
+  DEX,
+  getChainDefaultToken,
+  SWAP_SUPPORT_CHAINS,
+} from '@/constant/swap';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { findChainByServerID } from '@/utils/chain';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 
@@ -102,6 +108,22 @@ export class SwapService {
         storage.selectedChain = null;
         storage.selectedFromToken = undefined;
         storage.selectedToToken = undefined;
+      }
+
+      if (storage.recentToTokens?.length) {
+        storage.recentToTokens = storage.recentToTokens.filter(item => {
+          const chainEnum = findChainByServerID(item.chain)?.enum;
+          if (chainEnum) {
+            const chainDefaultToken = getChainDefaultToken(chainEnum);
+            const isWrongToken =
+              chainDefaultToken?.id !== item.id &&
+              chainDefaultToken.symbol === item.symbol &&
+              chainDefaultToken.name === item.name &&
+              chainDefaultToken?.time_at === item.time_at;
+            return !isWrongToken;
+          }
+          return false;
+        });
       }
     }
     this.store = storage || this.store;

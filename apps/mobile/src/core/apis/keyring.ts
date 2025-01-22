@@ -75,7 +75,7 @@ export async function _setCurrentAccountFromKeyring(keyring, index = 0) {
   const account = accounts[index < 0 ? index + accounts.length : index];
 
   if (!account) {
-    throw new Error('background.error.emptyAccount');
+    throw new Error(t('background.error.emptyAccount'));
   }
 
   const _account = {
