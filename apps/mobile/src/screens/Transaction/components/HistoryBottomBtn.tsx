@@ -19,11 +19,12 @@ import { Button } from '@/components2024/Button';
 import { strings } from '@/utils/i18n';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
-import { findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
+import { fetchHistoryTokenUUId } from './utils';
 
 interface ItemProps {
   status: number;
@@ -67,10 +68,12 @@ export const HistoryBottomBtn = ({
         <View style={styles.buttonContainer}>
           <Button
             onPress={() => {
-              const sendToken = tokenDict[sends[0]?.token_id];
-              const chainItem = !sendToken?.chain
-                ? null
-                : findChainByServerID(sendToken?.chain);
+              const sendToken =
+                tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
+              console.log('chainItem sendToken', chain, sendToken);
+              const chainItem = findChain({
+                serverId: sendToken.chain,
+              });
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss

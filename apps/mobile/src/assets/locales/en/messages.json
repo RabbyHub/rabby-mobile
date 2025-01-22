@@ -41,7 +41,7 @@
         "Recieve": "Received",
         "Bridge": "Bridged",
         "Approve": "Approved",
-        "Revoke": "Revoke Approval",
+        "Revoke": "Revoked Approval",
         "Contract": "Deploy Contract",
         "Cancel": "Cancel Pending Transction",
         "Default": "Interaction"

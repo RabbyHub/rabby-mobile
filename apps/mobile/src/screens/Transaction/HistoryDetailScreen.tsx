@@ -227,7 +227,7 @@ function HistoryDetailScreen(): JSX.Element {
   };
   console.debug(
     'HistoryDetailScreen',
-    data.projectDict[data.project_id!],
+    data.projectDict.length,
     data.tx,
     data.other_addr,
     isForMultipleAdderss,
@@ -235,7 +235,7 @@ function HistoryDetailScreen(): JSX.Element {
 
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
-  const status = useMemo(() => data.tx?.status || 1, [data]);
+  const status = useMemo(() => data.tx?.status, [data]);
   const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -314,6 +314,8 @@ function HistoryDetailScreen(): JSX.Element {
   const toAddr =
     formatType === HistoryItemCateType.Recieve
       ? data.address
+      : formatType === HistoryItemCateType.Send
+      ? data.sends[0].to_addr
       : data.tx?.to_addr;
   const usdGasFee = data.tx?.usd_gas_fee;
 
@@ -411,6 +413,7 @@ function HistoryDetailScreen(): JSX.Element {
       }}>
       <HistoryTokenList
         data={data}
+        isForMultipleAdderss={isForMultipleAdderss}
         chain={data.chain}
         receives={data.receives}
         sends={data.sends}
@@ -543,7 +546,7 @@ function HistoryDetailScreen(): JSX.Element {
         sends={data.sends}
         type={formatType}
         chain={data.chain}
-        status={status}
+        status={status || 0}
         data={data}
         tokenDict={data.tokenDict}
       />

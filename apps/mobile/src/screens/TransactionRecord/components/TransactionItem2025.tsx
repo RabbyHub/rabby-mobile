@@ -372,7 +372,7 @@ export const TransactionItem = ({
     const FromText = strings('page.swap.from') + ' ';
     const ToText = strings('page.swap.to') + ' ';
 
-    const requiredData = data.txs?.[0]?.action?.requiredData as SwapRequireData;
+    const requiredData = data.maxGasTx.action?.requiredData as SwapRequireData;
     const projectName = requiredData.protocol?.name || '';
 
     switch (formatType) {

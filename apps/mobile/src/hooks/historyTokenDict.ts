@@ -9,8 +9,8 @@ const storeTokenBase = atomByMMKV<TxAllHistoryResult['token_uuid_dict']>(
 );
 
 const storeProjectBase = atomByMMKV<TxAllHistoryResult['project_dict']>(
-  '@HistoryTokenDict',
-  {} as TxAllHistoryResult['token_uuid_dict'],
+  '@HistoryProjectDict',
+  {} as TxAllHistoryResult['project_dict'],
 );
 
 const isFristFetchDataBase = atomByMMKV<boolean>(

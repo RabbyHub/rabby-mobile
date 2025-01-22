@@ -126,17 +126,9 @@ export const HistoryItem = React.memo(
       const projectName = data?.project_id
         ? projectDict[data?.project_id]?.name
         : '';
-      const other_addr = data.other_addr
-        ? ellipsisAddress(data.other_addr)
-        : '';
-
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return (
-            projectName ||
-            other_addr ||
-            strings('page.transactions.detail.Unknown')
-          );
+          return chainItem?.name || strings('page.transactions.detail.Unknown');
 
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
@@ -150,7 +142,12 @@ export const HistoryItem = React.memo(
           );
         case HistoryItemCateType.Revoke:
         case HistoryItemCateType.Approve:
-          return ToText + (projectName || chainItem?.name);
+          const isRevoke = formatType === HistoryItemCateType.Revoke;
+          return isRevoke
+            ? FromText +
+                (projectName || strings('page.transactions.detail.Unknown'))
+            : ToText +
+                (projectName || strings('page.transactions.detail.Unknown'));
         case HistoryItemCateType.Contract:
           return FromText + chainItem?.name;
         case HistoryItemCateType.Cancel:
@@ -207,7 +204,7 @@ export const HistoryItem = React.memo(
                   {isShowSuccess && (
                     <TxStatusItem status={1} showSuccess={true} />
                   )}
-                  <TxStatusItem status={data.tx?.status || 1} />
+                  <TxStatusItem status={data.tx?.status || 0} />
                 </View>
                 <Text style={styles.describeText} numberOfLines={1}>
                   {formatDescribe}

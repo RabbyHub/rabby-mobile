@@ -123,8 +123,6 @@ export const HistoryTokenList = ({
   approve,
   isForMultipleAdderss,
 }: ItemProps) => {
-  console.log('HistoryTokenList token', token);
-  console.log('HistoryTokenList type', type);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentAccount } = useCurrentAccount();
