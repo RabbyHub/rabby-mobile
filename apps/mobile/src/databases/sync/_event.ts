@@ -6,7 +6,7 @@ import { EntityAddressAssetBase } from '../entities/base';
 import { useEffect } from 'react';
 
 export type SyncTaskOptions = {
-  address: string;
+  owner_addr: string;
   taskFor:
     | 'token'
     | 'all-history'
@@ -21,7 +21,7 @@ type RemoteDataUpsertedCtx<
 > = {
   entityCls: ClassOf<EntityAddressAssetBase> & typeof BaseEntity;
   taskFor: SyncTaskOptions['taskFor'] | '@unknown';
-  address: string;
+  owner_addr: string;
   syncDetails: {
     items: T[];
     count: number;

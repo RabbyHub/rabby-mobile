@@ -27,13 +27,13 @@ export async function batchSaveWithPQueueAndTransaction<
     batchSize = 50,
     concurrency = 2,
     delayBetweenTasks = 1 * 1e3,
-    address,
+    owner_addr,
     taskFor,
     signal,
   } = options;
 
-  const key = [address, taskFor].filter(Boolean).join('-');
-  const loggerPrefix = !address
+  const key = [owner_addr, taskFor].filter(Boolean).join('-');
+  const loggerPrefix = !owner_addr
     ? ''
     : `[batchSaveWithPQueueAndTransaction::${key}] `;
 
@@ -79,7 +79,7 @@ export async function batchSaveWithPQueueAndTransaction<
 
         const eventPayload = {
           entityCls,
-          address,
+          owner_addr,
           taskFor: taskFor || '@unknown',
           syncDetails: {
             items: batch,

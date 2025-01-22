@@ -39,7 +39,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
 
   await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
-    address,
+    owner_addr: address,
     taskFor: `token`,
     batchSize: 300,
     concurrency: 1,
@@ -74,7 +74,7 @@ export async function syncRemoteHistory(
     // });
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction');
     await batchSaveWithPQueueAndTransaction(HistoryItemEntity, historyItems, {
-      address,
+      owner_addr: address,
       taskFor: 'all-history',
       batchSize: 100,
       concurrency: 1,
@@ -118,7 +118,7 @@ export async function syncRemoteSwapHistory(
     // });
     console.debug('syncRemoteSwapHistory batchSaveWithPQueueAndTransaction');
     await batchSaveWithPQueueAndTransaction(SwapItemEntity, historyItems, {
-      address,
+      owner_addr: address,
       taskFor: 'swap-history',
       batchSize: 100,
       concurrency: 1,
@@ -158,7 +158,7 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
   await prepareAppDataSource();
   await NFTItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(NFTItemEntity, nftItems, {
-    address,
+    owner_addr: address,
     taskFor: 'nfts',
     batchSize: 200,
     concurrency: 1,
@@ -189,7 +189,7 @@ export async function syncRemotePortocols(
   await prepareAppDataSource();
   await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
-    address,
+    owner_addr: address,
     taskFor: `portocols`,
     batchSize: 200,
     concurrency: 1,
@@ -243,7 +243,7 @@ export async function syncBalance(
   await prepareAppDataSource();
   await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
-    address,
+    owner_addr: address,
     taskFor: `balance`,
     batchSize: 100,
     concurrency: 1,
