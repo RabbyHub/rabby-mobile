@@ -110,7 +110,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   );
 
   useAppOrmSyncEvents({
-    taskFor: ['token', 'nfts', 'portocols'],
+    taskFor: ['token', 'nfts', 'protocols'],
     onRemoteDataUpserted: useCallback(
       ctx => {
         if (
@@ -127,7 +127,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           case 'nfts':
             throttleReloadNftList();
             break;
-          case 'portocols':
+          case 'protocols':
             throttleUpdatePortfolio();
             break;
           default:

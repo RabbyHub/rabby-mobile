@@ -190,7 +190,7 @@ export async function syncRemotePortocols(
   await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
     owner_addr: address,
-    taskFor: `portocols`,
+    taskFor: `protocols`,
     batchSize: 200,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,

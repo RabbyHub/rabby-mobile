@@ -13,7 +13,7 @@ export type SyncTaskOptions = {
     | 'all-history'
     | 'swap-history'
     | 'nfts'
-    | 'portocols'
+    | 'protocols'
     | 'balance';
 };
 
