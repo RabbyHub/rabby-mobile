@@ -347,8 +347,8 @@ export const TransactionItem = ({
 
       case HistoryItemCateType.Send:
         return strings('page.transactions.itemTitle.Send');
-      case HistoryItemCateType.Bridge:
-        return strings('page.transactions.itemTitle.Bridge');
+      // case HistoryItemCateType.Bridge:
+      //   return strings('page.transactions.itemTitle.Bridge');
 
       case HistoryItemCateType.Approve:
         return strings('page.transactions.itemTitle.Approve');
@@ -518,7 +518,17 @@ export const TransactionItem = ({
         </View>
       </View>
 
-      <View style={styles.rightContent}>
+      <View
+        style={[
+          styles.rightContent,
+          isCanceled ||
+          data.isPending ||
+          data.isFailed ||
+          data.isSubmitFailed ||
+          data.isWithdrawed
+            ? styles.cardGray
+            : null,
+        ]}>
         {approveToken && (
           <View style={styles.txChange}>
             <Text style={[styles.tokenText]} numberOfLines={1}>
@@ -534,6 +544,25 @@ export const TransactionItem = ({
               {formatSymbolName(approveToken)}
             </Text>
           </View>
+        )}
+        {recievesToken.map(
+          (token, index) =>
+            token && (
+              <View key={index} style={styles.txChange}>
+                <Text style={[styles.tokenText]} numberOfLines={1}>
+                  {'+'}{' '}
+                  {isNft
+                    ? token.amount
+                    : numberWithCommasIsLtOne(token.amount, 2)}
+                </Text>
+                <Text
+                  style={[styles.tokenText]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {formatSymbolName(token)}
+                </Text>
+              </View>
+            ),
         )}
         {sendsToken.map(
           (token, index) =>
@@ -633,7 +662,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     color: colors2024['neutral-title-1'],
   },
   cardGray: {
-    opacity: 0.5,
+    opacity: 0.3,
   },
   header: {
     position: 'relative',

@@ -84,6 +84,5 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
 
     cateDict: {}, // no use
     debt_liquidated: null,
-    other_addr: '',
   };
 };

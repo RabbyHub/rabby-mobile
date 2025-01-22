@@ -132,7 +132,11 @@ export const HistoryItem = React.memo(
 
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return projectName || strings('page.transactions.detail.Unknown');
+          return (
+            projectName ||
+            other_addr ||
+            strings('page.transactions.detail.Unknown')
+          );
 
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
