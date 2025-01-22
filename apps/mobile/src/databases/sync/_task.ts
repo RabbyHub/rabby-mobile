@@ -1,8 +1,9 @@
-import { BaseEntity, Repository } from 'typeorm/browser';
+import { BaseEntity } from 'typeorm/browser';
 import PQueue from 'p-queue';
 import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { type EntityAddressAssetBase } from '../entities/base';
+import { appOrmEvents, SyncTaskOptions } from './_event';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -15,8 +16,7 @@ export async function batchSaveWithPQueueAndTransaction<
 >(
   entityCls: ClassOf<T> & typeof BaseEntity,
   data: T[],
-  options: {
-    key?: string;
+  options: SyncTaskOptions & {
     batchSize?: number;
     concurrency?: number;
     delayBetweenTasks?: number;
@@ -27,11 +27,13 @@ export async function batchSaveWithPQueueAndTransaction<
     batchSize = 50,
     concurrency = 2,
     delayBetweenTasks = 1 * 1e3,
-    key,
+    owner_addr,
+    taskFor,
     signal,
   } = options;
 
-  const loggerPrefix = !key
+  const key = [owner_addr, taskFor].filter(Boolean).join('-');
+  const loggerPrefix = !owner_addr
     ? ''
     : `[batchSaveWithPQueueAndTransaction::${key}] `;
 
@@ -70,8 +72,23 @@ export async function batchSaveWithPQueueAndTransaction<
       }
 
       upsertQueue.add(async () => {
-        const round = `${i / batchSize + 1} / ${totalRound}`;
-        console.debug(`${loggerPrefix}Batch ${round} upsert started.`);
+        const round = Math.floor(i / batchSize);
+        const roundText = `${round + 1}`;
+        const roundPercent = `${roundText} / ${totalRound}`;
+        console.debug(`${loggerPrefix}Batch ${roundPercent} upsert started.`);
+
+        const eventPayload = {
+          entityCls,
+          owner_addr,
+          taskFor: taskFor || '@unknown',
+          syncDetails: {
+            items: batch,
+            count: batch.length,
+            total: data.length,
+            round: round,
+            batchSize,
+          },
+        };
 
         try {
           // await repo.manager.transaction(async transactionalEntityManager => {
@@ -86,10 +103,10 @@ export async function batchSaveWithPQueueAndTransaction<
           //     // }
           //   }))
           //     .then(() => {
-          //       console.debug(`${loggerPrefix}Batch ${round} upsert successfully.`);
+          //       console.debug(`${loggerPrefix}Batch ${roundPercent} upsert successfully.`);
           //     })
           //     .catch(error => {
-          //       console.error(`${loggerPrefix}Batch ${round} upsert failed.`);
+          //       console.error(`${loggerPrefix}Batch ${roundPercent} upsert failed.`);
           //       throw error
           //     });
           // });
@@ -100,10 +117,16 @@ export async function batchSaveWithPQueueAndTransaction<
             // bar
             { conflictPaths: ['_db_id'] },
           );
-          console.debug(`${loggerPrefix}Batch ${round} upsert successfully.`);
+          console.debug(
+            `${loggerPrefix}Batch ${roundPercent} upsert successfully.`,
+          );
+          appOrmEvents.emit('onRemoteDataUpserted', {
+            ...eventPayload,
+            success: true,
+          });
         } catch (error) {
           console.error(
-            `${loggerPrefix}Error inserting batch ${round}:`,
+            `${loggerPrefix}Error inserting batch ${roundText}:`,
             error,
           );
           // Re-throw the error to rollback the transaction

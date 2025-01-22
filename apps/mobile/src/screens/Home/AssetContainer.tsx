@@ -50,8 +50,9 @@ import { DisplayedProject } from './utils/project';
 import { flatListRefAtom } from './hooks/store';
 import { useSetAtom } from 'jotai';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
+import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
 import { useTriggerTagAssets } from './hooks/refresh';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -90,6 +91,22 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
+
+  useAppOrmSyncEvents({
+    taskFor: ['token', 'nfts', 'portocols'],
+    onRemoteDataUpserted: useCallback(ctx => {
+      switch (ctx.taskFor) {
+        case 'token':
+          break;
+        case 'nfts':
+          break;
+        case 'portocols':
+          break;
+        default:
+          break;
+      }
+    }, []),
+  });
 
   const {
     sheetModalRef: tokenDetailModalRef,

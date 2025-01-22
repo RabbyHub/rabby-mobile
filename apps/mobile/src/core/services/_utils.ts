@@ -3,20 +3,41 @@ import type { Account } from './preference';
 
 type Listener = (resp?: any) => void;
 
-function makeJsEEClass<Listeners extends Record<string, Listener>>() {
+export function makeJsEEClass<
+  Listeners extends {
+    [key: string]: Listener;
+  },
+>() {
   type EE = typeof EventEmitter & {
-    on<T extends keyof Listeners>(
+    on<T extends keyof Listeners & string>(
+      eventName: T,
+      listener: Listeners[T],
+      context?: Object,
+    ): ThisType<EE>;
+    emit<T extends keyof Listeners & string>(
+      eventName: T,
+      ...args: Parameters<Listeners[T]>
+    ): boolean;
+  };
+
+  class BizEventEmitter extends EventEmitter {
+    on<T extends keyof Listeners & string>(
       eventType: T,
       listener: Listeners[T],
       context?: Object,
-    ): void;
-    emit<T extends keyof Listeners>(
+    ) {
+      return super.on(eventType, listener.bind(context));
+    }
+
+    emit<T extends keyof Listeners & string>(
       eventType: T,
       ...args: Parameters<Listeners[T]>
-    ): void;
-  };
+    ) {
+      return super.emit(eventType, ...args);
+    }
+  }
 
-  return { EventEmitter: EventEmitter as EE };
+  return { EventEmitter: BizEventEmitter };
 }
 
 const { EventEmitter: AppServiceEvents } = makeJsEEClass<{
