@@ -491,7 +491,7 @@ function HistoryDetailScreen(): JSX.Element {
               {strings('page.transactions.detail.GasFee')}
             </Text>
             <Text style={styles.itemContentText}>
-              {formatAmount(data.tx?.eth_gas_fee!, 2)}{' '}
+              {formatAmount(data.tx?.eth_gas_fee!)}{' '}
               {chainItem?.nativeTokenSymbol} ($
               {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
             </Text>

@@ -181,6 +181,9 @@ function History({
 
     if (!isInTokenDetail) {
       const res = await batchFetchDataV2();
+      if (!isReady.current) {
+        isReady.current = true;
+      }
       return { list: res };
     } else {
       const swapList = await getSwapHistory(); // just for single token history
@@ -361,10 +364,10 @@ function History({
   });
 
   useEffect(() => {
-    if (!isInTokenDetail) {
-      batchFetchDataV2();
-    } else {
-      if (isReady.current) {
+    if (isReady.current) {
+      if (!isInTokenDetail) {
+        batchFetchDataV2();
+      } else {
         cancel();
         refresh();
       }
@@ -415,11 +418,11 @@ function History({
     return orderBy(data?.list || [], 'time_at', 'desc');
   }, [data]);
 
-  useEffect(() => {
+  useMount(() => {
     const list = transactionHistoryService.getSucceedList();
     setHistorySuccessList(list);
     transactionHistoryService.clearSuccessAndFailList();
-  }, [setHistorySuccessList, data, groups?.length]);
+  });
 
   const displayList = useMemo(() => {
     return allTxHistory
@@ -548,7 +551,7 @@ function History({
           localTxList={groups}
           loading={isFirstLoading}
           loadingMore={loadingMore}
-          refreshLoading={loading}
+          refreshLoading={isInTokenDetail && loading}
           isForMultipleAdderss={isForMultipleAdderss}
           loadMore={loadMore}
           onRefresh={refresh}

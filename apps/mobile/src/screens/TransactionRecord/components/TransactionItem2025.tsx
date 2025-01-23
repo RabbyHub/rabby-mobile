@@ -563,7 +563,10 @@ export const TransactionItem = ({
                   {'+'}{' '}
                   {isNft
                     ? token.amount
-                    : numberWithCommasIsLtOne(token.amount, 2)}
+                    : numberWithCommasIsLtOne(
+                        token.amount || token.min_amount,
+                        2,
+                      )}
                 </Text>
                 <Text
                   style={[styles.tokenText]}

@@ -155,6 +155,7 @@ export const HistoryList = ({
         <>
           {/* {item.isFirst ? <AddressInfo account={account} /> : null} */}
           <TransactionItem
+            isForMultipleAdderss={isForMultipleAdderss}
             historySuccessList={historySuccessList}
             data={item.data}
             canCancel={canCancel}

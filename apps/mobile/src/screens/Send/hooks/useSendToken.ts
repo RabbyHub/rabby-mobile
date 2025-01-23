@@ -483,16 +483,6 @@ export function useSendTokenForm(toAddress?: string) {
     });
   }, [currentAccount?.type, currentAccount?.address]);
 
-  useEffect(() => {
-    toAddress &&
-      setFormValues(prev => {
-        return {
-          ...prev,
-          to: toAddress,
-        };
-      });
-  }, [toAddress]);
-
   const { validationSchema } = useMemo(() => {
     return {
       validationSchema: makeSendTokenValidationSchema({ t }),
@@ -828,6 +818,11 @@ export function useSendTokenForm(toAddress?: string) {
     },
     [formik, setFormValues, handleFormValuesChange],
   );
+
+  useEffect(() => {
+    toAddress && handleFieldChange('to', toAddress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toAddress]);
 
   const estimateGasOnChain = useCallback(
     async (input?: {

@@ -254,7 +254,10 @@ export const useSyncHistoryDB = (
   );
 
   const syncSingleAddress = useMemoizedFn(address => {
-    Promise.all([syncUserAllHistory(address), syncSwapHistory(address)]);
+    Promise.all([
+      syncUserAllHistory(address.toLowerCase()),
+      syncSwapHistory(address.toLowerCase()),
+    ]);
   });
 
   return {

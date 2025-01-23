@@ -98,7 +98,7 @@ export const RevokeToken: React.FC<Props> = ({ data, isSingleAddress }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <HistoryItemIcon
               isInDetail={true}
-              type={HistoryItemCateType.Approve}
+              type={HistoryItemCateType.Revoke}
               token={actionData.token}
               isNft={false}
             />
