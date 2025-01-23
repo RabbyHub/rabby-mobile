@@ -388,7 +388,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
             <Text style={styles.itemAddressText}>
-              {ellipsisAddress(data.tx?.to_addr || '')}
+              {ellipsisAddress(data.tx?.to_addr || data.other_addr || '')}
             </Text>
           </View>
         </View>
