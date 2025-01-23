@@ -22,7 +22,6 @@ import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,
 } from '@/databases/imports';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -40,7 +39,6 @@ export default function DevDataPlaygroundModal({
 }: RNViewProps & {
   onCancel?(): void;
 }) {
-  const { setIsFristFetchData } = useHistoryTokenDict();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { toggleShowSheetModal } = useSheetModals({
     devUIPlayground: modalRef,
@@ -123,7 +121,6 @@ export default function DevDataPlaygroundModal({
             HistoryItemEntity.clear(),
             SwapItemEntity.clear(),
           ]);
-          setIsFristFetchData(true);
         },
       },
     ];

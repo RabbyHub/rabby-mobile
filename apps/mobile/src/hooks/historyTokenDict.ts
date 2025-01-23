@@ -13,22 +13,14 @@ const storeProjectBase = atomByMMKV<TxAllHistoryResult['project_dict']>(
   {} as TxAllHistoryResult['project_dict'],
 );
 
-const isFristFetchDataBase = atomByMMKV<boolean>(
-  '@HistoryIsFristFetchData',
-  true,
-);
-
 export function useHistoryTokenDict() {
   const [tokenDict, setTokenDict] = useAtom(storeTokenBase);
   const [projectDict, setProjectDict] = useAtom(storeProjectBase);
-  const [isFristFetchData, setIsFristFetchData] = useAtom(isFristFetchDataBase);
 
   return {
     projectDict,
     setProjectDict,
     tokenDict,
     setTokenDict,
-    isFristFetchData,
-    setIsFristFetchData,
   };
 }
