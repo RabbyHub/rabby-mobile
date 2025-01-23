@@ -227,6 +227,7 @@ function HistoryDetailScreen(): JSX.Element {
   };
   console.debug(
     'HistoryDetailScreen',
+    data.projectDict[data.project_id!],
     data.projectDict.length,
     data.tx,
     data.other_addr,
@@ -387,7 +388,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
             <Text style={styles.itemAddressText}>
-              {ellipsisAddress(data?.tx?.id || '')}
+              {ellipsisAddress(data?.project_id || '')}
             </Text>
           </View>
         </View>
@@ -527,7 +528,7 @@ function HistoryDetailScreen(): JSX.Element {
               onPress={onOpenTxId}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Text style={[styles.itemContentText]}>
-                {ellipsisAddress(data.id)}
+                {ellipsisAddress(data.tx?.id)}
               </Text>
               <RcIconExternalLinkCC
                 width={14}

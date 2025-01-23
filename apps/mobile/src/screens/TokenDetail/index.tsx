@@ -192,6 +192,10 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
   } = (route.params || {}) as RootStackParamsList[typeof RootNames.TokenDetail];
+  console.log(
+    'TokenDetailScreen CUSTOM_LOGGER:=>: isSingleAddress',
+    isSingleAddress,
+  );
 
   const { styles } = useTheme2024({
     getStyle,

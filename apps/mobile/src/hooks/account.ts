@@ -105,7 +105,9 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   }, [disableAutoFetch, fetchAccounts]);
 
   return {
-    accounts: [...accounts],
+    accounts: useMemo(() => {
+      return [...accounts];
+    }, [accounts]),
     fetchAccounts,
   };
 }
@@ -375,7 +377,9 @@ export function useLoadMatteredChainBalances() {
         }
       >(
         ctx => {
-          if (!isShowTestnet && ctx.isTestnetTask) return null;
+          if (!isShowTestnet && ctx.isTestnetTask) {
+            return null;
+          }
 
           return apiBalance.getAddressCacheBalance(
             currentAccountAddr,

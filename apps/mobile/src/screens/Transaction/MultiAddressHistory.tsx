@@ -99,7 +99,9 @@ function History({
   isTestnet?: boolean;
   isForMultipleAdderss: boolean;
 }): JSX.Element {
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
   const sortedAccounts = useSortAddressList(accounts);
   const route = useRoute();
   const { tokenItem, isInTokenDetail, isMultiAddress } = (route.params ||
