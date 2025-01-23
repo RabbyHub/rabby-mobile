@@ -54,7 +54,7 @@ export const naviPush: NativeStackScreenProps<RootStackParamsList>['navigation']
     }
   };
 
-export const replace: NativeStackScreenProps<RootStackParamsList>['navigation']['replace'] =
+export const naviReplace: NativeStackScreenProps<RootStackParamsList>['navigation']['replace'] =
   ((name: any, pramas?: object) => {
     if (navigationRef.isReady()) {
       // Perform navigation if the react navigation is ready to handle actions
@@ -64,6 +64,20 @@ export const replace: NativeStackScreenProps<RootStackParamsList>['navigation'][
       // You can ignore this, or add these actions to a queue you can call later
     }
   }) as typeof navigationRef.navigate;
+
+/** @deprecated */
+export const replace = naviReplace;
+
+export const naviDispatch: NativeStackScreenProps<RootStackParamsList>['navigation']['dispatch'] =
+  (action => {
+    if (navigationRef.isReady()) {
+      // Perform navigation if the react navigation is ready to handle actions
+      navigationRef.dispatch(action);
+    } else {
+      // You can decide what to do if react navigation is not ready
+      // You can ignore this, or add these actions to a queue you can call later
+    }
+  }) as typeof navigationRef.dispatch;
 
 export const redirectBackErrorHandler = (
   navigation: any,

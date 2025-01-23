@@ -138,7 +138,11 @@ export const useStackScreenConfig = () => {
   );
 
   const mergeScreenOptions2024 = useCallback(
-    (optsList: Partial<ScreenOptions>[], options?: any) => {
+    (
+      optsList: Partial<ScreenOptions> | Partial<ScreenOptions>[],
+      options?: any,
+    ) => {
+      optsList = Array.isArray(optsList) ? optsList : [optsList];
       const screenOptions: ScreenOptions = {
         animation: 'slide_from_right',
         ...headerPresets.onlyTitle,
@@ -197,7 +201,13 @@ export function useBottomTabScreenConfig() {
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
   const mergeBottomTabOptions2024 = useCallback(
-    (optsList: Partial<BottomTabNavigationOptions>[] = [], options?: any) => {
+    (
+      optsList:
+        | Partial<BottomTabNavigationOptions>
+        | Partial<BottomTabNavigationOptions>[] = [],
+      options?: any,
+    ) => {
+      optsList = Array.isArray(optsList) ? optsList : [optsList];
       const bottomTabOptions: BottomTabNavigationOptions = {
         headerTitleAlign: 'center',
         headerStyle: {
