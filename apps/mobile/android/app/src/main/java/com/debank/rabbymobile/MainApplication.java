@@ -5,8 +5,10 @@ import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
+import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
+import com.facebook.react.modules.i18nmanager.I18nUtil;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
 
@@ -68,6 +70,9 @@ public class MainApplication extends Application implements ReactApplication {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       DefaultNewArchitectureEntryPoint.load();
     }
+
+    I18nUtil sharedI18nUtilInstance = I18nUtil.getInstance();
+    sharedI18nUtilInstance.allowRTL(getApplicationContext(), false);
 
     /**
      * We use `libcrypto.so` from `react-native-quick-crypto`, which is simplified version of `libcrypto.so` from `openssl`,
