@@ -357,12 +357,12 @@ function History({
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    !isInTokenDetail && reloadAsync();
+    !isInTokenDetail ? reloadAsync() : syncTop10History(true);
   });
 
   useEffect(() => {
-    if (isInTokenDetail) {
-      syncTop10History(true);
+    if (!isInTokenDetail) {
+      batchFetchDataV2();
     } else {
       if (isReady.current) {
         cancel();
