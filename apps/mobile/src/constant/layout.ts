@@ -60,6 +60,7 @@ export const RootNames = {
   GetStartedScreen2024: 'GetStartedScreen2024',
   CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
+  DappWebViewStubOnHome: 'DappWebViewStubOnHome',
   StackHomeNonTab: 'StackHomeNonTab',
 
   NotFound: 'NotFound',
@@ -72,6 +73,9 @@ export const RootNames = {
   StackDapps: 'StackDapps',
   Dapps: 'Dapps',
   FavoriteDapps: 'FavoriteDapps',
+  // /** @deprecated */
+  // DappWebViewStubOnDapps: 'DappWebViewStubOnDapps',
+
   Search: 'Search',
 
   StackSettings: 'StackSettings',
@@ -158,7 +162,6 @@ export const RootNames = {
   SingleAddressStack: 'SingleAddressStack',
   SingleAddressHome: 'SingleAddressHome',
 
-  DappWebViewStubOnHome: 'DappWebViewStubOnHome',
   TokenDetail: 'TokenDetail',
   ReceiveAddressList: 'ReceiveAddressList',
 } as const;

@@ -76,7 +76,8 @@
     "@rabby-wallet/eth-hd-keyring@4.3.1": "patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch",
     "react-native-quick-crypto@^0.7.7": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
     "react-native-quick-crypto@0.7.10": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
-    "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch"
+    "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch",
+    "react-native-screens@^3.27.0": "patch:react-native-screens@npm%3A3.29.0#./.yarn/patches/react-native-screens-npm-3.29.0-1e673f50f7.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",

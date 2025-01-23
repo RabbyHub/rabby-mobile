@@ -14,6 +14,7 @@ import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadSettingsScreen } from '@/perfs/preloads';
+import { IS_ANDROID } from '@/core/native/utils';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
@@ -35,23 +36,24 @@ export function HomeScreenNavigator() {
   return (
     <>
       <HomeHiddenTabStack.Navigator
-        screenOptions={
-          /* mergeScreenOptions */ {
-            // gestureEnabled: false,
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            // headerShadowVisible: true,
-            headerTintColor: colors['neutral-title-1'],
-            headerTitleStyle: {
-              color: colors['neutral-title-1'],
-              fontWeight: '500',
-              fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-            },
-            // headerTransparent: true,
-          }
-        }
+        // detachInactiveScreens={false}
+        // backBehavior={'history'}
+        screenOptions={{
+          // gestureEnabled: false,
+          // lazy: false,
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'transparent',
+          },
+          // headerShadowVisible: true,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            color: colors['neutral-title-1'],
+            fontWeight: '500',
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+          },
+          // headerTransparent: true,
+        }}
         tabBar={() => null}>
         <HomeHiddenTabStack.Screen
           name={RootNames.Home}
@@ -61,26 +63,20 @@ export function HomeScreenNavigator() {
           }}
         />
 
-        <HomeHiddenTabStack.Screen
-          name={RootNames.DappWebViewStubOnHome}
-          component={DappWebViewStubScreen}
-          options={{
-            title: '',
-            headerShadowVisible: false,
-            headerShown: false,
-            // tabBarStyle: { height: 0, display: 'none' },
-            // tabBarButton(props) {
-            //   return null;
-            // },
-            // animation: 'slide_from_bottom',
-            // animationDuration: 500,
-            // animationTypeForReplace: 'push',
-            // header: (headerProps) => {
-            //   // return <DappWebViewStubScreen.Header />
-            //   return null;
-            // }
-          }}
-        />
+        {IS_ANDROID && (
+          <HomeHiddenTabStack.Screen
+            name={RootNames.DappWebViewStubOnHome}
+            component={DappWebViewStubScreen}
+            options={{
+              lazy: false,
+              unmountOnBlur: false,
+              freezeOnBlur: false,
+              title: '',
+              headerShadowVisible: false,
+              headerShown: false,
+            }}
+          />
+        )}
       </HomeHiddenTabStack.Navigator>
 
       <BiometricsStubModal />

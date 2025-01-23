@@ -11,12 +11,15 @@ import { FavoriteDappsScreen } from '../Dapps/FavoriteDappsScreen';
 const DappsStack = createCustomNativeStackNavigator<DappsNavigatorParamsList>();
 
 export function DappsNavigator() {
-  const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
+
   const colors = useThemeColors();
-  // console.log('============== SettingNavigator Render =========');
 
   return (
     <DappsStack.Navigator
+      // backBehavior='none'
+      // detachInactiveScreens={false}
+      // tabBar={() => null}
       screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',

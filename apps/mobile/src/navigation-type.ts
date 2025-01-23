@@ -49,14 +49,14 @@ export type RootStackParamsList = {
  */
 export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
-  /** @deprecated */
-  [RootNames.Points]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
       | typeof RootNames.FavoriteDapps;
     nextOpenDappInfo?: DappInfo;
   };
+  /** @deprecated */
+  [RootNames.Points]?: {};
 };
 
 export type HomeNonTabNavigatorParamsList = {
@@ -66,6 +66,8 @@ export type HomeNonTabNavigatorParamsList = {
 export type DappsNavigatorParamsList = {
   [RootNames.Dapps]?: {};
   [RootNames.FavoriteDapps]?: {};
+  // /** @deprecated */
+  // [RootNames.DappWebViewStubOnDapps]?: HomeNavigatorParamsList['DappWebViewStubOnHome'];
 };
 
 type GetStartedNavigatorParamsList = {

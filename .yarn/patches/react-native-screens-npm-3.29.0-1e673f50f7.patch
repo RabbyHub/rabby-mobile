@@ -1,0 +1,24 @@
+diff --git a/ios/RNSFullWindowOverlay.mm b/ios/RNSFullWindowOverlay.mm
+index 74f1804239632fac8feb7a61e9aee19e2959e8e5..10803893b8e85458a542fe28080bb438698ddb3b 100644
+--- a/ios/RNSFullWindowOverlay.mm
++++ b/ios/RNSFullWindowOverlay.mm
+@@ -124,7 +124,7 @@ - (RNSFullWindowOverlayContainer *)container
+ - (void)show
+ {
+   UIWindow *window = RCTSharedApplication().delegate.window;
+-  [window addSubview:_container];
++  [window.rootViewController.view addSubview:_container];
+ }
+ 
+ - (void)didMoveToSuperview
+@@ -157,8 +157,8 @@ - (void)didMoveToSuperview
+ - (void)maybeShow
+ {
+   UIWindow *window = RCTSharedApplication().delegate.window;
+-  if (![[window subviews] containsObject:self]) {
+-    [window addSubview:_container];
++  if (![[window.rootViewController.view subviews] containsObject:self]) {
++    [window.rootViewController.view addSubview:_container];
+   }
+ }
+ 

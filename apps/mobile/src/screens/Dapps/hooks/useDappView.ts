@@ -16,7 +16,6 @@ import {
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { stringUtils, urlUtils, hashUtils } from '@rabby-wallet/base-utils';
 import {
-  isSameAccount,
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
@@ -64,12 +63,12 @@ export type OpenedDappItem = {
   lastOpenWebViewId?: string | null;
 };
 const DAPPS_VIEW_LIMIT = {
-  maxCount: 1,
+  maxCount: __DEV__ ? 3 : 1,
   // 30days
   expireDuration: 3 * 86400 * 1e3,
 };
 const DAPPS_VIEW_LIMIT_SHORT = {
-  maxCount: 1,
+  maxCount: __DEV__ ? 3 : 1,
   // 5 mins
   expireDuration: 5 * 60 * 1e3,
 };

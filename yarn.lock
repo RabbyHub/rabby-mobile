@@ -28662,9 +28662,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-screens@npm:^3.27.0":
+"react-native-screens@npm:3.29.0":
   version: 3.29.0
-  resolution: "react-native-screens@npm:3.29.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-screens%2F-%2Freact-native-screens-3.29.0.tgz"
+  resolution: "react-native-screens@npm:3.29.0"
   dependencies:
     react-freeze: ^1.0.0
     warn-once: ^0.1.0
@@ -28672,6 +28672,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: c1879eea8386f32c2655fedd79d41d8e25d2f4e7f883abbcad2c747ea7ac859f4a7f469475a519948e7c5ea317a7ebd8df92c6365627f6a5da1e4a208cece7e1
+  languageName: node
+  linkType: hard
+
+"react-native-screens@patch:react-native-screens@npm%3A3.29.0#./.yarn/patches/react-native-screens-npm-3.29.0-1e673f50f7.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 3.29.0
+  resolution: "react-native-screens@patch:react-native-screens@npm%3A3.29.0#./.yarn/patches/react-native-screens-npm-3.29.0-1e673f50f7.patch::version=3.29.0&hash=0cfd08&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    react-freeze: ^1.0.0
+    warn-once: ^0.1.0
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 965c75c7eef7672d7ef88bf3b8d41baa4a709dfbde0422b36638c91d04712443b0c538fc95250eb31ee24c6b54ebed565e3f2e62916735b06079b7f571634d64
   languageName: node
   linkType: hard
 

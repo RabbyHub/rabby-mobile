@@ -55,38 +55,8 @@ export function useOpenedActiveDappState() {
   };
 }
 
-export type OpenedDappItem = {
-  origin: DappInfo['origin'];
-  dappTabId: string;
-  $openParams?: {
-    initialUrl?: string;
-  };
-  maybeDappInfo?: DappInfo;
-  /**
-   * @description timestamp on opening
-   *
-   * // TODO: clear it if time changed
-   *
-   **/
-  openTime: number;
-  lastOpenWebViewId?: string | null;
-};
-const DAPPS_VIEW_LIMIT = {
-  maxCount: 1,
-  // 30days
-  expireDuration: 3 * 86400 * 1e3,
-};
-const DAPPS_VIEW_LIMIT_SHORT = {
-  maxCount: 1,
-  // 5 mins
-  expireDuration: 5 * 60 * 1e3,
-};
-const dappsViewConfigAtom = atom({
-  maxCount: DAPPS_VIEW_LIMIT.maxCount,
-  expireDuration: isNonPublicProductionEnv
-    ? DAPPS_VIEW_LIMIT_SHORT.expireDuration
-    : DAPPS_VIEW_LIMIT.expireDuration,
-});
+import type { OpenedDappItem } from './useDappView';
+export type { OpenedDappItem };
 const openedDappWebViewRecordsAtom = atom<OpenedDappItem[]>([]);
 /**
  * @deprecated
@@ -364,12 +334,10 @@ export function useDappWebViewScreen() {
 
       preferenceService.toggleAllowNotifyAccountsChanged(true);
 
-      activate(dappInfo);
-
       const routeName = getLatestNavigationName();
       const needRedirect =
         routeName && routeName !== RootNames.DappWebViewStubOnHome;
-      if (needRedirect) {
+      if (IS_ANDROID && needRedirect) {
         /**
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
@@ -382,9 +350,9 @@ export function useDappWebViewScreen() {
           },
         });
         // try trigger notify again
-        setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
+        setTimeout(() => activate(dappInfo), 1 * 1e3);
       } else {
-        activate(dapps[item.origin]);
+        activate(dappInfo);
       }
 
       return true;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,16 +22,23 @@ import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/Web
 import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
 import { toast } from '@/components2024/Toast';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { getLatestNavigationName } from '@/utils/navigation';
+import {
+  getLatestNavigationName,
+  navigate,
+  naviReplace,
+} from '@/utils/navigation';
 import { useNavigationState } from '@react-navigation/native';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 
 /**
  * @description this screen will be put on top level of App's navigation
  */
-export function DappWebViewStubScreen() {
+export function DappWebViewStubScreen({
+  __AS_FULL_OVERLAY_WIN__ = IS_IOS,
+}: {
+  __AS_FULL_OVERLAY_WIN__?: boolean;
+}) {
   const { styles: stylesScreen, colors } = useTheme2024({
     getStyle: getScreenStyle,
   });
@@ -39,11 +46,14 @@ export function DappWebViewStubScreen() {
 
   const { safeTop, androidOnlyBottomOffset } = useSafeSizes();
 
-  const { dappsWebViewFromRoute = RootNames.Dapps } = useNavigationState(
-    s =>
-      s.routes.find(r => r.name === RootNames.DappWebViewStubOnHome)?.params ||
-      {},
-  ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
+  const { dappsWebViewFromRoute = RootNames.Dapps } = IS_IOS
+    ? { dappsWebViewFromRoute: RootNames.Dapps }
+    : // eslint-disable-next-line react-hooks/rules-of-hooks
+      (useNavigationState(
+        s =>
+          s?.routes?.find(r => r.name === RootNames.DappWebViewStubOnHome)
+            ?.params || {},
+      ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object);
 
   const {
     openedDappItems,
@@ -58,27 +68,28 @@ export function DappWebViewStubScreen() {
 
   const { isDappConnected, disconnectDapp, updateFavorite } = useDapps();
 
-  const navigation = useRabbyAppNavigation();
-
   /**
    * @description we put this screen at top level home-navigator (which's bottom-tabs-navigator)
    */
   const backToDappsScreen = useCallback(() => {
+    if (IS_IOS) return;
+
     switch (dappsWebViewFromRoute) {
       case RootNames.Dapps:
       case RootNames.FavoriteDapps: {
-        navigation.navigate(RootNames.StackDapps, {
+        navigate(RootNames.StackDapps, {
           screen: dappsWebViewFromRoute,
         });
         break;
       }
       default: {
-        navigation.replace(RootNames.StackDapps, {
+        naviReplace(RootNames.StackDapps, {
           screen: dappsWebViewFromRoute,
         });
+        break;
       }
     }
-  }, [navigation, dappsWebViewFromRoute]);
+  }, [dappsWebViewFromRoute]);
 
   const hideDappWebViewScreen = useCallback(
     (ctx?: DappWebViewHideContext) => {
@@ -162,7 +173,8 @@ export function DappWebViewStubScreen() {
               width: '100%',
               justifyContent: 'center',
               alignItems: 'center',
-            }}>
+            }}
+            onPress={() => hideDappWebViewScreen()}>
             <Text
               style={{
                 color: __DEV__ ? colors['neutral-title1'] : 'transparent',

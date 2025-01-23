@@ -71,6 +71,7 @@ import {
   NFTDetailScreen,
   DeFiDetailScreen,
 } from '@/screens/index.eager';
+import GlobalDappWebViews from './screens/Dapps/DappWebViewScreen/GlobalDappWebViews';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -275,6 +276,7 @@ export default function AppNavigation({
         <DuplicateAddressModal />
         <AliasNameEditModal />
         <QrCodeModal />
+        {IS_IOS && <GlobalDappWebViews />}
 
         <RootStack.Navigator
           screenOptions={{
