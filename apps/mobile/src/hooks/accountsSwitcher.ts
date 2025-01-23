@@ -50,6 +50,8 @@ const AccountSwitcherInfos = {
 
   Approvals: makeSceneAccount(),
 
+  MultiBuy: makeSceneAccount(),
+
   '@ActiveDappWebViewModal': makeSceneAccount(),
 };
 
