@@ -14,10 +14,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { unionBy, orderBy, isUndefined, maxBy } from 'lodash';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import PQueue from 'p-queue';
-import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Empty } from './components/Empty';
 import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
@@ -28,27 +24,17 @@ import {
   KeyringAccountWithAlias,
   useAccounts,
   useCurrentAccount,
-  useMyAccounts,
 } from '@/hooks/account';
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  TxDisplayItem,
-  TxHistoryItem,
-  NFTItem,
-  TokenItem,
-  GasLevel,
-} from '@rabby-wallet/rabby-api/dist/types';
-import { formatPrice, intToHex, numberWithCommasIsLtOne } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
+import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -60,11 +46,9 @@ import { getApproveTokeName, getHistoryItemType } from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { strings } from '@/utils/i18n';
-import { Button } from '@/components2024/Button';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
-import { format } from 'path';
 import { getERC20Allowance } from '@/core/apis/provider';
 import BigNumber from 'bignumber.js';
 
@@ -181,24 +165,28 @@ export const AddressItemInDetail = ({
   return (
     <View>
       {getAlianName(address) ? (
-        <View style={{ alignItems: 'flex-end' }}>
-          <TouchableOpacity
-            disabled={!isInAccounts}
-            style={styles.itemAliaName}
-            onPress={handleGoAddressDetail}>
-            <Text style={styles.itemContentText}>
-              {getAlianName(address) || ellipsisAddress(address)}
+        <TouchableOpacity
+          disabled={!isInAccounts}
+          style={styles.itemAliaName}
+          onPress={handleGoAddressDetail}>
+          <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.itemContentText}>
+                {getAlianName(address) || ellipsisAddress(address)}
+              </Text>
+              {isInAccounts && (
+                <RcIconRightCC
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-foot']}
+                />
+              )}
+            </View>
+            <Text style={styles.itemAddressText}>
+              {ellipsisAddress(address)}
             </Text>
-            {isInAccounts && (
-              <RcIconRightCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            )}
-          </TouchableOpacity>
-          <Text style={styles.itemAddressText}>{ellipsisAddress(address)}</Text>
-        </View>
+          </View>
+        </TouchableOpacity>
       ) : (
         <TouchableOpacity
           style={styles.itemAliaName}
@@ -266,10 +254,6 @@ function HistoryDetailScreen(): JSX.Element {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const list = useSortAddressList(accounts);
-  const unionAccounts = useMemo(() => {
-    return unionBy(list, account => account.address.toLowerCase());
-  }, [list]);
 
   const formatType: HistoryItemCateType = useMemo(() => {
     return getHistoryItemType(data);
@@ -318,7 +302,7 @@ function HistoryDetailScreen(): JSX.Element {
       : formatType === HistoryItemCateType.Send
       ? data.sends[0].to_addr
       : data.tx?.to_addr;
-  const usdGasFee = data.tx?.usd_gas_fee;
+  const usdGasFee = data.tx?.eth_gas_fee;
 
   const formatProject = useMemo(() => {
     const projectDict = data.projectDict;
@@ -467,7 +451,7 @@ function HistoryDetailScreen(): JSX.Element {
             </Text>
             <AddressItemInDetail
               address={fromAddr!}
-              accounts={unionAccounts}
+              accounts={accounts}
               switchAccount={switchAccount}
             />
           </View>
@@ -483,7 +467,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
               <AddressItemInDetail
                 address={toAddr!}
-                accounts={unionAccounts}
+                accounts={accounts}
                 switchAccount={switchAccount}
               />
             </View>
@@ -507,7 +491,7 @@ function HistoryDetailScreen(): JSX.Element {
               {strings('page.transactions.detail.GasFee')}
             </Text>
             <Text style={styles.itemContentText}>
-              {numberWithCommasIsLtOne(data.tx?.eth_gas_fee, 2)}{' '}
+              {formatAmount(data.tx?.eth_gas_fee!, 2)}{' '}
               {chainItem?.nativeTokenSymbol} ($
               {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
             </Text>
