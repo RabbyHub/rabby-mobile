@@ -141,12 +141,6 @@ function History({
     return swapList;
   };
 
-  useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
-    setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList();
-  });
-
   const batchFetchDataV2 = async () => {
     // fetch data from local database
     const addresses = isSceneUsingAllAccounts
@@ -420,6 +414,12 @@ function History({
   const allTxHistory = useMemo(() => {
     return orderBy(data?.list || [], 'time_at', 'desc');
   }, [data]);
+
+  useEffect(() => {
+    const list = transactionHistoryService.getSucceedList();
+    setHistorySuccessList(list);
+    transactionHistoryService.clearSuccessAndFailList();
+  }, [setHistorySuccessList, data, groups?.length]);
 
   const displayList = useMemo(() => {
     return allTxHistory

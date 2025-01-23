@@ -777,7 +777,7 @@
         "swap": "Swap",
         "bridge": "Bridge",
         "send": "Send",
-        "history": "History",
+        "history": "Transactions",
         "receive": "Receive",
         "gasAccount": "GasAccount",
         "approvals": "Approvals",
