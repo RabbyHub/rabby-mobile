@@ -215,12 +215,12 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   //   };
   // }
 
-  static async getAllHistoryItemSortedByTime(owner_addr?: string) {
+  static async getAllHistoryItemSortedByTime(owner_addrs?: string[]) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
 
-    if (!owner_addr) {
+    if (!owner_addrs || owner_addrs.length === 0) {
       return await repo
         .createQueryBuilder('historyitem')
         .orderBy('historyitem.time_at', 'DESC')
@@ -229,11 +229,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
     return await repo
       .createQueryBuilder('historyitem')
-      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .orderBy('historyitem.time_at', 'DESC')
       .getMany();
   }
-
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

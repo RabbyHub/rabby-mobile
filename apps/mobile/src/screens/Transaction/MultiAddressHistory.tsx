@@ -116,8 +116,6 @@ function History({
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
-  const cacheSwapHistory = useRef<SwapItemEntity[]>([]);
-
   const [currentPage, setCurrentPage] = useState(0);
   const [isShowAll, setIsShowAll] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
@@ -139,12 +137,7 @@ function History({
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
   const getSwapHistory = async (add?: string) => {
-    if (cacheSwapHistory.current.length) {
-      return cacheSwapHistory.current;
-    }
-
     const swapList = await SwapItemEntity.getAllHistoryItem(add);
-    cacheSwapHistory.current = swapList;
     return swapList;
   };
 
@@ -156,14 +149,19 @@ function History({
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
-    const address = isSceneUsingAllAccounts
-      ? undefined
-      : finalSceneCurrentAccount?.address.toLowerCase();
+    const addresses = isSceneUsingAllAccounts
+      ? unionAccounts.map(account => account.address.toLowerCase())
+      : [finalSceneCurrentAccount?.address.toLowerCase()!];
 
     // juset not in single token history
+
     const [historyList, swapList] = await Promise.all([
-      HistoryItemEntity.getAllHistoryItemSortedByTime(address),
-      getSwapHistory(address),
+      HistoryItemEntity.getAllHistoryItemSortedByTime(addresses),
+      getSwapHistory(
+        isSceneUsingAllAccounts
+          ? undefined
+          : finalSceneCurrentAccount?.address.toLowerCase(),
+      ),
     ]);
     console.log('tokenDict', Object.keys(tokenDict).length);
     console.log('projectDict', Object.keys(projectDict).length);
