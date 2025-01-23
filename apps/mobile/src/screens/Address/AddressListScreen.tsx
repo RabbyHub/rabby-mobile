@@ -3,8 +3,12 @@ import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/AddressItem';
-import { RootNames } from '@/constant/layout';
-import { useFocusEffect, useNavigation } from '@react-navigation/core';
+import { AppRootName, RootNames } from '@/constant/layout';
+import {
+  useFocusEffect,
+  useNavigation,
+  StackActions,
+} from '@react-navigation/core';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -13,6 +17,14 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { useSortAddressList } from './useSortAddressList';
 import { AddressEmptyContainer } from './components/AddressEmptyContainer';
+import { Card } from '@/components2024/Card';
+import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useTranslation } from 'react-i18next';
 
 type CurrentAddressProps = NativeStackScreenProps<
@@ -40,8 +52,9 @@ export function AddressListScreen(): JSX.Element {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const hasWatchAddress = React.useMemo(() => {
     return accounts.some(account => account.type === KEYRING_CLASS.WATCH);
@@ -70,6 +83,25 @@ export function AddressListScreen(): JSX.Element {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
+
+  const gotoAddAddress = React.useCallback(() => {
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      shouldRedirectToSetPasswordBefore2024,
+      navigateTo: (screen: AppRootName, params?: object) => {
+        navigation.dispatch(
+          StackActions.push(RootNames.StackAddress, {
+            screen,
+            params,
+          }),
+        );
+      },
+    });
+  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
+
   const { t } = useTranslation();
 
   useFocusEffect(
@@ -95,6 +127,18 @@ export function AddressListScreen(): JSX.Element {
         ListEmptyComponent={AddressEmptyContainer}
         ListFooterComponent={
           <View style={styles.footer}>
+            <Card style={styles.footerCard} onPress={gotoAddAddress}>
+              <View style={styles.footerMain}>
+                <PlusSVG
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-secondary']}
+                />
+                <Text style={styles.footerCardText}>
+                  {t('page.addressDetail.addressListScreen.addAddress')}
+                </Text>
+              </View>
+            </Card>
             {hasSafeAddress && (
               <OtherAddressNav
                 onPress={onGotoSafeAddress}
@@ -142,6 +186,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footer: {
     marginTop: 12,
+  },
+  footerCard: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    marginBottom: 22,
+  },
+  footerMain: {
+    height: 46,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  footerCardText: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
   },
   sectionFooter: {
     paddingVertical: 10,
