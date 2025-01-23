@@ -11,6 +11,7 @@ export enum MultiHomeFeatTitle {
   TEST_DAPP = 'TEST_DAPP',
   Ecosystem = 'Ecosystem',
   Points = 'Rabby Points',
+  Buy = 'Buy',
 }
 
 export enum AccountPannelSectionTitle {

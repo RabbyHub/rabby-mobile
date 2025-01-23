@@ -878,7 +878,15 @@
       "multiAddressHome": {
         "pin": "Pin",
         "services": "Services",
-        "totalBalance": "Total Balance"
+        "totalBalance": "Total Balance",
+        "noAssets": "No Assets?",
+        "fundYourWallet": "Fund Your Wallet",
+        "importAddress": "Import an Address",
+        "importAddressDesc": "Add an existing address with funds.",
+        "receiveCrypto": "Receive Crypto",
+        "receiveCryptoDesc": "Transfer tokens from another address.",
+        "buyWithFiat": "Buy with Fiat",
+        "buyWithFiatDesc": "Purchase crypto using a debit card or bank account."
       },
       "importAddress": {
         "importTitle": "Import Address",
@@ -1557,8 +1565,22 @@
       }
     },
     "buy": {
+      "title": "Buy",
+      "youWillPay": "You Will Pay",
+      "youWillReceive": "You Will Receive",
+      "paymentsOnly": "Payments can only be made in {{currency}}",
+      "searchingQuote": "Searching Quotes For you...",
+      "quotesForYou": "Quotes For you",
       "from": "From {{dex}}",
-      "purchased": "Purchased"
+      "purchased": "Purchased",
+      "regionBottomSheet": {
+        "title": "Select your region",
+        "searchPlaceholder": "Search fiat currency"
+      },
+      "quote": {
+        "title": "Quotes For you",
+        "best": "Best Quotes"
+      }
     }
   },
   "component": {

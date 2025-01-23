@@ -26,7 +26,7 @@ import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
-import { strings } from '@/utils/i18n';
+import { BuyScreen } from '../Buy';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -299,6 +299,23 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'GasAccount',
           ...headerPresets.withBgCard2_2024,
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.MultiBuy}
+        component={BuyScreen}
+        options={mergeScreenOptions({
+          title: 'Buy',
+          // ...headerPresets.withBgCard1_2024,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MultiBuy"
+                titleText={ctx.children}
+              />
+            );
+          },
         })}
       />
     </TransactionStack.Navigator>

@@ -75,6 +75,10 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
+import RcIconBuy from '@/assets2024/icons/home/IconReceive.svg';
+import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
+import { FundYourWallet } from './FundYourWallet';
+
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
@@ -246,6 +250,11 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconBridge,
         },
         {
+          key: MultiHomeFeatTitle.Buy,
+          title: t('page.buy.title'),
+          icon: RcIconBuy,
+        },
+        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistory,
@@ -291,6 +300,9 @@ function MultiAddressHome(): JSX.Element {
       }[],
     [alertInfo.total, t, historyCount],
   );
+
+  // TODO: no assets and no behaver onchain
+  const isNoAssets = false;
 
   useEffect(() => {
     if (pendingTxCount) {
@@ -510,6 +522,12 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Ecosystem:
           break;
+        case MultiHomeFeatTitle.Buy:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.MultiBuy,
+            params: {},
+          });
+          break;
         default:
           break;
       }
@@ -644,7 +662,19 @@ function MultiAddressHome(): JSX.Element {
               })}
             </View>
           )}
-          <View style={styles.menuHeader}>
+          {isNoAssets && (
+            <>
+              <View
+                style={[styles.menuHeader, { justifyContent: 'flex-start' }]}>
+                <IconRabby />
+                <Text style={styles.headerText}>
+                  {t('page.nextComponent.multiAddressHome.noAssets')}
+                </Text>
+              </View>
+              <FundYourWallet />
+            </>
+          )}
+          <View style={[styles.menuHeader, isNoAssets && styles.hidden]}>
             <Text style={styles.headerText}>
               {t('page.nextComponent.multiAddressHome.services')}
             </Text>
@@ -665,7 +695,7 @@ function MultiAddressHome(): JSX.Element {
               </TouchableOpacity>
             )}
           </View>
-          <View style={[styles.grid]}>
+          <View style={[styles.grid, isNoAssets && styles.hidden]}>
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity
@@ -1002,6 +1032,90 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 28,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+
+  noAssetsContainer: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingHorizontal: 16,
+    paddingBottom: 50,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  bgLeft: { position: 'absolute', top: 0, left: 0 },
+  bgRight: { position: 'absolute', top: 35, right: 0 },
+  bgb1: {
+    position: 'absolute',
+    top: 52,
+    left: 16,
+    transform: [{ scale: 0.5 }],
+  },
+  bgb2: {
+    position: 'absolute',
+    top: 76,
+    right: 34,
+    transform: [{ scale: 0.5 }],
+  },
+  noAssetsTitle: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 36,
+    marginVertical: 42,
+  },
+
+  noAssetsItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  noAssetsIconWrapper: {
+    width: 28,
+    height: 28,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 9.8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buyIcon: {
+    alignSelf: 'flex-start',
+  },
+  noAssetsRight: {
+    gap: 4,
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  noAssetsItemName: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  noAssetsItemDesc: {
+    maxWidth: '100%',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  hidden: {
+    display: 'none',
   },
 }));
 
