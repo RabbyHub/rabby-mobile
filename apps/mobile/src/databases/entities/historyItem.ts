@@ -82,6 +82,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
   tx_from_address: string = '';
 
+  // tx_to_address
+  @Column('text', { default: '' })
+  tx_to_address: string = '';
+
   // tx_usd_gas_fee
   @Column('real', {
     transformer: realTransformer,
@@ -124,6 +128,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.project_id = input.project_id ?? '';
 
     e.tx_from_address = input.tx?.from_addr ?? '';
+    e.tx_to_address = input.tx?.to_addr ?? '';
     e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
 

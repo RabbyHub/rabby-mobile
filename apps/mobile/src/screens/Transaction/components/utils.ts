@@ -65,12 +65,12 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
       id: item.txHash,
       status: item.status,
       from_addr: item.tx_from_address,
+      to_addr: item.tx_to_address,
       usd_gas_fee: item.tx_usd_gas_fee,
       eth_gas_fee: item.tx_eth_gas_fee,
 
       name: '', // no use
       params: [],
-      to_addr: '',
       value: 0,
       message: '',
     },

@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconRightCC } from '@/assets/icons/common';
+import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
@@ -198,10 +198,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             disabled={!chain?.scanLink}
             onPress={handleOpenTxId}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={[styles.itemContentText]}>{`${t(
-              'page.transactions.detail.ViewOn',
-            )} ${chain?.name || 'Unknown'}`}</Text>
-            <RcIconRightCC
+            <Text style={[styles.itemContentText]}>{data.maxGasTx.hash}</Text>
+            <RcIconExternalLinkCC
               width={14}
               height={14}
               color={colors2024['neutral-foot']}

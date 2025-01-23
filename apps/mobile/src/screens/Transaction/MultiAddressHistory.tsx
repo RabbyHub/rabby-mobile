@@ -154,7 +154,7 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
 
     // juset not in single token history
-
+    console.log('batchFetchDataV2 addresses', addresses);
     const [historyList, swapList] = await Promise.all([
       HistoryItemEntity.getAllHistoryItemSortedByTime(addresses),
       getSwapHistory(
@@ -359,18 +359,21 @@ function History({
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
 
   const refresh = useMemoizedFn(() => {
-    syncTop10History(true);
     lastMap.current = {};
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    isInTokenDetail ? reloadAsync() : batchFetchDataV2();
+    !isInTokenDetail && reloadAsync();
   });
 
   useEffect(() => {
-    if (isReady.current) {
-      cancel();
-      refresh();
+    if (isInTokenDetail) {
+      syncTop10History(true);
+    } else {
+      if (isReady.current) {
+        cancel();
+        refresh();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);

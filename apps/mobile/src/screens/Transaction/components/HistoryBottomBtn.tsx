@@ -82,6 +82,7 @@ export const HistoryBottomBtn = ({
                   params: {
                     chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                     tokenId: sends[0]?.token_id,
+                    toAddress: sends[0]?.to_addr,
                   },
                 }),
               );

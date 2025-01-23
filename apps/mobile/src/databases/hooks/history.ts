@@ -230,8 +230,8 @@ export const useSyncHistoryDB = (
 
             try {
               await Promise.all([
-                syncUserAllHistory(account.address),
-                syncSwapHistory(account.address),
+                syncUserAllHistory(account.address.toLowerCase()),
+                syncSwapHistory(account.address.toLowerCase()),
               ]);
 
               // boradcast to update ui ?

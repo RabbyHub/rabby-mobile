@@ -388,7 +388,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
             <Text style={styles.itemAddressText}>
-              {ellipsisAddress(data?.project_id || '')}
+              {ellipsisAddress(data.tx?.to_addr || '')}
             </Text>
           </View>
         </View>
@@ -528,7 +528,7 @@ function HistoryDetailScreen(): JSX.Element {
               onPress={onOpenTxId}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Text style={[styles.itemContentText]}>
-                {ellipsisAddress(data.tx?.id)}
+                {ellipsisAddress(data.id)}
               </Text>
               <RcIconExternalLinkCC
                 width={14}
