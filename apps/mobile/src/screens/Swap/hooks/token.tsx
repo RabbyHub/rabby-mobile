@@ -396,9 +396,7 @@ export const useTokenPair = (userAddress: string) => {
   const [quoteLoading, setQuoteLoading] = useState(false);
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
-    async () => {
-      fetchIdRef.current += 1;
-      const currentFetchId = fetchIdRef.current;
+    async (currentFetchId: number) => {
       if (
         userAddress &&
         payToken?.id &&
@@ -423,18 +421,24 @@ export const useTokenPair = (userAddress: string) => {
           fee: feeRate,
           setQuote: setQuote(currentFetchId),
           onFinishedQuote: () => {
-            setFinishedQuotes(e => e + 1);
+            if (currentFetchId === fetchIdRef.current) {
+              setFinishedQuotes(e => e + 1);
+            }
           },
-        }).finally(() => {
-          // enableSwapBySlippageChanged(currentFetchId);
         });
       }
     },
     {
       manual: true,
-      onFinally() {
-        setQuoteLoading(false);
-        setShowMoreVisible(true);
+      onFinally(params) {
+        if (params[0] === fetchIdRef.current) {
+          // wait for progress animation finish
+          setTimeout(() => {
+            setQuoteLoading(false);
+            setShowMoreVisible(true);
+            setFinishedQuotes(0);
+          }, 300);
+        }
       },
     },
   );
@@ -456,14 +460,16 @@ export const useTokenPair = (userAddress: string) => {
     ) {
       setFinishedQuotes(0);
       setQuoteLoading(true);
-
       setActiveProvider(undefined);
-      runGetAllQuotes();
+      fetchIdRef.current += 1;
+      runGetAllQuotes(fetchIdRef.current);
     } else {
+      setFinishedQuotes(0);
       setActiveProvider(undefined);
       setQuoteLoading(false);
     }
   }, [
+    refreshId,
     userAddress,
     payToken?.id,
     receiveToken?.id,

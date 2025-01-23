@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider, useSwapSupportedDexList } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -27,12 +27,16 @@ import {
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+
+const progressColor = ['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)'];
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -75,12 +79,42 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
   const dexLength = useSwapSupportedDexList()[0].length;
 
-  const percent = useMemo(() => {
+  const progress = useMemo(() => {
     if (finishedQuotes && !isFrom) {
       return (finishedQuotes / dexLength) * 100;
     }
     return 0;
   }, [dexLength, finishedQuotes, isFrom]);
+
+  const animatedProgress = useSharedValue(0);
+
+  useEffect(() => {
+    if (!valueLoading) {
+      return;
+    }
+    if (!progress) {
+      animatedProgress.value = 0;
+      setTimeout(() => {
+        animatedProgress.value = withTiming(50, {
+          duration: 5000,
+          easing: Easing.linear,
+        });
+      }, 200);
+      return;
+    }
+    if (progress > 50) {
+      animatedProgress.value = withTiming(progress, {
+        duration: 300,
+        easing: Easing.linear,
+      });
+    }
+  }, [animatedProgress, dexLength, progress, valueLoading]);
+
+  const progressBarStyle = useAnimatedStyle(() => {
+    return {
+      width: `${animatedProgress.value}%`,
+    };
+  });
 
   const openTokenModalRef = useRef<{
     openTokenModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -247,17 +281,15 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
         {valueLoading ? (
           <View style={styles.skeleton}>
-            <LinearGradient
-              locations={[0, 1]}
-              style={{
-                width: `${percent}%`,
-                height: '100%',
-                backgroundColor: colors2024['brand-light-1'],
-              }}
-              start={{ x: 1, y: 0.5 }}
-              end={{ x: 0, y: 0.5 }}
-              colors={['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)']}
-            />
+            <Animated.View style={progressBarStyle}>
+              <LinearGradient
+                locations={[0, 1]}
+                style={styles.progressBar}
+                start={{ x: 1, y: 0.5 }}
+                end={{ x: 0, y: 0.5 }}
+                colors={progressColor}
+              />
+            </Animated.View>
           </View>
         ) : isFrom ? (
           <TextInput
@@ -438,5 +470,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   insufficient: {
     color: colors2024['red-default'],
+  },
+  progressBar: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors2024['brand-light-1'],
   },
 }));
