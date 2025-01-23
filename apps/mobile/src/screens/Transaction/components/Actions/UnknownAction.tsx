@@ -154,7 +154,9 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
             disabled={!chain?.scanLink}
             onPress={handleOpenTxId}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={[styles.itemContentText]}>{data.maxGasTx.hash}</Text>
+            <Text style={[styles.itemContentText]}>
+              {ellipsisAddress(data.maxGasTx.hash!)}
+            </Text>
             <RcIconExternalLinkCC
               width={14}
               height={14}

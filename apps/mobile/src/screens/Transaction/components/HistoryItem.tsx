@@ -171,12 +171,7 @@ export const HistoryItem = React.memo(
 
     return (
       <TouchableOpacity onPress={hanldeNavigateDetail}>
-        <View
-          style={[
-            styles.card,
-            style,
-            // isFailed || isScam ? styles.cardGray : null,
-          ]}>
+        <View style={[styles.card, style, isScam ? styles.cardGray : null]}>
           <View style={styles.cardBody}>
             {/* <TxInterAddressExplain
             style={[
