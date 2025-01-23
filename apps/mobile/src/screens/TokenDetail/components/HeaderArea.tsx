@@ -78,7 +78,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
             style={styles.tokenSymbol}
             numberOfLines={1}
             ellipsizeMode="tail">
-            {getTokenSymbol(token)}
+            {ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
         </View>
         {/* <View style={styles.contract}>
