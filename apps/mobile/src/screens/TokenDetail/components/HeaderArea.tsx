@@ -72,6 +72,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
             logo={token?.logo_url}
             // style={mediaStyle}
             size={35}
+            chain={token?.chain}
             chainSize={16}
           />
           <Text
