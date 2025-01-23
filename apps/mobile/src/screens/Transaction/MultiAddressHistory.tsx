@@ -357,7 +357,7 @@ function History({
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    !isInTokenDetail ? reloadAsync() : syncTop10History(true);
+    isInTokenDetail ? reloadAsync() : syncTop10History(true);
   });
 
   useEffect(() => {
