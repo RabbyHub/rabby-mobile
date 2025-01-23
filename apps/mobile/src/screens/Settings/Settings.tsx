@@ -280,41 +280,6 @@ function SettingsBlocks() {
               clearPendingRef.current?.present();
             },
           },
-          {
-            label: t('page.setting.appCache'),
-            icon: RcClearPending,
-            rightNode: ({ rightIconNode }) => {
-              return (
-                <View style={{ flexDirection: 'row' }}>
-                  <AppCacheSizeText
-                    style={{
-                      color: colors['neutral-title-1'],
-                      fontSize: 14,
-                      fontWeight: '400',
-                      paddingRight: 8,
-                    }}
-                  />
-                  {rightIconNode}
-                </View>
-              );
-            },
-            onPress: () => {
-              Alert.alert(
-                'Clear App Cache',
-                'This will only clear app cache, and never affect your sensitive data and settings. Restarting app is required, do you confirm to continue?',
-                [
-                  { text: 'Cancel', onPress: () => {} },
-                  {
-                    text: 'Clear & Quit App',
-                    style: 'destructive',
-                    onPress: async () => {
-                      await dropAppDataSourceAndQuitApp();
-                    },
-                  },
-                ],
-              );
-            },
-          },
         ],
       },
       aboutus: {
@@ -388,6 +353,46 @@ function SettingsBlocks() {
           },
         ].filter(Boolean),
       },
+      extra: {
+        label: '',
+        items: [
+          {
+            label: t('page.setting.appCache'),
+            icon: RcClearPending,
+            rightNode: ({ rightIconNode }) => {
+              return (
+                <View style={{ flexDirection: 'row' }}>
+                  <AppCacheSizeText
+                    style={{
+                      color: colors['neutral-title-1'],
+                      fontSize: 14,
+                      fontWeight: '400',
+                      paddingRight: 8,
+                    }}
+                  />
+                  {rightIconNode}
+                </View>
+              );
+            },
+            onPress: () => {
+              Alert.alert(
+                'Clear App Cache',
+                'This will remove temporary cached files without impacting your personal data or settings. The app needs to restart to complete the process. Do you wish to continue?',
+                [
+                  { text: 'Cancel', onPress: () => {} },
+                  {
+                    text: 'Clear & Close App',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await dropAppDataSourceAndQuitApp();
+                    },
+                  },
+                ],
+              );
+            },
+          },
+        ],
+      },
     };
   })();
 
@@ -401,9 +406,10 @@ function SettingsBlocks() {
             key={l1key}
             label={block.label}
             style={[
-              idx > 0 && {
-                marginTop: 16,
-              },
+              idx > 0 &&
+                !!block.label && {
+                  marginTop: 16,
+                },
             ]}>
             {block.items.map((item, idx_l2) => {
               return (
