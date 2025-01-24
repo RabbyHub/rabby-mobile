@@ -576,6 +576,18 @@ function MultiAddressHome(): JSX.Element {
                     menuConfig={{
                       menuTitle: item.alias || ellipsisAddress(item.address),
                       menuActions: [
+                        ...(IS_ANDROID
+                          ? [
+                              {
+                                title:
+                                  item.alias || ellipsisAddress(item.address),
+                                key: 'hostname',
+                                icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
+                                disabled: true,
+                                action() {},
+                              },
+                            ]
+                          : []),
                         {
                           title: 'UnPin',
                           icon: isDarkTheme
