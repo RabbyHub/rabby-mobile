@@ -266,8 +266,8 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     }
 
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
-    switchToChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
-    setToToken({
+    switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
+    setFromToken({
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.tokenId,
     });
@@ -285,7 +285,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     }
     const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
     setAmount('');
-    switchFromChain(firstChainEnum);
+    switchFromChain(navState?.chainEnum ?? firstChainEnum);
     const getRemoteRecommendChain = async () => {
       if (initIdRef.current === currentFetchId) {
         const data = await openapi.getRecommendBridgeToChain({
@@ -295,7 +295,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
           switchToChain(findChainByServerID(data.to_chain_id)?.enum);
       }
     };
-    if (userAddress && !navState?.tokenId) {
+    if (userAddress) {
       const latestTx = await openapi.getBridgeHistoryList({
         user_addr: userAddress,
         start: 0,
@@ -318,7 +318,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       }
     }
   }, [
-    navState?.tokenId,
+    navState,
     fetchOrderedChainList,
     userAddress,
     setAmount,
