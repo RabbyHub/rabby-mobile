@@ -2,13 +2,15 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
-import { AppRootName, RootNames } from './constant/layout';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { Chain, CHAINS_ENUM } from './constant/chains';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolioToken } from './screens/Home/types';
+import type { RootNames } from './constant/layout';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { Chain } from './constant/chains';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { AbstractPortfolioToken } from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
 import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
+import type { TransactionGroup } from './core/services/transactionHistory';
+// import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -202,7 +204,16 @@ export type TransactionNavigatorParamList = {
     isForMultipleAdderss?: boolean;
     title?: string;
   };
-  [RootNames.HistoryLocalDetail]?: {};
+  [RootNames.HistoryLocalDetail]?: {
+    data: TransactionGroup;
+    canCancel?: boolean;
+    isForMultipleAdderss?: boolean;
+    title?: string;
+    // sendsToken: (TokenItem | undefined)[];
+    // approveToken?: TokenItem;
+    // formatType: HistoryItemCateType;
+    // recievesToken: (TokenItem | undefined)[];
+  };
   [RootNames.Send]?: {};
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {

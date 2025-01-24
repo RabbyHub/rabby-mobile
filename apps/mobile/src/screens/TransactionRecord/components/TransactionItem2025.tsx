@@ -446,24 +446,10 @@ export const TransactionItem = ({
         isForMultipleAdderss,
         data,
         canCancel,
-        sendsToken,
-        recievesToken,
-        approveToken,
-        formatType,
         title: formatTitle,
       },
     });
-  }, [
-    formatType,
-    approveToken,
-    isForMultipleAdderss,
-    navigation,
-    canCancel,
-    data,
-    formatTitle,
-    recievesToken,
-    sendsToken,
-  ]);
+  }, [isForMultipleAdderss, navigation, canCancel, data, formatTitle]);
 
   const approveTokenAmountStr = useMemo(() => {
     const amount = approveToken?.amount;
