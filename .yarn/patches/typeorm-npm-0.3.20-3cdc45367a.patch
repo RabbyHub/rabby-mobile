@@ -1,0 +1,35 @@
+diff --git a/package.json b/package.json
+index dd493baa87afa3764c7f26590876ce27b4c22d8e..408d06767b301755cbd92b6dc16a1435a35685eb 100644
+--- a/package.json
++++ b/package.json
+@@ -12,6 +12,11 @@
+   "engines": {
+     "node": ">=16.13.0"
+   },
++  "react-native": {
++    "import": "./index.js",
++    "require": "./index.js",
++    "types": "./index.d.ts"
++  },
+   "exports": {
+     ".": {
+       "types": "./index.d.ts",
+@@ -20,12 +25,18 @@
+         "require": "./index.js",
+         "types": "./index.d.ts"
+       },
++      "react-native": {
++        "import": "./index.js",
++        "require": "./index.js",
++        "types": "./index.d.ts"
++      },
+       "browser": {
+         "require": "./index.js",
+         "import": "./browser/index.js",
+         "default": "./index.js"
+       }
+     },
++    "./package.json": "./package.json",
+     "./browser": {
+       "types": "./index.d.ts",
+       "default": "./browser/index.js"

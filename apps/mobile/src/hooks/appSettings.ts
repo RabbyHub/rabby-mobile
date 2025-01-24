@@ -5,7 +5,7 @@ import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisAutoLock } from '@/core/apis';
-import { DEFAULT_AUTO_LOCK_MINUTES, TIME_SETTINGS } from '@/constant/autoLock';
+import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
 import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 import { isNonPublicProductionEnv } from '@/constant/env';
@@ -91,7 +91,7 @@ export function useGlobalAppPreventScreenrecordOnDev() {
   usePreventScreenshot(__DEV__ && !forceAllowScreenshot);
 
   useEffect(() => {
-    if (!isIOS && !__DEV__) return;
+    if (!isIOS || !__DEV__) return;
 
     if (!forceAllowScreenshot) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();

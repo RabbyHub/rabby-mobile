@@ -5,7 +5,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import dayjs from 'dayjs';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
-import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem';
+import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
@@ -86,14 +86,18 @@ const AddressInfo = ({ account }: { account?: KeyringAccountWithAlias }) => {
 
 export const HistoryList = ({
   loading,
+  historySuccessList,
   loadingMore,
   loadMore,
   refreshLoading,
+  resetTopMenu,
   list,
   localTxList,
   onRefresh,
   isForMultipleAdderss = true,
 }: {
+  resetTopMenu?: () => void;
+  historySuccessList?: string[];
   localTxList?: TransactionGroup[];
   list?: (HistoryDisplayItem | TransactionGroup)[];
   loading?: boolean;
@@ -122,9 +126,9 @@ export const HistoryList = ({
               {formatTimestamp(item.data.time_at * 1000)}
             </Text>
           ) : null}
-          {item.isFirst && isForMultipleAdderss ? (
+          {/* {item.isFirst && isForMultipleAdderss ? (
             <AddressInfo account={item.data.account} />
-          ) : null}
+          ) : null} */}
           <HistoryItem
             data={item.data}
             isForMultipleAdderss={isForMultipleAdderss}
@@ -149,8 +153,10 @@ export const HistoryList = ({
       );
       return (
         <>
-          {item.isFirst ? <AddressInfo account={account} /> : null}
+          {/* {item.isFirst ? <AddressInfo account={account} /> : null} */}
           <TransactionItem
+            isForMultipleAdderss={isForMultipleAdderss}
+            historySuccessList={historySuccessList}
             data={item.data}
             canCancel={canCancel}
             onRefresh={onRefresh}
@@ -163,7 +169,7 @@ export const HistoryList = ({
   if (loading) {
     return (
       <View style={styles.skeletonContainer}>
-        {range(0, 4).map(i => {
+        {range(0, 8).map(i => {
           return <SkeletonCard key={i} />;
         })}
       </View>
@@ -175,6 +181,7 @@ export const HistoryList = ({
       data={markedList}
       renderItem={renderItem}
       windowSize={5}
+      onTouchStart={() => resetTopMenu && resetTopMenu()}
       style={styles.container}
       onEndReached={loadMore}
       onEndReachedThreshold={0.8}
@@ -222,12 +229,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   date: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
-    // paddingLeft: 0,
+    paddingLeft: 8,
     marginTop: 12,
-    marginBottom: 20,
-    color: colors2024['neutral-title-1'],
-    lineHeight: 22,
+    marginBottom: 8,
+    color: colors2024['neutral-secondary'],
+    lineHeight: 18,
   },
 }));

@@ -10,19 +10,20 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { openapi } from '@/core/request';
+import { ItemLoader } from './Skeleton';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
 type Props = {
   filterText?: string;
-  existTokensIds?: string[];
 };
 
-const SearchOnTheChain = ({ filterText, existTokensIds = [] }: Props) => {
+const SearchOnTheChain = ({ filterText }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [resultTokens, setResultTokens] = useState<AbstractPortfolioToken[]>(
     [],
   );
   const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
   const searchedRef = useRef<string>('');
   const { t } = useTranslation();
   const handleSearch = async (text?: string) => {
@@ -34,36 +35,30 @@ const SearchOnTheChain = ({ filterText, existTokensIds = [] }: Props) => {
       ignoreAndroidSystemSettings: false,
     });
     searchedRef.current = text;
+    setLoading(true);
     try {
       const res = await openapi.searchTokens({
         q: text,
       });
       setResultTokens(
-        res
-          .filter(
-            token => !existTokensIds.includes(`${token.chain}:${token.id}`),
-          )
-          .map(
-            token =>
-              ({
-                ...token,
-                _isPined: false,
-                _isFold: false,
-                _isExcludeBalance: false,
-                _usdValueStr: 0,
-                _amountStr: 1,
-                _tokenId: token.id,
-              } as unknown as AbstractPortfolioToken),
-          ),
+        res.map(
+          token =>
+            ({
+              ...token,
+              _isPined: false,
+              _isFold: false,
+              _isExcludeBalance: false,
+              _usdValueStr: 0,
+              _amountStr: 1,
+              _tokenId: token.id,
+            } as unknown as AbstractPortfolioToken),
+        ),
       );
       setSearched(true);
     } catch (error) {
-      console.log(
-        '🔍 CUSTOM_LOGGER:=>: get web chain error)',
-        filterText,
-        error,
-      );
+      console.log('get web chain error)', filterText, error);
     } finally {
+      setLoading(false);
     }
   };
   const handleOpenTokenDetail = React.useCallback(
@@ -84,6 +79,16 @@ const SearchOnTheChain = ({ filterText, existTokensIds = [] }: Props) => {
 
   if (!filterText) {
     return null;
+  }
+
+  if (loading) {
+    return (
+      <View>
+        <Text style={styles.title}>{t('page.search.searchWeb.title')}</Text>
+        <ItemLoader />
+        <ItemLoader />
+      </View>
+    );
   }
   return (
     <View>

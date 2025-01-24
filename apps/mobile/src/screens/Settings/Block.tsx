@@ -151,12 +151,7 @@ function BlockItem({
       {/* left area */}
       <View style={styles.leftArea}>
         <View>{iconNode || null}</View>
-        <View
-          style={{
-            flex: 1,
-          }}>
-          {children}
-        </View>
+        <View style={styles.leftTextArea}>{children}</View>
       </View>
       {/* right area */}
       <View style={styles.rightArea}>{rightNode || null}</View>
@@ -183,6 +178,12 @@ const getBlockItemStyles = createGetStyles(colors => {
       flex: 1,
       overflow: 'hidden',
       height: '100%',
+    },
+    leftTextArea: {
+      flex: 1,
+      // width: '100%',
+      alignItems: 'flex-start',
+      // ...makeDebugBorder(),
     },
     rightArea: {
       flexDirection: 'row',

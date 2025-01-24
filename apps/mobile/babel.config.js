@@ -106,6 +106,8 @@ module.exports = {
           '@': './src',
           'styled-components/native': 'styled-components/native',
           'styled-components': 'styled-components/native',
+          'react-native-sqlite-storage':
+            '@boltcode/react-native-sqlite-storage',
 
           // 'crypto': 'react-native-quick-crypto',
           // // 'stream': 'stream-browserify',
@@ -130,9 +132,10 @@ module.exports = {
         // mode: "compileOnly",
       },
     ],
+    // 'babel-plugin-transform-typescript-metadata',
     ['@babel/plugin-proposal-decorators', { legacy: true }],
+    ['@babel/plugin-proposal-class-properties', { loose: true }],
     // ['@babel/plugin-transform-flow-strip-types', { loose: true }],
-    // ['@babel/plugin-proposal-class-properties', { loose: true }],
     // ['@babel/plugin-proposal-private-methods', { loose: true }],
   ],
   env: {

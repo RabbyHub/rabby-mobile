@@ -6,7 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ASSETS_ITEM_HEIGHT } from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
@@ -22,6 +22,7 @@ import {
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
+import { CombineDefiItem } from '../../hooks/store';
 
 const hitSlop = {
   top: 10,
@@ -42,7 +43,7 @@ export const DefiRow = memo(
     disableMenu,
     onPress,
   }: {
-    data: AbstractProject;
+    data: CombineDefiItem;
     style?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
@@ -123,13 +124,24 @@ export const DefiRow = memo(
           </View>
         </View>
         <View style={styles.projectHeaderUsd}>
-          <Text
-            style={[
-              styles.projectHeaderNetWorth,
-              data._isExcludeBalance && styles.exclude,
-            ]}>
-            {data._netWorth}
-          </Text>
+          {data.filterTokenDesc ? (
+            <HighlightText
+              style={styles.projectHeaderNetWorth}
+              highlightStyle={styles.highlightText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              searchWords={[filterText || '']}
+              textToHighlight={data?.filterTokenDesc}
+            />
+          ) : (
+            <Text
+              style={[
+                styles.projectHeaderNetWorth,
+                data._isExcludeBalance && styles.exclude,
+              ]}>
+              {data._netWorth}
+            </Text>
+          )}
           {data._isExcludeBalance && data._netWorth && (
             <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
               <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
@@ -160,8 +172,14 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 4,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: ASSETS_ITEM_HEIGHT,
+    height: ASSETS_ITEM_HEIGHT_NEW,
     alignItems: 'center',
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    paddingLeft: 12,
+    paddingRight: 16,
   },
   projectHeaderName: {
     flexDirection: 'row',

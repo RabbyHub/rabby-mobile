@@ -8,7 +8,7 @@ import React, {
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
-
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { transactionHistoryService } from '@/core/services';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -18,11 +18,12 @@ import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
+  useMount,
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy } from 'lodash';
-import { Text, View } from 'react-native';
+import { last, unionBy, orderBy, set, isString, throttle } from 'lodash';
+import { Text, TouchableWithoutFeedback, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,7 +33,11 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useMyAccounts,
+} from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -49,8 +54,23 @@ import { AbstractPortfolioToken } from '../Home/types';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import {
+  useHistoryBasicInfo,
+  useSyncHistoryDB,
+} from '@/databases/hooks/history';
+import { HistoryFilterMenu } from './components/HistoryFilterMenu';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { strings } from '@/utils/i18n';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import { SwapItemEntity } from '@/databases/entities/swapitem';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { ensureHistoryListItemFromDb } from './components/utils';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
-const PAGE_COUNT = 10;
+const PAGE_COUNT = 200;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -59,6 +79,8 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   key: string;
   account?: KeyringAccountWithAlias;
+  isLocalSwap?: boolean;
+  isShowSuccess?: boolean;
 }
 
 interface IFetchHistory {
@@ -83,22 +105,29 @@ function History({
   isTestnet?: boolean;
   isForMultipleAdderss: boolean;
 }): JSX.Element {
-  const { accounts } = useMyAccounts();
-  const route = useRoute();
-  const { tokenItem, isInTokenDetail, isMultiAddress } = (route.params ||
-    {}) as {
-    tokenItem: AbstractPortfolioToken;
-    isInTokenDetail?: boolean;
-    isMultiAddress?: boolean;
-  };
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const sortedAccounts = useSortAddressList(accounts);
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'MultiAddressHistory'
+      >['route']
+    >();
+  const { tokenItem, isInTokenDetail } = route.params || {};
   const unionAccounts = useMemo(() => {
-    return unionBy(accounts, account => account.address.toLowerCase());
-  }, [accounts]);
+    return unionBy(sortedAccounts, account => account.address.toLowerCase());
+  }, [sortedAccounts]);
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
+  const [isShowAll, setIsShowAll] = useState(false);
+  const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
+  const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
   const {
@@ -108,57 +137,124 @@ function History({
   } = useSceneAccountInfo({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
+  const [historySuccessList, setHistorySuccessList] = useState<string[]>(
+    transactionHistoryService.getSucceedList(),
+  );
+
+  const { syncTop10History, syncSingleAddress } =
+    useSyncHistoryDB(unionAccounts);
+  const { projectDict, tokenDict } = useHistoryTokenDict();
+  const getSwapHistory = async (add?: string) => {
+    const swapList = await SwapItemEntity.getAllHistoryItem(add);
+    return swapList;
+  };
+
+  const batchFetchDataV2 = async () => {
+    // fetch data from local database
+    const addresses = isSceneUsingAllAccounts
+      ? unionAccounts.map(account => account.address.toLowerCase())
+      : [finalSceneCurrentAccount?.address.toLowerCase()!];
+
+    // juset not in single token history
+    console.log('batchFetchDataV2 addresses', addresses);
+    const [historyList, swapList] = await Promise.all([
+      HistoryItemEntity.getAllHistoryItemSortedByTime(addresses),
+      getSwapHistory(
+        isSceneUsingAllAccounts
+          ? undefined
+          : finalSceneCurrentAccount?.address.toLowerCase(),
+      ),
+    ]);
+    console.log('tokenDict', Object.keys(tokenDict).length);
+    console.log('projectDict', Object.keys(projectDict).length);
+    console.log('historyList', historyList.length);
+    console.log('swapList', swapList.length);
+
+    const list = historyList.map(
+      item =>
+        ({
+          ...ensureHistoryListItemFromDb(item),
+          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+          tokenDict,
+          projectDict,
+          isShowSuccess: historySuccessList.includes(
+            `${item.owner_addr}-${item.txHash}`,
+          ),
+        } as HistoryDisplayItem),
+    );
+    setDbData(list);
+    return list;
+  };
+
+  const isNeedFetchFromApi = useMemo(() => {
+    const isUseingContactsOrSafe =
+      !isSceneUsingAllAccounts &&
+      (finalSceneCurrentAccount?.type === KEYRING_CLASS.WATCH ||
+        finalSceneCurrentAccount?.type === KEYRING_CLASS.GNOSIS);
+    return isInTokenDetail || isUseingContactsOrSafe;
+  }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, isInTokenDetail]);
 
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
-    const accountList = isSceneUsingAllAccounts
-      ? unionAccounts
-      : [finalSceneCurrentAccount];
-    const queue = new PQueue({
-      interval: 2000,
-      intervalCap: 10,
-    });
-    for (let i = 0; i < accountList.length; i++) {
-      queue.add(async () => {
-        const account = accountList[i];
-        if (!account) {
-          return;
-        }
-        const addr = account.address.toLowerCase();
-        if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
-          return;
-        }
-        const needFilter = isInTokenDetail && tokenItem;
-        const result = needFilter
-          ? await fetchData(
-              addr,
-              lastMap.current[addr] || 0,
-              tokenItem.chain,
-              tokenItem._tokenId,
-            )
-          : await fetchData(addr, lastMap.current[addr] || 0);
 
-        if (result.list.length < PAGE_COUNT) {
-          hasMoreMap.current[addr] = false;
-        } else {
-          hasMoreMap.current[addr] = true;
-        }
-        lastMap.current[addr] = result.last || 0;
-        list.push(
-          ...result.list.map(item => ({
-            ...item,
-            account,
-          })),
-        );
+    if (!isNeedFetchFromApi) {
+      const res = await batchFetchDataV2();
+      if (!isReady.current) {
+        isReady.current = true;
+      }
+      return { list: res };
+    } else {
+      const swapList = await getSwapHistory(); // just for single token history
+      const accountList = isSceneUsingAllAccounts
+        ? unionAccounts
+        : [finalSceneCurrentAccount];
+      const queue = new PQueue({
+        interval: 2000,
+        intervalCap: 10,
       });
+      for (let i = 0; i < accountList.length; i++) {
+        queue.add(async () => {
+          const account = accountList[i];
+          if (!account) {
+            return;
+          }
+          const addr = account.address.toLowerCase();
+          if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+            return;
+          }
+          const needFilter = isInTokenDetail && tokenItem;
+          const result = needFilter
+            ? await fetchData(
+                addr,
+                lastMap.current[addr] || 0,
+                tokenItem.chain,
+                tokenItem._tokenId,
+              )
+            : await fetchData(addr, lastMap.current[addr] || 0);
+
+          if (result.list.length < PAGE_COUNT) {
+            hasMoreMap.current[addr] = false;
+          } else {
+            hasMoreMap.current[addr] = true;
+          }
+          lastMap.current[addr] = result.last || 0;
+          list.push(
+            ...result.list.map(item => ({
+              ...item,
+              isLocalSwap: swapList.some(e => e.tx_id === item.id),
+              account,
+            })),
+          );
+        });
+      }
+      if (!isReady.current) {
+        isReady.current = true;
+      }
+      if (accountList.length > 0) {
+        await waitQueueFinished(queue);
+      }
+      return { list: list };
     }
-    if (!isReady.current) {
-      isReady.current = true;
-    }
-    if (accountList.length > 0) {
-      await waitQueueFinished(queue);
-    }
-    return { list };
   };
 
   const fetchData = async (
@@ -177,7 +273,9 @@ function History({
       throw new Error('no account');
     }
 
-    const getHistory = openapi.listTxHisotry;
+    const getHistory = !isInTokenDetail
+      ? openapi.getAllTxHistory
+      : openapi.listTxHisotry;
     try {
       const res = await getHistory({
         id: address,
@@ -187,13 +285,19 @@ function History({
         token_id,
       });
 
-      const { project_dict, cate_dict, token_dict, history_list: list } = res;
+      const {
+        project_dict,
+        cate_dict,
+        token_dict,
+        token_uuid_dict,
+        history_list: list,
+      } = res;
       const displayList = list
         .map(item => ({
           ...item,
           projectDict: project_dict,
           cateDict: cate_dict,
-          tokenDict: token_dict,
+          tokenDict: token_dict || token_uuid_dict,
           address,
           key: `${address}_${item.chain}_${item.id}`,
         }))
@@ -263,9 +367,9 @@ function History({
             }
 
             return (
-              item.createdAt >= Date.now() - 3600000 &&
-              !item.isSubmitFailed &&
-              !isSynced
+              item.createdAt >= Date.now() - 3600000 && // gap smaller 1 hour
+              !item.isSubmitFailed && // not submit failed
+              !isSynced // not has synced and not in history list
             );
           })),
     ];
@@ -282,34 +386,85 @@ function History({
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    reloadAsync();
+
+    if (isNeedFetchFromApi) {
+      reloadAsync();
+    } else {
+      isSceneUsingAllAccounts
+        ? syncTop10History(true)
+        : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
+    }
   });
 
   useEffect(() => {
     if (isReady.current) {
-      cancel();
-      refresh();
+      if (!isNeedFetchFromApi) {
+        batchFetchDataV2();
+      } else {
+        cancel();
+        refresh();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
-  const { data, loading, loadingMore, loadMore, reloadAsync, cancel } =
-    useInfiniteScroll(() => batchFetchData(), {
-      isNoMore: () => {
-        return Object.values(hasMoreMap.current).every(item => !item);
-      },
-      onSuccess() {
-        setCurrentPage(currentPage + 1);
-        runFetchLocalTx();
-      },
-    });
+  const {
+    data: _data,
+    loading,
+    loadingMore,
+    loadMore,
+    reloadAsync,
+    cancel,
+  } = useInfiniteScroll(() => batchFetchData(), {
+    isNoMore: () => {
+      if (!isNeedFetchFromApi) {
+        return true;
+      }
+      return Object.values(hasMoreMap.current).every(item => !item);
+    },
+    onSuccess() {
+      setCurrentPage(currentPage + 1);
+      runFetchLocalTx();
+    },
+  });
+
+  const thorttleBatchFetchData = throttle(batchFetchData, 2000);
+
+  useAppOrmSyncEvents({
+    taskFor: ['all-history'],
+    onRemoteDataUpserted: ctx => {
+      switch (ctx.taskFor) {
+        case 'all-history':
+          thorttleBatchFetchData();
+          break;
+        default:
+          break;
+      }
+    },
+  });
+
+  const data = useMemo(() => {
+    return isNeedFetchFromApi ? _data : { list: dbData };
+  }, [_data, isNeedFetchFromApi, dbData]);
 
   const allTxHistory = useMemo(() => {
     return orderBy(data?.list || [], 'time_at', 'desc');
   }, [data]);
 
+  useMount(() => {
+    const list = transactionHistoryService.getSucceedList();
+    setHistorySuccessList(list);
+    transactionHistoryService.clearSuccessAndFailList();
+  });
+
   const displayList = useMemo(() => {
     return allTxHistory
+      .filter(tx => {
+        if (!isShowAll) {
+          return !tx.is_scam;
+        }
+        return true;
+      })
       .filter(tx => {
         if (isSceneUsingAllAccounts) {
           return true;
@@ -318,11 +473,12 @@ function History({
           finalSceneCurrentAccount?.address || '',
           tx.address,
         );
-      })
-      .slice(0, (currentPage + 1) * PAGE_COUNT);
+      });
+    // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
-    currentPage,
+    isShowAll,
+    // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
   ]);
@@ -332,6 +488,10 @@ function History({
     return () => {
       eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
     };
+  });
+
+  const getHeaderRight = useMemoizedFn(() => {
+    return <HistoryFilterMenu setIsShowMenu={setIsShowMenu} />;
   });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -348,7 +508,7 @@ function History({
               chain={tokenItem?.chain}
               chainSize={10}
             />
-            <Text style={styles.titleText}>{tokenItem.symbol}</Text>
+            <Text style={styles.titleText}>{tokenItem?.symbol}</Text>
             <Text style={styles.titleText}>Transactions</Text>
           </View>
         }
@@ -357,24 +517,49 @@ function History({
     );
   }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
 
+  const resetTopMenu = useCallback(() => {
+    setIsShowMenu(false);
+  }, [setIsShowMenu]);
+
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
       setNavigationOptions({
         headerTitle: getHeaderTitle,
+        headerRight: getHeaderRight,
+      });
+    } else {
+      setNavigationOptions({
+        headerRight: getHeaderRight,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setNavigationOptions, getHeaderTitle]);
+  }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = loading && !allTxHistory.length;
+  const isFirstLoading = loading && !allTxHistory.length && !groups?.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
     return <Empty />;
   }
 
   return (
-    <View style={{ paddingBottom: bottom, paddingTop: 24 }}>
-      {isTestnet || isInTokenDetail ? null : (
+    <View
+      // onPress={() => {
+      //   setIsShowMenu(false);
+      // }}
+      // eslint-disable-next-line react-native/no-inline-styles
+      style={{ paddingBottom: bottom, paddingTop: 0, position: 'relative' }}>
+      <>
+        {isShowMenu && (
+          <View style={styles.menuContainer}>
+            <Text style={styles.menuItemText}>
+              {strings('page.transactions.ViewHiddenItems')}
+            </Text>
+            <View style={styles.valueView}>
+              <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
+            </View>
+          </View>
+        )}
+        {/* {isTestnet || isInTokenDetail ? null : (
         <TouchableOpacity
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
@@ -391,17 +576,20 @@ function History({
           <Text style={styles.linkText}>Hide scam transactions</Text>
           <RcIconRight />
         </TouchableOpacity>
-      )}
-      <HistoryList
-        list={[...(groups || []), ...(displayList || [])]}
-        localTxList={groups}
-        loading={isFirstLoading}
-        loadingMore={loadingMore}
-        refreshLoading={loading}
-        isForMultipleAdderss={isForMultipleAdderss}
-        loadMore={loadMore}
-        onRefresh={refresh}
-      />
+      )} */}
+        <HistoryList
+          resetTopMenu={resetTopMenu}
+          historySuccessList={historySuccessList}
+          list={[...(groups || []), ...(displayList || [])]}
+          localTxList={groups}
+          loading={isFirstLoading}
+          loadingMore={loadingMore}
+          refreshLoading={isNeedFetchFromApi && loading}
+          isForMultipleAdderss={isForMultipleAdderss}
+          loadMore={loadMore}
+          onRefresh={refresh}
+        />
+      </>
     </View>
   );
 }
@@ -416,12 +604,13 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   } = useGeneralTokenDetailSheetModal();
   useLastUsedAccountInScreen();
 
+  const { styles } = useTheme2024({ getStyle });
   const { isSceneUsingAllAccounts } = useSceneAccountInfo({
     forScene: 'MultiHistory',
   });
 
   return (
-    <NormalScreenContainer2024 type="bg1">
+    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
       {isForMultipleAdderss && (
         <AccountSwitcherModal
           forScene="MultiHistory"
@@ -451,7 +640,44 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  container: {
+    backgroundColor: isLight ? '#F6F7F7' : colors2024['neutral-bg-1'],
+  },
+  menuContainer: {
+    elevation: 5,
+    shadowColor: 'rgba(25, 35, 60, 0.2)', // Shadow color
+    shadowOffset: { width: 0, height: 12 }, // Horizontal and vertical offsets
+    shadowOpacity: 0.2, // Shadow opacity
+    shadowRadius: 8, // Blur radius
+    flexDirection: 'row',
+    zIndex: 1,
+    justifyContent: 'space-between',
+    position: 'absolute',
+    top: 0,
+    right: 16,
+    alignItems: 'center',
+    width: 250,
+    height: 56,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 12,
+    // paddingVertical: 16,
+    borderRadius: 16,
+  },
+  menuItemText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  valueView: {
+    // width: '50%',
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
   link: {
     marginHorizontal: 20,
     marginBottom: 8,

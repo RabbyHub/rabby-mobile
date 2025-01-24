@@ -66,8 +66,12 @@ function SendScreen({
           (isForMultipleAdderss ? RootNames.MultiSend : RootNames.Send),
       )?.params,
   ) as
-    | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
-    | { safeInfo: { nonce: number; chainId: number } }
+    | {
+        chainEnum?: CHAINS_ENUM | undefined;
+        tokenId?: TokenItem['id'];
+        toAddress?: string;
+      }
+    | { safeInfo: { nonce: number; chainId: number }; toAddress?: string }
     | undefined;
 
   const {
@@ -104,7 +108,7 @@ function SendScreen({
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendTokenForm();
+  } = useSendTokenForm(navParams?.toAddress);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances();
 
@@ -197,7 +201,9 @@ function SendScreen({
         });
 
         tokenFromOrder = firstChain ? makeTokenFromChain(firstChain) : null;
-        if (firstChain) setCurrentToken(tokenFromOrder!);
+        if (firstChain) {
+          setCurrentToken(tokenFromOrder!);
+        }
       }
 
       let needLoadToken: TokenItem =
@@ -205,7 +211,9 @@ function SendScreen({
 
       if (chainItem && needLoadToken.chain !== chainItem.serverId) {
         const target = findChainByServerID(needLoadToken.chain);
-        if (target?.enum) setChainEnum(target.enum);
+        if (target?.enum) {
+          setChainEnum(target.enum);
+        }
       }
       if (!chainItem) {
         setChainEnum(CHAINS_ENUM.ETH);

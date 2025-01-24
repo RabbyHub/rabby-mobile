@@ -64,6 +64,8 @@ import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 import { bytesToHex } from '@ethereumjs/util';
 import { CustomTestnetTokenBase } from '../services/customTestnetService';
+import { updateExpiredTime } from '@/databases/sync/assets';
+import { PENDGING_TIME } from '@/constant/expireTime';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -598,6 +600,8 @@ class ProviderController extends BaseController {
         // if (isSend) {
         //   pageStateCacheService.clear();
         // }
+        updateExpiredTime(txParams.from, PENDGING_TIME);
+
         // TODO: transactionHistory
         transactionHistoryService.addTx({
           address: txParams.from,

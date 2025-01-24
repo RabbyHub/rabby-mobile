@@ -94,6 +94,7 @@ export const RootNames = {
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIDapps: 'DevUIDapps',
+  DevDataSQLite: 'DevDataSQLite',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -108,6 +109,8 @@ export const RootNames = {
   Approvals: 'Approvals',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
+  HistoryDetail: 'HistoryDetail',
+  HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
@@ -211,6 +214,12 @@ function makeScreenSpecConfig() {
       androidStatusBarBg: colors2024['neutral-bg-1'],
     };
 
+    const bg2Default2024Conf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors2024['neutral-bg-2'],
+    };
+
     const transparentDefault2024Conf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
       iosStatusBarStyle: adaptiveIosStatusBarStyle,
@@ -262,8 +271,21 @@ function makeScreenSpecConfig() {
       MultiAddressHome: bg1Default2024Conf,
       // MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
-      History: bg1Default2024Conf,
-      MultiAddressHistory: bg1Default2024Conf,
+      History: {
+        ...bg2Default2024Conf,
+        androidStatusBarBg: !isDarkTheme
+          ? '#F6F7F7'
+          : colors2024['neutral-bg-1'],
+      },
+      MultiHistory: {
+        ...bg2Default2024Conf,
+        androidStatusBarBg: !isDarkTheme
+          ? '#F6F7F7'
+          : colors2024['neutral-bg-1'],
+      },
+      MultiAddressHistory: bg2Default2024Conf,
+      HistoryDetail: bg2Default2024Conf,
+      HistoryLocalDetail: bg2Default2024Conf,
 
       Dapps: bg1Default2024Conf,
       SendNFT: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,

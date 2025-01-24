@@ -1,13 +1,25 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type {
+  CompositeScreenProps,
+  NavigatorScreenParams,
+} from '@react-navigation/native';
+
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
-import { AppRootName, RootNames } from './constant/layout';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { Chain, CHAINS_ENUM } from './constant/chains';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolioToken } from './screens/Home/types';
+import type { RootNames } from './constant/layout';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { Chain } from './constant/chains';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  AbstractPortfolio,
+  AbstractPortfolioToken,
+  AbstractProject,
+} from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
+import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
+import type { TransactionGroup } from './core/services/transactionHistory';
+// import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -26,8 +38,19 @@ export type RootStackParamsList = {
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
-  [RootNames.NftDetail]?: {};
-  [RootNames.DeFiDetail]?: {};
+  [RootNames.NftDetail]: {
+    token: NFTItem;
+    account?: KeyringAccountWithAlias;
+    isSingleAddress?: boolean;
+  };
+  [RootNames.DeFiDetail]?: {
+    data: AbstractProject;
+    portfolioList: AbstractPortfolio[];
+    isSingleAddress?: boolean;
+    account?: KeyringAccountWithAlias | null;
+    cache: boolean;
+    relateTokenId?: string;
+  };
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
@@ -80,6 +103,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIAccountShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
+  [RootNames.DevDataSQLite]?: {};
 };
 
 export type AddressNavigatorParamList = {
@@ -193,8 +217,27 @@ export type SingleAddressNavigatorParamList = {
 
 export type TransactionNavigatorParamList = {
   [RootNames.History]?: {};
-  [RootNames.MultiAddressHistory]?: {};
+  [RootNames.MultiAddressHistory]?: {
+    isInTokenDetail?: boolean;
+    isMultiAddress?: boolean;
+    tokenItem?: AbstractPortfolioToken;
+  };
   [RootNames.HistoryFilterScam]?: {};
+  [RootNames.HistoryDetail]: {
+    data: HistoryDisplayItem;
+    isForMultipleAdderss?: boolean;
+    title?: string;
+  };
+  [RootNames.HistoryLocalDetail]: {
+    data: TransactionGroup;
+    canCancel?: boolean;
+    isForMultipleAdderss?: boolean;
+    title?: string;
+    // sendsToken: (TokenItem | undefined)[];
+    // approveToken?: TokenItem;
+    // formatType: HistoryItemCateType;
+    // recievesToken: (TokenItem | undefined)[];
+  };
   [RootNames.Send]?: {};
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
@@ -242,3 +285,34 @@ export type SettingNavigatorParamList = {
     rpcUrl: string;
   };
 };
+
+type _NestedScreensParamsDict = {
+  HomeNavigatorParamsList: HomeNavigatorParamsList;
+  HomeNonTabNavigatorParamsList: HomeNonTabNavigatorParamsList;
+  GetStartedNavigatorParamsList: GetStartedNavigatorParamsList;
+  TestKitsNavigatorParamsList: TestKitsNavigatorParamsList;
+  AddressNavigatorParamList: AddressNavigatorParamList;
+  AccountNavigatorParamList: AccountNavigatorParamList;
+  SingleAddressNavigatorParamList: SingleAddressNavigatorParamList;
+  TransactionNavigatorParamList: TransactionNavigatorParamList;
+  SettingNavigatorParamList: SettingNavigatorParamList;
+  DappsNavigatorParamsList: DappsNavigatorParamsList;
+};
+type _NestedScreensParamsName = keyof _NestedScreensParamsDict;
+
+export type GetRootScreensParamsList<T extends keyof RootStackParamsList> =
+  RootStackParamsList[T];
+export type GetRootScreenNavigationProps<T extends keyof RootStackParamsList> =
+  NativeStackScreenProps<RootStackParamsList, T>;
+
+export type GetNestedScreensParamsList<
+  T extends _NestedScreensParamsName,
+  K extends keyof _NestedScreensParamsDict[T] & string,
+> = _NestedScreensParamsDict[T][K];
+export type GetNestedScreenNavigationProps<
+  T extends _NestedScreensParamsName,
+  K extends keyof _NestedScreensParamsDict[T] & string,
+> = CompositeScreenProps<
+  NativeStackScreenProps<_NestedScreensParamsDict[T], K>,
+  NativeStackScreenProps<RootStackParamsList>
+>;

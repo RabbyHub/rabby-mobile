@@ -4,18 +4,15 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import {
-  DEFAULT_NAVBAR_FONT_SIZE,
-  RootNames,
-  ScreenWithAccountSwitcherLayouts,
-  makeHeadersPresets,
-} from '@/constant/layout';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
+import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
+import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
@@ -25,6 +22,7 @@ import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
+import { strings } from '@/utils/i18n';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -33,7 +31,7 @@ export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
 
-  const { colors, colors2024 } = useTheme2024();
+  const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
   return (
@@ -111,7 +109,7 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
+            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
           },
         }}
       />
@@ -130,7 +128,7 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
+            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
           },
         }}
       />
@@ -150,6 +148,40 @@ export default function TransactionNavigator() {
           },
           headerStyle: {
             backgroundColor: colors2024?.['neutral-bg-1'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.HistoryDetail}
+        component={HistoryDetailScreen}
+        options={mergeScreenOptions({
+          title: '',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+          headerStyle: {
+            backgroundColor: colors2024?.['neutral-bg-2'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.HistoryLocalDetail}
+        component={HistoryLocalDetailScreen}
+        options={mergeScreenOptions({
+          title: '',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+          headerStyle: {
+            backgroundColor: colors2024?.['neutral-bg-2'],
           },
         })}
       />

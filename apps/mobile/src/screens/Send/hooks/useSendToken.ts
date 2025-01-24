@@ -278,9 +278,13 @@ export function makeSendTokenValidationSchema(options: {
         t('page.sendToken.sectionTo.addrValidator__invalid'),
         value => {
           // allow empty for this test
-          if (!value) return true;
+          if (!value) {
+            return true;
+          }
 
-          if (value && isValidAddress(value)) return true;
+          if (value && isValidAddress(value)) {
+            return true;
+          }
 
           return false;
         },
@@ -315,7 +319,9 @@ function calcGasCost({
   const targetChain = findChainByEnum(chainEnum)!;
   const gasList = gasPriceMap[targetChain.enum]?.list;
 
-  if (!gasList) return new BigNumber(0);
+  if (!gasList) {
+    return new BigNumber(0);
+  }
 
   const lastTimeGas: ChainGas | null =
     preferenceService.getLastTimeGasSelection(targetChain.id);
@@ -366,7 +372,7 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 /**
  * @description only called once at top level
  */
-export function useSendTokenForm() {
+export function useSendTokenForm(toAddress?: string) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
@@ -475,7 +481,6 @@ export function useSendTokenForm() {
         to: prev.to,
       };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAccount?.type, currentAccount?.address]);
 
   const { validationSchema } = useMemo(() => {
@@ -814,6 +819,11 @@ export function useSendTokenForm() {
     [formik, setFormValues, handleFormValuesChange],
   );
 
+  useEffect(() => {
+    toAddress && handleFieldChange('to', toAddress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toAddress]);
+
   const estimateGasOnChain = useCallback(
     async (input?: {
       chainItem?: Chain | null;
@@ -835,8 +845,12 @@ export function useSendTokenForm() {
         currentAddress = currentAccount?.address,
       } = input || {};
 
-      if (!lastestChainItem?.needEstimateGas) return doReturn(DEFAULT_GAS_USED);
-      if (!currentAddress) return doReturn();
+      if (!lastestChainItem?.needEstimateGas) {
+        return doReturn(DEFAULT_GAS_USED);
+      }
+      if (!currentAddress) {
+        return doReturn();
+      }
 
       if (lastestChainItem.serverId !== tokenItem.chain) {
         console.warn(
@@ -998,10 +1012,16 @@ export function useSendTokenForm() {
 
   const handleMaxInfoChanged = useCallback(
     async (input?: { gasLevel: GasLevel }) => {
-      if (!currentAccount) return;
+      if (!currentAccount) {
+        return;
+      }
 
-      if (screenState.isLoading) return;
-      if (screenState.isEstimatingGas) return;
+      if (screenState.isLoading) {
+        return;
+      }
+      if (screenState.isEstimatingGas) {
+        return;
+      }
 
       const tokenBalance = new BigNumber(
         currentToken.raw_amount_hex_str || 0,

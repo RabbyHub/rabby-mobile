@@ -13,15 +13,13 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { View } from 'react-native-reanimated/lib/typescript/Animated';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 export default function TokenLabel({
   token,
   isNft,
-  isMyOwn,
-  disableClickToken: propDisableClick,
   style,
-  isForMultipleAdderss,
-  address,
 }: RNViewProps & {
   isMyOwn?: boolean;
   disableClickToken?: boolean;
@@ -43,62 +41,20 @@ export default function TokenLabel({
   const symbolName = useMemo(() => {
     const symbol = isNft ? '' : getTokenSymbol(token);
 
-    return isNft
-      ? token?.name ||
-          (symbol ? `${symbol} ${token?.inner_id}` : t('global.unknownNFT'))
-      : symbol;
+    return isNft ? t('page.singleHome.sectionHeader.Nft') : symbol;
   }, [t, isNft, token]);
 
-  const disableClickToken = propDisableClick || (isNft && !isMyOwn);
-
-  const handlePress = useCallback(() => {
-    if (disableClickToken) {
-      return;
-    }
-
-    if (isNft) {
-      naviPush(RootNames.NftDetail, {
-        token: { ...token },
-        isSingleAddress: !isForMultipleAdderss,
-      });
-    } else {
-      // if (address) {
-      //   setTokenDetailAddress(address);
-      // }
-      // openTokenDetailPopup(token as TokenItem);
-      naviPush(RootNames.TokenDetail, {
-        token: ensureAbstractPortfolioToken(token),
-        // account: address,
-        needUseCacheToken: true,
-        isSingleAddress: !isForMultipleAdderss,
-      });
-    }
-  }, [token, disableClickToken, isNft, isForMultipleAdderss]);
-
-  if (disableClickToken) {
-    return (
-      <Text style={style} numberOfLines={1} ellipsizeMode="tail">
-        {symbolName}
-      </Text>
-    );
-  }
-
   return (
-    <TouchableText
-      onPress={handlePress}
-      disabled={disableClickToken}
-      style={[!disableClickToken && styles.clickable, style]}
-      numberOfLines={1}
-      ellipsizeMode="tail">
-      {symbolName}
-    </TouchableText>
+    <Text style={style} numberOfLines={1} ellipsizeMode="tail">
+      {ellipsisOverflowedText(symbolName, 6)}
+    </Text>
   );
 }
 
 const getStyles = createGetStyles(colors => {
   return {
     clickable: {
-      textDecorationLine: 'underline',
+      // textDecorationLine: 'underline',
     },
   };
 });

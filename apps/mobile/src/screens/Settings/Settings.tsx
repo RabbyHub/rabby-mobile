@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { Alert, Linking, Platform, ScrollView, Text, View } from 'react-native';
 
 import {
@@ -32,6 +32,7 @@ import {
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
 import {
+  makeThemeOptions,
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
   useTheme2024,
@@ -95,6 +96,9 @@ import WalletLockTestItemModal, {
 import DevUIPlaygroundModal, {
   useDevUIPlaygroundModalVisible,
 } from './sheetModals/DevUIPlayground';
+import DevDataPlayground, {
+  useDevDataPlaygroundModalVisible,
+} from './sheetModals/DevDataPlayground';
 import DevUIWipModal, {
   useUIDevWipModalVisiable,
 } from './sheetModals/DevUIWip';
@@ -103,6 +107,9 @@ import CurrentLanguageSelectorModal, {
 } from './sheetModals/LanguageSelector';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { useSQLiteStatics } from '@/databases/hooks/_statics';
+import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
+import { AppCacheSizeText } from './components/SpecialText';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -158,8 +165,13 @@ function SettingsBlocks() {
   }, [shouldRedirectToSetPasswordBefore]);
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
-  const { appThemeText } = useAppTheme();
+  const { appTheme } = useAppTheme();
   const { t } = useTranslation();
+  const appThemeText = useMemo(() => {
+    return (
+      makeThemeOptions(t).find(item => item.value === appTheme)?.title || ''
+    );
+  }, [appTheme, t]);
 
   const navigation = useRabbyAppNavigation();
 
@@ -201,7 +213,7 @@ function SettingsBlocks() {
             rightTextNode: <AutoLockSettingLabel />,
           },
           {
-            label: 'Current Language',
+            label: t('page.setting.currentLanguage'),
             icon: RcI18n,
             onPress: () => {
               setCurrentLanguageModalVisible(true);
@@ -341,6 +353,46 @@ function SettingsBlocks() {
           },
         ].filter(Boolean),
       },
+      extra: {
+        label: '',
+        items: [
+          {
+            label: t('page.setting.appCache'),
+            icon: RcClearPending,
+            rightNode: ({ rightIconNode }) => {
+              return (
+                <View style={{ flexDirection: 'row' }}>
+                  <AppCacheSizeText
+                    style={{
+                      color: colors['neutral-title-1'],
+                      fontSize: 14,
+                      fontWeight: '400',
+                      paddingRight: 8,
+                    }}
+                  />
+                  {rightIconNode}
+                </View>
+              );
+            },
+            onPress: () => {
+              Alert.alert(
+                t('page.settingModal.clearAppCache.title'),
+                t('page.settingModal.clearAppCache.clearAppCacheDesc'),
+                [
+                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
+                  {
+                    text: t('page.settingModal.clearAppCache.button.confirm'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      await dropAppDataSourceAndQuitApp();
+                    },
+                  },
+                ],
+              );
+            },
+          },
+        ],
+      },
     };
   })();
 
@@ -354,9 +406,10 @@ function SettingsBlocks() {
             key={l1key}
             label={block.label}
             style={[
-              idx > 0 && {
-                marginTop: 16,
-              },
+              idx > 0 &&
+                !!block.label && {
+                  marginTop: 16,
+                },
             ]}>
             {block.items.map((item, idx_l2) => {
               return (
@@ -433,6 +486,7 @@ function DevSettingsBlocks() {
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
+  const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -511,10 +565,17 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: '[UI] Playground',
+              label: 'UI Playground',
               icon: RcCode,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'Data Playground',
+              icon: RcCode,
+              onPress: () => {
+                setDataPlaygroundModalVisible(true);
               },
             },
             {
@@ -659,6 +720,7 @@ function DevSettingsBlocks() {
       <WalletLockTestItemModal />
       <DevUIWipModal />
       <DevUIPlaygroundModal />
+      <DevDataPlayground />
     </>
   );
 }

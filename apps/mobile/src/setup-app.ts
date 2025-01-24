@@ -5,6 +5,7 @@ import {
 } from 'react-native-exception-handler';
 import { initSentry } from './core/sentry';
 import './perfs/bundle-splitter-analysis.ts';
+import './databases/orm';
 
 setJSExceptionHandler((error, isFatal) => {
   console.debug('setJSExceptionHandler:: error');

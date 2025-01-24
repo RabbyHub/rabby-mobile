@@ -40,7 +40,6 @@ import {
 } from './components/AssetRenderItems';
 import { HomeTopArea } from './components/HomeTopArea';
 import { useTranslation } from 'react-i18next';
-import { useRefreshTags } from './hooks/token';
 import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import {
@@ -51,7 +50,22 @@ import { DisplayedProject } from './utils/project';
 import { flatListRefAtom } from './hooks/store';
 import { useSetAtom } from 'jotai';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
+import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
+import { useTriggerTagAssets } from './hooks/refresh';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import throttle from 'lodash/throttle';
+
+const icons = {
+  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
+  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
+  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
+  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
+  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png'),
+  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
+  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+};
 
 interface Props {
   onRefresh(): void;
@@ -71,16 +85,63 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loading,
     refreshing,
     hasAssets,
+    updateTokens,
+    updatePortfolio,
+    reloadNftList,
   } = useQueryProjects(currentAccount?.address);
   const sortTokens = useSortToken(tokens);
-
+  const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
+    useTriggerTagAssets();
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
+  const throttleUpdateTokens = useCallback(
+    () => throttle(updateTokens, 4000),
+    [updateTokens],
+  );
+  const throttleUpdatePortfolio = useCallback(
+    () => throttle(updatePortfolio, 4000),
+    [updatePortfolio],
+  );
+  const throttleReloadNftList = useCallback(
+    () => throttle(reloadNftList, 4000),
+    [reloadNftList],
+  );
 
-  const { refreshTagNft, refreshTagToken, refreshTagPortfolio } =
-    useRefreshTags();
+  useAppOrmSyncEvents({
+    taskFor: ['token', 'nfts', 'protocols'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (
+          !currentAccount?.address ||
+          !isSameAddress(ctx.owner_addr, currentAccount?.address) ||
+          !ctx.success
+        ) {
+          return;
+        }
+        switch (ctx.taskFor) {
+          case 'token':
+            throttleUpdateTokens();
+            break;
+          case 'nfts':
+            throttleReloadNftList();
+            break;
+          case 'protocols':
+            throttleUpdatePortfolio();
+            break;
+          default:
+            break;
+        }
+      },
+      [
+        currentAccount?.address,
+        throttleReloadNftList,
+        throttleUpdatePortfolio,
+        throttleUpdateTokens,
+      ],
+    ),
+  });
 
   const {
     sheetModalRef: tokenDetailModalRef,
@@ -214,7 +275,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const handleSwitchTab = (key: AsssetKey) => {
     if (loading || refreshing) {
       toast.info(
-        `Ops! The asset wasn't shown yet, please scroll down manually`,
+        "Ops! The asset wasn't shown yet, please scroll down manually",
       );
       return;
     }
@@ -245,145 +306,137 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }, 0);
   };
 
-  const icons = React.useMemo(
-    () => ({
-      unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-      unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-      foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-      foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-      pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png'),
-      pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-      unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
-      unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
-    }),
-    [],
+  const getTokenMenuActions = useCallback(
+    (data: AbstractPortfolioToken): MenuAction[] => {
+      return [
+        {
+          title: data._isFold
+            ? t('page.tokenDetail.action.unfold')
+            : t('page.tokenDetail.action.fold'),
+          icon: data._isFold
+            ? isDarkTheme
+              ? icons.unfoldDark
+              : icons.unfoldLight
+            : isDarkTheme
+            ? icons.foldDark
+            : icons.foldLight,
+          androidIconName: data._isFold
+            ? 'ic_rabby_menu_unfold'
+            : 'ic_rabby_menu_fold',
+          key: 'fold',
+          action() {
+            if (data._isFold) {
+              preferenceService.manualUnFoldToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+            } else {
+              preferenceService.manualFoldToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+            }
+            singleTokenRefresh();
+          },
+        },
+        {
+          title: data._isPined
+            ? t('page.tokenDetail.action.unpin')
+            : t('page.tokenDetail.action.pin'),
+          icon: data._isPined
+            ? isDarkTheme
+              ? icons.unpinDark
+              : icons.unpinLight
+            : isDarkTheme
+            ? icons.pinDark
+            : icons.pinLight,
+          androidIconName: data._isPined
+            ? 'ic_rabby_menu_un_pin'
+            : 'ic_rabby_menu_pin',
+          key: 'pin',
+          action() {
+            if (data._isPined) {
+              preferenceService.removePinedToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
+            } else {
+              preferenceService.pinToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              flatListRef.current?.scrollToOffset({
+                animated: true,
+                offset: HEADER_TOP_AREA_HEIGHT,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.pin_success'));
+            }
+            singleTokenRefresh();
+          },
+        },
+      ];
+    },
+    [isDarkTheme, singleTokenRefresh, t],
   );
-
-  const getTokenMenuActions = (data: AbstractPortfolioToken): MenuAction[] => {
-    return [
-      {
-        title: data._isFold
-          ? t('page.tokenDetail.action.unfold')
-          : t('page.tokenDetail.action.fold'),
-        icon: data._isFold
-          ? isDarkTheme
-            ? icons.unfoldDark
-            : icons.unfoldLight
-          : isDarkTheme
-          ? icons.foldDark
-          : icons.foldLight,
-        androidIconName: data._isFold
-          ? 'ic_rabby_menu_unfold'
-          : 'ic_rabby_menu_fold',
-        key: 'fold',
-        action() {
-          if (data._isFold) {
-            preferenceService.manualUnFoldToken({
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-          } else {
-            preferenceService.manualFoldToken({
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-          }
-          refreshTagToken();
-        },
-      },
-      {
-        title: data._isPined
-          ? t('page.tokenDetail.action.unpin')
-          : t('page.tokenDetail.action.pin'),
-        icon: data._isPined
-          ? isDarkTheme
-            ? icons.unpinDark
-            : icons.unpinLight
-          : isDarkTheme
-          ? icons.pinDark
-          : icons.pinLight,
-        androidIconName: data._isPined
-          ? 'ic_rabby_menu_un_pin'
-          : 'ic_rabby_menu_pin',
-        key: 'pin',
-        action() {
-          if (data._isPined) {
-            preferenceService.removePinedToken({
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
-          } else {
-            preferenceService.pinToken({
-              tokenId: data._tokenId,
-              chainId: data.chain,
-            });
-            flatListRef.current?.scrollToOffset({
-              animated: true,
-              offset: HEADER_TOP_AREA_HEIGHT,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.pin_success'));
-          }
-          refreshTagToken();
-        },
-      },
-    ];
-  };
-  const getDefiOrNftMenuAction = (
-    type: 'nft' | 'defi',
-    data: DisplayedProject | DisplayNftItem,
-  ): MenuAction[] => {
-    return [
-      {
-        title: data._isFold
-          ? t('page.tokenDetail.action.unfold')
-          : t('page.tokenDetail.action.fold'),
-        icon: data._isFold
-          ? isDarkTheme
-            ? icons.unfoldDark
-            : icons.unfoldLight
-          : isDarkTheme
-          ? icons.foldDark
-          : icons.foldLight,
-        androidIconName: data._isFold
-          ? 'ic_rabby_menu_unfold'
-          : 'ic_rabby_menu_fold',
-        key: 'fold',
-        action() {
-          if (data._isFold) {
-            if (type === 'defi') {
-              preferenceService.manualUnFoldDefi(data.id);
-              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-            } else if (type === 'nft' && data.chain) {
-              preferenceService.manualUnFoldNft({
-                chain: data.chain,
-                id: data.id,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+  const getDefiOrNftMenuAction = useCallback(
+    (
+      type: 'nft' | 'defi',
+      data: DisplayedProject | DisplayNftItem,
+    ): MenuAction[] => {
+      return [
+        {
+          title: data._isFold
+            ? t('page.tokenDetail.action.unfold')
+            : t('page.tokenDetail.action.fold'),
+          icon: data._isFold
+            ? isDarkTheme
+              ? icons.unfoldDark
+              : icons.unfoldLight
+            : isDarkTheme
+            ? icons.foldDark
+            : icons.foldLight,
+          androidIconName: data._isFold
+            ? 'ic_rabby_menu_unfold'
+            : 'ic_rabby_menu_fold',
+          key: 'fold',
+          action() {
+            if (data._isFold) {
+              if (type === 'defi') {
+                preferenceService.manualUnFoldDefi(data.id);
+                toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+              } else if (type === 'nft' && data.chain) {
+                preferenceService.manualUnFoldNft({
+                  chain: data.chain,
+                  id: data.id,
+                });
+                toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+              }
+            } else {
+              if (type === 'defi') {
+                preferenceService.manualFoldDefi(data.id);
+                toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+              } else if (type === 'nft' && data.chain) {
+                preferenceService.manualFoldNft({
+                  chain: data.chain,
+                  id: data.id,
+                });
+                toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+              }
             }
-          } else {
             if (type === 'defi') {
-              preferenceService.manualFoldDefi(data.id);
-              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-            } else if (type === 'nft' && data.chain) {
-              preferenceService.manualFoldNft({
-                chain: data.chain,
-                id: data.id,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+              singleDeFiRefresh();
+            } else if (type === 'nft') {
+              singleNFTRefresh();
             }
-          }
-          if (type === 'defi') {
-            refreshTagPortfolio();
-          } else if (type === 'nft') {
-            refreshTagNft();
-          }
+          },
         },
-      },
-    ];
-  };
+      ];
+    },
+    [isDarkTheme, singleDeFiRefresh, singleNFTRefresh, t],
+  );
 
   const renderItem = ({ item: _item }: { item: ActionItem }) => {
     const { type, data } = _item;
@@ -588,7 +641,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
-              refreshPositions();
+              refreshPositions(true);
               onRefresh();
             }}
             refreshing={refreshing}

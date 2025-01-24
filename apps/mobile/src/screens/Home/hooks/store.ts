@@ -2,13 +2,19 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
 
-import { getAllMyAccount } from '@/core/apis/address';
 import { formatNetworth } from '@/utils/math';
 import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
 import { FlatList } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { preferenceService } from '@/core/services';
+import { usePinTokens } from '@/screens/Search/usePinTokens';
+import { tagTokenList } from '../utils/token';
+import { tagProfiles } from './usePortfolio';
+import { tagNfts } from './nft';
+import { tokenNounceAtom, deFiNounceAtom, nftNounceAtom } from './refresh';
 
 export type CombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -26,6 +32,7 @@ type DisplayedProjectWithoutMethods = Omit<
 
 export type CombineDefiItem = DisplayedProjectWithoutMethods & {
   totalUsdValue: BigNumber;
+  filterTokenDesc?: string;
   fromAddress: Array<{
     address: string;
   }>;
@@ -45,132 +52,15 @@ export interface IAssets {
   lastUpdateTime?: number;
 }
 
-export const assetsMapAtom = atom<{ [address: string]: IAssets }>({});
-export const useAssetsMap = () => useAtom(assetsMapAtom);
-
 export const flatListRefAtom = atom<React.RefObject<FlatList> | null>(null);
-const getOrInitializeAssets = (
-  assets: { [address: string]: IAssets },
-  address: string,
-): IAssets => {
-  return assets[address] || {};
-};
 
-const createSetter = <T>(
-  address: string,
-  field: keyof IAssets,
-  updater: (prevValue?: T) => T | undefined,
-  setAssetsMap: (
-    updater: (prev: { [address: string]: IAssets }) => {
-      [address: string]: IAssets;
-    },
-  ) => void,
-) => {
-  setAssetsMap(prev => ({
-    ...prev,
-    [address]: {
-      ...getOrInitializeAssets(prev, address),
-      [field]: updater(prev[address]?.[field as keyof IAssets] as T),
-    },
-  }));
-};
-
-const EmptyRes = [undefined, () => {}] as const;
-
-export const usePortfoliosAtom = (address?: string) => {
-  const [assetsMap, setAssetsMap] = useAtom(assetsMapAtom);
-
-  if (!address) {
-    return EmptyRes;
-  }
-  const portfolios = assetsMap[address]?.portfolios;
-  const setPortfolios = (
-    valueOrUpdater:
-      | DisplayedProject[]
-      | ((prev?: DisplayedProject[]) => DisplayedProject[]),
-  ) => {
-    createSetter(
-      address,
-      'portfolios',
-      typeof valueOrUpdater === 'function'
-        ? valueOrUpdater
-        : () => valueOrUpdater,
-      setAssetsMap,
-    );
-  };
-  return [portfolios, setPortfolios] as const;
-};
-
-export const useTokensAtom = (address?: string) => {
-  const [assetsMap, setAssetsMap] = useAtom(assetsMapAtom);
-  if (!address) {
-    return EmptyRes;
-  }
-  const tokens = assetsMap[address]?.tokens;
-  const setTokens = (
-    valueOrUpdater:
-      | AbstractPortfolioToken[]
-      | ((prev?: AbstractPortfolioToken[]) => AbstractPortfolioToken[]),
-  ) => {
-    createSetter(
-      address,
-      'tokens',
-      typeof valueOrUpdater === 'function'
-        ? valueOrUpdater
-        : () => valueOrUpdater,
-      setAssetsMap,
-    );
-  };
-  return [tokens, setTokens] as const;
-};
-
-export const useNFTsAtom = (address?: string) => {
-  const [assetsMap, setAssetsMap] = useAtom(assetsMapAtom);
-  if (!address) {
-    return EmptyRes;
-  }
-  const nfts = assetsMap[address]?.nfts;
-  const setNFTs = (
-    valueOrUpdater: NFTItem[] | ((prev?: NFTItem[]) => NFTItem[]),
-  ) => {
-    createSetter(
-      address,
-      'nfts',
-      typeof valueOrUpdater === 'function'
-        ? valueOrUpdater
-        : () => valueOrUpdater,
-      setAssetsMap,
-    );
-  };
-  return [nfts, setNFTs] as const;
-};
-
-export const useLastUpdateTimeAtom = (address?: string) => {
-  const [assetsMap, setAssetsMap] = useAtom(assetsMapAtom);
-  if (!address) {
-    return EmptyRes;
-  }
-  const lastUpdateTime = assetsMap[address]?.lastUpdateTime;
-  const setLastUpdateTime = (
-    valueOrUpdater: number | ((prev?: number) => number),
-  ) => {
-    createSetter(
-      address,
-      'lastUpdateTime',
-      typeof valueOrUpdater === 'function'
-        ? valueOrUpdater
-        : () => valueOrUpdater,
-      setAssetsMap,
-    );
-  };
-  return [lastUpdateTime, setLastUpdateTime] as const;
-};
-
-export const combinedTokensAtom = atom(async get => {
-  const assetsMap = get(assetsMapAtom);
+export const combinedTokens = (assetsMap: {
+  [address: string]: IAssets;
+}): CombineTokensItem[] => {
   const tokenMap: Record<string, CombineTokensItem> = {};
-  const myAccouts = await getAllMyAccount();
-  const lowerAddresses = new Set(myAccouts.map(i => i.address.toLowerCase()));
+  const lowerAddresses = new Set(
+    Object.keys(assetsMap).map(i => i.toLowerCase()),
+  );
 
   Object.entries(assetsMap).forEach(([address, assets]) => {
     if (!lowerAddresses.has(address.toLowerCase())) {
@@ -223,14 +113,14 @@ export const combinedTokensAtom = atom(async get => {
       _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
       _amountStr: formatAmount(i.totalAmount.toNumber()),
     }));
-});
+};
 
-export const combinedDefiAtom = atom(async get => {
-  const assetsMap = get(assetsMapAtom);
+export const combinedProtocols = (assetsMap: {
+  [address: string]: IAssets;
+}): CombineDefiItem[] => {
   const defiMap: Record<string, CombineDefiItem> = {};
-  const myAccouts = await getAllMyAccount();
   const lowerAddresses = new Set(
-    myAccouts.map(i => i.address.toLowerCase()) || [],
+    Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );
   Object.entries(assetsMap).forEach(([address, assets]) => {
     if (!lowerAddresses.has(address.toLowerCase())) {
@@ -278,14 +168,14 @@ export const combinedDefiAtom = atom(async get => {
       totalUsdValue: p.totalUsdValue.toNumber(),
       _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
     }));
-});
+};
 
-export const combinedNFTAtom = atom(async get => {
-  const assetsMap = get(assetsMapAtom);
+export const combinedNFTs = (assetsMap: {
+  [address: string]: IAssets;
+}): CombineNFTItem[] => {
   const nftMap: Record<string, CombineNFTItem> = {};
-  const myAccouts = await getAllMyAccount();
   const lowerAddresses = new Set(
-    myAccouts.map(i => i.address.toLowerCase()) || [],
+    Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );
   Object.entries(assetsMap).forEach(([address, assets]) => {
     if (!lowerAddresses.has(address.toLowerCase())) {
@@ -333,114 +223,171 @@ export const combinedNFTAtom = atom(async get => {
       totalAmount: nft.totalAmount.toNumber(),
       amount: nft.totalAmount?.toNumber() || 0,
     }));
-});
+};
 
-export const updateTokensAtom = atom(
-  null,
-  (
-    get,
-    set,
-    {
+export const useAssetsMap = () => {
+  const [assetsMap, setAssetsMap] = useState<{ [address: string]: IAssets }>(
+    {},
+  );
+  const { handleFetchTokens } = usePinTokens();
+  const [tokenNounce, setTokenNounce] = useAtom(tokenNounceAtom);
+  const [defiNounce, setDefiNounce] = useAtom(deFiNounceAtom);
+  const [nftNounce, setNftNounce] = useAtom(nftNounceAtom);
+
+  const updateTokens = useCallback(
+    ({
       address,
       newTokens,
     }: {
       address: string;
       newTokens: AbstractPortfolioToken[];
+    }) => {
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [address]: {
+            ...currentAssets,
+            tokens: newTokens,
+          },
+        };
+      });
     },
-  ) => {
-    const currentAssets = get(assetsMapAtom);
+    [],
+  );
 
-    set(assetsMapAtom, {
-      ...currentAssets,
-      [address]: {
-        ...currentAssets[address],
-        tokens: newTokens,
-      },
-    });
-  },
-);
-
-export const updatePortfoliosAtom = atom(
-  null,
-  (
-    get,
-    set,
-    {
+  const updatePortfolios = useCallback(
+    ({
       address,
       newPortfolios,
-    }: { address: string; newPortfolios: DisplayedProject[] },
-  ) => {
-    const currentAssets = get(assetsMapAtom);
+    }: {
+      address: string;
+      newPortfolios: DisplayedProject[];
+    }) => {
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [address]: {
+            ...currentAssets,
+            portfolios: newPortfolios,
+          },
+        };
+      });
+    },
+    [],
+  );
+  const updateNFTs = useCallback(
+    ({ address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [address]: {
+            ...currentAssets,
+            nfts: newNFTs,
+          },
+        };
+      });
+    },
+    [],
+  );
 
-    set(assetsMapAtom, {
-      ...currentAssets,
-      [address]: {
-        ...currentAssets[address],
-        portfolios: newPortfolios,
-      },
+  const refreshTagToken = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    handleFetchTokens();
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          tokens: tagTokenList(assets.tokens || [], tokenSettings),
+        };
+      });
+
+      return updatedAssetsMap;
     });
-  },
-);
+  }, [handleFetchTokens]);
+  const refreshTagPortfolio = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
 
-export const updateNFTsAtom = atom(
-  null,
-  (get, set, { address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
-    const currentAssets = get(assetsMapAtom);
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        if (!assets) {
+          return;
+        }
+        updatedAssetsMap[address] = {
+          ...assets,
+          portfolios: tagProfiles(assets.portfolios || [], tokenSettings),
+        };
+      });
 
-    set(assetsMapAtom, {
-      ...currentAssets,
-      [address]: {
-        ...currentAssets[address],
-        nfts: newNFTs,
-      },
+      return updatedAssetsMap;
     });
-  },
-);
+  }, []);
+  const refreshTagNft = useCallback(async () => {
+    const tokenSettings =
+      (await preferenceService.getUserTokenSettings()) || {};
+    setAssetsMap(prevAssetsMap => {
+      const updatedAssetsMap: { [address: string]: IAssets } = {};
+      Object.entries(prevAssetsMap).forEach(([address, assets]) => {
+        updatedAssetsMap[address] = {
+          ...assets,
+          nfts: tagNfts(assets.nfts || [], tokenSettings),
+        };
+      });
 
-export const lastUpdateTimeAtom = atom(
-  get => (address: string) => {
-    const currentAssets = get(assetsMapAtom);
-    return currentAssets[address]?.lastUpdateTime ?? null;
-  },
-  (
-    get,
-    set,
-    {
-      address,
-      newLastUpdateTime,
-    }: { address: string; newLastUpdateTime: number },
-  ) => {
-    const currentAssets = get(assetsMapAtom);
-    set(assetsMapAtom, {
-      ...currentAssets,
-      [address]: {
-        ...currentAssets[address],
-        lastUpdateTime: newLastUpdateTime,
-      },
+      return updatedAssetsMap;
     });
-  },
-);
+  }, []);
 
-export const useDeleteAssets = () => {
-  const [, updateTokens] = useAtom(updateTokensAtom);
-  const [, updatePortfolios] = useAtom(updatePortfoliosAtom);
-  const [, updateNftList] = useAtom(updateNFTsAtom);
-  const deleteAssets = (address: string) => {
-    if (!address) {
-      return;
+  useEffect(() => {
+    if (tokenNounce > 0) {
+      refreshTagToken();
+      setTokenNounce(0);
     }
-    updateTokens({
-      address,
-      newTokens: [],
-    });
-    updatePortfolios({
-      address,
-      newPortfolios: [],
-    });
-    updateNftList({
-      address,
-      newNFTs: [],
-    });
+  }, [refreshTagToken, setTokenNounce, tokenNounce]);
+
+  useEffect(() => {
+    if (defiNounce > 0) {
+      refreshTagPortfolio();
+      setDefiNounce(0);
+    }
+  }, [refreshTagPortfolio, defiNounce, setDefiNounce]);
+
+  useEffect(() => {
+    if (nftNounce > 0) {
+      refreshTagNft();
+      setNftNounce(0);
+    }
+  }, [refreshTagNft, nftNounce, setNftNounce]);
+
+  const memoTokens = useMemo(() => {
+    return combinedTokens(assetsMap);
+  }, [assetsMap]);
+
+  const memoPortfolios = useMemo(() => {
+    return combinedProtocols(assetsMap);
+  }, [assetsMap]);
+
+  const memoNFTs = useMemo(() => {
+    return combinedNFTs(assetsMap);
+  }, [assetsMap]);
+
+  return {
+    updateTokens,
+    updatePortfolios,
+    updateNFTs,
+    tokens: memoTokens,
+    portfolios: memoPortfolios,
+    nftList: memoNFTs,
+    assetsMap,
+    setAssetsMap,
   };
-  return deleteAssets;
 };

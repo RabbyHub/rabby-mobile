@@ -25,8 +25,8 @@ import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
-import { useDeleteAssets } from '@/screens/Home/hooks/store';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -105,13 +105,15 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   }, [disableAutoFetch, fetchAccounts]);
 
   return {
-    accounts: [...accounts],
+    accounts: useMemo(() => {
+      return [...accounts];
+    }, [accounts]),
     fetchAccounts,
   };
 }
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const [accounts, setAccounts] = useAtom(accountsAtom);
+  const [allAccounts, setAccounts] = useAtom(accountsAtom);
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -132,11 +134,14 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
   }, [disableAutoFetch, fetchAccounts]);
 
   return {
-    accounts: [
-      ...accounts.filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
-    ],
+    accounts: useMemo(() => {
+      return [
+        ...allAccounts.filter(
+          a =>
+            a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+        ),
+      ];
+    }, [allAccounts]),
     fetchAccounts,
   };
 }
@@ -289,15 +294,19 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export function useRemoveAccount() {
-  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const deleteAssetInStore = useDeleteAssets();
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
       await fetchAccounts();
-      deleteAssetInStore(account?.address?.toLowerCase());
+      if (
+        accounts.filter(acc => isSameAddress(acc.address, account.address))
+          .length === 1
+      ) {
+        await deleteDBResourceForAddress(account.address);
+      }
     },
-    [deleteAssetInStore, fetchAccounts],
+    [accounts, fetchAccounts],
   );
 }
 
@@ -368,7 +377,9 @@ export function useLoadMatteredChainBalances() {
         }
       >(
         ctx => {
-          if (!isShowTestnet && ctx.isTestnetTask) return null;
+          if (!isShowTestnet && ctx.isTestnetTask) {
+            return null;
+          }
 
           return apiBalance.getAddressCacheBalance(
             currentAccountAddr,

@@ -3,7 +3,9 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import {
   ExplainTxResponse,
+  TokenItem,
   Tx,
+  TxAllHistoryResult,
   TxPushType,
   TxRequest,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -24,6 +26,7 @@ import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { updateExpiredTime } from '@/databases/sync/assets';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -79,6 +82,9 @@ export interface TransactionSigningItem {
 
 interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
+  successList: string[];
+  failList: string[];
+  isNeedFetchTxHistory?: boolean;
 }
 
 // TODO
@@ -96,6 +102,9 @@ export class TransactionHistoryService {
         name: APP_STORE_NAMES.txHistory,
         template: {
           transactions: [],
+          successList: [],
+          failList: [],
+          isNeedFetchTxHistory: false,
         },
       },
       {
@@ -104,6 +113,14 @@ export class TransactionHistoryService {
     );
     if (!Array.isArray(this.store.transactions)) {
       this.store.transactions = [];
+    }
+
+    if (!Array.isArray(this.store.successList)) {
+      this.store.successList = [];
+    }
+
+    if (!Array.isArray(this.store.failList)) {
+      this.store.failList = [];
     }
 
     this.init();
@@ -137,6 +154,29 @@ export class TransactionHistoryService {
       chainId,
       nonce,
     });
+  }
+
+  getSucceedCount() {
+    return this.store.successList.length;
+  }
+
+  getSucceedList() {
+    return this.store.successList;
+  }
+
+  getFailedCount() {
+    return this.store.failList.length;
+  }
+
+  getIsNeedFetchTxHistory() {
+    const res = this.store.isNeedFetchTxHistory;
+    this.store.isNeedFetchTxHistory = false;
+    return res;
+  }
+
+  clearSuccessAndFailList() {
+    this.store.successList = [];
+    this.store.failList = [];
   }
 
   getTransactionGroups(args?: {
@@ -370,6 +410,9 @@ export class TransactionHistoryService {
       nonce,
     })?.[0];
 
+    if (success) {
+      updateExpiredTime(address.toLowerCase());
+    }
     target?.txs?.forEach(tx => {
       if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
         this.updateTx({
@@ -379,6 +422,13 @@ export class TransactionHistoryService {
           isCompleted: true,
           gasUsed,
         });
+        const id = tx.hash || tx.reqId;
+        if (success) {
+          id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
+        } else {
+          id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
+        }
+        this.store.isNeedFetchTxHistory = true;
       }
     });
 
@@ -602,6 +652,10 @@ export class TransactionGroup {
 
   get $ctx() {
     return this.maxGasTx.$ctx;
+  }
+
+  get action() {
+    return this.txs[0].action;
   }
 
   get address() {

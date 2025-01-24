@@ -135,7 +135,6 @@ export const Button = ({
           type === 'ghost' ? colors2024['brand-default'] : 'transparent',
         borderWidth: 1,
       },
-      buttonStyle,
       type === 'primary' && !noShadow && styles.shadowButton,
       isDisabled &&
         (type === 'ghost'
@@ -145,6 +144,7 @@ export const Button = ({
           : {
               backgroundColor: colors2024['brand-disable'],
             }),
+      buttonStyle,
     ]);
   }, [
     disabled,

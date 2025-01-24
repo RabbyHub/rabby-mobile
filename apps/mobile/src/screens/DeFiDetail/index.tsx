@@ -1,11 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import {
-  View,
-  ScrollView,
-  SectionList,
-  Keyboard,
-  RefreshControl,
-} from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { View, SectionList, RefreshControl } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
@@ -20,29 +14,21 @@ import { trigger } from 'react-native-haptic-feedback';
 import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { toast } from '@/components2024/Toast';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '../Home/types';
+import { AbstractPortfolio, AbstractProject } from '../Home/types';
 import { useMemoizedFn } from 'ahooks';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
-import { useRefreshTags } from '../Home/hooks/token';
+import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
 import {
   KeyringAccountWithAlias,
-  useAccounts,
   useCurrentAccount,
   useMyAccounts,
 } from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useAssetsMap } from '../Home/hooks/store';
-import { useSortAddressList } from '../Address/useSortAddressList';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { useAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
@@ -50,6 +36,7 @@ import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_ANDROID } from '@/core/native/utils';
 import { ellipsisAddress } from '@/utils/address';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -70,8 +57,8 @@ const hitSlop = {
 export const RightMore: React.FC<{
   token: AbstractProject;
   refreshBalance: () => void;
-}> = ({ token, refreshBalance }) => {
-  const { refreshTagPortfolio } = useRefreshTags();
+  refreshTags: () => void;
+}> = ({ token, refreshBalance, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -101,7 +88,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTagPortfolio();
+          refreshTags();
         },
       },
       {
@@ -140,12 +127,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTagPortfolio();
+          refreshTags();
           refreshBalance();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTagPortfolio, refreshBalance]);
+  }, [token, t, isDarkTheme, refreshTags, refreshBalance]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -183,9 +170,17 @@ export const DeFiDetailScreen = () => {
     isSingleAddress?: boolean;
   };
 
-  // console.log('DefiDetail data:', JSON.stringify(data));
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
+  const { deFiRefresh, singleDeFiRefresh } = useTriggerTagAssets();
+
+  const refreshTag = useCallback(() => {
+    if (isSingleAddress) {
+      singleDeFiRefresh();
+    } else {
+      deFiRefresh();
+    }
+  }, [deFiRefresh, isSingleAddress, singleDeFiRefresh]);
 
   const getHeaderTitle = useMemoizedFn(() => {
     return (
@@ -232,7 +227,13 @@ export const DeFiDetailScreen = () => {
   });
 
   const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore token={data} refreshBalance={triggerUpdate} />;
+    return (
+      <RightMore
+        token={data}
+        refreshBalance={triggerUpdate}
+        refreshTags={refreshTag}
+      />
+    );
   });
 
   React.useEffect(() => {
@@ -243,14 +244,12 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const [asssest] = useAssetsMap();
-
-  const { initFetchTop10Assets, refreshing } = useAssets();
+  const { getCacheTop10Assets, refreshing, assetsMap } = useAssets();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
 
-  const { currentAccount } = useCurrentAccount();
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const finalAccount = useMemo(
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],
@@ -277,8 +276,8 @@ export const DeFiDetailScreen = () => {
       totalUsdValue: SectionListItem['totalUsdValue'];
       address: SectionListItem['address'];
     }[] = [];
-    Object.keys(asssest).map(address => {
-      const { portfolios } = asssest[address];
+    Object.keys(assetsMap).map(address => {
+      const { portfolios } = assetsMap[address];
 
       portfolios?.map(portfolio => {
         if (portfolio.id === data.id && portfolio.chain === data.chain) {
@@ -307,7 +306,7 @@ export const DeFiDetailScreen = () => {
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [data, asssest, accounts, isSingleAddress, finalAccount, portfolioList]);
+  }, [data, assetsMap, accounts, isSingleAddress, finalAccount, portfolioList]);
 
   const sumNetWorth = useMemo(() => {
     const res = sectionsMultiProject.reduce((pre, cur) => {
@@ -330,6 +329,13 @@ export const DeFiDetailScreen = () => {
   );
 
   const { bottom } = useSafeAreaInsets();
+  useEffect(() => {
+    getCacheTop10Assets(false, {
+      disableNFT: true,
+      disableToken: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const androidBottomOffset = IS_ANDROID ? bottom : 0;
 
@@ -379,7 +385,10 @@ export const DeFiDetailScreen = () => {
         refreshControl={
           <RefreshControl
             onRefresh={() => {
-              initFetchTop10Assets(true);
+              getCacheTop10Assets(true, {
+                disableNFT: true,
+                disableToken: true,
+              });
             }}
             refreshing={refreshing}
           />

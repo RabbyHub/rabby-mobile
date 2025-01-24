@@ -235,6 +235,24 @@ export const useTokenPair = (userAddress: string) => {
     [setActiveProvider, setPayToken, setReceiveToken],
   );
 
+  const switchSwapAgain = useCallback(
+    (c: CHAINS_ENUM, payTokenId: string, receiveTokenId: string) => {
+      handleChain(c);
+      setPayToken({
+        ...getChainDefaultToken(c),
+        id: payTokenId,
+      });
+      setReceiveToken({
+        ...getChainDefaultToken(c),
+        id: receiveTokenId,
+      });
+      setPayAmount('');
+      setSlider(0);
+      setActiveProvider(undefined);
+    },
+    [setActiveProvider, setPayToken, setReceiveToken],
+  );
+
   useAsyncInitializeChainList({
     // NOTICE: now `useTokenPair` is only used for swap page, so we can use `SWAP_SUPPORT_CHAINS` here
     supportChains: SWAP_SUPPORT_CHAINS,
@@ -618,7 +636,6 @@ export const useTokenPair = (userAddress: string) => {
     if (expiredTimer.current) {
       clearTimeout(expiredTimer.current);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
 
   const search = {};
@@ -735,6 +752,7 @@ export const useTokenPair = (userAddress: string) => {
     bestQuoteDex,
     chain,
     switchChain,
+    switchSwapAgain,
 
     payToken,
     setPayToken,

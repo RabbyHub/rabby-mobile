@@ -1,4 +1,5 @@
 import RcIconSpinCC from '@/assets/icons/transaction-record/icon-spin-cc.svg';
+import RcIconItemPendingCC from '@/assets2024/icons/history/IconItemPending.svg';
 import React from 'react';
 import { useEffect, useRef } from 'react';
 import {
@@ -44,7 +45,7 @@ export const Spin = React.memo(
           },
           style,
         ]}>
-        <RcIconSpinCC
+        <RcIconItemPendingCC
           color={color}
           viewBox="0 0 14 14"
           width={'100%'}

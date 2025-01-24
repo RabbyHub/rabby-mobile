@@ -33,9 +33,67 @@
       "goToHome": "Go to Home"
     },
     "transactions": {
+      "title": "Transactions",
+      "ViewHiddenItems": "View scam transactions",
+      "itemTitle": {
+        "Swap": "Swapped",
+        "Send": "Sent",
+        "Recieve": "Received",
+        "Bridge": "Bridged",
+        "Approve": "Approved",
+        "Revoke": "Revoked Approval",
+        "Contract": "Deploy Contract",
+        "Cancel": "Cancel Pending Transction",
+        "Default": "Interaction"
+      },
+      "detail": {
+        "Unknown": "Unknown",
+        "NoApproveNeed": "No need to revoke: No allowance remaining.",
+        "Cancel": "Cancel",
+        "SpeedUp": "Speed Up",
+        "Pending": "Pending",
+        "Succeeded": "Succeeded",
+        "Failed": "Failed",
+        "SendAgain": "Send Again",
+        "SwapAgain": "Swap Again",
+        "Unlimited": "Unlimited",
+        "Revoke": "Revoke",
+        "Date": "Date",
+        "Status": "Status",
+        "From": "From",
+        "To": "To",
+        "Chain": "Chain",
+        "GasFee": "Gas Fee",
+        "ViewOn": "View on",
+        "ApproveToken": "Approve token",
+        "ApproveTo": "Approve to",
+        "RevokeFrom": "Revoke from",
+        "InteractedContract": "Interacted contract",
+        "RecipientAddress": "Recipient address",
+        "name": "Name",
+        "RevokeToken": "Revoke Token",
+        "InteractionResults": "Interaction Results"
+      },
+      "empty": {
+        "title": "No transactions",
+        "desc": " No transactions found on <1>supported chains</1>"
+      },
       "explain": {
         "unknown": "Contract Interaction",
         "cancel": "Canceled a pending transaction"
+      },
+      "txHistory": {
+        "tipInputData": "The transaction includes a message",
+        "parseInputDataError": "Parse message failed",
+        "scamToolTip": "This transaction is initiated by scammers to send scam tokens and NFTs. Please refrain from interacting with it."
+      },
+      "modalViewMessage": {
+        "title": "View Message"
+      },
+      "filterScam": {
+        "title": "Hide scam transactions",
+        "loading": "Loading may take a moment, and data delays are possible",
+        "btn": "Hide scam transactions"
       }
     },
     "signTx": {
@@ -722,7 +780,7 @@
         "swap": "Swap",
         "bridge": "Bridge",
         "send": "Send",
-        "history": "History",
+        "history": "Transactions",
         "receive": "Receive",
         "gasAccount": "GasAccount",
         "approvals": "Approvals",
@@ -1472,7 +1530,21 @@
       "tou": "Term Of Use",
       "policy": "Privacy Policy",
       "clearPendingDesc1": "This will clear all your pending transactions. This can help you solve the problem that in some cases the state of the transaction in Rabby does not match the state on-chain.",
-      "clearPendingDesc2": "This will not change the balances in your accounts or require you to re-enter your seed phrase. All your assets and accounts information will remain secure."
+      "clearPendingDesc2": "This will not change the balances in your accounts or require you to re-enter your seed phrase. All your assets and accounts information will remain secure.",
+      "appCache": "Clear App Cache",
+      "currentLanguage": "Current Language"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "Theme mode"
+      },
+      "clearAppCache": {
+        "title": "Clear App Cache",
+        "clearAppCacheDesc": "'This will remove temporary cached files without impacting your personal data or settings. The app needs to restart to complete the process. Do you wish to continue?'",
+        "button": {
+          "confirm": "Clear & Close App"
+        }
+      }
     },
     "buy": {
       "from": "From {{dex}}",
@@ -1655,6 +1727,12 @@
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",
       "mins": "{{t}} mins"
+    },
+    "Unknown": "Unknown",
+    "themeMode": {
+      "option_System": "System",
+      "option_Light": "Light",
+      "option_Dark": "Dark"
     }
   },
   "background": {
@@ -1710,6 +1788,13 @@
       "message": "Check out how to update Ledger firmware from Ledger support",
       "update": "Update",
       "cancel": "Cancel"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Cancel"
+      }
     }
   }
 }

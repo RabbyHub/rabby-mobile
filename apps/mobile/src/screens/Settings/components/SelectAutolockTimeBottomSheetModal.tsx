@@ -98,7 +98,8 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
         <Text style={styles.title}>{t('page.setting.autoLockTime')}</Text>
         <View style={styles.mainContainer}>
           {TIME_SETTINGS.map((item, idx) => {
-            const itemKey = `timesetting-${item.label}-${item.milliseconds}`;
+            const labelText = item.getLabel();
+            const itemKey = `timesetting-${labelText}-${item.milliseconds}`;
             const isSelected = autoLockMs === item.milliseconds;
 
             return (
@@ -108,7 +109,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
                 onPress={() => {
                   handleConfirm(item.milliseconds);
                 }}>
-                <Text style={styles.settingItemLabel}>{item.label}</Text>
+                <Text style={styles.settingItemLabel}>{labelText}</Text>
                 {isSelected && (
                   <View>
                     <RcIconCheckmark style={{ width: 24, height: 24 }} />

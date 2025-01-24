@@ -27,11 +27,7 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
 import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
@@ -39,7 +35,6 @@ import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
 import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
 import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import RcIconVectorCC from '@/assets2024/icons/home/IconVectorCC.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
@@ -59,18 +54,25 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
-import { useDappWebViewScreen } from '../Dapps/hooks/useDappWebViewScreen';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+  useMyAccounts,
+} from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { useAssetsMap } from './hooks/store';
-import { useAssets } from '../Search/useAssets';
-import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { ellipsisAddress } from '@/utils/address';
+import { useSyncAssetsDB } from '@/databases/hooks/assets';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
@@ -197,6 +199,10 @@ function MultiAddressHome(): JSX.Element {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [pendingTxCount, setPendingTxCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState<{
+    success: number;
+    fail: number;
+  }>();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { switchAccount } = useCurrentAccount();
   const appState = useAppState();
@@ -243,6 +249,8 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistory,
+          badge: historyCount?.fail || historyCount?.success,
+          isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
@@ -279,8 +287,9 @@ function MultiAddressHome(): JSX.Element {
         title: string;
         icon: React.FC<import('react-native-svg').SvgProps>;
         badge?: number;
+        isSuccess?: boolean;
       }[],
-    [alertInfo.total, t],
+    [alertInfo.total, t, historyCount],
   );
 
   useEffect(() => {
@@ -309,7 +318,17 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
-  const { initFetchTop10Assets } = useAssets();
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const sortedAccounts = useSortAddressList(accounts);
+  const unionAccounts = useMemo(() => {
+    return unionBy(sortedAccounts, account => account.address.toLowerCase());
+  }, [sortedAccounts]);
+
+  const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
+  const { syncTop10History } = useSyncHistoryDB(unionAccounts);
+
   const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
 
@@ -323,7 +342,7 @@ function MultiAddressHome(): JSX.Element {
     setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [balanceCacheAccounts]);
+  }, [balanceCacheAccounts, setPendingTxCount]);
 
   const detectHasAccounts = useMemoizedFn(async () => {
     const result = { redirectAction: null as Function | null };
@@ -337,6 +356,23 @@ function MultiAddressHome(): JSX.Element {
 
     return result;
   });
+
+  // useMount(() => {  no use ?
+  //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
+  //   return () => {
+  //     eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
+  //   };
+  // });
+
+  const getSuccessAndFailList = useCallback(() => {
+    const count = transactionHistoryService.getFailedCount();
+    const success = transactionHistoryService.getSucceedCount();
+
+    setHistoryCount({
+      success: success,
+      fail: count,
+    });
+  }, [setHistoryCount]);
 
   useFocusEffect(
     useCallback(() => {
@@ -353,20 +389,35 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      getSuccessAndFailList();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [getSuccessAndFailList, pendingTxCount]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
-        initFetchTop10Assets();
+        syncTop10Assets();
+        syncTop10History();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [triggerUpdate, triggerUpdateAlert, appState]),
+    }, [
+      triggerUpdate,
+      triggerUpdateAlert,
+      appState,
+      getSuccessAndFailList,
+      sortedAccounts.length,
+    ]),
   );
 
   const onRefresh = useCallback(() => {
     triggerUpdate(true); // force update balance from server api
     forceUpdate();
-    initFetchTop10Assets(true);
-  }, [forceUpdate, triggerUpdate, initFetchTop10Assets]);
+    syncTop10Assets(true);
+    syncTop10History(true);
+  }, [triggerUpdate, forceUpdate, syncTop10Assets, syncTop10History]);
 
   const totalBalance = useMemo(() => {
     const num = balanceAccounts.reduce(
@@ -525,6 +576,18 @@ function MultiAddressHome(): JSX.Element {
                     menuConfig={{
                       menuTitle: item.alias || ellipsisAddress(item.address),
                       menuActions: [
+                        ...(IS_ANDROID
+                          ? [
+                              {
+                                title:
+                                  item.alias || ellipsisAddress(item.address),
+                                key: 'hostname',
+                                icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
+                                disabled: true,
+                                action() {},
+                              },
+                            ]
+                          : []),
                         {
                           title: 'UnPin',
                           icon: isDarkTheme
@@ -611,7 +674,7 @@ function MultiAddressHome(): JSX.Element {
                     { width: itemWidth },
                   ])}
                   key={index}
-                  onPress={e => {
+                  onPress={() => {
                     handleClickMenu(el.key);
                     matomoRequestEvent({
                       category: 'Click_Services',
@@ -621,7 +684,11 @@ function MultiAddressHome(): JSX.Element {
                   <View style={styles.iconWrapper}>
                     <el.icon />
                     {!!el.badge && el.badge > 0 && (
-                      <BadgeText count={el.badge} style={styles.badgeStyle} />
+                      <BadgeText
+                        count={el.badge}
+                        isSuccess={el.isSuccess}
+                        style={[styles.badgeStyle]}
+                      />
                     )}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>

@@ -10,7 +10,11 @@ import PendingTx from '@/screens/Bridge/components/PendingTx';
 import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 
-export const SwapHeader = () => {
+export const SwapHeader = ({
+  isForMultipleAdderss,
+}: {
+  isForMultipleAdderss: boolean;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const loadingNumber = usePollSwapPendingNumber(5000);
@@ -33,7 +37,7 @@ export const SwapHeader = () => {
           />
         )}
       </TouchableOpacity>
-      <SwapTxHistory />
+      <SwapTxHistory isForMultipleAdderss={isForMultipleAdderss} />
     </View>
   );
 };

@@ -10,16 +10,19 @@ import { apiBalance } from '@/core/apis';
 const balanceAtom = atom<number | null>(null);
 const testnetBalanceAtom = atom<string | null>(null);
 const balanceUpdateNonceAtom = atom<number>(0);
+const forceUpdateAtom = atom<boolean>(false);
 
 export const useTriggerHomeBalanceUpdate = () => {
   /**
    * @description in the future, only nonce >= 0, the fetching will be triggered
    */
   const [balanceNonce, setNonce] = useAtom(balanceUpdateNonceAtom);
+  const [, setForceUpdate] = useAtom(forceUpdateAtom);
 
   const triggerUpdate = useCallback(() => {
     setNonce(n => n + 1);
-  }, [setNonce]);
+    setForceUpdate(true);
+  }, [setForceUpdate, setNonce]);
 
   return { balanceNonce, triggerUpdate };
 };
@@ -41,6 +44,8 @@ export default function useCurrentBalance(
   const [balance, setBalance] = useAtom(balanceAtom);
   const [success, setSuccess] = useState(true);
   const { balanceNonce } = useTriggerHomeBalanceUpdate();
+  const [forceUpdate, setForceUpdate] = useAtom(forceUpdateAtom);
+
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [balanceUpdating, setBalanceUpdating] = useState(false);
   const [balanceFromCache, setBalanceFromCache] = useState(false);
@@ -161,7 +166,8 @@ export default function useCurrentBalance(
   }, [balanceNonce]);
 
   useEffect(() => {
-    getCurrentBalance();
+    getCurrentBalance(forceUpdate);
+    setForceUpdate(false);
     if (!noNeedBalance && account) {
       apiBalance.getAddressCacheBalance(account).then(cache => {
         setChainBalances(

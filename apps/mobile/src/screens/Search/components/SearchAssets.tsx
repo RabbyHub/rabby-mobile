@@ -1,10 +1,14 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, SectionList, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-import { ASSETS_ITEM_HEIGHT, RootNames } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT,
+  ASSETS_ITEM_HEIGHT_NEW,
+  RootNames,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   DefiRow,
@@ -35,7 +39,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     tokens,
     portfolios,
     nftList,
-    initFetchTop10Assets,
+    getCacheTop10Assets,
     refreshing,
     isLoading,
   } = useAssets(filterText);
@@ -103,7 +107,8 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             data={item}
             onTokenPress={handleOpenTokenDetail}
             filterText={filterText}
-            logoSize={40}
+            logoSize={46}
+            chainLogoSize={18}
             hideFoldTag
             disableMenu
           />
@@ -114,7 +119,8 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             data={item}
             filterText={filterText}
             onTokenPress={handleOpenTokenDetail}
-            logoSize={40}
+            logoSize={46}
+            chainLogoSize={18}
             hideFoldTag
             disableMenu
           />
@@ -127,6 +133,8 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             disableMenu
             hideFoldTag
             onPress={() => handlePressNft(item)}
+            logoSize={46}
+            chainLogoSize={18}
           />
         );
       case 'defi':
@@ -139,6 +147,8 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             onPress={() =>
               handleOpenDefiDetail(item, [...(item._portfolios || [])])
             }
+            logoSize={46}
+            chainLogoSize={18}
           />
         );
       default:
@@ -187,29 +197,28 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     }),
     [],
   );
+  useEffect(() => {
+    getCacheTop10Assets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const ListEmptyComponent = useMemo(() => {
     return isLoading ? <PositionLoader /> : null;
   }, [isLoading]);
 
   const ListFooterComponent = useMemo(() => {
-    return (
-      <SearchOnTheChain
-        existTokensIds={tokens.map(token => `${token.chain}:${token._tokenId}`)}
-        filterText={filterText}
-      />
-    );
-  }, [filterText, tokens]);
+    return <SearchOnTheChain filterText={filterText} />;
+  }, [filterText]);
 
   return (
     <SectionList
+      contentInset={{ bottom: 56 }}
       sections={sections.filter(i => !!i.originData?.length)}
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.bgContainer}
       keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
       windowSize={10}
-      getItemLayout={getItemLayout}
       stickySectionHeadersEnabled
       ListEmptyComponent={ListEmptyComponent}
       onScroll={() => {
@@ -221,7 +230,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={() => {
-            initFetchTop10Assets(true);
+            getCacheTop10Assets(true);
           }}
           refreshing={refreshing}
         />
@@ -232,8 +241,11 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
 
 const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
+    gap: 8,
   },
   emptyHolder: {
     marginTop: 65,
@@ -251,12 +263,14 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-info'],
   },
   sectionHeader: {
-    height: 50,
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontWeight: '500',
+    lineHeight: 22,
     color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    lineHeight: 50,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+    paddingBottom: 8,
   },
 }));

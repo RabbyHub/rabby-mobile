@@ -24,6 +24,15 @@ export default function useHomePinAddress(
     let highlightedAccounts: balanceAccountType[] = [];
 
     pinAddresses.forEach(highlighted => {
+      if (
+        accounts.findIndex(
+          a =>
+            isSameAddress(a.address, highlighted.address) &&
+            a.brandName === highlighted.brandName,
+        ) === -1
+      ) {
+        return;
+      }
       const idx = restAccounts.findIndex(
         account =>
           isSameAddress(account.address, highlighted.address) &&

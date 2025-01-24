@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
@@ -17,7 +17,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
@@ -27,23 +26,22 @@ import {
   useCurrentAccount,
   useMyAccounts,
   KeyringAccountWithAlias,
-  useAccounts,
 } from '@/hooks/account';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useAssetsMap } from '../Home/hooks/store';
+import { useAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
 import { DisplayNftItem } from '../Home/types';
-import { useRefreshTags } from '../Home/hooks/token';
+import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { trigger } from 'react-native-haptic-feedback';
 import { preferenceService } from '@/core/services';
 import { RcIconMore } from '@/assets/icons/home';
 import { toast } from '@/components2024/Toast';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
+import { GetRootScreensParamsList } from '@/navigation-type';
 
 const ListItem = (props: {
   title: string;
@@ -76,8 +74,8 @@ const hitSlop = {
 
 const RightMore: React.FC<{
   nft: DisplayNftItem;
-}> = ({ nft }) => {
-  const { refreshTagNft } = useRefreshTags();
+  refreshTags: () => void;
+}> = ({ nft, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -113,11 +111,11 @@ const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           nft._isFold = !nft._isFold;
-          refreshTagNft();
+          refreshTags();
         },
       },
     ] as MenuAction[];
-  }, [nft, t, isDarkTheme, refreshTagNft]);
+  }, [nft, t, isDarkTheme, refreshTags]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -148,16 +146,21 @@ export const NFTDetailScreen = () => {
     account: routeAccount,
   } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
-  ) as {
-    token: NFTItem;
-    account: KeyringAccountWithAlias;
-    isSingleAddress?: boolean;
-  };
+  ) as GetRootScreensParamsList<'NftDetail'>;
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
+  const { nftRefresh, singleNFTRefresh } = useTriggerTagAssets();
+
+  const refreshTag = useCallback(() => {
+    if (isSingleAddress) {
+      singleNFTRefresh();
+    } else {
+      nftRefresh();
+    }
+  }, [isSingleAddress, nftRefresh, singleNFTRefresh]);
   const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore nft={token} />;
+    return <RightMore nft={token} refreshTags={refreshTag} />;
   });
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
@@ -193,7 +196,7 @@ export const NFTDetailScreen = () => {
         </View>
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
           {/* {token?.name} */}
-          {ellipsisOverflowedText(token?.name, 20)}
+          {ellipsisOverflowedText(token?.name || t('global.unknownNFT'), 20)}
         </Text>
       </View>
     );
@@ -211,14 +214,14 @@ export const NFTDetailScreen = () => {
     if (iToken?.usd_price) {
       return `$${new BigNumber(iToken?.usd_price).toFormat(2, 4)}`;
     }
-    return 'Unable to get price';
+    return '-';
   }, []);
 
   const calDate = useCallback(
     (iToken: NFTItem) =>
       iToken?.pay_token?.time_at
         ? dayjs(iToken?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
-        : 'Unable to get Date',
+        : '-',
     [],
   );
 
@@ -253,14 +256,14 @@ export const NFTDetailScreen = () => {
     [accounts, currentAccount, switchSceneCurrentAccount],
   );
 
-  const [asssest] = useAssetsMap();
+  const { assetsMap, getCacheTop10Assets } = useAssets();
   const itemList = useMemo(() => {
     const resList: {
       data: NFTItem;
-      address: string;
+      address?: string;
       index: number;
-      type: KEYRING_TYPE;
-      aliasName: string;
+      type?: KEYRING_TYPE;
+      aliasName?: string;
     }[] = [];
     if (isSingleAddress) {
       console.debug('relateNFTList isSingleAddress');
@@ -281,8 +284,8 @@ export const NFTDetailScreen = () => {
       index: number;
     }[] = [];
 
-    Object.keys(asssest).map((address, index) => {
-      const { nfts } = asssest[address];
+    Object.keys(assetsMap).map((address, index) => {
+      const { nfts } = assetsMap[address];
 
       nfts?.map(item => {
         if (
@@ -315,8 +318,22 @@ export const NFTDetailScreen = () => {
       }
     });
     console.log('relateNFTList length:', resList.length);
-    return resList;
-  }, [asssest, token, accounts, finalAccount, isSingleAddress]);
+    return resList.length
+      ? resList
+      : [
+          {
+            data: token,
+            index: 0,
+          },
+        ];
+  }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+  useEffect(() => {
+    getCacheTop10Assets(false, {
+      disableToken: true,
+      disableDefi: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const renderAccountHeader = useCallback(
     (type: KEYRING_TYPE, aliasName: string) => {
@@ -346,18 +363,14 @@ export const NFTDetailScreen = () => {
       type,
       aliasName,
     }: {
-      address: string;
-      type: KEYRING_TYPE;
-      aliasName: string;
+      address?: string;
+      type?: KEYRING_TYPE;
+      aliasName?: string;
       iToken: NFTItem;
     }) => {
-      if (!address) {
-        return null;
-      }
-
       return (
         <View key={`${address}-${iToken.id}`}>
-          {renderAccountHeader(type, aliasName)}
+          {type && aliasName ? renderAccountHeader(type, aliasName) : null}
           <Media
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
             type={iToken?.content_type}
@@ -370,7 +383,7 @@ export const NFTDetailScreen = () => {
           <View style={styles.bottom}>
             <View style={styles.titleView}>
               <Text style={styles.title} numberOfLines={1}>
-                {iToken?.name || 'Unable to get NFT name'}
+                {iToken?.name || '-'}
               </Text>
               {iToken?.amount > 1 ? (
                 <View style={styles.subtitle}>
@@ -403,13 +416,17 @@ export const NFTDetailScreen = () => {
             <ListItem title="Purchase Date" value={calDate(iToken)} />
             <ListItem title="Last Price" value={calPrice(iToken)} />
           </View>
-          <View style={[styles.buttonContainer]}>
-            <Button
-              onPress={() => handleSend(iToken, address, type)}
-              title={t('page.sendNFT.sendButton')}
-              titleStyle={styles.btnTitle}
-            />
-          </View>
+          {!!address && (
+            <View style={[styles.buttonContainer]}>
+              <Button
+                onPress={() =>
+                  address && type && handleSend(iToken, address, type)
+                }
+                title={t('page.sendNFT.sendButton')}
+                titleStyle={styles.btnTitle}
+              />
+            </View>
+          )}
         </View>
       );
     },

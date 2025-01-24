@@ -8,7 +8,10 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
-import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_SECTION_HEADER,
+} from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { HighlightText } from '@/components2024/HighlightText';
 import { memo } from 'react';
@@ -169,7 +172,7 @@ export const NftSectionHeader = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrpper: {
     display: 'flex',
     flexDirection: 'row',
@@ -177,7 +180,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: 4,
     gap: 12,
-    height: ASSETS_ITEM_HEIGHT,
+    height: ASSETS_ITEM_HEIGHT_NEW,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    paddingLeft: 12,
+    paddingRight: 16,
   },
   main: {
     display: 'flex',

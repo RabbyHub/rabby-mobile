@@ -169,6 +169,7 @@ export const getERC20Allowance = async (
   chainServerId,
   erc20Address: string,
   contractAddress: string,
+  address?: string,
 ): Promise<string> => {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
@@ -203,7 +204,7 @@ export const getERC20Allowance = async (
       stateMutability: 'view',
       type: 'function',
     },
-    [account.address, contractAddress],
+    [address || account.address, contractAddress],
   );
 
   const allowance = await requestETHRpc(

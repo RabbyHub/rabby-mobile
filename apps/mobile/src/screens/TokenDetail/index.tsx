@@ -5,12 +5,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
+import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -26,7 +21,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
@@ -38,23 +33,21 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
 import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
-import { useRefreshTags } from '../Home/hooks/token';
+import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
-import { CombineTokensItem, useAssetsMap } from '../Home/hooks/store';
-import { DisplayedProject } from '../Home/utils/project';
+import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import BigNumber from 'bignumber.js';
-import { RootStackParamsList } from '@/navigation-type';
+import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 
 const isAndroid = Platform.OS === 'android';
@@ -81,9 +74,9 @@ export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   isMultiAddress?: boolean;
   triggerUpdate: () => void;
-}> = ({ token, triggerUpdate, isMultiAddress }) => {
+  refreshTags: () => void;
+}> = ({ token, triggerUpdate, isMultiAddress, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { refreshTagToken } = useRefreshTags();
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
@@ -118,7 +111,7 @@ export const RightMore: React.FC<{
             toast.success(t('page.tokenDetail.actionsTips.fold_success'));
           }
           token._isFold = !token._isFold;
-          refreshTagToken();
+          refreshTags();
         },
       },
       {
@@ -157,12 +150,12 @@ export const RightMore: React.FC<{
             );
           }
           token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTagToken();
+          refreshTags();
           triggerUpdate();
         },
       },
     ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTagToken, triggerUpdate]);
+  }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
   const onPress = () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
@@ -191,7 +184,8 @@ export const RightMore: React.FC<{
 };
 
 export const TokenDetailScreen = () => {
-  const route = useRoute();
+  const route =
+    useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const {
     fromPortfolio,
     token: _token,
@@ -199,14 +193,17 @@ export const TokenDetailScreen = () => {
     needUseCacheToken,
     unHold: _unHold,
     isSingleAddress,
-  } = (route.params || {}) as RootStackParamsList[typeof RootNames.TokenDetail];
+  } = route.params || {};
+  console.log(
+    'TokenDetailScreen CUSTOM_LOGGER:=>: isSingleAddress',
+    isSingleAddress,
+  );
 
   const { styles } = useTheme2024({
     getStyle,
   });
 
-  const [asssest] = useAssetsMap();
-  const { tokens: cacheAssets } = useAssets();
+  const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio) {
       const iToken = cacheAssets.find(
@@ -224,13 +221,13 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  const { currentAccount } = useCurrentAccount();
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const finalAccount = account || currentAccount;
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
 
-    Object.keys(asssest).map((address, index) => {
+    Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
       }
@@ -243,7 +240,7 @@ export const TokenDetailScreen = () => {
         return;
       }
 
-      const { portfolios } = asssest[address];
+      const { portfolios } = assetsMap[address];
       portfolios?.map(portfolio => {
         if (portfolio.chain !== token.chain) {
           return;
@@ -271,7 +268,7 @@ export const TokenDetailScreen = () => {
     });
     console.debug('relateDefiList length:', resList.length);
     return resList;
-  }, [token, asssest, isSingleAddress, finalAccount, accounts]);
+  }, [token, assetsMap, isSingleAddress, finalAccount, accounts]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -286,6 +283,12 @@ export const TokenDetailScreen = () => {
     },
     [token, isSingleAddress, finalAccount],
   );
+  useEffect(() => {
+    getCacheTop10Assets(false, {
+      disableNFT: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -313,6 +316,15 @@ export const TokenDetailScreen = () => {
   );
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
+  const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
+
+  const refreshTag = useCallback(() => {
+    if (isSingleAddress) {
+      singleTokenRefresh();
+    } else {
+      tokenRefresh();
+    }
+  }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderRight = useCallback(() => {
     return (
@@ -320,9 +332,10 @@ export const TokenDetailScreen = () => {
         token={token}
         triggerUpdate={triggerUpdate}
         isMultiAddress={!isSingleAddress}
+        refreshTags={refreshTag}
       />
     );
-  }, [token, triggerUpdate, isSingleAddress]);
+  }, [token, triggerUpdate, isSingleAddress, refreshTag]);
 
   const getHeaderTitle = useCallback(() => {
     return (
@@ -463,7 +476,7 @@ export const TokenDetailScreen = () => {
     <NormalScreenContainer2024 type="bg1" style={styles.root}>
       <ScrollView>
         <View style={{ position: 'relative' }}>
-          <HomePinBadge token={token} />
+          <HomePinBadge token={token} refreshTags={refreshTag} />
           <Text style={styles.currentText}>Current price</Text>
           <TokenPriceChart
             token={tokenWithAmount || token}
