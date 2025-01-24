@@ -328,7 +328,11 @@ export const TransactionItem = ({
           isNft: false,
         };
       case HistoryItemCateType.Revoke: {
-        const reToken = data.txs?.[0]?.action?.actionData.revokeToken;
+        const reToken =
+          data.txs?.[0]?.action?.actionData.revokeToken ||
+          // data.txs?.[0]?.action?.actionData.revokeNFT ||
+          // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
+          data.txs?.[0]?.action?.actionData.revokePermit2;
 
         return {
           approveToken: reToken?.token!,

@@ -33,7 +33,11 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useMyAccounts,
+} from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -136,7 +140,8 @@ function History({
     transactionHistoryService.getSucceedList(),
   );
 
-  const { syncTop10History } = useSyncHistoryDB(unionAccounts);
+  const { syncTop10History, syncSingleAddress } =
+    useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
   const getSwapHistory = async (add?: string) => {
     const swapList = await SwapItemEntity.getAllHistoryItem(add);
@@ -171,7 +176,9 @@ function History({
           isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
           tokenDict,
           projectDict,
-          isShowSuccess: historySuccessList.includes(item.txHash),
+          isShowSuccess: historySuccessList.includes(
+            `${item.owner_addr}-${item.txHash}`,
+          ),
         } as HistoryDisplayItem),
     );
     setDbData(list);
@@ -362,7 +369,14 @@ function History({
     hasMoreMap.current = {};
     setCurrentPage(0);
     runFetchLocalTx();
-    isInTokenDetail ? reloadAsync() : syncTop10History(true);
+
+    if (isInTokenDetail) {
+      reloadAsync();
+    } else {
+      isSceneUsingAllAccounts
+        ? syncTop10History(true)
+        : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
+    }
   });
 
   useEffect(() => {
@@ -504,7 +518,7 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = loading && !allTxHistory.length;
+  const isFirstLoading = loading && !allTxHistory.length && !groups?.length;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
     return <Empty />;

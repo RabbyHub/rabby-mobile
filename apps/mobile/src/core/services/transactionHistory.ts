@@ -424,9 +424,9 @@ export class TransactionHistoryService {
         });
         const id = tx.hash || tx.reqId;
         if (success) {
-          id && this.store.successList.push(id);
+          id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
         } else {
-          id && this.store.failList.push(id);
+          id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
         this.store.isNeedFetchTxHistory = true;
       }

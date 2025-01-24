@@ -119,7 +119,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
       nonce,
     );
 
-    console.debug('fetchRefreshData groups', groups);
+    console.debug('fetchRefreshData groups', JSON.stringify(groups));
     if (groups.length?.[0]) {
       setData(groups[0]);
     }
