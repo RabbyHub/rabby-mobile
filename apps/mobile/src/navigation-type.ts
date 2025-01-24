@@ -8,6 +8,7 @@ import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
+import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -196,7 +197,11 @@ export type TransactionNavigatorParamList = {
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {};
   [RootNames.HistoryFilterScam]?: {};
-  [RootNames.HistoryDetail]?: {};
+  [RootNames.HistoryDetail]?: {
+    data: HistoryDisplayItem;
+    isForMultipleAdderss?: boolean;
+    title?: string;
+  };
   [RootNames.HistoryLocalDetail]?: {};
   [RootNames.Send]?: {};
   [RootNames.MultiSend]?: {};

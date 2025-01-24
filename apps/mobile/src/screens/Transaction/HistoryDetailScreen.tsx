@@ -9,6 +9,7 @@ import React, {
 import {
   Animated,
   Easing,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -51,6 +52,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { AssetAvatar } from '@/components';
 import { getERC20Allowance } from '@/core/apis/provider';
 import BigNumber from 'bignumber.js';
+import { TransactionNavigatorParamList } from '@/navigation-type';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 export const TxStatusItem = ({
   status,
@@ -208,11 +211,8 @@ export const AddressItemInDetail = ({
 
 function HistoryDetailScreen(): JSX.Element {
   const route = useRoute();
-  const { data, isForMultipleAdderss, title } = (route.params || {}) as {
-    data: HistoryDisplayItem;
-    isForMultipleAdderss?: boolean;
-    title?: string;
-  };
+  const { data, isForMultipleAdderss, title } = (route.params ||
+    {}) as TransactionNavigatorParamList['HistoryDetail'] & object;
   console.debug(
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
@@ -228,7 +228,9 @@ function HistoryDetailScreen(): JSX.Element {
   const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    containerPb: 12,
+  });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
@@ -391,155 +393,158 @@ function HistoryDetailScreen(): JSX.Element {
   return (
     <NormalScreenContainer2024
       type="bg2"
-      style={{
-        paddingBottom: bottom,
-        paddingTop: 24,
-        paddingHorizontal: 16,
-      }}>
-      <HistoryTokenList
-        data={data}
-        isForMultipleAdderss={isForMultipleAdderss}
-        chain={data.chain}
-        receives={data.receives}
-        sends={data.sends}
-        approve={data.token_approve}
-        type={formatType}
-        token={formatToken}
-        status={status}
-        tokenDict={data.tokenDict}
-      />
-      <View style={styles.detailContainer}>
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>Date</Text>
-          <View>
-            <Text style={styles.itemContentText}>
-              {formatIntlTimestamp(data?.time_at * 1000)}
-            </Text>
+      style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
+      <ScrollView style={[styles.scrollView]}>
+        <HistoryTokenList
+          data={data}
+          isForMultipleAdderss={isForMultipleAdderss}
+          chain={data.chain}
+          receives={data.receives}
+          sends={data.sends}
+          approve={data.token_approve}
+          type={formatType}
+          token={formatToken}
+          status={status}
+          tokenDict={data.tokenDict}
+        />
+        <View style={styles.detailContainer}>
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>Date</Text>
+            <View>
+              <Text style={styles.itemContentText}>
+                {formatIntlTimestamp(data?.time_at * 1000)}
+              </Text>
+            </View>
           </View>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {strings('page.transactions.detail.Status')}
-          </Text>
-          <View>
-            <TxStatusItem status={status} withText={true} />
-          </View>
-        </View>
-        {isApproveOrRevoke &&
-          ProjecRenderItem(
-            formatType === HistoryItemCateType.Approve
-              ? strings('page.transactions.detail.ApproveTo')
-              : strings('page.transactions.detail.RevokeFrom'),
-          )}
-        {formatType === HistoryItemCateType.Approve && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.ApproveToken')}
+              {strings('page.transactions.detail.Status')}
             </Text>
-            <Text style={styles.itemContentText}>
-              {data.token_approve?.value! < 1e9
-                ? data.token_approve?.value.toFixed(4)
-                : strings('page.transactions.detail.Unlimited')}{' '}
-              {getApproveTokeName(data)}
-            </Text>
+            <View>
+              <TxStatusItem status={status} withText={true} />
+            </View>
           </View>
-        )}
-        {Boolean(fromAddr) && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.From')}
-            </Text>
-            <AddressItemInDetail
-              address={fromAddr!}
-              accounts={accounts}
-              switchAccount={switchAccount}
-            />
-          </View>
-        )}
-        {(formatType === HistoryItemCateType.Send ||
-          formatType === HistoryItemCateType.Recieve) &&
-          Boolean(toAddr) && (
+          {isApproveOrRevoke &&
+            ProjecRenderItem(
+              formatType === HistoryItemCateType.Approve
+                ? strings('page.transactions.detail.ApproveTo')
+                : strings('page.transactions.detail.RevokeFrom'),
+            )}
+          {formatType === HistoryItemCateType.Approve && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
-                {formatType === HistoryItemCateType.Recieve
-                  ? strings('page.transactions.detail.RecipientAddress')
-                  : strings('page.transactions.detail.To')}
+                {strings('page.transactions.detail.ApproveToken')}
+              </Text>
+              <Text style={styles.itemContentText}>
+                {data.token_approve?.value! < 1e9
+                  ? data.token_approve?.value.toFixed(4)
+                  : strings('page.transactions.detail.Unlimited')}{' '}
+                {getApproveTokeName(data)}
+              </Text>
+            </View>
+          )}
+          {Boolean(fromAddr) && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {strings('page.transactions.detail.From')}
               </Text>
               <AddressItemInDetail
-                address={toAddr!}
+                address={fromAddr!}
                 accounts={accounts}
                 switchAccount={switchAccount}
               />
             </View>
           )}
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {strings('page.transactions.detail.Chain')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <ChainIconImage
-              size={16}
-              chainEnum={chainItem?.enum}
-              isShowRPCStatus={true}
-            />
-            <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
-          </View>
-        </View>
-        {Boolean(usdGasFee) && status === 1 && (
+          {(formatType === HistoryItemCateType.Send ||
+            formatType === HistoryItemCateType.Recieve) &&
+            Boolean(toAddr) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.itemTitleText}>
+                  {formatType === HistoryItemCateType.Recieve
+                    ? strings('page.transactions.detail.RecipientAddress')
+                    : strings('page.transactions.detail.To')}
+                </Text>
+                <AddressItemInDetail
+                  address={toAddr!}
+                  accounts={accounts}
+                  switchAccount={switchAccount}
+                />
+              </View>
+            )}
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.GasFee')}
+              {strings('page.transactions.detail.Chain')}
             </Text>
-            <Text style={styles.itemContentText}>
-              {formatAmount(data.tx?.eth_gas_fee!)}{' '}
-              {chainItem?.nativeTokenSymbol} ($
-              {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
-            </Text>
-            {/* <Text style={[styles.itemContentText]}>{`-${formatPrice(
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              <ChainIconImage
+                size={16}
+                chainEnum={chainItem?.enum}
+                isShowRPCStatus={true}
+              />
+              <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
+            </View>
+          </View>
+          {Boolean(usdGasFee) && status === 1 && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {strings('page.transactions.detail.GasFee')}
+              </Text>
+              <Text style={styles.itemContentText}>
+                {formatAmount(data.tx?.eth_gas_fee!)}{' '}
+                {chainItem?.nativeTokenSymbol} ($
+                {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
+              </Text>
+              {/* <Text style={[styles.itemContentText]}>{`-${formatPrice(
               usdGasFee!,
             )} USD`}</Text> */}
-          </View>
-        )}
-        {!isApproveOrRevoke &&
-          ProjecRenderItem(
-            strings('page.transactions.detail.InteractedContract'),
+            </View>
           )}
-        {
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Hash</Text>
-            <TouchableOpacity
-              disabled={!touchable}
-              onPress={onOpenTxId}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[styles.itemContentText]}>
-                {ellipsisAddress(data.id)}
-              </Text>
-              <RcIconExternalLinkCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-        }
-      </View>
-      <HistoryBottomBtn
-        noRemainValue={noRemainValue}
-        currentApprove={currentApprove}
-        approve={data.token_approve}
-        receives={data.receives}
-        sends={data.sends}
-        type={formatType}
-        chain={data.chain}
-        status={status || 0}
-        data={data}
-        tokenDict={data.tokenDict}
-      />
+          {!isApproveOrRevoke &&
+            ProjecRenderItem(
+              strings('page.transactions.detail.InteractedContract'),
+            )}
+          {
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>Hash</Text>
+              <TouchableOpacity
+                disabled={!touchable}
+                onPress={onOpenTxId}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Text style={[styles.itemContentText]}>
+                  {ellipsisAddress(data.id)}
+                </Text>
+                <RcIconExternalLinkCC
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+            </View>
+          }
+        </View>
+        <HistoryBottomBtn
+          noRemainValue={noRemainValue}
+          currentApprove={currentApprove}
+          approve={data.token_approve}
+          receives={data.receives}
+          sends={data.sends}
+          type={formatType}
+          chain={data.chain}
+          status={status || 0}
+          data={data}
+          tokenDict={data.tokenDict}
+        />
+      </ScrollView>
     </NormalScreenContainer2024>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
+  scrollView: {
+    height: '100%',
+    paddingHorizontal: 16,
+  },
   detailContainer: {
     // flex: 1,
     width: '100%',
