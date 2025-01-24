@@ -41,6 +41,7 @@ import { preferenceService } from '@/core/services';
 import { RcIconMore } from '@/assets/icons/home';
 import { toast } from '@/components2024/Toast';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
+import { GetRootScreensParamsList } from '@/navigation-type';
 
 const ListItem = (props: {
   title: string;
@@ -145,11 +146,7 @@ export const NFTDetailScreen = () => {
     account: routeAccount,
   } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
-  ) as {
-    token: NFTItem;
-    account: KeyringAccountWithAlias;
-    isSingleAddress?: boolean;
-  };
+  ) as GetRootScreensParamsList<'NftDetail'>;
   const chain = getCHAIN_ID_LIST().get(token.chain);
   const isSvgURL = token?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
@@ -217,14 +214,14 @@ export const NFTDetailScreen = () => {
     if (iToken?.usd_price) {
       return `$${new BigNumber(iToken?.usd_price).toFormat(2, 4)}`;
     }
-    return 'Unable to get price';
+    return '-';
   }, []);
 
   const calDate = useCallback(
     (iToken: NFTItem) =>
       iToken?.pay_token?.time_at
         ? dayjs(iToken?.pay_token?.time_at * 1000).format('YYYY-MM-DD')
-        : 'Unable to get Date',
+        : '-',
     [],
   );
 
@@ -383,7 +380,7 @@ export const NFTDetailScreen = () => {
           <View style={styles.bottom}>
             <View style={styles.titleView}>
               <Text style={styles.title} numberOfLines={1}>
-                {iToken?.name || 'Unable to get NFT name'}
+                {iToken?.name || '-'}
               </Text>
               {iToken?.amount > 1 ? (
                 <View style={styles.subtitle}>

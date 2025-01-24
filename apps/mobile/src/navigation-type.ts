@@ -38,7 +38,11 @@ export type RootStackParamsList = {
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
-  [RootNames.NftDetail]?: {};
+  [RootNames.NftDetail]: {
+    token: NFTItem;
+    account: KeyringAccountWithAlias;
+    isSingleAddress?: boolean;
+  };
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
@@ -296,11 +300,15 @@ type _NestedScreensParamsDict = {
 };
 type _NestedScreensParamsName = keyof _NestedScreensParamsDict;
 
-// export type GetRootScreensParamsList<T extends keyof RootStackParamsList> = RootStackParamsList[T];
+export type GetRootScreensParamsList<T extends keyof RootStackParamsList> =
+  RootStackParamsList[T];
 export type GetRootScreenNavigationProps<T extends keyof RootStackParamsList> =
   NativeStackScreenProps<RootStackParamsList, T>;
 
-// export type GetNestedScreensParamsList<T extends _NestedScreensParamsName, K extends (keyof _NestedScreensParamsDict[T]) & string> = _NestedScreensParamsDict[T][K];
+export type GetNestedScreensParamsList<
+  T extends _NestedScreensParamsName,
+  K extends keyof _NestedScreensParamsDict[T] & string,
+> = _NestedScreensParamsDict[T][K];
 export type GetNestedScreenNavigationProps<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
