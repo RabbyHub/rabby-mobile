@@ -6,7 +6,7 @@ import { prepareAppDataSource } from '../imports';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { columnConverter } from './_helpers';
 
-@Entity('balance')
+@Entity('cache_balance')
 export class BalanceEntity extends EntityAddressAssetBase {
   // balance
   @Column('real')

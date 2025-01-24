@@ -13,7 +13,7 @@ import { EntityAddressAssetBase } from './base';
 import { columnConverter, realTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 
-@Entity('historyitem')
+@Entity('cache_historyitem')
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')

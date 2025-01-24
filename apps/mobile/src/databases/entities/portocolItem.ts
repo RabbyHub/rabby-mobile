@@ -7,7 +7,7 @@ import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 
-@Entity('portocolitem')
+@Entity('cache_portocolitem')
 export class PortocolItemEntity extends EntityAddressAssetBase {
   // id
   @Column('text', { default: '' })

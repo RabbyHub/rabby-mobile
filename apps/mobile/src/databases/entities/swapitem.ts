@@ -13,7 +13,7 @@ import { EntityAddressAssetBase } from './base';
 import { columnConverter, realTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 
-@Entity('swapitem')
+@Entity('cache_swapitem')
 export class SwapItemEntity extends EntityAddressAssetBase {
   // tx_id
   @Column('text', { default: '' })

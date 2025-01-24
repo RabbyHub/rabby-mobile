@@ -7,7 +7,7 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 
-@Entity('tokenitem')
+@Entity('cache_tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
   // content_type
   @Column('text', { default: '' })

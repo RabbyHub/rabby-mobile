@@ -7,7 +7,7 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 
-@Entity('nftitem')
+@Entity('cache_nftitem')
 export class NFTItemEntity extends EntityAddressAssetBase {
   // chain
   @Column('text', { default: '' })
