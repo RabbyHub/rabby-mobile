@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import RcIconFilter from '@/assets2024/icons/history/IconFilter.svg';
+import RcIconFilterCC from '@/assets2024/icons/history/IconFilterCC.svg';
 import {
   Image,
   ImageStyle,
@@ -34,7 +34,10 @@ export const HistoryFilterMenu = ({ setIsShowMenu }: Props) => {
       <TouchableOpacity
         hitSlop={historyHitSlop}
         onPress={() => setIsShowMenu(prev => !prev)}>
-        <RcIconFilter style={styles.filterIcon} />
+        <RcIconFilterCC
+          color={styles.filterIcon.color}
+          style={styles.filterIcon}
+        />
       </TouchableOpacity>
       {/* {isShowMenu && (
         <View style={styles.menuContainer}>
@@ -66,6 +69,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   filterIcon: {
     width: 24,
     height: 24,
+    color: colors2024['neutral-title-1'],
   },
   menuItemText: {
     color: colors2024['neutral-title-1'],

@@ -271,7 +271,18 @@ function makeScreenSpecConfig() {
       MultiAddressHome: bg1Default2024Conf,
       // MultiAddressHome: bg1Default2024Conf,
       Unlock: bg1DefaultConf,
-      History: bg2Default2024Conf,
+      History: {
+        ...bg2Default2024Conf,
+        androidStatusBarBg: !isDarkTheme
+          ? '#F6F7F7'
+          : colors2024['neutral-bg-1'],
+      },
+      MultiHistory: {
+        ...bg2Default2024Conf,
+        androidStatusBarBg: !isDarkTheme
+          ? '#F6F7F7'
+          : colors2024['neutral-bg-1'],
+      },
       MultiAddressHistory: bg2Default2024Conf,
       HistoryDetail: bg2Default2024Conf,
       HistoryLocalDetail: bg2Default2024Conf,
