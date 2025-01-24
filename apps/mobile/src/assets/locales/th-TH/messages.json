@@ -42,7 +42,10 @@
     },
     "TokenSelector": {
       "recent": "ที่ผ่านมา",
-      "hot": "ร้อน"
+      "hot": "ร้อน",
+      "searchPlaceHolder1": "ค้นหาจาก ชื่อ / ที่อยู่",
+      "searchPlaceHolder2": "ค้นหา Token",
+      "common": "ทั่วไป"
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {
@@ -163,7 +166,65 @@
       "explain": {
         "unknown": "สัญญาปฏิสัมพันธ์",
         "cancel": "ยกเลิกธุรกรรมที่ยังไม่ได้ดำเนินการ"
-      }
+      },
+      "itemTitle": {
+        "Bridge": "สะพาน",
+        "Contract": "ปรับใช้ Contract",
+        "Recieve": "ได้รับ",
+        "Send": "ส่งแล้ว",
+        "Default": "การโต้ตอบ",
+        "Revoke": "เพิกถอนการอนุมัติ",
+        "Swap": "สลับแล้ว",
+        "Cancel": "ยกเลิกธุรกรรมที่ค้างอยู่",
+        "Approve": "อนุมัติแล้ว"
+      },
+      "detail": {
+        "NoApproveNeed": "ไม่จำเป็นต้องเพิกถอน: ไม่มีค่าเผื่อที่เหลืออยู่",
+        "From": "จาก",
+        "Unknown": "ไม่ทราบ",
+        "Succeeded": "สำเร็จ",
+        "Pending": "รอดำเนินการ",
+        "ViewOn": "ดูบน",
+        "Chain": "เชน",
+        "SendAgain": "ส่งอีกครั้ง",
+        "Cancel": "ยกเลิก",
+        "Failed": "ล้มเหลว",
+        "Date": "วันที่",
+        "Status": "สถานะ",
+        "Revoke": "เพิกถอน",
+        "SwapAgain": "สลับอีกครั้ง",
+        "To": "ถึง",
+        "GasFee": "ค่าธรรมเนียม Gas",
+        "SpeedUp": "เร่งความเร็ว",
+        "Unlimited": "ไม่จำกัด",
+        "RecipientAddress": "ที่อยู่ผู้รับ",
+        "RevokeFrom": "เพิกถอนจาก",
+        "InteractedContract": "สัญญาที่เคยใช้งาน",
+        "ApproveTo": "อนุมัติให้",
+        "name": "ชื่อ",
+        "InteractionResults": "ผลลัพธ์ของการโต้ตอบ",
+        "ApproveToken": "อนุมัติโทเค็น",
+        "RevokeToken": "เพิกถอน Token"
+      },
+      "empty": {
+        "desc": "ไม่พบธุรกรรมบน<1>supported chains</1>",
+        "title": "ไม่มีธุรกรรม"
+      },
+      "txHistory": {
+        "scamToolTip": "ธุรกรรมนี้ถูกริเริ่มโดยกลุ่มมิจฉาชีพเพื่อส่งโทเค็นและ NFT หลอกลวง กรุณาหลีกเลี่ยงการโต้ตอบกับมัน",
+        "parseInputDataError": "แยกวิเคราะห์ข้อความล้มเหลว",
+        "tipInputData": "การทำธุรกรรมรวมถึงข้อความ"
+      },
+      "modalViewMessage": {
+        "title": "ดูข้อความ"
+      },
+      "filterScam": {
+        "btn": "ซ่อนธุรกรรมหลอกลวง",
+        "loading": "การโหลดอาจใช้เวลาสักครู่ และอาจเกิดความล่าช้าของข้อมูลได้",
+        "title": "ซ่อนการทำธุรกรรมหลอกลวง"
+      },
+      "title": "ธุรกรรม",
+      "ViewHiddenItems": "ดูธุรกรรมหลอกลวง"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "กรอกวลีเมล็ดพันธุ์ของคุณ"
@@ -783,7 +844,8 @@
       "Pending": "รอดำเนินการ",
       "history": "Bridge history",
       "est-payment": "ประมาณการจ่าย:",
-      "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น"
+      "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น",
+      "bridged": "Bridged"
     },
     "dashboard": {
       "home": {
@@ -901,7 +963,9 @@
         "bridgeDesc": "Rabby Wallet จะค้นหาอัตราที่ดีที่สุดจากผู้รวมอันดับต้น ๆ และยืนยันความเชื่อถือได้ของข้อเสนอ Rabby จะคิดค่าธรรมเนียม <1>0.25%</1> ซึ่งรวมอยู่ในราคาที่เสนอโดยอัตโนมัติ"
       },
       "recommend-slippage": "เพื่อป้องกันการซื้อขายล่วงหน้า เราขอแนะนำให้ตั้งค่า slippage ที่ <2>{{ slippage }}</2>%",
-      "need-to-approve-token-before-swap": "จำเป็นต้องอนุมัติโทเค็นก่อนการ swap"
+      "need-to-approve-token-before-swap": "จำเป็นต้องอนุมัติโทเค็นก่อนการ swap",
+      "historyTitle": "ประวัติการ Swap",
+      "swapped": "สลับแล้ว"
     },
     "nextComponent": {
       "addAddress": {
@@ -1502,7 +1566,9 @@
         "tipsBtn": "เข้าใจแล้ว",
         "destinationChain": "เชนปลายทาง",
         "deductGasFees": "จำนวนเงินที่ได้รับจะหักค่าธรรมเนียม gas",
-        "recipientAddress": "ที่อยู่ผู้รับ"
+        "recipientAddress": "ที่อยู่ผู้รับ",
+        "noEnoughValueBalance": "ยอดเงินใน Vault ไม่เพียงพอ เปลี่ยนเครือข่ายหรือลองใหม่ภายหลัง",
+        "noRecipient": "ไม่มีที่อยู่ผู้รับที่พร้อมใช้งาน"
       },
       "withdrawConfirmModal": {
         "button": "ดูบน DeBank",
@@ -1595,7 +1661,18 @@
       "enableWhitelist": "เปิดใช้งานรายชื่อที่อนุญาตสำหรับการส่งสินทรัพย์",
       "clearPendingDesc1": "วิธีนี้จะล้างธุรกรรมที่ยังค้างอยู่ทั้งหมดของคุณ สิ่งนี้สามารถช่วยคุณแก้ปัญหาที่ในบางกรณีสถานะของธุรกรรมใน Rabby ไม่ตรงกับสถานะบนเชน",
       "clearPendingDesc2": "การดำเนินการนี้จะไม่เปลี่ยนยอดเงินในบัญชีของคุณหรือกำหนดให้คุณต้องป้อนวลีเมล็ดพันธุ์ใหม่ ข้อมูลสินทรัพย์และบัญชีทั้งหมดของคุณจะยังคงปลอดภัย",
-      "followUs": "ติดตามเรา"
+      "followUs": "ติดตามเรา",
+      "currentLanguage": "ภาษาปัจจุบัน",
+      "appCache": "ล้างแคชของแอป"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "โหมดธีม"
+      }
+    },
+    "buy": {
+      "purchased": "ที่ซื้อ",
+      "from": "จาก {{dex}}"
     }
   },
   "native": {
@@ -1644,7 +1721,13 @@
     "appDescription": "กระเป๋าเงินที่เปลี่ยนเกมสำหรับ Ethereum และทุก EVM chains",
     "Deleted": "ลบแล้ว",
     "Paste": "วาง",
-    "Nonce": "Nonce"
+    "Nonce": "Nonce",
+    "themeMode": {
+      "option_Dark": "Dark",
+      "option_System": "ระบบ",
+      "option_Light": "เบา"
+    },
+    "Unknown": "ไม่ทราบ"
   },
   "background": {
     "transactionWatcher": {

@@ -72,14 +72,78 @@
       "mins": "{{t}} phút"
     },
     "assets": "tài sản",
-    "Deleted": "đã xóa"
+    "Deleted": "đã xóa",
+    "themeMode": {
+      "option_Light": "Nhẹ",
+      "option_System": "Hệ thống",
+      "option_Dark": "Tối"
+    },
+    "Unknown": "Không xác định"
   },
   "page": {
     "transactions": {
       "explain": {
         "unknown": "Tương tác Hợp đồng",
         "cancel": "Đã hủy một giao dịch đang chờ xử lý"
-      }
+      },
+      "itemTitle": {
+        "Approve": "Phê duyệt",
+        "Contract": "Triển khai Contract",
+        "Send": "Đã gửi",
+        "Revoke": "Phê duyệt đã bị thu hồi",
+        "Recieve": "Đã nhận",
+        "Swap": "Đã hoán đổi",
+        "Cancel": "Hủy giao dịch đang chờ xử lý",
+        "Default": "Tương tác",
+        "Bridge": "Đã bridge"
+      },
+      "detail": {
+        "From": "Từ",
+        "Succeeded": "Thành công",
+        "SwapAgain": "Hoán Đổi Lại",
+        "ViewOn": "Xem trên",
+        "NoApproveNeed": "Không cần thu hồi: Không còn khoản cấp phép nào.",
+        "To": "Đến",
+        "Unlimited": "Không giới hạn",
+        "ApproveToken": "Phê duyệt token",
+        "SpeedUp": "Tăng tốc",
+        "Revoke": "Thu hồi",
+        "Chain": "Chuỗi",
+        "Date": "Ngày tháng",
+        "Cancel": "Hủy",
+        "SendAgain": "Gửi lại",
+        "Pending": "Đang chờ xử lý",
+        "Unknown": "Không xác định",
+        "RevokeFrom": "Thu hồi từ",
+        "RecipientAddress": "Địa chỉ người nhận",
+        "name": "Tên",
+        "Status": "Trạng thái",
+        "Failed": "Thất bại",
+        "RevokeToken": "Thu hồi Token",
+        "InteractionResults": "Kết quả Tương tác",
+        "GasFee": "Phí Gas",
+        "InteractedContract": "Hợp đồng đã tương tác",
+        "ApproveTo": "Phê duyệt tới"
+      },
+      "empty": {
+        "title": "Không có giao dịch",
+        "desc": "Không tìm thấy giao dịch nào trên <1>supported chains</1>"
+      },
+      "txHistory": {
+        "tipInputData": "Giao dịch bao gồm một tin nhắn",
+        "scamToolTip": "Giao dịch này được khởi xướng bởi kẻ lừa đảo để gửi token lừa đảo và NFT. Vui lòng không tương tác với nó.",
+        "parseInputDataError": "Phân tích thông điệp thất bại"
+      },
+      "modalViewMessage": {
+        "title": "Xem tin nhắn"
+      },
+      "filterScam": {
+        "btn": "Ẩn giao dịch lừa đảo",
+        "title": "Ẩn các giao dịch lừa đảo",
+        "loading": "Quá trình tải có thể mất một chút thời gian và có thể xảy ra trì hoãn dữ liệu"
+      },
+      "title": "Giao dịch",
+      "ViewHiddenItems": "Xem các giao dịch lừa đảo"
     },
     "getStart": {
       "alreadyHaveAddress": "Tôi đã có một địa chỉ",
@@ -709,7 +773,9 @@
       "select-token": "Chọn Token",
       "source": "Nguồn",
       "gas-fee-too-high": "Phí gas quá cao",
-      "directlySwap": "Gói token {{symbol}} trực tiếp với hợp đồng thông minh"
+      "directlySwap": "Gói token {{symbol}} trực tiếp với hợp đồng thông minh",
+      "historyTitle": "Lịch sử Swap",
+      "swapped": "Đã trao đổi"
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",
@@ -747,7 +813,8 @@
       "best": "Tốt nhất",
       "no-route-found": "Không tìm thấy tuyến đường",
       "via-bridge": "thông qua {{bridge}}",
-      "duration": "{{duration}} phút"
+      "duration": "{{duration}} phút",
+      "bridged": "Đã cầu nối"
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -1305,7 +1372,9 @@
         "destinationChain": "Chuỗi đích",
         "riskMessageFromChain": "Do kiểm soát rủi ro, hạn mức rút tiền phụ thuộc vào tổng số tiền gửi từ chuỗi này.",
         "selectChain": "Chọn Chain",
-        "recipientAddress": "Địa chỉ người nhận"
+        "recipientAddress": "Địa chỉ người nhận",
+        "noRecipient": "Không có địa chỉ Người nhận nào có sẵn",
+        "noEnoughValueBalance": "Số dư Vault không đủ. Chuyển chuỗi hoặc thử lại sau."
       },
       "withdrawConfirmModal": {
         "button": "Xem trên DeBank",
@@ -1333,7 +1402,9 @@
       "modifyRPCURL": "Chỉnh sửa URL RPC",
       "addCustomNetwork": "Thêm mạng tùy chỉnh",
       "clearPendingDesc2": "Điều này sẽ không thay đổi số dư trong các tài khoản của bạn hoặc yêu cầu bạn nhập lại cụm từ khôi phục. Tất cả tài sản và thông tin tài khoản của bạn sẽ được bảo mật.",
-      "clearPendingDesc1": "Điều này sẽ xóa tất cả các giao dịch đang chờ xử lý của bạn. Điều này có thể giúp bạn giải quyết vấn đề trong một số trường hợp trạng thái giao dịch trong Rabby không khớp với trạng thái trên chuỗi."
+      "clearPendingDesc1": "Điều này sẽ xóa tất cả các giao dịch đang chờ xử lý của bạn. Điều này có thể giúp bạn giải quyết vấn đề trong một số trường hợp trạng thái giao dịch trong Rabby không khớp với trạng thái trên chuỗi.",
+      "currentLanguage": "Ngôn ngữ hiện tại",
+      "appCache": "Xóa bộ nhớ cache của ứng dụng"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -1517,6 +1588,15 @@
       "qrCodePopupTitle": "QR Code",
       "qrCodePopupTips": "Không bao giờ chia sẻ mã QR cụm từ seed cho bất kỳ ai. Vui lòng xem nó trong một môi trường an toàn và giữ cẩn thận.",
       "alert": "Cụm từ khôi phục này là thông tin xác thực cho tài sản của bạn. KHÔNG làm mất hoặc tiết lộ nó cho người khác, nếu không bạn có thể mất tài sản mãi mãi. Vui lòng xem nó trong môi trường an toàn và giữ cẩn thận."
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "Chế độ theme"
+      }
+    },
+    "buy": {
+      "purchased": "Đã mua",
+      "from": "Từ {{dex}}"
     }
   },
   "component": {
@@ -1533,7 +1613,10 @@
     },
     "TokenSelector": {
       "recent": "Gần đây",
-      "hot": "Nóng"
+      "hot": "Nóng",
+      "common": "Phổ biến",
+      "searchPlaceHolder1": "Tìm kiếm theo Tên / Địa chỉ",
+      "searchPlaceHolder2": "Tìm kiếm Token"
     },
     "PillsSwitch": {
       "NetSwitchTabs": {

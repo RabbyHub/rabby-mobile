@@ -81,7 +81,13 @@
       "mins": "{{t}} 分鐘",
       "hours": "{{t}} 小時"
     },
-    "ok": "OK"
+    "ok": "OK",
+    "themeMode": {
+      "option_System": "系統",
+      "option_Dark": "深色",
+      "option_Light": "輕量版"
+    },
+    "Unknown": "未知"
   },
   "background": {
     "transactionWatcher": {
@@ -144,7 +150,65 @@
       "explain": {
         "unknown": "合約交互",
         "cancel": "取消了一筆待處理的交易"
-      }
+      },
+      "itemTitle": {
+        "Contract": "部署合約",
+        "Cancel": "取消待處理的交易",
+        "Swap": "已交換",
+        "Bridge": "已橋接",
+        "Revoke": "撤銷批准",
+        "Recieve": "收到",
+        "Send": "已發送",
+        "Approve": "已批准",
+        "Default": "互動"
+      },
+      "detail": {
+        "Unknown": "未知",
+        "Cancel": "取消",
+        "From": "從",
+        "Unlimited": "無限制",
+        "To": "至",
+        "NoApproveNeed": "無需撤銷：無剩餘許可。",
+        "SwapAgain": "再次交換",
+        "Date": "日期",
+        "SpeedUp": "加速",
+        "Status": "狀態",
+        "Succeeded": "成功",
+        "ApproveToken": "批准 token",
+        "Pending": "待處理",
+        "Failed": "失敗",
+        "GasFee": "Gas Fee",
+        "SendAgain": "再次發送",
+        "Chain": "鏈",
+        "InteractedContract": "已交互合約",
+        "ViewOn": "查看",
+        "RecipientAddress": "收件人地址",
+        "RevokeToken": "收回 Token",
+        "RevokeFrom": "從...撤銷",
+        "InteractionResults": "互動結果",
+        "ApproveTo": "批准至",
+        "Revoke": "撤销",
+        "name": "名稱"
+      },
+      "empty": {
+        "title": "沒有交易",
+        "desc": "未在<1>supported chains</1>上找到交易。"
+      },
+      "txHistory": {
+        "parseInputDataError": "解析消息失敗",
+        "tipInputData": "交易包含一條消息",
+        "scamToolTip": "此交易由騙子發起，用於發送騙局代幣和NFT。請避免與其互動。"
+      },
+      "modalViewMessage": {
+        "title": "檢視訊息"
+      },
+      "filterScam": {
+        "btn": "隱藏詐騙交易",
+        "title": "隱藏騙局交易",
+        "loading": "加載可能需要一些時間，數據可能會延遲"
+      },
+      "title": "交易",
+      "ViewHiddenItems": "查看 scam 交易"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "輸入您的助記詞"
@@ -760,7 +824,8 @@
       "price-impact": "價格影響",
       "loss-tips": "您正在損失 {{usd}}。請嘗試不同的金額。",
       "no-quote-found": "未找到報價。請嘗試其他代幣對。",
-      "To": "至"
+      "To": "至",
+      "bridged": "橋接"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",
@@ -882,7 +947,9 @@
         "bridgeDesc": "Rabby Wallet 將始終從頂級聚合器中找到最佳匯率，並驗證其報價的可靠性。Rabby 收取<1>0.25%</1>的費用，該費用已自動包含在報價中。",
         "swapDesc": "Rabby Wallet 始終會從頂級聚合器中找到最佳匯率，並驗證其報價的可靠性。Rabby 收取<1>0.25%</1>的費用（包裝費用為0%），該費用已自動包含在報價中。"
       },
-      "Completed": "完成"
+      "Completed": "完成",
+      "historyTitle": "交換記錄",
+      "swapped": "已交換"
     },
     "signText": {
       "title": "簽署文本",
@@ -1419,7 +1486,9 @@
         "recipientAddress": "Recipient address 接收者地址",
         "destinationChain": "目標鏈",
         "deductGasFees": "收到的金額將扣除 gas 費用",
-        "tipsBtn": "我知道了"
+        "tipsBtn": "我知道了",
+        "noRecipient": "沒有可用的收件人地址",
+        "noEnoughValueBalance": "Vault Balance 不足。請切換鏈或者稍後再試。"
       },
       "withdrawConfirmModal": {
         "title": "已轉移到你的 DeBank L2 Wallet",
@@ -1560,7 +1629,9 @@
       "modifyRPCURL": "修改 RPC URL",
       "enableWhitelist": "啟用白名單以發送資產",
       "clearPendingDesc2": "這不會改變您賬戶中的餘額，也不需要您重新輸入您的種子短語。您所有的資產和賬戶信息都將保持安全。",
-      "clearPendingDesc1": "這將清除您所有的待處理交易。這樣可以幫助您解決在某些情況下 Rabby 中的交易狀態與鏈上狀態不匹配的問題。"
+      "clearPendingDesc1": "這將清除您所有的待處理交易。這樣可以幫助您解決在某些情況下 Rabby 中的交易狀態與鏈上狀態不匹配的問題。",
+      "currentLanguage": "當前語言",
+      "appCache": "清除應用程式快取"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -1572,6 +1643,15 @@
       "unknownResult": "結果未知，因為安全引擎當前不可用",
       "ruleDetailTitle": "風險詳情",
       "riskProcessed": "風險提示已被忽略"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "主題模式"
+      }
+    },
+    "buy": {
+      "purchased": "已購買",
+      "from": "來自 {{dex}}"
     }
   },
   "component": {
@@ -1698,7 +1778,10 @@
     },
     "TokenSelector": {
       "hot": "熱門",
-      "recent": "最近"
+      "recent": "最近",
+      "searchPlaceHolder1": "按名稱/地址搜尋",
+      "searchPlaceHolder2": "搜索 Token",
+      "common": "常用"
     }
   }
 }

@@ -86,7 +86,65 @@
       "explain": {
         "unknown": "コントラクトインタラクション",
         "cancel": "保留されたトランザクションをキャンセルしました。"
-      }
+      },
+      "itemTitle": {
+        "Contract": "コントラクトをデプロイする",
+        "Default": "インタラクション",
+        "Recieve": "受け取った",
+        "Revoke": "承認を取り消しました",
+        "Swap": "スワップ済み",
+        "Bridge": "ブリッジ済み",
+        "Cancel": "保留中止取引をキャンセル",
+        "Send": "送信完了",
+        "Approve": "承認済み"
+      },
+      "detail": {
+        "SpeedUp": "速度アップ",
+        "NoApproveNeed": "承認を取り消す必要はありません：残りの許可はありません。",
+        "ApproveToken": "トークンを承認",
+        "To": "至",
+        "Date": "日付",
+        "Chain": "チェーン",
+        "SendAgain": "再送信",
+        "Unlimited": "無制限",
+        "Cancel": "キャンセル",
+        "InteractionResults": "インタラクション結果",
+        "Revoke": "承認しない",
+        "ViewOn": "表示",
+        "ApproveTo": "承認する",
+        "Failed": "失敗しました",
+        "Succeeded": "成功しました",
+        "Pending": "保留中",
+        "From": "から",
+        "name": "名前",
+        "RevokeToken": "トークンの無効化",
+        "Unknown": "不明",
+        "RecipientAddress": "受取人アドレス",
+        "RevokeFrom": "から取消",
+        "InteractedContract": "相互作用したコントラクト",
+        "Status": "ステータス",
+        "GasFee": "Gas Fee",
+        "SwapAgain": "再スワップ"
+      },
+      "empty": {
+        "desc": "<1>サポートされているチェーン</1>で取引が見つかりませんでした。",
+        "title": "トランザクションなし"
+      },
+      "txHistory": {
+        "tipInputData": "トランザクションにはメッセージが含まれています。",
+        "parseInputDataError": "メッセージの解析に失敗しました。",
+        "scamToolTip": "この取引は詐欺師によって開始され、詐欺トークンやNFTを送信するものです。関与しないようにしてください。"
+      },
+      "modalViewMessage": {
+        "title": "メッセージを表示"
+      },
+      "filterScam": {
+        "btn": "スキャム取引を隠す",
+        "loading": "読み込みには少し時間がかかる場合があり、データの遅延が発生する可能性があります。",
+        "title": "スキャム取引を非表示"
+      },
+      "ViewHiddenItems": "詐欺トランザクションを表示する",
+      "title": "トランザクション"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "シードフレーズを入力してください"
@@ -672,7 +730,9 @@
         "bridgeDesc": "Rabby Walletは常にトップアグリゲーターから可能な限り最良のレートを見つけ、そのオファーの信頼性を確認します。Rabbyは<1>0.25%</1>の手数料を請求し、これは見積もりに自動的に含まれます。",
         "swapDesc": "Rabby Walletは常にトップアグリゲーターから最適なレートを見つけ、そのオファーの信頼性を確認します。Rabbyは<1>0.25%</1>の手数料（ラッピング時は0%）を請求し、この手数料は見積もりに自動的に含まれます。"
       },
-      "directlySwap": "スマートコントラクトで{{symbol}}トークンを直接ラッピングする"
+      "directlySwap": "スマートコントラクトで{{symbol}}トークンを直接ラッピングする",
+      "historyTitle": "スワップ履歴",
+      "swapped": "スワップ完了"
     },
     "signTypedData": {
       "createKey": {
@@ -822,7 +882,8 @@
       "the-following-bridge-route-are-found": "以下のレートを発見",
       "no-route-found": "ルートが見つかりません",
       "best": "最高",
-      "Select": "選択"
+      "Select": "選択",
+      "bridged": "ブリッジ済み"
     },
     "dashboard": {
       "hd": {
@@ -1246,7 +1307,10 @@
         "deductGasFees": "受け取った金額からガス料金が差し引かれます",
         "noEnoughValuetBalance": "Vault Balance が不足しています。チェーンを切り替えるか、後でもう一度お試しください。",
         "riskMessageFromAddress": "リスク管理のため、出金限度額はこのアドレスが入金した総額に依存します。",
-        "desc": "GasAccountの残高をDeBank L2 Walletに引き出すことができます。必要に応じて、資金をサポートされているブロックチェーンに転送するために、DeBank L2 Walletにログインしてください。"
+        "desc": "GasAccountの残高をDeBank L2 Walletに引き出すことができます。必要に応じて、資金をサポートされているブロックチェーンに転送するために、DeBank L2 Walletにログインしてください。",
+        "noEnoughGas": "金額がガス料金をカバーするには少なすぎます。",
+        "noEnoughValueBalance": "Vault Balanceが不足しています。チェーンを切り替えるか、後でもう一度試してください。",
+        "noRecipient": "受取人アドレスが利用できません"
       },
       "withdrawConfirmModal": {
         "button": "DeBankで表示",
@@ -1517,7 +1581,18 @@
       "faceId": "Face ID",
       "themeMode": "テーマモード",
       "clearPendingDesc1": "これにより、すべての未処理の取引がクリアされます。これは、一部のケースでRabbyにおける取引の状態がオンチェーンの状態と一致しないという問題を解決するのに役立ちます。",
-      "clearPendingDesc2": "これにより、アカウントの残高が変更されたり、シードフレーズを再入力する必要が生じたりすることはありません。すべての資産とアカウント情報は安全に保たれます。"
+      "clearPendingDesc2": "これにより、アカウントの残高が変更されたり、シードフレーズを再入力する必要が生じたりすることはありません。すべての資産とアカウント情報は安全に保たれます。",
+      "appCache": "アプリのキャッシュをクリア",
+      "currentLanguage": "現在の言語"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "テーマモード"
+      }
+    },
+    "buy": {
+      "purchased": "購入済み",
+      "from": "{{dex}} より"
     }
   },
   "global": {
@@ -1551,7 +1626,13 @@
       "hour": "{{t}} 時間"
     },
     "Nonce": "Nonce",
-    "Cancel": "キャンセル"
+    "Cancel": "キャンセル",
+    "themeMode": {
+      "option_Dark": "ダーク",
+      "option_System": "システム",
+      "option_Light": "ライト"
+    },
+    "Unknown": "不明"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -1576,7 +1657,10 @@
   "component": {
     "TokenSelector": {
       "hot": "ホット",
-      "recent": "最近"
+      "recent": "最近",
+      "searchPlaceHolder2": "トークンを検索",
+      "searchPlaceHolder1": "名前 / アドレスで検索",
+      "common": "一般"
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",

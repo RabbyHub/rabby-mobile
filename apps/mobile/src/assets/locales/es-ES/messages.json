@@ -105,7 +105,10 @@
     },
     "TokenSelector": {
       "recent": "Reciente",
-      "hot": "Caliente"
+      "hot": "Caliente",
+      "searchPlaceHolder2": "Buscar Token",
+      "common": "Común",
+      "searchPlaceHolder1": "Buscar por Nombre / Dirección"
     },
     "NFTNumberInput": {
       "erc1155Tips": "Tu saldo es {{amount}}",
@@ -178,7 +181,65 @@
       "explain": {
         "unknown": "Interacción con Contratos",
         "cancel": "Canceló una transacción pendiente"
-      }
+      },
+      "itemTitle": {
+        "Approve": "Aprobado",
+        "Default": "Interacción",
+        "Revoke": "Aprobación revocada",
+        "Cancel": "Cancelar transacción pendiente",
+        "Send": "Enviado",
+        "Recieve": "Recibido",
+        "Swap": "Cambiado",
+        "Contract": "Desplegar Contrato",
+        "Bridge": "Puenteado"
+      },
+      "detail": {
+        "Cancel": "Cancelar",
+        "Succeeded": "Correcto",
+        "From": "Desde",
+        "SwapAgain": "Intercambiar de nuevo",
+        "Unlimited": "Ilimitado",
+        "Unknown": "Desconocido",
+        "Failed": "Fallido",
+        "SendAgain": "Enviar de nuevo",
+        "To": "A",
+        "ApproveToken": "Aprobar token",
+        "Pending": "Pendiente",
+        "NoApproveNeed": "No need to revoke: No allowance remaining.",
+        "Chain": "Cadena",
+        "Date": "Fecha",
+        "SpeedUp": "Acelerar",
+        "Revoke": "Revocar",
+        "Status": "Estado",
+        "GasFee": "Gas Fee",
+        "name": "Nombre",
+        "ViewOn": "Ver en",
+        "RevokeToken": "Revocar Token",
+        "RevokeFrom": "Revocar desde",
+        "InteractionResults": "Resultados de Interacción",
+        "ApproveTo": "Aprobar para",
+        "InteractedContract": "Contrato interactuado",
+        "RecipientAddress": "Dirección del destinatario"
+      },
+      "empty": {
+        "desc": "No se encontraron transacciones en <1>supported chains</1>",
+        "title": "Sin transacciones"
+      },
+      "txHistory": {
+        "tipInputData": "La transacción incluye un mensaje",
+        "parseInputDataError": "Analizar mensaje fallido",
+        "scamToolTip": "Esta transacción es iniciada por estafadores para enviar tokens y NFT fraudulentos. Por favor, absténgase de interactuar con ella."
+      },
+      "modalViewMessage": {
+        "title": "Ver Mensaje"
+      },
+      "filterScam": {
+        "btn": "Ocultar transacciones de estafa",
+        "loading": "Cargar puede tardar un momento, y son posibles retrasos en los datos",
+        "title": "Ocultar transacciones fraudulentas"
+      },
+      "ViewHiddenItems": "Ver transacciones fraudulentas",
+      "title": "Transacciones"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Introduce tu frase semilla"
@@ -878,7 +939,9 @@
         "swapDesc": "Rabby Wallet siempre encontrará la mejor tasa posible de los principales agregadores y verificará la fiabilidad de sus ofertas. Rabby cobra una tarifa de <1>0.25%</1> (0% para envolturas), que se incluye automáticamente en la cotización.",
         "bridgeDesc": "Rabby Wallet siempre encontrará la mejor tarifa posible de los principales agregadores y verificará la fiabilidad de sus ofertas. Rabby cobra una tarifa de <1>0.25%</1>, que se incluye automáticamente en la cotización."
       },
-      "wrap-contract": "Wrap Contract"
+      "wrap-contract": "Wrap Contract",
+      "historyTitle": "Historial de Swap",
+      "swapped": "Intercambiado"
     },
     "nextComponent": {
       "addAddress": {
@@ -969,7 +1032,8 @@
       "bridge-from": "Puente desde",
       "price-impact": "Impacto en el precio",
       "From": "Desde",
-      "actual": "Actual:"
+      "actual": "Actual:",
+      "bridged": "Puenteado"
     },
     "newAddress": {
       "createNewAddress": "Crear nueva Address",
@@ -1541,7 +1605,9 @@
       "currentVersion": "Versión Actual",
       "themeMode": "Modo de tema",
       "clearPendingDesc2": "Esto no cambiará los saldos de tus cuentas ni requerirá que vuelvas a ingresar tu frase semilla. Toda tu información de activos y cuentas permanecerá segura.",
-      "clearPendingDesc1": "Esto borrará todas tus transacciones pendientes. Esto puede ayudarte a resolver el problema de que, en algunos casos, el estado de la transacción en Rabby no coincida con el estado en la cadena."
+      "clearPendingDesc1": "Esto borrará todas tus transacciones pendientes. Esto puede ayudarte a resolver el problema de que, en algunos casos, el estado de la transacción en Rabby no coincida con el estado en la cadena.",
+      "currentLanguage": "Idioma actual",
+      "appCache": "Borrar caché de la aplicación"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -1577,7 +1643,8 @@
         "followingTokenInSufficient": "El saldo de los siguientes tokens es insuficiente",
         "inSufficientTip1": "Esta dirección no tiene suficientes tokens. Por favor, elige una dirección diferente.",
         "zeroInvalidAmount": "El importe no puede ser cero",
-        "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento."
+        "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento.",
+        "paymentAddress": "Dirección de pago"
       },
       "paymentAddressPopup": {
         "confirm": "Confirmar",
@@ -1601,7 +1668,9 @@
         "recipientAddress": "Dirección del destinatario",
         "tipsBtn": "Lo tengo",
         "selectChain": "Seleccionar cadena",
-        "deductGasFees": "La cantidad recibida deducirá las tarifas de gas."
+        "deductGasFees": "La cantidad recibida deducirá las tarifas de gas.",
+        "noRecipient": "No Recipient address available",
+        "noEnoughValueBalance": "Saldo de Vault insuficiente. Cambia de cadena o inténtalo de nuevo más tarde."
       },
       "withdrawConfirmModal": {
         "button": "Ver en DeBank",
@@ -1610,6 +1679,15 @@
       "withdraw": "Retirar",
       "noBalance": "Sin saldo para retirar",
       "gasExceed": "El saldo de GasAccount no puede exceder los $1000."
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "Modo de tema"
+      }
+    },
+    "buy": {
+      "from": "Desde {{dex}}",
+      "purchased": "Comprado"
     }
   },
   "global": {
@@ -1643,7 +1721,13 @@
     },
     "copied": "Copiado",
     "cancelButton": "Cancelar",
-    "appDescription": "El innovador wallet para Ethereum y todas las cadenas EVM"
+    "appDescription": "El innovador wallet para Ethereum y todas las cadenas EVM",
+    "themeMode": {
+      "option_System": "Sistema",
+      "option_Light": "Ligero",
+      "option_Dark": "Oscuro"
+    },
+    "Unknown": "Desconocido"
   },
   "bluetooth": {
     "powered_off_alert": {

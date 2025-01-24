@@ -72,7 +72,13 @@
     "appDescription": "Die revolutionäre Wallet für Ethereum und alle EVM-Chains",
     "closeButton": "Schließen",
     "confirm": "Bestätigen",
-    "Confirm": "Bestätigen"
+    "Confirm": "Bestätigen",
+    "themeMode": {
+      "option_Dark": "Dunkel",
+      "option_System": "System",
+      "option_Light": "Licht"
+    },
+    "Unknown": "Unbekannt"
   },
   "component": {
     "accountSwitcher": {
@@ -116,7 +122,10 @@
     },
     "TokenSelector": {
       "recent": "Kürzlich",
-      "hot": "Heiß"
+      "hot": "Heiß",
+      "searchPlaceHolder2": "Token suchen",
+      "common": "Allgemein",
+      "searchPlaceHolder1": "Suche nach Name / Adresse"
     },
     "AuthenticationModals": {
       "processBiometrics": {
@@ -206,7 +215,65 @@
       "explain": {
         "cancel": "Abgebrochene ausstehende Transaktion",
         "unknown": "Vertragsinteraktion"
-      }
+      },
+      "itemTitle": {
+        "Send": "Gesendet",
+        "Approve": "Genehmigt",
+        "Default": "Interaktion",
+        "Recieve": "Empfangen",
+        "Contract": "Vertrag bereitstellen",
+        "Bridge": "Überbrückt",
+        "Swap": "Getauscht",
+        "Cancel": "Anstehende Transaktion abbrechen",
+        "Revoke": "Widerrufene Genehmigung"
+      },
+      "detail": {
+        "InteractionResults": "Interaktionsergebnisse",
+        "NoApproveNeed": "Kein Widerruf nötig: Keine verbleibende Erlaubnis.",
+        "Failed": "Fehlgeschlagen",
+        "Date": "Datum",
+        "name": "Name",
+        "To": "Zu",
+        "Status": "Status",
+        "ViewOn": "Ansehen auf",
+        "Cancel": "Abbrechen",
+        "Chain": "Kette",
+        "Unlimited": "Unbegrenzt",
+        "RevokeToken": "Token widerrufen",
+        "GasFee": "Gasgebühr",
+        "Revoke": "Zurückziehen",
+        "InteractedContract": "In Kontakt stehender Vertrag",
+        "From": "Von",
+        "SwapAgain": "Erneut tauschen",
+        "Unknown": "Unbekannt",
+        "ApproveTo": "Genehmigen für",
+        "RecipientAddress": "Empfängeradresse",
+        "SendAgain": "Erneut senden",
+        "SpeedUp": "Beschleunigen",
+        "Pending": "Ausstehend",
+        "ApproveToken": "Token genehmigen",
+        "Succeeded": "Erfolgreich",
+        "RevokeFrom": "Widerrufen von"
+      },
+      "empty": {
+        "title": "Keine Transaktionen",
+        "desc": "Auf <1>unterstützten Chains</1> wurden keine Transaktionen gefunden。"
+      },
+      "txHistory": {
+        "parseInputDataError": "Nachricht konnte nicht geparst werden",
+        "tipInputData": "Die Transaktion enthält eine Nachricht",
+        "scamToolTip": "Diese Transaktion wird von Betrügern initiiert, um betrügerische Token und NFTs zu senden. Bitte vermeiden Sie Interaktionen damit."
+      },
+      "modalViewMessage": {
+        "title": "Nachricht anzeigen"
+      },
+      "filterScam": {
+        "title": "Scam-Transaktionen ausblenden",
+        "loading": "Das Laden kann einen Moment dauern, und Datenverzögerungen sind möglich",
+        "btn": "Betrugstransaktionen ausblenden"
+      },
+      "ViewHiddenItems": "Betrugs-Transaktionen anzeigen",
+      "title": "Transaktionen"
     },
     "getStart": {
       "goToHome": "Gehe zu Home",
@@ -864,7 +931,9 @@
         "title": "Rabby-Gebühr",
         "bridgeDesc": "Rabby Wallet findet immer den bestmöglichen Kurs von den führenden Aggregatoren und überprüft die Zuverlässigkeit ihrer Angebote. Rabby erhebt eine Gebühr von <1>0,25%</1>, die automatisch im Angebot enthalten ist.",
         "swapDesc": "Rabby Wallet wird stets den bestmöglichen Kurs von den führenden Aggregatoren finden und die Zuverlässigkeit ihrer Angebote überprüfen. Rabby erhebt eine Gebühr von <1>0,25%</1> (0% für Wrapping), die automatisch im Angebot enthalten ist."
-      }
+      },
+      "swapped": "Getauscht",
+      "historyTitle": "Tauschhistorie"
     },
     "bridge": {
       "liquidity": "Liquidität",
@@ -902,7 +971,8 @@
       "bridgeFrom": "Brücke von",
       "est-difference": "Geschätzter Unterschied:",
       "duration": "{{duration}} Min.",
-      "no-quote": "Kein Angebot"
+      "no-quote": "Kein Angebot",
+      "bridged": "Überbrückt"
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1530,7 +1600,9 @@
         "destinationChain": "Ziel-Chain",
         "noEnoughGas": "Betrag zu niedrig, um die Gasgebühren zu decken",
         "noEnoughValuetBalance": "Vault-Guthaben unzureichend. Wechsle die Kette oder versuche es später erneut.",
-        "desc": "Sie können Ihr GasAccount-Guthaben auf Ihr DeBank L2 Wallet abheben. Melden Sie sich bei Ihrem DeBank L2 Wallet an, um die Gelder bei Bedarf auf eine unterstützte Blockchain zu übertragen."
+        "desc": "Sie können Ihr GasAccount-Guthaben auf Ihr DeBank L2 Wallet abheben. Melden Sie sich bei Ihrem DeBank L2 Wallet an, um die Gelder bei Bedarf auf eine unterstützte Blockchain zu übertragen.",
+        "noRecipient": "Kein Empfängeradresse verfügbar",
+        "noEnoughValueBalance": "Vault-Guthaben unzureichend. Kette wechseln oder später erneut versuchen."
       },
       "withdrawConfirmModal": {
         "button": "Auf DeBank ansehen",
@@ -1601,7 +1673,9 @@
       "addCustomNetwork": "Benutzerdefiniertes Netzwerk hinzufügen",
       "clearPendingDesc1": "Dadurch werden alle Ihre ausstehenden Transaktionen gelöscht. Dies kann Ihnen helfen, das Problem zu lösen, dass in einigen Fällen der Zustand der Transaktion in Rabby nicht mit dem Zustand on-chain übereinstimmt.",
       "clearPendingDesc2": "Dadurch werden die Kontosalden nicht geändert oder Sie müssen Ihre Seed-Phrase nicht erneut eingeben. Alle Ihre Vermögenswerte und Kontoinformationen bleiben sicher.",
-      "autoLockTime": "Automatische Sperrzeit"
+      "autoLockTime": "Automatische Sperrzeit",
+      "currentLanguage": "Aktuelle Sprache",
+      "appCache": "App-Cache löschen"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -1644,6 +1718,15 @@
       "ConfirmModifyRpcModal": {
         "desc": "Die Chain ist bereits von Rabby integriert. Müssen Sie die RPC-URL ändern?"
       }
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "Themenmodus"
+      }
+    },
+    "buy": {
+      "from": "Von {{dex}}",
+      "purchased": "Gekauft"
     }
   },
   "constant": {

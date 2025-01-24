@@ -45,7 +45,65 @@
       "explain": {
         "unknown": "Interaction avec le contrat",
         "cancel": "Annulation d'une transaction en attente"
-      }
+      },
+      "itemTitle": {
+        "Contract": "Déployer le contrat",
+        "Recieve": "Reçu",
+        "Approve": "Approuvé",
+        "Default": "Interaction",
+        "Bridge": "Relié",
+        "Revoke": "Approbation Révoquée",
+        "Swap": "Échangé",
+        "Cancel": "Annuler la transaction en attente",
+        "Send": "Envoyé"
+      },
+      "detail": {
+        "Status": "Statut",
+        "ViewOn": "Afficher sur",
+        "NoApproveNeed": "Pas besoin de révoquer : aucune allocation restante.",
+        "Date": "Date",
+        "Succeeded": "Réussi",
+        "GasFee": "Gas Fee",
+        "To": "Pour",
+        "Revoke": "Révoquer",
+        "Cancel": "Annuler",
+        "SpeedUp": "Accélérer",
+        "ApproveToken": "Approuver le token",
+        "From": "De",
+        "Pending": "En attente",
+        "SwapAgain": "Échanger à nouveau",
+        "Chain": "Chaîne",
+        "Failed": "Échoué",
+        "ApproveTo": "Approuver à",
+        "Unlimited": "Illimité",
+        "InteractionResults": "Résultats d'interaction",
+        "RecipientAddress": "Adresse du destinataire",
+        "RevokeFrom": "Révoquer de",
+        "InteractedContract": "Contrat interagi",
+        "name": "Nom",
+        "SendAgain": "Envoyer à nouveau",
+        "Unknown": "Inconnu",
+        "RevokeToken": "Révoquer Token"
+      },
+      "empty": {
+        "title": "Aucune transaction",
+        "desc": "Aucune transaction trouvée sur les <1>chaînes prises en charge</1>"
+      },
+      "txHistory": {
+        "scamToolTip": "Cette transaction est initiée par des fraudeurs pour envoyer des jetons et NFT frauduleux. Veuillez vous abstenir d'interagir avec elle.",
+        "parseInputDataError": "Échec de l'analyse du message",
+        "tipInputData": "La transaction inclut un message"
+      },
+      "modalViewMessage": {
+        "title": "Voir le message"
+      },
+      "filterScam": {
+        "title": "Masquer les transactions frauduleuses",
+        "loading": "Le chargement peut prendre un moment et des retards de données sont possibles",
+        "btn": "Masquer les transactions frauduleuses"
+      },
+      "title": "Transactions",
+      "ViewHiddenItems": "Afficher les transactions frauduleuses"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -670,7 +728,9 @@
         "rate": "Taux de frais",
         "bridgeDesc": "Le Rabby Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève des frais de <1>0,25%</1>, qui sont automatiquement inclus dans le devis.",
         "swapDesc": "Rabby Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève une commission de <1>0,25%</1> (0% pour l'enveloppement), qui est automatiquement incluse dans le devis."
-      }
+      },
+      "historyTitle": "Historique des swaps",
+      "swapped": "Échangé"
     },
     "manageAddress": {
       "seed-phrase": "Phrase secrète",
@@ -736,7 +796,8 @@
       "duration": "{{duration}} min",
       "best": "Meilleur",
       "no-route-found": "Aucun itinéraire trouvé",
-      "the-following-bridge-route-are-found": "Taux suivants trouvés"
+      "the-following-bridge-route-are-found": "Taux suivants trouvés",
+      "bridged": "Ponté"
     },
     "dashboard": {
       "hd": {
@@ -1344,7 +1405,9 @@
         "selectChain": "Sélectionner la chaîne",
         "riskMessageFromChain": "En raison du contrôle des risques, la limite de retrait dépend du montant total déposé à partir de cette chaîne.",
         "destinationChain": "Chaîne de destination",
-        "deductGasFees": "Le montant reçu déduira les frais de gas"
+        "deductGasFees": "Le montant reçu déduira les frais de gas",
+        "noEnoughValueBalance": "Solde de la Vault insuffisant. Changez de chaîne ou réessayez plus tard.",
+        "noRecipient": "Aucune adresse de destinataire disponible"
       },
       "withdrawConfirmModal": {
         "button": "Voir sur DeBank",
@@ -1477,7 +1540,18 @@
       "clearPendingDesc1": "Cela supprimera toutes vos transactions en attente. Cela peut vous aider à résoudre le problème lorsque, dans certains cas, l'état de la transaction dans Rabby ne correspond pas à l'état sur la blockchain.",
       "clearPendingDesc2": "Cela ne changera pas les soldes de vos comptes ni ne vous obligera à ressaisir votre phrase de récupération. Toutes vos informations sur les actifs et les comptes resteront sécurisées.",
       "screenTitle": "Paramètres",
-      "themeMode": "Mode Thème"
+      "themeMode": "Mode Thème",
+      "currentLanguage": "Langue actuelle",
+      "appCache": "Effacer le cache de l'application"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "Mode thème"
+      }
+    },
+    "buy": {
+      "from": "Depuis {{dex}}",
+      "purchased": "Acheté"
     }
   },
   "native": {
@@ -1522,7 +1596,10 @@
     },
     "TokenSelector": {
       "recent": "Récent",
-      "hot": "Hot"
+      "hot": "Hot",
+      "searchPlaceHolder1": "Rechercher par nom / adresse",
+      "searchPlaceHolder2": "Rechercher Token",
+      "common": "Commun"
     },
     "AccountSelectDrawer": {
       "btn": {
@@ -1673,7 +1750,13 @@
       "hours": "{{t}} heures",
       "hour": "{{t}} heure",
       "mins": "{{t}} mins"
-    }
+    },
+    "themeMode": {
+      "option_System": "Système",
+      "option_Light": "Léger",
+      "option_Dark": "Sombre"
+    },
+    "Unknown": "Inconnu"
   },
   "background": {
     "transactionWatcher": {

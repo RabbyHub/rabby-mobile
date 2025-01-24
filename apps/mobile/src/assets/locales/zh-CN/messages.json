@@ -77,7 +77,8 @@
       "option_System": "跟随系统",
       "option_Light": "浅色",
       "option_Dark": "深色"
-    }
+    },
+    "Unknown": "未知"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -93,7 +94,64 @@
       "explain": {
         "unknown": "合约交互",
         "cancel": "取消了一笔待处理的交易"
-      }
+      },
+      "itemTitle": {
+        "Approve": "已批准",
+        "Default": "交互",
+        "Send": "已发送",
+        "Revoke": "撤销授权",
+        "Swap": "已交换",
+        "Bridge": "跨链",
+        "Contract": "部署合约",
+        "Recieve": "已收到",
+        "Cancel": "取消等待中的交易"
+      },
+      "detail": {
+        "Cancel": "取消",
+        "Pending": "待处理",
+        "Unlimited": "无限制",
+        "GasFee": "Gas Fee",
+        "NoApproveNeed": "无需撤销：没有剩余的授权。",
+        "Succeeded": "成功",
+        "Failed": "失败",
+        "From": "从",
+        "SendAgain": "再次发送",
+        "Revoke": "撤销",
+        "ViewOn": "查看",
+        "Unknown": "Unknown",
+        "Status": "状态",
+        "SwapAgain": "再次交换",
+        "Date": "日期",
+        "RevokeToken": "撤销 Token",
+        "Chain": "链",
+        "name": "名称",
+        "ApproveToken": "批准 token",
+        "RevokeFrom": "从中撤销",
+        "SpeedUp": "加速",
+        "InteractionResults": "交互结果",
+        "ApproveTo": "批准给",
+        "RecipientAddress": "Recipient address",
+        "InteractedContract": "已交互合约"
+      },
+      "empty": {
+        "title": "暂无交易",
+        "desc": "<1>支持的链</1>上未找到交易"
+      },
+      "txHistory": {
+        "parseInputDataError": "解析消息失败",
+        "tipInputData": "交易包含一条消息",
+        "scamToolTip": "该交易由诈骗者发起，用于发送诈骗代币和NFT。请避免与其交互。"
+      },
+      "modalViewMessage": {
+        "title": "查看消息"
+      },
+      "filterScam": {
+        "loading": "加载可能需要一点时间，数据可能会延迟",
+        "btn": "隐藏诈骗交易",
+        "title": "隐藏诈骗交易"
+      },
+      "ViewHiddenItems": "查看 scam 交易",
+      "title": "交易"
     },
     "getStart": {
       "alreadyHaveAddress": "我已经有一个地址",
@@ -671,7 +729,8 @@
       "price-impact": "价格影响",
       "bridgeTo": "桥接到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
-      "title": "Bridge"
+      "title": "Bridge",
+      "bridged": "跨链已完成"
     },
     "approvals": {
       "tab-switch": {
@@ -789,7 +848,9 @@
         "swapDesc": "Rabby Wallet 始终会从顶级聚合器中找到最佳汇率，并验证其报价的可靠性。Rabby 收取<1>0.25%</1>的费用（包装费用为0%），该费用已自动包含在报价中。"
       },
       "directlySwap": "通过智能合约直接包装{{symbol}}代币",
-      "gas-fee-too-high": "Gas 费用过高"
+      "gas-fee-too-high": "Gas 费用过高",
+      "swapped": "已交换",
+      "historyTitle": "Swap 历史记录"
     },
     "dashboard": {
       "home": {
@@ -1429,7 +1490,9 @@
         "recipientAddress": "Recipient address（收件人地址）",
         "destinationChain": "目标链",
         "deductGasFees": "接收金额将扣除 gas 费用",
-        "tipsBtn": "我知道了"
+        "tipsBtn": "我知道了",
+        "noEnoughValueBalance": "Vault Balance insufficient. 切换链或稍后重试。",
+        "noRecipient": "未提供收件人地址"
       },
       "withdrawConfirmModal": {
         "title": "已转入您的 DeBank L2 钱包",
@@ -1531,12 +1594,17 @@
       "currentVersion": "当前版本",
       "clearPendingDesc1": "这将清除您所有的待处理交易。这样可以帮助您解决在某些情况下 Rabby 中的交易状态与链上状态不匹配的问题。",
       "touchId": "Touch ID",
-      "appCache": "清空应用缓存"
+      "appCache": "清空应用缓存",
+      "currentLanguage": "当前语言"
     },
     "settingModal": {
       "themeMode": {
         "title": "主题模式"
       }
+    },
+    "buy": {
+      "from": "来自 {{dex}}",
+      "purchased": "已购买"
     }
   },
   "component": {
@@ -1579,7 +1647,10 @@
     },
     "TokenSelector": {
       "recent": "最近",
-      "hot": "热门"
+      "hot": "热门",
+      "common": "常规",
+      "searchPlaceHolder1": "按名称 / 地址搜索",
+      "searchPlaceHolder2": "搜索 Token"
     },
     "NoLongerSupports": {
       "button": "知道了",

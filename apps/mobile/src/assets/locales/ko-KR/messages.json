@@ -31,7 +31,64 @@
       "explain": {
         "unknown": "컨트랙트 상호작용",
         "cancel": "보류 중인 거래가 취소되었습니다."
-      }
+      },
+      "itemTitle": {
+        "Send": "보내짐",
+        "Bridge": "브릿지됨",
+        "Revoke": "철회된 승인",
+        "Contract": "컨트랙트 배포",
+        "Approve": "승인됨",
+        "Swap": "교환됨",
+        "Cancel": "보류 중인 거래 취소",
+        "Default": "상호작용",
+        "Recieve": "수신완료"
+      },
+      "detail": {
+        "ApproveToken": "토큰 승인",
+        "SendAgain": "다시 보내기",
+        "Cancel": "취소",
+        "Revoke": "철회",
+        "SpeedUp": "속도 향상",
+        "GasFee": "Gas Fee",
+        "From": "부터",
+        "Unlimited": "무제한",
+        "Status": "상태",
+        "To": "에",
+        "Failed": "실패했습니다",
+        "Succeeded": "성공했습니다",
+        "ViewOn": "보기",
+        "Pending": "보류 중",
+        "NoApproveNeed": "철회할 필요 없음: 남아 있는 허용량이 없습니다.",
+        "SwapAgain": "다시 Swap 하기",
+        "Chain": "체인",
+        "InteractionResults": "상호 작용 결과",
+        "RecipientAddress": "수신자 주소",
+        "Unknown": "알 수 없음",
+        "ApproveTo": "승인하기",
+        "Date": "날짜",
+        "RevokeFrom": "에서 철회",
+        "InteractedContract": "상호작용된 계약",
+        "RevokeToken": "토큰 취소",
+        "name": "이름"
+      },
+      "empty": {
+        "desc": "<1> 지원되는 체인 </1>에서 거래를 찾을 수 없습니다.",
+        "title": "거래 내역 없음"
+      },
+      "txHistory": {
+        "parseInputDataError": "메시지 구문 분석 실패",
+        "tipInputData": "트랜잭션에는 메시지가 포함됩니다."
+      },
+      "modalViewMessage": {
+        "title": "메시지 보기"
+      },
+      "filterScam": {
+        "btn": "사기 거래 숨기기",
+        "loading": "로드하는 데 시간이 걸릴 수 있으며, 데이터 지연이 발생할 수 있습니다.",
+        "title": "사기 거래 숨기기"
+      },
+      "title": "트랜잭션",
+      "ViewHiddenItems": "사기 거래 보기"
     },
     "getStart": {
       "goToHome": "홈으로 이동",
@@ -547,7 +604,9 @@
         "title": "Rabby 수수료",
         "bridgeDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 최상의 요율을 찾아 제공의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료를 부과하며, 이는 견적에 자동으로 포함됩니다.",
         "swapDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 가능한 최상의 비율을 찾고 그들의 제안의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료(래핑의 경우 0%)를 부과하며, 이는 견적에 자동으로 포함됩니다."
-      }
+      },
+      "swapped": "교환됨",
+      "historyTitle": "스왑 기록"
     },
     "activities": {
       "signedTx": {
@@ -654,7 +713,8 @@
       "best": "최고",
       "duration": "{{duration}} 분",
       "via-bridge": "{{bridge}} 통해",
-      "To": "에게"
+      "To": "에게",
+      "bridged": "브리징됨"
     },
     "manageAddress": {
       "confirm": "확인",
@@ -1160,7 +1220,9 @@
         "amount": "수량",
         "selectChain": "체인 선택",
         "deductGasFees": "수신된 금액은 gas 수수료를 공제합니다.",
-        "withdrawalLimit": "출금 한도"
+        "withdrawalLimit": "출금 한도",
+        "noEnoughValueBalance": "Vault Balance insufficient. 체인을 전환하거나 나중에 다시 시도하세요.",
+        "noRecipient": "수취인 주소를 사용할 수 없습니다."
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Wallet로 전송되었습니다.",
@@ -1468,7 +1530,18 @@
       "aboutUs": "회사 소개",
       "tou": "이용 약관",
       "policy": "개인정보처리방침",
-      "clearPendingDesc2": "이렇게 해도 귀하의 계좌 잔액에는 변화가 없으며 시드 구문을 재입력할 필요도 없습니다. 모든 자산과 계좌 정보는 안전하게 유지됩니다."
+      "clearPendingDesc2": "이렇게 해도 귀하의 계좌 잔액에는 변화가 없으며 시드 구문을 재입력할 필요도 없습니다. 모든 자산과 계좌 정보는 안전하게 유지됩니다.",
+      "currentLanguage": "현재 언어",
+      "appCache": "앱 캐시 지우기"
+    },
+    "settingModal": {
+      "themeMode": {
+        "title": "테마 모드"
+      }
+    },
+    "buy": {
+      "purchased": "구매함",
+      "from": "{{dex}} 에서"
     }
   },
   "global": {
@@ -1502,7 +1575,13 @@
     "appDescription": "이더리움 및 모든 EVM 체인을 위한 혁신적인 지갑",
     "folded": "접힘",
     "ok": "OK",
-    "Deleted": "삭제됨"
+    "Deleted": "삭제됨",
+    "themeMode": {
+      "option_System": "시스템",
+      "option_Light": "라이트",
+      "option_Dark": "다크"
+    },
+    "Unknown": "알 수 없음"
   },
   "native": {
     "biometrics": {
@@ -1529,7 +1608,10 @@
     },
     "TokenSelector": {
       "recent": "최근",
-      "hot": "핫"
+      "hot": "핫",
+      "common": "일반",
+      "searchPlaceHolder1": "이름 / 주소로 검색",
+      "searchPlaceHolder2": "토큰 검색"
     },
     "NFTNumberInput": {
       "erc1155Tips": "귀하의 잔액은 {{amount}} 입니다.",
