@@ -6158,7 +6158,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.9.1-1.beta.0
+    "@rabby-wallet/rabby-api": 0.9.11
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
@@ -6529,9 +6529,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.1-1.beta.0":
-  version: 0.9.1-1.beta.0
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.1-1.beta.0"
+"@rabby-wallet/rabby-api@npm:0.9.11":
+  version: 0.9.11
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.11"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -6542,24 +6542,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: fc8ed1d366cdaeb4f9b06796efa7b491a0100b9f8dd570c0288656c06daee06c43c6ea95c55c90cf9a47a6288a0897679cef3463aaa3be17516ec3ec05f5bfc2
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/rabby-api@npm:0.9.1-1.beta.3":
-  version: 0.9.1-1.beta.3
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.1-1.beta.3"
-  dependencies:
-    "@rabby-wallet/rabby-sign": 0.4.0
-    axios: ^0.27.2
-    axios-rate-limit: ^1.3.0
-    eth-rpc-errors: ^4.0.3
-    lodash: ^4.17.21
-    qss: ^2.0.3
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 6fb466dfe3e3ef4f512d933e1d37fb429b9fc3a4677832ab2ae9217142f6faf5d012d21da0bf26c76fd34b84fb85251f5b69b36637a1fe567205773ace463d88
+  checksum: 7b830de2c5ced9527f79d14789b99ebbf250be4240945d3d803045d607a7222cd0215d3d491dc0363d6b037abac6d1baa8c57f71dc91958427dcb70b65a2b596
   languageName: node
   linkType: hard
 
@@ -27686,7 +27669,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
-    "@rabby-wallet/rabby-api": 0.9.1-1.beta.3
+    "@rabby-wallet/rabby-api": 0.9.11
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.46
