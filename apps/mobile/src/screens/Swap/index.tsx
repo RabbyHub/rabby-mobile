@@ -69,7 +69,9 @@ import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 
 const isAndroid = Platform.OS === 'android';
 
-const Swap = ({ isForMultipleAdderss = true }: PropsForAccountSwitchScreen) => {
+const Swap = ({
+  isForMultipleAdderss = false,
+}: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
