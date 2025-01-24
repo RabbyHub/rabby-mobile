@@ -1722,6 +1722,13 @@
     "settingModal": {
       "themeMode": {
         "title": "Modo de tema"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "Limpar e Fechar App"
+        },
+        "title": "Limpar Cache da App",
+        "clearAppCacheDesc": "'Isto removerá ficheiros temporários em cache sem afetar os seus dados pessoais ou definições. A aplicação precisa de reiniciar para concluir o processo. Deseja continuar?'"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "message": "Por favor, ative o Bluetooth para usar esta funcionalidade.",
       "open_settings": "OK",
       "title": "Bluetooth está desligado"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Cancelar"
+      }
     }
   }
 }

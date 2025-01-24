@@ -77,7 +77,8 @@
       },
       "txHistory": {
         "parseInputDataError": "메시지 구문 분석 실패",
-        "tipInputData": "트랜잭션에는 메시지가 포함됩니다."
+        "tipInputData": "트랜잭션에는 메시지가 포함됩니다.",
+        "scamToolTip": "이 거래는 사기꾼들이 사기 토큰과 NFTs를 보내기 위해 시작한 것입니다. 이와 상호작용하지 않도록 주의하세요."
       },
       "modalViewMessage": {
         "title": "메시지 보기"
@@ -1537,6 +1538,13 @@
     "settingModal": {
       "themeMode": {
         "title": "테마 모드"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "지우기 및 앱 닫기"
+        },
+        "title": "앱 캐시 지우기",
+        "clearAppCacheDesc": "\"이 작업은 개인 데이터나 설정에 영향을 미치지 않고 임시 캐시 파일을 제거합니다. 프로세스를 완료하려면 앱을 다시 시작해야 합니다. 계속하시겠습니까?\""
       }
     },
     "buy": {
@@ -1781,6 +1789,13 @@
       "title": "Bluetooth이 꺼져 있습니다",
       "open_settings": "OK",
       "message": "이 기능을 사용하려면 Bluetooth를 켜십시오."
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "취소"
+      }
     }
   }
 }

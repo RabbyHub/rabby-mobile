@@ -1647,6 +1647,13 @@
     "settingModal": {
       "themeMode": {
         "title": "主題模式"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "清除並關閉 App"
+        },
+        "title": "清除 App 緩存",
+        "clearAppCacheDesc": "這將移除暫存的快取檔案，而不影響您的個人資料或設定。應用程式需要重新啟動才能完成此過程。您是否希望繼續？"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "searchPlaceHolder1": "按名稱/地址搜尋",
       "searchPlaceHolder2": "搜索 Token",
       "common": "常用"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "取消"
+      }
     }
   }
 }

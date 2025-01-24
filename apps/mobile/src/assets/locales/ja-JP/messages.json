@@ -1588,6 +1588,13 @@
     "settingModal": {
       "themeMode": {
         "title": "テーマモード"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "アプリをクリアして閉じる"
+        },
+        "title": "アプリのキャッシュをクリア",
+        "clearAppCacheDesc": "これにより、一時的なキャッシュファイルが削除されますが、個人データや設定には影響しません。プロセスを完了するにはアプリを再起動する必要があります。続行しますか？"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "instant": "インスタント",
       "doNotReserve": "ガスを予約しない",
       "normal": "ノーマル"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "キャンセル"
+      }
     }
   }
 }

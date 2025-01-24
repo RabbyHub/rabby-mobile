@@ -1592,6 +1592,13 @@
     "settingModal": {
       "themeMode": {
         "title": "Chế độ theme"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "Xóa & Đóng Ứng dụng"
+        },
+        "clearAppCacheDesc": "'Điều này sẽ xóa các tập tin tạm thời trong bộ nhớ đệm mà không ảnh hưởng đến dữ liệu cá nhân hoặc cài đặt của bạn. Ứng dụng cần khởi động lại để hoàn tất quá trình. Bạn có muốn tiếp tục không?'",
+        "title": "Xóa bộ nhớ đệm của ứng dụng"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "duplicateAccount": "Tài khoản bạn đang cố gắng nhập bị trùng lặp.",
       "invalidPrivateKey": "Khóa riêng không hợp lệ",
       "canNotUnlock": "Không thể mở khóa nếu không có vault trước đó"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Hủy"
+      }
     }
   }
 }

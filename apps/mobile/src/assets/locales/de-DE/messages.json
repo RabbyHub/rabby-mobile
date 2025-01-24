@@ -1722,6 +1722,13 @@
     "settingModal": {
       "themeMode": {
         "title": "Themenmodus"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "Löschen & App schließen"
+        },
+        "title": "App-Cache leeren",
+        "clearAppCacheDesc": "'Dadurch werden temporäre zwischengespeicherte Dateien entfernt, ohne Ihre persönlichen Daten oder Einstellungen zu beeinträchtigen. Die App muss neu gestartet werden, um den Vorgang abzuschließen. Möchten Sie fortfahren?'"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "title": "Ledger Firmware veraltet",
       "message": "Informiere dich bei Ledger Support darüber, wie du die Ledger-Firmware aktualisierst.",
       "cancel": "Abbrechen"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Abbrechen"
+      }
     }
   }
 }

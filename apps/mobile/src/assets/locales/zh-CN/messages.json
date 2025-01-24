@@ -131,7 +131,8 @@
         "InteractionResults": "交互结果",
         "ApproveTo": "批准给",
         "RecipientAddress": "Recipient address",
-        "InteractedContract": "已交互合约"
+        "InteractedContract": "已交互合约",
+        "To": "至"
       },
       "empty": {
         "title": "暂无交易",
@@ -1600,6 +1601,13 @@
     "settingModal": {
       "themeMode": {
         "title": "主题模式"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "清除并关闭应用程序"
+        },
+        "title": "清除应用缓存",
+        "clearAppCacheDesc": "这将删除临时缓存文件，而不会影响您的个人数据或设置。应用程序需要重新启动以完成此过程。您希望继续吗？"
       }
     },
     "buy": {
@@ -1781,6 +1789,13 @@
       "failed": "交易失败",
       "submitted": "交易已提交",
       "txCompleteMoreContent": "{{chain}} #{{nonce}} 已完成。点击查看更多。"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "取消"
+      }
     }
   }
 }

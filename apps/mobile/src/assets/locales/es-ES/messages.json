@@ -1683,6 +1683,13 @@
     "settingModal": {
       "themeMode": {
         "title": "Modo de tema"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "Borrar y cerrar la aplicación"
+        },
+        "title": "Borrar caché de la aplicación",
+        "clearAppCacheDesc": "Esto eliminará los archivos temporales almacenados en caché sin afectar tus datos personales o configuraciones. La aplicación necesita reiniciarse para completar el proceso. ¿Deseas continuar?"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "SimpleKeyring": "Importado por Private Key",
       "HdKeyring": "Creado por Seed Phrase",
       "WatchAddressKeyring": "Contacto"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Cancelar"
+      }
     }
   }
 }

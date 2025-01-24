@@ -1547,6 +1547,13 @@
     "settingModal": {
       "themeMode": {
         "title": "Mode thème"
+      },
+      "clearAppCache": {
+        "button": {
+          "confirm": "Effacer et fermer l'application"
+        },
+        "title": "Effacer le cache de l'application",
+        "clearAppCacheDesc": "Cela supprimera les fichiers cache temporaires sans affecter vos données personnelles ou paramètres. L'application doit redémarrer pour terminer le processus. Souhaitez-vous continuer ?"
       }
     },
     "buy": {
@@ -1782,6 +1789,13 @@
       "notFindChain": "Impossible de trouver la chaîne {{chain}}",
       "addKeyring404": "échec de l'ajout de keyring, keyring est indéfini",
       "unknownAbi": "ABI de contrat inconnu"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Annuler"
+      }
     }
   }
 }
