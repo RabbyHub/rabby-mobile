@@ -273,10 +273,10 @@ export default function AppNavigation({
         independent
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        {IS_IOS && <GlobalDappWebViews />}
         <DuplicateAddressModal />
         <AliasNameEditModal />
         <QrCodeModal />
-        {IS_IOS && <GlobalDappWebViews />}
 
         <RootStack.Navigator
           screenOptions={{

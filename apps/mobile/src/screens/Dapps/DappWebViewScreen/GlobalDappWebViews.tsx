@@ -43,36 +43,34 @@ export default function GlobalDappWebViews() {
   });
 
   return (
-    <FullWindowOverlay>
-      <View
+    <View
+      style={[
+        styles.containerShape,
+        { display: shownAnimated.value ? 'flex' : 'none' },
+      ]}
+      {...(!hasActiveDapp && { pointerEvents: 'box-none' })}>
+      <Animated.View
         style={[
           styles.containerShape,
-          { display: shownAnimated.value ? 'flex' : 'none' },
-        ]}
-        {...(!hasActiveDapp && { pointerEvents: 'box-none' })}>
-        <Animated.View
-          style={[
-            styles.containerShape,
-            styles.animatedLayer,
-            animatedViewStyle,
-          ]}>
-          <DappWebViewStubScreen __AS_FULL_OVERLAY_WIN__ />
-        </Animated.View>
-      </View>
-    </FullWindowOverlay>
+          styles.animatedLayer,
+          animatedViewStyle,
+        ]}>
+        <DappWebViewStubScreen __AS_FULL_OVERLAY_WIN__ />
+      </Animated.View>
+    </View>
   );
 }
 
 const getStyle = createGetStyles2024(ctx => {
   return {
+    container: {
+      // zIndex: 999,
+      position: 'relative',
+      backgroundColor: __DEV__ ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+    },
     containerShape: {
       height: '100%',
       width: '100%',
-    },
-    container: {
-      zIndex: 999,
-      position: 'relative',
-      backgroundColor: __DEV__ ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
     },
     animatedLayer: {
       position: 'absolute',
