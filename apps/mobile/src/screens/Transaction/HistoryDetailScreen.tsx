@@ -52,7 +52,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { AssetAvatar } from '@/components';
 import { getERC20Allowance } from '@/core/apis/provider';
 import BigNumber from 'bignumber.js';
-import { TransactionNavigatorParamList } from '@/navigation-type';
+import {
+  GetNestedScreenNavigationProps,
+  GetRootScreenNavigationProps,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 export const TxStatusItem = ({
@@ -210,9 +214,14 @@ export const AddressItemInDetail = ({
 };
 
 function HistoryDetailScreen(): JSX.Element {
-  const route = useRoute();
-  const { data, isForMultipleAdderss, title } = (route.params ||
-    {}) as TransactionNavigatorParamList['HistoryDetail'] & object;
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'HistoryDetail'
+      >['route']
+    >();
+  const { data, isForMultipleAdderss, title } = route.params || {};
   console.debug(
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],

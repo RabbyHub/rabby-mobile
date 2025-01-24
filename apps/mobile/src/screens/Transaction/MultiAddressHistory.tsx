@@ -63,6 +63,7 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { ensureHistoryListItemFromDb } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 
 const PAGE_COUNT = 20;
 
@@ -103,13 +104,14 @@ function History({
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
-  const route = useRoute();
-  const { tokenItem, isInTokenDetail, isMultiAddress } = (route.params ||
-    {}) as {
-    tokenItem: AbstractPortfolioToken;
-    isInTokenDetail?: boolean;
-    isMultiAddress?: boolean;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'MultiAddressHistory'
+      >['route']
+    >();
+  const { tokenItem, isInTokenDetail } = route.params || {};
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
@@ -475,7 +477,7 @@ function History({
               chain={tokenItem?.chain}
               chainSize={10}
             />
-            <Text style={styles.titleText}>{tokenItem.symbol}</Text>
+            <Text style={styles.titleText}>{tokenItem?.symbol}</Text>
             <Text style={styles.titleText}>Transactions</Text>
           </View>
         }

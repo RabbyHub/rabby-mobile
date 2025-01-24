@@ -47,7 +47,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
-import { RootStackParamsList } from '@/navigation-type';
+import { GetRootScreenNavigationProps } from '@/navigation-type';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -183,7 +183,8 @@ export const RightMore: React.FC<{
 };
 
 export const TokenDetailScreen = () => {
-  const route = useRoute();
+  const route =
+    useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const {
     fromPortfolio,
     token: _token,
@@ -191,7 +192,7 @@ export const TokenDetailScreen = () => {
     needUseCacheToken,
     unHold: _unHold,
     isSingleAddress,
-  } = (route.params || {}) as RootStackParamsList[typeof RootNames.TokenDetail];
+  } = route.params || {};
   console.log(
     'TokenDetailScreen CUSTOM_LOGGER:=>: isSingleAddress',
     isSingleAddress,

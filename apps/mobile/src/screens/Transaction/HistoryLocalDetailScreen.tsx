@@ -79,17 +79,22 @@ import { Swap } from './components/Actions/Swap';
 import { Send } from './components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
-import { TransactionNavigatorParamList } from '@/navigation-type';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 
 function HistoryLocalDetailScreen(): JSX.Element {
-  const route = useRoute();
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'HistoryLocalDetail'
+      >['route']
+    >();
   const {
     data: _data,
     canCancel,
     isForMultipleAdderss,
     title,
-  } = (route.params ||
-    {}) as TransactionNavigatorParamList['HistoryLocalDetail'] & object;
+  } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);

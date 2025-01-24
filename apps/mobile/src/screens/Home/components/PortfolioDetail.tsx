@@ -30,6 +30,7 @@ import { RootNames } from '@/constant/layout';
 import { useAssets } from '@/screens/Search/useAssets';
 import { useRoute } from '@react-navigation/native';
 import { ensureAbstractPortfolioToken } from '../utils/token';
+import { GetRootScreenNavigationProps } from '@/navigation-type';
 
 export const PortfolioHeader = ({
   data,
@@ -116,11 +117,8 @@ export const TokenList = ({
   };
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const route = useRoute();
-  const { relateTokenId, isSingleAddress } = (route.params || {}) as {
-    relateTokenId?: string;
-    isSingleAddress?: boolean;
-  };
+  const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
+  const { relateTokenId, isSingleAddress } = route.params || {};
 
   const [highlightAnim] = useState(new Animated.Value(0));
 
