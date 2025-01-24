@@ -1686,10 +1686,13 @@
       },
       "clearAppCache": {
         "button": {
-          "confirm": "Borrar y cerrar la aplicación"
+          "clear_and_quit": "Borrar y cerrar la aplicación",
+          "clear": "Claro"
         },
         "title": "Borrar caché de la aplicación",
-        "clearAppCacheDesc": "Esto eliminará los archivos temporales almacenados en caché sin afectar tus datos personales o configuraciones. La aplicación necesita reiniciarse para completar el proceso. ¿Deseas continuar?"
+        "clearAppCacheDesc": "Esto eliminará los archivos temporales almacenados en caché sin afectar tus datos personales o configuraciones. La aplicación necesita reiniciarse para completar el proceso. ¿Deseas continuar?",
+        "iOSToastTitle": "Borrar caché con éxito",
+        "iOSToastDesc": "Debes reiniciar la aplicación para que surta efecto."
       }
     },
     "buy": {

@@ -1540,10 +1540,13 @@
       },
       "clearAppCache": {
         "title": "Clear App Cache",
-        "clearAppCacheDesc": "'This will remove temporary cached files without impacting your personal data or settings. The app needs to restart to complete the process. Do you wish to continue?'",
+        "clearAppCacheDesc": "This will remove temporary cached files without impacting your personal data or settings. The app needs to restart to complete the process. Do you wish to continue?",
         "button": {
-          "confirm": "Clear & Close App"
-        }
+          "clear_and_quit": "Clear & Close App",
+          "clear": "Clear"
+        },
+        "iOSToastTitle": "Clear Cache Success",
+        "iOSToastDesc": "You need to restart the app to take effect."
       }
     },
     "buy": {

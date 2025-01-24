@@ -1725,10 +1725,13 @@
       },
       "clearAppCache": {
         "button": {
-          "confirm": "Löschen & App schließen"
+          "clear_and_quit": "Löschen & App schließen",
+          "clear": "Klar"
         },
         "title": "App-Cache leeren",
-        "clearAppCacheDesc": "'Dadurch werden temporäre zwischengespeicherte Dateien entfernt, ohne Ihre persönlichen Daten oder Einstellungen zu beeinträchtigen. Die App muss neu gestartet werden, um den Vorgang abzuschließen. Möchten Sie fortfahren?'"
+        "clearAppCacheDesc": "'Dadurch werden temporäre zwischengespeicherte Dateien entfernt, ohne Ihre persönlichen Daten oder Einstellungen zu beeinträchtigen. Die App muss neu gestartet werden, um den Vorgang abzuschließen. Möchten Sie fortfahren?'",
+        "iOSToastTitle": "Cache erfolgreich löschen",
+        "iOSToastDesc": "Sie müssen die App neu starten, damit sie wirksam wird."
       }
     },
     "buy": {

@@ -11,26 +11,26 @@ async function sleep(ms: number) {
 
 const keyVaryUpsertQueue: Record<string, PQueue> = {};
 
+function makeTaskKey(
+  taskFor: SyncTaskOptions['taskFor'],
+  owner_addr: string,
+): `${SyncTaskOptions['taskFor']}-${string}` {
+  return `${taskFor}-${owner_addr}`;
+}
+
 /**
  * @description In most cases, you don't need call it manually,
  * if you want to do that, make sure you know what you are doing.
  */
 export const syncAbortControllers: {
-  [P in SyncTaskOptions['taskFor']]: AbortController | null;
-} = {
-  balance: null,
-  token: null,
-  nfts: null,
-  protocols: null,
-  'all-history': null,
-  'swap-history': null,
-};
+  [P in ReturnType<typeof makeTaskKey>]?: AbortController | null;
+} = {};
 
 export function abortAllSyncTasks() {
-  for (const key in syncAbortControllers) {
-    const controller = syncAbortControllers[key] as AbortController | null;
+  Object.entries(syncAbortControllers).forEach(([taskKey, controller]) => {
+    console.warn('[debug] abortAllSyncTasks::will abort', taskKey);
     controller?.abort();
-  }
+  });
 }
 
 export async function batchSaveWithPQueueAndTransaction<
@@ -54,45 +54,44 @@ export async function batchSaveWithPQueueAndTransaction<
     // signal = syncAbortControllers[taskFor],
   } = options;
 
-  if (syncAbortControllers[taskFor]) {
-    syncAbortControllers[taskFor].abort();
-    syncAbortControllers[taskFor] = new AbortController();
-  }
+  const taskKey = makeTaskKey(taskFor, owner_addr);
+  const curAbortController = new AbortController();
+  if (syncAbortControllers[taskKey]) syncAbortControllers[taskKey].abort();
+  syncAbortControllers[taskKey] = curAbortController;
 
-  const currentSignal = syncAbortControllers[taskFor]?.signal;
+  const currentSignal = curAbortController.signal;
 
-  const key = [owner_addr, taskFor].filter(Boolean).join('-');
   const loggerPrefix = !owner_addr
     ? ''
-    : `[batchSaveWithPQueueAndTransaction::${key}] `;
+    : `[batchSaveWithPQueueAndTransaction::${taskKey}] `;
 
-  if (key && keyVaryUpsertQueue[key]) {
-    keyVaryUpsertQueue[key].clear();
-    delete keyVaryUpsertQueue[key];
+  if (taskKey && keyVaryUpsertQueue[taskKey]) {
+    keyVaryUpsertQueue[taskKey].clear();
+    delete keyVaryUpsertQueue[taskKey];
   }
 
-  const thisTickUpsertQueue = !key
-    ? new PQueue({ concurrency: 1 })
-    : (keyVaryUpsertQueue[key] = new PQueue({ concurrency: 1 }));
+  const thisTickUpsertQueue = (keyVaryUpsertQueue[taskKey] = new PQueue({
+    concurrency: 1,
+  }));
 
   const repo = entityCls.getRepository();
 
   const totalRound = Math.ceil(data.length / batchSize);
-  console.debug(
-    `${loggerPrefix}Starting to upsert ${data.length} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
-  );
 
   let waitAllTasksCreated = Promise.resolve();
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize);
 
-    if (currentSignal?.aborted) break;
+    if (currentSignal.aborted) {
+      console.warn(`${loggerPrefix}Batch upsertion was aborted.`);
+      break;
+    }
 
     waitAllTasksCreated = waitAllTasksCreated.then(async () => {
       await sleep(delayBetweenTasks);
-      if (currentSignal?.aborted) {
+      if (currentSignal.aborted) {
         console.warn(
-          `${loggerPrefix}Batch upsertion was upsertion before next task.`,
+          `${loggerPrefix}[waitAllTasksCreated] Batch upsertion was aborted before.`,
         );
         thisTickUpsertQueue.clear();
         return;
@@ -120,12 +119,12 @@ export async function batchSaveWithPQueueAndTransaction<
         };
 
         const makeEmit = (success: boolean) => {
-          if (currentSignal?.aborted) return;
+          if (currentSignal.aborted) return;
 
           // leave here for debug
           if (eventPayload.taskFor === 'all-history') {
-            console.warn(
-              `[debug] I will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
+            console.debug(
+              `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
             );
           }
           appOrmEvents.emit('onRemoteDataUpserted', {
@@ -188,6 +187,11 @@ export async function batchSaveWithPQueueAndTransaction<
 
     try {
       await waitAllTasksCreated;
+      if (!currentSignal.aborted) {
+        console.debug(
+          `${loggerPrefix}Started to upsert ${data.length} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
+        );
+      }
     } catch (error) {
       console.error(`${loggerPrefix}Wait batch upsertion failed:`, error);
     } finally {
@@ -197,4 +201,9 @@ export async function batchSaveWithPQueueAndTransaction<
     await waitAllTasksCreated;
     console.debug(`${loggerPrefix}All batches have been processed.`);
   }
+
+  return {
+    taskKey,
+    taskSignal: currentSignal,
+  };
 }
