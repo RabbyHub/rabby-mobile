@@ -69,52 +69,12 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     inSufficient,
     valueLoading,
     currentQuote,
-    finishedQuotes,
   } = props;
   const { t } = useTranslation();
 
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFrom = type === 'from';
-
-  const dexLength = useSwapSupportedDexList()[0].length;
-
-  const progress = useMemo(() => {
-    if (finishedQuotes && !isFrom) {
-      return (finishedQuotes / dexLength) * 100;
-    }
-    return 0;
-  }, [dexLength, finishedQuotes, isFrom]);
-
-  const animatedProgress = useSharedValue(0);
-
-  useEffect(() => {
-    if (!valueLoading) {
-      return;
-    }
-    if (!progress) {
-      animatedProgress.value = 0;
-      setTimeout(() => {
-        animatedProgress.value = withTiming(50, {
-          duration: 5000,
-          easing: Easing.linear,
-        });
-      }, 200);
-      return;
-    }
-    if (progress > 50) {
-      animatedProgress.value = withTiming(progress, {
-        duration: 300,
-        easing: Easing.linear,
-      });
-    }
-  }, [animatedProgress, dexLength, progress, valueLoading]);
-
-  const progressBarStyle = useAnimatedStyle(() => {
-    return {
-      width: `${animatedProgress.value}%`,
-    };
-  });
 
   const openTokenModalRef = useRef<{
     openTokenModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -180,12 +140,17 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     [width],
   );
 
+  const disabledSlider = useMemo(
+    () => !token || tokenAmountBn(token).lte(0),
+    [token],
+  );
+
   const onSlidingStart = useCallback(() => {
-    if (!token || tokenAmountBn(token).lte(0)) {
+    if (disabledSlider) {
       return;
     }
     showBubble.value = true;
-  }, [showBubble, token]);
+  }, [disabledSlider, showBubble]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
@@ -216,7 +181,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         {isFrom && (
           <View style={styles.sliderContainer}>
             <Slider
-              allowTouchTrack
+              allowTouchTrack={!disabledSlider}
               style={styles.slider}
               value={slider}
               onSlidingStart={onSlidingStart}
@@ -280,17 +245,11 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         </View>
 
         {valueLoading ? (
-          <View style={styles.skeleton}>
-            <Animated.View style={progressBarStyle}>
-              <LinearGradient
-                locations={[0, 1]}
-                style={styles.progressBar}
-                start={{ x: 1, y: 0.5 }}
-                end={{ x: 0, y: 0.5 }}
-                colors={progressColor}
-              />
-            </Animated.View>
-          </View>
+          <Skeleton
+            animation="wave"
+            LinearGradientComponent={Linear}
+            style={styles.skeleton}
+          />
         ) : isFrom ? (
           <TextInput
             numberOfLines={1}
@@ -332,13 +291,11 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         </View>
         <View style={styles.usdValueContainer}>
           {valueLoading ? (
-            !isFrom ? null : (
-              <Skeleton
-                animation="wave"
-                LinearGradientComponent={Linear}
-                style={styles.skeleton2}
-              />
-            )
+            <Skeleton
+              animation="wave"
+              LinearGradientComponent={Linear}
+              style={styles.skeleton2}
+            />
           ) : (
             <Text style={styles.usdValue}>{usdValue}</Text>
           )}
@@ -441,7 +398,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     overflow: 'hidden',
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: colors2024['neutral-line'],
     height: 36,
     width: 138,
     borderRadius: 100,
@@ -470,10 +427,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   insufficient: {
     color: colors2024['red-default'],
-  },
-  progressBar: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: colors2024['brand-light-1'],
   },
 }));
