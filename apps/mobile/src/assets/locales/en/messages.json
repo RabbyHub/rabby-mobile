@@ -719,7 +719,9 @@
       "lowCreditModal": {
         "title": "This token has a low credit value",
         "desc": "A low credit value often signals high risk, such as a honeypot token or very low liquidity."
-      }
+      },
+      "swapped": "Swapped",
+      "historyTitle": "Swap history"
     },
     "bridge": {
       "showMore": {
@@ -757,7 +759,8 @@
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
       "best": "Best",
-      "no-route-found": "No route found"
+      "no-route-found": "No route found",
+      "bridged": "Bridged"
     },
     "manageAddress": {
       "delete-checklist-1": "I understand that if I delete this address, the corresponding private key and seed phrase will be deleted, and Rabby will NOT be able to recover them.",
@@ -1534,6 +1537,10 @@
       "themeMode": {
         "title": "Theme mode"
       }
+    },
+    "buy": {
+      "from": "From {{dex}}",
+      "purchased": "Purchased"
     }
   },
   "component": {
@@ -1613,7 +1620,10 @@
     },
     "TokenSelector": {
       "hot": "Hot",
-      "recent": "Recent"
+      "common": "Common",
+      "recent": "Recent",
+      "searchPlaceHolder1": "Search by Name / Address",
+      "searchPlaceHolder2": "Search Token"
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

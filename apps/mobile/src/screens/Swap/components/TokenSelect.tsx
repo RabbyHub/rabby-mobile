@@ -39,6 +39,7 @@ import {
   tagTokenList,
 } from '@/screens/Home/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
+import LinearGradient from 'react-native-linear-gradient';
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
@@ -61,6 +62,7 @@ interface TokenSelectProps {
       }) => React.ReactNode)
     | React.ReactNode;
   supportChains: CHAINS_ENUM[];
+  searchPlaceholder?: string;
 }
 const defaultExcludeTokens = [];
 const TokenSelect = forwardRef<
@@ -82,6 +84,7 @@ const TokenSelect = forwardRef<
       tokenRender,
       useSwapTokenList = false,
       supportChains,
+      searchPlaceholder,
     },
     ref,
   ) => {
@@ -229,7 +232,7 @@ const TokenSelect = forwardRef<
     }, [chainId]);
 
     const { t } = useTranslation();
-    const { styles } = useTheme2024({ getStyle });
+    const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
     const [recentToTokens] = useSwapRecentToTokens();
 
     const recentDisplayToTokens = useMemo(() => {
@@ -257,31 +260,18 @@ const TokenSelect = forwardRef<
 
     const swapToHeader = useMemo(() => {
       return (
-        <View
-          style={[
-            styles.headerBox,
-            recentDisplayToTokens ? { marginTop: 16 } : [],
-          ]}>
+        <View style={[styles.headerBox]}>
           <Text style={styles.headerBoxText}>
-            {t('component.TokenSelector.hot')}
+            {t('component.TokenSelector.common')}
           </Text>
           <Text style={styles.headerBoxText}>
             <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
           </Text>
         </View>
       );
-    }, [styles.headerBox, styles.headerBoxText, t, recentDisplayToTokens]);
+    }, [styles.headerBox, styles.headerBoxText, t]);
 
     const headerTitle = useMemo(() => {
-      if (recentDisplayToTokens.length) {
-        return (
-          <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>
-              {t('component.TokenSelector.recent')}
-            </Text>
-          </View>
-        );
-      }
       if (type === 'swapTo') {
         return swapToHeader;
       }
@@ -291,85 +281,84 @@ const TokenSelect = forwardRef<
           <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
         </View>
       );
-    }, [
-      recentDisplayToTokens.length,
-      styles.headerBox,
-      styles.headerBoxText,
-      swapToHeader,
-      t,
-      type,
-    ]);
+    }, [styles.headerBox, styles.headerBoxText, swapToHeader, t, type]);
+
+    const recentTitle = useMemo(() => {
+      if (recentDisplayToTokens.length) {
+        return (
+          <View style={styles.headerBox}>
+            <Text style={styles.headerBoxText}>
+              {t('component.TokenSelector.recent')}
+            </Text>
+          </View>
+        );
+      }
+      return null;
+    }, [recentDisplayToTokens, t, styles.headerBox, styles.headerBoxText]);
 
     const list = useMemo(() => {
-      if (recentDisplayToTokens.length) {
-        const recentObj = {
-          recentList: recentDisplayToTokens.map(e => ({
-            ...omit(e, ['isPined', 'pinIndex']),
-            group: 'recent',
-          })),
-          _chain: 'swapToRecentList',
-          TokenRender: ({ token }: { token: TokenItem }) => {
-            return (
-              <View style={styles.recentItemWrapper}>
-                <AssetAvatar
-                  size={26}
-                  chain={token.chain}
-                  logo={token.logo_url}
-                  // chainSize={0}
-                />
-                <Text numberOfLines={1} style={styles.tokenSymbol}>
-                  {ellipsisOverflowedText(getTokenSymbol(token), 5)}
-                </Text>
-              </View>
-            );
-          },
-        };
-        if (pinedQueue?.length) {
-          return [
-            recentObj,
-            {
-              id: 'swapTo header',
-              _chain: 'swapTo',
-              headerRender: () => swapToHeader,
-            },
-            ...availableToken
-              .map(e => ({
-                ...e,
-                isPined: pinedQueue?.some(
-                  x => x.chainId === e.chain && x.tokenId === e.id,
-                ),
-                pinIndex: pinedQueue?.findIndex(
-                  x => x.chainId === e.chain && x.tokenId === e.id,
-                ),
-              }))
-              .sort((a, b) => {
-                if (a.pinIndex > -1 && b.pinIndex > -1) {
-                  return a.pinIndex - b.pinIndex;
-                }
-
-                const a1 = a.isPined ? 1 : 0;
-                const b1 = b.isPined ? 1 : 0;
-                return b1 - a1;
-              }),
-          ] as TokenItem[];
-        }
-
+      if (pinedQueue?.length) {
         return [
-          recentObj,
-          {
-            id: 'swapTo header',
-            _chain: 'swapTo',
-            headerRender: () => swapToHeader,
-          },
-          ...availableToken,
+          ...availableToken
+            .map(e => ({
+              ...e,
+              isPined: pinedQueue?.some(
+                x => x.chainId === e.chain && x.tokenId === e.id,
+              ),
+              pinIndex: pinedQueue?.findIndex(
+                x => x.chainId === e.chain && x.tokenId === e.id,
+              ),
+            }))
+            .sort((a, b) => {
+              if (a.pinIndex > -1 && b.pinIndex > -1) {
+                return a.pinIndex - b.pinIndex;
+              }
+
+              const a1 = a.isPined ? 1 : 0;
+              const b1 = b.isPined ? 1 : 0;
+              return b1 - a1;
+            }),
         ] as TokenItem[];
       }
-      return availableToken;
+
+      return [...availableToken];
+    }, [availableToken, pinedQueue]);
+
+    const unshiftList = useMemo(() => {
+      if (recentDisplayToTokens.length) {
+        const recentObj = {
+          header: () => recentTitle,
+          data: [
+            {
+              _chain: 'swapToRecentList',
+              recentList: recentDisplayToTokens.map(e => ({
+                ...omit(e, ['isPined', 'pinIndex']),
+                group: 'recent',
+              })),
+              TokenRender: ({ token }: { token: TokenItem }) => {
+                return (
+                  <View style={styles.recentItemWrapper}>
+                    <AssetAvatar
+                      size={26}
+                      chain={token.chain}
+                      logo={token.logo_url}
+                    />
+                    <Text numberOfLines={1} style={styles.tokenSymbol}>
+                      {ellipsisOverflowedText(getTokenSymbol(token), 5)}
+                    </Text>
+                  </View>
+                );
+              },
+            } as any as TokenItem,
+          ],
+        };
+
+        return [recentObj];
+      }
+      return;
     }, [
       recentDisplayToTokens,
-      availableToken,
-      pinedQueue,
-      swapToHeader,
+      recentTitle,
       styles.recentItemWrapper,
       styles.tokenSymbol,
     ]);
@@ -406,7 +395,9 @@ const TokenSelect = forwardRef<
         </TouchableOpacity>
 
         <TokenSelectorSheetModal
+          searchPlaceholder={searchPlaceholder}
           visible={tokenSelectorVisible}
+          unshiftList={unshiftList}
           list={list}
           foldTokensList={foldTokensList}
           onConfirm={handleCurrentTokenChange}
@@ -426,7 +417,7 @@ const TokenSelect = forwardRef<
     );
   },
 );
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     borderRadius: 12,
     // TODO: backgroundColor: colors2024['neutral-card-2'],
@@ -450,14 +441,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   recentItemWrapper: {
-    borderRadius: 12,
-    backgroundColor: colors2024['neutral-line'],
-    padding: 4,
-    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    padding: 8,
+    paddingRight: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
   token: {
     flexDirection: 'row',
@@ -473,18 +466,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   headerBox: {
-    // paddingHorizontal: 16,
-    // height: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    // borderTopWidth: 0,
-    backgroundColor: colors2024['neutral-bg-1'],
-    // borderBottomWidth: 0.5,
-    marginHorizontal: 24,
-    marginBottom: 12,
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   headerBoxText: {
     fontSize: 17,

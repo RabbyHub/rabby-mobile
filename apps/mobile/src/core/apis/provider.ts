@@ -281,6 +281,12 @@ export const ethSendTransaction = async (
   }
 };
 
+export const ethPersonalSign = async (
+  ...args: Parameters<typeof providerController.personalSign>
+) => {
+  return providerController.personalSign(...args);
+};
+
 type gasMarketV2ParamsV2 = {
   chain: Chain;
   tx: Tx;

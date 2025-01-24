@@ -233,7 +233,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     clickMaxBtnCount,
     isMaxRef,
     payTokenIsNativeToken,
-  } = useBridge();
+  } = useBridge(isForMultipleAdderss);
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const refresh = useSetRefreshId();
 

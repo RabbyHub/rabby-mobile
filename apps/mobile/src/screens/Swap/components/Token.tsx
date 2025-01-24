@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { QuoteProvider } from '../hooks';
+import { QuoteProvider, useSwapSupportedDexList } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -27,12 +27,16 @@ import {
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+
+const progressColor = ['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)'];
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -48,6 +52,7 @@ interface SwapTokenItemProps {
   inSufficient?: boolean;
   valueLoading?: boolean;
   currentQuote?: QuoteProvider;
+  finishedQuotes?: number;
 }
 
 export const SwapTokenItem = (props: SwapTokenItemProps) => {
@@ -135,12 +140,17 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     [width],
   );
 
+  const disabledSlider = useMemo(
+    () => !token || tokenAmountBn(token).lte(0),
+    [token],
+  );
+
   const onSlidingStart = useCallback(() => {
-    if (!token || tokenAmountBn(token).lte(0)) {
+    if (disabledSlider) {
       return;
     }
     showBubble.value = true;
-  }, [showBubble, token]);
+  }, [disabledSlider, showBubble]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
@@ -171,6 +181,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         {isFrom && (
           <View style={styles.sliderContainer}>
             <Slider
+              allowTouchTrack={!disabledSlider}
               style={styles.slider}
               value={slider}
               onSlidingStart={onSlidingStart}
@@ -224,6 +235,11 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             excludeTokens={excludeTokens}
             useSwapTokenList={!isFrom}
             supportChains={SWAP_SUPPORT_CHAINS}
+            searchPlaceholder={
+              isFrom
+                ? undefined
+                : t('component.TokenSelector.searchPlaceHolder1')
+            }
           />
           <Divider color={colors2024['neutral-line']} />
         </View>
@@ -381,6 +397,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   skeleton: {
+    overflow: 'hidden',
     backgroundColor: colors2024['neutral-line'],
     height: 36,
     width: 138,

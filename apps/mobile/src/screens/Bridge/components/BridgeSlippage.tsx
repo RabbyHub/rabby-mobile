@@ -15,9 +15,9 @@ import { Input } from '@rneui/base';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 
-const BRIDGE_SLIPPAGE = ['0.5', '1'];
+export const BRIDGE_SLIPPAGE = ['0.5', '1'];
 
-const SWAP_SLIPPAGE = ['0.1', '0.5'];
+export const SWAP_SLIPPAGE = ['1', '5'];
 
 const BRIDGE_MAX_SLIPPAGE = 10;
 
@@ -93,6 +93,16 @@ export const BridgeSlippage = (props: SlippageProps) => {
       value?.trim() !== '' && Number(value || 0) > maximumSlippage,
     ];
   }, [maximumSlippage, minimumSlippage, value]);
+
+  useEffect(() => {
+    if (
+      !autoSlippage &&
+      !isCustomSlippage &&
+      SLIPPAGE.findIndex(item => item === value) === -1
+    ) {
+      setIsCustomSlippage(true);
+    }
+  }, [SLIPPAGE, autoSlippage, isCustomSlippage, setIsCustomSlippage, value]);
 
   const setRecommendValue = useCallback(() => {
     onChange(new BigNumber(recommendValue || 0).times(100).toString());

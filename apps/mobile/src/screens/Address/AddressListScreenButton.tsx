@@ -1,15 +1,18 @@
+import { TouchableOpacity } from 'react-native';
+import { StackActions, useNavigation } from '@react-navigation/core';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { IS_ANDROID } from '@/core/native/utils';
-import { useAccounts } from '@/hooks/account';
+import { navigate } from '@/utils/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Dimensions, Text, TouchableOpacity } from 'react-native';
+import { AppRootName, RootNames } from '@/constant/layout';
+import { useSetPasswordFirst } from '@/hooks/useLock';
+import { CurrentAddressProps } from './components/AddressListScreenContainer';
+import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -38,35 +41,49 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 export const AddressListScreenButton: React.FC<Props> = ({
   type = 'address',
 }) => {
-  const { styles } = useTheme2024({ getStyle });
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-  const maxHeight = Dimensions.get('window').height - 104;
-  const contentHeight = accounts.length * (94 + 12) + 60 + 56;
-  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const onPress = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
-      bottomSheetModalProps: {
-        snapPoints: [Math.min(contentHeight, maxHeight)],
-      },
-      type,
-      onCancel: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-    });
-  }, [contentHeight, maxHeight, type]);
-
+    switch (type) {
+      case 'address':
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+          onDone: () => {
+            removeGlobalBottomSheetModal2024(id);
+          },
+          shouldRedirectToSetPasswordBefore2024,
+          navigateTo: (screen: AppRootName, params?: object) => {
+            navigation.dispatch(
+              StackActions.push(RootNames.StackAddress, {
+                screen,
+                params,
+              }),
+            );
+          },
+        });
+        break;
+      case 'watch-address':
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportWatchAddress2024,
+        });
+        break;
+      case 'safe-address':
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportSafeAddress2024,
+        });
+        break;
+      default:
+      // NOTHING
+    }
+  }, [type, shouldRedirectToSetPasswordBefore2024, navigation]);
   return (
     <TouchableOpacity
       style={styles.headerRight}
       hitSlop={hitSlop}
       onPress={onPress}>
-      <Text style={styles.headerRightText}>
-        {t('page.addressDetail.addressListScreen.edit')}
-      </Text>
+      <WalletSVG width={24} height={24} color={colors2024['neutral-body']} />
     </TouchableOpacity>
   );
 };

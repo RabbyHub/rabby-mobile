@@ -11,6 +11,7 @@ import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { openapi } from '@/core/request';
 import { ItemLoader } from './Skeleton';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
 type Props = {
   filterText?: string;
@@ -63,7 +64,7 @@ const SearchOnTheChain = ({ filterText }: Props) => {
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
       navigate(RootNames.TokenDetail, {
-        token: token,
+        token: ensureAbstractPortfolioToken(token),
         unHold: true,
       });
     },

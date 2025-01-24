@@ -114,6 +114,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
+      marginTop: -4,
     },
     titleText: {
       fontFamily: 'SF Pro Rounded',

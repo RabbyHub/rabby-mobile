@@ -48,6 +48,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
+import { TokenChainAndContract } from './components/TokenChainAndContract';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -359,6 +360,23 @@ export const TokenDetailScreen = () => {
       },
     });
   });
+
+  const handleBridge = useMemoizedFn(async () => {
+    const chain = findChain({
+      serverId: token.chain,
+    });
+    if (isSingleAddress) {
+      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
+    }
+    navigation.push(RootNames.StackTransaction, {
+      screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
+      params: {
+        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+        tokenId: token?._tokenId,
+      },
+    });
+  });
+
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
@@ -464,6 +482,7 @@ export const TokenDetailScreen = () => {
             token={tokenWithAmount || token}
             isPin={token._isPined}
           />
+          <TokenChainAndContract token={token} />
           <View style={styles.divider} />
           <TokenArea
             tokenSupportSwap={tokenSupportSwap}
@@ -503,10 +522,11 @@ export const TokenDetailScreen = () => {
                 : undefined
             }>
             <Button
-              title={t('page.tokenDetail.action.Sell')}
               containerStyle={styles.btnContainer}
-              onPress={() => handleSwap('Sell')}
-              disabled={!tokenSupportSwap || unHold}
+              type="ghost"
+              title={t('page.bridge.title')}
+              onPress={handleBridge}
+              disabled={!tokenSupportSwap}
             />
           </Tip>
         </View>
@@ -520,9 +540,9 @@ export const TokenDetailScreen = () => {
                 : undefined
             }>
             <Button
-              title={t('page.tokenDetail.action.Buy')}
+              title={t('page.swap.title')}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Buy')}
+              onPress={() => handleSwap('Sell')}
               disabled={!tokenSupportSwap}
             />
           </Tip>
@@ -544,6 +564,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontWeight: '500',
     },
     divider: {
+      marginTop: 28,
       marginHorizontal: 20,
       backgroundColor: colors2024['neutral-line'],
       height: 1,

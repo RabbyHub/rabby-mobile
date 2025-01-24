@@ -65,6 +65,7 @@ import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useSwapRecentToTokens } from './hooks/recent';
+import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -142,6 +143,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
 
     swapUseSlider,
     clearExpiredTimer,
+    finishedQuotes,
   } = useTokenPair(currentAccount!.address);
 
   const {
@@ -476,7 +478,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
         !!payToken &&
         !!receiveToken &&
         activeProvider &&
-        Number(slippage) > 1
+        Number(slippage) >= Number(SWAP_SLIPPAGE[1])
       ) {
         setShowMoreOpen(true);
       }
@@ -603,6 +605,7 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
               currentQuote={activeProvider}
               // placeholder={t('page.swap.search-by-name-address')}
               excludeTokens={payToken?.id ? [payToken?.id] : undefined}
+              finishedQuotes={finishedQuotes}
             />
             <BridgeSwitchBtn
               onPress={exchangeToken}
