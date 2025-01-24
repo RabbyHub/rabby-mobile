@@ -61,7 +61,7 @@ export const TokenArea: React.FC<Props> = ({
             {tokenSupportSwap && (
               <>
                 <TouchableOpacity
-                  onPress={() => handleSwap('Buy', item.address, item.type)}>
+                  onPress={() => handleSwap('Sell', item.address, item.type)}>
                   <Text style={styles.actionText}>{t('page.swap.title')}</Text>
                 </TouchableOpacity>
               </>
