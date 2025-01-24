@@ -201,7 +201,7 @@ function SettingsBlocks() {
             rightTextNode: <AutoLockSettingLabel />,
           },
           {
-            label: 'Current Language',
+            label: t('page.setting.currentLanguage'),
             icon: RcI18n,
             onPress: () => {
               setCurrentLanguageModalVisible(true);

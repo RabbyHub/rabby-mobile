@@ -1461,6 +1461,7 @@
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
       "autoLockTime": "Auto lock time",
+      "currentLanguage": "Current Language",
       "addCustomNetwork": "Add Custom Network",
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
