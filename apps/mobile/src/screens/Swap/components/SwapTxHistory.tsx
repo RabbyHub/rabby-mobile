@@ -158,7 +158,11 @@ const HistoryList = ({
   );
 };
 
-export const SwapTxHistory = () => {
+export const SwapTxHistory = ({
+  isForMultipleAdderss,
+}: {
+  isForMultipleAdderss: boolean;
+}) => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapTxHistoryVisible();
@@ -187,13 +191,14 @@ export const SwapTxHistory = () => {
         navigate(RootNames.StackTransaction, {
           screen: RootNames.HistoryDetail,
           params: {
+            isForMultipleAdderss,
             data: detailData,
             title: t('page.swap.swapped'),
           },
         });
       }
     },
-    [onDismiss, projectDict, t, tokenDict],
+    [onDismiss, projectDict, t, tokenDict, isForMultipleAdderss],
   );
 
   useEffect(() => {

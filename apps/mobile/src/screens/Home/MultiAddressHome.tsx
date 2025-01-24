@@ -318,22 +318,15 @@ function MultiAddressHome(): JSX.Element {
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
-  const { accounts } = useAccounts({
+  const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-
   const sortedAccounts = useSortAddressList(accounts);
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
-  const sortedMyAccounts = useMemo(
-    () =>
-      unionAccounts.filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
-    [unionAccounts],
-  );
-  const { syncTop10Assets } = useSyncAssetsDB(sortedMyAccounts);
+
+  const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
 
   const { pinAccountsFirstFour, isShowPin, unPinAddress } =

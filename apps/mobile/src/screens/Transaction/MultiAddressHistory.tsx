@@ -68,8 +68,9 @@ import { useSortAddressList } from '../Address/useSortAddressList';
 import { ensureHistoryListItemFromDb } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
-const PAGE_COUNT = 20;
+const PAGE_COUNT = 200;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -185,10 +186,18 @@ function History({
     return list;
   };
 
+  const isNeedFetchFromApi = useMemo(() => {
+    const isUseingContactsOrSafe =
+      !isSceneUsingAllAccounts &&
+      (finalSceneCurrentAccount?.type === KEYRING_CLASS.WATCH ||
+        finalSceneCurrentAccount?.type === KEYRING_CLASS.GNOSIS);
+    return isInTokenDetail || isUseingContactsOrSafe;
+  }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, isInTokenDetail]);
+
   const batchFetchData = async () => {
     const list: HistoryDisplayItem[] = [];
 
-    if (!isInTokenDetail) {
+    if (!isNeedFetchFromApi) {
       const res = await batchFetchDataV2();
       if (!isReady.current) {
         isReady.current = true;
@@ -264,7 +273,9 @@ function History({
       throw new Error('no account');
     }
 
-    const getHistory = openapi.listTxHisotry;
+    const getHistory = !isInTokenDetail
+      ? openapi.getAllTxHistory
+      : openapi.listTxHisotry;
     try {
       const res = await getHistory({
         id: address,
@@ -274,13 +285,19 @@ function History({
         token_id,
       });
 
-      const { project_dict, cate_dict, token_dict, history_list: list } = res;
+      const {
+        project_dict,
+        cate_dict,
+        token_dict,
+        token_uuid_dict,
+        history_list: list,
+      } = res;
       const displayList = list
         .map(item => ({
           ...item,
           projectDict: project_dict,
           cateDict: cate_dict,
-          tokenDict: token_dict,
+          tokenDict: token_dict || token_uuid_dict,
           address,
           key: `${address}_${item.chain}_${item.id}`,
         }))
@@ -370,7 +387,7 @@ function History({
     setCurrentPage(0);
     runFetchLocalTx();
 
-    if (isInTokenDetail) {
+    if (isNeedFetchFromApi) {
       reloadAsync();
     } else {
       isSceneUsingAllAccounts
@@ -381,7 +398,7 @@ function History({
 
   useEffect(() => {
     if (isReady.current) {
-      if (!isInTokenDetail) {
+      if (!isNeedFetchFromApi) {
         batchFetchDataV2();
       } else {
         cancel();
@@ -400,7 +417,7 @@ function History({
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: () => {
-      if (!isInTokenDetail) {
+      if (!isNeedFetchFromApi) {
         return true;
       }
       return Object.values(hasMoreMap.current).every(item => !item);
@@ -427,8 +444,8 @@ function History({
   });
 
   const data = useMemo(() => {
-    return isInTokenDetail ? _data : { list: dbData };
-  }, [_data, isInTokenDetail, dbData]);
+    return isNeedFetchFromApi ? _data : { list: dbData };
+  }, [_data, isNeedFetchFromApi, dbData]);
 
   const allTxHistory = useMemo(() => {
     return orderBy(data?.list || [], 'time_at', 'desc');
@@ -567,7 +584,7 @@ function History({
           localTxList={groups}
           loading={isFirstLoading}
           loadingMore={loadingMore}
-          refreshLoading={isInTokenDetail && loading}
+          refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAdderss={isForMultipleAdderss}
           loadMore={loadMore}
           onRefresh={refresh}

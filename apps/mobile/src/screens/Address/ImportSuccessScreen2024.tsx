@@ -146,14 +146,6 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
-    if (addresses.length > 10) {
-      // just sync 10 addresses
-      const top10Account = addresses.slice(0, 10);
-      Promise.all(top10Account.map(address => syncSingleAddress(address)));
-    } else {
-      Promise.all(addresses.map(address => syncSingleAddress(address)));
-    }
-
     if (
       state.type === KEYRING_TYPE.WatchAddressKeyring ||
       state.type === KEYRING_TYPE.GnosisKeyring
@@ -165,6 +157,14 @@ export const ImportSuccessScreen2024 = () => {
           }),
         ),
       );
+    } else {
+      if (addresses.length > 10) {
+        // just sync 10 addresses
+        const top10Account = addresses.slice(0, 10);
+        Promise.all(top10Account.map(address => syncSingleAddress(address)));
+      } else {
+        Promise.all(addresses.map(address => syncSingleAddress(address)));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

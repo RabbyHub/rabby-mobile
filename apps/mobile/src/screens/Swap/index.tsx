@@ -69,7 +69,7 @@ import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 
 const isAndroid = Platform.OS === 'android';
 
-const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
+const Swap = ({ isForMultipleAdderss = true }: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
@@ -77,7 +77,10 @@ const Swap = ({ isForMultipleAdderss }: PropsForAccountSwitchScreen) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const headerRight = useCallback(() => <SwapHeader />, []);
+  const headerRight = useCallback(
+    () => <SwapHeader isForMultipleAdderss={isForMultipleAdderss} />,
+    [isForMultipleAdderss],
+  );
   useEffect(() => {
     setNavigationOptions({
       headerRight,
