@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { AssetAvatar, Tip } from '@/components';
 import {
   NFTItem,
@@ -7,7 +7,7 @@ import {
   TxDisplayItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
@@ -39,6 +39,7 @@ interface ItemProps {
   currentApprove: number;
   noRemainValue: boolean;
   isForMultipleAdderss?: boolean;
+  buttonContainerStyle?: RNViewProps['style'];
 }
 
 export const HistoryBottomBtn = ({
@@ -53,20 +54,32 @@ export const HistoryBottomBtn = ({
   chain,
   receives,
   isForMultipleAdderss = true,
+  buttonContainerStyle,
 }: ItemProps) => {
   console.log('HistoryBottomBtn type', type);
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const isFail = useMemo(() => status !== 1, [status]);
+  // const isFail = useMemo(() => status !== 1, [status]);
+  const { btnContainerViewStyle, buttonStyle } = useMemo(() => {
+    const viewStyle = StyleSheet.flatten([
+      styles.buttonContainer,
+      buttonContainerStyle,
+    ]);
+    return {
+      btnContainerViewStyle: viewStyle,
+      buttonStyle: { height: viewStyle.height || 56 },
+    };
+  }, [styles.buttonContainer, buttonContainerStyle]);
 
   switch (type) {
     case HistoryItemCateType.Send: {
       const isNft = sends[0]?.token_id?.length === 32;
       return isNft ? null : (
-        <View style={styles.buttonContainer}>
+        <View style={btnContainerViewStyle}>
           <Button
+            buttonStyle={buttonStyle}
             onPress={() => {
               const sendToken =
                 tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
@@ -107,7 +120,7 @@ export const HistoryBottomBtn = ({
         : getTokenSymbol(singeToken as TokenItem);
 
       return tokenIsNft ? null : (
-        <View style={styles.buttonContainer}>
+        <View style={btnContainerViewStyle}>
           <Tip
             placement="top"
             content={
@@ -118,7 +131,7 @@ export const HistoryBottomBtn = ({
             <Button
               // loading={btnLoading}
               disabled={noRemainValue}
-              buttonStyle={[styles.ghostButton]}
+              buttonStyle={[styles.ghostButton, buttonStyle]}
               titleStyle={[
                 styles.ghostTitle,
                 noRemainValue && styles.ghostDisableButton,
@@ -161,8 +174,9 @@ export const HistoryBottomBtn = ({
       return null;
     case HistoryItemCateType.Swap:
       return (
-        <View style={styles.buttonContainer}>
+        <View style={btnContainerViewStyle}>
           <Button
+            buttonStyle={buttonStyle}
             onPress={() => {
               const chainItem = !chain ? null : findChainByServerID(chain);
               navigation.dispatch(
@@ -212,10 +226,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   buttonContainer: {
-    position: 'absolute',
-    height: 60,
-    bottom: 40,
+    // ...makeDebugBorder(),
+    position: 'relative',
+    flexShrink: 0,
+    height: 56,
+    marginBottom: 0,
     width: '100%',
-    left: 16,
+    gap: 16,
   },
 }));

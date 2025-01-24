@@ -238,8 +238,15 @@ function HistoryDetailScreen(): JSX.Element {
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
-    containerPb: 12,
+    // containerPb: 12,
+    btnContainerBottomOffset: 40,
   });
+  const buttonContainerStyle = useMemo(() => {
+    return [
+      styles.buttonContainerStyle,
+      { marginBottom: safeSizes.btnContainerBottomOffset },
+    ];
+  }, [styles.buttonContainerStyle, safeSizes.btnContainerBottomOffset]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
@@ -400,9 +407,7 @@ function HistoryDetailScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer2024
-      type="bg2"
-      style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
+    <NormalScreenContainer2024 type="bg2" style={[styles.container]}>
       <ScrollView style={[styles.scrollView]}>
         <HistoryTokenList
           data={data}
@@ -416,7 +421,7 @@ function HistoryDetailScreen(): JSX.Element {
           status={status}
           tokenDict={data.tokenDict}
         />
-        <View style={styles.detailContainer}>
+        <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>Date</Text>
             <View>
@@ -531,28 +536,32 @@ function HistoryDetailScreen(): JSX.Element {
             </View>
           }
         </View>
-        <HistoryBottomBtn
-          noRemainValue={noRemainValue}
-          currentApprove={currentApprove}
-          approve={data.token_approve}
-          receives={data.receives}
-          sends={data.sends}
-          type={formatType}
-          chain={data.chain}
-          status={status || 0}
-          data={data}
-          tokenDict={data.tokenDict}
-        />
       </ScrollView>
+      <HistoryBottomBtn
+        noRemainValue={noRemainValue}
+        currentApprove={currentApprove}
+        approve={data.token_approve}
+        receives={data.receives}
+        sends={data.sends}
+        type={formatType}
+        chain={data.chain}
+        status={status || 0}
+        data={data}
+        tokenDict={data.tokenDict}
+        buttonContainerStyle={buttonContainerStyle}
+      />
     </NormalScreenContainer2024>
   );
 }
+
+const PADDING_HORIZONTAL = 16;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
   scrollView: {
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: PADDING_HORIZONTAL,
+    flexShrink: 1,
   },
   detailContainer: {
     // flex: 1,
@@ -561,14 +570,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-1'],
   },
-  buttonContainer: {
-    position: 'absolute',
-    flexDirection: 'row',
-    height: 60,
-    bottom: 40,
-    width: '100%',
-    gap: 16,
-    left: 16,
+  detailContainerLastOne: {
+    marginBottom: 20,
+  },
+  buttonContainerStyle: {
+    paddingHorizontal: PADDING_HORIZONTAL,
+    flexShrink: 0,
   },
   itemAliaName: {
     flexDirection: 'row',
