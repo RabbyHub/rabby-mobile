@@ -285,7 +285,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     }
     const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
     setAmount('');
-    switchFromChain(navState?.chainEnum ?? firstChainEnum);
+    !navState?.chainEnum && switchFromChain(firstChainEnum);
     const getRemoteRecommendChain = async () => {
       if (initIdRef.current === currentFetchId) {
         const data = await openapi.getRecommendBridgeToChain({
