@@ -15,7 +15,7 @@ const keyVaryUpsertQueue: Record<string, PQueue> = {};
  * @description In most cases, you don't need call it manually,
  * if you want to do that, make sure you know what you are doing.
  */
-const syncAbortControllers: {
+export const syncAbortControllers: {
   [P in SyncTaskOptions['taskFor']]: AbortController | null;
 } = {
   balance: null,
@@ -82,13 +82,13 @@ export async function batchSaveWithPQueueAndTransaction<
     `${loggerPrefix}Starting to upsert ${data.length} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
   );
 
-  let waitTaskCompleted = Promise.resolve();
+  let waitAllTasksCreated = Promise.resolve();
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize);
 
     if (currentSignal?.aborted) break;
 
-    waitTaskCompleted = waitTaskCompleted.then(async () => {
+    waitAllTasksCreated = waitAllTasksCreated.then(async () => {
       await sleep(delayBetweenTasks);
       if (currentSignal?.aborted) {
         console.warn(
@@ -117,6 +117,21 @@ export async function batchSaveWithPQueueAndTransaction<
             round: round,
             batchSize,
           },
+        };
+
+        const makeEmit = (success: boolean) => {
+          if (currentSignal?.aborted) return;
+
+          // leave here for debug
+          if (eventPayload.taskFor === 'all-history') {
+            console.warn(
+              `[debug] I will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
+            );
+          }
+          appOrmEvents.emit('onRemoteDataUpserted', {
+            ...eventPayload,
+            success,
+          });
         };
 
         try {
@@ -149,11 +164,9 @@ export async function batchSaveWithPQueueAndTransaction<
           console.debug(
             `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
           );
-          appOrmEvents.emit('onRemoteDataUpserted', {
-            ...eventPayload,
-            success: true,
-          });
+          makeEmit(true);
         } catch (error) {
+          makeEmit(false);
           console.error(
             `${loggerPrefix}Error inserting batch ${roundText}:`,
             error,
@@ -165,30 +178,23 @@ export async function batchSaveWithPQueueAndTransaction<
     });
   }
 
-  // Wait for all tasks to complete
-  const waitFinalTask = await Promise.all([
-    thisTickUpsertQueue.onIdle(),
-    waitTaskCompleted,
-  ]);
-
   if (currentSignal) {
     const abortListener = () => {
       console.warn(`${loggerPrefix}Batch upsertion was aborted.`);
       thisTickUpsertQueue.clear();
-      currentSignal.removeEventListener('abort', abortListener);
     };
 
     currentSignal.addEventListener('abort', abortListener);
 
     try {
-      waitFinalTask;
+      await waitAllTasksCreated;
     } catch (error) {
       console.error(`${loggerPrefix}Wait batch upsertion failed:`, error);
     } finally {
       currentSignal.removeEventListener('abort', abortListener);
     }
   } else {
-    waitFinalTask;
+    await waitAllTasksCreated;
     console.debug(`${loggerPrefix}All batches have been processed.`);
   }
 }
