@@ -40,14 +40,14 @@ export type RootStackParamsList = {
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]: {
     token: NFTItem;
-    account: KeyringAccountWithAlias;
+    account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
     isSingleAddress?: boolean;
-    account: KeyringAccountWithAlias | null;
+    account?: KeyringAccountWithAlias | null;
     cache: boolean;
     relateTokenId?: string;
   };

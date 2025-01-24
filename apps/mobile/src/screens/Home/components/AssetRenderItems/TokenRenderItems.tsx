@@ -26,7 +26,10 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
-import { ASSETS_ITEM_HEIGHT, ASSETS_SECTION_HEADER } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_SECTION_HEADER,
+} from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { ellipsisAddress } from '@/utils/address';
@@ -343,16 +346,23 @@ export const TokenRowSectionHeader = memo(
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
-    height: ASSETS_ITEM_HEIGHT,
+    height: ASSETS_ITEM_HEIGHT_NEW,
     width: '100%',
-    paddingHorizontal: 4,
     flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    paddingLeft: 12,
+    paddingRight: 16,
   },
   tokenSectionHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -398,12 +408,14 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
     height: 36,
     width: 100,
     justifyContent: 'center',
     borderRadius: 100,
     display: 'flex',
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
   actionText: {
     fontSize: 16,
