@@ -1556,7 +1556,10 @@
     },
     "TokenSelector": {
       "hot": "Hot",
-      "recent": "Recent"
+      "common": "Common",
+      "recent": "Recent",
+      "searchPlaceHolder1": "Search by Name / Address",
+      "searchPlaceHolder2": "Search Token"
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

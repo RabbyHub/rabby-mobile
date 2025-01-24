@@ -191,7 +191,7 @@ const TokenSelect = ({
     </>
   );
 };
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     borderRadius: 12,
     backgroundColor: colors2024['neutral-line'],
@@ -206,20 +206,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   headerBox: {
-    // paddingHorizontal: 16,
     height: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    // borderTopWidth: 0,
-    backgroundColor: colors2024['neutral-bg-1'],
-    // borderBottomWidth: 0.5,
-    // borderWidth: 1,
-    marginHorizontal: 24,
-    // borderTopColor: 'transparent',
-    // borderColor: colors2024['neutral-line'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+
+    paddingHorizontal: 24,
   },
   headerBoxText: {
     fontSize: 17,
