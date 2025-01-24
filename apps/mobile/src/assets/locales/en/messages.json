@@ -1537,6 +1537,13 @@
     "settingModal": {
       "themeMode": {
         "title": "Theme mode"
+      },
+      "clearAppCache": {
+        "title": "Clear App Cache",
+        "clearAppCacheDesc": "'This will remove temporary cached files without impacting your personal data or settings. The app needs to restart to complete the process. Do you wish to continue?'",
+        "button": {
+          "confirm": "Clear & Close App"
+        }
       }
     },
     "buy": {
@@ -1781,6 +1788,13 @@
       "message": "Check out how to update Ledger firmware from Ledger support",
       "update": "Update",
       "cancel": "Cancel"
+    }
+  },
+  "common": {
+    "dialog": {
+      "button": {
+        "cancel": "Cancel"
+      }
     }
   }
 }

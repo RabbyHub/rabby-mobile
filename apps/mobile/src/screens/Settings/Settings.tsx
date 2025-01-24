@@ -376,12 +376,12 @@ function SettingsBlocks() {
             },
             onPress: () => {
               Alert.alert(
-                'Clear App Cache',
-                'This will remove temporary cached files without impacting your personal data or settings. The app needs to restart to complete the process. Do you wish to continue?',
+                t('page.settingModal.clearAppCache.title'),
+                t('page.settingModal.clearAppCache.clearAppCacheDesc'),
                 [
-                  { text: 'Cancel', onPress: () => {} },
+                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
                   {
-                    text: 'Clear & Close App',
+                    text: t('page.settingModal.clearAppCache.button.confirm'),
                     style: 'destructive',
                     onPress: async () => {
                       await dropAppDataSourceAndQuitApp();
