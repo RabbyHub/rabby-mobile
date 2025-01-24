@@ -12,13 +12,6 @@ export const batchQueryNFTsWithLocalCache = async (
   const { id, isAll, sortByCredit } = params;
   if (isAll && sortByCredit) {
     const isExpired = await NFTItemEntity.isExpired(id);
-    console.log(
-      '🔍 CUSTOM_LOGGER:=>isExpired nft',
-      isExpired,
-      'force',
-      force,
-      id.slice(-4),
-    );
     if (force || isExpired) {
       const nfts = await openapi.listNFT(id, isAll, sortByCredit);
       runOnJS(syncRemoteNFTs)(id, nfts);

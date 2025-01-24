@@ -260,10 +260,10 @@ export const NFTDetailScreen = () => {
   const itemList = useMemo(() => {
     const resList: {
       data: NFTItem;
-      address: string;
+      address?: string;
       index: number;
-      type: KEYRING_TYPE;
-      aliasName: string;
+      type?: KEYRING_TYPE;
+      aliasName?: string;
     }[] = [];
     if (isSingleAddress) {
       console.debug('relateNFTList isSingleAddress');
@@ -318,7 +318,14 @@ export const NFTDetailScreen = () => {
       }
     });
     console.log('relateNFTList length:', resList.length);
-    return resList;
+    return resList.length
+      ? resList
+      : [
+          {
+            data: token,
+            index: 0,
+          },
+        ];
   }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
   useEffect(() => {
     getCacheTop10Assets(false, {
@@ -356,18 +363,14 @@ export const NFTDetailScreen = () => {
       type,
       aliasName,
     }: {
-      address: string;
-      type: KEYRING_TYPE;
-      aliasName: string;
+      address?: string;
+      type?: KEYRING_TYPE;
+      aliasName?: string;
       iToken: NFTItem;
     }) => {
-      if (!address) {
-        return null;
-      }
-
       return (
         <View key={`${address}-${iToken.id}`}>
-          {renderAccountHeader(type, aliasName)}
+          {type && aliasName ? renderAccountHeader(type, aliasName) : null}
           <Media
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
             type={iToken?.content_type}
@@ -413,13 +416,17 @@ export const NFTDetailScreen = () => {
             <ListItem title="Purchase Date" value={calDate(iToken)} />
             <ListItem title="Last Price" value={calPrice(iToken)} />
           </View>
-          <View style={[styles.buttonContainer]}>
-            <Button
-              onPress={() => handleSend(iToken, address, type)}
-              title={t('page.sendNFT.sendButton')}
-              titleStyle={styles.btnTitle}
-            />
-          </View>
+          {!!address && (
+            <View style={[styles.buttonContainer]}>
+              <Button
+                onPress={() =>
+                  address && type && handleSend(iToken, address, type)
+                }
+                title={t('page.sendNFT.sendButton')}
+                titleStyle={styles.btnTitle}
+              />
+            </View>
+          )}
         </View>
       );
     },

@@ -69,13 +69,6 @@ export const batchQueryTokensWithLocalCache = async (
   } = params;
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
-    console.log(
-      '🔍 CUSTOM_LOGGER:=>isExpired token:',
-      isExpired,
-      'force',
-      force,
-      user_id.slice(-4),
-    );
     if (force || isExpired) {
       const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
       runOnJS(syncRemoteTokens)(user_id, tokens);

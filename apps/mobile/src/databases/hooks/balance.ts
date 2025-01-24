@@ -23,13 +23,6 @@ export const batchBalanceWithLocalCache = async (
 ): Promise<ReturnType<typeof openapi.getTotalBalanceV2>> => {
   const { address, isCore } = params;
   const isExpired = await BalanceEntity.isExpired(address, isCore);
-  console.log(
-    '🔍 CUSTOM_LOGGER:=>isExpired balance',
-    isExpired,
-    'force',
-    force,
-    address.slice(-4),
-  );
   if (force || isExpired) {
     const balance = await openapi.getTotalBalanceV2(params);
     runOnJS(syncBalance)(address, isCore, balance);

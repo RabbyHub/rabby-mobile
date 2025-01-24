@@ -75,13 +75,6 @@ export const syncProtocols = async (
     return [];
   }
   const isExpired = await PortocolItemEntity.isExpired(address);
-  console.log(
-    '🔍 CUSTOM_LOGGER:=>isExpired defi',
-    isExpired,
-    'force',
-    force,
-    address.slice(-4),
-  );
 
   if (!isExpired && !force) {
     return onlySync ? [] : PortocolItemEntity.batchQueryPortocols(address);
