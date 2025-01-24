@@ -609,7 +609,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
     );
 
     const section = useMemo(() => {
-      if (unshiftList) {
+      if (!tokens?.length) {
+        return [];
+      }
+      if (unshiftList?.length) {
         return [
           ...unshiftList.map(e => ({
             ...e,
@@ -741,7 +744,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
               />
             </View>
           )}
-          {!isSwapTo && <>{customHeaderTitle || DefaultHeaderTitle}</>}
+          {(!isSwapTo || (query && !tokens.length)) && (
+            <>{customHeaderTitle || DefaultHeaderTitle}</>
+          )}
           <BottomSheetSectionList
             contentInset={{ bottom: 30 }}
             sections={section}
