@@ -71,13 +71,33 @@ import { useAssets } from '../Search/useAssets';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ellipsisAddress } from '@/utils/address';
+import { useUpgradeInfo } from '@/hooks/version';
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+  const { balanceAccounts, accountsLength } = useAccountsBalance({
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+  const needSmallNum = useMemo(() => {
+    const num = balanceAccounts.reduce(
+      (sum, item) => sum + (Number(item.balance) || 0),
+      0,
+    );
+    return num >= 1000000000;
+  }, [balanceAccounts]);
   const spinValue = useRef(new Animated.Value(0)).current;
+  const { remoteVersion } = useUpgradeInfo();
+  const totalBalanceUsd = useMemo(() => {
+    const num = balanceAccounts.reduce(
+      (sum, item) => sum + (Number(item.balance) || 0),
+      0,
+    );
+    return '$' + splitNumberByStep((num || 0).toFixed(2));
+  }, [balanceAccounts]);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -100,33 +120,70 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   }, [loading, spinValue]);
 
   return (
-    <View style={styles.headerBox}>
-      <View style={styles.leftBox}>
-        <Text style={styles.balanceTextBox}>
-          {t('page.nextComponent.multiAddressHome.totalBalance')}
-        </Text>
-        <Animated.View
-          style={{
-            transform: [{ rotate: spin }],
-          }}>
-          {loading && <RcIconloading />}
-        </Animated.View>
-      </View>
-      <TouchableWithoutFeedback
-        style={styles.settingEntry}
-        onPress={() => {
-          navigation.navigate(RootNames.StackSettings, {
-            screen: RootNames.Settings,
-            params: {},
-          });
+    <View>
+      <View style={styles.headerBox}>
+        <View style={styles.leftBox}>
+          <Text style={styles.balanceTextBox}>
+            {t('page.nextComponent.multiAddressHome.totalBalance')}
+          </Text>
+          <Animated.View
+            style={{
+              transform: [{ rotate: spin }],
+            }}>
+            {loading && <RcIconloading />}
+          </Animated.View>
+        </View>
+        <TouchableWithoutFeedback
+          style={styles.settingEntry}
+          onPress={() => {
+            navigation.navigate(RootNames.StackSettings, {
+              screen: RootNames.Settings,
+              params: {},
+            });
 
-          matomoRequestEvent({
-            category: 'Click_Header',
-            action: 'Click_Setting',
-          });
-        }}>
-        <RcIconSetting />
-      </TouchableWithoutFeedback>
+            matomoRequestEvent({
+              category: 'Click_Header',
+              action: 'Click_Setting',
+            });
+          }}>
+          <RcIconSetting />
+          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+        </TouchableWithoutFeedback>
+      </View>
+      <View style={styles.balanceBox}>
+        <Text
+          style={[
+            styles.usdText,
+            // eslint-disable-next-line react-native/no-inline-styles
+            {
+              fontSize: needSmallNum ? 28 : 36,
+            },
+          ]}>
+          {totalBalanceUsd}
+        </Text>
+        <TouchableOpacity
+          style={styles.accountBg}
+          onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+            navigation.dispatch(
+              StackActions.push(RootNames.StackAddress, {
+                screen: RootNames.AddressList,
+                params: {},
+              }),
+            );
+            matomoRequestEvent({
+              category: 'Click_Header',
+              action: 'Click_Address',
+            });
+          }}>
+          <RcIconSmallWallet />
+          <Text style={styles.accountText}>{accountsLength}</Text>
+          <RcIconSmallArrow />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -281,13 +338,6 @@ function MultiAddressHome(): JSX.Element {
     return result;
   });
 
-  // useMount(() => {  no use ?
-  //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   return () => {
-  //     eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   };
-  // });
-
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -318,14 +368,6 @@ function MultiAddressHome(): JSX.Element {
     initFetchTop10Assets(true);
   }, [forceUpdate, triggerUpdate, initFetchTop10Assets]);
 
-  const needSmallNum = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return num >= 1000000000;
-  }, [balanceAccounts]);
-
   const totalBalance = useMemo(() => {
     const num = balanceAccounts.reduce(
       (sum, item) => sum + (Number(item.balance) || 0),
@@ -345,17 +387,7 @@ function MultiAddressHome(): JSX.Element {
     [totalBalance],
   );
 
-  const totalBalanceUsd = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return '$' + splitNumberByStep((num || 0).toFixed(2));
-  }, [balanceAccounts]);
-
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-
-  const { openUrlAsDapp } = useDappWebViewScreen();
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
@@ -433,7 +465,6 @@ function MultiAddressHome(): JSX.Element {
     },
     [navigation, toggleUseAllAccountsOnScene],
   );
-  const [asssest] = useAssetsMap();
 
   const handleClickPinAccount = useCallback(
     (pinItem: KeyringAccountWithAlias) => {
@@ -486,40 +517,6 @@ function MultiAddressHome(): JSX.Element {
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
-          <View style={styles.balanceBox}>
-            <Text
-              style={[
-                styles.usdText,
-                // eslint-disable-next-line react-native/no-inline-styles
-                {
-                  fontSize: needSmallNum ? 28 : 36,
-                },
-              ]}>
-              {totalBalanceUsd}
-            </Text>
-            <TouchableOpacity
-              style={styles.accountBg}
-              onPress={() => {
-                trigger('impactLight', {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackAddress, {
-                    screen: RootNames.AddressList,
-                    params: {},
-                  }),
-                );
-                matomoRequestEvent({
-                  category: 'Click_Header',
-                  action: 'Click_Address',
-                });
-              }}>
-              <RcIconSmallWallet />
-              <Text style={styles.accountText}>{accountsLength}</Text>
-              <RcIconSmallArrow />
-            </TouchableOpacity>
-          </View>
           {isShowPin && (
             <View style={[styles.pinGrid]}>
               {pinAccountsFirstFour.map((item, index) => {
@@ -674,6 +671,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: '100%',
   },
+  redDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['red-default'],
+    position: 'absolute',
+    top: 15,
+    right: 13,
+  },
   rootScreenContainer: {
     // ...makeDebugBorder(),
     // paddingHorizontal: 20,
@@ -723,7 +729,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     paddingLeft: 12,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    // ...makeDebugBorder(),
+    position: 'relative',
   },
   usdText: {
     fontSize: 36,
