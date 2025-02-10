@@ -44,7 +44,6 @@ export const useAssets = (filterText?: string) => {
   } = useAssetsMap();
 
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
-  const abortRef = useRef(false);
   const loadToken = async (address: string, force?: boolean) => {
     if (!address) {
       return;
@@ -129,10 +128,6 @@ export const useAssets = (filterText?: string) => {
     }
   };
 
-  const interrupt = () => {
-    abortRef.current = true;
-  };
-
   const getCacheTop10Assets = async (
     force?: boolean,
     options?: {
@@ -150,16 +145,15 @@ export const useAssets = (filterText?: string) => {
     try {
       await handleFetchTokens();
       for (const address of addresses) {
-        if (abortRef.current) {
-          console.log('Fetching interrupted.');
-          setLoading(false);
-          setIsFirstFetch(false);
-          break;
+        try {
+          !disableToken && (await loadToken(address, force));
+        } catch (error) {
+          console.error(`Error fetching token ${address.slice(-4)}:`, error);
         }
-
+      }
+      for (const address of addresses) {
         try {
           await Promise.all([
-            !disableToken && loadToken(address, force),
             !disableDefi && loadDefi(address, force),
             !disableNFT && loadNFT(address, force),
           ]);
@@ -194,7 +188,6 @@ export const useAssets = (filterText?: string) => {
     isLoading,
     hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
     getCacheTop10Assets,
-    interrupt,
     refreshing: !!isLoading && !isFirstFetch,
   };
 };
