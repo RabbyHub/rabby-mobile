@@ -233,7 +233,7 @@ function HistoryDetailScreen(): JSX.Element {
 
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
-  const status = useMemo(() => data.tx?.status || 0, [data]);
+  const status = useMemo(() => data.tx?.status ?? 1, [data]);
   const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024 } = useTheme2024({ getStyle });

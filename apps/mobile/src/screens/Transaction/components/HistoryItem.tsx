@@ -199,7 +199,7 @@ export const HistoryItem = React.memo(
                   {isShowSuccess && (
                     <TxStatusItem status={1} showSuccess={true} />
                   )}
-                  <TxStatusItem status={data.tx?.status || 0} />
+                  <TxStatusItem status={data.tx?.status ?? 1} />
                 </View>
                 <Text style={styles.describeText} numberOfLines={1}>
                   {formatDescribe}
