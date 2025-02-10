@@ -1,18 +1,14 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect } from 'react';
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
-import { useSafeState } from '@/hooks/useSafeState';
 
 export const useQueryProjects = (userAddr: string | undefined) => {
-  const [isLoading, setLoading] = useSafeState(false);
-
-  const { tokens, updateData: updateTokens } = useTokens(
-    userAddr,
-    false,
-    0,
-    undefined,
-  );
+  const {
+    tokens,
+    updateData: updateTokens,
+    isLoading,
+  } = useTokens(userAddr, false, 0, undefined);
 
   const {
     data: portfolios,
@@ -25,21 +21,19 @@ export const useQueryProjects = (userAddr: string | undefined) => {
   const refreshPositions = useCallback(
     async (force?: boolean) => {
       if (!isLoading) {
-        setLoading(true);
         try {
           await updateTokens(force);
           await Promise.all([updatePortfolio(force), reloadNftList(force)]);
         } catch (error) {
           console.error(error);
         } finally {
-          setLoading(false);
         }
       }
     },
-    [isLoading, setLoading, updatePortfolio, updateTokens, reloadNftList],
+    [isLoading, updatePortfolio, updateTokens, reloadNftList],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (userAddr) {
       refreshPositions();
       return;

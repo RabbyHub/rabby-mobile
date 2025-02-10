@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect } from 'react';
 
 import { useSafeState } from '@/hooks/useSafeState';
 import { portfolio2Display } from '../utils/portfolio';
@@ -9,6 +9,7 @@ import { preferenceService } from '@/core/services';
 import { syncProtocols } from '@/databases/hooks/assets';
 import { singleDeFiNounceAtom } from './refresh';
 import { useAtom } from 'jotai';
+import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -95,6 +96,28 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
         return;
       }
       setHasValue(false);
+      if (!force) {
+        const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+          userAddr,
+        );
+        if (cachePortocols.length) {
+          const cacheProjectDict: Record<string, DisplayedProject> | null = {};
+          cachePortocols.forEach(project => {
+            if (projectDict) {
+              projectDict = produce(projectDict, draft => {
+                project && portfolio2Display(project, draft);
+              });
+            }
+          });
+          const realtimeData = Object.values(cacheProjectDict)?.sort(
+            (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+          );
+          const tokenSetting = await preferenceService.getUserTokenSettings();
+          setData(tagProfiles(realtimeData, tokenSetting));
+          console.log('🔍 CUSTOM_LOGGER:=> cachedone: usePortfolios)');
+          setHasValue(!!cachePortocols.length);
+        }
+      }
 
       let projectDict: Record<string, DisplayedProject> | null = {};
       const protocols = await syncProtocols(userAddr, force);

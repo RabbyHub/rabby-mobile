@@ -7,6 +7,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { syncNFTs } from '@/databases/hooks/assets';
 import { singleNFTNounceAtom } from './refresh';
 import { useAtom } from 'jotai';
+import { NFTItemEntity } from '@/databases/entities/nftItem';
 
 export const tagNfts = (
   nfts: NFTItem[],
@@ -49,9 +50,14 @@ export const useQueryNft = (addr?: string, visible = true) => {
         return;
       }
       try {
-        setIsLoading(true);
-        const nfts = await syncNFTs(addr, force);
+        const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
         const tokenSetting = await preferenceService.getUserTokenSettings();
+        if (!cacheNfts.length || force) {
+          setIsLoading(true);
+        }
+        setList(tagNfts(cacheNfts, tokenSetting));
+        console.log('🔍 CUSTOM_LOGGER:=> cachedone: useQueryNft)');
+        const nfts = await syncNFTs(addr, force);
         setList(tagNfts(nfts, tokenSetting));
       } catch (e) {
         console.error(e);
