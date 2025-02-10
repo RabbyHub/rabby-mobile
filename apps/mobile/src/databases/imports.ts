@@ -1,6 +1,5 @@
 import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
-import { removeDBFiles } from './dbfs';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -81,11 +80,26 @@ export async function prepareAppDataSource() {
   return appDataSource;
 }
 
+export async function clearAppDataSource() {
+  const appDataSource = await prepareAppDataSource();
+
+  // await appDataSource.dropDatabase();
+  await Promise.allSettled(
+    appDataSource.entityMetadatas.map(async entityMetadata => {
+      const repo = appDataSource.getRepository(entityMetadata.target);
+
+      return repo.clear();
+    }),
+  );
+  await appDataSource.query('VACUUM');
+}
+
 export async function dropAppDataSourceAndQuitApp() {
   const appDataSource = await prepareAppDataSource();
 
   await appDataSource.dropDatabase();
   await appDataSource.query('VACUUM');
+  // it will cause crash on iOS production
   RNHelpers.forceExitApp();
 }
 

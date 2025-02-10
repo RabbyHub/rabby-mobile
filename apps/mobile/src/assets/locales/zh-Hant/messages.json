@@ -1650,10 +1650,13 @@
       },
       "clearAppCache": {
         "button": {
-          "confirm": "清除並關閉 App"
+          "clear_and_quit": "清除並關閉 App",
+          "clear": "清除"
         },
         "title": "清除 App 緩存",
-        "clearAppCacheDesc": "這將移除暫存的快取檔案，而不影響您的個人資料或設定。應用程式需要重新啟動才能完成此過程。您是否希望繼續？"
+        "clearAppCacheDesc": "這將移除暫存的快取檔案，而不影響您的個人資料或設定。應用程式需要重新啟動才能完成此過程。您是否希望繼續？",
+        "iOSToastTitle": "清除緩存成功",
+        "iOSToastDesc": "您需要重新啟動該應用以生效。"
       }
     },
     "buy": {

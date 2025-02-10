@@ -107,9 +107,13 @@ import CurrentLanguageSelectorModal, {
 } from './sheetModals/LanguageSelector';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { useSQLiteStatics } from '@/databases/hooks/_statics';
-import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
+import {
+  clearAppDataSource,
+  dropAppDataSourceAndQuitApp,
+} from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
+import { IS_IOS } from '@/core/native/utils';
+import { abortAllSyncTasks } from '@/databases/sync/_task';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -359,34 +363,53 @@ function SettingsBlocks() {
           {
             label: t('page.setting.appCache'),
             icon: RcClearPending,
-            rightNode: ({ rightIconNode }) => {
-              return (
-                <View style={{ flexDirection: 'row' }}>
-                  <AppCacheSizeText
-                    style={{
-                      color: colors['neutral-title-1'],
-                      fontSize: 14,
-                      fontWeight: '400',
-                      paddingRight: 8,
-                    }}
-                  />
-                  {rightIconNode}
-                </View>
-              );
-            },
+            rightNode: IS_IOS
+              ? undefined
+              : ({ rightIconNode }) => {
+                  return (
+                    <View style={{ flexDirection: 'row' }}>
+                      <AppCacheSizeText
+                        style={{
+                          color: colors['neutral-title-1'],
+                          fontSize: 14,
+                          fontWeight: '400',
+                          paddingRight: 8,
+                        }}
+                      />
+                      {rightIconNode}
+                    </View>
+                  );
+                },
             onPress: () => {
               Alert.alert(
                 t('page.settingModal.clearAppCache.title'),
                 t('page.settingModal.clearAppCache.clearAppCacheDesc'),
                 [
                   { text: t('common.dialog.button.cancel'), onPress: () => {} },
-                  {
-                    text: t('page.settingModal.clearAppCache.button.confirm'),
-                    style: 'destructive',
-                    onPress: async () => {
-                      await dropAppDataSourceAndQuitApp();
-                    },
-                  },
+                  IS_IOS
+                    ? {
+                        text: t('page.settingModal.clearAppCache.button.clear'),
+                        style: 'destructive',
+                        onPress: async () => {
+                          abortAllSyncTasks();
+                          await clearAppDataSource();
+
+                          Alert.alert(
+                            t('page.settingModal.clearAppCache.iOSToastTitle'),
+                            t('page.settingModal.clearAppCache.iOSToastDesc'),
+                            [],
+                          );
+                        },
+                      }
+                    : {
+                        text: t(
+                          'page.settingModal.clearAppCache.button.clear_and_quit',
+                        ),
+                        style: 'destructive',
+                        onPress: async () => {
+                          await dropAppDataSourceAndQuitApp();
+                        },
+                      },
                 ],
               );
             },
