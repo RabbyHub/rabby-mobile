@@ -95,6 +95,7 @@ export class TransactionHistoryService {
   store!: TxHistoryStore;
 
   private _signingTxList: TransactionSigningItem[] = [];
+  private _txHistoryLimit = 100;
 
   constructor(options?: StorageAdapaterOptions) {
     this.store = createPersistStore<TxHistoryStore>(
@@ -313,6 +314,7 @@ export class TransactionHistoryService {
     this.setStore(draft => {
       return [...draft, tx];
     });
+    this.clearAllExpiredTxs();
   }
 
   addSigningTx(tx: Tx) {
@@ -460,7 +462,7 @@ export class TransactionHistoryService {
         networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
       });
     }
-    // this.clearBefore({ address, chainId, nonce });
+    this.clearBefore({ address, chainId, nonce });
   }
 
   async reloadTx(
@@ -633,6 +635,41 @@ export class TransactionHistoryService {
         .catch(e => console.error(e));
     }
   };
+  /**
+   * @description clear expired txs, keep this.txHistoryLimit 100 compoleted transactions
+   */
+  clearAllExpiredTxs() {
+    this.setStore(draft => {
+      const list = sortBy(draft, item => item.createdAt).filter(
+        item => !item.isPending,
+      );
+      if (list.length <= this._txHistoryLimit) {
+        return draft;
+      }
+      return list.slice(0, this._txHistoryLimit);
+    });
+  }
+
+  clearBefore({
+    address,
+    chainId,
+    nonce,
+  }: {
+    address: string;
+    chainId: number;
+    nonce: number;
+  }) {
+    this.setStore(draft => {
+      return draft.filter(item => {
+        return (
+          isSameAddress(address, item.address) &&
+          item.chainId === chainId &&
+          item.nonce < nonce &&
+          item.isPending
+        );
+      });
+    });
+  }
 
   clearPendingTransactions(address: string) {
     this.setStore(draft => {
