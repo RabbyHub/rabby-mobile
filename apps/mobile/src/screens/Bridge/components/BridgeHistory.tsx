@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useBridgeHistory } from '../hooks';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -125,6 +125,8 @@ export const BridgeTxHistory = ({
     }
   }, [visible]);
 
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+
   return (
     <AppBottomSheetModal
       ref={bottomRef}
@@ -132,14 +134,14 @@ export const BridgeTxHistory = ({
       onDismiss={onClose}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg2',
+        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
       })}>
       <HistoryList />
     </AppBottomSheetModal>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   emptyText: {
     textAlign: 'center',
     fontSize: 14,
@@ -166,7 +168,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 24,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   flatList: {
     paddingHorizontal: 20,

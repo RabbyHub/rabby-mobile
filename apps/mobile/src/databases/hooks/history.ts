@@ -265,5 +265,6 @@ export const useSyncHistoryDB = (
     syncTop10History,
     interrupt,
     syncSingleAddress,
+    syncUserAllHistory,
   };
 };
