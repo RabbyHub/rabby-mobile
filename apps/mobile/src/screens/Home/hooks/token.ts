@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { AbstractPortfolioToken } from '../types';
 import { useSafeState } from '@/hooks/useSafeState';
 import { findChain } from '@/utils/chain';
@@ -125,8 +125,8 @@ export const useTokens = (
         (await preferenceService.getUserTokenSettings()) || {};
       if (
         force ||
-        (await TokenItemEntity.isExpired(userAddr)) ||
-        cachedTokens.length
+        cachedTokens.length ||
+        (await TokenItemEntity.isExpired(userAddr))
       ) {
         const snapshot = cachedTokens.length
           ? cachedTokens
@@ -145,7 +145,10 @@ export const useTokens = (
           _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
           setMainnetTokens(filterDisplayToken(_tokens));
-          console.log('🔍 CUSTOM_LOGGER:=> cachedone: useTokens)');
+          console.log(
+            '🔍 CUSTOM_LOGGER:=> cachedone: useTokens)',
+            _tokens.length,
+          );
           setLoading(false);
         }
       }

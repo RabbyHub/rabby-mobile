@@ -56,7 +56,10 @@ export const useQueryNft = (addr?: string, visible = true) => {
           setIsLoading(true);
         }
         setList(tagNfts(cacheNfts, tokenSetting));
-        console.log('🔍 CUSTOM_LOGGER:=> cachedone: useQueryNft)');
+        console.log(
+          '🔍 CUSTOM_LOGGER:=> cachedone: useQueryNft)',
+          cacheNfts.length,
+        );
         const nfts = await syncNFTs(addr, force);
         setList(tagNfts(nfts, tokenSetting));
       } catch (e) {

@@ -101,10 +101,10 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           userAddr,
         );
         if (cachePortocols.length) {
-          const cacheProjectDict: Record<string, DisplayedProject> | null = {};
+          let cacheProjectDict: Record<string, DisplayedProject> | null = {};
           cachePortocols.forEach(project => {
-            if (projectDict) {
-              projectDict = produce(projectDict, draft => {
+            if (cacheProjectDict) {
+              cacheProjectDict = produce(cacheProjectDict, draft => {
                 project && portfolio2Display(project, draft);
               });
             }
@@ -114,7 +114,10 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           );
           const tokenSetting = await preferenceService.getUserTokenSettings();
           setData(tagProfiles(realtimeData, tokenSetting));
-          console.log('🔍 CUSTOM_LOGGER:=> cachedone: usePortfolios)');
+          console.log(
+            '🔍 CUSTOM_LOGGER:=> cachedone: usePortfolios)',
+            realtimeData.length,
+          );
           setHasValue(!!cachePortocols.length);
         }
       }

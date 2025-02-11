@@ -493,11 +493,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <AssestAllHeader
             style={styles.assetHeader}
-            showToken={!!tokens?.length}
             hasAssets={hasAssets}
             loading={loading}
             currentSection={currentSection}
             setCurrentSection={setCurrentSection}
+            showToken={!!tokens?.length}
             showDefi={!!portfolios.length}
             showNft={!!nftList?.length}
             onPress={handleSwitchTab}
