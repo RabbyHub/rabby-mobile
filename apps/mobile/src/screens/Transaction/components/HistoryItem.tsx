@@ -239,11 +239,11 @@ export const HistoryItem = React.memo(
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    marginBottom: 12,
+    marginBottom: 8,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
   },

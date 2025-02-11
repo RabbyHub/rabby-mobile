@@ -162,7 +162,7 @@ export const TxChange = ({
 const ChangeSizes = {
   gap: 2,
 };
-const getStyle = createGetStyles2024(({ colors }) => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     flexDirection: 'column',
     gap: 3,
@@ -181,10 +181,10 @@ const getStyle = createGetStyles2024(({ colors }) => ({
     borderRadius: 2,
   },
   text: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
-    color: colors['green-default'],
+    color: colors2024['green-default'],
     minWidth: 0,
     flexShrink: 1,
     textAlign: 'right',
@@ -201,10 +201,10 @@ const getStyle = createGetStyles2024(({ colors }) => ({
     fontWeight: '700',
   },
   textNegative: {
-    color: colors['neutral-body'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
   tokenLabel: {

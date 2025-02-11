@@ -315,7 +315,7 @@ export const HistoryTokenList = ({
   // return <RcIconDefault style={[styles.image, style]} />;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -381,7 +381,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
     gap: 10,
@@ -391,14 +393,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
   },
   singleBox: {
     width: '100%',
     height: 92,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,
@@ -408,7 +414,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   mutliBox: {
     width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     justifyContent: 'center',
     alignContent: 'center',
     borderRadius: 16,

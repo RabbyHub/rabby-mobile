@@ -236,7 +236,7 @@ function HistoryDetailScreen(): JSX.Element {
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
   const { switchAccount } = useCurrentAccount();
 
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
     // containerPb: 12,
     btnContainerBottomOffset: 40,
@@ -407,7 +407,9 @@ function HistoryDetailScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer2024 type="bg2" style={[styles.container]}>
+    <NormalScreenContainer2024
+      type={!isLight ? 'bg1' : 'bg2'}
+      style={[styles.container]}>
       <ScrollView style={[styles.scrollView]}>
         <HistoryTokenList
           data={data}
@@ -556,7 +558,7 @@ function HistoryDetailScreen(): JSX.Element {
 
 const PADDING_HORIZONTAL = 16;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
   scrollView: {
     height: '100%',
@@ -566,9 +568,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   detailContainerLastOne: {
     marginBottom: 20,
