@@ -82,6 +82,7 @@ export const HistoryBottomBtn = ({
             buttonStyle={buttonStyle}
             onPress={() => {
               const sendToken =
+                tokenDict[sends[0]?.token_id] ||
                 tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
               console.log('chainItem sendToken', chain, sendToken);
               const chainItem = findChain({
