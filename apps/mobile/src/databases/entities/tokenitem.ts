@@ -169,6 +169,14 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     );
   }
 
+  static async batchQueryCoreTokens(owner_addr: string) {
+    await prepareAppDataSource();
+
+    return (
+      await this.getRepository().findBy({ owner_addr, is_core: true })
+    ).filter(i => i.id !== EMPTY_TOKEN_ITEM_ID);
+  }
+
   static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
