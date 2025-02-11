@@ -70,7 +70,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
-const PAGE_COUNT = 200;
+const PAGE_COUNT = 20;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -273,11 +273,8 @@ function History({
       throw new Error('no account');
     }
 
-    const getHistory = !isInTokenDetail
-      ? openapi.getAllTxHistory
-      : openapi.listTxHisotry;
     try {
-      const res = await getHistory({
+      const res = await openapi.listTxHisotry({
         id: address,
         start_time: startTime,
         page_count: PAGE_COUNT,
@@ -285,19 +282,13 @@ function History({
         token_id,
       });
 
-      const {
-        project_dict,
-        cate_dict,
-        token_dict,
-        token_uuid_dict,
-        history_list: list,
-      } = res;
+      const { project_dict, cate_dict, token_dict, history_list: list } = res;
       const displayList = list
         .map(item => ({
           ...item,
           projectDict: project_dict,
           cateDict: cate_dict,
-          tokenDict: token_dict || token_uuid_dict,
+          tokenDict: token_dict,
           address,
           key: `${address}_${item.chain}_${item.id}`,
         }))
@@ -482,6 +473,14 @@ function History({
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
   ]);
+
+  useEffect(() => {
+    if (currentPage) {
+      const len = displayList.length;
+      len < PAGE_COUNT && !loadingMore && loadMore();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   useFocusEffect(() => {
     eventBus.addListener(EVENTS.RELOAD_TX, refresh);
