@@ -12,6 +12,7 @@ import {
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
+import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
@@ -252,6 +253,11 @@ export const HistoryTokenList = ({
                 {'-'} {numberWithCommasIsLtOne(sendAmount, 2)}{' '}
                 {getTokenSymbol(sendToken as TokenItem)}
               </Text>
+              <RcIconRightCC
+                color={colors2024['neutral-foot']}
+                width={18}
+                height={18}
+              />
             </View>
           </TouchableOpacity>
           <TouchableOpacity
@@ -268,6 +274,11 @@ export const HistoryTokenList = ({
                 {'+'} {numberWithCommasIsLtOne(recieveAmount, 2)}{' '}
                 {getTokenSymbol(recieveToken as TokenItem)}
               </Text>
+              <RcIconRightCC
+                color={colors2024['green-default']}
+                width={18}
+                height={18}
+              />
             </View>
           </TouchableOpacity>
           <View style={styles.iconSwitchArrow}>
@@ -338,11 +349,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   colomnBox: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   isSendTextColor: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
   },
   isFailBox: {
     opacity: 0.3,
