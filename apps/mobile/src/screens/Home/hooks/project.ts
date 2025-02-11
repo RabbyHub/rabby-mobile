@@ -20,17 +20,17 @@ export const useQueryProjects = (userAddr: string | undefined) => {
 
   const refreshPositions = useCallback(
     async (force?: boolean) => {
-      if (!isLoading) {
-        try {
-          await updateTokens(force);
-          await Promise.all([updatePortfolio(force), reloadNftList(force)]);
-        } catch (error) {
-          console.error(error);
-        } finally {
-        }
+      try {
+        await Promise.all([
+          updateTokens(force),
+          updatePortfolio(force),
+          reloadNftList(force),
+        ]);
+      } catch (error) {
+        console.error(error);
       }
     },
-    [isLoading, updatePortfolio, updateTokens, reloadNftList],
+    [updatePortfolio, updateTokens, reloadNftList],
   );
 
   useLayoutEffect(() => {
