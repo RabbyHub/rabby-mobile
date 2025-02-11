@@ -157,6 +157,24 @@ export class NFTItemEntity extends EntityAddressAssetBase {
         pay_token: columnConverter.jsonStringToObj(i.pay_token),
       }));
   }
+  static async batchQueryCoreNFTs(owner_addr: string) {
+    await prepareAppDataSource();
+
+    return (
+      await this.getRepository().find({
+        where: {
+          owner_addr,
+          is_core: true,
+        },
+      })
+    )
+      .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
+      .map(i => ({
+        ...i,
+        collection: columnConverter.jsonStringToObj(i.collection),
+        pay_token: columnConverter.jsonStringToObj(i.pay_token),
+      }));
+  }
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {
       return;
