@@ -164,14 +164,12 @@ export const TokenRow = memo(
             </View>
 
             {data._priceStr ? (
-              <HighlightText
-                style={styles.amountStr}
-                highlightStyle={styles.highlightText}
+              <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
-                searchWords={[filterText || '']}
-                textToHighlight={`${data._amountStr} ${data.symbol}`}
-              />
+                style={
+                  styles.amountStr
+                }>{`${data._amountStr} ${data.symbol}`}</Text>
             ) : null}
           </View>
         </View>
