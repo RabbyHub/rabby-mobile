@@ -13,6 +13,7 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -92,6 +93,88 @@ export const useSyncHistoryDB = (
     }
   });
 
+  const synHistoryInRealTimeApi = useMemoizedFn(
+    async (address: string, latest_time: number, start_time?: number) => {
+      try {
+        const latestTime = latest_time;
+        const startTime = start_time || 0;
+
+        console.log(
+          'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: start',
+          address,
+          'latestTime:',
+          latestTime,
+          'startTime:',
+          startTime,
+        );
+        const res = await openapi.listTxHisotry({
+          id: address,
+          start_time: startTime,
+          page_count: 20,
+        });
+
+        console.debug(
+          'synHistoryInRealTimeApi length:',
+          res.history_list.length,
+        );
+        const tokenUUDict: Record<string, TokenItem> = {};
+        Object.keys(res.token_dict).map(id => {
+          const chain = res.token_dict[id].chain;
+          tokenUUDict[`${chain}_token:${id}`] = res.token_dict[id];
+        });
+        if (res.history_list.length) {
+          const lastItemTime =
+            res.history_list[res.history_list.length - 1].time_at;
+          if (lastItemTime < latestTime) {
+            // update done or not all update  to  interup loop
+            res.history_list = res.history_list.filter(
+              i => i.time_at > latestTime,
+            );
+
+            console.debug(
+              'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: update',
+              address,
+              'add length:',
+              res.history_list.length,
+            );
+            if (res.history_list.length) {
+              runOnJS(syncRemoteHistory)(address, res.history_list);
+              setProjectDict(prev => ({ ...prev, ...res.project_dict }));
+              setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
+            }
+            console.debug(
+              'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
+              address,
+            );
+          } else {
+            // need more history, exec loop
+            console.debug(
+              'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: fetch more history',
+              address,
+              'lastItemTime:',
+              lastItemTime,
+            );
+            console.debug(
+              'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: loop update',
+              address,
+              'add length:',
+              res.history_list.length,
+            );
+            runOnJS(syncRemoteHistory)(address, res.history_list);
+            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
+            setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
+            synHistoryInRealTimeApi(address, latestTime, lastItemTime);
+          }
+        }
+      } catch (error) {
+        console.error('synHistoryInRealTimeApi Error fetching data:', error);
+      }
+      if (!address) {
+        return [];
+      }
+    },
+  );
+
   const syncUserAllHistory = useMemoizedFn(
     async (address: string, start_time?: number, latest_time?: number) => {
       try {
@@ -100,6 +183,14 @@ export const useSyncHistoryDB = (
         const isExpiredTimeAgo =
           new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
         const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
+        const isUseRealTimeApi =
+          latestTime > (new Date().getTime() - 24 * 60 * 60 * 1000) / 1000; // 1 days ago
+
+        if (isUseRealTimeApi) {
+          // use other fetch api
+          synHistoryInRealTimeApi(address, latestTime, start_time);
+          return;
+        }
 
         console.log(
           '🔍syncUserAllHistory CUSTOM_LOGGER:=>: start',
@@ -110,6 +201,7 @@ export const useSyncHistoryDB = (
           isAddUpdate,
         );
         // init time gap
+
         const res = await openapi.getAllTxHistory({
           id: address,
           start_time: start_time || 0,
