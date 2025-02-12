@@ -47,10 +47,14 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  static async getAllHistoryItem(owner_addr?: string) {
+  static async getAllHistoryItem(owner_addrs: string[], count?: number) {
     await prepareAppDataSource();
 
-    return await this.getRepository().findBy({ owner_addr });
+    return await this.getRepository()
+      .createQueryBuilder('swapitem')
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .take(count || 10000)
+      .getMany();
   }
 
   static async getCountOfAccount() {

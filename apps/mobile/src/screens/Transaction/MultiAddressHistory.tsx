@@ -149,46 +149,51 @@ function History({
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
-  const getSwapHistory = async (add?: string) => {
-    const swapList = await SwapItemEntity.getAllHistoryItem(add);
+  const getSwapHistory = async (add?: string, count?: number) => {
+    const swapList = await SwapItemEntity.getAllHistoryItem(add, count);
     return swapList;
   };
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
+
     const addresses = isSceneUsingAllAccounts
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
-
-    // juset not in single token history
     console.log('batchFetchDataV2 addresses', addresses);
-    const [historyList, swapList] = await Promise.all([
-      HistoryItemEntity.getAllHistoryItemSortedByTime(addresses),
-      getSwapHistory(
-        isSceneUsingAllAccounts
-          ? undefined
-          : finalSceneCurrentAccount?.address.toLowerCase(),
-      ),
-    ]);
-    console.log('tokenDict', Object.keys(tokenDict).length);
-    console.log('projectDict', Object.keys(projectDict).length);
-    console.log('historyList', historyList.length);
-    console.log('swapList', swapList.length);
+    const fetchHistoryFromDbData = async (count?: number) => {
+      const [historyList, swapList] = await Promise.all([
+        HistoryItemEntity.getAllHistoryItemSortedByTime(addresses, count),
+        SwapItemEntity.getAllHistoryItem(addresses, count),
+      ]);
+      console.log('tokenDict', Object.keys(tokenDict).length);
+      console.log('projectDict', Object.keys(projectDict).length);
+      console.log('historyList', historyList.length);
+      console.log('swapList', swapList.length);
 
-    const list = historyList.map(
-      item =>
-        ({
-          ...ensureHistoryListItemFromDb(item),
-          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict),
-          tokenDict,
-          projectDict,
-          isShowSuccess: historySuccessList.includes(
-            `${item.owner_addr}-${item.txHash}`,
-          ),
-        } as HistoryDisplayItem),
-    );
-    setDbData(list);
+      const list = historyList.map(
+        item =>
+          ({
+            ...ensureHistoryListItemFromDb(item),
+            isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict),
+            tokenDict,
+            projectDict,
+            isShowSuccess: historySuccessList.includes(
+              `${item.owner_addr}-${item.txHash}`,
+            ),
+          } as HistoryDisplayItem),
+      );
+      setDbData(list);
+      return list;
+    };
+    if (!dbData.length) {
+      // first init 20 count
+      await fetchHistoryFromDbData(20);
+    }
+
+    // later fetch all data
+    const list = await fetchHistoryFromDbData();
     return list;
   };
 

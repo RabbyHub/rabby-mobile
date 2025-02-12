@@ -220,29 +220,21 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   //   };
   // }
 
-  static async getAllHistoryItemSortedByTime(owner_addrs?: string[]) {
+  static async getAllHistoryItemSortedByTime(
+    owner_addrs: string[],
+    count?: number,
+  ) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
     const currentTime = new Date().getTime();
     console.log('getAllHistoryItemSortedByTime exec');
 
-    if (!owner_addrs || owner_addrs.length === 0) {
-      const res = await repo
-        .createQueryBuilder('historyitem')
-        .orderBy('historyitem.time_at', 'DESC')
-        .getMany();
-      console.log(
-        'getAllHistoryItemSortedByTime exec done',
-        new Date().getTime() - currentTime,
-      );
-      return res;
-    }
-
     const res = await repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .orderBy('historyitem.time_at', 'DESC')
+      .take(count || 10000) // limit
       .getMany();
     console.log(
       'getAllHistoryItemSortedByTime exec done',
