@@ -11,10 +11,8 @@ import {
 import RcInfoCC from '@/assets/icons/home/info-cc.svg';
 import { BSheetModal, Tip } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { toast } from '@/components/Toast';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
@@ -51,10 +49,6 @@ import { useApprovalAlert } from '../hooks/approvals';
 import { CurveBottomSheetModal } from './CurveBottomSheet';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
 import LinearGradient from 'react-native-linear-gradient';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
@@ -240,28 +234,11 @@ export const HomeTopArea = ({
           return;
         }
         await switchSceneCurrentAccount('Receive', currentAccount);
-        const id = createGlobalBottomSheetModal2024({
-          name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-          titleText: t('page.receiveAddressList.selectChainTitle'),
-          bottomSheetModalProps: {
-            enableContentPanningGesture: false,
-            enablePanDownToClose: true,
-          },
-          onChange: (v: CHAINS_ENUM) => {
-            navigation.dispatch(
-              StackActions.push(RootNames.StackTransaction, {
-                screen: RootNames.Receive,
-                params: {
-                  chainEnum: v,
-                },
-              }),
-            );
-            removeGlobalBottomSheetModal2024(id);
-          },
-          onClose: () => {
-            removeGlobalBottomSheetModal2024(id);
-          },
-        });
+        navigation.dispatch(
+          StackActions.push(RootNames.StackTransaction, {
+            screen: RootNames.Receive,
+          }),
+        );
       },
     },
     {

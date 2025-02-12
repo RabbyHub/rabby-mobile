@@ -7,6 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { Button } from '@/components2024/Button';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -20,23 +21,49 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, View, Pressable } from 'react-native';
+import { Modal, Text, View, Pressable, Image } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import IconMCopy from '@/assets2024/icons/address/mcopy.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RcIconEyeCC, RcIconEyeCloseCC } from '@/assets/icons/common';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import {
+  RcIconEyeCC,
+  RcIconEyeCloseCC,
+  RcArrowRightCC,
+} from '@/assets/icons/common';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+
 function ReceiveScreen(): JSX.Element {
-  const [chainTokenInfo, setChainTokenInfo] = useState({
-    chainEnum: CHAINS_ENUM.ETH,
-    tokenSymbol: null as TokenItem['id'] | null,
-  });
+  const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { currentAccount: account } = useCurrentAccount();
+
+  const selectedChainInfo = useMemo(() => {
+    if (!selectedChain) {
+      return null;
+    }
+    return findChainByEnum(selectedChain);
+  }, [selectedChain]);
+
+  const addressSplit = useMemo(() => {
+    if (!account?.address) {
+      return [];
+    }
+    const prefix = account.address.slice(0, 10);
+    const middle = account.address.slice(10, -6);
+    const suffix = account.address.slice(-6);
+
+    return [prefix, middle, suffix];
+  }, [account]);
+
   useLastUsedAccountInScreen({ disableAutoEffect: false });
 
   const isWatchMode = useMemo(
@@ -50,59 +77,53 @@ function ReceiveScreen(): JSX.Element {
   const [showName, setShowName] = useState(true);
 
   const headerTitle = useMemo(
-    () =>
-      showName ? (
-        <View style={styles.headerTitle}>
-          <WalletIcon
-            type={account?.type as KEYRING_TYPE}
-            width={styles.walletIcon.width}
-            height={styles.walletIcon.height}
-            style={styles.walletIcon}
-          />
-          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-            {account?.aliasName}
-          </Text>
-        </View>
-      ) : (
-        <>{null}</>
-      ),
-    [
-      account?.aliasName,
-      account?.type,
-      showName,
-      styles.headerTitle,
-      styles.titleText,
-      styles.walletIcon,
-    ],
-  );
-
-  const headerRight = useMemo(
     () => (
-      <Pressable onPress={() => setShowName(e => !e)}>
+      <View style={styles.headerTitle}>
         {showName ? (
-          <RcIconEyeCC
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
+          <>
+            <WalletIcon
+              type={account?.type as KEYRING_TYPE}
+              width={styles.walletIcon.width}
+              height={styles.walletIcon.height}
+              style={styles.walletIcon}
+            />
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.titleText}>
+              {account?.aliasName}
+            </Text>
+          </>
         ) : (
-          <RcIconEyeCloseCC
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
+          <Text style={styles.titleText}>******</Text>
         )}
-      </Pressable>
+        <Pressable
+          style={styles.headerIconEye}
+          onPress={() => setShowName(e => !e)}>
+          {showName ? (
+            <RcIconEyeCC
+              width={24}
+              height={24}
+              color={colors2024['neutral-title-1']}
+            />
+          ) : (
+            <RcIconEyeCloseCC
+              width={24}
+              height={24}
+              color={colors2024['neutral-title-1']}
+            />
+          )}
+        </Pressable>
+      </View>
     ),
-    [colors2024, showName],
+    [account?.aliasName, account?.type, showName, colors2024, styles],
   );
 
   useLayoutEffect(() => {
     setNavigationOptions({
       headerTitle: () => headerTitle,
-      headerRight: () => headerRight,
     });
-  }, [setNavigationOptions, headerTitle, headerRight]);
+  }, [setNavigationOptions, headerTitle]);
 
   useEffect(() => {
     // force disapper when not watch address
@@ -119,25 +140,31 @@ function ReceiveScreen(): JSX.Element {
 
   useEffect(() => {
     if (navState?.chainEnum) {
-      setChainTokenInfo({
-        chainEnum: navState.chainEnum,
-        tokenSymbol: navState.tokenSymbol ?? null,
-      });
+      setSelectedChain(navState.chainEnum);
     }
   }, [navState]);
+
+  const handleSelectChain = () => {
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: false,
+        enablePanDownToClose: true,
+      },
+      titleText: t('page.receiveAddressList.selectChainTitle'),
+      onChange: (v: CHAINS_ENUM) => {
+        setSelectedChain(v);
+        removeGlobalBottomSheetModal2024(id);
+      },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+    });
+  };
 
   const copyAddress = useCallback(() => {
     Clipboard.setString(account?.address || '');
   }, [account?.address]);
-
-  const receiveTitle = useMemo(
-    () =>
-      t('page.receive.title', {
-        chain: findChainByEnum(chainTokenInfo.chainEnum)?.name,
-        token: chainTokenInfo.tokenSymbol || t('global.assets'),
-      }),
-    [chainTokenInfo, t],
-  );
 
   const triggerLight = () => {
     trigger('impactLight', {
@@ -183,7 +210,38 @@ function ReceiveScreen(): JSX.Element {
       <View style={styles.container}>
         <View style={styles.receiveContainer}>
           <View style={styles.qrCard}>
-            <Text style={styles.qrCardHeader}>{receiveTitle}</Text>
+            <Text style={styles.qrCardHeader}>
+              {t('page.receive.newTitle')}
+            </Text>
+            <Button
+              titleStyle={styles.selectChainText}
+              title={
+                selectedChain ? (
+                  <View style={styles.selectChainWrapper}>
+                    <Image
+                      style={styles.selectChianLogo}
+                      source={{ uri: selectedChainInfo?.logo }}
+                      width={23}
+                      height={23}
+                    />
+                    <Text style={styles.selectChainText}>
+                      {selectedChainInfo?.name}
+                    </Text>
+                  </View>
+                ) : (
+                  t('page.receive.allEVMChain')
+                )
+              }
+              buttonStyle={styles.selectChain}
+              iconRight={
+                <RcArrowRightCC
+                  width={15}
+                  height={15}
+                  color={colors2024['neutral-title-1']}
+                />
+              }
+              onPress={handleSelectChain}
+            />
             <View style={styles.qrCardCode}>
               {account?.address && !isShowWatchModeModal ? (
                 <QRCode value={account.address} size={190} />
@@ -191,28 +249,15 @@ function ReceiveScreen(): JSX.Element {
                 <View style={styles.qrCodePlaceholder} />
               )}
             </View>
-            {/* <View style={styles.accountBox}>
-              <View className="relative">
-                <WalletIcon
-                  type={account?.type as KEYRING_TYPE}
-                  width={styles.walletIcon.width}
-                  height={styles.walletIcon.height}
-                  style={styles.walletIcon}
-                />
-              </View>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.titleText}>
-                {name}
-              </Text>
-            </View> */}
 
             <Pressable
               style={styles.addressDetailContainer}
               onPress={handleCopy}>
               <Text style={styles.qrCardAddress}>
-                {account?.address} <IconMCopy width={17} height={17} />
+                <Text style={styles.highlightAddrPart}>{addressSplit[0]}</Text>
+                {addressSplit[1]}
+                <Text style={styles.highlightAddrPart}>{addressSplit[2]}</Text>
+                <IconMCopy width={17} height={17} />
               </Text>
             </Pressable>
           </View>
@@ -278,9 +323,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   qrCardHeader: {
     fontSize: 17,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    marginBottom: 20,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    marginBottom: 6,
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
   },
@@ -301,11 +347,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 27,
   },
   qrCardAddress: {
+    fontFamily: 'SF Pro Rounded',
     width: '100%',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '400',
-    color: colors2024['neutral-info'],
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
   },
   overlay: {
@@ -355,6 +402,40 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 25,
     height: 25,
     borderRadius: 7,
+  },
+  selectChain: {
+    display: 'flex',
+    flexDirection: 'row',
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingLeft: 12,
+    paddingRight: 6,
+    backgroundColor: colors2024['neutral-bg-2'],
+    // borderRadius: 100,
+    alignItems: 'center',
+    marginBottom: 20,
+    width: 'auto',
+    height: 'auto',
+  },
+  selectChainWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  selectChianLogo: {
+    marginRight: 4,
+  },
+  selectChainText: {
+    fontFamily: 'SF Pro',
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 22,
+    color: colors2024['neutral-title-1'],
+  },
+  highlightAddrPart: {
+    color: colors2024['neutral-title-1'],
+  },
+  headerIconEye: {
+    marginLeft: 4,
   },
 }));
 
