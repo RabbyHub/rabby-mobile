@@ -190,13 +190,14 @@ export const HistoryTokenList = ({
                 token={singeToken as TokenItem}
                 isNft={tokenIsNft}
               />
-              <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
+              <View
+                style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
                 <Text
                   style={[
                     styles.tokenAmountText,
                     (isSend || isApprove) && styles.isSendTextColor,
                   ]}>
-                  {!isApprove && (isSend ? '-' : '+')}{' '}
+                  {!isApprove && (isSend ? '- ' : '+ ')}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
                     ? t('page.singleHome.sectionHeader.Nft')
@@ -347,6 +348,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
+  },
+  singleColomnBox: {
+    flexDirection: 'column',
+    // alignItems: 'center',
   },
   colomnBox: {
     flexDirection: 'row',

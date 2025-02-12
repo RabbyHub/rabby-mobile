@@ -5,6 +5,8 @@ import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { isString } from 'lodash';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import { TokenItem, TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
@@ -85,4 +87,35 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
     cateDict: {}, // no use
     debt_liquidated: null,
   };
+};
+
+export const judgeIsSmallUsdTx = (
+  item: HistoryItemEntity,
+  tokenDict: Record<string, TokenItem>,
+) => {
+  if (item.tx_from_address.toLowerCase() === item.owner_addr.toLowerCase()) {
+    return false;
+  }
+
+  const receives = safeParseJSON(item.receives) as {
+    amount: number;
+    from_addr: string;
+    token_id: string;
+  }[];
+  const allUsd = new BigNumber(0);
+
+  receives.map(i => {
+    const token =
+      tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
+      tokenDict[i.token_id];
+    const usd = new BigNumber(i.amount).multipliedBy(token?.price || 0);
+    allUsd.plus(usd);
+    return;
+  });
+
+  if (allUsd.isLessThan(0.1)) {
+    return true;
+  }
+
+  return false;
 };

@@ -65,7 +65,10 @@ import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import { ensureHistoryListItemFromDb } from './components/utils';
+import {
+  ensureHistoryListItemFromDb,
+  judgeIsSmallUsdTx,
+} from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -81,6 +84,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   account?: KeyringAccountWithAlias;
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
+  isSmallUsdTx?: boolean;
 }
 
 interface IFetchHistory {
@@ -125,6 +129,7 @@ function History({
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [isShowAll, setIsShowAll] = useState(false);
+  const [isShowSmall, setIsShowSmall] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
@@ -175,6 +180,7 @@ function History({
         ({
           ...ensureHistoryListItemFromDb(item),
           isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict),
           tokenDict,
           projectDict,
           isShowSuccess: historySuccessList.includes(
@@ -466,6 +472,12 @@ function History({
         return true;
       })
       .filter(tx => {
+        if (!isShowSmall) {
+          return !tx.isSmallUsdTx;
+        }
+        return true;
+      })
+      .filter(tx => {
         if (isSceneUsingAllAccounts) {
           return true;
         }
@@ -478,6 +490,7 @@ function History({
   }, [
     allTxHistory,
     isShowAll,
+    isShowSmall,
     // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -541,6 +554,8 @@ function History({
     return <Empty />;
   }
 
+  console.log('multi address history refresh', new Date());
+
   return (
     <View
       // onPress={() => {
@@ -551,11 +566,24 @@ function History({
       <>
         {isShowMenu && (
           <View style={styles.menuContainer}>
-            <Text style={styles.menuItemText}>
-              {strings('page.transactions.ViewHiddenItems')}
-            </Text>
-            <View style={styles.valueView}>
-              <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
+            <View style={styles.menuItem}>
+              <Text style={styles.menuItemText}>
+                {strings('page.transactions.ViewHiddenItems')}
+              </Text>
+              <View style={styles.valueView}>
+                <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
+              </View>
+            </View>
+            <View style={styles.menuItem}>
+              <Text style={styles.menuItemText}>
+                {strings('page.transactions.ViewSmallItems')}
+              </Text>
+              <View style={styles.valueView}>
+                <AppSwitch2024
+                  value={isShowSmall}
+                  onValueChange={setIsShowSmall}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -650,19 +678,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     shadowOffset: { width: 0, height: 12 }, // Horizontal and vertical offsets
     shadowOpacity: 0.2, // Shadow opacity
     shadowRadius: 8, // Blur radius
-    flexDirection: 'row',
+    // flexDirection: 'row',
     zIndex: 1,
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     position: 'absolute',
     top: 0,
     right: 16,
     alignItems: 'center',
     width: 250,
-    height: 56,
+    // height: 56,
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 12,
+    paddingVertical: 16,
     // paddingVertical: 16,
     borderRadius: 16,
+    gap: 16,
+  },
+  menuItem: {
+    // height: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    // alignItems: 'center',
   },
   menuItemText: {
     color: colors2024['neutral-title-1'],

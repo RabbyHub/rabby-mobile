@@ -35,6 +35,7 @@
     "transactions": {
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",
+      "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
         "Swap": "Swapped",
         "Send": "Sent",

@@ -224,19 +224,31 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
+    const currentTime = new Date().getTime();
+    console.log('getAllHistoryItemSortedByTime exec');
 
     if (!owner_addrs || owner_addrs.length === 0) {
-      return await repo
+      const res = await repo
         .createQueryBuilder('historyitem')
         .orderBy('historyitem.time_at', 'DESC')
         .getMany();
+      console.log(
+        'getAllHistoryItemSortedByTime exec done',
+        new Date().getTime() - currentTime,
+      );
+      return res;
     }
 
-    return await repo
+    const res = await repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .orderBy('historyitem.time_at', 'DESC')
       .getMany();
+    console.log(
+      'getAllHistoryItemSortedByTime exec done',
+      new Date().getTime() - currentTime,
+    );
+    return res;
   }
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
