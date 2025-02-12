@@ -138,6 +138,8 @@ export const ImportSafeAddressScreen2024 = () => {
                 inputProps={{
                   placeholder: 'Input safe address',
                   value: input,
+                  blurOnSubmit: true,
+                  returnKeyType: 'done',
                   onChangeText: handleChange,
                 }}
               />
