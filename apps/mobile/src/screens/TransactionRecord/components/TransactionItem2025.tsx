@@ -54,6 +54,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName } from '@/core/apis/contact';
+import { findChain } from '@/utils/chain';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {
@@ -98,11 +99,11 @@ export const TransactionItem = ({
       return HistoryItemCateType.Send;
     }
 
-    if (data.maxGasTx.action?.actionData.wrapToken) {
-      return HistoryItemCateType.Swap;
-    }
-
-    if (data.maxGasTx.action?.actionData.swap) {
+    if (
+      data.maxGasTx.action?.actionData.wrapToken ||
+      data.maxGasTx.action?.actionData.unWrapToken ||
+      data.maxGasTx.action?.actionData.swap
+    ) {
       return HistoryItemCateType.Swap;
     }
 
@@ -146,6 +147,7 @@ export const TransactionItem = ({
       case HistoryItemCateType.Swap:
         const actionData =
           data.txs?.[0]?.action?.actionData.swap ||
+          data.txs?.[0]?.action?.actionData.unWrapToken ||
           data.txs?.[0]?.action?.actionData.wrapToken;
         const send = actionData?.payToken!;
         const receive = actionData?.receiveToken!;
@@ -212,10 +214,11 @@ export const TransactionItem = ({
 
     const requiredData = data.maxGasTx.action?.requiredData as SwapRequireData;
     const projectName = requiredData.protocol?.name || '';
+    const chain = findChain({ id: data.maxGasTx.chainId });
 
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        return projectName || strings('page.transactions.detail.Unknown');
+        return chain?.name || strings('page.transactions.detail.Unknown');
 
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
