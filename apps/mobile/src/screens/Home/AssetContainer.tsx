@@ -626,7 +626,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           }`
         }
         contentContainerStyle={styles.bgContainer}
-        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
         windowSize={10}
         onScrollToIndexFailed={info => {
