@@ -606,6 +606,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         }`
       }
       contentContainerStyle={styles.bgContainer}
+      ListFooterComponent={<View style={{ height: 56 }} />}
       stickyHeaderIndices={[1]}
       windowSize={10}
       onScrollToIndexFailed={info => {
