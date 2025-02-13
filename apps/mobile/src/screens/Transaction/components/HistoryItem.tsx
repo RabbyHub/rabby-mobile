@@ -47,6 +47,7 @@ export const HistoryItem = React.memo(
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
     const isScam = data.is_scam;
+    const isSmallUsdTx = data.isSmallUsdTx;
     const chainItem = getChain(data.chain);
     const { styles, isLight } = useTheme2024({ getStyle });
 
@@ -178,7 +179,12 @@ export const HistoryItem = React.memo(
 
     return (
       <TouchableOpacity onPress={hanldeNavigateDetail}>
-        <View style={[styles.card, style, isScam ? styles.cardGray : null]}>
+        <View
+          style={[
+            styles.card,
+            style,
+            isScam || isSmallUsdTx ? styles.cardGray : null,
+          ]}>
           <View style={styles.cardBody}>
             {/* <TxInterAddressExplain
             style={[
