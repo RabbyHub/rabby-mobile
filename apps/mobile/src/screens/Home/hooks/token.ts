@@ -37,6 +37,18 @@ export const testnetTokensAtom = atom({
   list: [] as AbstractPortfolioToken[],
 });
 
+export const useLocalTokens = (userAddr: string | undefined) => {
+  const [tokenList, setTokenList] = useSafeState<TokenItem[]>([]);
+  useEffect(() => {
+    if (userAddr) {
+      syncTokens(userAddr).then(tokens => {
+        setTokenList(tokens);
+      });
+    }
+  }, [userAddr, setTokenList]);
+  return { tokenList };
+};
+
 export const useTokens = (
   userAddr: string | undefined,
   visible = true,

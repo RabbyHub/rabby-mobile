@@ -146,10 +146,13 @@ function ReceiveScreen(): JSX.Element {
 
   const handleSelectChain = () => {
     const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+      name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-0'],
+        },
       },
       titleText: t('page.receiveAddressList.selectChainTitle'),
       onChange: (v: CHAINS_ENUM) => {

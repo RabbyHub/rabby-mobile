@@ -9,6 +9,7 @@ import { ViewRawDetail } from '@/components/Approval/components/TxComponents/Vie
 import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
 import { SelectSortedChain } from '@/components2024/SelectSortedChain';
+import { SelectChainWithSummary } from '@/components2024/SelectChainWithSummary';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
 import { SettingLedger } from '@/components/HDSetting/SettingLedger';
@@ -55,6 +56,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['45%'],
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
+  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
@@ -99,6 +101,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_CHAIN]: SelectChain,
   [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
+  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: SelectChainWithSummary,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
   [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
