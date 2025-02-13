@@ -10,6 +10,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import RcIconInteraction from '@/assets2024/icons/history/IconInteraction.svg';
+import RcIconInteractionDark from '@/assets2024/icons/history/IconInteractionDark.svg';
 import { TxChange } from './TokenChange';
 import { TxId } from './TxId';
 import { TxInterAddressExplain } from './TxInterAddressExplain';
@@ -25,6 +27,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
+import { AssetAvatar } from '@/components';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -45,7 +48,7 @@ export const HistoryItem = React.memo(
     const isShowSuccess = data.isShowSuccess;
     const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
-    const { styles } = useTheme2024({ getStyle });
+    const { styles, isLight } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
       return getHistoryItemType(data);
@@ -120,6 +123,10 @@ export const HistoryItem = React.memo(
       }
     }, [formatType, data]);
 
+    const projectObj = useMemo(() => {
+      return data?.project_id ? projectDict[data.project_id] : undefined;
+    }, [data, projectDict]);
+
     const formatDescribe = useMemo(() => {
       const FromText = strings('page.swap.from') + ' ';
       const ToText = strings('page.swap.to') + ' ';
@@ -153,7 +160,7 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Cancel:
           return strings('page.transactions.detail.Unknown');
         default:
-          return strings('page.transactions.detail.Unknown');
+          return projectName || strings('page.transactions.detail.Unknown');
       }
     }, [formatType, data, chainItem, projectDict]);
 
@@ -186,11 +193,22 @@ export const HistoryItem = React.memo(
             isScam={isScam}
           /> */}
             <View style={styles.leftContent}>
-              <HistoryItemIcon
-                type={formatType as HistoryItemCateType}
-                token={formatToken}
-                isNft={isNft}
-              />
+              {formatType === HistoryItemCateType.UnKnown && projectObj ? (
+                <View style={styles.imageBox}>
+                  <AssetAvatar logo={projectObj?.logo_url} size={46} />
+                  {isLight ? (
+                    <RcIconInteraction style={styles.iconBR} />
+                  ) : (
+                    <RcIconInteractionDark style={styles.iconBR} />
+                  )}
+                </View>
+              ) : (
+                <HistoryItemIcon
+                  type={formatType as HistoryItemCateType}
+                  token={formatToken}
+                  isNft={isNft}
+                />
+              )}
               <View style={styles.textBox}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
@@ -250,6 +268,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleBox: {
     flexDirection: 'row',
     gap: 6,
+  },
+  imageBox: {
+    width: 46,
+    height: 46,
+    position: 'relative',
+  },
+  iconBR: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    width: 20,
+    height: 20,
   },
   cardGray: {
     opacity: 0.5,
