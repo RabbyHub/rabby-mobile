@@ -107,13 +107,18 @@ export const judgeIsSmallUsdTx = (
   }
   let allUsd = new BigNumber(0);
 
-  receives.forEach(i => {
+  for (const i of receives) {
     const token =
       tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
       tokenDict[i.token_id];
     const usd = new BigNumber(i.amount).multipliedBy(token?.price || 0);
+    const tokenIsNft = i.token_id?.length === 32;
+    if (tokenIsNft) {
+      // reeives nft is not small tx
+      return false;
+    }
     allUsd = allUsd.plus(usd);
-  });
+  }
 
   if (allUsd.isLessThan(new BigNumber(0.1))) {
     return true;
