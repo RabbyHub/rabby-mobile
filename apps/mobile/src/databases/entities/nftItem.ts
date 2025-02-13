@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, realTransformer } from './_helpers';
+import { columnConverter, badRealTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
@@ -43,7 +43,7 @@ export class NFTItemEntity extends EntityAddressAssetBase {
   @Column({
     default: 0,
     type: 'integer',
-    transformer: realTransformer,
+    transformer: badRealTransformer,
   })
   amount: NFTItem['amount'] = 0;
   // collection_id

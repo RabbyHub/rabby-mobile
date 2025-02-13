@@ -17,6 +17,7 @@ import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
 import { syncMainChainList } from '@/constant/chains';
+import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
 
 const bootstrapAtom = atom({
   couldRender: false,
@@ -89,6 +90,18 @@ export function useInitializeAppOnTop() {
       keyringService.off('lock', onLock);
     };
   }, [setAppLock, doInitializeApis, fetchAccounts]);
+
+  const { fetchTop5TokensForAllAccountsOnce } = useFetchTokensForAllAccounts();
+  React.useEffect(() => {
+    const onUnlock = () => {
+      fetchTop5TokensForAllAccountsOnce();
+    };
+    keyringService.on('unlock', onUnlock);
+
+    return () => {
+      keyringService.off('unlock', onUnlock);
+    };
+  }, [fetchTop5TokensForAllAccountsOnce]);
 
   React.useEffect(() => {
     if (isAppUnlocked) {

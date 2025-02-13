@@ -3,7 +3,7 @@ import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import BigNumber from 'bignumber.js';
 import { ValueTransformer } from 'typeorm/browser';
 
-const DECIMALS_INT_RATIO = 18;
+export const DECIMALS_INT_RATIO = 18;
 
 export const columnConverter = {
   numberToString(num?: number | string) {
@@ -37,8 +37,13 @@ export const columnConverter = {
 
     return num;
   },
+};
 
-  decimalsToInteger(decimals?: number | string) {
+/**
+ * @deprecated bad/incorrect implementation, should not use this
+ */
+export const badRealTransformer: ValueTransformer = {
+  to: (decimals?: number | string) => {
     if (!decimals) {
       return 0;
     }
@@ -52,8 +57,7 @@ export const columnConverter = {
 
     return decimals * DECIMALS_INT_RATIO;
   },
-
-  intToDecimals(int?: number | string) {
+  from: (int?: number | string) => {
     if (!int) {
       return 0;
     }
@@ -69,10 +73,9 @@ export const columnConverter = {
   },
 };
 
-export const realTransformer: ValueTransformer = {
-  to: (val: any) => columnConverter.decimalsToInteger(val),
-  from: (val: any) => columnConverter.intToDecimals(val),
-};
+export function correctBadRealOnSql(columnName: string) {
+  return `(${columnName} / ${DECIMALS_INT_RATIO})`;
+}
 
 /**
  * @description should used with TEXT column type

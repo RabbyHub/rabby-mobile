@@ -2,7 +2,12 @@ import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, realTransformer } from './_helpers';
+import {
+  columnConverter,
+  DECIMALS_INT_RATIO,
+  badRealTransformer,
+  correctBadRealOnSql,
+} from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
@@ -22,7 +27,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column({
     default: 0,
     type: 'integer',
-    transformer: realTransformer,
+    transformer: badRealTransformer,
   })
   amount: TokenItem['amount'] = 0;
   // chain
@@ -66,7 +71,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   optimized_symbol: TokenItem['optimized_symbol'] = '';
   // price
   @Column('real', {
-    transformer: realTransformer,
+    transformer: badRealTransformer,
   })
   price: TokenItem['price'] = 0;
   // symbol
@@ -167,6 +172,88 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return (await this.getRepository().findBy({ owner_addr })).filter(
       i => i.id !== EMPTY_TOKEN_ITEM_ID,
     );
+  }
+
+  static async queryTokens(
+    owner_addr: string,
+    options?: {
+      topCount?: number;
+      /** @default true */
+      filter_tokenGte10Dollar?: boolean;
+      /** @default true */
+      filter_tokenProportionGte10Percent?: boolean;
+      // excludeTokenIds?: string[]
+    },
+  ) {
+    await prepareAppDataSource();
+
+    let {
+      topCount = 5,
+      filter_tokenGte10Dollar = true,
+      filter_tokenProportionGte10Percent = true,
+      // excludeTokenIds = []
+    } = options || {};
+    topCount = Math.max(0, topCount || 0);
+
+    const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('tokenitem')
+      .where({ owner_addr, is_core: true })
+      .select([
+        // TODO: which need customized sqlite drivers
+        // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
+        `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
+          'tokenitem.amount',
+        )}) AS tokenitem_token_usd_value`,
+        'tokenitem',
+      ])
+      .orderBy('tokenitem_token_usd_value', 'DESC');
+
+    if (filter_tokenGte10Dollar)
+      queryBuilder.andWhere(`tokenitem_token_usd_value >= 10`);
+
+    if (filter_tokenProportionGte10Percent) {
+      const loggerPrefix = `[queryTokens::${repo.metadata.tableName}::${owner_addr}]`;
+      // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
+      const result = await repo
+        .query(
+          // `SELECT SUM( ${correctBadRealOnSql('tokenitem.price')} * ("tokenitem"."raw_amount" / pow(10, tokenitem.decimals)) ) AS total_value
+          `SELECT SUM( ${correctBadRealOnSql(
+            'tokenitem.price',
+          )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
+        FROM "${repo.metadata.tableName}" "tokenitem"
+        WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
+        )
+        .catch(error => {
+          console.error(`${loggerPrefix} error on get total_value`, error);
+          return [{ total_value: NaN }];
+        });
+
+      const totalValue = result[0]?.total_value;
+      if (typeof totalValue !== 'number' || !totalValue) {
+        console.debug(
+          `${loggerPrefix} don't queried valid total_value (result: ${JSON.stringify(
+            result,
+          )}), will not filter by tokenProportionGte10Percent`,
+        );
+      } else if (Number.isNaN(totalValue)) {
+        console.warn(
+          `${loggerPrefix} totalValue is NaN, will not filter by tokenProportionGte10Percent`,
+        );
+      } else {
+        queryBuilder.andWhere(
+          `(tokenitem_token_usd_value / ${totalValue}) >= 0.1`,
+        );
+      }
+    }
+
+    // if (excludeTokenIds?.length) {
+    //   queryBuilder.andWhere(`tokenitem.id NOT IN (:...excludeTokenIds)`, { excludeTokenIds });
+    // }
+
+    if (topCount) queryBuilder.take(topCount);
+
+    return queryBuilder.getMany();
   }
 
   static async isExpired(owner_addr: string) {

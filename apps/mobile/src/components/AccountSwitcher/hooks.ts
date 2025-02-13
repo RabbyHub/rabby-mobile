@@ -1,7 +1,11 @@
 import { atom, useAtom } from 'jotai';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { AccountSwitcherScene } from '@/hooks/accountsSwitcher';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { apisAccount } from '@/core/apis';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 type AccountSwitcherState = {
   /**
@@ -83,5 +87,106 @@ export function useAccountSceneVisible(forScene?: AccountSwitcherScene) {
       typeof forScene === 'undefined'
         ? undefined
         : !scenes[forScene]?.collapsed,
+  };
+}
+
+const addressTop5TokensAtom = atom<{
+  [addr: string]: TokenItem[];
+}>({});
+const addressTop5TokensRequestingRefs = {};
+function useTopTokensByAccount() {
+  const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
+    addressTop5TokensAtom,
+  );
+  const setTokensByAddr = useCallback(
+    (addr: string, tokens: TokenItem[]) => {
+      setAddressTop5Tokens(prev => ({
+        ...prev,
+        [addr]: tokens,
+      }));
+    },
+    [setAddressTop5Tokens],
+  );
+
+  const fetchTokens = useCallback(
+    (addr?: string, count = 5) => {
+      if (!addr) return;
+      if (addressTop5TokensRequestingRefs[addr]) return;
+      addressTop5TokensRequestingRefs[addr] = true;
+
+      TokenItemEntity.queryTokens(addr, { topCount: count })
+        .then(tokens => {
+          setTokensByAddr(addr, tokens);
+        })
+        .catch(error => {
+          console.error('[useTopTokensByAccount] error', error);
+          setTokensByAddr(addr, []);
+        })
+        .finally(() => {
+          addressTop5TokensRequestingRefs[addr] = false;
+        });
+    },
+    [setTokensByAddr],
+  );
+
+  return { addressTop5Tokens, fetchTokens };
+}
+
+const fetchedRef = { current: false };
+export function useFetchTokensForAllAccounts() {
+  const { fetchTokens } = useTopTokensByAccount();
+
+  const fetchTop5TokensForAllAccountsOnce = useCallback(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    apisAccount
+      .getAllAccountsToDisplay()
+      .then(accounts => {
+        accounts.forEach(account => {
+          fetchTokens(account.address);
+        });
+      })
+      .catch(error => {
+        console.error('[useFetchTokensForAllAccounts] error', error);
+        fetchedRef.current = false;
+      });
+  }, [fetchTokens]);
+
+  return { fetchTop5TokensForAllAccountsOnce };
+}
+
+export function useTopTokensForAddress(options?: {
+  accountAddress?: string;
+  count?: number;
+}) {
+  const { count = 5, accountAddress } = options || {};
+  const { addressTop5Tokens, fetchTokens } = useTopTokensByAccount();
+
+  useEffect(() => {
+    if (!accountAddress) return;
+
+    fetchTokens(accountAddress, count);
+  }, [accountAddress, fetchTokens, count]);
+
+  // useAppOrmSyncEvents({
+  //   taskFor: 'token',
+  //   onRemoteDataUpserted: useCallback(({ success, owner_addr }) => {
+  //     if (!success) return ;
+  //     if (!owner_addr) return ;
+
+  //     fetchTokens(owner_addr, count);
+  //   }, [fetchTokens, count]),
+  // });
+
+  const tokenList = useMemo(() => {
+    return accountAddress
+      ? addressTop5Tokens[accountAddress]?.slice(0, count)
+      : null;
+  }, [addressTop5Tokens, accountAddress, count]);
+
+  return {
+    tokenList,
+    fetchTokens,
   };
 }

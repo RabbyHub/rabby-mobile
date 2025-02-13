@@ -8,6 +8,8 @@ import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import RcIconCorrectCC from './icons/correct-cc.svg';
 import { Account } from '@/core/services/preference';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { useTopTokensForAddress } from './hooks';
+import { AssetAvatar } from '../AssetAvatar';
 
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
@@ -47,6 +49,10 @@ export function AddressItemInPanel({
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
 
+  const { tokenList: tokens } = useTopTokensForAddress({
+    accountAddress: account?.address,
+  });
+
   return (
     <AddressItemShadowView style={style}>
       <TouchableOpacity
@@ -73,12 +79,29 @@ export function AddressItemInPanel({
                       </View>
                     )}
                   </View>
-                  <WalletBalance
-                    style={[
-                      styles.addressUsdValue,
-                      isCurrent && styles.addressUsdValueCurrent,
-                    ]}
-                  />
+                  <View style={styles.bottomArea}>
+                    <WalletBalance
+                      style={[
+                        styles.addressUsdValue,
+                        isCurrent && styles.addressUsdValueCurrent,
+                      ]}
+                    />
+                    {!!tokens?.length && (
+                      <>
+                        <View style={styles.divider} />
+                        <View style={styles.chainLogos}>
+                          {tokens.map(item => (
+                            <AssetAvatar
+                              key={`${item.chain}-${item.id}`}
+                              logo={item.logo_url}
+                              size={14}
+                              logoStyle={styles.chainLogoItem}
+                            />
+                          ))}
+                        </View>
+                      </>
+                    )}
+                  </View>
                 </View>
                 <View style={styles.rightArea}>
                   {isCurrent && (
@@ -139,8 +162,21 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       fontWeight: '700',
       lineHeight: 22,
     },
-    addressUsdValue: {
+    bottomArea: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      width: '100%',
       marginTop: 6,
+    },
+    divider: {
+      height: 12,
+      maxHeight: '100%',
+      width: 1,
+      backgroundColor: ctx.colors2024['brand-light-1'],
+      marginHorizontal: 8,
+    },
+    addressUsdValue: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 17,
       fontStyle: 'normal',
@@ -152,6 +188,13 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       color: ctx.colors2024['brand-default'],
       fontWeight: '700',
     },
+    chainLogos: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      gap: 2,
+    },
+    chainLogoItem: {},
 
     pinnedWrapper: {
       flexShrink: 0,
