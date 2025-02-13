@@ -59,12 +59,12 @@ export const useSyncHistoryDB = (
   sortedAccounts: KeyringAccountWithAlias[] = [],
 ) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
-  const { setProjectDict, setTokenDict } = useHistoryTokenDict();
-  const abortRef = useRef(false);
-
-  const interrupt = () => {
-    abortRef.current = true;
-  };
+  const {
+    setProjectDict,
+    setTokenDict,
+    updateHistoryTime,
+    updateHistoryTimeSingleAddress,
+  } = useHistoryTokenDict();
 
   const syncSwapHistory = useMemoizedFn(async (address: string) => {
     if (!address) {
@@ -261,9 +261,8 @@ export const useSyncHistoryDB = (
       }
     },
   );
-
-  const isNeedSyncData = useMemoizedFn(async () => {
-    if (transactionHistoryService.getIsNeedFetchTxHistory()) {
+  const isNeedSyncData = useMemoizedFn(async (add: string) => {
+    if (transactionHistoryService.getIsNeedFetchTxHistory(add)) {
       // some tx done need to update
       console.debug('🔍syncTop10History some tx done so isNeedSyncData');
       return true;
@@ -271,12 +270,17 @@ export const useSyncHistoryDB = (
 
     await prepareAppDataSource();
 
-    const latestTime = await HistoryItemEntity.getLatestTime();
+    const latestTime = updateHistoryTime[add] || 0;
 
     const currentTime = Date.now();
-    const gap = currentTime - latestTime * 1000;
+    const gap = currentTime - latestTime;
     const expireTime = 1 * 24 * 60 * 60 * 1000; // 1 days ago
-    console.log('🔍syncTop10History isNeedSyncData time gap', gap);
+    console.log(
+      '🔍syncTop10History isNeedSyncData time gap',
+      gap,
+      'isExpire:',
+      gap > expireTime,
+    );
     return gap > expireTime;
   });
 
@@ -285,12 +289,6 @@ export const useSyncHistoryDB = (
       const top10Account = sortedAccounts.slice(0, 10);
       if (top10Account.length === 0) {
         console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
-        return;
-      }
-
-      const isForceFetchFromApi = force || (await isNeedSyncData());
-      if (!isForceFetchFromApi) {
-        console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: not update');
         return;
       }
 
@@ -306,39 +304,40 @@ export const useSyncHistoryDB = (
           await HistoryItemEntity.clear();
           await SwapItemEntity.clear();
         }
-
         const queue = new PQueue({
           interval: 2000,
           intervalCap: 5,
         });
         for (const account of top10Account) {
-          queue.add(async () => {
-            if (abortRef.current) {
-              console.log(
-                '🔍syncTop10History CUSTOM_LOGGER:=>: Fetching interrupted.',
-              );
-              setIsSyncing(false);
-            }
-
-            try {
-              await Promise.all([
-                syncUserAllHistory(account.address.toLowerCase()),
-                syncSwapHistory(account.address.toLowerCase()),
-              ]);
-
-              // boradcast to update ui ?
-            } catch (error) {
-              console.error(
-                `syncTop10History Error fetching data for ${account.address.slice(
-                  -4,
-                )}:`,
-                error,
-              );
-            }
-            await new Promise(resolve => setTimeout(resolve, 0));
-          });
+          const address = account.address.toLowerCase();
+          const isForceFetchFromApi = force || (await isNeedSyncData(address));
+          if (isForceFetchFromApi) {
+            updateHistoryTimeSingleAddress(address);
+            console.debug(
+              '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
+              address,
+            );
+            queue.add(async () => {
+              try {
+                await Promise.all([
+                  syncUserAllHistory(address),
+                  syncSwapHistory(address),
+                ]);
+              } catch (error) {
+                console.error(
+                  `syncTop10History Error fetching data for ${account.address.slice(
+                    -4,
+                  )}:`,
+                  error,
+                );
+              }
+              await new Promise(resolve => setTimeout(resolve, 0));
+            });
+          }
         }
-        await waitQueueFinished(queue);
+        if (queue.size > 0) {
+          await waitQueueFinished(queue);
+        }
       } finally {
         setIsSyncing(false);
       }
@@ -346,6 +345,7 @@ export const useSyncHistoryDB = (
   );
 
   const syncSingleAddress = useMemoizedFn(address => {
+    updateHistoryTimeSingleAddress(address);
     Promise.all([
       syncUserAllHistory(address.toLowerCase()),
       syncSwapHistory(address.toLowerCase()),
@@ -355,7 +355,6 @@ export const useSyncHistoryDB = (
   return {
     isSyncing,
     syncTop10History,
-    interrupt,
     syncSingleAddress,
   };
 };
