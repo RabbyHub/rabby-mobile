@@ -149,10 +149,6 @@ function History({
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
-  const getSwapHistory = async (add?: string, count?: number) => {
-    const swapList = await SwapItemEntity.getAllHistoryItem(add, count);
-    return swapList;
-  };
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
@@ -215,10 +211,15 @@ function History({
       }
       return { list: res };
     } else {
-      const swapList = await getSwapHistory(); // just for single token history
       const accountList = isSceneUsingAllAccounts
         ? unionAccounts
         : [finalSceneCurrentAccount];
+      const addresses = isSceneUsingAllAccounts
+        ? unionAccounts.map(account => account.address.toLowerCase())
+        : [finalSceneCurrentAccount?.address.toLowerCase()!];
+
+      // just for single token history
+      const swapList = await SwapItemEntity.getAllHistoryItem(addresses);
       const queue = new PQueue({
         interval: 2000,
         intervalCap: 10,
