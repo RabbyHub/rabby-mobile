@@ -150,9 +150,6 @@ function ReceiveScreen(): JSX.Element {
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
-        handleStyle: {
-          backgroundColor: colors2024['neutral-bg-0'],
-        },
       },
       titleText: t('page.receiveAddressList.selectChainTitle'),
       onChange: (v: CHAINS_ENUM) => {
