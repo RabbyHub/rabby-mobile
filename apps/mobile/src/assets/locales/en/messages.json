@@ -481,7 +481,7 @@
     "activities": {
       "signedTx": {
         "empty": {
-          "title": "No signed transactions yet",
+          "title": "No Transaction history",
           "desc": "All transactions signed via Rabby will be listed here."
         },
         "common": {

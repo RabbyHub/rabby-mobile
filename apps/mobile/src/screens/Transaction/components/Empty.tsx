@@ -1,4 +1,5 @@
-import RcIconEmpty from '@/assets/icons/history/empty.svg';
+import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
+import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
