@@ -102,18 +102,20 @@ export const judgeIsSmallUsdTx = (
     from_addr: string;
     token_id: string;
   }[];
-  const allUsd = new BigNumber(0);
+  if (!receives || !receives.length) {
+    return false;
+  }
+  let allUsd = new BigNumber(0);
 
-  receives.map(i => {
+  receives.forEach(i => {
     const token =
       tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
       tokenDict[i.token_id];
     const usd = new BigNumber(i.amount).multipliedBy(token?.price || 0);
-    allUsd.plus(usd);
-    return;
+    allUsd = allUsd.plus(usd);
   });
 
-  if (allUsd.isLessThan(0.1)) {
+  if (allUsd.isLessThan(new BigNumber(0.1))) {
     return true;
   }
 

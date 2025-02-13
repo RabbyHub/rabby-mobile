@@ -128,7 +128,7 @@ function History({
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [isShowAll, setIsShowAll] = useState(false);
+  const [isShowScam, setIsShowScam] = useState(false);
   const [isShowSmall, setIsShowSmall] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
@@ -472,15 +472,26 @@ function History({
   const displayList = useMemo(() => {
     return allTxHistory
       .filter(tx => {
-        if (!isShowAll) {
-          return !tx.is_scam;
+        if (isShowScam && isShowSmall) {
+          // show all
+          return true;
         }
-        return true;
-      })
-      .filter(tx => {
-        if (!isShowSmall) {
+
+        if (isShowScam) {
+          // only hide small tx
           return !tx.isSmallUsdTx;
         }
+
+        if (isShowSmall) {
+          // only hidden scam
+          return !tx.is_scam;
+        }
+
+        if (!isShowScam && !isShowSmall) {
+          // hide small tx and scam
+          return !(tx.is_scam || tx.isSmallUsdTx);
+        }
+
         return true;
       })
       .filter(tx => {
@@ -495,7 +506,7 @@ function History({
     // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
-    isShowAll,
+    isShowScam,
     isShowSmall,
     // currentPage,
     isSceneUsingAllAccounts,
@@ -573,7 +584,10 @@ function History({
                 {strings('page.transactions.ViewHiddenItems')}
               </Text>
               <View style={styles.valueView}>
-                <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
+                <AppSwitch2024
+                  value={isShowScam}
+                  onValueChange={setIsShowScam}
+                />
               </View>
             </View>
             <View style={styles.menuItem}>
