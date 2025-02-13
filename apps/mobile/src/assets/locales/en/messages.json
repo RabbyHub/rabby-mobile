@@ -535,7 +535,8 @@
       "title": "Receive {{token}} on {{chain}}",
       "newTitle": "Receive assets on",
       "allEVMChain": "All EVM Chain",
-      "watchModeAlert": "This is a watch-only address. Are you sure you want to use it to receive assets?"
+      "watchModeAlert": "This is a watch-only address. Are you sure you want to use it to receive assets?",
+      "copyAddress": "Copy Address"
     },
     "sendToken": {
       "Chain": "Chain",

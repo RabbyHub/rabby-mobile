@@ -12,7 +12,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { useLocalTokens } from '@/screens/Home/hooks/token';
-import { useCurrentAccount } from '@/hooks/account';
+import { useChainBalances, useCurrentAccount } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export default function MixedFlatChainList({
@@ -38,11 +38,15 @@ export default function MixedFlatChainList({
   const { currentAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const { tokenList } = useLocalTokens(currentAccount?.address);
+  const { matteredChainBalances } = useChainBalances();
   const tokenListMap = useMemo(() => {
     if (!tokenList) {
       return {};
     }
     const res = tokenList.reduce((map, item) => {
+      if (item.price * item.amount < 10) {
+        return map;
+      }
       if (map[item.chain]) {
         return {
           ...map,
@@ -55,8 +59,15 @@ export default function MixedFlatChainList({
         };
       }
     }, {} as Record<string, TokenItem[]>);
+    for (const key in res) {
+      const list = res[key];
+      const chainUsdValue = matteredChainBalances[key]?.usd_value || 0;
+      res[key] = list.filter(item => {
+        return item.price * item.amount > chainUsdValue * 0.1;
+      });
+    }
     return res;
-  }, [tokenList]);
+  }, [tokenList, matteredChainBalances]);
 
   const sections = React.useMemo(() => {
     return [

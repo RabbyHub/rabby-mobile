@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Keyboard, Text, View, ViewStyle } from 'react-native';
+import {
+  Keyboard,
+  LayoutChangeEvent,
+  Pressable,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
@@ -11,9 +18,7 @@ import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { varyAndSortChainItems } from '@/utils/chain';
-import NetSwitchTabs, {
-  useSwitchNetTab,
-} from '@/components2024/PillsSwitch/NetSwitchTabs';
+import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import MixedFlatChainList from './MixedFlatChainList';
 import AutoLockView from '@/components/AutoLockView';
 import { useChainList } from '@/hooks/useChainList';
@@ -23,6 +28,12 @@ import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -120,8 +131,11 @@ export default function SelectChainWithSummary({
   excludeChains,
   titleText,
 }: RNViewProps & SelectSortedChainProps) {
+  const { t } = useTranslation();
+  const [canSearch, setCanSearch] = useState(false);
+  const [inputContainerWidth, setInputContainerWidth] = useState(0);
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
+  const { selectedTab } = useSwitchNetTab({
     hideTestnetTab,
   });
   const {
@@ -144,22 +158,78 @@ export default function SelectChainWithSummary({
     return [_matteredList, _unmatteredList];
   }, [excludeChains, _matteredList, _unmatteredList]);
 
+  const animation = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      width: withTiming(
+        animation.value * Math.floor(inputContainerWidth * 0.8),
+        { duration: 500 },
+      ),
+      transform: [
+        {
+          translateX: withTiming(
+            (1 - animation.value) * Math.floor(inputContainerWidth * 0.8),
+            {
+              duration: 500,
+            },
+          ),
+        },
+      ],
+    };
+  });
+
+  const handleToggleSearch = () => {
+    if (!canSearch) {
+      setSearch('');
+    }
+    setCanSearch(!canSearch);
+    animation.value = animation.value === 0 ? 1 : 0;
+  };
+
+  const handleInputContainerLayout = (e: LayoutChangeEvent) => {
+    setInputContainerWidth(e.nativeEvent.layout.width);
+  };
+
   return (
     <AutoLockView style={styles.container}>
       <BottomSheetHandlableView>
-        {titleText && <Text style={styles.titleText}>{titleText}</Text>}
-        <Input
-          leftIcon={<RcIconSearch color={colors2024['neutral-foot']} />}
-          containerStyle={[styles.containerOfInput, styles.innerBlock]}
-          inputContainerStyle={styles.inputContainerStyle}
-          style={styles.inputText}
-          placeholderTextColor={colors2024['neutral-info']}
-          placeholder="Search chain"
-          value={search}
-          onChangeText={text => {
-            setSearch(text);
-          }}
-        />
+        {!canSearch && (
+          <View
+            style={{ ...styles.titleView, ...styles.titleViewWithText }}
+            onLayout={handleInputContainerLayout}>
+            {titleText && (
+              <View style={styles.titleTextWrapper}>
+                <Text style={styles.titleText}>{titleText}</Text>
+              </View>
+            )}
+            <Pressable onPress={handleToggleSearch}>
+              <RcIconSearch color={colors2024['neutral-foot']} />
+            </Pressable>
+          </View>
+        )}
+        {canSearch && (
+          <View style={styles.titleView}>
+            <View style={styles.inputWrapper}>
+              <Animated.View style={[animatedStyle]}>
+                <Input
+                  containerStyle={[styles.containerOfInput, styles.innerBlock]}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  style={styles.inputText}
+                  placeholderTextColor={colors2024['neutral-info']}
+                  placeholder="Search chain"
+                  value={search}
+                  onChangeText={text => {
+                    setSearch(text);
+                  }}
+                />
+              </Animated.View>
+            </View>
+            <Pressable onPress={handleToggleSearch}>
+              <Text style={styles.cancelText}>{t('global.cancel')}</Text>
+            </Pressable>
+          </View>
+        )}
       </BottomSheetHandlableView>
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (
@@ -226,13 +296,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-0'],
   },
   titleText: {
-    marginBottom: 20,
     color: colors2024['neutral-title-1'],
     fontSize: 20,
     fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  titleTextWrapper: {
+    flex: 1,
   },
   netSwitchTabs: {
     marginBottom: 20,
@@ -284,5 +356,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-info'],
+  },
+
+  titleView: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+  },
+
+  inputWrapper: {
+    marginRight: 15,
+    flex: 1,
+    overflow: 'hidden',
+  },
+
+  cancelText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
+    fontSize: 17,
+    lineHeight: 22,
+    transform: 'translateY(-10px)',
+  },
+
+  titleViewWithText: {
+    marginBottom: 34,
   },
 }));

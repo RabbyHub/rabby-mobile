@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Text, View, Pressable, Image } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
-import IconMCopy from '@/assets2024/icons/address/mcopy.svg';
+import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -201,9 +201,20 @@ function ReceiveScreen(): JSX.Element {
     <FooterButtonScreenContainer
       as="View"
       buttonProps={{
-        title: 'Copy address',
+        title: (
+          <View style={styles.copyButtonTextWrapper}>
+            <RcIconMCopy color={colors2024['brand-default']} />
+            <Text style={styles.copyButtonText}>
+              {t('page.receive.copyAddress')}
+            </Text>
+          </View>
+        ),
         onPress: handleCopy,
         disabled: isShowWatchModeModal,
+        buttonStyle: styles.copyButtonStyle,
+        titleStyle: {
+          color: colors2024['brand-default'],
+        },
       }}
       style={styles.screen}
       footerBottomOffset={56}
@@ -260,7 +271,6 @@ function ReceiveScreen(): JSX.Element {
                 <Text style={styles.highlightAddrPart}>{addressSplit[0]}</Text>
                 {addressSplit[1]}
                 <Text style={styles.highlightAddrPart}>{addressSplit[2]}</Text>
-                <IconMCopy width={17} height={17} />
               </Text>
             </Pressable>
           </View>
@@ -439,6 +449,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerIconEye: {
     marginLeft: 4,
+  },
+  copyButtonStyle: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderWidth: 1,
+    borderColor: colors2024['brand-default'],
+  },
+  copyButtonTextWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  copyButtonText: {
+    fontSize: 20,
+    fontFamily: 'SF Pro',
+    fontWeight: '700',
+    lineHeight: 24,
+    color: colors2024['brand-default'],
+    marginLeft: 6,
   },
 }));
 
