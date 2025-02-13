@@ -554,11 +554,9 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = false;
-
-  if (!loading && !groups?.length && !allTxHistory.length) {
-    return <Empty />;
-  }
+  // if (!loading && !groups?.length && !allTxHistory.length) {
+  //   return <Empty />;
+  // }
 
   return (
     <View
@@ -614,7 +612,7 @@ function History({
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
-          loading={isFirstLoading}
+          loading={loading}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAdderss={isForMultipleAdderss}

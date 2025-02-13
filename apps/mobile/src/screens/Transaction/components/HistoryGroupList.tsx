@@ -8,8 +8,8 @@ import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { Empty } from '../components/Empty';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { formatTimestamp } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -162,21 +162,22 @@ export const HistoryList = ({
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.skeletonContainer}>
-        {range(0, 8).map(i => {
-          return <SkeletonCard key={i} />;
-        })}
-      </View>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <View style={styles.skeletonContainer}>
+  //       {range(0, 8).map(i => {
+  //         return <SkeletonCard key={i} />;
+  //       })}
+  //     </View>
+  //   );
+  // }
 
   return (
     <Animated.FlatList
       data={markedList}
       renderItem={renderItem}
       windowSize={5}
+      ListEmptyComponent={loading ? null : <Empty />}
       onTouchStart={() => resetTopMenu && resetTopMenu()}
       style={styles.container}
       onEndReached={loadMore}

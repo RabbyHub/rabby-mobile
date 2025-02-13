@@ -59,6 +59,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 17,
     },
     image: {
+      marginTop: 200,
       marginBottom: 16,
     },
   });
