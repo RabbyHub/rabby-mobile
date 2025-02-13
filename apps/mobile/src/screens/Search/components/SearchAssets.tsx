@@ -27,6 +27,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '../useAssets';
 import { PositionLoader } from './Skeleton';
 import SearchOnTheChain from './SearchOnTheChain';
+import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import { useSearchTokens } from '../useSearch';
 
 interface Props {
   filterText?: string;
@@ -43,6 +45,9 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     refreshing,
     isLoading,
   } = useAssets(filterText);
+
+  const { resultTokens, searched, loading, handleSearch } =
+    useSearchTokens(filterText);
   const { t } = useTranslation();
 
   const [foldHideList, setFoldHideList] = useState(true);
@@ -53,26 +58,31 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     return [
       {
         type: 'unfold_token',
-        originData: unFoldList,
+        show: !!unFoldList.length,
         data: unFoldList,
       },
       {
         type: 'fold_token',
-        originData: filterText ? [] : foldList,
+        show: !!(filterText ? [] : foldList).length,
         data: foldHideList ? [] : foldList,
       },
       {
         type: 'defi',
-        originData: portfolios,
+        show: !!portfolios.length,
         data: portfolios,
       },
       {
         type: 'nft',
-        originData: filterText ? nftList : [],
+        show: !!(filterText ? nftList : []).length,
         data: nftList,
       },
+      {
+        type: 'search-token',
+        show: true,
+        data: resultTokens,
+      },
     ];
-  }, [filterText, foldHideList, nftList, portfolios, tokens]);
+  }, [filterText, foldHideList, nftList, portfolios, resultTokens, tokens]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -151,6 +161,16 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             chainLogoSize={18}
           />
         );
+      case 'search-token':
+        return (
+          <ExternalTokenRow
+            data={item}
+            key={`${item.id}-${item.chain}`}
+            filterText={filterText}
+            onTokenPress={handleOpenTokenDetail}
+            logoSize={40}
+          />
+        );
       default:
         return null;
     }
@@ -184,6 +204,18 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             {t('page.search.sectionHeader.NFT')}
           </Text>
         );
+      case 'search-token':
+        return (
+          <SearchOnTheChain
+            filterText={filterText}
+            loading={loading}
+            titleStyle={styles.sectionHeader}
+            searched={searched}
+            hasTokens={!!resultTokens.length}
+            handleSearch={() => handleSearch(filterText)}
+          />
+        );
+
       default:
         return <View style={{ height: 0 }} />;
     }
@@ -206,14 +238,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     return isLoading ? <PositionLoader /> : null;
   }, [isLoading]);
 
-  const ListFooterComponent = useMemo(() => {
-    return <SearchOnTheChain filterText={filterText} />;
-  }, [filterText]);
-
   return (
     <SectionList
       contentInset={{ bottom: 56 }}
-      sections={sections.filter(i => !!i.originData?.length)}
+      sections={sections.filter(i => i.show)}
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.bgContainer}
@@ -224,7 +252,6 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       onScroll={() => {
         Keyboard.dismiss();
       }}
-      ListFooterComponent={ListFooterComponent}
       renderSectionHeader={renderSectionHeader}
       refreshControl={
         <RefreshControl

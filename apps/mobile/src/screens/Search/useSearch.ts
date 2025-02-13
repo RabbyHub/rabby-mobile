@@ -1,5 +1,5 @@
 import { useDebounce } from 'ahooks';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CombineDefiItem,
   CombineNFTItem,
@@ -8,6 +8,12 @@ import {
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedPortfolio } from '../Home/utils/project';
 import { formatAmount } from '@/utils/math';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { AbstractPortfolioToken } from '../Home/types';
+import { trigger } from 'react-native-haptic-feedback';
+import { openapi } from '@/core/request';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -169,4 +175,61 @@ export const combinePinTokens = (
     ...unloadPinTokens,
     ...noPinTokens,
   ] as CombineTokensItem[];
+};
+
+export const useSearchTokens = (filterText?: string) => {
+  const [resultTokens, setResultTokens] = useState<AbstractPortfolioToken[]>(
+    [],
+  );
+  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const searchedRef = useRef<string>('');
+  const handleSearch = async (text?: string) => {
+    if (!text) {
+      return;
+    }
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    searchedRef.current = text;
+    setLoading(true);
+    try {
+      const res = await openapi.searchTokens({
+        q: text,
+      });
+      setResultTokens(
+        res.map(
+          token =>
+            ({
+              ...token,
+              _isPined: false,
+              _isFold: false,
+              _isExcludeBalance: false,
+              _usdValueStr: 0,
+              _amountStr: 1,
+              _tokenId: token.id,
+            } as unknown as AbstractPortfolioToken),
+        ),
+      );
+      setSearched(true);
+    } catch (error) {
+      console.log('get web chain error)', filterText, error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (filterText !== searchedRef.current) {
+      setSearched(false);
+      setResultTokens([]);
+    }
+  }, [filterText]);
+
+  return {
+    resultTokens,
+    searched,
+    loading,
+    handleSearch,
+  };
 };
