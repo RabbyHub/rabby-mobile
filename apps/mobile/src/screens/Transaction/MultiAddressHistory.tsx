@@ -559,8 +559,6 @@ function History({
     return <Empty />;
   }
 
-  console.log('multi address history refresh', new Date());
-
   return (
     <View
       // onPress={() => {
