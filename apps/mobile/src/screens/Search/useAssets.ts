@@ -25,6 +25,7 @@ import {
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
 import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
@@ -65,9 +66,29 @@ export const useAssets = (filterText?: string) => {
     });
 
     let _tokens: AbstractPortfolioToken[] = [];
+    const cachedTokens = await TokenItemEntity.batchQueryCoreTokens(address);
 
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
+
+    if (cachedTokens.length) {
+      const chainTokens = cachedTokens.reduce((m, n) => {
+        m[n.chain] = m[n.chain] || [];
+        m[n.chain].push(n);
+
+        return m;
+      }, {} as Record<string, TokenItem[]>);
+      _data = produce(_data, draft => {
+        setWalletTokens(draft, chainTokens);
+      });
+
+      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+
+      updateTokens({
+        address,
+        newTokens: filterDisplayToken(_tokens),
+      });
+    }
 
     const tokenRes = await syncTokens(address, force);
 

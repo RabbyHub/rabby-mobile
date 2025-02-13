@@ -146,7 +146,7 @@ export const useTokens = (
 
           setMainnetTokens(filterDisplayToken(_tokens));
           console.log(
-            '🔍 CUSTOM_LOGGER:=> cachedone: useTokens)',
+            '🔍 CUSTOM_LOGGER:=> cachedone: useTokens',
             _tokens.length,
           );
           setLoading(false);
