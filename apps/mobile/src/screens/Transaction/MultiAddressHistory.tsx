@@ -478,13 +478,13 @@ function History({
         }
 
         if (isShowScam) {
-          // only hide small tx
-          return !tx.isSmallUsdTx;
+          // only hide small tx and not scam
+          return !(tx.isSmallUsdTx && !tx.is_scam);
         }
 
         if (isShowSmall) {
-          // only hidden scam
-          return !tx.is_scam;
+          // only hidden scam and not small tx
+          return !(tx.is_scam && !tx.isSmallUsdTx);
         }
 
         if (!isShowScam && !isShowSmall) {
