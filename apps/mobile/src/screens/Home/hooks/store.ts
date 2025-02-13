@@ -1,13 +1,12 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { atom, useAtom } from 'jotai';
+import { useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
 import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
-import { FlatList } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { preferenceService } from '@/core/services';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
@@ -51,8 +50,6 @@ export interface IAssets {
   nfts?: DisplayNftItem[];
   lastUpdateTime?: number;
 }
-
-export const flatListRefAtom = atom<React.RefObject<FlatList> | null>(null);
 
 export const combinedTokens = (assetsMap: {
   [address: string]: IAssets;
