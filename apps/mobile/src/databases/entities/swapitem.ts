@@ -52,7 +52,7 @@ export class SwapItemEntity extends EntityAddressAssetBase {
 
     return await this.getRepository()
       .createQueryBuilder('swapitem')
-      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .where('swapitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .take(count || 10000)
       .getMany();
   }

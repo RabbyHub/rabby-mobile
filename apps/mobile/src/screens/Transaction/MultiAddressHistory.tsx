@@ -189,7 +189,7 @@ function History({
     };
     if (!dbData.length) {
       // first init 20 count
-      await fetchHistoryFromDbData(20);
+      await fetchHistoryFromDbData(50);
     }
 
     // later fetch all data
@@ -553,7 +553,7 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = loading && !allTxHistory.length && !groups?.length;
+  const isFirstLoading = false;
 
   if (!loading && !groups?.length && !allTxHistory.length) {
     return <Empty />;
