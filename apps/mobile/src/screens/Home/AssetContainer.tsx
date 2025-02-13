@@ -5,7 +5,6 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
 import {
@@ -20,8 +19,6 @@ import {
   ActionItem,
   DisplayNftItem,
 } from './types';
-import { findChain } from '@/utils/chain';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -143,14 +140,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     ),
   });
 
-  const {
-    sheetModalRef: tokenDetailModalRef,
-    openTokenDetailPopup,
-    cleanFocusingToken,
-    focusingToken,
-    isTestnetToken,
-  } = useGeneralTokenDetailSheetModal();
-
   const dataList = useMemo(() => {
     const unFoldTokenList: ActionItem[] = sortTokens
       .filter(i => !i._isFold)
@@ -238,21 +227,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (
-        findChain({
-          serverId: token.chain,
-        })?.isTestnet
-      ) {
-        openTokenDetailPopup(token);
-      } else {
-        navigate(RootNames.TokenDetail, {
-          token: token,
-          isSingleAddress: true,
-          account: currentAccount as any,
-        });
-      }
+      navigate(RootNames.TokenDetail, {
+        token: token,
+        isSingleAddress: true,
+        account: currentAccount as any,
+      });
     },
-    [currentAccount, openTokenDetailPopup],
+    [currentAccount],
   );
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -611,56 +592,41 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   }
 
   return (
-    <>
-      <FlatList<ActionItem>
-        data={dataList}
-        ref={flatListRef}
-        viewabilityConfig={viewabilityConfigRef.current}
-        onViewableItemsChanged={onViewableItemsChanged}
-        ListHeaderComponent={header}
-        renderItem={renderItem}
-        ItemSeparatorComponent={ItemSeparatorComponent}
-        keyExtractor={item =>
-          `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
-            item.data?.chain || ''
-          }`
+    <FlatList<ActionItem>
+      data={dataList}
+      ref={flatListRef}
+      viewabilityConfig={viewabilityConfigRef.current}
+      onViewableItemsChanged={onViewableItemsChanged}
+      ListHeaderComponent={header}
+      renderItem={renderItem}
+      ItemSeparatorComponent={ItemSeparatorComponent}
+      keyExtractor={item =>
+        `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
+          item.data?.chain || ''
+        }`
+      }
+      contentContainerStyle={styles.bgContainer}
+      stickyHeaderIndices={[1]}
+      windowSize={10}
+      onScrollToIndexFailed={info => {
+        console.warn('Scroll to index failed', info);
+        if (info.highestMeasuredFrameIndex < info.index) {
+          toast.info(
+            `Ops! The asset wasn't shown yet, please scroll down manually`,
+          );
         }
-        contentContainerStyle={styles.bgContainer}
-        stickyHeaderIndices={[1]}
-        windowSize={10}
-        onScrollToIndexFailed={info => {
-          console.warn('Scroll to index failed', info);
-          if (info.highestMeasuredFrameIndex < info.index) {
-            toast.info(
-              `Ops! The asset wasn't shown yet, please scroll down manually`,
-            );
-          }
-        }}
-        refreshControl={
-          <RefreshControl
-            style={styles.bgContainer}
-            onRefresh={() => {
-              refreshPositions(true);
-              onRefresh();
-            }}
-            refreshing={refreshing}
-          />
-        }
-      />
-      <BottomSheetModalTokenDetail
-        __shouldSwitchSceneAccountBeforeRedirect__
-        nextTxRedirectAccount={currentAccount}
-        ref={tokenDetailModalRef}
-        token={focusingToken}
-        isTestnet={isTestnetToken}
-        onDismiss={() => {
-          cleanFocusingToken({ noNeedCloseModal: true });
-        }}
-        onTriggerDismissFromInternal={() => {
-          cleanFocusingToken();
-        }}
-      />
-    </>
+      }}
+      refreshControl={
+        <RefreshControl
+          style={styles.bgContainer}
+          onRefresh={() => {
+            refreshPositions(true);
+            onRefresh();
+          }}
+          refreshing={refreshing}
+        />
+      }
+    />
   );
 };
 
