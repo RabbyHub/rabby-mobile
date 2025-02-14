@@ -117,7 +117,7 @@ export const useTokens = (
 
       const cachedTokens = force
         ? []
-        : await TokenItemEntity.batchQueryCoreTokens(userAddr);
+        : await TokenItemEntity.batchQueryTokens(userAddr);
       if (!cachedTokens.length || force) {
         setLoading(true);
       }

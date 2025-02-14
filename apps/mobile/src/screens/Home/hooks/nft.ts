@@ -50,7 +50,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
         return;
       }
       try {
-        const cacheNfts = await NFTItemEntity.batchQueryCoreNFTs(addr);
+        const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
         const tokenSetting = await preferenceService.getUserTokenSettings();
         if (!cacheNfts.length || force) {
           setIsLoading(true);

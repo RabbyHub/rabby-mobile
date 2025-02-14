@@ -66,7 +66,7 @@ export const useAssets = (filterText?: string) => {
     });
 
     let _tokens: AbstractPortfolioToken[] = [];
-    const cachedTokens = await TokenItemEntity.batchQueryCoreTokens(address);
+    const cachedTokens = await TokenItemEntity.batchQueryTokens(address);
 
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
