@@ -22,7 +22,7 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, set, isString, throttle } from 'lodash';
+import { last, unionBy, orderBy, set, isString, debounce } from 'lodash';
 import { Text, TouchableWithoutFeedback, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -440,7 +440,7 @@ function History({
     },
   });
 
-  const thorttleBatchFetchData = throttle(batchFetchData, 2000);
+  const thorttleBatchFetchData = debounce(batchFetchData, 1000);
 
   useAppOrmSyncEvents({
     taskFor: ['all-history', 'swap-history'],
