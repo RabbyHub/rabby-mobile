@@ -4,8 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { View } from 'react-native';
 import { BuyQuoteItem } from './QuoteItem';
+import { openapi } from '@/core/request';
 
-export const BuyQuoteList = () => {
+export const BuyQuoteList = ({
+  quotes,
+  symbol,
+  activeProvider,
+  setActiveProvider,
+}: {
+  quotes: Awaited<ReturnType<typeof openapi.getBuyQuote>>;
+  symbol: string;
+  activeProvider: string;
+  setActiveProvider: (s: string) => void;
+}) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
@@ -13,12 +24,19 @@ export const BuyQuoteList = () => {
     <View>
       <Text style={styles.title}>{t('page.buy.quote.title')}</Text>
       <View style={styles.container}>
-        <BuyQuoteItem />
-        <BuyQuoteItem />
-        <BuyQuoteItem />
-        <BuyQuoteItem />
-        <BuyQuoteItem />
-        <BuyQuoteItem />
+        {quotes.map((e, idx) => (
+          <BuyQuoteItem
+            name={e.service_provider.name}
+            id={e.service_provider.id}
+            key={e.service_provider.id}
+            symbol={symbol}
+            logo={e.service_provider.logo_url || e.service_provider.image_url}
+            amount={e.token_amount}
+            activeProvider={activeProvider}
+            isBest={idx === 0}
+            setActiveProvider={setActiveProvider}
+          />
+        ))}
       </View>
     </View>
   );

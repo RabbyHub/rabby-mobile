@@ -306,14 +306,14 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiBuy}
-        component={BuyScreen}
+        component={BuyScreen.ForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Buy',
           // ...headerPresets.withBgCard1_2024,
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
-                forScene="MultiBuy"
+                forScene="MakeTransactionAbout"
                 titleText={ctx.children}
               />
             );

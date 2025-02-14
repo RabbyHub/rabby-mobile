@@ -1,17 +1,31 @@
+import { toast } from '@/components2024/Toast';
 import { getChainDefaultToken } from '@/constant/swap';
 import { openapi } from '@/core/request';
 import { useCurrentAccount } from '@/hooks/account';
-import { findChainByEnum } from '@/utils/chain';
 import { formatSpeicalAmount } from '@/utils/number';
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useState } from 'react';
+import { atom, useAtomValue } from 'jotai';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Keyboard } from 'react-native';
+import { getCountry } from 'react-native-localize';
 import useAsync from 'react-use/lib/useAsync';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
+
+const regionListAtom = atom<
+  Awaited<ReturnType<typeof openapi.getBuySupportedCountryList>>
+>([]);
+
+regionListAtom.onMount = set => {
+  set([]);
+  openapi.getBuySupportedCountryList().then(s => {
+    set(s);
+  });
+};
 
 const useTokenInfo = ({
   userAddress,
-  chain,
   defaultToken,
   refreshId,
 }: {
@@ -25,15 +39,12 @@ const useTokenInfo = ({
   >(defaultToken);
 
   const { value, loading, error } = useAsync(async () => {
-    if (userAddress && token?.id && chain) {
-      const data = await openapi.getToken(
-        userAddress,
-        findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
-        token.id,
-      );
+    if (userAddress && token?.id) {
+      const data = await openapi.getToken(userAddress, token.chain, token.id);
+
       return { ...data, tokenId: token.id };
     }
-  }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str, chain]);
+  }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str]);
 
   useDebounce(
     () => {
@@ -46,23 +57,24 @@ const useTokenInfo = ({
   );
 
   if (error) {
-    console.error('token info error', chain, token?.symbol, token?.id, error);
+    console.error('token info error', token?.symbol, token?.id, error);
   }
   return [token, setToken] as const;
 };
 
 export const useBuy = () => {
-  const { currentAccount } = useCurrentAccount();
-  const [region, setRegion] = useState('us');
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const [region, setRegion] = useState(getCountry());
   const [currency, setCurrency] = useState('usd');
   const [toToken, setToToken] = useTokenInfo({
-    chain: CHAINS_ENUM.ETH,
     defaultToken: getChainDefaultToken(CHAINS_ENUM.ETH),
     userAddress: currentAccount?.address,
   });
   const [amount, setAmount] = useState('');
 
-  const [toAmount, setToAmount] = useState('');
+  const [activeProvider, setActiveProvider] = useState<string>('');
+
+  const regionList = useAtomValue(regionListAtom);
 
   const switchRegion = useCallback((region: string) => {
     setRegion(region);
@@ -80,6 +92,79 @@ export const useBuy = () => {
     setAmount(v);
   }, []);
 
+  const [loading, setLoading] = useState(false);
+
+  const [{ value: _quotes, error }, getBuyQuotes] = useAsyncFn(async () => {
+    if (
+      currentAccount?.address &&
+      region &&
+      toToken &&
+      currency &&
+      Number(amount) > 0
+    ) {
+      return openapi
+        .getBuyQuote({
+          user_addr: currentAccount?.address,
+          country_code: region,
+          usd_amount: amount,
+          receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [amount, region, currency, currentAccount?.address, toToken]);
+
+  const [, cancel] = useDebounce(getBuyQuotes, 300, [
+    amount,
+    region,
+    currency,
+    currentAccount?.address,
+    toToken,
+  ]);
+
+  const isReady =
+    !!currentAccount?.address &&
+    !!region &&
+    !!toToken &&
+    !!currency &&
+    Number(amount) > 0;
+
+  const quotes = useMemo(() => {
+    if (_quotes && isReady) {
+      return _quotes;
+    }
+    return;
+  }, [_quotes, isReady]);
+
+  useEffect(() => {
+    if (
+      currentAccount?.address &&
+      region &&
+      toToken &&
+      currency &&
+      Number(amount) > 0
+    ) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+      cancel();
+    }
+  }, [amount, region, currency, currentAccount?.address, toToken, cancel]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(String(error));
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (!loading && !error && quotes?.[0]?.service_provider?.id) {
+      setActiveProvider(quotes[0].service_provider?.id);
+      Keyboard.dismiss();
+    }
+  }, [quotes, error, loading]);
+
   const onToTokenChange = useCallback(
     (t: TokenItem) => {
       setToToken(t);
@@ -87,7 +172,19 @@ export const useBuy = () => {
     [setToToken],
   );
 
+  const tokenAmount = useMemo(() => {
+    if (isReady && !loading && !error && quotes?.length && activeProvider) {
+      return (
+        quotes.find(e => e.service_provider.id === activeProvider)
+          ?.token_amount || ''
+      );
+    }
+    return '';
+  }, [isReady, loading, error, quotes, activeProvider]);
+
   return {
+    currentAddr: currentAccount?.address,
+    regionList,
     region,
     switchRegion,
 
@@ -100,7 +197,12 @@ export const useBuy = () => {
     amount,
     onPayMountChange,
 
-    toAmount,
-    setToAmount,
+    tokenAmount,
+
+    activeProvider,
+    setActiveProvider,
+
+    loading,
+    quotes,
   };
 };

@@ -1,30 +1,27 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text, TextInput, Pressable } from 'react-native';
 import IconUSLogo from '@/assets2024/icons/buy/us.svg';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import TokenSelect from '@/screens/Swap/components/TokenSelect';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import BigNumber from 'bignumber.js';
+import { BuyTokenSelect } from './SelectBuyToken';
+import { toast } from '@/components2024/Toast';
 
 export const BuyToken = ({
   type,
   value,
   onInputChange,
-  logo,
-  currency,
+  currency = 'USD',
   token,
-  loading,
   onTokenSelect,
 }: {
   type: 'from' | 'to';
   // from props
   value?: string;
   onInputChange?: (v: string) => void;
-  logo?: string;
   currency?: string;
 
   // to props
@@ -35,34 +32,28 @@ export const BuyToken = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const isPay = type === 'from';
+  const isFiat = type === 'from';
   const isReceive = type === 'to';
 
-  const openTokenModalRef = useRef<{
-    openTokenModal: React.Dispatch<React.SetStateAction<boolean>>;
-  }>(null);
+  const inputRef = useRef<TextInput>(null);
 
-  const handleTokenModalOpen = useCallback(() => {
-    if (isReceive) {
-      openTokenModalRef?.current?.openTokenModal?.(true);
+  useLayoutEffect(() => {
+    if (isFiat) {
+      inputRef?.current?.focus();
     }
-  }, [isReceive]);
+  }, [isFiat]);
 
-  // const [value, setValue] = useState('');
-
-  // const inputChange = React.useCallback((text: string) => {
-  //   const v = formatSpeicalAmount(text);
-  //   if (!/^\d*(\.\d*)?$/.test(v)) {
-  //     return;
-  //   }
-
-  //   setValue(v);
-  // }, []);
+  const onlyUsdToast = () => {
+    toast.show(t('page.buy.paymentsOnly', { currency: 'USD' }), {
+      position: toast.positions.CENTER,
+      textStyle: styles.toastText,
+    });
+  };
 
   return (
     <View style={styles.tokenBox}>
       <Text style={styles.label}>
-        {isPay ? t('page.buy.youWillPay') : t('page.buy.youWillReceive')}
+        {isFiat ? t('page.buy.youWillPay') : t('page.buy.youWillReceive')}
       </Text>
       <View style={styles.interfaceBox}>
         <TextInput
@@ -73,33 +64,30 @@ export const BuyToken = ({
           inputMode="decimal"
           placeholderTextColor={colors2024['neutral-info']}
           style={styles.input}
-          placeholder={'$0'}
+          placeholder={isFiat ? '$0' : '0'}
           scrollEnabled={true}
-          value={value?.toString()}
-          onChangeText={onInputChange}
+          value={isFiat && value ? '$' + value : value}
+          onChangeText={e => {
+            onInputChange?.(e.replaceAll('$', ''));
+          }}
+          focusable={isFiat}
+          ref={inputRef}
+          editable={isFiat}
         />
         <View style={styles.divider} />
 
-        {isPay && (
-          <View style={styles.token}>
-            <IconUSLogo />
-            <Text style={styles.tokenText}>{currency}</Text>
-          </View>
+        {isFiat && (
+          <Pressable onPress={onlyUsdToast}>
+            <View style={styles.token}>
+              <IconUSLogo width={24} height={24} />
+              <Text style={styles.tokenText}>{currency}</Text>
+            </View>
+          </Pressable>
         )}
 
-        {/* {isReceive && (
-          <TokenSelect
-            ref={openTokenModalRef}
-            token={token}
-            onTokenChange={onTokenSelect!}
-            chainId={''}
-            type={'swapFrom'}
-            placeholder={t('page.swap.search-by-name-address')}
-            // excludeTokens={excludeTokens}
-            useSwapTokenList
-            supportChains={SWAP_SUPPORT_CHAINS}
-          />
-        )} */}
+        {isReceive && onTokenSelect ? (
+          <BuyTokenSelect onTokenChange={onTokenSelect} token={token} />
+        ) : null}
       </View>
 
       {isReceive && (
@@ -168,7 +156,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    borderRadius: 20,
+    borderRadius: 12,
     backgroundColor: colors2024['neutral-line'],
   },
   tokenText: {
@@ -187,5 +175,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 18,
+  },
+  toastText: {
+    color: colors2024['neutral-title2'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 15,
+    fontStyle: 'normal',
+    fontWeight: '700',
   },
 }));

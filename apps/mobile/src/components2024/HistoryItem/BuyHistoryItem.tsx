@@ -1,5 +1,4 @@
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommonHistoryItem } from './CommonHistoryItem';
@@ -10,12 +9,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { formatPrice } from '@/utils/number';
+import { openapi } from '@/core/request';
 
 interface Props {
-  /**
-   * @todo maybe need to change the type
-   */
-  data: SwapItem;
+  data: Awaited<ReturnType<typeof openapi.getBuyHistory>>['histories'][number];
 }
 
 /**
@@ -23,7 +20,7 @@ interface Props {
  */
 export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
-  const isPending = data.status === 'Pending';
+  const isPending = data.status === 'pending';
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
@@ -31,7 +28,7 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
       icon={
         <View style={styles.iconContainer}>
           <BuyWalletSVG style={styles.walletIcon} />
-          <AssetAvatar logo={data.pay_token.logo_url} size={46} />
+          <AssetAvatar logo={data.receive_token.logo_url} size={46} />
         </View>
       }
       title={t('page.buy.purchased')}
@@ -39,10 +36,7 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
         <View style={styles.subTitleContainer}>
           <Text style={styles.subTitleText}>
             {t('page.buy.from', {
-              /**
-               * @todo
-               */
-              dex: 'Moonpay',
+              dex: data.service_provider,
             })}
           </Text>
           <ArrowRightCC
@@ -58,10 +52,7 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
         isPending ? (
           <View style={styles.rightContainer}>
             <Text numberOfLines={1} style={styles.rightText}>
-              {'-$' +
-                formatPrice(
-                  data.actual.pay_token_amount * data.pay_token.price,
-                )}
+              {'-$' + formatPrice(data.pay_usd_amount)}
             </Text>
           </View>
         ) : null
@@ -71,15 +62,12 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
           ? null
           : '+' +
             getTokenAmountText({
-              amount: data.actual.pay_token_amount,
-              token: data.pay_token,
+              amount: data.receive_token.amount,
+              token: data.receive_token,
             })
       }
       receiveTokenAmount={
-        isPending
-          ? null
-          : '-$' +
-            formatPrice(data.actual.pay_token_amount * data.pay_token.price)
+        isPending ? null : '-$' + formatPrice(data.pay_usd_amount)
       }
     />
   );

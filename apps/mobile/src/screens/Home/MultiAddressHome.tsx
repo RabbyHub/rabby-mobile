@@ -301,9 +301,6 @@ function MultiAddressHome(): JSX.Element {
     [alertInfo.total, t, historyCount],
   );
 
-  // TODO: no assets and no behaver onchain
-  const isNoAssets = false;
-
   useEffect(() => {
     if (pendingTxCount) {
       Animated.loop(
@@ -343,6 +340,18 @@ function MultiAddressHome(): JSX.Element {
 
   const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
+
+  const noAssets = useMemo(
+    () =>
+      balanceAccounts.every(e => e.balance === 0) &&
+      balanceCacheAccounts.every(e => e.balance === 0) &&
+      balanceAccounts.every(
+        e =>
+          transactionHistoryService.getTransactionGroups({ address: e.address })
+            .length === 0,
+      ),
+    [balanceAccounts, balanceCacheAccounts],
+  );
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
@@ -662,7 +671,7 @@ function MultiAddressHome(): JSX.Element {
               })}
             </View>
           )}
-          {isNoAssets && (
+          {noAssets && (
             <>
               <View
                 style={[styles.menuHeader, { justifyContent: 'flex-start' }]}>
@@ -674,7 +683,7 @@ function MultiAddressHome(): JSX.Element {
               <FundYourWallet />
             </>
           )}
-          <View style={[styles.menuHeader, isNoAssets && styles.hidden]}>
+          <View style={[styles.menuHeader, noAssets && styles.hidden]}>
             <Text style={styles.headerText}>
               {t('page.nextComponent.multiAddressHome.services')}
             </Text>
@@ -695,7 +704,7 @@ function MultiAddressHome(): JSX.Element {
               </TouchableOpacity>
             )}
           </View>
-          <View style={[styles.grid, isNoAssets && styles.hidden]}>
+          <View style={[styles.grid, noAssets && styles.hidden]}>
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity

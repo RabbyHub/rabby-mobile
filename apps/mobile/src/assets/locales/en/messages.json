@@ -1585,6 +1585,8 @@
       "quotesForYou": "Quotes For you",
       "from": "From {{dex}}",
       "purchased": "Purchased",
+      "toBuy": "Continue to Buy",
+      "history": "Purchased History",
       "regionBottomSheet": {
         "title": "Select your region",
         "searchPlaceholder": "Search fiat currency"

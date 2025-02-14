@@ -1,36 +1,49 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Skeleton } from '@rneui/themed';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import IconCheckedBg from '@/assets2024/icons/buy/check-bg.svg';
 import IconCheckedCC from '@/assets2024/icons/buy/check-cc.svg';
 import React from 'react';
-import { ListItem } from '@/components2024/ListItem/ListItem';
 import IconArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { formatTokenAmount } from '@/utils/number';
+import { TouchableOpacity } from 'react-native';
+import { Image } from 'react-native';
 
-export const BuyQuoteItem = () => {
+export const BuyQuoteItem = ({
+  id,
+  name,
+  logo,
+  amount,
+  symbol,
+  activeProvider,
+  setActiveProvider,
+  isBest,
+}: {
+  id: string;
+  name: string;
+  logo: string;
+  amount: number;
+  symbol: string;
+  activeProvider: string;
+  isBest?: boolean;
+  setActiveProvider: (s: string) => void;
+}) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const quoteName = 'QuoteName';
-
-  const quoteAmount = '0.254';
-
-  const symbol = 'ETH';
-
-  const active = true;
-
-  const isBest = true;
+  const active = activeProvider === id;
 
   const payMethodList = Array.from({ length: 4 }).fill(1);
 
   return (
-    <View
+    <TouchableOpacity
       style={[styles.container, active && styles.active]}
-      needsOffscreenAlphaCompositing>
+      onPress={() => {
+        setActiveProvider(id);
+      }}>
       {isBest && (
-        <View style={styles.bestQuote} needsOffscreenAlphaCompositing>
+        <View style={styles.bestQuote}>
           <Text style={styles.bestQuoteText}>{t('page.buy.quote.best')}</Text>
         </View>
       )}
@@ -46,23 +59,21 @@ export const BuyQuoteItem = () => {
       )}
       <View style={[styles.row, { justifyContent: 'space-between' }]}>
         <View style={[styles.row, { gap: 8 }]}>
-          {/* <Image source={require('@/assets/images/quote.png')}  style={styles.logo}/> */}
-          <Skeleton style={styles.logo} />
-          <Text style={styles.name}>{quoteName}</Text>
+          <Image source={{ uri: logo }} style={styles.logo} />
+          {/* <Skeleton style={styles.logo} /> */}
+          <Text style={styles.name}>{name}</Text>
         </View>
         <Text style={styles.amount}>
-          {quoteAmount} {symbol}
+          {formatTokenAmount(amount)} {symbol}
         </Text>
       </View>
 
-      <View style={styles.divider} needsOffscreenAlphaCompositing />
+      <View style={styles.divider} />
 
       <View style={[styles.row, { justifyContent: 'space-between' }]}>
         <View style={styles.payList}>
           {payMethodList.map((_, index) => (
-            <View
-              // key={}
-              style={styles.payBox}>
+            <View key={index} style={styles.payBox}>
               {/* <Image source={}  style={styles.payLogo}/> */}
               {/* <Skeleton style={styles.payLogo} /> */}
             </View>
@@ -74,7 +85,7 @@ export const BuyQuoteItem = () => {
           height={18}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
