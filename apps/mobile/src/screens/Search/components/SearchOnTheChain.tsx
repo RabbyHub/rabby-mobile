@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextStyle, StyleProp } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import React from 'react';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,7 +12,6 @@ type Props = {
   searched: boolean;
   hasTokens: boolean;
   handleSearch: () => void;
-  titleStyle: StyleProp<TextStyle>;
 };
 
 const SearchOnTheChain = ({
@@ -21,7 +20,6 @@ const SearchOnTheChain = ({
   searched,
   hasTokens,
   handleSearch,
-  titleStyle,
 }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -43,7 +41,7 @@ const SearchOnTheChain = ({
     <View style={styles.container}>
       {searched ? (
         hasTokens ? (
-          <Text style={titleStyle}>{t('page.search.searchWeb.title')}</Text>
+          <View style={styles.footer} />
         ) : (
           <Text style={styles.title}>
             {t('page.search.searchWeb.noResult')}{' '}
@@ -72,6 +70,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   loadingContainer: {
     gap: 8,
     display: 'flex',
+    marginTop: -52,
   },
   container: {
     backgroundColor: isLight
@@ -98,6 +97,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontSize: 18,
     lineHeight: 22,
     marginTop: 12,
+    height: 36,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
@@ -107,5 +107,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   boldTitle: {
     fontWeight: '700',
+  },
+  footer: {
+    height: 56,
   },
 }));

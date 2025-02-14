@@ -66,8 +66,8 @@ const getStyle = createGetStyles2024(ctx => ({
     flex: 1,
   },
   section: {
-    paddingTop: 12,
     paddingBottom: 16,
+    gap: 8,
   },
   sectionHeader: {
     marginLeft: 12,

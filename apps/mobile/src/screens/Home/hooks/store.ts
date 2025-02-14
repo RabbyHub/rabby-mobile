@@ -3,7 +3,11 @@ import BigNumber from 'bignumber.js';
 import { useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
-import { AbstractPortfolioToken, DisplayNftItem } from '../types';
+import {
+  AbstractPortfolioToken,
+  ActionHeaderItem,
+  DisplayNftItem,
+} from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
@@ -42,6 +46,16 @@ export type CombineNFTItem = NFTItem & {
   fromAddress: Array<{
     address: string;
   }>;
+};
+
+export type ICombineItem = {
+  type: string;
+  data?:
+    | ActionHeaderItem
+    | CombineTokensItem
+    | CombineDefiItem
+    | AbstractPortfolioToken
+    | CombineNFTItem;
 };
 
 export interface IAssets {

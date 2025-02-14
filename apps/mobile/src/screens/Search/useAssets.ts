@@ -157,7 +157,7 @@ export const useAssets = (filterText?: string) => {
       disableNFT?: boolean;
     },
   ) => {
-    const top10Account = sortedAccounts.slice(0, 10);
+    const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
     const addresses = [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];

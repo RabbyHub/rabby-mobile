@@ -89,6 +89,8 @@ interface Props {
 const getItemId = item => {
   return `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
     item.data?.chain || ''
+  }/${item.data?.price_24h_change || ''}/${item.data?.price || ''}/${
+    item.data?.time_at || ''
   }`;
 };
 
