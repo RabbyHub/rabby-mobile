@@ -44,7 +44,11 @@ import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { HistoryItemCateType } from './components/HistoryItemIcon';
 import { HistoryTokenList } from './components/HistoryTokenList';
-import { getApproveTokeName, getHistoryItemType } from './components/utils';
+import {
+  fetchHistoryTokenUUId,
+  getApproveTokeName,
+  getHistoryItemType,
+} from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { strings } from '@/utils/i18n';
@@ -229,10 +233,12 @@ function HistoryDetailScreen(): JSX.Element {
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
     data.projectDict.length,
-    data.receives,
+    data.sends,
     data.other_addr,
     isForMultipleAdderss,
   );
+
+  console.debug('HistoryDetailScreen', 'receives:', data.receives);
 
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);

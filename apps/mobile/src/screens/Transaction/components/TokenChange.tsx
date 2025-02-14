@@ -126,7 +126,7 @@ export const TxChange = ({
           <TxChangeItem
             isForMultipleAdderss={isForMultipleAdderss}
             canClickToken={canClickToken}
-            key={data.receives[0].token_id || data.sends[0].token_id}
+            key={data.receives[0]?.token_id || data.sends[0]?.token_id}
             data={data}
             isSend={!data.receives[0]?.token_id}
             tokenDict={tokenDict}
@@ -140,7 +140,7 @@ export const TxChange = ({
             <TxChangeItem
               isForMultipleAdderss={isForMultipleAdderss}
               canClickToken={canClickToken}
-              key={item.token_id}
+              key={item?.token_id}
               data={data}
               tokenDict={tokenDict}
               item={item}
@@ -152,7 +152,7 @@ export const TxChange = ({
               isSend
               isBottomSend={Boolean(data?.receives.length)}
               canClickToken={canClickToken}
-              key={item.token_id}
+              key={item?.token_id}
               data={data}
               tokenDict={tokenDict}
               item={item}

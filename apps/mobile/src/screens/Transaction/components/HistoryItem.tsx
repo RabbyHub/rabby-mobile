@@ -61,13 +61,13 @@ export const HistoryItem = React.memo(
         cate === HistoryItemCateType.Swap ||
         cate === HistoryItemCateType.Bridge;
       if (isDoubleToken) {
-        const send = data.sends[0];
-        const receive = data.receives[0];
+        const send = data.sends[0] || {};
+        const receive = data.receives[0] || {};
         const sendToken =
-          tokenDict[send.token_id] ||
+          tokenDict[send?.token_id] ||
           tokenDict[fetchHistoryTokenUUId(send.token_id, data.chain)];
         const receiveToken =
-          tokenDict[receive.token_id] ||
+          tokenDict[receive?.token_id] ||
           tokenDict[fetchHistoryTokenUUId(receive.token_id, data.chain)];
 
         return {
