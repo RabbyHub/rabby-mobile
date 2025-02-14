@@ -6,13 +6,19 @@ import {
   Text,
   View,
   ViewStyle,
+  TextInput,
 } from 'react-native';
 
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { useTheme2024 } from '@/hooks/theme';
-import { Input } from '@rneui/themed';
+import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 
 import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
@@ -28,12 +34,6 @@ import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
-import { useTranslation } from 'react-i18next';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -135,6 +135,7 @@ export default function SelectChainWithSummary({
   const [canSearch, setCanSearch] = useState(false);
   const [inputContainerWidth, setInputContainerWidth] = useState(0);
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const isDark = useGetBinaryMode() === 'dark';
   const { selectedTab } = useSwitchNetTab({
     hideTestnetTab,
   });
@@ -162,10 +163,6 @@ export default function SelectChainWithSummary({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      width: withTiming(
-        animation.value * Math.floor(inputContainerWidth * 0.8),
-        { duration: 500 },
-      ),
       transform: [
         {
           translateX: withTiming(
@@ -212,10 +209,14 @@ export default function SelectChainWithSummary({
           <View style={styles.titleView}>
             <View style={styles.inputWrapper}>
               <Animated.View style={[animatedStyle]}>
-                <Input
-                  containerStyle={[styles.containerOfInput, styles.innerBlock]}
-                  inputContainerStyle={styles.inputContainerStyle}
-                  style={styles.inputText}
+                <TextInput
+                  style={{
+                    ...styles.inputText,
+                    ...styles.inputContainerStyle,
+                    backgroundColor: isDark
+                      ? colors2024['neutral-bg-2']
+                      : '#E8E9E9', // There is no more suitable color, use a temporary color number to replace it first
+                  }}
                   placeholderTextColor={colors2024['neutral-info']}
                   placeholder="Search chain"
                   value={search}
@@ -312,18 +313,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   innerBlock: {
     paddingHorizontal: 0,
   },
-  containerOfInput: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    marginBottom: -4,
-    marginTop: 0,
-    flexShrink: 0,
-  },
   inputContainerStyle: {
     height: 46,
     borderRadius: 30,
     paddingHorizontal: 20,
-    backgroundColor: colors2024['neutral-bg-2'],
     borderBottomWidth: 0,
   },
   inputText: {
@@ -363,6 +356,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     width: '100%',
     alignItems: 'center',
+    marginBottom: 12,
   },
 
   inputWrapper: {
@@ -376,7 +370,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
     fontSize: 17,
     lineHeight: 22,
-    transform: 'translateY(-10px)',
   },
 
   titleViewWithText: {
