@@ -114,10 +114,6 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           );
           const tokenSetting = await preferenceService.getUserTokenSettings();
           setData(tagProfiles(realtimeData, tokenSetting));
-          console.log(
-            '🔍 CUSTOM_LOGGER:=> cachedone: usePortfolios)',
-            realtimeData.length,
-          );
           setHasValue(!!cachePortocols.length);
         }
       }

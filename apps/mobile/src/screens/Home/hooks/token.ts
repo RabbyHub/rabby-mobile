@@ -145,10 +145,6 @@ export const useTokens = (
           _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
           setMainnetTokens(filterDisplayToken(_tokens));
-          console.log(
-            '🔍 CUSTOM_LOGGER:=> cachedone: useTokens',
-            _tokens.length,
-          );
           setLoading(false);
         }
       }

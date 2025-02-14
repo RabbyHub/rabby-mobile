@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
@@ -632,27 +632,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const renderStickHeader = (type: string) => {
     switch (type) {
-      /** header */
-      case 'unfold_token':
-      case 'unfold_defi':
-      case 'unfold_nft':
-      case 'toggle_token_fold':
-      case 'toggle_defi_fold':
-      case 'toggle_nft_fold':
-      case 'nft_header':
-      case 'defi_header':
-        return (
-          <AssestAllHeader
-            style={styles.assetHeader}
-            hasAssets={hasAssets}
-            loading={loading}
-            currentSection={currentSection}
-            showToken={!!tokens?.length}
-            showDefi={!!portfolios.length}
-            showNft={!!nftList?.length}
-            onPress={handleSwitchTab}
-          />
-        );
       case 'fold_token':
         return (
           <TokenRowSectionHeader
@@ -702,16 +681,30 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   }
 
   return (
-    <>
-      {renderStickHeader(firstRowType)}
+    <View style={styles.container}>
+      {firstRowType !== 'asset_header' && (
+        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+          <AssestAllHeader
+            style={styles.assetHeader}
+            hasAssets={hasAssets}
+            loading={loading}
+            currentSection={currentSection}
+            showToken={!!tokens?.length}
+            showDefi={!!portfolios.length}
+            showNft={!!nftList?.length}
+            onPress={handleSwitchTab}
+          />
+          {renderStickHeader(firstRowType)}
+        </Animated.View>
+      )}
       <RecyclerListView
         dataProvider={listData}
         layoutProvider={layoutProvider}
         rowRenderer={renderItem}
         ref={listRef}
         onVisibleIndicesChanged={indexes => {
-          if (listData.getDataForIndex(indexes[0])?.type) {
-            setFirstRowType(listData.getDataForIndex(indexes[0]).type);
+          if (listData.getDataForIndex(indexes[1])?.type) {
+            setFirstRowType(listData.getDataForIndex(indexes[1]).type);
           }
         }}
         renderFooter={() => <View style={styles.footer} />}
@@ -728,11 +721,25 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           ),
         }}
       />
-    </>
+    </View>
   );
 };
 
 const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: ASSETS_SECTION_HEADER,
+    zIndex: 1,
+  },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },

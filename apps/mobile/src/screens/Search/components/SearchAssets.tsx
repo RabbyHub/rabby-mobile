@@ -1,7 +1,7 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Keyboard, Text, View } from 'react-native';
+import { Animated, Dimensions, Keyboard, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import {
@@ -157,7 +157,6 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   }, [filterText, foldHideList, nftList, portfolios, resultTokens, tokens]);
 
   useEffect(() => {
-    console.log('🔍 CUSTOM_LOGGER:=>: setListData)', dataList.length);
     setListData(dataProvider.cloneWithRows(dataList));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataList.length, dataProvider]);
@@ -365,10 +364,15 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   }
 
   return (
-    <>
-      <View style={styles.bgContainer}>{renderStickHeader(firstRowType)}</View>
+    <View style={styles.container}>
+      {firstRowType?.includes('_header') ||
+      firstRowType?.includes('toggle_') ? null : (
+        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+          {renderStickHeader(firstRowType)}
+        </Animated.View>
+      )}
       <RecyclerListView
-        style={styles.bgContainer}
+        style={[styles.bgContainer, styles.list]}
         dataProvider={listData}
         layoutProvider={layoutProvider}
         rowRenderer={renderItem}
@@ -401,11 +405,25 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
           ),
         }}
       />
-    </>
+    </View>
   );
 };
 
 const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: ASSETS_SECTION_HEADER,
+    zIndex: 1,
+  },
   bgContainer: {
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
