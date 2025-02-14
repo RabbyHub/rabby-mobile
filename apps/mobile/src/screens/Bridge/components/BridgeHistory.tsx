@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useBridgeHistory } from '../hooks';
@@ -38,8 +38,8 @@ const HistoryList = () => {
     if (noMore) {
       return null;
     }
-    return <Skeleton style={styles.skeletonBlock} />;
-  }, [noMore, styles.skeletonBlock]);
+    return <ActivityIndicator style={styles.loading} />;
+  }, [noMore, styles.loading]);
 
   const ListEmptyComponent = useMemo(
     () =>
@@ -177,5 +177,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   item: {
     height: 8,
+  },
+  loading: {
+    marginTop: 8,
   },
 }));
