@@ -443,9 +443,10 @@ function History({
   const thorttleBatchFetchData = throttle(batchFetchData, 2000);
 
   useAppOrmSyncEvents({
-    taskFor: ['all-history'],
+    taskFor: ['all-history', 'swap-history'],
     onRemoteDataUpserted: ctx => {
       switch (ctx.taskFor) {
+        case 'swap-history':
         case 'all-history':
           thorttleBatchFetchData();
           break;

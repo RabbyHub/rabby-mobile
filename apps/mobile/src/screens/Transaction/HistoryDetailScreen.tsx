@@ -234,7 +234,7 @@ function HistoryDetailScreen(): JSX.Element {
     data.projectDict[data.project_id!],
     data.projectDict.length,
     data.sends,
-    data.other_addr,
+    data.id,
     isForMultipleAdderss,
   );
 
@@ -297,7 +297,7 @@ function HistoryDetailScreen(): JSX.Element {
       const receive = data.receives[0];
 
       return {
-        formatToken: [tokenDict[send.token_id], tokenDict[receive.token_id]],
+        formatToken: [tokenDict[send?.token_id], tokenDict[receive?.token_id]],
         isNft: false,
       };
     } else {
