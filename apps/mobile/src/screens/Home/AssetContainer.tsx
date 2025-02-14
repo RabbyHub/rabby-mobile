@@ -85,6 +85,7 @@ type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 interface Props {
   onRefresh(): void;
 }
+const FOOTER_HEIGHT = 56;
 
 const getItemId = item => {
   return `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
@@ -101,6 +102,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [firstRowType, setFirstRowType] = useState('');
 
   const { currentAccount, switchAccount } = useCurrentAccount();
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const {
     tokens,
     refreshPositions,
@@ -707,8 +709,24 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             setFirstRowType(listData.getDataForIndex(indexes[1]).type);
           }
         }}
+        onScroll={event => {
+          if (
+            event.nativeEvent.contentSize &&
+            event.nativeEvent.layoutMeasurement
+          ) {
+            const reachEnd =
+              event.nativeEvent.contentSize.height -
+                event.nativeEvent.layoutMeasurement.height -
+                event.nativeEvent.contentOffset.y <=
+              FOOTER_HEIGHT;
+            const reachTop =
+              event.nativeEvent.contentOffset.y <= HEADER_TOP_AREA_HEIGHT;
+            setShowScrollIndicator(!reachEnd && !reachTop);
+          }
+        }}
         renderFooter={() => <View style={styles.footer} />}
         scrollViewProps={{
+          showsVerticalScrollIndicator: showScrollIndicator,
           refreshControl: (
             <RefreshControl
               style={styles.bgContainer}
@@ -778,6 +796,6 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   footer: {
-    height: 56,
+    height: FOOTER_HEIGHT,
   },
 }));
