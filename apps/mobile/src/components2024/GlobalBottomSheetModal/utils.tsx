@@ -138,12 +138,16 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 export function makeBottomSheetProps({
   colors,
   createParams,
+  linearGradientType: _linearGradientType,
 }: {
   createParams?: CreateParams;
+  linearGradientType?: (CreateParams['bottomSheetModalProps'] &
+    object)['linearGradientType'];
   colors: AppColors2024Variants;
 }): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
   const inputProps = createParams?.bottomSheetModalProps;
   const linearGradientType =
+    _linearGradientType ??
     createParams?.bottomSheetModalProps?.linearGradientType;
 
   const { handleBgColor } = (() => {
