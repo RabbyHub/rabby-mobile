@@ -108,13 +108,13 @@ function useTopTokensByAccount() {
     [setAddressTop5Tokens],
   );
 
-  const fetchTokens = useCallback(
+  const fetchTokensByAddress = useCallback(
     (addr?: string, count = 5) => {
       if (!addr) return;
       if (addressTop5TokensRequestingRefs[addr]) return;
       addressTop5TokensRequestingRefs[addr] = true;
 
-      TokenItemEntity.queryTokens(addr, { topCount: count })
+      TokenItemEntity.queryTokensByOwner(addr, { topCount: count })
         .then(tokens => {
           setTokensByAddr(addr, tokens);
         })
@@ -129,12 +129,12 @@ function useTopTokensByAccount() {
     [setTokensByAddr],
   );
 
-  return { addressTop5Tokens, fetchTokens };
+  return { addressTop5Tokens, fetchTokensByAddress };
 }
 
 const fetchedRef = { current: false };
 export function useFetchTokensForAllAccounts() {
-  const { fetchTokens } = useTopTokensByAccount();
+  const { fetchTokensByAddress } = useTopTokensByAccount();
 
   const fetchTop5TokensForAllAccountsOnce = useCallback(() => {
     if (fetchedRef.current) return;
@@ -144,14 +144,14 @@ export function useFetchTokensForAllAccounts() {
       .getAllAccountsToDisplay()
       .then(accounts => {
         accounts.forEach(account => {
-          fetchTokens(account.address);
+          fetchTokensByAddress(account.address);
         });
       })
       .catch(error => {
         console.error('[useFetchTokensForAllAccounts] error', error);
         fetchedRef.current = false;
       });
-  }, [fetchTokens]);
+  }, [fetchTokensByAddress]);
 
   return { fetchTop5TokensForAllAccountsOnce };
 }
@@ -161,13 +161,13 @@ export function useTopTokensForAddress(options?: {
   count?: number;
 }) {
   const { count = 5, accountAddress } = options || {};
-  const { addressTop5Tokens, fetchTokens } = useTopTokensByAccount();
+  const { addressTop5Tokens, fetchTokensByAddress } = useTopTokensByAccount();
 
   useEffect(() => {
     if (!accountAddress) return;
 
-    fetchTokens(accountAddress, count);
-  }, [accountAddress, fetchTokens, count]);
+    fetchTokensByAddress(accountAddress, count);
+  }, [accountAddress, fetchTokensByAddress, count]);
 
   // useAppOrmSyncEvents({
   //   taskFor: 'token',
@@ -175,8 +175,8 @@ export function useTopTokensForAddress(options?: {
   //     if (!success) return ;
   //     if (!owner_addr) return ;
 
-  //     fetchTokens(owner_addr, count);
-  //   }, [fetchTokens, count]),
+  //     fetchTokensByAddress(owner_addr, count);
+  //   }, [fetchTokensByAddress, count]),
   // });
 
   const tokenList = useMemo(() => {
@@ -187,6 +187,6 @@ export function useTopTokensForAddress(options?: {
 
   return {
     tokenList,
-    fetchTokens,
+    fetchTokensByAddress,
   };
 }

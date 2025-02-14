@@ -73,7 +73,9 @@ export const badRealTransformer: ValueTransformer = {
   },
 };
 
-export function correctBadRealOnSql(columnName: string) {
+export function correctBadRealOnSql(
+  columnName: `tokenitem.price` | `tokenitem.amount`,
+) {
   return `(${columnName} / ${DECIMALS_INT_RATIO})`;
 }
 

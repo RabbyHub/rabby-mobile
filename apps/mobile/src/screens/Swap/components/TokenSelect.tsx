@@ -16,11 +16,7 @@ import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
 import { useCurrentAccount } from '@/hooks/account';
-import {
-  abstractTokenToTokenItem,
-  getTokenSymbol,
-  SMALL_TOKEN_ID,
-} from '@/utils/token';
+import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -40,10 +36,17 @@ import {
 } from '@/screens/Home/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import LinearGradient from 'react-native-linear-gradient';
+import { Account } from '@/core/services/preference';
+import { useQueryLocalTokens } from '@/databases/hooks/token';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
+import { RootNames } from '@/constant/layout';
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
+  accountInScreen?: Account | null;
   chainId: string;
   useSwapTokenList?: boolean;
   excludeTokens?: TokenItem['id'][];
@@ -65,15 +68,22 @@ interface TokenSelectProps {
   searchPlaceholder?: string;
 }
 const defaultExcludeTokens = [];
-const TokenSelect = forwardRef<
-  { openTokenModal: React.Dispatch<React.SetStateAction<boolean>> },
-  TokenSelectProps
->(
+
+type QueryConditions = {
+  keyword: string;
+  account?: Account | null;
+  chainServerId: string;
+};
+export type TokenSelectInst = {
+  openTokenModal: (conds?: Partial<QueryConditions>) => void;
+};
+const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
   (
     {
       token,
       onChange,
       onTokenChange,
+      accountInScreen,
       chainId,
       excludeTokens = defaultExcludeTokens,
       type = 'send',
@@ -89,17 +99,23 @@ const TokenSelect = forwardRef<
     ref,
   ) => {
     const [fold, setFold] = useState(true);
-    const [queryConds, setQueryConds] = useState({
+    const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
+      account: null,
       chainServerId: chainId,
     });
+    const queryConds = useDebounceValue(_queryConds, 250);
+
     const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
     const [updateNonce, setUpdateNonce] = useState(0);
 
     const isSwapType = isSwapTokenType(type);
 
     useImperativeHandle(ref, () => ({
-      openTokenModal: setTokenSelectorVisible,
+      openTokenModal: conds => {
+        setQueryConds(prev => ({ ...prev, ...conds }));
+        setTokenSelectorVisible(true);
+      },
     }));
 
     const { currentAccount } = useCurrentAccount();
@@ -130,42 +146,89 @@ const TokenSelect = forwardRef<
         tokenSelectorVisible,
       ]);
 
-    const allTokens = useSortToken(_allTokens);
+    const useLocalDatabase = !queryConds.account;
+    const {
+      isSearchingLocalTokens,
+      sortedTokensWithOwner: searchedLocalTokensWithOwner,
+      sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
+      // allLocalTokens: searchedLocalTokens,
+      fetchAllLocalTokens,
+    } = useQueryLocalTokens();
 
-    const allDisplayTokens = useMemo(() => {
-      if (useSwapTokenList) {
-        return swapTokenList || [];
-      }
-      return allTokens.filter(i => !i._isFold).map(abstractTokenToTokenItem);
-    }, [allTokens, swapTokenList, useSwapTokenList]);
-
-    const { isLoading: isSearchLoading, list: searchedTokenByQuery } =
-      useSearchToken(
-        {
-          address: currentAccount?.address,
+    useEffect(() => {
+      if (!queryConds.account)
+        fetchAllLocalTokens({
           keyword: queryConds.keyword,
-          chainServerId: queryConds.chainServerId,
-        },
-        {
-          withBalance: isSwapType ? false : true,
-        },
-      );
+          chain_server_id: queryConds.chainServerId,
+        });
+    }, [queryConds, fetchAllLocalTokens]);
+
+    const allRemoteTokens = useSortToken(_allTokens);
+
+    const {
+      isLoading: isRemoteSearchLoading,
+      list: remoteSearchedTokenByQuery,
+    } = useSearchToken(
+      {
+        address: currentAccount?.address || '',
+        keyword: queryConds.keyword,
+        chainServerId: queryConds.chainServerId,
+      },
+      {
+        withBalance: isSwapType ? false : true,
+      },
+    );
+
+    const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
+      useMemo(() => {
+        const remoteVersion = {
+          isSearchLoading: isRemoteSearchLoading,
+          allTokens: allRemoteTokens,
+          allTokenItems: useSwapTokenList
+            ? swapTokenList || []
+            : allRemoteTokens
+                .filter(i => !i._isFold)
+                .map(abstractTokenToTokenItem),
+          searchedTokenByQuery: remoteSearchedTokenByQuery,
+        };
+
+        if (useSwapTokenList || !useLocalDatabase) return remoteVersion;
+
+        return {
+          isSearchLoading: isSearchingLocalTokens,
+          allTokens: searchedLocalDisplayTokensWithOwner,
+          allTokenItems: searchedLocalTokensWithOwner,
+          searchedTokenByQuery: searchedLocalTokensWithOwner,
+        };
+      }, [
+        useSwapTokenList,
+        useLocalDatabase,
+        allRemoteTokens,
+
+        isRemoteSearchLoading,
+        remoteSearchedTokenByQuery,
+
+        isSearchingLocalTokens,
+        // searchedLocalTokens,
+
+        searchedLocalDisplayTokensWithOwner,
+        searchedLocalTokensWithOwner,
+        swapTokenList,
+      ]);
 
     const availableToken = useMemo(() => {
-      const allTokens = queryConds.chainServerId
-        ? allDisplayTokens.filter(
+      const _tokens = queryConds.chainServerId
+        ? allTokenItems.filter(
             token => token.chain === queryConds.chainServerId,
           )
-        : allDisplayTokens;
+        : allTokenItems;
       return uniqBy(
-        queryConds.keyword
-          ? searchedTokenByQuery.map(abstractTokenToTokenItem)
-          : allTokens,
+        queryConds.keyword ? searchedTokenByQuery : _tokens,
         token => {
           return `${token.chain}-${token.id}`;
         },
       ).filter(e => !excludeTokens.includes(e.id));
-    }, [allDisplayTokens, searchedTokenByQuery, excludeTokens, queryConds]);
+    }, [allTokenItems, searchedTokenByQuery, excludeTokens, queryConds]);
 
     const isFromModalType = useMemo(
       () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
@@ -191,17 +254,28 @@ const TokenSelect = forwardRef<
       ? swapTokenListLoading
       : isLoadingAllTokens;
 
-    const handleSearchTokens = useCallback(
+    const handleSearchTokens = useCallback<
+      React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
+    >(
       async ctx => {
-        setQueryConds({
-          keyword: ctx.keyword,
-          chainServerId: ctx.chainServerId,
-        });
+        setQueryConds(prev => ({
+          ...prev,
+          ...(typeof ctx === 'string'
+            ? { keyword: ctx }
+            : {
+                // account: ctx.filterAccountItem || (ctx.filterAccountItem === null ? null : prev.account),
+                account: ctx.filterAccountItem ?? null,
+                keyword: ctx.keyword,
+                chainServerId: ctx.chainServerId ?? prev.chainServerId,
+              }),
+        }));
       },
       [setQueryConds],
     );
 
-    const handleCurrentTokenChange = useCallback(
+    const handleCurrentTokenChange = useCallback<
+      React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
+    >(
       token => {
         onChange && onChange('');
         onTokenChange(token);
@@ -217,19 +291,30 @@ const TokenSelect = forwardRef<
       }, 0);
     }, []);
 
-    const handleSelectToken = useCallback(() => {
-      if (allDisplayTokens.length > 0) {
-        setUpdateNonce(updateNonce + 1);
-      }
-      setTokenSelectorVisible(true);
-    }, [allDisplayTokens, updateNonce]);
-
-    useEffect(() => {
+    const resetQueryConds = useCallback(() => {
       setQueryConds(prev => ({
         ...prev,
         chainServerId: chainId,
+        account: accountInScreen,
       }));
+    }, [chainId, accountInScreen]);
+
+    const handleSelectToken = useCallback(() => {
+      if (allTokenItems.length > 0) {
+        setUpdateNonce(updateNonce + 1);
+      }
+
+      resetQueryConds();
+      setTokenSelectorVisible(true);
+    }, [allTokenItems, updateNonce, resetQueryConds]);
+
+    useEffect(() => {
+      setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
     }, [chainId]);
+
+    useEffect(() => {
+      setQueryConds(prev => ({ ...prev, accountInScreen }));
+    }, [accountInScreen]);
 
     const { t } = useTranslation();
     const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
@@ -363,6 +448,14 @@ const TokenSelect = forwardRef<
       styles.tokenSymbol,
     ]);
 
+    const { forScene, ofScreen } = useScreenSceneAccountContext();
+    const allowClearAccountFilter = useMemo(() => {
+      return (
+        forScene === 'MakeTransactionAbout' &&
+        [RootNames.MultiBridge, RootNames.MultiSwap].includes(ofScreen)
+      );
+    }, [forScene, ofScreen]);
+
     return (
       <>
         <TouchableOpacity onPress={handleSelectToken}>
@@ -408,6 +501,8 @@ const TokenSelect = forwardRef<
           selectToken={token}
           placeholder={placeholder}
           headerTitle={headerTitle}
+          displayAccountFilter={allowClearAccountFilter}
+          filterAccount={queryConds.account}
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}
           supportChains={supportChains}

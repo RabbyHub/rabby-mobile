@@ -11,9 +11,8 @@ import {
   PortfolioProject,
 } from '../types';
 import { calcPercent } from '@/utils/math';
-import { formatUsdValue, formatAmount } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
+import { formatUsdValue } from '@/utils/number';
+import { DisplayedToken } from '@/utils/token';
 
 export const pQueue = new PQueue({
   interval: 1000,
@@ -159,6 +158,11 @@ export class DisplayedProject implements AbstractProject {
   }
 }
 
+export {
+  /** @deprecated import from '@/utils/token.ts' directly */
+  DisplayedToken,
+};
+
 export class DisplayedPortfolio implements AbstractPortfolio {
   // [immerable] = true;
   id: string;
@@ -301,111 +305,4 @@ export class DisplayedPortfolio implements AbstractPortfolio {
 
   // 24h 之前有，现在没有的不考虑展示，只展示当前仓位
   // static createFromHistory(h: PortfolioItem) {}
-}
-
-export class DisplayedToken implements AbstractPortfolioToken {
-  // [immerable] = true;
-  id: string;
-  _tokenId: string;
-  chain: string;
-  logo_url: string;
-  amount: number;
-  symbol: string;
-  price: number;
-  decimals: number;
-  display_symbol: string | null;
-  is_core: boolean;
-  is_wallet: boolean;
-  name: string;
-  optimized_symbol: string;
-  is_verified: boolean;
-  time_at: number;
-  price_24h_change?: number | null;
-  low_credit_score?: boolean;
-  _amountStr?: string;
-  _priceStr?: string;
-  _amountChange?: number;
-  _amountChangeStr = '';
-  _usdValue?: number;
-  _realUsdValue: number;
-  _usdValueStr?: string;
-  _historyPatched?: boolean;
-  _usdValueChange?: number;
-  _realUsdValueChange?: number;
-  _usdValueChangeStr?: string;
-  _usdValueChangePercent?: string;
-  _amountChangeUsdValueStr = '';
-
-  constructor(token: PortfolioItemToken) {
-    this._tokenId = token.id;
-    this.amount = token.amount || 0;
-    this.id = token.id + token.chain;
-    this.chain = token.chain;
-    this.logo_url = token.logo_url;
-    this.price = token.price || 0;
-    this._realUsdValue = this.price * this.amount;
-    // 注意这里，debt 也被处理成正值
-    this._usdValue = Math.abs(this._realUsdValue);
-    this.symbol = getTokenSymbol(token);
-
-    this._usdValueStr = formatUsdValue(this._usdValue);
-    this._priceStr = bizNumberUtils.formatPrice(this.price);
-    this._amountStr = formatAmount(Math.abs(this.amount));
-    this.decimals = token.decimals;
-    this.is_core = token.is_core;
-    this.display_symbol = token.display_symbol;
-    this.is_verified = token.is_verified;
-    this.optimized_symbol = token.optimized_symbol;
-    this.is_wallet = token.is_wallet;
-    this.name = token.name;
-    this.time_at = token.time_at;
-    this.price_24h_change = token.price_24h_change;
-    this.low_credit_score = token.low_credit_score;
-
-    // 默认是它
-    this._usdValueChangeStr = '-';
-  }
-
-  patchHistory(h: PortfolioItemToken) {
-    this._historyPatched = true;
-    // debt 都当做正值
-    this._amountChange = Math.abs(this.amount) - Math.abs(h.amount || 0);
-    const amountChangeUsdValue = Math.abs(this._amountChange! * this.price);
-
-    // 大于 $0.01 才展示
-    if (amountChangeUsdValue >= 0.01) {
-      this._amountChangeStr = `${formatAmount(this._amountChange)} ${
-        this.symbol
-      }`;
-      this._amountChangeUsdValueStr = formatUsdValue(amountChangeUsdValue);
-    }
-
-    const preValue = (h.amount || 0) * (h.price || 0);
-    const preUsdValue = Math.abs(preValue);
-    this._usdValueChange = this._usdValue! - preUsdValue;
-    this._usdValueChangeStr = formatUsdValue(Math.abs(this._usdValueChange));
-
-    this._usdValueChangePercent = preUsdValue
-      ? calcPercent(preUsdValue, this._usdValue, 2, true)
-      : this._usdValue
-      ? '+100.00%'
-      : '+0.00%';
-
-    this._realUsdValueChange = this._realUsdValue! - preValue;
-  }
-
-  patchPrice(price?: number) {
-    if (this._historyPatched || (!price && price !== 0)) {
-      return;
-    }
-
-    // 特殊情况，对于不支持历史结点的 portfolio，只当 amount 没有变化
-    this.patchHistory({
-      amount: this.amount,
-      price,
-    } as PortfolioItemToken);
-  }
-
-  // 24h 之前有，现在没有的不考虑展示，只展示当前仓位
-  // static createFromHistory(h: PortfolioItemToken) {}
 }

@@ -8,6 +8,7 @@ import { BridgeContent } from './components/BridgeContent';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import {
   PropsForAccountSwitchScreen,
+  ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 
@@ -33,11 +34,12 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-  //   forScene: 'MakeTransactionAbout',
-  // });
-
-  return <Bridge {...props} isForMultipleAdderss />;
+  return (
+    <ScreenSceneAccountProvider
+      value={{ forScene: 'MakeTransactionAbout', ofScreen: 'MultiBridge' }}>
+      <Bridge {...props} isForMultipleAdderss />
+    </ScreenSceneAccountProvider>
+  );
 };
 
 Bridge.ForMultipleAddress = ForMultipleAddress;

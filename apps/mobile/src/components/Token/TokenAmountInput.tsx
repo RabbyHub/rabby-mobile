@@ -349,6 +349,7 @@ export const TokenAmountInput = React.forwardRef<
           onSearch={handleSearchTokens}
           isLoading={isListLoading}
           type={'send'}
+          displayAccountFilter={false}
           selectToken={token}
           placeholder={placeholder}
           chainServerId={chainServerId}

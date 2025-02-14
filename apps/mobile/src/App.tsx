@@ -32,6 +32,7 @@ import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
 import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { useCurrentAccountOnAppTop } from './hooks/account';
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
+import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -79,7 +80,9 @@ function MainScreen({ rabbitCode }: AppProps) {
   return (
     <AppProvider value={{ securityChain: securityChainOnTop }}>
       <BottomSheetModalProvider>
-        {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+        <ScreenSceneAccountProvider>
+          {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+        </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
   );

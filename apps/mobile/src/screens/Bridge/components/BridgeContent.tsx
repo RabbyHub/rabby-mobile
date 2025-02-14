@@ -31,12 +31,14 @@ import { RootNames } from '@/constant/layout';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
-import { findChainByEnum } from '@/utils/chain';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
 import { ReserveGasPopup } from '@/components/ReserveGasPopup';
 import { CHAINS_ENUM } from '@debank/common';
+import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import { naviReplace } from '@/utils/navigation';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -162,7 +164,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
 export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
-  const { colors2024, styles, colors } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const Header = useCallback(() => <BridgeHeader />, []);
@@ -514,6 +516,9 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     switchFeePopup(true);
   }, [switchFeePopup]);
 
+  const { switchAccountOnSelectedToken } =
+    useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
       {isForMultipleAdderss && (
@@ -529,15 +534,39 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           <View style={styles.cardContainer}>
             <BridgeToken
               type="from"
+              account={currentAccount}
               inSufficient={inSufficient}
               chain={fromChain}
               token={fromToken}
               isMaxRef={isMaxRef}
               clickMaxBtnCount={clickMaxBtnCount}
               handleMax={handleMax}
-              onChangeToken={item => {
-                handleAmountChange('');
-                setFromToken(item);
+              onChangeToken={token => {
+                const normalSetChainToken = () => {
+                  handleAmountChange('');
+                  setFromToken(token);
+                };
+
+                if (!isForMultipleAdderss) {
+                  normalSetChainToken();
+                } else {
+                  const { accountSwitchTo } = switchAccountOnSelectedToken({
+                    token,
+                    currentAccount,
+                  });
+                  if (!accountSwitchTo) {
+                    normalSetChainToken();
+                  } else {
+                    const chainItem = findChainByServerID(token.chain);
+                    naviReplace(RootNames.StackTransaction, {
+                      screen: RootNames.MultiBridge,
+                      params: {
+                        chainEnum: chainItem?.enum,
+                        tokenId: token.id,
+                      },
+                    });
+                  }
+                }
               }}
               onChangeChain={switchFromChain}
               value={amount}
@@ -546,6 +575,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             />
             <BridgeToken
               type="to"
+              account={currentAccount}
               chain={toChain}
               token={toToken}
               onChangeToken={setToToken}

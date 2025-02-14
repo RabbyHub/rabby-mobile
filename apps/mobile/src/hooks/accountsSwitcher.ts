@@ -11,6 +11,7 @@ import {
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
+import { RootNames } from '@/constant/layout';
 
 type SceneAccountInfo = {
   currentAccount: KeyringAccount | null;
@@ -481,4 +482,44 @@ export function useSceneAccountInfo(options: {
     isPinnedAccount,
     computeFinalSceneAccount,
   };
+}
+
+function getDefaultSceneAccountInfo() {
+  return {
+    forScene: null,
+    ofScreen: '',
+  };
+}
+const ScreenSceneAccountContext = React.createContext<
+  | {
+      forScene: null;
+      ofScreen: string;
+    }
+  | {
+      forScene: AccountSwitcherScene & 'MakeTransactionAbout';
+      ofScreen: typeof RootNames.MultiSwap | typeof RootNames.MultiBridge;
+    }
+>(getDefaultSceneAccountInfo());
+
+type ProviderProps = React.ComponentProps<
+  typeof ScreenSceneAccountContext.Provider
+>;
+export const ScreenSceneAccountProvider: React.FC<
+  Omit<ProviderProps, 'value'> & Partial<Pick<ProviderProps, 'value'>>
+> = props => {
+  const { children, value } = props;
+  return React.createElement(ScreenSceneAccountContext.Provider, {
+    value: value || getDefaultSceneAccountInfo(),
+    children,
+  });
+};
+export function useScreenSceneAccountContext() {
+  try {
+    return React.useContext(ScreenSceneAccountContext);
+  } catch (error) {
+    if (__DEV__) {
+      console.error('useScreenSceneAccountContext error', error);
+    }
+    return getDefaultSceneAccountInfo();
+  }
 }

@@ -55,7 +55,7 @@ import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
 import {
   PropsForAccountSwitchScreen,
-  useSceneAccountInfo,
+  ScreenSceneAccountProvider,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -66,6 +66,7 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useSwapRecentToTokens } from './hooks/recent';
 import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
+import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -73,6 +74,9 @@ const Swap = ({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
+  const { switchAccountOnSelectedToken } =
+    useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -573,7 +577,15 @@ const Swap = ({
                   setReceiveToken(undefined);
                 }
                 setPayToken(token);
+
+                if (isForMultipleAdderss) {
+                  switchAccountOnSelectedToken({
+                    token,
+                    currentAccount,
+                  });
+                }
               }}
+              account={currentAccount}
               chainId={chainServerId}
               type={'from'}
               excludeTokens={receiveToken?.id ? [receiveToken?.id] : undefined}
@@ -605,6 +617,7 @@ const Swap = ({
                   ? payAmount
                   : '0'
               }
+              account={currentAccount}
               chainId={chainServerId}
               type={'to'}
               currentQuote={activeProvider}
@@ -783,12 +796,11 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
-
   return (
-    <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
+    <ScreenSceneAccountProvider
+      value={{ forScene: 'MakeTransactionAbout', ofScreen: 'MultiSwap' }}>
+      <Swap {...props} isForMultipleAdderss />
+    </ScreenSceneAccountProvider>
   );
 };
 
