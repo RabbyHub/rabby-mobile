@@ -1,19 +1,17 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, TouchableOpacity, View } from 'react-native';
-import IconUSLogo from '@/assets2024/icons/buy/us.svg';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import {
   PropsWithChildren,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
-  useTransition,
 } from 'react';
 import {
   BottomSheetModalProps,
   BottomSheetScrollView,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components';
 import React from 'react';
@@ -22,15 +20,11 @@ import { useTranslation } from 'react-i18next';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { openapi } from '@/core/request';
 
-const list = [
-  {
-    logo: IconUSLogo,
-    name: 'us',
-    defaultPay: 'USD',
-    label: 'United States',
-  },
-];
+type TRegionList = Awaited<
+  ReturnType<typeof openapi.getBuySupportedCountryList>
+>;
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
@@ -62,7 +56,13 @@ const BottomSheetWrapper = (
   );
 };
 
-const SelectRegionInner = ({ onSelect }: { onSelect: (s: string) => void }) => {
+const SelectRegionInner = ({
+  onSelect,
+  regionList,
+}: {
+  onSelect: (s: string) => void;
+  regionList: TRegionList;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [isInputActive, setIsInputActive] = useState(false);
@@ -77,6 +77,18 @@ const SelectRegionInner = ({ onSelect }: { onSelect: (s: string) => void }) => {
   const handleInputBlur = () => {
     setIsInputActive(false);
   };
+
+  const displayList = useMemo(() => {
+    const v = query.trim()?.toLowerCase();
+    if (v) {
+      return regionList.filter(
+        item =>
+          item.id?.toLowerCase().includes(v) ||
+          item.name?.toLowerCase().includes(v),
+      );
+    }
+    return regionList;
+  }, [regionList, query]);
 
   return (
     <View style={styles.innerContainer}>
@@ -98,12 +110,13 @@ const SelectRegionInner = ({ onSelect }: { onSelect: (s: string) => void }) => {
       />
 
       <BottomSheetScrollView style={[styles.list, { marginBottom: bottom }]}>
-        {list.map(item => (
+        {displayList?.map(item => (
           <TouchableOpacity
+            key={item.id}
             style={styles.item}
-            onPress={() => onSelect(item.name)}>
-            <item.logo width={24} height={24} />
-            <Text style={styles.itemText}>{item.label}</Text>
+            onPress={() => onSelect(item.id)}>
+            <Image source={{ uri: item.image_url }} width={24} height={24} />
+            <Text style={styles.itemText}>{item.name}</Text>
           </TouchableOpacity>
         ))}
       </BottomSheetScrollView>
@@ -113,13 +126,20 @@ const SelectRegionInner = ({ onSelect }: { onSelect: (s: string) => void }) => {
 
 export const SelectRegion = ({
   region,
+  regionList,
   onSelectRegion,
 }: {
   region: string;
+  regionList: TRegionList;
   onSelectRegion: (s: string) => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [visible, setVisible] = React.useState(false);
+
+  const regionLogo = React.useMemo(
+    () => regionList.find(item => item.id === region)?.image_url,
+    [regionList, region],
+  );
 
   const onSelect = React.useCallback(
     (s: string) => {
@@ -135,7 +155,9 @@ export const SelectRegion = ({
         onPress={() => setVisible(true)}
         style={styles.container}>
         <View style={styles.inner}>
-          <IconUSLogo width={24} height={24} />
+          {regionLogo ? (
+            <Image width={16} height={16} source={{ uri: regionLogo }} />
+          ) : null}
           <RcIconSwapBottomArrow />
         </View>
       </TouchableOpacity>
@@ -149,7 +171,7 @@ export const SelectRegion = ({
           linearGradientType: 'linear',
           colors: colors2024,
         })}>
-        <SelectRegionInner onSelect={onSelect} />
+        <SelectRegionInner onSelect={onSelect} regionList={regionList} />
       </BottomSheetWrapper>
     </>
   );

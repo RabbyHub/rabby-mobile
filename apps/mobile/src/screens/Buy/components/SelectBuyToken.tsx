@@ -1,0 +1,525 @@
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Keyboard,
+  StyleSheet,
+} from 'react-native';
+import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
+import { uniqBy } from 'lodash';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenSelectorSheetModal } from '@/components/Token';
+import useAsync from 'react-use/lib/useAsync';
+import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
+import { useCurrentAccount } from '@/hooks/account';
+import { getTokenSymbol } from '@/utils/token';
+import { openapi } from '@/core/request';
+import { useTranslation } from 'react-i18next';
+import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { AppBottomSheetModal, AssetAvatar } from '@/components';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { SearchInput } from '@/components/Form/SearchInput';
+import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
+import { Skeleton } from '@rneui/themed';
+import { formatPrice, formatTokenAmount, formatUsdValue } from '@/utils/number';
+import BigNumber from 'bignumber.js';
+import { toast } from '@/components2024/Toast';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import { ModalLayouts } from '@/constant/layout';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import CheckedIcon from '@/assets2024/icons/common/check.svg';
+
+interface TokenSelectProps {
+  token?: TokenItem;
+  // onChange?(amount: string): void;
+  onTokenChange(token: TokenItem): void;
+  // excludeTokens?: TokenItem['id'][];
+  // placeholder?: string;
+  // tokenList: (TokenItem & {
+  //   currency_code: string;
+  // })[];
+}
+
+export const BuyTokenSelect = ({
+  token,
+  // onChange,
+  onTokenChange,
+}: TokenSelectProps) => {
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
+
+  const handleCurrentTokenChange = (token: TokenItem) => {
+    // onChange && onChange('');
+    onTokenChange(token);
+    setTokenSelectorVisible(false);
+  };
+
+  // const availableToken = useMemo(() => {
+  //   return uniqBy(tokenList, item => {
+  //     return `${item.chain}-${item.id}`;
+  //   }).filter(e => !excludeTokens.includes(e.id));
+  // }, [tokenList, excludeTokens]);
+
+  // const displayTokenList = useSortToken(availableToken);
+
+  const handleTokenSelectorClose = () => {
+    setTokenSelectorVisible(false);
+  };
+
+  const handleSelectToken = () => {
+    setTokenSelectorVisible(true);
+  };
+
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <>
+      <TouchableOpacity onPress={handleSelectToken} style={styles.wrapper}>
+        {token ? (
+          <>
+            <View style={styles.token}>
+              <AssetAvatar
+                size={26}
+                chain={token.chain}
+                logo={token.logo_url}
+                chainSize={0}
+              />
+              <Text numberOfLines={1} style={styles.tokenSymbol}>
+                {ellipsisOverflowedText(getTokenSymbol(token), 5)}
+              </Text>
+            </View>
+            <RcIconSwapBottomArrow />
+          </>
+        ) : (
+          <>
+            <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
+            <RcIconSwapBottomArrow />
+          </>
+        )}
+      </TouchableOpacity>
+
+      <TokenSelector
+        visible={tokenSelectorVisible}
+        onClose={handleTokenSelectorClose}
+        onChange={handleCurrentTokenChange}
+        address={currentAccount?.address || ''}
+        token={token}
+      />
+    </>
+  );
+};
+
+const TokenSelectorInner = ({
+  onChange,
+  address,
+  onClose,
+  token,
+}: {
+  onChange: (token: TokenItem) => void;
+  address: string;
+  onClose: () => void;
+  token?: TokenItem;
+}) => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyle,
+  });
+
+  const [query, setQuery] = useState('');
+  const [isInputActive, setIsInputActive] = useState(false);
+
+  const handleInputFocus = () => {
+    setIsInputActive(true);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputActive(false);
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+  };
+
+  const {
+    value: list,
+    loading,
+    error,
+  } = useAsync(() => openapi.getBuySupportedTokenList(), [address]);
+
+  if (error) {
+    toast.error(error?.message ? String(error?.message) : String(error));
+  }
+
+  const displayList = useMemo(() => {
+    const k = query?.trim();
+    if (k) {
+      return (
+        list?.filter(
+          e =>
+            e.name.toLowerCase().includes(query.toLowerCase()) ||
+            e.id.toLowerCase()?.includes(query.toLowerCase()),
+        ) || []
+      );
+    }
+    return list || [];
+  }, [query, list]);
+
+  const { tokens, updateData } = useTokens(address, false, 0, undefined, true);
+
+  useEffect(() => {
+    updateData();
+  }, [updateData]);
+
+  const Row = useCallback(
+    ({ item }: { item: TokenItem & { pinned?: boolean } }) => {
+      const isSelected = token?.id === item.id && token.chain === item.chain;
+
+      const cachedToken = tokens?.find(
+        e => e._tokenId === item.id && e.chain === item.chain,
+      );
+
+      return (
+        <TouchableOpacity
+          style={[styles.tokenListItem, isSelected && styles.selectedToken]}
+          onPress={() => {
+            onChange(item);
+            onClose();
+          }}>
+          <View style={styles.tokenLeft}>
+            <AssetAvatar
+              logo={item.logo_url}
+              size={40}
+              chain={item.chain}
+              chainSize={16}
+            />
+            <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
+              <View style={styles.tokenNameBox}>
+                <Text style={styles.tokenName} numberOfLines={1}>
+                  {ellipsisOverflowedText(getTokenSymbol(item), 15)}
+                </Text>
+                {isSelected && <CheckedIcon width={16} height={16} />}
+              </View>
+              <Text
+                style={[styles.tokenPrice, { marginTop: 4 }]}
+                numberOfLines={1}>
+                ${formatPrice(item.price)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+            <Text style={[styles.tokenHeaderAmount]}>
+              {formatTokenAmount(cachedToken?.amount || 0)}
+            </Text>
+            <Text style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
+              {formatUsdValue(
+                new BigNumber(cachedToken?.amount || 0)
+                  .times(item.price)
+                  .toString(10),
+              )}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [
+      onChange,
+      onClose,
+      styles.selectedToken,
+      styles.tokenHeaderAmount,
+      styles.tokenHeaderNetworth,
+      styles.tokenInfoCol,
+      styles.tokenInfoColRight,
+      styles.tokenLeft,
+      styles.tokenListItem,
+      styles.tokenName,
+      styles.tokenNameBox,
+      styles.tokenPrice,
+      token?.chain,
+      token?.id,
+      tokens,
+    ],
+  );
+
+  const ListHeader = useMemo(() => {
+    return loading ? (
+      <>
+        {Array.from({ length: 10 }).map((_, index) => (
+          <View key={index} style={styles.tokenListItem}>
+            <View style={[styles.box, { gap: 16 }]}>
+              <Skeleton circle width={40} height={40} />
+              <Skeleton width={70} height={20} />
+            </View>
+            <Skeleton width={50} height={20} />
+          </View>
+        ))}
+      </>
+    ) : null;
+  }, [loading, styles.box, styles.tokenListItem]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <Text style={styles.title}>
+          {t('page.gasTopUp.Select-from-supported-tokens')}
+        </Text>
+
+        <SearchInput
+          isActive={isInputActive}
+          containerStyle={styles.searchInputContainer}
+          searchIconWrapperStyle={styles.searchIconWrapperStyle}
+          inputStyle={styles.inputStyle}
+          searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
+          inputProps={{
+            value: query,
+            onChange: e => handleQueryChange(e.nativeEvent.text),
+            onFocus: handleInputFocus,
+            onBlur: handleInputBlur,
+            placeholder: 'Search Token',
+            placeholderTextColor: colors2024['neutral-info'],
+          }}
+        />
+      </View>
+
+      <BottomSheetFlatList
+        contentContainerStyle={styles.flatListContentContainerStyle}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={() => Keyboard.dismiss()}
+        data={displayList}
+        style={styles.flatList}
+        ListHeaderComponent={ListHeader}
+        renderItem={Row}
+        keyExtractor={item => item.id + item.chain}
+      />
+    </View>
+  );
+};
+
+const TokenSelector = ({
+  visible,
+  onClose,
+  onChange,
+  address,
+  token,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onChange: (token: TokenItem) => void;
+  address: string;
+  token?: TokenItem;
+}) => {
+  const bottomRef = useRef<BottomSheetModalMethods>(null);
+  const { colors2024, isLight } = useTheme2024({ getStyle });
+
+  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
+
+  useEffect(() => {
+    if (visible) {
+      bottomRef.current?.present();
+    } else {
+      bottomRef.current?.dismiss();
+    }
+  }, [visible]);
+
+  return (
+    <AppBottomSheetModal
+      ref={bottomRef}
+      snapPoints={snapPoints}
+      onDismiss={onClose}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: 'linear',
+      })}>
+      <TokenSelectorInner
+        onChange={onChange}
+        address={address}
+        onClose={onClose}
+        token={token}
+      />
+    </AppBottomSheetModal>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  wrapper: {
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-line'],
+    padding: 4,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  liquidityBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerBox: {
+    height: 48,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+
+    paddingHorizontal: 24,
+  },
+  headerBoxText: {
+    fontSize: 17,
+    marginRight: 2,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+  },
+  token: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tokenSymbol: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  selectText: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
+    marginBottom: 18,
+    textAlign: 'center',
+  },
+  inputStyle: {
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 22,
+    fontSize: 17,
+    color: colors2024['neutral-title-1'],
+  },
+  flatList: {
+    flexShrink: 1,
+    paddingHorizontal: 20,
+  },
+
+  tokenListItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flex: 1,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  searchInputContainer: {
+    borderRadius: 30,
+    backgroundColor: colors2024['neutral-bg-2'],
+    paddingHorizontal: 12,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  searchIconWrapperStyle: {
+    paddingLeft: 0,
+  },
+  box: { flexDirection: 'row', alignItems: 'center' },
+  tokenLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tokenInfoCol: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  tokenNameBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tokenName: {
+    marginRight: 8,
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    justifyContent: 'center',
+    fontWeight: '700',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenPrice: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenInfoColRight: {
+    alignItems: 'flex-end',
+    textAlign: 'right',
+  },
+  tokenHeaderAmount: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    textAlign: 'right',
+    fontFamily: 'SF Pro Rounded',
+  },
+  textSecondary: {
+    color: colors2024['neutral-secondary'],
+  },
+  isSelected: {
+    backgroundColor: colors2024['brand-light-1'],
+    marginHorizontal: 12,
+    borderRadius: 12,
+  },
+  tokenHeaderNetworth: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+    textAlign: 'right',
+    fontFamily: 'SF Pro Rounded',
+  },
+  text: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  selectedToken: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 0,
+  },
+  flatListContentContainerStyle: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-1'],
+    overflow: 'hidden',
+  },
+}));

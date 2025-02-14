@@ -13,22 +13,32 @@ import React from 'react';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { BuyToken } from './components/Token';
 import { useBuy } from './hooks';
-import SwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import { BestQuoteLoading } from '../Bridge/components/loading';
 import { BuyQuoteList } from './components/QuoteList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '@/components2024/Button';
 import { colord } from 'colord';
+import { getTokenSymbol } from '@/utils/token';
+import { openapi } from '@/core/request';
+import { openInAppBrowser } from '@/core/utils/linking';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import { BuyToIcon } from './components/ToIcon';
+import { toast } from '@/components2024/Toast';
 
 const floatBottom_height = 140;
 
-export const BuyScreen = () => {
+export const BuyScreen = ({
+  isForMultipleAdderss,
+}: {
+  isForMultipleAdderss?: boolean;
+}) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const headerRight = useCallback(() => <RightHeader onPress={() => {}} />, []);
+  const headerRight = useCallback(() => <RightHeader />, []);
   useLayoutEffect(() => {
     setNavigationOptions({
       headerRight,
@@ -36,23 +46,58 @@ export const BuyScreen = () => {
   }, [headerRight, setNavigationOptions]);
 
   const {
+    currentAddr,
+    regionList,
     region,
     switchRegion,
-
-    currency,
-    switchCurrency,
 
     toToken,
     onToTokenChange,
 
+    tokenAmount,
+
     amount,
     onPayMountChange,
+
+    activeProvider,
+    setActiveProvider,
+
+    quotes,
+    loading,
   } = useBuy();
 
-  const isQuoteLoading = false;
+  const isQuoteLoading = loading;
+
+  const symbol = React.useMemo(() => getTokenSymbol(toToken), [toToken]);
+
+  const [getUrlLoading, setUrlLoading] = React.useState(false);
+
+  const toBuy = useCallback(async () => {
+    if (currentAddr && activeProvider && region && amount && toToken) {
+      setUrlLoading(true);
+      try {
+        const data = await openapi.getBuyWidgetUrl({
+          user_addr: currentAddr,
+          country_code: region,
+          usd_amount: amount,
+          receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
+          service_provider: activeProvider,
+        });
+        openInAppBrowser(data.url);
+        onPayMountChange('');
+      } catch (error) {
+        toast.error(String(error));
+        console.log('error', error);
+      }
+      setUrlLoading(false);
+    }
+  }, [currentAddr, activeProvider, region, amount, toToken, onPayMountChange]);
 
   return (
     <NormalScreenContainer>
+      {isForMultipleAdderss && (
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      )}
       <KeyboardAwareScrollView
         enableOnAndroid
         scrollEnabled
@@ -60,12 +105,27 @@ export const BuyScreen = () => {
         keyboardOpeningTime={0}
         contentContainerStyle={styles.screen}>
         <View>
-          <SelectRegion region={region} onSelectRegion={switchRegion} />
+          <SelectRegion
+            region={region}
+            onSelectRegion={switchRegion}
+            regionList={regionList}
+          />
         </View>
         <View style={{ gap: 8 }}>
-          <BuyToken type="from" currency="USD" />
-          <BuyToken type="to" currency="USD" />
-          <SwitchBtn style={styles.switchButtonContainer} onPress={() => {}} />
+          <BuyToken
+            type="from"
+            currency="USD"
+            onInputChange={onPayMountChange}
+            value={amount}
+          />
+          <BuyToken
+            type="to"
+            currency="USD"
+            token={toToken}
+            onTokenSelect={onToTokenChange}
+            value={tokenAmount + ''}
+          />
+          <BuyToIcon style={styles.switchButtonContainer} />
         </View>
 
         {isQuoteLoading && (
@@ -80,23 +140,51 @@ export const BuyScreen = () => {
           </>
         )}
 
-        <BuyQuoteList />
+        {!loading && quotes?.length ? (
+          <BuyQuoteList
+            symbol={symbol}
+            quotes={quotes || []}
+            activeProvider={activeProvider}
+            setActiveProvider={setActiveProvider}
+          />
+        ) : null}
+
         <View style={styles.bottom} />
       </KeyboardAwareScrollView>
-      <LinearGradient
-        colors={[
-          colord(colors2024['neutral-bg-1']).alpha(0.3).toRgbString(),
-          colors2024['neutral-bg-1'],
-        ]}
-        locations={[0, 1]}
-        start={{ x: 0.54, y: 0 }}
-        end={{ x: 0.54, y: 0.5 }}
-        style={styles.floatBottom}>
-        <Button title={t('global.Confirm')} />
-      </LinearGradient>
+      {!loading && quotes?.length ? (
+        <LinearGradient
+          colors={[
+            colord(colors2024['neutral-bg-1']).alpha(0.3).toRgbString(),
+            colors2024['neutral-bg-1'],
+          ]}
+          locations={[0, 1]}
+          start={{ x: 0.54, y: 0 }}
+          end={{ x: 0.54, y: 0.5 }}
+          style={styles.floatBottom}>
+          <Button
+            title={t('page.buy.toBuy')}
+            onPress={toBuy}
+            loading={getUrlLoading}
+          />
+        </LinearGradient>
+      ) : null}
     </NormalScreenContainer>
   );
 };
+const ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof BuyScreen>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+  //   forScene: 'MakeTransactionAbout',
+  // });
+
+  return <BuyScreen {...props} isForMultipleAdderss />;
+};
+
+BuyScreen.ForMultipleAddress = ForMultipleAddress;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   screen: {

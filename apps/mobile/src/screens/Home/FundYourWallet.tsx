@@ -113,6 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingBottom: 50,
     borderRadius: 50,
     overflow: 'hidden',
+    marginHorizontal: 16,
   },
   bgLeft: { position: 'absolute', top: 0, left: 0 },
   bgRight: { position: 'absolute', top: 35, right: 0 },
