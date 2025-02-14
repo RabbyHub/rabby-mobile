@@ -40,7 +40,7 @@ HomeScreen.HeaderArea = HeaderArea;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-gray'],
   },
   safeView: {

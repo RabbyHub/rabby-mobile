@@ -79,7 +79,7 @@ const ViewTypes = {
   OVERVIEW: 2,
 };
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 interface Props {
@@ -700,6 +700,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         </Animated.View>
       )}
       <RecyclerListView
+        style={[styles.bgContainer, styles.list]}
         dataProvider={listData}
         layoutProvider={layoutProvider}
         rowRenderer={renderItem}
@@ -749,6 +750,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   list: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   stickyHeader: {
     position: 'absolute',
@@ -756,6 +758,7 @@ const getStyles = createGetStyles2024(ctx => ({
     left: 0,
     right: 0,
     height: ASSETS_SECTION_HEADER,
+    paddingHorizontal: 16,
     zIndex: 1,
   },
   bgContainer: {
