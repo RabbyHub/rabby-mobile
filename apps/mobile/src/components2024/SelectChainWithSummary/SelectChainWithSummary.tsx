@@ -13,11 +13,6 @@ import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
 import { NetSwitchTabsKey } from '@/constant/netType';
@@ -159,29 +154,11 @@ export default function SelectChainWithSummary({
     return [_matteredList, _unmatteredList];
   }, [excludeChains, _matteredList, _unmatteredList]);
 
-  const animation = useSharedValue(0);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateX: withTiming(
-            (1 - animation.value) * Math.floor(inputContainerWidth * 0.8),
-            {
-              duration: 500,
-            },
-          ),
-        },
-      ],
-    };
-  });
-
   const handleToggleSearch = () => {
     if (!canSearch) {
       setSearch('');
     }
     setCanSearch(!canSearch);
-    animation.value = animation.value === 0 ? 1 : 0;
   };
 
   const handleInputContainerLayout = (e: LayoutChangeEvent) => {
@@ -208,23 +185,21 @@ export default function SelectChainWithSummary({
         {canSearch && (
           <View style={styles.titleView}>
             <View style={styles.inputWrapper}>
-              <Animated.View style={[animatedStyle]}>
-                <TextInput
-                  style={{
-                    ...styles.inputText,
-                    ...styles.inputContainerStyle,
-                    backgroundColor: isDark
-                      ? colors2024['neutral-bg-2']
-                      : '#E8E9E9', // There is no more suitable color, use a temporary color number to replace it first
-                  }}
-                  placeholderTextColor={colors2024['neutral-info']}
-                  placeholder="Search chain"
-                  value={search}
-                  onChangeText={text => {
-                    setSearch(text);
-                  }}
-                />
-              </Animated.View>
+              <TextInput
+                style={{
+                  ...styles.inputText,
+                  ...styles.inputContainerStyle,
+                  backgroundColor: isDark
+                    ? colors2024['neutral-bg-2']
+                    : '#E8E9E9', // There is no more suitable color, use a temporary color number to replace it first
+                }}
+                placeholderTextColor={colors2024['neutral-info']}
+                placeholder="Search chain"
+                value={search}
+                onChangeText={text => {
+                  setSearch(text);
+                }}
+              />
             </View>
             <Pressable onPress={handleToggleSearch}>
               <Text style={styles.cancelText}>{t('global.cancel')}</Text>

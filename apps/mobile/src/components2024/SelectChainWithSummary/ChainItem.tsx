@@ -52,7 +52,6 @@ export default function ChainItem({
 
   const [tipsVisible, setTipsVisible] = useState(false);
   const isSelected = value && value === data?.enum;
-
   return (
     <Tip
       tooltipStyle={{
@@ -105,18 +104,20 @@ export default function ChainItem({
                     {formatUsdValue(chainBalanceItem?.usd_value || 0)}
                   </Text>
                 </View>
-                <View style={styles.divide} />
-                {tokens && (
-                  <View style={styles.chainLogos}>
-                    {tokens.map(item => (
-                      <AssetAvatar
-                        key={`${item.chain}-${item.id}`}
-                        logo={item.logo_url}
-                        size={14}
-                        logoStyle={styles.chainLogoItem}
-                      />
-                    ))}
-                  </View>
+                {tokens && tokens.length > 0 && (
+                  <>
+                    <View style={styles.divide} />
+                    <View style={styles.chainLogos}>
+                      {tokens.map(item => (
+                        <AssetAvatar
+                          key={`${item.chain}-${item.id}`}
+                          logo={item.logo_url}
+                          size={14}
+                          logoStyle={styles.chainLogoItem}
+                        />
+                      ))}
+                    </View>
+                  </>
                 )}
               </View>
             )}

@@ -36,7 +36,6 @@ export function ReceiveAddressListScreen(): JSX.Element {
         containerStyle={styles.accountRoot}
         onSelectAccount={handleSelect}
         scene="receive"
-        defaultPressItemAction="copy"
       />
     </NormalScreenContainer2024>
   );
