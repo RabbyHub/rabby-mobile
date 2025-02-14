@@ -603,9 +603,9 @@ class ProviderController extends BaseController {
         const _rawTx = {
           ...rawTx,
           ...approvalRes,
-          r: bufferToHex(signedTx.r),
-          s: bufferToHex(signedTx.s),
-          v: bufferToHex(signedTx.v),
+          r: covertToHex(signedTx.r),
+          s: covertToHex(signedTx.s),
+          v: covertToHex(signedTx.v),
         };
         if (is1559) {
           delete _rawTx.gasPrice;
