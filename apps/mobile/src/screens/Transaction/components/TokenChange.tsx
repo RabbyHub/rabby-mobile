@@ -23,6 +23,7 @@ import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemCateType } from './HistoryItemIcon';
 import { strings } from '@/utils/i18n';
 import { getTokenSymbol } from '@/utils/token';
+import { useMemo } from 'react';
 
 const TxChangeItem = ({
   item,
@@ -31,6 +32,7 @@ const TxChangeItem = ({
   isSend,
   canClickToken = true,
   isForMultipleAdderss,
+  isBottomSend,
 }: {
   isForMultipleAdderss?: boolean;
   data: HistoryDisplayItem;
@@ -40,6 +42,7 @@ const TxChangeItem = ({
     TokenItem | NFTItem
   >;
   isSend?: boolean;
+  isBottomSend?: boolean;
   canClickToken?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -50,36 +53,15 @@ const TxChangeItem = ({
 
   const tokenChangeStyle = StyleSheet.flatten([
     styles.text,
-    isSend ? styles.textNegative : null,
+    isSend ? (isBottomSend ? styles.textNegative : styles.approveText) : null,
   ]) as StyleProp<TextStyle>;
 
   return (
     <View style={styles.item}>
-      {/* {isNft ? (
-        <Media
-          failedPlaceholder={<IconDefaultNFT width={14} height={14} />}
-          type={token?.content_type}
-          src={token?.content?.endsWith('.svg') ? '' : token?.content}
-          thumbnail={token?.content?.endsWith('.svg') ? '' : token?.content}
-          playIconSize={14}
-          mediaStyle={styles.media}
-          style={styles.media}
-        />
-      ) : (token as TokenItem)?.logo_url ? (
-        <Image
-          source={{
-            uri: (token as TokenItem).logo_url,
-          }}
-          style={styles.media}
-        />
-      ) : (
-        <RcIconUnknown width={14} height={14} />
-      )} */}
-
       <Text
         style={[tokenChangeStyle, styles.tokenChangeDelta]}
         numberOfLines={1}>
-        {isSend ? '-' : '+'}{' '}
+        {isSend ? '-' : '+'}
         {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)}
       </Text>
       <TokenLabel
@@ -123,6 +105,11 @@ export const TxChange = ({
   const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
   const tokenIsNft = tokenId?.length === 32;
 
+  const hasMoreTxChange = useMemo(() => {
+    const arr = [...data?.receives, ...data?.sends];
+    return arr.length > 2;
+  }, [data]);
+
   return (
     <View style={[styles.container, style]}>
       {isApprove && (
@@ -134,27 +121,45 @@ export const TxChange = ({
             : getTokenSymbol(singeToken as TokenItem)}
         </Text>
       )}
-      {data?.receives?.map(item => (
-        <TxChangeItem
-          isForMultipleAdderss={isForMultipleAdderss}
-          canClickToken={canClickToken}
-          key={item.token_id}
-          data={data}
-          tokenDict={tokenDict}
-          item={item}
-        />
-      ))}
-      {data?.sends?.map(item => (
-        <TxChangeItem
-          isForMultipleAdderss={isForMultipleAdderss}
-          isSend
-          canClickToken={canClickToken}
-          key={item.token_id}
-          data={data}
-          tokenDict={tokenDict}
-          item={item}
-        />
-      ))}
+      {hasMoreTxChange ? (
+        <View style={styles.rowBox}>
+          <TxChangeItem
+            isForMultipleAdderss={isForMultipleAdderss}
+            canClickToken={canClickToken}
+            key={data.receives[0].token_id || data.sends[0].token_id}
+            data={data}
+            isSend={!data.receives[0]?.token_id}
+            tokenDict={tokenDict}
+            item={data.receives[0] || data.sends[0]}
+          />
+          <Text style={styles.text}>...</Text>
+        </View>
+      ) : (
+        <>
+          {data?.receives?.map(item => (
+            <TxChangeItem
+              isForMultipleAdderss={isForMultipleAdderss}
+              canClickToken={canClickToken}
+              key={item.token_id}
+              data={data}
+              tokenDict={tokenDict}
+              item={item}
+            />
+          ))}
+          {data?.sends?.map(item => (
+            <TxChangeItem
+              isForMultipleAdderss={isForMultipleAdderss}
+              isSend
+              isBottomSend={Boolean(data?.receives.length)}
+              canClickToken={canClickToken}
+              key={item.token_id}
+              data={data}
+              tokenDict={tokenDict}
+              item={item}
+            />
+          ))}
+        </>
+      )}
     </View>
   );
 };
@@ -169,7 +174,12 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     minWidth: 0,
     flexShrink: 1,
   },
+  rowBox: {
+    gap: ChangeSizes.gap,
+    flexDirection: 'row',
+  },
   item: {
+    flexShrink: 1,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -203,9 +213,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   textNegative: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   tokenLabel: {
     position: 'relative',

@@ -13,7 +13,7 @@ import { openapi } from '@/core/request';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { intToHex } from '@ethereumjs/util';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { isArray, maxBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -146,9 +146,9 @@ export const TransactionItem = ({
         };
       case HistoryItemCateType.Swap:
         const actionData =
-          data.txs?.[0]?.action?.actionData.swap ||
-          data.txs?.[0]?.action?.actionData.unWrapToken ||
-          data.txs?.[0]?.action?.actionData.wrapToken;
+          data.maxGasTx?.action?.actionData.swap ||
+          data.maxGasTx?.action?.actionData.unWrapToken ||
+          data.maxGasTx?.action?.actionData.wrapToken;
         const send = actionData?.payToken!;
         const receive = actionData?.receiveToken!;
 
@@ -159,22 +159,27 @@ export const TransactionItem = ({
         };
       case HistoryItemCateType.Revoke: {
         const reToken =
-          data.txs?.[0]?.action?.actionData.revokeToken ||
-          // data.txs?.[0]?.action?.actionData.revokeNFT ||
+          data.maxGasTx?.action?.actionData.revokeToken ||
+          data.maxGasTx?.action?.actionData.revokeNFT ||
           // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
-          data.txs?.[0]?.action?.actionData.revokePermit2;
+          data.maxGasTx?.action?.actionData.revokePermit2;
+        const revokeToken = reToken?.token || reToken?.nft;
 
         return {
-          approveToken: reToken?.token!,
-          isNft: reToken?.token?.id.length === 32,
+          approveToken: revokeToken!,
+          isNft: revokeToken?.id.length === 32,
         };
       }
       case HistoryItemCateType.Approve: {
-        const apToken = data.txs?.[0]?.action?.actionData.approveToken;
+        const apToken =
+          data.maxGasTx?.action?.actionData.approveToken ||
+          data.maxGasTx?.action?.actionData.approveNFT;
+
+        const approveTokenOrNft: TokenItem = apToken?.token || apToken?.nft;
 
         return {
-          approveToken: apToken?.token!,
-          isNft: apToken?.token?.id.length === 32,
+          approveToken: approveTokenOrNft!,
+          isNft: approveTokenOrNft?.id.length === 32,
         };
       }
       default:

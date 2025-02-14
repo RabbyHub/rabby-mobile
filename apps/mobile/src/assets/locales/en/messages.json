@@ -60,6 +60,8 @@
         "Unlimited": "Unlimited",
         "Revoke": "Revoke",
         "Date": "Date",
+        "Name": "Name",
+        "Collection": "Collection",
         "Status": "Status",
         "From": "From",
         "To": "To",

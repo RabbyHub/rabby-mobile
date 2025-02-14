@@ -29,6 +29,7 @@ import {
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
@@ -58,6 +59,8 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 export const TxStatusItem = ({
   status,
@@ -302,7 +305,6 @@ function HistoryDetailScreen(): JSX.Element {
       const tokenIsNft = tokenId?.length === 32;
       const tokenUUID = `${data.chain}_token:${tokenId}`;
       const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-
       return {
         formatToken: {
           ...token,
@@ -355,16 +357,21 @@ function HistoryDetailScreen(): JSX.Element {
     }
   }, [fetchApproveAllowance, formatType]);
 
-  const onOpenTxId = useCallback(() => {
-    const info =
-      typeof data.chain === 'string' ? getChain(data.chain) : data.chain;
+  const onOpenTxId = useCallback(
+    (txHash?: string, address?: string) => {
+      const info =
+        typeof data.chain === 'string' ? getChain(data.chain) : data.chain;
 
-    if (info?.scanLink) {
-      openTxExternalUrl({ chain: info, txHash: data.id });
-    } else {
-      toast.error('Unknown chain');
-    }
-  }, [data]);
+      if (info?.scanLink) {
+        address
+          ? openTxExternalUrl({ chain: info, address })
+          : openTxExternalUrl({ chain: info, txHash });
+      } else {
+        toast.error('Unknown chain');
+      }
+    },
+    [data],
+  );
 
   const isApproveOrRevoke = useMemo(() => {
     return (
@@ -378,21 +385,31 @@ function HistoryDetailScreen(): JSX.Element {
       return formatProject ? (
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>{titleText}</Text>
-          <View style={{ alignItems: 'flex-end' }}>
+          <TouchableOpacity
+            style={{ alignItems: 'flex-end' }}
+            onPress={() =>
+              onOpenTxId(undefined, data.tx?.to_addr || data.other_addr || '')
+            }>
             <View
               style={{
                 flexDirection: 'row',
+                alignItems: 'center',
                 gap: 4,
               }}>
               <AssetAvatar logo={formatProject?.logo_url} size={16} />
               <Text style={[styles.itemContentText]}>
                 {formatProject?.name}
               </Text>
+              <RcIconJumpCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-foot']}
+              />
             </View>
             <Text style={styles.itemAddressText}>
               {ellipsisAddress(data.tx?.to_addr || data.other_addr || '')}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       ) : null;
     },
@@ -403,6 +420,8 @@ function HistoryDetailScreen(): JSX.Element {
       styles.itemAddressText,
       styles.itemContentText,
       styles.itemTitleText,
+      colors2024,
+      onOpenTxId,
     ],
   );
 
@@ -425,7 +444,9 @@ function HistoryDetailScreen(): JSX.Element {
         />
         <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {strings('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
                 {formatIntlTimestamp(data?.time_at * 1000)}
@@ -440,6 +461,38 @@ function HistoryDetailScreen(): JSX.Element {
               <TxStatusItem status={status} withText={true} />
             </View>
           </View>
+          {isNft && (
+            <>
+              <View style={styles.detailItem}>
+                <Text style={styles.itemTitleText}>
+                  {strings('page.transactions.detail.Name')}
+                </Text>
+                <View>
+                  <Text style={styles.itemContentText}>
+                    {ellipsisOverflowedText(
+                      (formatToken as unknown as NFTItem)?.name,
+                      30,
+                    )}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.detailItem}>
+                <Text style={styles.itemTitleText}>
+                  {strings('page.transactions.detail.Collection')}
+                </Text>
+                <View>
+                  <Text style={styles.itemContentText}>
+                    {ellipsisOverflowedText(
+                      (formatToken as unknown as NFTItem).contract_name ||
+                        (formatToken as unknown as NFTItem)?.collection?.name ||
+                        '',
+                      30,
+                    )}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
           {isApproveOrRevoke &&
             ProjecRenderItem(
               formatType === HistoryItemCateType.Approve
@@ -524,12 +577,12 @@ function HistoryDetailScreen(): JSX.Element {
               <Text style={styles.itemTitleText}>Hash</Text>
               <TouchableOpacity
                 disabled={!touchable}
-                onPress={onOpenTxId}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                onPress={() => onOpenTxId(data.id)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={[styles.itemContentText]}>
                   {ellipsisAddress(data.id)}
                 </Text>
-                <RcIconExternalLinkCC
+                <RcIconJumpCC
                   width={14}
                   height={14}
                   color={colors2024['neutral-foot']}

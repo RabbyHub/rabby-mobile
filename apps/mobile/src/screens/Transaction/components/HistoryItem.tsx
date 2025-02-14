@@ -264,6 +264,8 @@ export const HistoryItem = React.memo(
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingRight: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -344,12 +346,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
   },
   cardBody: {
-    paddingHorizontal: 12,
     paddingVertical: 14,
+    overflow: 'hidden',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   cardFooter: {
     padding: 16,
