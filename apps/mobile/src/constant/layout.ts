@@ -178,6 +178,16 @@ export type ScreenStatusBarConf = {
 //   return colord(rgba).toHex();
 // }
 
+export function makeTxPageBackgroundColors({
+  isLight,
+  colors2024,
+}: {
+  isLight?: boolean;
+  colors2024: AppColors2024Variants;
+}) {
+  return isLight ? '#F6F7F7' : colors2024['neutral-bg-1'];
+}
+
 function makeScreenSpecConfig() {
   type ThemeType = {
     '@default': ScreenStatusBarConf;
@@ -200,7 +210,9 @@ function makeScreenSpecConfig() {
       : ('dark' as const);
 
     const colors = ThemeColors[isDarkTheme ? 'dark' : 'light'];
-    const colors2024 = ThemeColors2024[isDarkTheme ? 'dark' : 'light'];
+    const colors2024 = ThemeColors2024[
+      isDarkTheme ? 'dark' : 'light'
+    ] as AppColors2024Variants;
 
     const bg1DefaultConf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,
@@ -222,7 +234,10 @@ function makeScreenSpecConfig() {
 
     const historyPageConf = <ScreenStatusBarConf>{
       ...bg2Default2024Conf,
-      androidStatusBarBg: !isDarkTheme ? '#F6F7F7' : colors2024['neutral-bg-1'],
+      androidStatusBarBg: makeTxPageBackgroundColors({
+        isLight: !isDarkTheme,
+        colors2024,
+      }),
     };
 
     const transparentDefault2024Conf = <ScreenStatusBarConf>{
@@ -231,11 +246,11 @@ function makeScreenSpecConfig() {
       androidStatusBarBg: 'transparent',
     };
 
-    const bg2DefaultConf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors['neutral-bg2'],
-    };
+    // const bg2DefaultConf = <ScreenStatusBarConf>{
+    //   barStyle: adaptiveStatusBarStyle,
+    //   iosStatusBarStyle: adaptiveIosStatusBarStyle,
+    //   androidStatusBarBg: colors['neutral-bg2'],
+    // };
 
     const card2DefaultConf = <ScreenStatusBarConf>{
       barStyle: adaptiveStatusBarStyle,

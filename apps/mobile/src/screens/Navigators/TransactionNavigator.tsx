@@ -4,7 +4,11 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import {
+  RootNames,
+  makeHeadersPresets,
+  makeTxPageBackgroundColors,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
@@ -109,7 +113,10 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
+            backgroundColor: makeTxPageBackgroundColors({
+              isLight,
+              colors2024,
+            }),
           },
         }}
       />
@@ -128,7 +135,10 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
+            backgroundColor: makeTxPageBackgroundColors({
+              isLight,
+              colors2024,
+            }),
           },
         }}
       />

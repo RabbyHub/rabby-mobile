@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
-import { RootNames } from '@/constant/layout';
+import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
@@ -652,9 +652,9 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   useLastUsedAccountInScreen();
 
   const { styles } = useTheme2024({ getStyle });
-  const { isSceneUsingAllAccounts } = useSceneAccountInfo({
-    forScene: 'MultiHistory',
-  });
+  // const { isSceneUsingAllAccounts } = useSceneAccountInfo({
+  //   forScene: 'MultiHistory',
+  // });
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
@@ -662,7 +662,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
         <AccountSwitcherModal
           forScene="MultiHistory"
           inScreen
-          panelLinearGradientProps={{ type: 'linear' }}
+          panelLinearGradientProps={{ type: 'tx-page' }}
         />
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
@@ -689,7 +689,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
-    backgroundColor: colors2024?.['neutral-bg-1'],
+    backgroundColor: makeTxPageBackgroundColors({ isLight, colors2024 }),
   },
   menuContainer: {
     elevation: 5,
