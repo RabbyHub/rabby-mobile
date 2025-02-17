@@ -6,7 +6,7 @@ import { formatSpeicalAmount } from '@/utils/number';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtomValue } from 'jotai';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
 import { getCountry } from 'react-native-localize';
 import useAsync from 'react-use/lib/useAsync';
@@ -76,12 +76,12 @@ export const useBuy = () => {
 
   const regionList = useAtomValue(regionListAtom);
 
-  const switchRegion = useCallback((region: string) => {
-    setRegion(region);
+  const switchRegion = useCallback((v: string) => {
+    setRegion(v);
   }, []);
 
-  const switchCurrency = useCallback((currency: string) => {
-    setCurrency(currency);
+  const switchCurrency = useCallback((v: string) => {
+    setCurrency(v);
   }, []);
 
   const onPayMountChange = useCallback((value: string) => {
@@ -94,6 +94,8 @@ export const useBuy = () => {
 
   const [loading, setLoading] = useState(false);
 
+  const fetchRef = useRef<Promise<any>>();
+
   const [{ value: _quotes, error }, getBuyQuotes] = useAsyncFn(async () => {
     if (
       currentAccount?.address &&
@@ -102,16 +104,45 @@ export const useBuy = () => {
       currency &&
       Number(amount) > 0
     ) {
-      return openapi
+      const data = openapi
         .getBuyQuote({
           user_addr: currentAccount?.address,
           country_code: region,
           usd_amount: amount,
           receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
         })
+        .then(async res => {
+          const paymentMethods = await Promise.allSettled(
+            res.map(e =>
+              openapi.getBuyPaymentMethods({
+                country_code: region,
+                service_provider: e.service_provider.id,
+              }),
+            ),
+          );
+
+          console.log('paymentMethods', paymentMethods);
+          const data: ((typeof res)[number] & {
+            paymentMethod?: Awaited<
+              ReturnType<typeof openapi.getBuyPaymentMethods>
+            >;
+          })[] = [...res];
+          paymentMethods.forEach((item, idx) => {
+            if (item.status === 'fulfilled') {
+              data[idx].paymentMethod = item.value;
+            }
+          });
+          return data;
+        })
         .finally(() => {
-          setLoading(false);
+          if (data === fetchRef.current) {
+            setLoading(false);
+          }
         });
+
+      fetchRef.current = data;
+
+      return data;
     }
   }, [amount, region, currency, currentAccount?.address, toToken]);
 

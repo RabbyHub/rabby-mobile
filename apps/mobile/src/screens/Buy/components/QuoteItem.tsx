@@ -9,6 +9,7 @@ import IconArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { formatTokenAmount } from '@/utils/number';
 import { TouchableOpacity } from 'react-native';
 import { Image } from 'react-native';
+import { openapi } from '@/core/request';
 
 export const BuyQuoteItem = ({
   id,
@@ -19,6 +20,7 @@ export const BuyQuoteItem = ({
   activeProvider,
   setActiveProvider,
   isBest,
+  payments,
 }: {
   id: string;
   name: string;
@@ -28,13 +30,17 @@ export const BuyQuoteItem = ({
   activeProvider: string;
   isBest?: boolean;
   setActiveProvider: (s: string) => void;
+  payments?: Awaited<ReturnType<typeof openapi.getBuyPaymentMethods>>;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const active = activeProvider === id;
+  const active = React.useMemo(
+    () => activeProvider === id,
+    [activeProvider, id],
+  );
 
-  const payMethodList = Array.from({ length: 4 }).fill(1);
+  console.log('payments', payments);
 
   return (
     <TouchableOpacity
@@ -72,9 +78,12 @@ export const BuyQuoteItem = ({
 
       <View style={[styles.row, { justifyContent: 'space-between' }]}>
         <View style={styles.payList}>
-          {payMethodList.map((_, index) => (
+          {payments?.map((item, index) => (
             <View key={index} style={styles.payBox}>
-              {/* <Image source={}  style={styles.payLogo}/> */}
+              <Image
+                source={{ uri: item.logo_url }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
               {/* <Skeleton style={styles.payLogo} /> */}
             </View>
           ))}
@@ -97,6 +106,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     padding: 16,
     paddingTop: 24,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
 
   active: {
@@ -104,8 +115,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colors2024['green-default'],
-    overflow: 'hidden',
     backgroundColor: colors2024['green-light-4'],
+    padding: 16,
+    paddingTop: 24,
+    overflow: 'hidden',
   },
 
   checkBg: {
@@ -186,8 +199,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   payBox: {
-    width: 46,
+    width: 32,
     height: 20,
+    paddingHorizontal: 4,
     borderRadius: 4,
     overflow: 'hidden',
     justifyContent: 'center',
