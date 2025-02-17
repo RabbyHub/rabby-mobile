@@ -21,6 +21,8 @@ import { AssetAvatar } from '@/components';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export enum HistoryItemCateType {
   Send = 'send',
@@ -50,19 +52,48 @@ export const HistoryItemIcon = ({
   isNft,
   isInDetail,
 }: ItemIconProps) => {
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const RcSingleTokenBrIcon = useMemo(() => {
     const size = isInDetail ? 24 : 20;
     const IconApprove = (
-      <RcIconApproval width={size} height={size} style={[styles.iconBR]} />
+      <RcIconApproval
+        width={size}
+        height={size}
+        color={
+          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
+        }
+        style={[styles.iconBR]}
+      />
     );
     const IconSend = (
-      <RcIconSend width={size} height={size} style={[styles.iconBR]} />
+      <RcIconSend
+        width={size}
+        height={size}
+        style={[styles.iconBR]}
+        color={
+          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
+        }
+      />
     );
     const IconRecieve = (
-      <RcIconReceive style={[styles.iconBR]} width={size} height={size} />
+      <RcIconReceive
+        style={[styles.iconBR]}
+        width={size}
+        height={size}
+        color={
+          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
+        }
+      />
     );
     const IconRevoke = (
-      <RcIconRevoke width={size} height={size} style={[styles.iconBR]} />
+      <RcIconRevoke
+        width={size}
+        height={size}
+        style={[styles.iconBR]}
+        color={
+          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
+        }
+      />
     );
 
     return {
@@ -71,7 +102,7 @@ export const HistoryItemIcon = ({
       [HistoryItemCateType.Recieve]: IconRecieve,
       [HistoryItemCateType.Revoke]: IconRevoke,
     };
-  }, [isInDetail]);
+  }, [isInDetail, colors2024, styles, isLight]);
 
   // if (iconUri) {
   switch (type) {
@@ -142,7 +173,7 @@ export const HistoryItemIcon = ({
   // return <RcIconDefault style={[styles.image, style]} />;
 };
 
-const styles = StyleSheet.create({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   image: {
     width: 46,
     height: 46,
@@ -189,4 +220,4 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
-});
+}));

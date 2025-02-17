@@ -10,6 +10,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import RcIconInteraction from '@/assets2024/icons/history/IconInteraction.svg';
+import RcIconInteractionDark from '@/assets2024/icons/history/IconInteractionDark.svg';
 import { TxChange } from './TokenChange';
 import { TxId } from './TxId';
 import { TxInterAddressExplain } from './TxInterAddressExplain';
@@ -19,12 +21,13 @@ import { useTheme2024 } from '@/hooks/theme';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { strings } from '@/utils/i18n';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
+import { AssetAvatar } from '@/components';
+import { useTranslation } from 'react-i18next';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -41,11 +44,13 @@ export const HistoryItem = React.memo(
     style,
     isForMultipleAdderss,
   }: HistoryItemProps) => {
+    const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
     const isScam = data.is_scam;
+    const isSmallUsdTx = data.isSmallUsdTx;
     const chainItem = getChain(data.chain);
-    const { styles } = useTheme2024({ getStyle });
+    const { styles, isLight } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
       return getHistoryItemType(data);
@@ -57,13 +62,13 @@ export const HistoryItem = React.memo(
         cate === HistoryItemCateType.Swap ||
         cate === HistoryItemCateType.Bridge;
       if (isDoubleToken) {
-        const send = data.sends[0];
-        const receive = data.receives[0];
+        const send = data.sends[0] || {};
+        const receive = data.receives[0] || {};
         const sendToken =
-          tokenDict[send.token_id] ||
+          tokenDict[send?.token_id] ||
           tokenDict[fetchHistoryTokenUUId(send.token_id, data.chain)];
         const receiveToken =
-          tokenDict[receive.token_id] ||
+          tokenDict[receive?.token_id] ||
           tokenDict[fetchHistoryTokenUUId(receive.token_id, data.chain)];
 
         return {
@@ -94,41 +99,45 @@ export const HistoryItem = React.memo(
     const formatTitle = useMemo(() => {
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return strings('page.transactions.itemTitle.Swap');
+          return t('page.transactions.itemTitle.Swap');
 
         case HistoryItemCateType.Send:
-          return strings('page.transactions.itemTitle.Send');
+          return t('page.transactions.itemTitle.Send');
         case HistoryItemCateType.Recieve:
-          return strings('page.transactions.itemTitle.Recieve');
+          return t('page.transactions.itemTitle.Recieve');
         case HistoryItemCateType.Bridge:
-          return strings('page.transactions.itemTitle.Bridge');
+          return t('page.transactions.itemTitle.Bridge');
 
         case HistoryItemCateType.Approve:
-          return strings('page.transactions.itemTitle.Approve');
+          return t('page.transactions.itemTitle.Approve');
         case HistoryItemCateType.Revoke:
-          return strings('page.transactions.itemTitle.Revoke');
+          return t('page.transactions.itemTitle.Revoke');
         case HistoryItemCateType.Contract:
-          return strings('page.transactions.itemTitle.Contract');
+          return t('page.transactions.itemTitle.Contract');
         case HistoryItemCateType.Cancel:
-          return strings('page.transactions.itemTitle.Cancel');
+          return t('page.transactions.itemTitle.Cancel');
         case HistoryItemCateType.UnKnown:
-          return strings('page.transactions.itemTitle.Default');
+          return t('page.transactions.itemTitle.Default');
         default:
           return data.tx?.name
             ? ellipsisOverflowedText(data.tx?.name, 15)
-            : strings('page.transactions.itemTitle.Default');
+            : t('page.transactions.itemTitle.Default');
       }
-    }, [formatType, data]);
+    }, [formatType, data, t]);
+
+    const projectObj = useMemo(() => {
+      return data?.project_id ? projectDict[data.project_id] : undefined;
+    }, [data, projectDict]);
 
     const formatDescribe = useMemo(() => {
-      const FromText = strings('page.swap.from') + ' ';
-      const ToText = strings('page.swap.to') + ' ';
+      const FromText = t('page.swap.from') + ' ';
+      const ToText = t('page.swap.to') + ' ';
       const projectName = data?.project_id
         ? projectDict[data?.project_id]?.name
         : '';
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return chainItem?.name || strings('page.transactions.detail.Unknown');
+          return chainItem?.name || t('page.transactions.detail.Unknown');
 
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
@@ -144,18 +153,16 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Approve:
           const isRevoke = formatType === HistoryItemCateType.Revoke;
           return isRevoke
-            ? FromText +
-                (projectName || strings('page.transactions.detail.Unknown'))
-            : ToText +
-                (projectName || strings('page.transactions.detail.Unknown'));
+            ? FromText + (projectName || t('page.transactions.detail.Unknown'))
+            : ToText + (projectName || t('page.transactions.detail.Unknown'));
         case HistoryItemCateType.Contract:
           return FromText + chainItem?.name;
         case HistoryItemCateType.Cancel:
-          return strings('page.transactions.detail.Unknown');
+          return t('page.transactions.detail.Unknown');
         default:
-          return strings('page.transactions.detail.Unknown');
+          return projectName || t('page.transactions.detail.Unknown');
       }
-    }, [formatType, data, chainItem, projectDict]);
+    }, [formatType, data, chainItem, projectDict, t]);
 
     const navigation = useRabbyAppNavigation();
     const hanldeNavigateDetail = useCallback(() => {
@@ -171,7 +178,12 @@ export const HistoryItem = React.memo(
 
     return (
       <TouchableOpacity onPress={hanldeNavigateDetail}>
-        <View style={[styles.card, style, isScam ? styles.cardGray : null]}>
+        <View
+          style={[
+            styles.card,
+            style,
+            isScam || isSmallUsdTx ? styles.cardGray : null,
+          ]}>
           <View style={styles.cardBody}>
             {/* <TxInterAddressExplain
             style={[
@@ -186,11 +198,22 @@ export const HistoryItem = React.memo(
             isScam={isScam}
           /> */}
             <View style={styles.leftContent}>
-              <HistoryItemIcon
-                type={formatType as HistoryItemCateType}
-                token={formatToken}
-                isNft={isNft}
-              />
+              {formatType === HistoryItemCateType.UnKnown && projectObj ? (
+                <View style={styles.imageBox}>
+                  <AssetAvatar logo={projectObj?.logo_url} size={46} />
+                  {isLight ? (
+                    <RcIconInteraction style={styles.iconBR} />
+                  ) : (
+                    <RcIconInteractionDark style={styles.iconBR} />
+                  )}
+                </View>
+              ) : (
+                <HistoryItemIcon
+                  type={formatType as HistoryItemCateType}
+                  token={formatToken}
+                  isNft={isNft}
+                />
+              )}
               <View style={styles.textBox}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
@@ -199,7 +222,7 @@ export const HistoryItem = React.memo(
                   {isShowSuccess && (
                     <TxStatusItem status={1} showSuccess={true} />
                   )}
-                  <TxStatusItem status={data.tx?.status || 0} />
+                  <TxStatusItem status={data.tx?.status ?? 1} />
                 </View>
                 <Text style={styles.describeText} numberOfLines={1}>
                   {formatDescribe}
@@ -239,17 +262,31 @@ export const HistoryItem = React.memo(
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    borderRadius: 20,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingRight: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    marginBottom: 12,
+    marginBottom: 8,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
   },
   titleBox: {
     flexDirection: 'row',
     gap: 6,
+  },
+  imageBox: {
+    width: 46,
+    height: 46,
+    position: 'relative',
+  },
+  iconBR: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    width: 20,
+    height: 20,
   },
   cardGray: {
     opacity: 0.5,
@@ -308,8 +345,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
   },
   cardBody: {
-    paddingHorizontal: 12,
     paddingVertical: 14,
+    overflow: 'hidden',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

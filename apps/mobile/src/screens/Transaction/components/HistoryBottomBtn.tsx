@@ -16,7 +16,6 @@ import { navigate, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { Button } from '@/components2024/Button';
-import { strings } from '@/utils/i18n';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -25,6 +24,8 @@ import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
+import { useCurrentAccount } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 interface ItemProps {
   status: number;
@@ -60,6 +61,8 @@ export const HistoryBottomBtn = ({
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   // const isFail = useMemo(() => status !== 1, [status]);
   const { btnContainerViewStyle, buttonStyle } = useMemo(() => {
@@ -80,13 +83,20 @@ export const HistoryBottomBtn = ({
         <View style={btnContainerViewStyle}>
           <Button
             buttonStyle={buttonStyle}
-            onPress={() => {
+            onPress={async () => {
               const sendToken =
+                tokenDict[sends[0]?.token_id] ||
                 tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
               console.log('chainItem sendToken', chain, sendToken);
               const chainItem = findChain({
                 serverId: sendToken.chain,
               });
+              if (!isForMultipleAdderss) {
+                await switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  currentAccount,
+                );
+              }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss
@@ -100,7 +110,7 @@ export const HistoryBottomBtn = ({
                 }),
               );
             }}
-            title={strings('page.transactions.detail.SendAgain')}
+            title={t('page.transactions.detail.SendAgain')}
           />
         </View>
       );
@@ -116,7 +126,7 @@ export const HistoryBottomBtn = ({
       const tokenIsNft = tokenId?.length === 32;
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const name = tokenIsNft
-        ? strings('page.nft.title')
+        ? t('page.nft.title')
         : getTokenSymbol(singeToken as TokenItem);
 
       return tokenIsNft ? null : (
@@ -125,7 +135,7 @@ export const HistoryBottomBtn = ({
             placement="top"
             content={
               noRemainValue
-                ? strings('page.transactions.detail.NoApproveNeed')
+                ? t('page.transactions.detail.NoApproveNeed')
                 : undefined
             }>
             <Button
@@ -163,7 +173,7 @@ export const HistoryBottomBtn = ({
                 resetNavigationTo(navigation, 'Home');
               }}
               type={'primary'}
-              title={`${strings(
+              title={`${t(
                 'page.transactions.detail.Revoke',
               )} ${revokeAmountStr} ${name}`}
             />
@@ -179,6 +189,12 @@ export const HistoryBottomBtn = ({
             buttonStyle={buttonStyle}
             onPress={() => {
               const chainItem = !chain ? null : findChainByServerID(chain);
+              if (!isForMultipleAdderss) {
+                switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  currentAccount,
+                );
+              }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss
@@ -192,7 +208,7 @@ export const HistoryBottomBtn = ({
                 }),
               );
             }}
-            title={strings('page.transactions.detail.SwapAgain')}
+            title={t('page.transactions.detail.SwapAgain')}
           />
         </View>
       );

@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { View } from 'react-native';
 
 import {
   BottomSheetHandle,
@@ -85,3 +86,34 @@ export function BottomSheetHandlableView({
     </GestureDetector>
   );
 }
+
+export function Handlable<T extends React.FC<any>>({
+  __IN_SHEET_MODAL__ = false,
+  style,
+  children,
+  Component = View as any,
+}: React.PropsWithChildren<
+  RNViewProps & {
+    __IN_SHEET_MODAL__?: boolean;
+    Component?: T;
+  }
+>) {
+  const HandlableView = __IN_SHEET_MODAL__
+    ? BottomSheetHandlableView
+    : Component;
+
+  return <HandlableView style={style}>{children}</HandlableView>;
+}
+
+Handlable.Fragment = function ({
+  __IN_SHEET_MODAL__ = false,
+  children,
+}: React.PropsWithChildren<{
+  __IN_SHEET_MODAL__?: boolean;
+}>) {
+  const HandlableFragment = __IN_SHEET_MODAL__
+    ? BottomSheetHandlableView
+    : React.Fragment;
+
+  return <HandlableFragment>{children}</HandlableFragment>;
+};

@@ -94,6 +94,7 @@ export const scrollL1FeeEstimate = async (txParams: any) => {
           to: '0x5300000000000000000000000000000000000002',
           data: calldata,
         },
+        'latest',
       ],
     },
   );
@@ -129,7 +130,11 @@ export const opStackL1FeeEstimate = async (
 };
 
 export const fetchEstimatedL1Fee = async (
-  txParams: any,
+  {
+    txParams,
+  }: Record<string, any> & {
+    txParams: any;
+  },
   chain = CHAINS_ENUM.OP,
 ): Promise<string> => {
   if (OP_STACK_ENUMS.includes(chain)) {

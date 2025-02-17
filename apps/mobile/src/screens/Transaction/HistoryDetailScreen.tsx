@@ -29,6 +29,7 @@ import {
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
@@ -43,10 +44,13 @@ import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { HistoryItemCateType } from './components/HistoryItemIcon';
 import { HistoryTokenList } from './components/HistoryTokenList';
-import { getApproveTokeName, getHistoryItemType } from './components/utils';
+import {
+  fetchHistoryTokenUUId,
+  getApproveTokeName,
+  getHistoryItemType,
+} from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
-import { strings } from '@/utils/i18n';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
@@ -58,6 +62,9 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { useTranslation } from 'react-i18next';
 
 export const TxStatusItem = ({
   status,
@@ -71,7 +78,7 @@ export const TxStatusItem = ({
   withText?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
+  const { t } = useTranslation();
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -104,7 +111,7 @@ export const TxStatusItem = ({
               styles.statuItemText,
               { color: colors2024['orange-default'] },
             ]}>
-            {strings('page.transactions.detail.Pending')}
+            {t('page.transactions.detail.Pending')}
           </Text>
         )}
       </View>
@@ -117,7 +124,7 @@ export const TxStatusItem = ({
         <RcIconSuccess width={18} height={18} />
         {withText && (
           <Text style={styles.statuItemText}>
-            {strings('page.transactions.detail.Succeeded')}
+            {t('page.transactions.detail.Succeeded')}
           </Text>
         )}
       </View>
@@ -128,7 +135,7 @@ export const TxStatusItem = ({
       {withText && (
         <Text
           style={[styles.statuItemText, { color: colors2024['red-default'] }]}>
-          {strings('page.transactions.detail.Failed')}
+          {t('page.transactions.detail.Failed')}
         </Text>
       )}
     </View>
@@ -226,17 +233,18 @@ function HistoryDetailScreen(): JSX.Element {
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
     data.projectDict.length,
-    data.tx,
-    data.other_addr,
+    data.sends,
+    data.id,
     isForMultipleAdderss,
   );
 
+  const { t } = useTranslation();
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
-  const status = useMemo(() => data.tx?.status || 0, [data]);
+  const status = useMemo(() => data.tx?.status ?? 1, [data]);
   const { switchAccount } = useCurrentAccount();
 
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
     // containerPb: 12,
     btnContainerBottomOffset: 40,
@@ -252,10 +260,10 @@ function HistoryDetailScreen(): JSX.Element {
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {title || strings('page.transactions.itemTitle.Default')}
+        {title || t('page.transactions.itemTitle.Default')}
       </HeaderTitleText2024>
     );
-  }, [title, styles.headerTitleStyle]);
+  }, [title, styles.headerTitleStyle, t]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -288,7 +296,7 @@ function HistoryDetailScreen(): JSX.Element {
       const receive = data.receives[0];
 
       return {
-        formatToken: [tokenDict[send.token_id], tokenDict[receive.token_id]],
+        formatToken: [tokenDict[send?.token_id], tokenDict[receive?.token_id]],
         isNft: false,
       };
     } else {
@@ -302,7 +310,6 @@ function HistoryDetailScreen(): JSX.Element {
       const tokenIsNft = tokenId?.length === 32;
       const tokenUUID = `${data.chain}_token:${tokenId}`;
       const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-
       return {
         formatToken: {
           ...token,
@@ -355,16 +362,21 @@ function HistoryDetailScreen(): JSX.Element {
     }
   }, [fetchApproveAllowance, formatType]);
 
-  const onOpenTxId = useCallback(() => {
-    const info =
-      typeof data.chain === 'string' ? getChain(data.chain) : data.chain;
+  const onOpenTxId = useCallback(
+    (txHash?: string, address?: string) => {
+      const info =
+        typeof data.chain === 'string' ? getChain(data.chain) : data.chain;
 
-    if (info?.scanLink) {
-      openTxExternalUrl({ chain: info, txHash: data.id });
-    } else {
-      toast.error('Unknown chain');
-    }
-  }, [data]);
+      if (info?.scanLink) {
+        address
+          ? openTxExternalUrl({ chain: info, address })
+          : openTxExternalUrl({ chain: info, txHash });
+      } else {
+        toast.error('Unknown chain');
+      }
+    },
+    [data],
+  );
 
   const isApproveOrRevoke = useMemo(() => {
     return (
@@ -378,21 +390,31 @@ function HistoryDetailScreen(): JSX.Element {
       return formatProject ? (
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>{titleText}</Text>
-          <View style={{ alignItems: 'flex-end' }}>
+          <TouchableOpacity
+            style={{ alignItems: 'flex-end' }}
+            onPress={() =>
+              onOpenTxId(undefined, data.tx?.to_addr || data.other_addr || '')
+            }>
             <View
               style={{
                 flexDirection: 'row',
+                alignItems: 'center',
                 gap: 4,
               }}>
               <AssetAvatar logo={formatProject?.logo_url} size={16} />
               <Text style={[styles.itemContentText]}>
                 {formatProject?.name}
               </Text>
+              <RcIconJumpCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-foot']}
+              />
             </View>
             <Text style={styles.itemAddressText}>
               {ellipsisAddress(data.tx?.to_addr || data.other_addr || '')}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       ) : null;
     },
@@ -403,11 +425,15 @@ function HistoryDetailScreen(): JSX.Element {
       styles.itemAddressText,
       styles.itemContentText,
       styles.itemTitleText,
+      colors2024,
+      onOpenTxId,
     ],
   );
 
   return (
-    <NormalScreenContainer2024 type="bg2" style={[styles.container]}>
+    <NormalScreenContainer2024
+      type={!isLight ? 'bg1' : 'bg2'}
+      style={[styles.container]}>
       <ScrollView style={[styles.scrollView]}>
         <HistoryTokenList
           data={data}
@@ -423,7 +449,9 @@ function HistoryDetailScreen(): JSX.Element {
         />
         <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
                 {formatIntlTimestamp(data?.time_at * 1000)}
@@ -432,27 +460,60 @@ function HistoryDetailScreen(): JSX.Element {
           </View>
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.Status')}
+              {t('page.transactions.detail.Status')}
             </Text>
             <View>
               <TxStatusItem status={status} withText={true} />
             </View>
           </View>
+          {isNft && Boolean(formatToken) && (
+            <>
+              <View style={styles.detailItem}>
+                <Text style={styles.itemTitleText}>
+                  {t('page.transactions.detail.Name')}
+                </Text>
+                <View>
+                  <Text style={styles.itemContentText}>
+                    {ellipsisOverflowedText(
+                      (formatToken as unknown as NFTItem)?.name ||
+                        t('global.unknownNFT'),
+                      30,
+                    )}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.detailItem}>
+                <Text style={styles.itemTitleText}>
+                  {t('page.transactions.detail.Collection')}
+                </Text>
+                <View>
+                  <Text style={styles.itemContentText}>
+                    {ellipsisOverflowedText(
+                      (formatToken as unknown as NFTItem).contract_name ||
+                        (formatToken as unknown as NFTItem)?.collection?.name ||
+                        t('global.unknownNFT'),
+                      30,
+                    )}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
           {isApproveOrRevoke &&
             ProjecRenderItem(
               formatType === HistoryItemCateType.Approve
-                ? strings('page.transactions.detail.ApproveTo')
-                : strings('page.transactions.detail.RevokeFrom'),
+                ? t('page.transactions.detail.ApproveTo')
+                : t('page.transactions.detail.RevokeFrom'),
             )}
           {formatType === HistoryItemCateType.Approve && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
-                {strings('page.transactions.detail.ApproveToken')}
+                {t('page.transactions.detail.ApproveToken')}
               </Text>
               <Text style={styles.itemContentText}>
                 {data.token_approve?.value! < 1e9
                   ? data.token_approve?.value.toFixed(4)
-                  : strings('page.transactions.detail.Unlimited')}{' '}
+                  : t('page.transactions.detail.Unlimited')}{' '}
                 {getApproveTokeName(data)}
               </Text>
             </View>
@@ -460,7 +521,7 @@ function HistoryDetailScreen(): JSX.Element {
           {Boolean(fromAddr) && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
-                {strings('page.transactions.detail.From')}
+                {t('page.transactions.detail.From')}
               </Text>
               <AddressItemInDetail
                 address={fromAddr!}
@@ -475,8 +536,8 @@ function HistoryDetailScreen(): JSX.Element {
               <View style={styles.detailItem}>
                 <Text style={styles.itemTitleText}>
                   {formatType === HistoryItemCateType.Recieve
-                    ? strings('page.transactions.detail.RecipientAddress')
-                    : strings('page.transactions.detail.To')}
+                    ? t('page.transactions.detail.RecipientAddress')
+                    : t('page.transactions.detail.To')}
                 </Text>
                 <AddressItemInDetail
                   address={toAddr!}
@@ -487,7 +548,7 @@ function HistoryDetailScreen(): JSX.Element {
             )}
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {strings('page.transactions.detail.Chain')}
+              {t('page.transactions.detail.Chain')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 4 }}>
               <ChainIconImage
@@ -501,12 +562,12 @@ function HistoryDetailScreen(): JSX.Element {
           {Boolean(usdGasFee) && status === 1 && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
-                {strings('page.transactions.detail.GasFee')}
+                {t('page.transactions.detail.GasFee')}
               </Text>
               <Text style={styles.itemContentText}>
                 {formatAmount(data.tx?.eth_gas_fee!)}{' '}
                 {chainItem?.nativeTokenSymbol} ($
-                {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
+                {formatAmount(data.tx?.usd_gas_fee ?? 0)})
               </Text>
               {/* <Text style={[styles.itemContentText]}>{`-${formatPrice(
               usdGasFee!,
@@ -514,20 +575,18 @@ function HistoryDetailScreen(): JSX.Element {
             </View>
           )}
           {!isApproveOrRevoke &&
-            ProjecRenderItem(
-              strings('page.transactions.detail.InteractedContract'),
-            )}
+            ProjecRenderItem(t('page.transactions.detail.InteractedContract'))}
           {
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>Hash</Text>
               <TouchableOpacity
                 disabled={!touchable}
-                onPress={onOpenTxId}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                onPress={() => onOpenTxId(data.id)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={[styles.itemContentText]}>
                   {ellipsisAddress(data.id)}
                 </Text>
-                <RcIconExternalLinkCC
+                <RcIconJumpCC
                   width={14}
                   height={14}
                   color={colors2024['neutral-foot']}
@@ -547,6 +606,7 @@ function HistoryDetailScreen(): JSX.Element {
         chain={data.chain}
         status={status || 0}
         data={data}
+        isForMultipleAdderss={isForMultipleAdderss}
         tokenDict={data.tokenDict}
         buttonContainerStyle={buttonContainerStyle}
       />
@@ -556,7 +616,7 @@ function HistoryDetailScreen(): JSX.Element {
 
 const PADDING_HORIZONTAL = 16;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
   scrollView: {
     height: '100%',
@@ -566,9 +626,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   detailContainerLastOne: {
     marginBottom: 20,

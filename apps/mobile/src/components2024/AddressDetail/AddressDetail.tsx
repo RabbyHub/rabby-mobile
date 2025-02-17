@@ -29,7 +29,11 @@ export const AddressDetail: React.FC<Props> = ({ account, onCancel }) => {
 
   return (
     <BottomSheetScrollView>
-      <AddressDetailInner account={currentAccount} onCancel={onCancel} />
+      <AddressDetailInner
+        account={currentAccount}
+        onCancel={onCancel}
+        __IN_SHEET_MODAL__
+      />
     </BottomSheetScrollView>
   );
 };

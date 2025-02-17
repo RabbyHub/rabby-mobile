@@ -684,6 +684,10 @@ export class PreferenceService {
     };
   };
 
+  getPinToken = () => {
+    return this.store.pinedQueue || [];
+  };
+
   /** =========toggle pinToken start =========== */
   pinToken = (token: IManageToken) => {
     if (!this.store.pinedQueue) {

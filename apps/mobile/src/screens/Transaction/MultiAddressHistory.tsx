@@ -10,7 +10,7 @@ import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
@@ -22,7 +22,7 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, set, isString, throttle } from 'lodash';
+import { last, unionBy, orderBy, set, isString, debounce } from 'lodash';
 import { Text, TouchableWithoutFeedback, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -60,15 +60,18 @@ import {
 } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { strings } from '@/utils/i18n';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import { ensureHistoryListItemFromDb } from './components/utils';
+import {
+  ensureHistoryListItemFromDb,
+  judgeIsSmallUsdTx,
+} from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_COUNT = 200;
 
@@ -81,6 +84,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   account?: KeyringAccountWithAlias;
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
+  isSmallUsdTx?: boolean;
 }
 
 interface IFetchHistory {
@@ -120,11 +124,13 @@ function History({
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
+  const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [isShowAll, setIsShowAll] = useState(false);
+  const [isShowScam, setIsShowScam] = useState(false);
+  const [isShowSmall, setIsShowSmall] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
@@ -144,40 +150,44 @@ function History({
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict } = useHistoryTokenDict();
-  const getSwapHistory = async (add?: string) => {
-    const swapList = await SwapItemEntity.getAllHistoryItem(add);
-    return swapList;
-  };
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
+
     const addresses = isSceneUsingAllAccounts
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
+    console.log('batchFetchDataV2 addresses', addresses);
+    const fetchHistoryFromDbData = async (count?: number) => {
+      const [historyList, swapList] = await Promise.all([
+        HistoryItemEntity.getAllHistoryItemSortedByTime(addresses, count),
+        SwapItemEntity.getAllHistoryItem(addresses, count),
+      ]);
 
-    // juset not in single token history
-    const [historyList, swapList] = await Promise.all([
-      HistoryItemEntity.getAllHistoryItemSortedByTime(addresses),
-      getSwapHistory(
-        isSceneUsingAllAccounts
-          ? undefined
-          : finalSceneCurrentAccount?.address.toLowerCase(),
-      ),
-    ]);
+      const pinedQueue = preferenceService.getPinToken();
+      const list = historyList.map(
+        item =>
+          ({
+            ...ensureHistoryListItemFromDb(item),
+            isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
+            tokenDict,
+            projectDict,
+            isShowSuccess: historySuccessList.includes(
+              `${item.owner_addr}-${item.txHash}`,
+            ),
+          } as HistoryDisplayItem),
+      );
+      setDbData(list);
+      return list;
+    };
+    if (!dbData.length) {
+      // first init 20 count
+      await fetchHistoryFromDbData(50);
+    }
 
-    const list = historyList.map(
-      item =>
-        ({
-          ...ensureHistoryListItemFromDb(item),
-          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-          tokenDict,
-          projectDict,
-          isShowSuccess: historySuccessList.includes(
-            `${item.owner_addr}-${item.txHash}`,
-          ),
-        } as HistoryDisplayItem),
-    );
-    setDbData(list);
+    // later fetch all data
+    const list = await fetchHistoryFromDbData();
     return list;
   };
 
@@ -199,10 +209,15 @@ function History({
       }
       return { list: res };
     } else {
-      const swapList = await getSwapHistory(); // just for single token history
       const accountList = isSceneUsingAllAccounts
         ? unionAccounts
         : [finalSceneCurrentAccount];
+      const addresses = isSceneUsingAllAccounts
+        ? unionAccounts.map(account => account.address.toLowerCase())
+        : [finalSceneCurrentAccount?.address.toLowerCase()!];
+
+      // just for single token history
+      const swapList = await SwapItemEntity.getAllHistoryItem(addresses);
       const queue = new PQueue({
         interval: 2000,
         intervalCap: 10,
@@ -311,6 +326,10 @@ function History({
   };
 
   const batchFetchLocalTx = async () => {
+    if (isInTokenDetail) {
+      return [];
+    }
+
     const list: TransactionGroup[] = [];
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
@@ -423,12 +442,13 @@ function History({
     },
   });
 
-  const thorttleBatchFetchData = throttle(batchFetchData, 2000);
+  const thorttleBatchFetchData = debounce(batchFetchData, 1000);
 
   useAppOrmSyncEvents({
-    taskFor: ['all-history'],
+    taskFor: ['all-history', 'swap-history'],
     onRemoteDataUpserted: ctx => {
       switch (ctx.taskFor) {
+        case 'swap-history':
         case 'all-history':
           thorttleBatchFetchData();
           break;
@@ -455,9 +475,26 @@ function History({
   const displayList = useMemo(() => {
     return allTxHistory
       .filter(tx => {
-        if (!isShowAll) {
-          return !tx.is_scam;
+        if (isShowScam && isShowSmall) {
+          // show all
+          return true;
         }
+
+        if (isShowScam) {
+          // only hide small tx and not scam
+          return !(tx.isSmallUsdTx && !tx.is_scam);
+        }
+
+        if (isShowSmall) {
+          // only hidden scam and not small tx
+          return !(tx.is_scam && !tx.isSmallUsdTx);
+        }
+
+        if (!isShowScam && !isShowSmall) {
+          // hide small tx and scam
+          return !(tx.is_scam || tx.isSmallUsdTx);
+        }
+
         return true;
       })
       .filter(tx => {
@@ -472,16 +509,17 @@ function History({
     // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
-    isShowAll,
+    isShowScam,
+    isShowSmall,
     // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
   ]);
 
   useFocusEffect(() => {
-    eventBus.addListener(EVENTS.RELOAD_TX, refresh);
+    eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
     return () => {
-      eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
+      eventBus.removeListener(EVENTS.RELOAD_TX, runFetchLocalTx);
     };
   });
 
@@ -530,11 +568,9 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const isFirstLoading = loading && !allTxHistory.length && !groups?.length;
-
-  if (!loading && !groups?.length && !allTxHistory.length) {
-    return <Empty />;
-  }
+  // if (!loading && !groups?.length && !allTxHistory.length) {
+  //   return <Empty />;
+  // }
 
   return (
     <View
@@ -546,11 +582,27 @@ function History({
       <>
         {isShowMenu && (
           <View style={styles.menuContainer}>
-            <Text style={styles.menuItemText}>
-              {strings('page.transactions.ViewHiddenItems')}
-            </Text>
-            <View style={styles.valueView}>
-              <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
+            <View style={styles.menuItem}>
+              <Text style={styles.menuItemText}>
+                {t('page.transactions.ViewHiddenItems')}
+              </Text>
+              <View style={styles.valueView}>
+                <AppSwitch2024
+                  value={isShowScam}
+                  onValueChange={setIsShowScam}
+                />
+              </View>
+            </View>
+            <View style={styles.menuItem}>
+              <Text style={styles.menuItemText}>
+                {t('page.transactions.ViewSmallItems')}
+              </Text>
+              <View style={styles.valueView}>
+                <AppSwitch2024
+                  value={isShowSmall}
+                  onValueChange={setIsShowSmall}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -577,7 +629,7 @@ function History({
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
-          loading={isFirstLoading}
+          loading={loading}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAdderss={isForMultipleAdderss}
@@ -645,19 +697,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     shadowOffset: { width: 0, height: 12 }, // Horizontal and vertical offsets
     shadowOpacity: 0.2, // Shadow opacity
     shadowRadius: 8, // Blur radius
-    flexDirection: 'row',
+    // flexDirection: 'row',
     zIndex: 1,
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     position: 'absolute',
     top: 0,
     right: 16,
     alignItems: 'center',
     width: 250,
-    height: 56,
+    // height: 56,
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 12,
+    paddingVertical: 16,
     // paddingVertical: 16,
     borderRadius: 16,
+    gap: 16,
+  },
+  menuItem: {
+    // height: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    // alignItems: 'center',
   },
   menuItemText: {
     color: colors2024['neutral-title-1'],

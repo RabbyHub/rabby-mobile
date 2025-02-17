@@ -13,7 +13,7 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy, flatten } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -84,7 +84,7 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   successList: string[];
   failList: string[];
-  isNeedFetchTxHistory?: boolean;
+  isNeedFetchTxHistory: Record<string, boolean>;
 }
 
 // TODO
@@ -105,7 +105,7 @@ export class TransactionHistoryService {
           transactions: [],
           successList: [],
           failList: [],
-          isNeedFetchTxHistory: false,
+          isNeedFetchTxHistory: {},
         },
       },
       {
@@ -122,6 +122,10 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.failList)) {
       this.store.failList = [];
+    }
+
+    if (typeof this.store.isNeedFetchTxHistory !== 'object') {
+      this.store.isNeedFetchTxHistory = {};
     }
 
     this.init();
@@ -169,9 +173,9 @@ export class TransactionHistoryService {
     return this.store.failList.length;
   }
 
-  getIsNeedFetchTxHistory() {
-    const res = this.store.isNeedFetchTxHistory;
-    this.store.isNeedFetchTxHistory = false;
+  getIsNeedFetchTxHistory(address: string) {
+    const res = this.store.isNeedFetchTxHistory[address];
+    res && (this.store.isNeedFetchTxHistory[address] = false);
     return res;
   }
 
@@ -430,7 +434,7 @@ export class TransactionHistoryService {
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
-        this.store.isNeedFetchTxHistory = true;
+        this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
       }
     });
 
@@ -639,14 +643,26 @@ export class TransactionHistoryService {
    * @description clear expired txs, keep this.txHistoryLimit 100 compoleted transactions
    */
   clearAllExpiredTxs() {
-    this.setStore(draft => {
-      const list = sortBy(draft, item => item.createdAt).filter(
-        item => !item.isPending,
-      );
-      if (list.length <= this._txHistoryLimit) {
-        return draft;
+    const groups = this.getTransactionGroups();
+    const pendingTxGroups: TransactionGroup[] = [];
+    const completedTxGroups: TransactionGroup[] = [];
+    groups.forEach(item => {
+      if (item.isPending) {
+        pendingTxGroups.push(item);
+      } else {
+        completedTxGroups.push(item);
       }
-      return list.slice(0, this._txHistoryLimit);
+    });
+
+    const list = sortBy(completedTxGroups, item => -item.createdAt);
+    if (list.length <= this._txHistoryLimit) {
+      return;
+    }
+    this.setStore(_ => {
+      return [
+        ...flatten(pendingTxGroups.map(item => item.txs)),
+        ...flatten(list.slice(0, this._txHistoryLimit).map(item => item.txs)),
+      ];
     });
   }
 
@@ -660,14 +676,18 @@ export class TransactionHistoryService {
     nonce: number;
   }) {
     this.setStore(draft => {
-      return draft.filter(item => {
-        return (
+      const result = draft.filter(item => {
+        return !(
           isSameAddress(address, item.address) &&
           item.chainId === chainId &&
           item.nonce < nonce &&
           item.isPending
         );
       });
+      if (result.length !== draft.length) {
+        return result;
+      }
+      return draft;
     });
   }
 
