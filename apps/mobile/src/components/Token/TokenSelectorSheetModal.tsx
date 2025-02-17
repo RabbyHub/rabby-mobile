@@ -689,14 +689,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
       useMemo(() => {
         const _willShowAccountFilter =
-          displayAccountFilter &&
-          filterAccount &&
+          !!displayAccountFilter &&
+          !!filterAccount &&
           !isWatchOrSafeAccount(filterAccount);
-        const _willShowChainFilter = chainItem && !hideChainFilter;
+        const _willShowChainFilter = !!chainItem && !hideChainFilter;
 
         return {
-          willShowChainFilter: _willShowAccountFilter,
-          willShowAccountFilter: _willShowChainFilter,
+          willShowChainFilter: _willShowChainFilter,
+          willShowAccountFilter: _willShowAccountFilter,
           willShowFilterRow: _willShowAccountFilter || _willShowChainFilter,
         };
       }, [displayAccountFilter, filterAccount, chainItem, hideChainFilter]);

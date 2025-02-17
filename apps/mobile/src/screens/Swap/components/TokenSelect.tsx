@@ -459,7 +459,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
-      if (!currentAccount?.type || !isWatchOrSafeAccount(currentAccount?.type))
+      if (!currentAccount?.type || isWatchOrSafeAccount(currentAccount?.type))
         return false;
 
       return (
