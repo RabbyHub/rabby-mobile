@@ -3,8 +3,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { View } from 'react-native';
-import { BuyQuoteItem } from './QuoteItem';
+import { BuyQuoteItem as QuoteItem } from './QuoteItem';
 import { openapi } from '@/core/request';
+import { BuyQuoteItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const BuyQuoteList = ({
   quotes,
@@ -12,7 +13,9 @@ export const BuyQuoteList = ({
   activeProvider,
   setActiveProvider,
 }: {
-  quotes: Awaited<ReturnType<typeof openapi.getBuyQuote>>;
+  quotes: (BuyQuoteItem & {
+    paymentMethod?: Awaited<ReturnType<typeof openapi.getBuyPaymentMethods>>;
+  })[];
   symbol: string;
   activeProvider: string;
   setActiveProvider: (s: string) => void;
@@ -25,7 +28,7 @@ export const BuyQuoteList = ({
       <Text style={styles.title}>{t('page.buy.quote.title')}</Text>
       <View style={styles.container}>
         {quotes.map((e, idx) => (
-          <BuyQuoteItem
+          <QuoteItem
             name={e.service_provider.name}
             id={e.service_provider.id}
             key={e.service_provider.id}
@@ -35,6 +38,7 @@ export const BuyQuoteList = ({
             activeProvider={activeProvider}
             isBest={idx === 0}
             setActiveProvider={setActiveProvider}
+            payments={e.paymentMethod}
           />
         ))}
       </View>
