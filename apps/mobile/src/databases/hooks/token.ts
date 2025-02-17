@@ -38,6 +38,25 @@ export function extractOwnerAccountFromTokenItem(
   return null;
 }
 
+export function makeKeyForTokenItemMaybeWithOwner(
+  token: TokenItemMaybeWithOwner,
+  tokenKey?: string,
+) {
+  const ownerAccount = extractOwnerAccountFromTokenItem(token);
+  const ownerKey = !ownerAccount
+    ? ''
+    : `${ownerAccount.type}-${ownerAccount.address}`;
+
+  const token_key = [
+    ownerKey,
+    tokenKey || `${token.id}-${token.optimized_symbol}-${token.chain}`,
+  ]
+    .filter(Boolean)
+    .join('-');
+
+  return token_key;
+}
+
 const getInitData = () => ({
   accounts: [],
   addressIndexedTokens: {},

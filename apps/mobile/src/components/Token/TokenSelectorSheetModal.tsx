@@ -402,6 +402,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
         const ownerAccount =
           'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
+        const ownerKey = !ownerAccount
+          ? ''
+          : `${ownerAccount.type}-${ownerAccount.address}`;
 
         const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
@@ -434,7 +437,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
         const isPined = token?.$origin.isPined;
         const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
-        const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
+        const token_key = [
+          ownerKey,
+          `${token.$origin.id}-${token._symbol}-${token._chain}`,
+        ]
+          .filter(Boolean)
+          .join('-');
         const currentChainItem = findChainByServerID(token._chain);
         const disabled =
           !!supportChains?.length &&
@@ -670,7 +678,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 _chain: x.chain,
                 // @ts-expect-error
                 trade_volume_level: x?.trade_volume_level,
-                $origin: x,
+                $origin: x as TokenItemMaybeWithOwner,
               };
             }),
           })),
@@ -786,6 +794,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           <View
             style={[
               styles.filterRow,
+              styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
             {willShowAccountFilter && (
@@ -836,11 +845,18 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[styles.scrollView]}
             onScrollBeginDrag={() => Keyboard.dismiss()}
             windowSize={5}
-            keyExtractor={token =>
-              `${token.id}-${token._symbol}-${token._chain}-${
-                (token.$origin as any)?.group
-              }`
-            }
+            keyExtractor={token => {
+              const ownerKey = !token.$origin.ownerAccount
+                ? ''
+                : `${token.$origin.ownerAccount.type}-${token.$origin.ownerAccount.address}`;
+
+              return [
+                ownerKey,
+                `${token.id}-${token._symbol}-${token._chain}-${token.$origin?.group}`,
+              ]
+                .filter(Boolean)
+                .join('-');
+            }}
             renderSectionHeader={
               isSwapTo
                 ? ({ section }) => {
@@ -1005,7 +1021,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       gap: 8,
       maxHeight: 34,
-      paddingHorizontal: 8,
       marginBottom: 14,
       // ...makeDebugBorder(),
     },

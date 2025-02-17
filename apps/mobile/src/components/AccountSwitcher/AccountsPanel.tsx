@@ -187,7 +187,7 @@ AccountSwitcherAopProps<{
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContentContainer}>
           <View style={styles.section}>
-            <View style={styles.addressListContainer}>
+            <View style={[styles.addressListContainer, { marginTop: 0 }]}>
               {isSceneSupportAllAccounts && (
                 <UseAllAccountsItemInPanel
                   style={{
@@ -349,7 +349,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     },
     addressListContainer: {
       flexDirection: 'column',
-      // marginTop: 12,
+      marginTop: 12,
       // maxHeight: SIZES.myAddressesAreaVisiableH,
       width: '100%',
     },

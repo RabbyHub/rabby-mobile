@@ -37,7 +37,10 @@ import {
 import { CHAINS_ENUM } from '@debank/common';
 import LinearGradient from 'react-native-linear-gradient';
 import { Account } from '@/core/services/preference';
-import { useQueryLocalTokens } from '@/databases/hooks/token';
+import {
+  makeKeyForTokenItemMaybeWithOwner,
+  useQueryLocalTokens,
+} from '@/databases/hooks/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
@@ -227,7 +230,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       return uniqBy(
         queryConds.keyword ? searchedTokenByQuery : _tokens,
         token => {
-          return `${token.chain}-${token.id}`;
+          return makeKeyForTokenItemMaybeWithOwner(token);
         },
       ).filter(e => !excludeTokens.includes(e.id));
     }, [allTokenItems, searchedTokenByQuery, excludeTokens, queryConds]);
