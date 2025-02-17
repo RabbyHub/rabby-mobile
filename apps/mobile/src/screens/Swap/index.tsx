@@ -56,6 +56,8 @@ import { Button } from '@/components2024/Button';
 import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
+  useSceneAccountInfo,
+  useScreenSceneAccountContext,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -154,6 +156,13 @@ const Swap = ({
     clearExpiredTimer,
     finishedQuotes,
   } = useTokenPair(currentAccount!.address);
+
+  const { sceneScreenRenderId } = useScreenSceneAccountContext();
+
+  useEffect(() => {
+    // clear form
+    handleAmountChange('');
+  }, [sceneScreenRenderId, handleAmountChange]);
 
   const {
     autoSlippage,
@@ -796,10 +805,17 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   return (
     <ScreenSceneAccountProvider
-      value={{ forScene: 'MakeTransactionAbout', ofScreen: 'MultiSwap' }}>
-      <Swap {...props} isForMultipleAdderss />
+      value={{
+        forScene: 'MakeTransactionAbout',
+        ofScreen: 'MultiSwap',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
+      }}>
+      <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
     </ScreenSceneAccountProvider>
   );
 };

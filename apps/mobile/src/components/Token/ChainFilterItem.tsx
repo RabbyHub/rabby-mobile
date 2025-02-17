@@ -42,10 +42,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 export default function ChainFilterItem({
   style,
   chainItem,
-  onRmove,
+  onRemoveFilter,
 }: RNViewProps & {
   chainItem?: Chain | null;
-  onRmove?: (item: Chain | null) => void;
+  onRemoveFilter?: (item: Chain | null) => void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -60,7 +60,7 @@ export default function ChainFilterItem({
         style={styles.chainFilterItemClose}
         onPress={() => {
           // TODO: remove filter
-          onRmove?.(chainItem);
+          onRemoveFilter?.(chainItem);
         }}>
         <CloseBoldSVG color={colors2024['neutral-foot']} />
       </TouchableOpacity>
@@ -70,10 +70,10 @@ export default function ChainFilterItem({
 
 export function AccountFilterItem({
   filterAccount,
-  onRmove,
+  onRemoveFilter,
 }: {
   filterAccount?: Account | null;
-  onRmove?: (account?: Account | null) => void;
+  onRemoveFilter?: (account?: Account | null) => void;
 }) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAccountFilterItemStyle,
@@ -96,7 +96,7 @@ export function AccountFilterItem({
               style={styles.filterAccountClose}
               onPress={() => {
                 // TODO: remove filter
-                onRmove?.(filterAccount);
+                onRemoveFilter?.(filterAccount);
               }}>
               <CloseBoldSVG color={colors2024['neutral-foot']} />
             </TouchableOpacity>

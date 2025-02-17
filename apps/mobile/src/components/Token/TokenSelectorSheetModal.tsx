@@ -800,7 +800,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
-                onRmove={account => {
+                onRemoveFilter={account => {
                   if (account && isSameAccount(account, filterAccount)) {
                     onSearch({
                       ...chainSearchCtx,
@@ -818,7 +818,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               <View style={[styles.chainFiltersContainer]}>
                 <ChainFilterItem
                   chainItem={chainItem}
-                  onRmove={() => {
+                  onRemoveFilter={() => {
                     onRemoveChainFilter?.({
                       chainServerId,
                       chainItem,

@@ -16,7 +16,11 @@ import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
 import { useCurrentAccount } from '@/hooks/account';
-import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
+import {
+  abstractTokenToTokenItem,
+  DisplayedToken,
+  getTokenSymbol,
+} from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -39,6 +43,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Account } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
+  TokenItemMaybeWithOwner,
   useQueryLocalTokens,
 } from '@/databases/hooks/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -152,6 +157,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       ]);
 
     const useLocalDatabase = !queryConds.account;
+
     const {
       isSearchingLocalTokens,
       sortedTokensWithOwner: searchedLocalTokensWithOwner,
@@ -160,6 +166,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       fetchAllLocalTokens,
     } = useQueryLocalTokens();
 
+    const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
     useEffect(() => {
       if (!queryConds.account)
         fetchAllLocalTokens({
@@ -221,6 +228,15 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         swapTokenList,
       ]);
 
+    const isExcludedTokens = useCallback(
+      (e: AbstractPortfolioToken | TokenItemMaybeWithOwner) => {
+        return !!excludeTokens?.includes(
+          e instanceof DisplayedToken ? e._tokenId : e.id,
+        );
+      },
+      [excludeTokens],
+    );
+
     const availableToken = useMemo(() => {
       const _tokens = queryConds.chainServerId
         ? allTokenItems.filter(
@@ -232,8 +248,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         token => {
           return makeKeyForTokenItemMaybeWithOwner(token);
         },
-      ).filter(e => !excludeTokens.includes(e.id));
-    }, [allTokenItems, searchedTokenByQuery, excludeTokens, queryConds]);
+      ).filter(e => !isExcludedTokens(e));
+    }, [allTokenItems, searchedTokenByQuery, isExcludedTokens, queryConds]);
 
     const isFromModalType = useMemo(
       () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
@@ -250,8 +266,13 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           i => i._isFold && i.chain === queryConds.chainServerId,
         ),
       ).map(abstractTokenToTokenItem);
-      return list.filter(e => !excludeTokens.includes(e.id));
-    }, [allTokens, excludeTokens, isFromModalType, queryConds.chainServerId]);
+      return list.filter(e => !isExcludedTokens(e));
+    }, [
+      allTokens,
+      isExcludedTokens,
+      isFromModalType,
+      queryConds.chainServerId,
+    ]);
 
     const isListLoading = queryConds.keyword
       ? isSearchLoading
@@ -268,7 +289,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           ...(typeof ctx === 'string'
             ? { keyword: ctx }
             : {
-                // account: ctx.filterAccountItem || (ctx.filterAccountItem === null ? null : prev.account),
                 account: ctx.filterAccountItem ?? null,
                 keyword: ctx.keyword,
                 chainServerId: ctx.chainServerId ?? prev.chainServerId,
@@ -328,7 +348,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const recentDisplayToTokens = useMemo(() => {
       if (type === 'swapTo' && queryConds.keyword.length < 1) {
         return recentToTokens.filter(item => {
-          return item.chain === chainId && !excludeTokens?.includes(item.id);
+          return item.chain === chainId && !isExcludedTokens(item);
         });
       }
       return [];
@@ -337,7 +357,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       queryConds.keyword.length,
       recentToTokens,
       chainId,
-      excludeTokens,
+      isExcludedTokens,
     ]);
 
     const { value: pinedQueue } = useAsync(async () => {

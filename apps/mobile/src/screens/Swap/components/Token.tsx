@@ -36,6 +36,7 @@ import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { Account } from '@/core/services/preference';
+import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 
 const progressColor = ['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)'];
 
@@ -74,6 +75,13 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     currentQuote,
   } = props;
   const { t } = useTranslation();
+
+  const { sceneScreenRenderId } = useScreenSceneAccountContext();
+
+  useEffect(() => {
+    // clear form
+    onValueChange?.('');
+  }, [sceneScreenRenderId, onValueChange]);
 
   const { colors2024, styles } = useTheme2024({ getStyle });
 

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-// import { DisplayedToken } from '../utils/portfolio/project';
-import { DisplayedToken } from '@/screens/Home/utils/project';
+import { DisplayedToken } from '@/utils/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 import { requestOpenApiWithChainId } from '@/utils/openapi';

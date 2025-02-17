@@ -490,16 +490,20 @@ function getDefaultSceneAccountInfo() {
   return {
     forScene: null,
     ofScreen: '',
+    sceneScreenRenderId: '' as const,
   };
 }
+type OfSceneScreen = typeof RootNames.MultiSwap | typeof RootNames.MultiBridge;
 const ScreenSceneAccountContext = React.createContext<
   | {
       forScene: null;
       ofScreen: string;
+      sceneScreenRenderId: '' | `${string}-${OfSceneScreen}`;
     }
   | {
       forScene: AccountSwitcherScene & 'MakeTransactionAbout';
-      ofScreen: typeof RootNames.MultiSwap | typeof RootNames.MultiBridge;
+      ofScreen: OfSceneScreen;
+      sceneScreenRenderId: '' | `${string}-${OfSceneScreen}`;
     }
 >(getDefaultSceneAccountInfo());
 
