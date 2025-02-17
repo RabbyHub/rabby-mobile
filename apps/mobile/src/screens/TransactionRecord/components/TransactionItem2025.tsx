@@ -357,11 +357,7 @@ export const TransactionItem = ({
       <View
         style={[
           styles.rightContent,
-          isCanceled ||
-          data.isPending ||
-          data.isFailed ||
-          data.isSubmitFailed ||
-          data.isWithdrawed
+          isCanceled || data.isPending || data.isFailed || data.isSubmitFailed
             ? styles.cardGray
             : null,
         ]}>

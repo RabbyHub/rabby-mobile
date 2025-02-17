@@ -145,21 +145,22 @@ export const useSyncHistoryDB = (
             res.history_list[res.history_list.length - 1].time_at;
           if (lastItemTime < latestTime) {
             // update done or not all update  to  interup loop
-            res.history_list = res.history_list.filter(
-              i => i.time_at > latestTime,
-            );
+            // res.history_list = res.history_list.filter(
+            //   i => i.time_at > latestTime,
+            // );
+            // RealTimeApi need to update refresh local data
 
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: update',
               address,
-              'add length:',
+              'update length:',
               res.history_list.length,
             );
-            if (res.history_list.length) {
-              runOnJS(syncRemoteHistory)(address, res.history_list);
-              setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-              setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
-            }
+            // if (res.history_list.length) {
+            runOnJS(syncRemoteHistory)(address, res.history_list);
+            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
+            setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
+            // }
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
               address,
