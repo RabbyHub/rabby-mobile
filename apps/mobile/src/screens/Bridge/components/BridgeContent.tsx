@@ -448,6 +448,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       !toToken?.low_credit_score &&
       !toToken?.is_scam &&
       toToken?.is_verified !== false &&
+      !isSlippageHigh &&
+      !isSlippageLow &&
       [
         KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
