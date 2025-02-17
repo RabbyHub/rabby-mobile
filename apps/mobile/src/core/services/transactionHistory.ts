@@ -13,7 +13,7 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy, flatten } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -643,14 +643,26 @@ export class TransactionHistoryService {
    * @description clear expired txs, keep this.txHistoryLimit 100 compoleted transactions
    */
   clearAllExpiredTxs() {
-    this.setStore(draft => {
-      const list = sortBy(draft, item => item.createdAt).filter(
-        item => !item.isPending,
-      );
-      if (list.length <= this._txHistoryLimit) {
-        return draft;
+    const groups = this.getTransactionGroups();
+    const pendingTxGroups: TransactionGroup[] = [];
+    const completedTxGroups: TransactionGroup[] = [];
+    groups.forEach(item => {
+      if (item.isPending) {
+        pendingTxGroups.push(item);
+      } else {
+        completedTxGroups.push(item);
       }
-      return list.slice(0, this._txHistoryLimit);
+    });
+
+    const list = sortBy(completedTxGroups, item => -item.createdAt);
+    if (list.length <= this._txHistoryLimit) {
+      return;
+    }
+    this.setStore(_ => {
+      return [
+        ...flatten(pendingTxGroups.map(item => item.txs)),
+        ...flatten(list.slice(0, this._txHistoryLimit).map(item => item.txs)),
+      ];
     });
   }
 
@@ -664,14 +676,18 @@ export class TransactionHistoryService {
     nonce: number;
   }) {
     this.setStore(draft => {
-      return draft.filter(item => {
-        return (
+      const result = draft.filter(item => {
+        return !(
           isSameAddress(address, item.address) &&
           item.chainId === chainId &&
           item.nonce < nonce &&
           item.isPending
         );
       });
+      if (result.length !== draft.length) {
+        return result;
+      }
+      return draft;
     });
   }
 
