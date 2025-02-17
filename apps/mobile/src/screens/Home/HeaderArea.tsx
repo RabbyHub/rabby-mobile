@@ -51,7 +51,7 @@ export default function HomeHeaderArea() {
             <View className="relative">
               <TouchableOpacity hitSlop={24} onPress={goBack}>
                 <WalletIcon
-                  type={currentAccount?.type as KEYRING_TYPE}
+                  type={currentAccount?.brandName as KEYRING_TYPE}
                   width={styles.walletIcon.width}
                   height={styles.walletIcon.height}
                   style={styles.walletIcon}

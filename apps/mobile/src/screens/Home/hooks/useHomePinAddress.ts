@@ -41,19 +41,21 @@ export default function useHomePinAddress(
           account.type !== KEYRING_CLASS.WALLETCONNECT,
       );
       if (idx > -1) {
+        const alias =
+          accounts.find(
+            account =>
+              account.type !== KEYRING_CLASS.WATCH &&
+              account.type !== KEYRING_CLASS.GNOSIS &&
+              account.type !== KEYRING_CLASS.WALLETCONNECT &&
+              account.brandName === highlighted.brandName &&
+              isSameAddress(account.address, highlighted.address),
+          )?.aliasName || ellipsisAddress(highlighted.address);
         highlightedAccounts.push({
           ...restAccounts[idx],
           brandName: highlighted.brandName,
           balance: restAccounts[idx].balance ?? 0,
-          alias:
-            accounts.find(
-              account =>
-                account.type !== KEYRING_CLASS.WATCH &&
-                account.type !== KEYRING_CLASS.GNOSIS &&
-                account.type !== KEYRING_CLASS.WALLETCONNECT &&
-                account.brandName === highlighted.brandName &&
-                isSameAddress(account.address, highlighted.address),
-            )?.aliasName || ellipsisAddress(highlighted.address),
+          alias,
+          aliasName: alias,
         });
       }
     });

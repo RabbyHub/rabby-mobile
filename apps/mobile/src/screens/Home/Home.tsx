@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native';
+import { View } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
 
@@ -29,9 +29,9 @@ function HomeScreen(): JSX.Element {
     <NormalScreenContainer2024
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
-      <SafeAreaView style={styles.safeView}>
+      <View style={styles.safeView}>
         <AssetContainer onRefresh={triggerUpdate} />
-      </SafeAreaView>
+      </View>
     </NormalScreenContainer2024>
   );
 }
@@ -40,12 +40,11 @@ HomeScreen.HeaderArea = HeaderArea;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-gray'],
   },
   safeView: {
     flex: 1,
-    paddingBottom: 56,
     width: '100%',
     overflow: 'hidden',
   },

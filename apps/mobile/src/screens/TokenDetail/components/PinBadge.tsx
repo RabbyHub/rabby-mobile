@@ -8,9 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
 import { preferenceService } from '@/core/services';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { useAtomValue } from 'jotai';
-import { flatListRefAtom } from '@/screens/Home/hooks/store';
-import { HEADER_TOP_AREA_HEIGHT } from '@/constant/layout';
 
 interface Props {
   token: AbstractPortfolioToken;
@@ -20,7 +17,6 @@ interface Props {
 export const HomePinBadge: React.FC<Props> = ({ token, refreshTags }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const flatListRef = useAtomValue(flatListRefAtom);
   const handlePress = useCallback(() => {
     const currentPin = token._isPined;
     token._isPined = !token._isPined;
@@ -29,20 +25,14 @@ export const HomePinBadge: React.FC<Props> = ({ token, refreshTags }) => {
         tokenId: token._tokenId,
         chainId: token.chain,
       });
-      // toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
     } else {
       preferenceService.pinToken({
         tokenId: token._tokenId,
         chainId: token.chain,
       });
-      flatListRef?.current?.scrollToOffset?.({
-        animated: true,
-        offset: HEADER_TOP_AREA_HEIGHT,
-      });
-      // toast.success(t('page.tokenDetail.actionsTips.fold_success'));
     }
     refreshTags();
-  }, [flatListRef, refreshTags, token]);
+  }, [refreshTags, token]);
 
   return token._isPined ? (
     <TouchableOpacity

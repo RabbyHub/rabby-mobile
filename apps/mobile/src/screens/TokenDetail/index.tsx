@@ -194,10 +194,6 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
   } = route.params || {};
-  console.log(
-    'TokenDetailScreen CUSTOM_LOGGER:=>: isSingleAddress',
-    isSingleAddress,
-  );
 
   const { styles } = useTheme2024({
     getStyle,

@@ -1,11 +1,16 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
 import {
@@ -20,8 +25,6 @@ import {
   ActionItem,
   DisplayNftItem,
 } from './types';
-import { findChain } from '@/utils/chain';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -47,14 +50,17 @@ import {
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
 import { DisplayedProject } from './utils/project';
-import { flatListRefAtom } from './hooks/store';
-import { useSetAtom } from 'jotai';
 import { useFocusEffect } from '@react-navigation/native';
 import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
 import { useTriggerTagAssets } from './hooks/refresh';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import throttle from 'lodash/throttle';
+import {
+  RecyclerListView,
+  DataProvider,
+  LayoutProvider,
+} from 'recyclerlistview';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -67,16 +73,36 @@ const icons = {
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
 };
 
+const ViewTypes = {
+  HEADER: 0,
+  BODY: 1,
+  OVERVIEW: 2,
+};
+
+const SCREEN_WIDTH = Dimensions.get('window').width - 32;
+
+type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 interface Props {
   onRefresh(): void;
 }
+const FOOTER_HEIGHT = 56;
+
+const getItemId = item => {
+  return `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
+    item.data?.chain || ''
+  }/${item.data?.price_24h_change || ''}/${item.data?.price || ''}/${
+    item.data?.time_at || ''
+  }`;
+};
 
 export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
+  const [firstRowType, setFirstRowType] = useState('');
 
   const { currentAccount, switchAccount } = useCurrentAccount();
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const {
     tokens,
     refreshPositions,
@@ -95,7 +121,51 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
-  const [currentSection, setCurrentSection] = useState<AsssetKey>('token');
+  const dataProvider = useMemo(
+    () =>
+      new DataProvider((r1, r2) => {
+        return getItemId(r1) !== getItemId(r2);
+      }),
+    [],
+  );
+
+  const [listData, setListData] = useState(() =>
+    dataProvider.cloneWithRows([]),
+  );
+
+  const layoutProvider = useMemo(() => {
+    return new LayoutProvider(
+      index => {
+        const item = listData.getDataForIndex(index);
+        if (item.type === 'overview') {
+          return ViewTypes.OVERVIEW;
+        }
+        if (
+          item?.type?.includes('_header') ||
+          item?.type?.includes('toggle_')
+        ) {
+          return ViewTypes.HEADER;
+        }
+        return ViewTypes.BODY;
+      },
+      (type, dim) => {
+        switch (type) {
+          case ViewTypes.OVERVIEW:
+            dim.width = SCREEN_WIDTH;
+            dim.height = HEADER_TOP_AREA_HEIGHT;
+            break;
+          case ViewTypes.HEADER:
+            dim.width = SCREEN_WIDTH;
+            dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
+            break;
+          default:
+            dim.width = SCREEN_WIDTH;
+            dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
+        }
+      },
+    );
+  }, [listData]);
+
   const throttleUpdateTokens = useCallback(
     () => throttle(updateTokens, 4000),
     [updateTokens],
@@ -143,14 +213,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     ),
   });
 
-  const {
-    sheetModalRef: tokenDetailModalRef,
-    openTokenDetailPopup,
-    cleanFocusingToken,
-    focusingToken,
-    isTestnetToken,
-  } = useGeneralTokenDetailSheetModal();
-
   const dataList = useMemo(() => {
     const unFoldTokenList: ActionItem[] = sortTokens
       .filter(i => !i._isFold)
@@ -195,6 +257,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       {
         show: true,
         data: [
+          { type: 'overview' },
           {
             type: 'asset_header',
           },
@@ -236,23 +299,19 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       .flat();
   }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
 
+  useEffect(() => {
+    setListData(dataProvider.cloneWithRows(dataList));
+  }, [dataList, dataProvider]);
+
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (
-        findChain({
-          serverId: token.chain,
-        })?.isTestnet
-      ) {
-        openTokenDetailPopup(token);
-      } else {
-        navigate(RootNames.TokenDetail, {
-          token: token,
-          isSingleAddress: true,
-          account: currentAccount as any,
-        });
-      }
+      navigate(RootNames.TokenDetail, {
+        token: token,
+        isSingleAddress: true,
+        account: currentAccount as any,
+      });
     },
-    [currentAccount, openTokenDetailPopup],
+    [currentAccount],
   );
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -260,6 +319,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         data,
         portfolioList: itemList,
         account: currentAccount,
+        cache: true,
         isSingleAddress: true,
       });
     },
@@ -281,27 +341,17 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }
     setFoldHideList(true);
     setTimeout(() => {
-      flatListRef.current?.forceUpdate(() => {
-        const data = (flatListRef.current?.props.data || []) as ActionItem[];
-        let offset = HEADER_TOP_AREA_HEIGHT;
-        let index = 0;
+      listRef.current?.forceUpdate(() => {
+        const data = (listRef.current?.props.dataProvider.getAllData() ||
+          []) as ActionItem[];
+        let index = 1;
         if (key === 'defi') {
           index = data.findIndex(item => item.type === 'defi_header');
         }
         if (key === 'nft') {
           index = data.findIndex(item => item.type === 'nft_header');
         }
-        const headerLength = data.slice(0, index).filter(i => !i.data).length;
-        if (index > -1 && key !== 'token') {
-          offset +=
-            index * (ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT) -
-            (ASSETS_ITEM_HEIGHT_NEW - ASSETS_SECTION_HEADER) *
-              (headerLength + 1);
-        }
-        flatListRef.current?.scrollToOffset({
-          animated: true,
-          offset,
-        });
+        listRef.current?.scrollToIndex(index, true);
       });
     }, 0);
   };
@@ -367,10 +417,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
               preferenceService.pinToken({
                 tokenId: data._tokenId,
                 chainId: data.chain,
-              });
-              flatListRef.current?.scrollToOffset({
-                animated: true,
-                offset: HEADER_TOP_AREA_HEIGHT,
               });
               toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
@@ -438,8 +484,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     [isDarkTheme, singleDeFiRefresh, singleNFTRefresh, t],
   );
 
-  const renderItem = ({ item: _item }: { item: ActionItem }) => {
-    const { type, data } = _item;
+  const renderItem = (_type, _data) => {
+    const { type, data } = _data;
     switch (type) {
       case 'unfold_token':
       case 'fold_token':
@@ -493,11 +539,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <AssestAllHeader
             style={styles.assetHeader}
-            showToken={!!tokens?.length}
             hasAssets={hasAssets}
             loading={loading}
             currentSection={currentSection}
-            setCurrentSection={setCurrentSection}
+            showToken={!!tokens?.length}
             showDefi={!!portfolios.length}
             showNft={!!nftList?.length}
             onPress={handleSwitchTab}
@@ -554,23 +599,28 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             onPressFold={() => setFoldNft(pre => !pre)}
           />
         );
+      case 'overview':
+        return <HomeTopArea currentAccount={currentAccount} />;
       default:
         return null;
     }
   };
 
-  const header = useCallback(
-    () => <HomeTopArea currentAccount={currentAccount} />,
-    [currentAccount],
-  );
-  const flatListRef = useRef<FlatList>(null);
+  const listRef = useRef<RecyclerListViewRef>(null);
   const preAccount = useRef<KeyringAccountWithAlias | null>(null);
 
-  const setFlatListRef = useSetAtom(flatListRefAtom);
-
-  React.useEffect(() => {
-    setFlatListRef(flatListRef);
-  }, [flatListRef, setFlatListRef]);
+  const currentSection = useMemo(() => {
+    if (firstRowType.includes('token')) {
+      return 'token';
+    }
+    if (firstRowType.includes('defi')) {
+      return 'defi';
+    }
+    if (firstRowType.includes('nft')) {
+      return 'nft';
+    }
+    return 'token';
+  }, [firstRowType]);
 
   useFocusEffect(
     useMemoizedFn(() => {
@@ -582,92 +632,135 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }),
   );
 
-  const viewabilityConfigRef = useRef({
-    viewAreaCoveragePercentThreshold: 300,
-    minimumViewTime: 100,
-    waitForInteraction: false,
-  });
-  const onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
-    if (!changed) {
-      return;
+  const renderStickHeader = (type: string) => {
+    switch (type) {
+      case 'fold_token':
+        return (
+          <TokenRowSectionHeader
+            str={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+            fold={foldHideList}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
+            onPressFold={() => setFoldHideList(pre => !pre)}
+          />
+        );
+      case 'fold_defi':
+        return (
+          <TokenRowSectionHeader
+            str={getAllDefiCount(portfolios.filter(i => i._isFold))}
+            fold={foldDefi}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
+            onPressFold={() => setFoldDefi(pre => !pre)}
+          />
+        );
+      case 'fold_nft':
+        return (
+          <TokenRowSectionHeader
+            str={'' + getAllNftCount(nftList.filter(i => i._isFold))}
+            fold={foldNft}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              isDarkTheme && styles.bg2,
+            ])}
+            onPressFold={() => setFoldNft(pre => !pre)}
+          />
+        );
+      default:
+        return null;
     }
-    const type = (viewableItems?.[0]?.item?.type || '') as string;
-    if (type.includes('token')) {
-      setCurrentSection('token');
-      return;
-    }
-    if (type.includes('defi')) {
-      setCurrentSection('defi');
-      return;
-    }
-    if (type.includes('nft')) {
-      setCurrentSection('nft');
-      return;
-    }
-  }, []);
+  };
 
   if (!currentAccount?.address) {
     return null;
   }
 
   return (
-    <>
-      <FlatList<ActionItem>
-        data={dataList}
-        ref={flatListRef}
-        viewabilityConfig={viewabilityConfigRef.current}
-        onViewableItemsChanged={onViewableItemsChanged}
-        ListHeaderComponent={header}
-        renderItem={renderItem}
-        ItemSeparatorComponent={ItemSeparatorComponent}
-        keyExtractor={item =>
-          `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
-            item.data?.chain || ''
-          }`
-        }
-        contentContainerStyle={styles.bgContainer}
-        showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[1]}
-        windowSize={10}
-        onScrollToIndexFailed={info => {
-          console.warn('Scroll to index failed', info);
-          if (info.highestMeasuredFrameIndex < info.index) {
-            toast.info(
-              `Ops! The asset wasn't shown yet, please scroll down manually`,
-            );
+    <View style={styles.container}>
+      {firstRowType !== 'asset_header' && (
+        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+          <AssestAllHeader
+            style={styles.assetHeader}
+            hasAssets={hasAssets}
+            loading={loading}
+            currentSection={currentSection}
+            showToken={!!tokens?.length}
+            showDefi={!!portfolios.length}
+            showNft={!!nftList?.length}
+            onPress={handleSwitchTab}
+          />
+          {renderStickHeader(firstRowType)}
+        </Animated.View>
+      )}
+      <RecyclerListView
+        style={[styles.bgContainer, styles.list]}
+        dataProvider={listData}
+        layoutProvider={layoutProvider}
+        rowRenderer={renderItem}
+        ref={listRef}
+        onVisibleIndicesChanged={indexes => {
+          if (listData.getDataForIndex(indexes[1])?.type) {
+            setFirstRowType(listData.getDataForIndex(indexes[1]).type);
           }
         }}
-        refreshControl={
-          <RefreshControl
-            style={styles.bgContainer}
-            onRefresh={() => {
-              refreshPositions(true);
-              onRefresh();
-            }}
-            refreshing={refreshing}
-          />
-        }
-      />
-      <BottomSheetModalTokenDetail
-        __shouldSwitchSceneAccountBeforeRedirect__
-        nextTxRedirectAccount={currentAccount}
-        ref={tokenDetailModalRef}
-        token={focusingToken}
-        isTestnet={isTestnetToken}
-        onDismiss={() => {
-          cleanFocusingToken({ noNeedCloseModal: true });
+        onScroll={event => {
+          if (
+            event.nativeEvent.contentSize &&
+            event.nativeEvent.layoutMeasurement
+          ) {
+            const reachEnd =
+              event.nativeEvent.contentSize.height -
+                event.nativeEvent.layoutMeasurement.height -
+                event.nativeEvent.contentOffset.y <=
+              FOOTER_HEIGHT;
+            const reachTop =
+              event.nativeEvent.contentOffset.y <= HEADER_TOP_AREA_HEIGHT;
+            setShowScrollIndicator(!reachEnd && !reachTop);
+          }
         }}
-        onTriggerDismissFromInternal={() => {
-          cleanFocusingToken();
+        renderFooter={() => <View style={styles.footer} />}
+        scrollViewProps={{
+          showsVerticalScrollIndicator: showScrollIndicator,
+          refreshControl: (
+            <RefreshControl
+              style={styles.bgContainer}
+              onRefresh={() => {
+                refreshPositions(true);
+                onRefresh();
+              }}
+              refreshing={refreshing}
+            />
+          ),
         }}
       />
-    </>
+    </View>
   );
 };
 
-const ItemSeparatorComponent = () => <View style={{ height: 8 }} />;
-
 const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: ASSETS_SECTION_HEADER,
+    paddingHorizontal: 16,
+    zIndex: 1,
+  },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
@@ -704,5 +797,8 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-secondary'],
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
+  },
+  footer: {
+    height: FOOTER_HEIGHT,
   },
 }));

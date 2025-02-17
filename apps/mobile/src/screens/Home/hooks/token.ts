@@ -101,7 +101,6 @@ export const useTokens = (
       const currentAbort = new AbortController();
       abortProcess.current = currentAbort;
 
-      setLoading(true);
       log('======Start-Tokens======', userAddr);
       let _data = produce(walletProject, draft => {
         draft.netWorth = 0;
@@ -116,10 +115,22 @@ export const useTokens = (
 
       let _tokens: AbstractPortfolioToken[] = [];
 
+      const cachedTokens = force
+        ? []
+        : await TokenItemEntity.batchQueryTokens(userAddr);
+      if (!cachedTokens.length || force) {
+        setLoading(true);
+      }
       const tokenSettings =
         (await preferenceService.getUserTokenSettings()) || {};
-      if ((await TokenItemEntity.isExpired(userAddr)) || force) {
-        const snapshot = await queryTokensCache(userAddr);
+      if (
+        force ||
+        cachedTokens.length ||
+        (await TokenItemEntity.isExpired(userAddr))
+      ) {
+        const snapshot = cachedTokens.length
+          ? cachedTokens
+          : await queryTokensCache(userAddr);
         if (snapshot?.length) {
           const chainTokens = snapshot.reduce((m, n) => {
             m[n.chain] = m[n.chain] || [];

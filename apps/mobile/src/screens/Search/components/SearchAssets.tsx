@@ -1,12 +1,13 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, SectionList, Text, View } from 'react-native';
+import { Animated, Dimensions, Keyboard, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import {
-  ASSETS_ITEM_HEIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_SECTION_HEADER,
+  ASSETS_SEPARATOR_HEIGHT,
   RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -27,10 +28,34 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '../useAssets';
 import { PositionLoader } from './Skeleton';
 import SearchOnTheChain from './SearchOnTheChain';
+import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import { useSearchTokens } from '../useSearch';
+import { ICombineItem } from '@/screens/Home/hooks/store';
+import {
+  RecyclerListView,
+  DataProvider,
+  LayoutProvider,
+} from 'recyclerlistview';
+
+const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
 interface Props {
   filterText?: string;
 }
+
+const ViewTypes = {
+  HEADER: 0,
+  BODY: 1,
+  OVERVIEW: 2,
+};
+
+const getItemId = item => {
+  return `${item.type}/${item.data?.chain || ''}/${item.data?.symbol || ''}/${
+    item.data?._tokenId || ''
+  }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
+    item.data?.price || ''
+  }/${item.data?.time_at || ''}`;
+};
 
 export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -43,36 +68,98 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     refreshing,
     isLoading,
   } = useAssets(filterText);
+
+  const { resultTokens, searched, loading, handleSearch } =
+    useSearchTokens(filterText);
   const { t } = useTranslation();
+  const [firstRowType, setFirstRowType] = useState('');
+  const dataProvider = useMemo(
+    () =>
+      new DataProvider((r1, r2) => {
+        return getItemId(r1) !== getItemId(r2);
+      }),
+    [],
+  );
 
   const [foldHideList, setFoldHideList] = useState(true);
+  const [listData, setListData] = useState(() =>
+    dataProvider.cloneWithRows([]),
+  );
 
-  const sections = useMemo(() => {
-    const unFoldList = tokens.filter(i => filterText || !i._isFold);
-    const foldList = tokens.filter(i => i._isFold);
-    return [
-      {
+  const dataList = useMemo(() => {
+    const unFoldList = tokens
+      .filter(i => filterText || !i._isFold)
+      .map(item => ({
         type: 'unfold_token',
-        originData: unFoldList,
-        data: unFoldList,
-      },
-      {
+        data: item,
+      }));
+    const foldList = tokens
+      .filter(i => i._isFold)
+      .map(item => ({
         type: 'fold_token',
-        originData: filterText ? [] : foldList,
-        data: foldHideList ? [] : foldList,
+        data: item,
+      }));
+    const itemData: Array<{
+      show: boolean;
+      data: ICombineItem[];
+    }> = [
+      {
+        show: !!unFoldList.length,
+        data: [
+          {
+            type: 'asset_header',
+          },
+          ...unFoldList,
+        ],
       },
       {
-        type: 'defi',
-        originData: portfolios,
-        data: portfolios,
+        show: !!(filterText ? [] : foldList).length,
+        data: [
+          { type: 'toggle_token_fold' },
+          ...(foldHideList ? [] : foldList),
+        ],
       },
       {
-        type: 'nft',
-        originData: filterText ? nftList : [],
-        data: nftList,
+        show: !!portfolios.length,
+        data: [
+          { type: 'defi_header' },
+          ...portfolios.map(item => ({
+            type: 'defi',
+            data: item,
+          })),
+        ],
+      },
+      {
+        show: !!(filterText ? nftList : []).length,
+        data: [
+          { type: 'nft_header' },
+          ...nftList.map(item => ({
+            type: 'nft',
+            data: item,
+          })),
+        ],
+      },
+      {
+        show: true,
+        data: [
+          { type: 'search_token_header' },
+          ...resultTokens.map(item => ({
+            type: 'search-token',
+            data: item,
+          })),
+        ],
       },
     ];
-  }, [filterText, foldHideList, nftList, portfolios, tokens]);
+    return itemData
+      .filter(item => item.show)
+      .map(item => item.data)
+      .flat();
+  }, [filterText, foldHideList, nftList, portfolios, resultTokens, tokens]);
+
+  useEffect(() => {
+    setListData(dataProvider.cloneWithRows(dataList));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataList.length, dataProvider]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -99,27 +186,18 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     navigate(RootNames.NftDetail, { token: item });
   };
 
-  const renderItem = ({ item, section }) => {
-    switch (section.type) {
+  const renderItem = (_type, _data) => {
+    const { type, data } = _data;
+    switch (type) {
       case 'unfold_token':
-        return (
-          <TokenRow
-            data={item}
-            onTokenPress={handleOpenTokenDetail}
-            filterText={filterText}
-            logoSize={46}
-            chainLogoSize={18}
-            hideFoldTag
-            disableMenu
-          />
-        );
       case 'fold_token':
         return (
           <TokenRow
-            data={item}
-            filterText={filterText}
+            data={data}
             onTokenPress={handleOpenTokenDetail}
+            filterText={filterText}
             logoSize={46}
+            style={styles.renderItemWrapper}
             chainLogoSize={18}
             hideFoldTag
             disableMenu
@@ -129,10 +207,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
         return (
           <NftRow
             filterText={filterText}
-            item={item}
+            item={data}
             disableMenu
             hideFoldTag
-            onPress={() => handlePressNft(item)}
+            onPress={() => handlePressNft(data)}
             logoSize={46}
             chainLogoSize={18}
           />
@@ -140,24 +218,67 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       case 'defi':
         return (
           <DefiRow
-            data={item}
+            data={data}
             filterText={filterText}
             disableMenu
             hideFoldTag
             onPress={() =>
-              handleOpenDefiDetail(item, [...(item._portfolios || [])])
+              handleOpenDefiDetail(data, [...(data._portfolios || [])])
             }
             logoSize={46}
             chainLogoSize={18}
           />
         );
+      case 'search-token':
+        return (
+          <ExternalTokenRow
+            data={data}
+            style={styles.renderItemWrapper}
+            filterText={filterText}
+            onTokenPress={handleOpenTokenDetail}
+            logoSize={40}
+          />
+        );
+      case 'asset_header':
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.token')}
+          </Text>
+        );
+      case 'toggle_token_fold':
+        return (
+          <TokenRowSectionHeader
+            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
+            fold={foldHideList}
+            onPressFold={() => setFoldHideList(pre => !pre)}
+          />
+        );
+      case 'defi_header':
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.Defi')}
+          </Text>
+        );
+      case 'nft_header':
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.NFT')}
+          </Text>
+        );
+      case 'search_token_header':
+        return resultTokens.length ? (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.searchWeb.title')}
+          </Text>
+        ) : null;
       default:
         return null;
     }
   };
 
-  const renderSectionHeader = ({ section }) => {
-    switch (section.type) {
+  const renderStickHeader = (type: string) => {
+    switch (type) {
+      /** header */
       case 'unfold_token':
         return (
           <Text style={styles.sectionHeader}>
@@ -172,80 +293,142 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
         );
-      case 'defi':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
-        );
       case 'nft':
         return (
           <Text style={styles.sectionHeader}>
             {t('page.search.sectionHeader.NFT')}
           </Text>
         );
+      case 'defi':
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.sectionHeader.Defi')}
+          </Text>
+        );
+      case 'search-token':
+        return (
+          <Text style={styles.sectionHeader}>
+            {t('page.search.searchWeb.title')}
+          </Text>
+        );
       default:
-        return <View style={{ height: 0 }} />;
+        return null;
     }
   };
 
-  const getItemLayout = useCallback(
-    (_data: any, index: number) => ({
-      length: ASSETS_ITEM_HEIGHT,
-      offset: ASSETS_ITEM_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
+  const layoutProvider = useMemo(() => {
+    return new LayoutProvider(
+      index => {
+        const item = listData.getDataForIndex(index);
+        if (
+          item?.type?.includes('_header') ||
+          item?.type?.includes('toggle_')
+        ) {
+          return ViewTypes.HEADER;
+        }
+        return ViewTypes.BODY;
+      },
+      (type, dim) => {
+        switch (type) {
+          case ViewTypes.HEADER:
+            dim.width = SCREEN_WIDTH;
+            dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
+            break;
+
+          case ViewTypes.BODY:
+            dim.width = SCREEN_WIDTH;
+            dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
+            break;
+          default:
+            dim.width = 0;
+            dim.height = 0;
+        }
+      },
+    );
+  }, [listData]);
+
   useEffect(() => {
     getCacheTop10Assets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ListEmptyComponent = useMemo(() => {
-    return isLoading ? <PositionLoader /> : null;
-  }, [isLoading]);
-
-  const ListFooterComponent = useMemo(() => {
-    return <SearchOnTheChain filterText={filterText} />;
-  }, [filterText]);
+  if (isLoading && !listData.getSize()) {
+    return (
+      <View style={styles.bgContainer}>
+        <PositionLoader />
+      </View>
+    );
+  }
+  if (!listData.getSize()) {
+    return null;
+  }
 
   return (
-    <SectionList
-      contentInset={{ bottom: 56 }}
-      sections={sections.filter(i => !!i.originData?.length)}
-      renderItem={renderItem}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.bgContainer}
-      keyExtractor={item => `${item.chain}/${item.symbol || ''}/${item.id}`}
-      windowSize={10}
-      stickySectionHeadersEnabled
-      ListEmptyComponent={ListEmptyComponent}
-      onScroll={() => {
-        Keyboard.dismiss();
-      }}
-      ListFooterComponent={ListFooterComponent}
-      renderSectionHeader={renderSectionHeader}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={() => {
-            getCacheTop10Assets(true);
-          }}
-          refreshing={refreshing}
-        />
-      }
-    />
+    <View style={styles.container}>
+      {firstRowType?.includes('_header') ||
+      firstRowType?.includes('toggle_') ? null : (
+        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+          {renderStickHeader(firstRowType)}
+        </Animated.View>
+      )}
+      <RecyclerListView
+        style={[styles.bgContainer, styles.list]}
+        dataProvider={listData}
+        layoutProvider={layoutProvider}
+        rowRenderer={renderItem}
+        onVisibleIndicesChanged={indexes => {
+          if (listData.getDataForIndex(indexes[0])?.type) {
+            setFirstRowType(listData.getDataForIndex(indexes[0]).type);
+          }
+        }}
+        renderFooter={() => (
+          <SearchOnTheChain
+            filterText={filterText}
+            loading={loading}
+            searched={searched}
+            hasTokens={!!resultTokens.length}
+            handleSearch={() => handleSearch(filterText)}
+          />
+        )}
+        onScroll={() => {
+          Keyboard.dismiss();
+        }}
+        scrollViewProps={{
+          refreshControl: (
+            <RefreshControl
+              style={styles.bgContainer}
+              onRefresh={() => {
+                getCacheTop10Assets(true);
+              }}
+              refreshing={refreshing}
+            />
+          ),
+        }}
+      />
+    </View>
   );
 };
 
 const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: ASSETS_SECTION_HEADER,
+    zIndex: 1,
+  },
   bgContainer: {
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    gap: 8,
   },
   emptyHolder: {
     marginTop: 65,
@@ -267,10 +450,17 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 18,
     fontWeight: '500',
     lineHeight: 22,
+    height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
-    paddingBottom: 8,
+  },
+  renderItemWrapper: {
+    height: ASSETS_ITEM_HEIGHT_NEW,
+    marginBottom: 8,
+  },
+  footer: {
+    height: 200,
   },
 }));
