@@ -8,15 +8,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
 import { StackActions } from '@react-navigation/native';
-
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { CHAINS_ENUM } from '@debank/common';
-import { useTranslation } from 'react-i18next';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -24,35 +16,16 @@ type CurrentAddressProps = NativeStackScreenProps<
 >;
 
 export function ReceiveAddressListScreen(): JSX.Element {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
-
-  const { t } = useTranslation();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const handleSelect = async account => {
     await switchSceneCurrentAccount('Receive', account);
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: false,
-        enablePanDownToClose: true,
-      },
-      titleText: t('page.receiveAddressList.selectChainTitle'),
-      onChange: (v: CHAINS_ENUM) => {
-        removeGlobalBottomSheetModal2024(id);
-        navigation.dispatch(
-          StackActions.push(RootNames.StackTransaction, {
-            screen: RootNames.Receive,
-            params: {
-              chainEnum: v,
-            },
-          }),
-        );
-      },
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-    });
+    navigation.dispatch(
+      StackActions.push(RootNames.StackTransaction, {
+        screen: RootNames.Receive,
+      }),
+    );
   };
 
   return (
@@ -63,7 +36,6 @@ export function ReceiveAddressListScreen(): JSX.Element {
         containerStyle={styles.accountRoot}
         onSelectAccount={handleSelect}
         scene="receive"
-        defaultPressItemAction="copy"
       />
     </NormalScreenContainer2024>
   );

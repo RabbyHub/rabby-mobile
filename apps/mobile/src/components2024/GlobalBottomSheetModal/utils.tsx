@@ -1,4 +1,4 @@
-import { MODAL_NAMES } from './types';
+import { CreateParams, MODAL_NAMES } from './types';
 import { Approval } from '@/components//Approval';
 import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
 import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
@@ -9,6 +9,7 @@ import { ViewRawDetail } from '@/components/Approval/components/TxComponents/Vie
 import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
 import { SelectSortedChain } from '@/components2024/SelectSortedChain';
+import { SelectChainWithSummary } from '@/components2024/SelectChainWithSummary';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
 import { SettingLedger } from '@/components/HDSetting/SettingLedger';
@@ -43,7 +44,7 @@ import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { BackgroundComponent } from './BackgroundComponent';
 import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { AppColors2024Variants } from '@/constant/theme';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
@@ -55,6 +56,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['45%'],
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
+  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
@@ -99,6 +101,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_CHAIN]: SelectChain,
   [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
+  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: SelectChainWithSummary,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
   [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
@@ -133,36 +136,69 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 };
 
 export function makeBottomSheetProps({
-  linearGradientType,
   colors,
+  createParams,
+  linearGradientType: _linearGradientType,
 }: {
-  linearGradientType?: LinearGradientContainerProps['type'];
+  createParams?: CreateParams;
+  linearGradientType?: (CreateParams['bottomSheetModalProps'] &
+    object)['linearGradientType'];
   colors: AppColors2024Variants;
 }): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
-  const handleBgColor =
-    linearGradientType === 'linear' || !linearGradientType
-      ? colors['neutral-bg-1']
-      : linearGradientType === 'bg1'
-      ? colors['neutral-bg-1']
-      : colors['neutral-bg-2'];
+  const inputProps = createParams?.bottomSheetModalProps;
+  const linearGradientType =
+    _linearGradientType ??
+    createParams?.bottomSheetModalProps?.linearGradientType;
 
-  return {
-    style: {
-      overflow: 'hidden',
-      borderRadius: 32,
-    },
-    handleStyle: {
-      backgroundColor: handleBgColor,
-      paddingVertical: 18,
-    },
-    handleIndicatorStyle: {
-      backgroundColor: '#D1D4DB',
-      height: 6,
-      width: 50,
-    },
+  const { handleBgColor } = (() => {
+    switch (createParams?.name) {
+      case MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY: {
+        return {
+          handleBgColor: colors['neutral-bg-0'],
+        };
+      }
+      default: {
+        return {
+          handleBgColor:
+            linearGradientType === 'linear' || !linearGradientType
+              ? colors['neutral-bg-1']
+              : linearGradientType === 'bg1'
+              ? colors['neutral-bg-1']
+              : colors['neutral-bg-2'],
+        };
+      }
+    }
+  })();
 
-    backgroundComponent: props => (
-      <BackgroundComponent {...props} type={linearGradientType} />
-    ),
+  const baseProps: Partial<React.ComponentProps<typeof AppBottomSheetModal>> = {
+    style: StyleSheet.flatten([
+      {
+        overflow: 'hidden',
+        borderRadius: 32,
+      },
+      inputProps?.style,
+    ]),
+    handleStyle: StyleSheet.flatten([
+      {
+        backgroundColor: handleBgColor,
+        paddingVertical: 18,
+      },
+      inputProps?.handleStyle,
+    ]),
+    handleIndicatorStyle: StyleSheet.flatten([
+      {
+        backgroundColor: '#D1D4DB',
+        height: 6,
+        width: 50,
+      },
+      inputProps?.handleIndicatorStyle,
+    ]),
+    ...(inputProps?.backdropComponent === undefined && {
+      backgroundComponent: props => (
+        <BackgroundComponent {...props} type={linearGradientType} />
+      ),
+    }),
   };
+
+  return baseProps;
 }

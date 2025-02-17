@@ -207,7 +207,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       width: '100%',
     },
-    walletIcon: { marginRight: 6, width: 34, height: 34, borderRadius: 8.5 },
+    walletIcon: { marginRight: 6, width: 46, height: 46, borderRadius: 8.5 },
     centerInfo: {
       flex: 1,
       flexShrink: 1,
