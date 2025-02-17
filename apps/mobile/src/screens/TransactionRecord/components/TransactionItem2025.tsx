@@ -90,8 +90,11 @@ export const TransactionItem = ({
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
   const isShowSuccess = useMemo(
-    () => historySuccessList?.includes(data.maxGasTx.hash || ''),
-    [data.maxGasTx.hash, historySuccessList],
+    () =>
+      historySuccessList?.includes(
+        `${data.maxGasTx.address}-${data.maxGasTx.hash}` || '',
+      ),
+    [data.maxGasTx, historySuccessList],
   );
 
   const formatType: HistoryItemCateType = useMemo(() => {
@@ -248,7 +251,7 @@ export const TransactionItem = ({
         const isApprove = formatType === HistoryItemCateType.Approve;
         return projectName
           ? isApprove
-            ? ToText
+            ? ToText + projectName
             : FromText + projectName
           : strings('page.transactions.detail.Unknown');
       // case HistoryItemCateType.Contract:

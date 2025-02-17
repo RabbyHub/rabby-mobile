@@ -514,12 +514,12 @@ function History({
     finalSceneCurrentAccount,
   ]);
 
-  // useFocusEffect(() => {
-  //   eventBus.addListener(EVENTS.RELOAD_TX, refresh);
-  //   return () => {
-  //     eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
-  //   };
-  // });
+  useFocusEffect(() => {
+    eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
+    return () => {
+      eventBus.removeListener(EVENTS.RELOAD_TX, runFetchLocalTx);
+    };
+  });
 
   const getHeaderRight = useMemoizedFn(() => {
     return <HistoryFilterMenu setIsShowMenu={setIsShowMenu} />;

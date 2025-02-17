@@ -123,6 +123,10 @@ export class TransactionHistoryService {
       this.store.failList = [];
     }
 
+    if (typeof this.store.isNeedFetchTxHistory !== 'object') {
+      this.store.isNeedFetchTxHistory = {};
+    }
+
     this.init();
 
     // this._populateAvailableTxs();
@@ -170,7 +174,7 @@ export class TransactionHistoryService {
 
   getIsNeedFetchTxHistory(address: string) {
     const res = this.store.isNeedFetchTxHistory[address];
-    this.store.isNeedFetchTxHistory[address] = false;
+    res && (this.store.isNeedFetchTxHistory[address] = false);
     return res;
   }
 
