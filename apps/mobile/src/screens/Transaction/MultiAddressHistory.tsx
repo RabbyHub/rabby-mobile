@@ -328,6 +328,10 @@ function History({
   };
 
   const batchFetchLocalTx = async () => {
+    if (isInTokenDetail) {
+      return [];
+    }
+
     const list: TransactionGroup[] = [];
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
