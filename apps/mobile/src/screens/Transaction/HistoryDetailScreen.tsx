@@ -606,6 +606,7 @@ function HistoryDetailScreen(): JSX.Element {
         chain={data.chain}
         status={status || 0}
         data={data}
+        isForMultipleAdderss={isForMultipleAdderss}
         tokenDict={data.tokenDict}
         buttonContainerStyle={buttonContainerStyle}
       />
