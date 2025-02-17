@@ -102,7 +102,7 @@ export function useQueryLocalTokens() {
 
       const addressSet = new Set(allAccounts.map(account => account.address));
 
-      Promise.all(
+      return Promise.all(
         [...addressSet].map(async address => {
           return TokenItemEntity.searchAllTokens({
             owner_addr: address,

@@ -13,8 +13,9 @@ import { AssetAvatar } from '../AssetAvatar';
 
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
+  radiusValue: 20,
   useAllItemH: 70,
-  itemH: 96,
+  itemH: 78,
   itemGap: 12,
   get myAddressesAreaVisiableH() {
     return (
@@ -54,7 +55,9 @@ export function AddressItemInPanel({
   });
 
   return (
-    <AddressItemShadowView style={style}>
+    <AddressItemShadowView
+      disableShadow
+      style={[styles.addressItemView, style]}>
       <TouchableOpacity
         style={StyleSheet.flatten([
           styles.addressItemContainer,
@@ -123,14 +126,17 @@ export function AddressItemInPanel({
 
 const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
   return {
+    addressItemView: {
+      borderRadius: AddressItemSizes.radiusValue,
+      overflow: 'hidden',
+    },
     containerPressing: {
       borderColor: ctx.colors2024['brand-light-2'],
       backgroundColor: ctx.colors2024['brand-light-1'],
     },
     addressItemContainer: {
-      borderRadius: 30,
+      padding: 16,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
-      padding: 24,
       height: AddressItemSizes.itemH,
     },
     addressItemContainerCurrent: {
@@ -141,7 +147,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       height: 52,
       width: '100%',
     },
-    walletIcon: { marginRight: 12 },
+    walletIcon: { marginRight: 12, width: 46, height: 46 },
     centerInfo: {
       flexDirection: 'column',
       flexShrink: 1,
@@ -157,10 +163,9 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     addressAliasName: {
       flexShrink: 1,
       fontFamily: 'SF Pro Rounded',
-      fontSize: 17,
+      fontSize: 16,
       fontStyle: 'normal',
       fontWeight: '700',
-      lineHeight: 22,
     },
     bottomArea: {
       flexDirection: 'row',
@@ -178,10 +183,10 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressUsdValue: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 17,
+      fontSize: 14,
       fontStyle: 'normal',
       fontWeight: '500',
-      lineHeight: 22,
+      lineHeight: 18,
       color: ctx.colors2024['neutral-secondary'],
     },
     addressUsdValueCurrent: {
@@ -194,7 +199,9 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       gap: 2,
     },
-    chainLogoItem: {},
+    chainLogoItem: {
+      opacity: 0.8,
+    },
 
     pinnedWrapper: {
       flexShrink: 0,
@@ -223,6 +230,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       justifyContent: 'center',
       alignItems: 'center',
       height: '100%',
+      // ...makeDebugBorder(),
     },
   };
 });

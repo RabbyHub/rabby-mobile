@@ -329,7 +329,7 @@ function computeSceneAccountInfo({
   pinAddresses,
 
   sceneCurrentAccount,
-  isSceneUsingAllAccounts,
+  isSceneUsingAllAccounts = false,
 }: {
   forScene: AccountSwitcherScene;
   accounts: Account[];
@@ -384,7 +384,8 @@ function computeSceneAccountInfo({
   ) {
     result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
   }
-  if (result.finalSceneCurrentAccount) {
+
+  if (!result.isSceneUsingAllAccounts && result.finalSceneCurrentAccount) {
     result.shouldSafeAddressesExpanded = !!result.safeAddresses.find(account =>
       isSameAccount(account, result.finalSceneCurrentAccount),
     );
@@ -433,8 +434,9 @@ export function useSceneAccountInfo(options: {
     (account?: Account | null) => {
       const result = computeSceneAccountInfo({
         forScene,
-        sceneCurrentAccount: account || sceneAccountInfo?.currentAccount,
-        isSceneUsingAllAccounts: sceneAccountInfo?.useAllAccounts,
+        sceneCurrentAccount:
+          (account || sceneAccountInfo?.currentAccount) ?? null,
+        isSceneUsingAllAccounts: !!sceneAccountInfo?.useAllAccounts,
         accounts,
         pinAddresses,
       });
@@ -453,8 +455,8 @@ export function useSceneAccountInfo(options: {
     return computeSceneAccountInfo({
       forScene,
 
-      sceneCurrentAccount: sceneAccountInfo?.currentAccount,
-      isSceneUsingAllAccounts: sceneAccountInfo?.useAllAccounts,
+      sceneCurrentAccount: sceneAccountInfo?.currentAccount ?? null,
+      isSceneUsingAllAccounts: !!sceneAccountInfo?.useAllAccounts,
       accounts,
       pinAddresses,
     });

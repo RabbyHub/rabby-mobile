@@ -610,7 +610,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
         <AccountSwitcherModal
           forScene="MultiHistory"
           inScreen
-          panelLinearGradientProps={{ type: 'bg1' }}
+          panelLinearGradientProps={{ type: 'linear' }}
         />
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
@@ -637,7 +637,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
-    backgroundColor: isLight ? '#F6F7F7' : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024?.['neutral-bg-1'],
   },
   menuContainer: {
     elevation: 5,

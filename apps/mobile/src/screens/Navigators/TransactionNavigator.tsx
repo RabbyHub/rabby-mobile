@@ -109,7 +109,7 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
+            backgroundColor: colors2024?.['neutral-bg-1'],
           },
         }}
       />
@@ -128,7 +128,7 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
+            backgroundColor: colors2024?.['neutral-bg-1'],
           },
         }}
       />

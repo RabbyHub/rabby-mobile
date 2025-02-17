@@ -4,10 +4,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  shadowView: {
+  viewBase: {
     borderWidth: 1,
     borderRadius: 30,
     borderColor: colors2024['neutral-line'],
+  },
+  shadowView: {
     ...Platform.select({
       ios: {
         shadowColor: colors2024['neutral-black'],
@@ -26,13 +28,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 interface Props {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  disableShadow?: boolean;
 }
 
 export const AddressItemShadowView = (props: Props) => {
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    <View style={StyleSheet.flatten([styles.shadowView, props.style])}>
+    <View
+      style={StyleSheet.flatten([
+        styles.viewBase,
+        !props.disableShadow && styles.shadowView,
+        props.style,
+      ])}>
       {props.children}
     </View>
   );

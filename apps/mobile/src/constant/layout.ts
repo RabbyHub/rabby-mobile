@@ -273,15 +273,11 @@ function makeScreenSpecConfig() {
       Unlock: bg1DefaultConf,
       History: {
         ...bg2Default2024Conf,
-        androidStatusBarBg: !isDarkTheme
-          ? '#F6F7F7'
-          : colors2024['neutral-bg-1'],
+        androidStatusBarBg: colors2024['neutral-bg-1'],
       },
       MultiHistory: {
         ...bg2Default2024Conf,
-        androidStatusBarBg: !isDarkTheme
-          ? '#F6F7F7'
-          : colors2024['neutral-bg-1'],
+        androidStatusBarBg: colors2024['neutral-bg-1'],
       },
       MultiAddressHistory: bg2Default2024Conf,
       HistoryDetail: bg2Default2024Conf,

@@ -133,9 +133,9 @@ AccountSwitcherAopProps<{
       } else {
         setNavsCollapsed(prev => ({ ...prev, watch: nextCollapsed }));
       }
-      scrollToBottom();
+      if (!isSceneUsingAllAccounts) scrollToBottom();
     },
-    [scrollToBottom],
+    [scrollToBottom, isSceneUsingAllAccounts],
   );
 
   useEffect(() => {
@@ -349,7 +349,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     },
     addressListContainer: {
       flexDirection: 'column',
-      marginTop: 12,
+      // marginTop: 12,
       // maxHeight: SIZES.myAddressesAreaVisiableH,
       width: '100%',
     },
