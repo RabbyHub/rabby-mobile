@@ -21,6 +21,7 @@ import {
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
+import { isWatchOrSafeAccount } from '@/utils/account';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
   // ownerAddress?: string;
@@ -94,7 +95,9 @@ export function useQueryLocalTokens() {
       if (isRequestingRef.current) return;
       setIsRequesting(true);
 
-      const allAccounts = await fetchAccountsForTokens();
+      const allAccounts = await fetchAccountsForTokens().then(accounts =>
+        accounts.filter(account => !isWatchOrSafeAccount(account)),
+      );
 
       const { keyword, chain_server_id } = filters || {};
 
