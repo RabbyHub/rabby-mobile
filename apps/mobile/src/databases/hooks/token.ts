@@ -138,16 +138,16 @@ export function useQueryLocalTokens() {
   } = useMemo(() => {
     const { accounts, addressIndexedTokens } = accountTokenMap;
 
-    return accounts.reduce(
+    const result = accounts.reduce(
       (accu, account) => {
         const tokens = addressIndexedTokens[account.address] || [];
 
         accu.tokenItems = accu.tokenItems.concat(
           tokens.map(x => ({ ...x, ownerAccount: account })),
         );
-        accu.displayTokens = accu.displayTokens.concat(
-          tokens.map(token => tokenItem2AbstractTokenWithOwner(token, account)),
-        );
+        // accu.displayTokens = accu.displayTokens.concat(
+        //   tokens.map(token => tokenItem2AbstractTokenWithOwner(token, account)),
+        // );
         return accu;
       },
       {
@@ -155,6 +155,20 @@ export function useQueryLocalTokens() {
         displayTokens: [] as DisplayedTokenWithOwner[],
       },
     );
+
+    // sort all tokens by usd_value = item.price * item.amount descending, for same usd_value, sort by account order
+    result.tokenItems.sort((a, b) => {
+      const aUsdValue = a.price * a.amount;
+      const bUsdValue = b.price * b.amount;
+
+      return bUsdValue - aUsdValue;
+    });
+
+    result.displayTokens = result.tokenItems.map(token =>
+      tokenItem2AbstractTokenWithOwner(token),
+    );
+
+    return result;
   }, [accountTokenMap]);
 
   return {
