@@ -10,6 +10,7 @@ import {
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
+import { IManageToken } from '@/core/services/preference';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
@@ -95,6 +96,7 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
 export const judgeIsSmallUsdTx = (
   item: HistoryItemEntity,
   tokenDict: Record<string, TokenItem>,
+  pinedQueue: IManageToken[],
 ) => {
   const currentTime = new Date().getTime();
   if (item.time_at * 1000 > currentTime - 1000 * 60 * 60) {
@@ -130,7 +132,12 @@ export const judgeIsSmallUsdTx = (
         return false;
       }
     }
-    const price = token.is_core ? token?.price || 0 : 0; // is not core token price to 0
+    const isCore =
+      token?.is_core ||
+      pinedQueue.find(
+        p => p.chainId === item.chain && p.tokenId === i.token_id,
+      );
+    const price = isCore ? token?.price || 0 : 0; // is not core token price to 0
     const usd = new BigNumber(i.amount).multipliedBy(price || 0);
     allUsd = allUsd.plus(usd);
   }

@@ -10,7 +10,7 @@ import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
@@ -164,12 +164,13 @@ function History({
         SwapItemEntity.getAllHistoryItem(addresses, count),
       ]);
 
+      const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(
         item =>
           ({
             ...ensureHistoryListItemFromDb(item),
             isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict),
+            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
             tokenDict,
             projectDict,
             isShowSuccess: historySuccessList.includes(
