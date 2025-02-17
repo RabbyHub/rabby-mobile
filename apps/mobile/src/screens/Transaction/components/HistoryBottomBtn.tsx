@@ -24,6 +24,8 @@ import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
+import { useCurrentAccount } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 interface ItemProps {
   status: number;
@@ -59,6 +61,8 @@ export const HistoryBottomBtn = ({
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   // const isFail = useMemo(() => status !== 1, [status]);
   const { btnContainerViewStyle, buttonStyle } = useMemo(() => {
@@ -79,7 +83,7 @@ export const HistoryBottomBtn = ({
         <View style={btnContainerViewStyle}>
           <Button
             buttonStyle={buttonStyle}
-            onPress={() => {
+            onPress={async () => {
               const sendToken =
                 tokenDict[sends[0]?.token_id] ||
                 tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
@@ -87,6 +91,12 @@ export const HistoryBottomBtn = ({
               const chainItem = findChain({
                 serverId: sendToken.chain,
               });
+              if (!isForMultipleAdderss) {
+                await switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  currentAccount,
+                );
+              }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss
@@ -179,6 +189,12 @@ export const HistoryBottomBtn = ({
             buttonStyle={buttonStyle}
             onPress={() => {
               const chainItem = !chain ? null : findChainByServerID(chain);
+              if (!isForMultipleAdderss) {
+                switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  currentAccount,
+                );
+              }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss
