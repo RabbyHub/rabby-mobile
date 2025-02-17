@@ -1550,10 +1550,13 @@
       },
       "clearAppCache": {
         "button": {
-          "confirm": "Effacer et fermer l'application"
+          "clear_and_quit": "Effacer et fermer l'application",
+          "clear": "Clair"
         },
         "title": "Effacer le cache de l'application",
-        "clearAppCacheDesc": "Cela supprimera les fichiers cache temporaires sans affecter vos données personnelles ou paramètres. L'application doit redémarrer pour terminer le processus. Souhaitez-vous continuer ?"
+        "clearAppCacheDesc": "Cela supprimera les fichiers cache temporaires sans affecter vos données personnelles ou paramètres. L'application doit redémarrer pour terminer le processus. Souhaitez-vous continuer ?",
+        "iOSToastTitle": "Effacer le cache avec succès",
+        "iOSToastDesc": "Vous devez redémarrer l'application pour prendre effet."
       }
     },
     "buy": {

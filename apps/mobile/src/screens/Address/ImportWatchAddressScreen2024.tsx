@@ -177,6 +177,7 @@ export const ImportWatchAddressScreen2024 = () => {
                   placeholder: 'Address / ENS',
                   value: input,
                   blurOnSubmit: true,
+                  returnKeyType: 'done',
                   onSubmitEditing: onSubmitEditing,
                   onChangeText: handleSubmit,
                 }}

@@ -356,5 +356,6 @@ export const useSyncHistoryDB = (
     isSyncing,
     syncTop10History,
     syncSingleAddress,
+    syncUserAllHistory,
   };
 };

@@ -40,6 +40,7 @@ export type ButtonProps = Omit<
       disableTrigger?: boolean;
       noShadow?: boolean;
       icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
+      iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
     },
   'children'
 >;
@@ -58,6 +59,7 @@ export const Button = ({
   disabled = false,
   disabledTitleStyle,
   icon,
+  iconRight,
   ViewComponent = View,
   disableTrigger,
   ...rest
@@ -175,11 +177,12 @@ export const Button = ({
   }, [title, titleStyle]);
 
   const iconNode = useMemo(() => {
-    if (typeof icon === 'function') {
-      return icon({ titleStyle });
+    const i = icon || iconRight;
+    if (typeof i === 'function') {
+      return i({ titleStyle });
     }
-    return icon;
-  }, [icon, titleStyle]);
+    return i;
+  }, [icon, iconRight, titleStyle]);
 
   return (
     <View
@@ -205,7 +208,7 @@ export const Button = ({
           )}
           {!loading && (
             <>
-              {iconNode && (
+              {iconNode && !iconRight && (
                 <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
                 </View>
@@ -215,14 +218,11 @@ export const Button = ({
                 renderText(textNode, {
                   style: titleStyle,
                 })}
-              {/* {iconNode && iconRight && (
-                <View
-                  style={StyleSheet.flatten([
-                    styles.iconContainer,
-                  ])}>
+              {iconNode && iconRight && (
+                <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
                 </View>
-              )} */}
+              )}
             </>
           )}
         </ViewComponent>

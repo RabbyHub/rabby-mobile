@@ -17,7 +17,6 @@ type Props = {
   loading?: boolean;
   hasAssets?: boolean;
   currentSection: AsssetKey;
-  setCurrentSection: React.Dispatch<React.SetStateAction<AsssetKey>>;
   style?: ViewStyle;
 };
 
@@ -31,7 +30,6 @@ export const AssestAllHeader = memo(
     loading,
     hasAssets,
     currentSection,
-    setCurrentSection,
   }: Props) => {
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
@@ -40,7 +38,6 @@ export const AssestAllHeader = memo(
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      setCurrentSection(key);
       onPress?.(key);
     };
 

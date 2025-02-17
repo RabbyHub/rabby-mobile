@@ -176,7 +176,6 @@ export const GlobalBottomSheetModal2024 = () => {
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
-        const linearGradientType = bottomSheetModalProps?.linearGradientType;
 
         const modalViewProps = {
           ...modal.params,
@@ -209,7 +208,7 @@ export const GlobalBottomSheetModal2024 = () => {
             }
             stackBehavior="push"
             {...makeBottomSheetProps({
-              linearGradientType,
+              createParams: modal.params,
               colors: colors2024,
             })}
           />

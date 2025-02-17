@@ -157,6 +157,8 @@ export const ImportPrivateKeyScreen2024 = () => {
                   value: privateKey,
                   secureTextEntry: true,
                   textContentType: 'none',
+                  blurOnSubmit: true,
+                  returnKeyType: 'done',
                   onChangeText: setPrivateKey,
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components

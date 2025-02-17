@@ -53,9 +53,9 @@ const getStyle = createGetStyles2024(ctx => ({
   positionLoader: {
     height: 60,
     alignItems: 'center',
-    borderRadius: 4,
+    borderRadius: 16,
     flexDirection: 'row',
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     paddingVertical: 15,
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -66,8 +66,8 @@ const getStyle = createGetStyles2024(ctx => ({
     flex: 1,
   },
   section: {
-    paddingTop: 12,
     paddingBottom: 16,
+    gap: 8,
   },
   sectionHeader: {
     marginLeft: 12,

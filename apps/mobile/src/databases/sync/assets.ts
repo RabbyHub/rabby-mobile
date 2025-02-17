@@ -45,8 +45,12 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
   })
-    .then(() => {
-      console.debug('batch upsert tasks created');
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
     })
     .catch(error => {
       console.error('Batch upsert failed:', error);
@@ -79,13 +83,13 @@ export async function syncRemoteHistory(
       batchSize: 200,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
-    })
-      .then(() => {
-        console.debug('batch upsert tasks created');
-      })
-      .catch(error => {
-        console.error('Batch upsert failed:', error);
-      });
+    }).then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
+    });
 
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
     return {
@@ -124,8 +128,12 @@ export async function syncRemoteSwapHistory(
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
     })
-      .then(() => {
-        console.debug('batch upsert tasks created');
+      .then(({ taskSignal, taskKey }) => {
+        if (taskSignal.aborted) {
+          console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+        } else {
+          console.debug(`[${taskKey}] batch upsert tasks created`);
+        }
       })
       .catch(error => {
         console.error('Batch upsert failed:', error);
@@ -164,8 +172,12 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
   })
-    .then(() => {
-      console.debug('batch upsert tasks created');
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
     })
     .catch(error => {
       console.error('Batch upsert failed:', error);
@@ -195,8 +207,12 @@ export async function syncRemotePortocols(
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
   })
-    .then(() => {
-      console.debug('batch upsert tasks created');
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
     })
     .catch(error => {
       console.error('Batch upsert failed:', error);
@@ -248,8 +264,12 @@ export async function syncBalance(
     batchSize: 100,
     concurrency: 1,
   })
-    .then(() => {
-      console.debug('batch upsert tasks created');
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
     })
     .catch(error => {
       console.error('Batch upsert failed:', error);

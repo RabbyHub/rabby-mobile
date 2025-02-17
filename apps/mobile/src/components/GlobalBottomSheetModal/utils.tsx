@@ -98,11 +98,14 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
 };
 
-export function makeBottomSheetProps(ctx: {
+export function makeClassicalBottomSheetProps(ctx: {
   params: CreateParams;
   colors: (typeof ThemeColors)['light'];
   prevProps?: any;
-}): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
+}): Pick<
+  Partial<React.ComponentProps<typeof AppBottomSheetModal>>,
+  'handleStyle' | 'handleIndicatorStyle' | 'backgroundStyle'
+> {
   if (ctx.params.approvalComponent === 'Connect') {
     return {
       handleStyle: {

@@ -1595,10 +1595,13 @@
       },
       "clearAppCache": {
         "button": {
-          "confirm": "Xóa & Đóng Ứng dụng"
+          "clear_and_quit": "Xóa & Đóng Ứng dụng",
+          "clear": "Thông thoáng"
         },
         "clearAppCacheDesc": "'Điều này sẽ xóa các tập tin tạm thời trong bộ nhớ đệm mà không ảnh hưởng đến dữ liệu cá nhân hoặc cài đặt của bạn. Ứng dụng cần khởi động lại để hoàn tất quá trình. Bạn có muốn tiếp tục không?'",
-        "title": "Xóa bộ nhớ đệm của ứng dụng"
+        "title": "Xóa bộ nhớ đệm của ứng dụng",
+        "iOSToastTitle": "Xóa bộ nhớ đệm thành công",
+        "iOSToastDesc": "Bạn cần khởi động lại ứng dụng để có hiệu lực."
       }
     },
     "buy": {
