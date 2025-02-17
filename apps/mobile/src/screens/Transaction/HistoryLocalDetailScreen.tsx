@@ -42,7 +42,6 @@ import {
 } from './components/HistoryItemIcon';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
-import { strings } from '@/utils/i18n';
 import { Button } from '@/components2024/Button';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
@@ -131,10 +130,10 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {title || strings('page.transactions.itemTitle.Default')}
+        {title || t('page.transactions.itemTitle.Default')}
       </HeaderTitleText2024>
     );
-  }, [title, styles.headerTitleStyle]);
+  }, [title, styles.headerTitleStyle, t]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -365,7 +364,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
               titleStyle={[styles.ghostTitle]}
               buttonStyle={[styles.ghostButton]}
               onPress={handleTxCancel}
-              title={strings('page.transactions.detail.Cancel')}
+              title={t('page.transactions.detail.Cancel')}
             />
           </View>
           <View style={{ flex: 1 }}>
@@ -373,7 +372,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
               titleStyle={[styles.primaryTitle]}
               buttonStyle={[styles.primaryButton]}
               onPress={handleTxSpeedUp}
-              title={strings('page.transactions.detail.SpeedUp')}
+              title={t('page.transactions.detail.SpeedUp')}
             />
           </View>
         </View>

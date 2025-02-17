@@ -21,13 +21,13 @@ import { useTheme2024 } from '@/hooks/theme';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { strings } from '@/utils/i18n';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
 import { AssetAvatar } from '@/components';
+import { useTranslation } from 'react-i18next';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -44,6 +44,7 @@ export const HistoryItem = React.memo(
     style,
     isForMultipleAdderss,
   }: HistoryItemProps) => {
+    const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
     const isScam = data.is_scam;
@@ -98,45 +99,45 @@ export const HistoryItem = React.memo(
     const formatTitle = useMemo(() => {
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return strings('page.transactions.itemTitle.Swap');
+          return t('page.transactions.itemTitle.Swap');
 
         case HistoryItemCateType.Send:
-          return strings('page.transactions.itemTitle.Send');
+          return t('page.transactions.itemTitle.Send');
         case HistoryItemCateType.Recieve:
-          return strings('page.transactions.itemTitle.Recieve');
+          return t('page.transactions.itemTitle.Recieve');
         case HistoryItemCateType.Bridge:
-          return strings('page.transactions.itemTitle.Bridge');
+          return t('page.transactions.itemTitle.Bridge');
 
         case HistoryItemCateType.Approve:
-          return strings('page.transactions.itemTitle.Approve');
+          return t('page.transactions.itemTitle.Approve');
         case HistoryItemCateType.Revoke:
-          return strings('page.transactions.itemTitle.Revoke');
+          return t('page.transactions.itemTitle.Revoke');
         case HistoryItemCateType.Contract:
-          return strings('page.transactions.itemTitle.Contract');
+          return t('page.transactions.itemTitle.Contract');
         case HistoryItemCateType.Cancel:
-          return strings('page.transactions.itemTitle.Cancel');
+          return t('page.transactions.itemTitle.Cancel');
         case HistoryItemCateType.UnKnown:
-          return strings('page.transactions.itemTitle.Default');
+          return t('page.transactions.itemTitle.Default');
         default:
           return data.tx?.name
             ? ellipsisOverflowedText(data.tx?.name, 15)
-            : strings('page.transactions.itemTitle.Default');
+            : t('page.transactions.itemTitle.Default');
       }
-    }, [formatType, data]);
+    }, [formatType, data, t]);
 
     const projectObj = useMemo(() => {
       return data?.project_id ? projectDict[data.project_id] : undefined;
     }, [data, projectDict]);
 
     const formatDescribe = useMemo(() => {
-      const FromText = strings('page.swap.from') + ' ';
-      const ToText = strings('page.swap.to') + ' ';
+      const FromText = t('page.swap.from') + ' ';
+      const ToText = t('page.swap.to') + ' ';
       const projectName = data?.project_id
         ? projectDict[data?.project_id]?.name
         : '';
       switch (formatType) {
         case HistoryItemCateType.Swap:
-          return chainItem?.name || strings('page.transactions.detail.Unknown');
+          return chainItem?.name || t('page.transactions.detail.Unknown');
 
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
@@ -152,18 +153,16 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Approve:
           const isRevoke = formatType === HistoryItemCateType.Revoke;
           return isRevoke
-            ? FromText +
-                (projectName || strings('page.transactions.detail.Unknown'))
-            : ToText +
-                (projectName || strings('page.transactions.detail.Unknown'));
+            ? FromText + (projectName || t('page.transactions.detail.Unknown'))
+            : ToText + (projectName || t('page.transactions.detail.Unknown'));
         case HistoryItemCateType.Contract:
           return FromText + chainItem?.name;
         case HistoryItemCateType.Cancel:
-          return strings('page.transactions.detail.Unknown');
+          return t('page.transactions.detail.Unknown');
         default:
-          return projectName || strings('page.transactions.detail.Unknown');
+          return projectName || t('page.transactions.detail.Unknown');
       }
-    }, [formatType, data, chainItem, projectDict]);
+    }, [formatType, data, chainItem, projectDict, t]);
 
     const navigation = useRabbyAppNavigation();
     const hanldeNavigateDetail = useCallback(() => {

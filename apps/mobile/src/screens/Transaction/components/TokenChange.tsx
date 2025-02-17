@@ -21,9 +21,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemCateType } from './HistoryItemIcon';
-import { strings } from '@/utils/i18n';
 import { getTokenSymbol } from '@/utils/token';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const TxChangeItem = ({
   item,
@@ -92,13 +92,14 @@ export const TxChange = ({
   canClickToken?: boolean;
 } & RNViewProps) => {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const isApprove =
     type === HistoryItemCateType.Approve || type === HistoryItemCateType.Revoke;
   const singleAmount = data?.token_approve?.value;
   const appvoveAmmountStr = singleAmount
     ? singleAmount < 1e9
       ? numberWithCommasIsLtOne(singleAmount, 2)
-      : strings('page.transactions.detail.Unlimited')
+      : t('page.transactions.detail.Unlimited')
     : '';
   const tokenId = data?.token_approve?.token_id || '';
   const tokenUUID = `${data?.chain}_token:${tokenId}`;
@@ -117,7 +118,7 @@ export const TxChange = ({
           {' '}
           {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
           {tokenIsNft
-            ? strings('page.nft.title')
+            ? t('page.nft.title')
             : getTokenSymbol(singeToken as TokenItem)}
         </Text>
       )}

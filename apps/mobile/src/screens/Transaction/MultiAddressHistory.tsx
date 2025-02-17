@@ -60,7 +60,6 @@ import {
 } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { strings } from '@/utils/i18n';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
@@ -72,6 +71,7 @@ import {
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_COUNT = 200;
 
@@ -124,6 +124,7 @@ function History({
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
+  const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
@@ -582,7 +583,7 @@ function History({
           <View style={styles.menuContainer}>
             <View style={styles.menuItem}>
               <Text style={styles.menuItemText}>
-                {strings('page.transactions.ViewHiddenItems')}
+                {t('page.transactions.ViewHiddenItems')}
               </Text>
               <View style={styles.valueView}>
                 <AppSwitch2024
@@ -593,7 +594,7 @@ function History({
             </View>
             <View style={styles.menuItem}>
               <Text style={styles.menuItemText}>
-                {strings('page.transactions.ViewSmallItems')}
+                {t('page.transactions.ViewSmallItems')}
               </Text>
               <View style={styles.valueView}>
                 <AppSwitch2024

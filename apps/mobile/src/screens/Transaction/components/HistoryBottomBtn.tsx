@@ -16,7 +16,6 @@ import { navigate, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { Button } from '@/components2024/Button';
-import { strings } from '@/utils/i18n';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -101,7 +100,7 @@ export const HistoryBottomBtn = ({
                 }),
               );
             }}
-            title={strings('page.transactions.detail.SendAgain')}
+            title={t('page.transactions.detail.SendAgain')}
           />
         </View>
       );
@@ -117,7 +116,7 @@ export const HistoryBottomBtn = ({
       const tokenIsNft = tokenId?.length === 32;
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const name = tokenIsNft
-        ? strings('page.nft.title')
+        ? t('page.nft.title')
         : getTokenSymbol(singeToken as TokenItem);
 
       return tokenIsNft ? null : (
@@ -126,7 +125,7 @@ export const HistoryBottomBtn = ({
             placement="top"
             content={
               noRemainValue
-                ? strings('page.transactions.detail.NoApproveNeed')
+                ? t('page.transactions.detail.NoApproveNeed')
                 : undefined
             }>
             <Button
@@ -164,7 +163,7 @@ export const HistoryBottomBtn = ({
                 resetNavigationTo(navigation, 'Home');
               }}
               type={'primary'}
-              title={`${strings(
+              title={`${t(
                 'page.transactions.detail.Revoke',
               )} ${revokeAmountStr} ${name}`}
             />
@@ -193,7 +192,7 @@ export const HistoryBottomBtn = ({
                 }),
               );
             }}
-            title={strings('page.transactions.detail.SwapAgain')}
+            title={t('page.transactions.detail.SwapAgain')}
           />
         </View>
       );

@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { strings } from '@/utils/i18n';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
@@ -174,7 +173,7 @@ export const HistoryTokenList = ({
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
           ? numberWithCommasIsLtOne(singleAmount, 2)
-          : strings('page.transactions.detail.Unlimited')
+          : t('page.transactions.detail.Unlimited')
         : '';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const isSend = type === HistoryItemCateType.Send;
@@ -303,7 +302,7 @@ export const HistoryTokenList = ({
                 chain={chain}
                 token_id={token_id}
                 amount={amount}
-                isNft={token_id.length === 32}
+                isNft={token_id?.length === 32}
                 tokenDict={tokenDict}
                 hanldePress={handlePress}
               />
@@ -314,7 +313,7 @@ export const HistoryTokenList = ({
                 token_id={token_id}
                 chain={chain}
                 amount={amount}
-                isNft={token_id.length === 32}
+                isNft={token_id?.length === 32}
                 tokenDict={tokenDict}
                 hanldePress={handlePress}
               />

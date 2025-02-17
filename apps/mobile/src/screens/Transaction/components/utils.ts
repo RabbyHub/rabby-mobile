@@ -1,11 +1,14 @@
-import { strings } from '@/utils/i18n';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemCateType } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { isString } from 'lodash';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
-import { TokenItem, TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  NFTItem,
+  TokenItem,
+  TxHistoryItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
@@ -44,7 +47,7 @@ export function getApproveTokeName(data: HistoryDisplayItem): string {
   const tokenUUID = `${data.chain}_token:${tokenId}`;
   const tokenIsNft = tokenId?.length === 32;
   if (tokenIsNft) {
-    return strings('page.nft.title');
+    return 'NFT';
   }
 
   return getTokenSymbol(data.tokenDict[tokenId] || data.tokenDict[tokenUUID]);
@@ -93,6 +96,12 @@ export const judgeIsSmallUsdTx = (
   item: HistoryItemEntity,
   tokenDict: Record<string, TokenItem>,
 ) => {
+  const currentTime = new Date().getTime();
+  if (item.time_at * 1000 > currentTime - 1000 * 60 * 60) {
+    // 1 hour not filter
+    return false;
+  }
+
   if (item.tx_from_address.toLowerCase() === item.owner_addr.toLowerCase()) {
     return false;
   }
@@ -111,12 +120,18 @@ export const judgeIsSmallUsdTx = (
     const token =
       tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
       tokenDict[i.token_id];
-    const usd = new BigNumber(i.amount).multipliedBy(token?.price || 0);
     const tokenIsNft = i.token_id?.length === 32;
     if (tokenIsNft) {
-      // reeives nft is not small tx
-      return false;
+      // reeives nft
+      const nftToken = token as unknown as NFTItem;
+      if (!nftToken || !nftToken.collection) {
+        return true;
+      } else {
+        return false;
+      }
     }
+    const price = token.is_core ? token?.price || 0 : 0; // is not core token price to 0
+    const usd = new BigNumber(i.amount).multipliedBy(price || 0);
     allUsd = allUsd.plus(usd);
   }
 

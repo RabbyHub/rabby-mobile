@@ -45,7 +45,6 @@ import {
   ParsedTransactionActionData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
-import { strings } from '@/utils/i18n';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
 import { numberWithCommasIsLtOne } from '@/utils/number';
@@ -195,30 +194,30 @@ export const TransactionItem = ({
   const formatTitle = useMemo(() => {
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        return strings('page.transactions.itemTitle.Swap');
+        return t('page.transactions.itemTitle.Swap');
 
       case HistoryItemCateType.Send:
-        return strings('page.transactions.itemTitle.Send');
+        return t('page.transactions.itemTitle.Send');
       // case HistoryItemCateType.Bridge:
-      //   return strings('page.transactions.itemTitle.Bridge');
+      //   return t('page.transactions.itemTitle.Bridge');
 
       case HistoryItemCateType.Approve:
-        return strings('page.transactions.itemTitle.Approve');
+        return t('page.transactions.itemTitle.Approve');
 
       case HistoryItemCateType.Revoke:
-        return strings('page.transactions.itemTitle.Revoke');
+        return t('page.transactions.itemTitle.Revoke');
       case HistoryItemCateType.Cancel:
-        return strings('page.transactions.itemTitle.Cancel');
+        return t('page.transactions.itemTitle.Cancel');
       case HistoryItemCateType.UnKnown:
-        return strings('page.transactions.itemTitle.Default');
+        return t('page.transactions.itemTitle.Default');
       default:
-        return strings('page.transactions.itemTitle.Default');
+        return t('page.transactions.itemTitle.Default');
     }
-  }, [formatType]);
+  }, [formatType, t]);
 
   const formatDescribe = useMemo(() => {
-    const FromText = strings('page.swap.from') + ' ';
-    const ToText = strings('page.swap.to') + ' ';
+    const FromText = t('page.swap.from') + ' ';
+    const ToText = t('page.swap.to') + ' ';
 
     const requiredData = data.maxGasTx.action?.requiredData as SwapRequireData;
     const projectName = requiredData.protocol?.name || '';
@@ -226,14 +225,14 @@ export const TransactionItem = ({
 
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        return chain?.name || strings('page.transactions.detail.Unknown');
+        return chain?.name || t('page.transactions.detail.Unknown');
 
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
         const addr = acData?.to;
 
         if (!addr) {
-          return strings('page.transactions.detail.Unknown');
+          return t('page.transactions.detail.Unknown');
         }
 
         return ToText + (getAlianName(addr) || ellipsisOverflowedText(addr));
@@ -253,24 +252,22 @@ export const TransactionItem = ({
           ? isApprove
             ? ToText + projectName
             : FromText + projectName
-          : strings('page.transactions.detail.Unknown');
+          : t('page.transactions.detail.Unknown');
       // case HistoryItemCateType.Contract:
       //   return FromText + chainItem?.name;
       // case HistoryItemCateType.Cancel:
       default:
-        return strings('page.transactions.detail.Unknown');
+        return t('page.transactions.detail.Unknown');
     }
-  }, [formatType, data]);
+  }, [formatType, data, t]);
 
   const formatSymbolName = useCallback(
     token => {
       const symbol = isNft ? '' : getTokenSymbol(token);
 
-      return isNft
-        ? strings('page.nft.title')
-        : ellipsisOverflowedText(symbol, 6);
+      return isNft ? t('page.nft.title') : ellipsisOverflowedText(symbol, 6);
     },
-    [isNft],
+    [isNft, t],
   );
 
   const sendsToken = useMemo(() => {
@@ -303,11 +300,11 @@ export const TransactionItem = ({
         return approveToken.amount;
       } else {
         return amount >= 1e9
-          ? strings('page.transactions.detail.Unlimited')
+          ? t('page.transactions.detail.Unlimited')
           : numberWithCommasIsLtOne(amount, 2);
       }
     }
-  }, [approveToken, isNft]);
+  }, [approveToken, isNft, t]);
 
   const formatToken = useMemo(() => {
     const tempArr = [sendToken!, receiveToken!, approveToken!].filter(
