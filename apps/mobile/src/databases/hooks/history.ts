@@ -66,32 +66,50 @@ export const useSyncHistoryDB = (
     updateHistoryTimeSingleAddress,
   } = useHistoryTokenDict();
 
-  const syncSwapHistory = useMemoizedFn(async (address: string) => {
-    if (!address) {
-      return [];
-    }
+  const syncSwapHistory = useMemoizedFn(
+    async (address: string, start_time?: number, latest_time?: number) => {
+      if (!address) {
+        return [];
+      }
 
-    const latestTime = await SwapItemEntity.getLatestTime(address);
-    const time = latestTime || 0;
+      const latestTime =
+        latest_time || (await SwapItemEntity.getLatestTime(address));
+      const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
+      const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
 
-    console.log('syncSwapHistory CUSTOM_LOGGER:=>: lastTime', address, time);
-    const res = await openapi.getSwapTradeListV2({
-      user_addr: address,
-      start_time: 0,
-      limit: 100,
-    });
+      const time = latestTime || 0;
 
-    res.history_list = res.history_list.filter(i => i.create_at > latestTime);
+      console.log(
+        'syncSwapHistory CUSTOM_LOGGER:=>: lastTime',
+        address,
+        time,
+        'isAddUpdate:',
+        isAddUpdate,
+      );
+      const res = await openapi.getSwapTradeListV2({
+        user_addr: address,
+        start_time: Math.floor(start_time || 0),
+        limit: isAddUpdate ? 20 : 100,
+      });
 
-    console.debug(
-      'getSwapTradeListV2 sync data length:',
-      res.history_list.length,
-    );
-    if (res.history_list.length) {
-      runOnJS(syncRemoteSwapHistory)(address, res.history_list);
-      return res.history_list;
-    }
-  });
+      const lastItemTime =
+        res.history_list[res.history_list.length - 1].create_at;
+      res.history_list = res.history_list.filter(i => i.create_at > latestTime);
+
+      console.debug(
+        'getSwapTradeListV2 sync data length:',
+        res.history_list.length,
+      );
+      if (res.history_list.length) {
+        runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+        if (isAddUpdate && lastItemTime > latestTime) {
+          console.debug('getSwapTradeListV2 sync data need to loop:', address);
+          syncSwapHistory(address, lastItemTime, latestTime);
+        }
+        return res.history_list;
+      }
+    },
+  );
 
   const synHistoryInRealTimeApi = useMemoizedFn(
     async (address: string, latest_time: number, start_time?: number) => {
