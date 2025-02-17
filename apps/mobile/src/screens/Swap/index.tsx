@@ -69,6 +69,8 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { useSwapRecentToTokens } from './hooks/recent';
 import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import { naviReplace } from '@/utils/navigation';
+import { TransactionNavigatorParamList } from '@/navigation-type';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -204,15 +206,7 @@ const Swap = ({
           r.name ===
           (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
       )?.params,
-  ) as
-    | {
-        chainEnum?: CHAINS_ENUM | undefined;
-        tokenId?: TokenItem['id'];
-        type?: 'Buy' | 'Sell';
-        swapAgain?: boolean;
-        swapTokenId?: TokenItem['id'][];
-      }
-    | undefined;
+  ) as TransactionNavigatorParamList['Swap'] | undefined;
 
   useMount(() => {
     if (!navState?.chainEnum) {
@@ -581,17 +575,33 @@ const Swap = ({
               token={payToken}
               onTokenChange={token => {
                 const chainItem = findChainByServerID(token.chain);
-                if (chainItem?.enum !== chain) {
-                  switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                  setReceiveToken(undefined);
-                }
-                setPayToken(token);
+                const normalSetChainToken = () => {
+                  if (chainItem?.enum !== chain) {
+                    switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+                    setReceiveToken(undefined);
+                  }
+                  setPayToken(token);
+                };
 
-                if (isForMultipleAdderss) {
-                  switchAccountOnSelectedToken({
+                if (!isForMultipleAdderss) {
+                  normalSetChainToken();
+                } else {
+                  const { accountSwitchTo } = switchAccountOnSelectedToken({
                     token,
                     currentAccount,
                   });
+                  if (!accountSwitchTo) {
+                    normalSetChainToken();
+                  } else {
+                    const chainItem = findChainByServerID(token.chain);
+                    naviReplace(RootNames.StackTransaction, {
+                      screen: RootNames.MultiSwap,
+                      params: {
+                        chainEnum: chainItem?.enum,
+                        tokenId: token.id,
+                      },
+                    });
+                  }
                 }
               }}
               account={currentAccount}

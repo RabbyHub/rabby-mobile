@@ -34,9 +34,16 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   return (
     <ScreenSceneAccountProvider
-      value={{ forScene: 'MakeTransactionAbout', ofScreen: 'MultiBridge' }}>
+      value={{
+        forScene: 'MakeTransactionAbout',
+        ofScreen: 'MultiBridge',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiBridge`,
+      }}>
       <Bridge {...props} isForMultipleAdderss />
     </ScreenSceneAccountProvider>
   );
