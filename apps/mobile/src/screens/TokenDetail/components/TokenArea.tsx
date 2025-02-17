@@ -2,13 +2,11 @@ import { Text } from '@/components';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import BigNumber from 'bignumber.js';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Image, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import { TokenFromAddressItem } from '..';
 
 interface Props {

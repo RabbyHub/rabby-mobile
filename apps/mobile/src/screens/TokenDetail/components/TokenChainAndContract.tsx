@@ -37,26 +37,23 @@ export const TokenChainAndContract: React.FC<Props> = ({ token }) => {
     toastCopyAddressSuccess(token._tokenId);
   });
 
-  const { isContractToken, nativeTokenChainName, tokenAddress, chainItem } =
-    React.useMemo(() => {
-      const item = findChain({ serverId: token.chain });
-      /* for AbstractPortfolioToken,
+  const { isContractToken, tokenAddress, chainItem } = React.useMemo(() => {
+    const item = findChain({ serverId: token.chain });
+    /* for AbstractPortfolioToken,
           id of native token is `{chain.symbol}{chain.symbol}`,
           id of non-native token is `{token_address}{chain.symbol}  */
-      // const isContractToken = /^0x.{40}/.test(token.id) && token.id.endsWith(token.chain);
-      const isContractToken =
-        /^0x.{40}/.test(token._tokenId) &&
-        token.id === `${token._tokenId}${token.chain}`;
-
-      return {
-        chainItem: item,
-        isContractToken,
-        nativeTokenChainName: !isContractToken && item ? item.name : '',
-        tokenAddress: !isContractToken
-          ? item?.nativeTokenAddress || ''
-          : token._tokenId,
-      };
-    }, [token]);
+    // const isContractToken = /^0x.{40}/.test(token.id) && token.id.endsWith(token.chain);
+    const _isContractToken =
+      /^0x.{40}/.test(token._tokenId) && token.id?.includes(token._tokenId);
+    return {
+      chainItem: item,
+      isContractToken: _isContractToken,
+      nativeTokenChainName: !_isContractToken && item ? item.name : '',
+      tokenAddress: !_isContractToken
+        ? item?.nativeTokenAddress || ''
+        : token._tokenId,
+    };
+  }, [token]);
 
   return (
     <View style={styles.container}>
