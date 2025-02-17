@@ -21,6 +21,7 @@ import {
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
@@ -73,6 +74,7 @@ export function ChainInfo2024({
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const chainItem = useFindChain({
     enum: chainEnum,
   });
@@ -87,13 +89,14 @@ export function ChainInfo2024({
 
   const createChainModal = React.useCallback(() => {
     modalRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+      name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: chainEnum,
       onClose: removeChainModal,
       supportChains,
       disabledTips,
       hideMainnetTab,
       hideTestnetTab,
+      titleText: t('page.swap.selectChainModalTitle'),
       onChange: chain => {
         removeChainModal();
         onChange?.(chain);
@@ -105,6 +108,7 @@ export function ChainInfo2024({
     hideMainnetTab,
     hideTestnetTab,
     onChange,
+    t,
     removeChainModal,
     supportChains,
   ]);

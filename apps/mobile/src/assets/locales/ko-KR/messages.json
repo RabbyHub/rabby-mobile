@@ -607,7 +607,8 @@
         "swapDesc": "Rabby Wallet은 항상 최고의 애그리게이터에서 가능한 최상의 비율을 찾고 그들의 제안의 신뢰성을 검증합니다. Rabby는 <1>0.25%</1>의 수수료(래핑의 경우 0%)를 부과하며, 이는 견적에 자동으로 포함됩니다."
       },
       "swapped": "교환됨",
-      "historyTitle": "스왑 기록"
+      "historyTitle": "스왑 기록",
+      "selectChainModalTitle": "체인을 선택하십시오"
     },
     "activities": {
       "signedTx": {

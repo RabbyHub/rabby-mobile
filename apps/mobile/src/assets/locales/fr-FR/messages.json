@@ -730,7 +730,8 @@
         "swapDesc": "Rabby Wallet trouvera toujours le meilleur taux possible auprès des principaux agrégateurs et vérifiera la fiabilité de leurs offres. Rabby prélève une commission de <1>0,25%</1> (0% pour l'enveloppement), qui est automatiquement incluse dans le devis."
       },
       "historyTitle": "Historique des swaps",
-      "swapped": "Échangé"
+      "swapped": "Échangé",
+      "selectChainModalTitle": "Sélectionner la chaîne"
     },
     "manageAddress": {
       "seed-phrase": "Phrase secrète",

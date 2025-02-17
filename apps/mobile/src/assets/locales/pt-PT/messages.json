@@ -959,7 +959,8 @@
         "swapDesc": "A Rabby Wallet procurará sempre a melhor taxa possível dos principais agregadores e verificará a fiabilidade das suas ofertas. A Rabby cobra uma taxa de <1>0,25%</1> (0% para wrapping), que está automaticamente incluída na cotação."
       },
       "historyTitle": "Histórico de Swap",
-      "swapped": "Trocado"
+      "swapped": "Trocado",
+      "selectChainModalTitle": "Selecione Cadeia"
     },
     "approvals": {
       "tab-switch": {

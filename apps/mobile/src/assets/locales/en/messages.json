@@ -724,7 +724,8 @@
         "desc": "A low credit value often signals high risk, such as a honeypot token or very low liquidity."
       },
       "swapped": "Swapped",
-      "historyTitle": "Swap history"
+      "historyTitle": "Swap history",
+      "selectChainModalTitle": "Select Chain"
     },
     "bridge": {
       "showMore": {

@@ -949,7 +949,8 @@
       },
       "Completed": "完成",
       "historyTitle": "交換記錄",
-      "swapped": "已交換"
+      "swapped": "已交換",
+      "selectChainModalTitle": "選擇鏈"
     },
     "signText": {
       "title": "簽署文本",
