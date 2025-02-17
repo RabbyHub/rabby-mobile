@@ -371,10 +371,7 @@ export const TransactionItem = ({
               {approveTokenAmountStr}
             </Text>
             <Text
-              style={[
-                styles.tokenText,
-                !approveToken.amount && styles.sendText,
-              ]}
+              style={[styles.tokenText, styles.approveText]}
               numberOfLines={1}
               ellipsizeMode="tail">
               {formatSymbolName(approveToken)}
@@ -408,7 +405,12 @@ export const TransactionItem = ({
             token && (
               <View key={index} style={styles.txChange}>
                 <Text
-                  style={[styles.tokenText, styles.sendText]}
+                  style={[
+                    styles.tokenText,
+                    styles.sendText,
+                    [...recievesToken, ...sendsToken].length === 1 &&
+                      styles.approveText,
+                  ]}
                   numberOfLines={1}>
                   {'-'}{' '}
                   {isNft
@@ -456,6 +458,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     gap: 12,
     // width: '50%',
   },
+  approveText: {
+    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
   textBox: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -488,8 +497,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   },
   tokenText: {
     justifyContent: 'flex-end',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors['green-default'],
     minWidth: 0,
@@ -498,7 +507,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   sendText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   cardGray: {
     opacity: 0.3,
