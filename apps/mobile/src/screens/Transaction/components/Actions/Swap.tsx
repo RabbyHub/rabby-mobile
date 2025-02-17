@@ -105,11 +105,16 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             chain={actionData.payToken?.chain}
             chainSize={16}
           />
-          <View style={[styles.colomnBox]}>
+          <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
               {'-'} {numberWithCommasIsLtOne(actionData.payToken.amount, 2)}{' '}
               {getTokenSymbol(actionData.payToken as TokenItem)}
             </Text>
+            <RcIconRightCC
+              color={colors2024['neutral-foot']}
+              width={18}
+              height={18}
+            />
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -121,11 +126,16 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             chain={actionData.minReceive?.chain}
             chainSize={16}
           />
-          <View style={[styles.colomnBox]}>
+          <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList]}>
               {'+'} {numberWithCommasIsLtOne(actionData.minReceive.amount, 2)}{' '}
               {getTokenSymbol(actionData.minReceive as TokenItem)}
             </Text>
+            <RcIconRightCC
+              color={colors2024['green-default']}
+              width={18}
+              height={18}
+            />
           </View>
         </TouchableOpacity>
         <View style={styles.iconSwitchArrow}>
@@ -282,11 +292,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '700',
   },
+  rowBox: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   colomnBox: {
     flexDirection: 'column',
   },
   isSendTextColor: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
   },
   isFailBox: {
     opacity: 0.3,

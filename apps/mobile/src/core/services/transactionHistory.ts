@@ -84,7 +84,7 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   successList: string[];
   failList: string[];
-  isNeedFetchTxHistory?: boolean;
+  isNeedFetchTxHistory: Record<string, boolean>;
 }
 
 // TODO
@@ -105,7 +105,7 @@ export class TransactionHistoryService {
           transactions: [],
           successList: [],
           failList: [],
-          isNeedFetchTxHistory: false,
+          isNeedFetchTxHistory: {},
         },
       },
       {
@@ -122,6 +122,10 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.failList)) {
       this.store.failList = [];
+    }
+
+    if (typeof this.store.isNeedFetchTxHistory !== 'object') {
+      this.store.isNeedFetchTxHistory = {};
     }
 
     this.init();
@@ -169,9 +173,9 @@ export class TransactionHistoryService {
     return this.store.failList.length;
   }
 
-  getIsNeedFetchTxHistory() {
-    const res = this.store.isNeedFetchTxHistory;
-    this.store.isNeedFetchTxHistory = false;
+  getIsNeedFetchTxHistory(address: string) {
+    const res = this.store.isNeedFetchTxHistory[address];
+    res && (this.store.isNeedFetchTxHistory[address] = false);
     return res;
   }
 
@@ -430,7 +434,7 @@ export class TransactionHistoryService {
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
-        this.store.isNeedFetchTxHistory = true;
+        this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
       }
     });
 

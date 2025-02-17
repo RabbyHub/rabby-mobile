@@ -13,7 +13,7 @@ import { openapi } from '@/core/request';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { intToHex } from '@ethereumjs/util';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { isArray, maxBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -45,15 +45,15 @@ import {
   ParsedTransactionActionData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
-import { strings } from '@/utils/i18n';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
-import { numberWithCommasIsLtOne } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName } from '@/core/apis/contact';
+import { findChain } from '@/utils/chain';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {
@@ -84,197 +84,28 @@ export const TransactionItem = ({
   onRefresh?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const chain = useFindChain({
-    id: data.chainId,
-  });
   const { t } = useTranslation();
   const isCanceled =
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
-  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
   const isShowSuccess = useMemo(
-    () => historySuccessList?.includes(data.maxGasTx.hash || ''),
-    [data.maxGasTx.hash, historySuccessList],
+    () =>
+      historySuccessList?.includes(
+        `${data.maxGasTx.address}-${data.maxGasTx.hash}` || '',
+      ),
+    [data.maxGasTx, historySuccessList],
   );
-
-  const { accounts } = useAccounts();
-
-  const handleTxSpeedUp = useMemoizedFn(async () => {
-    if (!canCancel) {
-      return;
-    }
-    const maxGasTx = data.maxGasTx;
-    const originTx = data.originTx!;
-    const keyringType = data.keyringType;
-    const maxGasPrice = Number(
-      maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
-    );
-    let account: KeyringAccountWithAlias | undefined;
-    const canUseAccountList = accounts.filter(acc => {
-      return (
-        isSameAddress(acc.address, data.address) &&
-        acc.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (keyringType) {
-      account = canUseAccountList.find(acc => acc.type === data.keyringType);
-    }
-    if (!account) {
-      account = findAccountByPriority(canUseAccountList);
-    }
-    if (!account) {
-      throw Error('No account find');
-    }
-
-    await switchSceneSigningAccount('MultiHistory', account);
-    const gasLevels: GasLevel[] = chain?.isTestnet
-      ? await apiCustomTestnet.getCustomTestnetGasMarket({
-          chainId: chain?.id!,
-        })
-      : await apiProvider.gasMarketV2({
-          chain: chain!,
-          tx: originTx.rawTx,
-        });
-    const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
-
-    try {
-      await sendRequest(
-        {
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from: originTx.rawTx.from,
-              value: originTx.rawTx.value,
-              data: originTx.rawTx.data,
-              nonce: originTx.rawTx.nonce,
-              chainId: originTx.rawTx.chainId,
-              to: originTx.rawTx.to,
-              gasPrice: intToHex(
-                Math.round(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-              ),
-              isSpeedUp: true,
-              reqId: maxGasTx.reqId,
-            },
-          ],
-        },
-        INTERNAL_REQUEST_SESSION,
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
-    }
-    onRefresh?.();
-  });
-
-  const handleTxCancel = useMemoizedFn(() => {
-    const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.CANCEL_TX_POPUP,
-      tx: data.maxGasTx,
-      onCancelTx: (mode: CANCEL_TX_TYPE) => {
-        if (mode === CANCEL_TX_TYPE.QUICK_CANCEL) {
-          handleQuickCancel();
-        }
-        if (mode === CANCEL_TX_TYPE.ON_CHAIN_CANCEL) {
-          handleOnChainCancel();
-        }
-        removeGlobalBottomSheetModal(id);
-      },
-    });
-  });
-
-  const handleQuickCancel = async () => {
-    const maxGasTx = data.maxGasTx;
-    if (maxGasTx?.reqId) {
-      try {
-        // todo
-        // await wallet.quickCancelTx({
-        //   reqId: maxGasTx.reqId,
-        //   chainId: maxGasTx.rawTx.chainId,
-        //   nonce: +maxGasTx.rawTx.nonce,
-        //   address: maxGasTx.rawTx.from,
-        // });
-        // onQuickCancel?.();
-        toast.success(t('page.activities.signedTx.message.cancelSuccess'));
-      } catch (e) {
-        toast.info((e as any).message);
-      }
-    }
-  };
-
-  const handleOnChainCancel = async () => {
-    if (!canCancel) {
-      return;
-    }
-    const keyringType = data.keyringType;
-    let account: KeyringAccountWithAlias | undefined;
-    const canUseAccountList = accounts.filter(acc => {
-      return (
-        isSameAddress(acc.address, data.address) &&
-        acc.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (keyringType) {
-      account = canUseAccountList.find(acc => acc.type === data.keyringType);
-    }
-    if (!account) {
-      account = findAccountByPriority(canUseAccountList);
-    }
-    if (!account) {
-      throw Error('No account find');
-    }
-
-    await switchSceneSigningAccount('MultiHistory', account);
-    const maxGasTx = data.maxGasTx;
-    const maxGasPrice = Number(
-      maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
-    );
-    const gasLevels: GasLevel[] = chain?.isTestnet
-      ? await apiCustomTestnet.getCustomTestnetGasMarket({
-          chainId: chain?.id!,
-        })
-      : await apiProvider.gasMarketV2({
-          chain: chain!,
-          tx: maxGasTx.rawTx,
-        });
-    const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
-    try {
-      await sendRequest(
-        {
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from: maxGasTx.rawTx.from,
-              to: maxGasTx.rawTx.from,
-              gasPrice: intToHex(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-              value: '0x0',
-              chainId: data.chainId,
-              nonce: intToHex(data.nonce),
-              isCancel: true,
-              reqId: maxGasTx.reqId,
-            },
-          ],
-        },
-        INTERNAL_REQUEST_SESSION,
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
-    }
-    onRefresh?.();
-  };
 
   const formatType: HistoryItemCateType = useMemo(() => {
     if (data.maxGasTx.action?.actionData.send) {
       return HistoryItemCateType.Send;
     }
 
-    if (data.maxGasTx.action?.actionData.wrapToken) {
-      return HistoryItemCateType.Swap;
-    }
-
-    if (data.maxGasTx.action?.actionData.swap) {
+    if (
+      data.maxGasTx.action?.actionData.wrapToken ||
+      data.maxGasTx.action?.actionData.unWrapToken ||
+      data.maxGasTx.action?.actionData.swap
+    ) {
       return HistoryItemCateType.Swap;
     }
 
@@ -317,8 +148,9 @@ export const TransactionItem = ({
         };
       case HistoryItemCateType.Swap:
         const actionData =
-          data.txs?.[0]?.action?.actionData.swap ||
-          data.txs?.[0]?.action?.actionData.wrapToken;
+          data.maxGasTx?.action?.actionData.swap ||
+          data.maxGasTx?.action?.actionData.unWrapToken ||
+          data.maxGasTx?.action?.actionData.wrapToken;
         const send = actionData?.payToken!;
         const receive = actionData?.receiveToken!;
 
@@ -329,22 +161,27 @@ export const TransactionItem = ({
         };
       case HistoryItemCateType.Revoke: {
         const reToken =
-          data.txs?.[0]?.action?.actionData.revokeToken ||
-          // data.txs?.[0]?.action?.actionData.revokeNFT ||
+          data.maxGasTx?.action?.actionData.revokeToken ||
+          data.maxGasTx?.action?.actionData.revokeNFT ||
           // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
-          data.txs?.[0]?.action?.actionData.revokePermit2;
+          data.maxGasTx?.action?.actionData.revokePermit2;
+        const revokeToken = reToken?.token || reToken?.nft;
 
         return {
-          approveToken: reToken?.token!,
-          isNft: reToken?.token?.id.length === 32,
+          approveToken: revokeToken!,
+          isNft: revokeToken?.id.length === 32,
         };
       }
       case HistoryItemCateType.Approve: {
-        const apToken = data.txs?.[0]?.action?.actionData.approveToken;
+        const apToken =
+          data.maxGasTx?.action?.actionData.approveToken ||
+          data.maxGasTx?.action?.actionData.approveNFT;
+
+        const approveTokenOrNft: TokenItem = apToken?.token || apToken?.nft;
 
         return {
-          approveToken: apToken?.token!,
-          isNft: apToken?.token?.id.length === 32,
+          approveToken: approveTokenOrNft!,
+          isNft: approveTokenOrNft?.id.length === 32,
         };
       }
       default:
@@ -357,44 +194,45 @@ export const TransactionItem = ({
   const formatTitle = useMemo(() => {
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        return strings('page.transactions.itemTitle.Swap');
+        return t('page.transactions.itemTitle.Swap');
 
       case HistoryItemCateType.Send:
-        return strings('page.transactions.itemTitle.Send');
+        return t('page.transactions.itemTitle.Send');
       // case HistoryItemCateType.Bridge:
-      //   return strings('page.transactions.itemTitle.Bridge');
+      //   return t('page.transactions.itemTitle.Bridge');
 
       case HistoryItemCateType.Approve:
-        return strings('page.transactions.itemTitle.Approve');
+        return t('page.transactions.itemTitle.Approve');
 
       case HistoryItemCateType.Revoke:
-        return strings('page.transactions.itemTitle.Revoke');
+        return t('page.transactions.itemTitle.Revoke');
       case HistoryItemCateType.Cancel:
-        return strings('page.transactions.itemTitle.Cancel');
+        return t('page.transactions.itemTitle.Cancel');
       case HistoryItemCateType.UnKnown:
-        return strings('page.transactions.itemTitle.Default');
+        return t('page.transactions.itemTitle.Default');
       default:
-        return strings('page.transactions.itemTitle.Default');
+        return t('page.transactions.itemTitle.Default');
     }
-  }, [formatType]);
+  }, [formatType, t]);
 
   const formatDescribe = useMemo(() => {
-    const FromText = strings('page.swap.from') + ' ';
-    const ToText = strings('page.swap.to') + ' ';
+    const FromText = t('page.swap.from') + ' ';
+    const ToText = t('page.swap.to') + ' ';
 
     const requiredData = data.maxGasTx.action?.requiredData as SwapRequireData;
     const projectName = requiredData.protocol?.name || '';
+    const chain = findChain({ id: data.maxGasTx.chainId });
 
     switch (formatType) {
       case HistoryItemCateType.Swap:
-        return projectName || strings('page.transactions.detail.Unknown');
+        return chain?.name || t('page.transactions.detail.Unknown');
 
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
         const addr = acData?.to;
 
         if (!addr) {
-          return strings('page.transactions.detail.Unknown');
+          return t('page.transactions.detail.Unknown');
         }
 
         return ToText + (getAlianName(addr) || ellipsisOverflowedText(addr));
@@ -414,24 +252,22 @@ export const TransactionItem = ({
           ? isApprove
             ? ToText + projectName
             : FromText + projectName
-          : strings('page.transactions.detail.Unknown');
+          : t('page.transactions.detail.Unknown');
       // case HistoryItemCateType.Contract:
       //   return FromText + chainItem?.name;
       // case HistoryItemCateType.Cancel:
       default:
-        return strings('page.transactions.detail.Unknown');
+        return t('page.transactions.detail.Unknown');
     }
-  }, [formatType, data]);
+  }, [formatType, data, t]);
 
   const formatSymbolName = useCallback(
     token => {
       const symbol = isNft ? '' : getTokenSymbol(token);
 
-      return isNft
-        ? strings('page.nft.title')
-        : ellipsisOverflowedText(symbol, 6);
+      return isNft ? t('page.nft.title') : ellipsisOverflowedText(symbol, 6);
     },
-    [isNft],
+    [isNft, t],
   );
 
   const sendsToken = useMemo(() => {
@@ -464,11 +300,11 @@ export const TransactionItem = ({
         return approveToken.amount;
       } else {
         return amount >= 1e9
-          ? strings('page.transactions.detail.Unlimited')
-          : numberWithCommasIsLtOne(amount, 2);
+          ? t('page.transactions.detail.Unlimited')
+          : formatAmount(amount);
       }
     }
-  }, [approveToken, isNft]);
+  }, [approveToken, isNft, t]);
 
   const formatToken = useMemo(() => {
     const tempArr = [sendToken!, receiveToken!, approveToken!].filter(
@@ -521,11 +357,7 @@ export const TransactionItem = ({
       <View
         style={[
           styles.rightContent,
-          isCanceled ||
-          data.isPending ||
-          data.isFailed ||
-          data.isSubmitFailed ||
-          data.isWithdrawed
+          isCanceled || data.isPending || data.isFailed || data.isSubmitFailed
             ? styles.cardGray
             : null,
         ]}>
@@ -535,10 +367,7 @@ export const TransactionItem = ({
               {approveTokenAmountStr}
             </Text>
             <Text
-              style={[
-                styles.tokenText,
-                !approveToken.amount && styles.sendText,
-              ]}
+              style={[styles.tokenText, styles.approveText]}
               numberOfLines={1}
               ellipsizeMode="tail">
               {formatSymbolName(approveToken)}
@@ -553,10 +382,7 @@ export const TransactionItem = ({
                   {'+'}{' '}
                   {isNft
                     ? token.amount
-                    : numberWithCommasIsLtOne(
-                        token.amount || token.min_amount,
-                        2,
-                      )}
+                    : formatAmount(token.amount || token.min_amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText]}
@@ -572,12 +398,14 @@ export const TransactionItem = ({
             token && (
               <View key={index} style={styles.txChange}>
                 <Text
-                  style={[styles.tokenText, styles.sendText]}
+                  style={[
+                    styles.tokenText,
+                    styles.sendText,
+                    [...recievesToken, ...sendsToken].length === 1 &&
+                      styles.approveText,
+                  ]}
                   numberOfLines={1}>
-                  {'-'}{' '}
-                  {isNft
-                    ? token.amount
-                    : numberWithCommasIsLtOne(token.amount, 2)}
+                  {'-'} {isNft ? token.amount : formatAmount(token.amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText, styles.sendText]}
@@ -620,6 +448,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     gap: 12,
     // width: '50%',
   },
+  approveText: {
+    color: colors['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
   textBox: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -652,8 +487,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   },
   tokenText: {
     justifyContent: 'flex-end',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors['green-default'],
     minWidth: 0,
@@ -662,7 +497,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   sendText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   cardGray: {
     opacity: 0.3,

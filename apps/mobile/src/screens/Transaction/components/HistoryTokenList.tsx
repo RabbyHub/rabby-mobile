@@ -12,15 +12,15 @@ import {
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
+import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { strings } from '@/utils/i18n';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
@@ -93,8 +93,7 @@ const TokenItemInlist = ({
                 styles.tokenAmountTextList,
                 isSend && styles.isSendTextColor,
               ]}>
-              {isSend ? '-' : '+'}{' '}
-              {isNft ? amount : numberWithCommasIsLtOne(amount, 2)}{' '}
+              {isSend ? '-' : '+'} {isNft ? amount : formatAmount(amount)}{' '}
               {isNft
                 ? t('page.singleHome.sectionHeader.Nft')
                 : getTokenSymbol(token as TokenItem)}
@@ -172,8 +171,8 @@ export const HistoryTokenList = ({
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
-          ? numberWithCommasIsLtOne(singleAmount, 2)
-          : strings('page.transactions.detail.Unlimited')
+          ? formatAmount(singleAmount)
+          : t('page.transactions.detail.Unlimited')
         : '';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const isSend = type === HistoryItemCateType.Send;
@@ -189,13 +188,14 @@ export const HistoryTokenList = ({
                 token={singeToken as TokenItem}
                 isNft={tokenIsNft}
               />
-              <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
+              <View
+                style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
                 <Text
                   style={[
                     styles.tokenAmountText,
                     (isSend || isApprove) && styles.isSendTextColor,
                   ]}>
-                  {!isApprove && (isSend ? '-' : '+')}{' '}
+                  {!isApprove && (isSend ? '- ' : '+ ')}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
                     ? t('page.singleHome.sectionHeader.Nft')
@@ -249,9 +249,14 @@ export const HistoryTokenList = ({
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {numberWithCommasIsLtOne(sendAmount, 2)}{' '}
+                {'-'} {formatAmount(sendAmount)}{' '}
                 {getTokenSymbol(sendToken as TokenItem)}
               </Text>
+              <RcIconRightCC
+                color={colors2024['neutral-foot']}
+                width={18}
+                height={18}
+              />
             </View>
           </TouchableOpacity>
           <TouchableOpacity
@@ -265,9 +270,14 @@ export const HistoryTokenList = ({
             />
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text style={[styles.tokenAmountTextList]}>
-                {'+'} {numberWithCommasIsLtOne(recieveAmount, 2)}{' '}
+                {'+'} {formatAmount(recieveAmount)}{' '}
                 {getTokenSymbol(recieveToken as TokenItem)}
               </Text>
+              <RcIconRightCC
+                color={colors2024['green-default']}
+                width={18}
+                height={18}
+              />
             </View>
           </TouchableOpacity>
           <View style={styles.iconSwitchArrow}>
@@ -291,7 +301,7 @@ export const HistoryTokenList = ({
                 chain={chain}
                 token_id={token_id}
                 amount={amount}
-                isNft={token_id.length === 32}
+                isNft={token_id?.length === 32}
                 tokenDict={tokenDict}
                 hanldePress={handlePress}
               />
@@ -302,7 +312,7 @@ export const HistoryTokenList = ({
                 token_id={token_id}
                 chain={chain}
                 amount={amount}
-                isNft={token_id.length === 32}
+                isNft={token_id?.length === 32}
                 tokenDict={tokenDict}
                 hanldePress={handlePress}
               />
@@ -315,7 +325,7 @@ export const HistoryTokenList = ({
   // return <RcIconDefault style={[styles.image, style]} />;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -337,12 +347,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '500',
   },
-  colomnBox: {
+  singleColomnBox: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    // alignItems: 'center',
+  },
+  colomnBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   isSendTextColor: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
   },
   isFailBox: {
     opacity: 0.3,
@@ -381,7 +395,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
     gap: 10,
@@ -391,14 +407,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
   },
   singleBox: {
     width: '100%',
     height: 92,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,
@@ -408,7 +428,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   mutliBox: {
     width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     justifyContent: 'center',
     alignContent: 'center',
     borderRadius: 16,

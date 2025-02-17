@@ -13,14 +13,28 @@ const storeProjectBase = atomByMMKV<TxAllHistoryResult['project_dict']>(
   {} as TxAllHistoryResult['project_dict'],
 );
 
+const historyTimetBase = atomByMMKV<Record<string, number>>(
+  '@HistoryProjectDict',
+  {} as Record<string, number>,
+);
+
 export function useHistoryTokenDict() {
   const [tokenDict, setTokenDict] = useAtom(storeTokenBase);
   const [projectDict, setProjectDict] = useAtom(storeProjectBase);
+  const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimetBase);
 
+  const updateHistoryTimeSingleAddress = (add: string) => {
+    setUpdateHistoryTime(prev => ({
+      ...prev,
+      [add]: Date.now(),
+    }));
+  };
   return {
     projectDict,
     setProjectDict,
     tokenDict,
     setTokenDict,
+    updateHistoryTime,
+    updateHistoryTimeSingleAddress,
   };
 }

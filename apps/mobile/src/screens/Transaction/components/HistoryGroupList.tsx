@@ -8,12 +8,13 @@ import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { Empty } from '../components/Empty';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { formatTimestamp } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTranslation } from 'react-i18next';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -37,8 +38,6 @@ function markFirstItems(
       data: item,
     };
     if (i === 0) {
-      newItem.isFirst = true;
-    } else if (!isSameAddress(item.address, arr[i - 1].address)) {
       newItem.isFirst = true;
     } else {
       newItem.isFirst = false;
@@ -111,7 +110,7 @@ export const HistoryList = ({
     return markFirstItems(list || []);
   }, [list]);
   const { styles } = useTheme2024({ getStyle });
-  const { accounts } = useMyAccounts();
+  const { t } = useTranslation();
 
   const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
     if ('projectDict' in item.data) {
@@ -126,9 +125,6 @@ export const HistoryList = ({
               {formatTimestamp(item.data.time_at * 1000)}
             </Text>
           ) : null}
-          {/* {item.isFirst && isForMultipleAdderss ? (
-            <AddressInfo account={item.data.account} />
-          ) : null} */}
           <HistoryItem
             data={item.data}
             isForMultipleAdderss={isForMultipleAdderss}
@@ -148,12 +144,12 @@ export const HistoryList = ({
           ) || [],
           i => i.nonce,
         )?.nonce === item.data.nonce;
-      const account = accounts.find(i =>
-        isSameAddress(i.address, item.data.address),
-      );
+
       return (
         <>
-          {/* {item.isFirst ? <AddressInfo account={account} /> : null} */}
+          {item.isFirst ? (
+            <Text style={[styles.date]}>{t('page.bridge.Pending')}</Text>
+          ) : null}
           <TransactionItem
             isForMultipleAdderss={isForMultipleAdderss}
             historySuccessList={historySuccessList}
@@ -166,21 +162,22 @@ export const HistoryList = ({
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.skeletonContainer}>
-        {range(0, 8).map(i => {
-          return <SkeletonCard key={i} />;
-        })}
-      </View>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <View style={styles.skeletonContainer}>
+  //       {range(0, 8).map(i => {
+  //         return <SkeletonCard key={i} />;
+  //       })}
+  //     </View>
+  //   );
+  // }
 
   return (
     <Animated.FlatList
       data={markedList}
       renderItem={renderItem}
       windowSize={5}
+      ListEmptyComponent={loading ? null : <Empty />}
       onTouchStart={() => resetTopMenu && resetTopMenu()}
       style={styles.container}
       onEndReached={loadMore}

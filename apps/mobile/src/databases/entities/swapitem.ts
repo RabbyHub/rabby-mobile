@@ -47,10 +47,15 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  static async getAllHistoryItem(owner_addr?: string) {
+  static async getAllHistoryItem(owner_addrs: string[], count?: number) {
     await prepareAppDataSource();
 
-    return await this.getRepository().findBy({ owner_addr });
+    return await this.getRepository()
+      .createQueryBuilder('swapitem')
+      .where('swapitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .orderBy('swapitem.create_at', 'DESC')
+      .take(count || 10000)
+      .getMany();
   }
 
   static async getCountOfAccount() {
@@ -92,22 +97,6 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
 
     return this.getRepository().findBy({ owner_addr });
-  }
-
-  static async getAllHistoryItemSortedByTime(
-    owner_addr?: string,
-    count: number = 100,
-  ) {
-    await prepareAppDataSource();
-
-    const repo = this.getRepository();
-
-    return await repo
-      .createQueryBuilder('historyitem')
-      // .where('historyitem.owner_addr = :owner_addr', { owner_addr })
-      .orderBy('historyitem.time_at', 'DESC')
-      .take(count) // limit 100
-      .getMany();
   }
 
   static async deleteForAddress(owner_addr: string) {
