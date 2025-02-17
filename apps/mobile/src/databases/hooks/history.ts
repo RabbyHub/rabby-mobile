@@ -93,7 +93,7 @@ export const useSyncHistoryDB = (
       });
 
       const lastItemTime =
-        res.history_list[res.history_list.length - 1].create_at;
+        res.history_list[res.history_list.length - 1]?.create_at || 0;
       res.history_list = res.history_list.filter(i => i.create_at > latestTime);
 
       console.debug(

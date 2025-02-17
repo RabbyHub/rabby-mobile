@@ -238,8 +238,6 @@ function HistoryDetailScreen(): JSX.Element {
     isForMultipleAdderss,
   );
 
-  console.debug('HistoryDetailScreen', 'receives:', data.receives);
-
   const { t } = useTranslation();
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
