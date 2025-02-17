@@ -16,14 +16,19 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 import { useTranslation } from 'react-i18next';
+import { Handlable } from '@/components/customized/BottomSheetHandle';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
   onCancel: () => void;
 }
 
-export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
-  const { account, onCancel } = props;
+export const AddressDetailInner: React.FC<
+  AddressInfoProps & {
+    __IN_SHEET_MODAL__?: boolean;
+  }
+> = props => {
+  const { account, onCancel, __IN_SHEET_MODAL__ = false } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const inWhiteList = useMemo(
@@ -63,7 +68,9 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
 
   return (
     <View style={styles.root}>
-      <View style={styles.qrCodeView}>
+      <Handlable
+        __IN_SHEET_MODAL__={__IN_SHEET_MODAL__}
+        style={styles.qrCodeView}>
         <TouchableOpacity
           style={styles.qrCode}
           hitSlop={10}
@@ -76,10 +83,14 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
             color={colors2024['neutral-body']}
           />
         </TouchableOpacity>
-      </View>
-      <AddressInfoItem account={account} />
+      </Handlable>
+      <Handlable __IN_SHEET_MODAL__={__IN_SHEET_MODAL__}>
+        <AddressInfoItem account={account} />
+      </Handlable>
       <View style={styles.cardList}>
-        <AddressAssetsItem onCancel={onCancel} account={account} />
+        <Handlable.Fragment __IN_SHEET_MODAL__={__IN_SHEET_MODAL__}>
+          <AddressAssetsItem onCancel={onCancel} account={account} />
+        </Handlable.Fragment>
         <AddressBackupItem onCancel={onCancel} account={account} />
         <Card style={styles.card}>
           <Item
