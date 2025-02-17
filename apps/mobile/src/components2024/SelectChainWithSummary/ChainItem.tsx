@@ -4,7 +4,7 @@ import { Image, Text, View } from 'react-native';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useChainBalances } from '@/hooks/account';
 import { RcWalletCC } from '@/assets/icons/common';
@@ -31,7 +31,8 @@ export default function ChainItem({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   tokens: TokenItem[];
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const isDark = useGetBinaryMode() === 'dark';
 
   const { matteredChainBalances, testnetMatteredChainBalances } =
     useChainBalances();
@@ -67,6 +68,11 @@ export default function ChainItem({
           disabled && styles.disable,
           isSelected && styles.isSelected,
           style,
+          {
+            backgroundColor: isDark
+              ? colors2024['neutral-bg-2']
+              : colors2024['neutral-bg-1'],
+          },
         ]}
         onPress={() => {
           if (disabled) {
@@ -142,7 +148,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 16,
     paddingRight: 16,
     marginBottom: 8,
-    backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'transparent',

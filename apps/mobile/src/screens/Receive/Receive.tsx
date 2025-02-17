@@ -262,6 +262,9 @@ function ReceiveScreen(): JSX.Element {
             onPress={handleCopy}
             disabled={isShowWatchModeModal}
             buttonStyle={styles.copyButtonStyle}
+            containerStyle={{
+              width: '100%',
+            }}
             titleStyle={{
               color: colors2024['brand-default'],
             }}
@@ -315,7 +318,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   receiveContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
     width: '100%',
   },
   qrCard: {

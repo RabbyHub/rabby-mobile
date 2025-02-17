@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Keyboard,
-  LayoutChangeEvent,
   Pressable,
   Text,
   View,
@@ -128,7 +127,6 @@ export default function SelectChainWithSummary({
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
-  const [inputContainerWidth, setInputContainerWidth] = useState(0);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const isDark = useGetBinaryMode() === 'dark';
   const { selectedTab } = useSwitchNetTab({
@@ -161,23 +159,23 @@ export default function SelectChainWithSummary({
     setCanSearch(!canSearch);
   };
 
-  const handleInputContainerLayout = (e: LayoutChangeEvent) => {
-    setInputContainerWidth(e.nativeEvent.layout.width);
-  };
-
   return (
-    <AutoLockView style={styles.container}>
+    <AutoLockView
+      style={{
+        ...styles.container,
+        backgroundColor: isDark
+          ? colors2024['neutral-bg-1']
+          : colors2024['neutral-bg-0'],
+      }}>
       <BottomSheetHandlableView>
         {!canSearch && (
-          <View
-            style={{ ...styles.titleView, ...styles.titleViewWithText }}
-            onLayout={handleInputContainerLayout}>
+          <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
             {titleText && (
               <View style={styles.titleTextWrapper}>
                 <Text style={styles.titleText}>{titleText}</Text>
               </View>
             )}
-            <Pressable onPress={handleToggleSearch}>
+            <Pressable onPress={handleToggleSearch} style={styles.iconSearch}>
               <RcIconSearch color={colors2024['neutral-foot']} />
             </Pressable>
           </View>
@@ -269,7 +267,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 32,
-    backgroundColor: colors2024['neutral-bg-0'],
   },
   titleText: {
     color: colors2024['neutral-title-1'],
@@ -349,5 +346,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   titleViewWithText: {
     marginBottom: 34,
+  },
+
+  iconSearch: {
+    position: 'absolute',
+    right: 0,
   },
 }));
