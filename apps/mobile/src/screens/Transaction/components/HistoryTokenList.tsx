@@ -14,7 +14,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
@@ -93,8 +93,7 @@ const TokenItemInlist = ({
                 styles.tokenAmountTextList,
                 isSend && styles.isSendTextColor,
               ]}>
-              {isSend ? '-' : '+'}{' '}
-              {isNft ? amount : numberWithCommasIsLtOne(amount, 2)}{' '}
+              {isSend ? '-' : '+'} {isNft ? amount : formatAmount(amount)}{' '}
               {isNft
                 ? t('page.singleHome.sectionHeader.Nft')
                 : getTokenSymbol(token as TokenItem)}
@@ -172,7 +171,7 @@ export const HistoryTokenList = ({
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
-          ? numberWithCommasIsLtOne(singleAmount, 2)
+          ? formatAmount(singleAmount)
           : t('page.transactions.detail.Unlimited')
         : '';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
@@ -250,7 +249,7 @@ export const HistoryTokenList = ({
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {numberWithCommasIsLtOne(sendAmount, 2)}{' '}
+                {'-'} {formatAmount(sendAmount)}{' '}
                 {getTokenSymbol(sendToken as TokenItem)}
               </Text>
               <RcIconRightCC
@@ -271,7 +270,7 @@ export const HistoryTokenList = ({
             />
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text style={[styles.tokenAmountTextList]}>
-                {'+'} {numberWithCommasIsLtOne(recieveAmount, 2)}{' '}
+                {'+'} {formatAmount(recieveAmount)}{' '}
                 {getTokenSymbol(recieveToken as TokenItem)}
               </Text>
               <RcIconRightCC

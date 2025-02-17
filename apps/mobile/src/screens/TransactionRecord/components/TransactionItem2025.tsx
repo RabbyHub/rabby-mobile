@@ -47,7 +47,7 @@ import {
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
-import { numberWithCommasIsLtOne } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
@@ -301,7 +301,7 @@ export const TransactionItem = ({
       } else {
         return amount >= 1e9
           ? t('page.transactions.detail.Unlimited')
-          : numberWithCommasIsLtOne(amount, 2);
+          : formatAmount(amount);
       }
     }
   }, [approveToken, isNft, t]);
@@ -382,10 +382,7 @@ export const TransactionItem = ({
                   {'+'}{' '}
                   {isNft
                     ? token.amount
-                    : numberWithCommasIsLtOne(
-                        token.amount || token.min_amount,
-                        2,
-                      )}
+                    : formatAmount(token.amount || token.min_amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText]}
@@ -408,10 +405,7 @@ export const TransactionItem = ({
                       styles.approveText,
                   ]}
                   numberOfLines={1}>
-                  {'-'}{' '}
-                  {isNft
-                    ? token.amount
-                    : numberWithCommasIsLtOne(token.amount, 2)}
+                  {'-'} {isNft ? token.amount : formatAmount(token.amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText, styles.sendText]}
