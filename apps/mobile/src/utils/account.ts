@@ -1,3 +1,5 @@
+import { Account } from '@/core/services/preference';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 
 export const sortAccountsByBalance = <
@@ -11,3 +13,13 @@ export const sortAccountsByBalance = <
       .toNumber();
   });
 };
+
+export function isWatchOrSafeAccount(account: Account | Account['type']) {
+  if (!account) return false;
+
+  const accType = typeof account === 'string' ? account : account.type;
+
+  return (
+    accType && [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS].includes(accType)
+  );
+}

@@ -118,7 +118,6 @@ const getAccountFilterItemStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 16,
     },
     filterAccountWalletIcon: {
       width: 18,

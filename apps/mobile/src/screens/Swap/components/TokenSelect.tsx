@@ -42,6 +42,8 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
+import { isWatchOrSafeAccount } from '@/utils/account';
+
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
@@ -361,12 +363,19 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         return swapToHeader;
       }
       return (
-        <View style={styles.headerBox}>
+        <View style={[styles.headerBox, styles.headerBoxNoPb]}>
           <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
           <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
         </View>
       );
-    }, [styles.headerBox, styles.headerBoxText, swapToHeader, t, type]);
+    }, [
+      styles.headerBox,
+      styles.headerBoxNoPb,
+      styles.headerBoxText,
+      swapToHeader,
+      t,
+      type,
+    ]);
 
     const recentTitle = useMemo(() => {
       if (recentDisplayToTokens.length) {
@@ -450,11 +459,15 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
+      if (!currentAccount?.type || !isWatchOrSafeAccount(currentAccount?.type))
+        return false;
+
       return (
         forScene === 'MakeTransactionAbout' &&
-        [RootNames.MultiBridge, RootNames.MultiSwap].includes(ofScreen)
+        ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
+          (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
       );
-    }, [forScene, ofScreen]);
+    }, [forScene, ofScreen, currentAccount?.type, type]);
 
     return (
       <>
@@ -569,6 +582,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
+  },
+  headerBoxNoPb: {
+    paddingBottom: 0,
   },
   headerBoxText: {
     fontSize: 17,

@@ -23,7 +23,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
 import { getTokenSymbol } from '@/utils/token';
@@ -62,6 +62,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { AccountInfoInTokenRow } from './AccountWidgets';
+import { isWatchOrSafeAccount } from '@/utils/account';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -685,6 +686,21 @@ export const TokenSelectorSheetModal = React.forwardRef<
       ];
     }, [isBridgeTo, tokens, unshiftList]);
 
+    const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
+      useMemo(() => {
+        const _willShowAccountFilter =
+          displayAccountFilter &&
+          filterAccount &&
+          !isWatchOrSafeAccount(filterAccount);
+        const _willShowChainFilter = chainItem && !hideChainFilter;
+
+        return {
+          willShowChainFilter: _willShowAccountFilter,
+          willShowAccountFilter: _willShowChainFilter,
+          willShowFilterRow: _willShowAccountFilter || _willShowChainFilter,
+        };
+      }, [displayAccountFilter, filterAccount, chainItem, hideChainFilter]);
+
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
@@ -770,10 +786,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           <View
             style={[
               styles.filterRow,
-              styles.internalBlock,
-              // !(filterAccount && displayAccountFilter) && !(chainItem && !hideChainFilter)
+              !willShowFilterRow && { display: 'none' },
             ]}>
-            {displayAccountFilter && filterAccount && (
+            {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
                 onRmove={account => {
@@ -790,7 +805,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             )}
 
             {/* TODO: chain selector */}
-            {chainItem && !hideChainFilter && (
+            {willShowChainFilter && (
               <View style={[styles.chainFiltersContainer]}>
                 <ChainFilterItem
                   chainItem={chainItem}
@@ -989,13 +1004,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'flex-start',
       alignItems: 'center',
       gap: 8,
-      // height: 34,
-      paddingHorizontal: 24,
+      maxHeight: 34,
+      paddingHorizontal: 8,
+      marginBottom: 14,
+      // ...makeDebugBorder(),
     },
 
     chainFiltersContainer: {
       flexDirection: 'row',
-      marginBottom: 16,
     },
 
     scrollView: {
