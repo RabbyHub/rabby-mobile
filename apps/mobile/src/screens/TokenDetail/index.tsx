@@ -259,7 +259,6 @@ export const TokenDetailScreen = () => {
           });
       });
     });
-    console.debug('relateDefiList length:', resList.length);
     return resList;
   }, [token, assetsMap, isSingleAddress, finalAccount, accounts]);
 
