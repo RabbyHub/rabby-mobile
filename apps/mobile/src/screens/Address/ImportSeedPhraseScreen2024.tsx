@@ -315,6 +315,8 @@ export const ImportSeedPhraseScreen2024 = () => {
                   value: mnemonics,
                   secureTextEntry: true,
                   textContentType: 'none',
+                  blurOnSubmit: true,
+                  returnKeyType: 'done',
                   onChangeText: text => {
                     if (importing) {
                       return;

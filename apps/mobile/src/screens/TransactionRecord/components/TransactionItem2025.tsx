@@ -412,7 +412,7 @@ export const TransactionItem = ({
         const isApprove = formatType === HistoryItemCateType.Approve;
         return projectName
           ? isApprove
-            ? ToText
+            ? ToText + projectName
             : FromText + projectName
           : strings('page.transactions.detail.Unknown');
       // case HistoryItemCateType.Contract:

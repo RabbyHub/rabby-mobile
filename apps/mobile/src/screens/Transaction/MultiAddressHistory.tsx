@@ -156,7 +156,6 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
 
     // juset not in single token history
-    console.log('batchFetchDataV2 addresses', addresses);
     const [historyList, swapList] = await Promise.all([
       HistoryItemEntity.getAllHistoryItemSortedByTime(addresses),
       getSwapHistory(
@@ -165,10 +164,6 @@ function History({
           : finalSceneCurrentAccount?.address.toLowerCase(),
       ),
     ]);
-    console.log('tokenDict', Object.keys(tokenDict).length);
-    console.log('projectDict', Object.keys(projectDict).length);
-    console.log('historyList', historyList.length);
-    console.log('swapList', swapList.length);
 
     const list = historyList.map(
       item =>

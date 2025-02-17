@@ -12,7 +12,11 @@ import {
   MODAL_NAMES,
 } from './types';
 
-import { makeBottomSheetProps, MODAL_VIEWS, SNAP_POINTS } from './utils';
+import {
+  makeClassicalBottomSheetProps,
+  MODAL_VIEWS,
+  SNAP_POINTS,
+} from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '../AutoLockView';
@@ -201,7 +205,7 @@ export const GlobalBottomSheetModal = () => {
               )
             }
             stackBehavior="push"
-            {...makeBottomSheetProps({
+            {...makeClassicalBottomSheetProps({
               params: modal.params,
               colors,
             })}

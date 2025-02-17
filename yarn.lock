@@ -6557,9 +6557,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.46":
-  version: 0.0.46
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.46"
+"@rabby-wallet/rabby-swap@npm:0.0.47":
+  version: 0.0.47
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.47"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -6568,7 +6568,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 099d6614d389f611b51159098d0d15d4ac81a2ee27477d43dc461f7ece1eb7a2cf51118e9d4700f447bcd4dc22bcc3f1f77dc8a027f6826bfa85eb92ea0c98ac
+  checksum: 2f2eec6d252bd4161c9e88c823ea2fcde57ed83c6a52884983e5377df1631bc5a809135659fa2885ee2842c291f0ae734e5413790d6155341cc13e5b447f992d
   languageName: node
   linkType: hard
 
@@ -23163,6 +23163,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.debounce@npm:4.0.8":
+  version: 4.0.8
+  resolution: "lodash.debounce@npm:4.0.8"
+  checksum: a3f527d22c548f43ae31c861ada88b2637eb48ac6aa3eb56e82d44917971b8aa96fbb37aa60efea674dc4ee8c42074f90f7b1f772e9db375435f6c83a19b3bc6
+  languageName: node
+  linkType: hard
+
 "lodash.debounce@npm:^4.0.8":
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flodash.debounce%2F-%2Flodash.debounce-4.0.8.tgz"
@@ -27368,6 +27375,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prop-types@npm:15.8.1":
+  version: 15.8.1
+  resolution: "prop-types@npm:15.8.1"
+  dependencies:
+    loose-envify: ^1.4.0
+    object-assign: ^4.1.1
+    react-is: ^16.13.1
+  checksum: c056d3f1c057cb7ff8344c645450e14f088a915d078dcda795041765047fa080d38e5d626560ccaac94a4e16e3aa15f3557c1a9a8d1174530955e992c675e459
+  languageName: node
+  linkType: hard
+
 "propagate@npm:^2.0.0":
   version: 2.0.1
   resolution: "propagate@npm:2.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fpropagate%2F-%2Fpropagate-2.0.1.tgz"
@@ -27662,7 +27680,7 @@ __metadata:
     "@rabby-wallet/rabby-api": 0.9.11
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.46
+    "@rabby-wallet/rabby-swap": 0.0.47
     "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.1
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -27799,6 +27817,7 @@ __metadata:
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
     readable-stream: 3.6.2
+    recyclerlistview: 4.2.1
     reflect-metadata: 0.1.13
     ripple-keypairs: ^2.0.0
     semver: ^7.5.4
@@ -29482,6 +29501,20 @@ __metadata:
   dependencies:
     minimatch: ^3.0.5
   checksum: 88ec96e276237290607edc0872b4f9842837b95cfde0cdbb1e00ba9623dfdf3514d44cdd14496ab60a0c2dd180a6ef8a3f1c34599e6cf2273afac9b72a6fb2b5
+  languageName: node
+  linkType: hard
+
+"recyclerlistview@npm:4.2.1":
+  version: 4.2.1
+  resolution: "recyclerlistview@npm:4.2.1"
+  dependencies:
+    lodash.debounce: 4.0.8
+    prop-types: 15.8.1
+    ts-object-utils: 0.0.5
+  peerDependencies:
+    react: ">= 15.2.1"
+    react-native: ">= 0.30.0"
+  checksum: 48e84937f803ac2acb510b2bc36b3ef1ea9c5383540a832f80c87d7e7f933b26c59e4ffc2d7de529be55e14a8d551c4f6660a450ad220142f351e6bf6e630450
   languageName: node
   linkType: hard
 
@@ -32887,6 +32920,13 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: fde256c9073969e234526e2cfead42591b9a2aec5222bac154b0de2fa9e4ceb30efcd717ee8bc785a56f3a119bdd5aa27b333d9dbec94ed254bd26f8944c67ac
+  languageName: node
+  linkType: hard
+
+"ts-object-utils@npm:0.0.5":
+  version: 0.0.5
+  resolution: "ts-object-utils@npm:0.0.5"
+  checksum: 83c48fbdaba392fb2c01cea53b267ed5538d2bb44fc6c3eecc10bcfabc1780bfa6ec8569b52bbf0140d9b521d9049d5f15884e12286918244d463d854dbc73cb
   languageName: node
   linkType: hard
 

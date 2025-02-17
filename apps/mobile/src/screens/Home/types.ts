@@ -101,6 +101,7 @@ export type CombineNft = {
 
 export type ActionHeaderItem = {
   type:
+    | 'overview'
     | 'asset_header'
     | 'toggle_token_fold'
     | 'defi_header'

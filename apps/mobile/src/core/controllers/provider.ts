@@ -600,6 +600,19 @@ class ProviderController extends BaseController {
         // if (isSend) {
         //   pageStateCacheService.clear();
         // }
+        const _rawTx = {
+          ...rawTx,
+          ...approvalRes,
+          r: covertToHex(signedTx.r),
+          s: covertToHex(signedTx.s),
+          v: covertToHex(signedTx.v),
+        };
+        if (is1559) {
+          delete _rawTx.gasPrice;
+        } else {
+          delete _rawTx.maxPriorityFeePerGas;
+          delete _rawTx.maxFeePerGas;
+        }
         updateExpiredTime(txParams.from, PENDGING_TIME);
 
         // TODO: transactionHistory
@@ -608,13 +621,7 @@ class ProviderController extends BaseController {
           nonce: +approvalRes.nonce,
           chainId: approvalRes.chainId,
 
-          rawTx: {
-            ...rawTx,
-            ...approvalRes,
-            r: covertToHex(signedTx.r),
-            s: covertToHex(signedTx.s),
-            v: covertToHex(signedTx.v),
-          },
+          rawTx: _rawTx,
           createdAt: Date.now(),
           hash,
           reqId,

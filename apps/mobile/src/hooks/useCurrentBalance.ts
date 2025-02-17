@@ -6,6 +6,10 @@ import {
   formatChain,
 } from '@/utils/chain';
 import { apiBalance } from '@/core/apis';
+import { BalanceEntity } from '@/databases/entities/balance';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { keyringService } from '@/core/services';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 
 const balanceAtom = atom<number | null>(null);
 const testnetBalanceAtom = atom<string | null>(null);
@@ -71,6 +75,24 @@ export default function useCurrentBalance(
   ) => {
     const { force } = options || {};
     try {
+      const addresses = await keyringService.getAllAddresses();
+      const filtered = addresses.filter(item =>
+        isSameAddress(item.address, address),
+      );
+      let core = false;
+      if (
+        filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))
+      ) {
+        core = true;
+      }
+      const cachedBalance = await BalanceEntity.queryBalance(address, core);
+      if (cachedBalance) {
+        setBalance(cachedBalance.total_usd_value);
+        setSuccess(true);
+        setBalanceLoading(false);
+        setBalanceFromCache(false);
+        setBalanceUpdating(false);
+      }
       const { total_usd_value: totalUsdValue, chain_list: chainList } =
         await apiBalance.getAddressBalance(address, { force });
       if (isCanceled) {

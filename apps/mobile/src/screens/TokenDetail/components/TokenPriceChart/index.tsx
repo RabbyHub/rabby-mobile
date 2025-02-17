@@ -77,12 +77,18 @@ export function TokenPriceChart(props: Props) {
       const pre = data?.list?.[0]?.value;
       const now = data?.list?.[data?.list?.length - 1]?.value;
       const isLoss = now < pre;
-      const currentPercent =
-        pre === 0
-          ? now === 0
-            ? '0%'
-            : '100%'
-          : Math.abs(((now - pre) / pre) * 100).toFixed(2) + '%';
+      let currentPercent = '';
+      if (activeKey === '24h') {
+        currentPercent =
+          Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%';
+      } else {
+        currentPercent =
+          pre === 0
+            ? now === 0
+              ? '0%'
+              : '100%'
+            : Math.abs(((now - pre) / pre) * 100).toFixed(2) + '%';
+      }
       return {
         isUp: !isLoss,
         percent: currentPercent,
@@ -92,7 +98,7 @@ export function TokenPriceChart(props: Props) {
       isUp: true,
       percent: '',
     };
-  }, [data]);
+  }, [activeKey, data?.list, token?.price_24h_change]);
 
   const pathColor = isUp
     ? colors2024['green-default']
