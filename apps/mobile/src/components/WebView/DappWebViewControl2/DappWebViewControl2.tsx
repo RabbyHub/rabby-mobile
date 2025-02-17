@@ -34,6 +34,10 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '../utils';
 import { FontNames } from '@/core/utils/fonts';
 import { DappWebViewHideContext } from '@/screens/Dapps/hooks/useDappView';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useMemoizedFn } from 'ahooks';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toast } from '@/components2024/Toast';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl2::error]', ...info);
@@ -185,18 +189,20 @@ const DappWebViewControl2 = React.forwardRef<
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
 
-    const { formattedCurrentUrl, stillInDappOrigin } = useMemo(() => {
-      const urlString = latestUrl || convertToWebviewUrl(dappOrigin);
-      const urlInfo = canoicalizeDappUrl(urlString);
+    const { formattedCurrentUrl, stillInDappOrigin, urlString } =
+      useMemo(() => {
+        const urlString = latestUrl || convertToWebviewUrl(dappOrigin);
+        const urlInfo = canoicalizeDappUrl(urlString);
 
-      const hasSameOrigin =
-        canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
+        const hasSameOrigin =
+          canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
 
-      return {
-        stillInDappOrigin: hasSameOrigin,
-        formattedCurrentUrl: hasSameOrigin ? urlInfo.hostname : urlString,
-      };
-    }, [dappOrigin, latestUrl]);
+        return {
+          stillInDappOrigin: hasSameOrigin,
+          formattedCurrentUrl: hasSameOrigin ? urlInfo.hostname : urlString,
+          urlString,
+        };
+      }, [dappOrigin, latestUrl]);
 
     React.useImperativeHandle(
       ref,
@@ -239,6 +245,11 @@ const DappWebViewControl2 = React.forwardRef<
       webviewActions,
     });
 
+    const handleCopyUrl = useMemoizedFn(() => {
+      Clipboard.setString(urlString);
+      toast.success('Copied!');
+    });
+
     const renderedHeaderNode = useMemo(() => {
       const node = (
         <View style={[styles.dappWebViewHeadContainer]}>
@@ -254,21 +265,23 @@ const DappWebViewControl2 = React.forwardRef<
             </TouchableView>
           </View>
           <View style={styles.DappWebViewHeadTitleWrapper}>
-            {stillInDappOrigin ? (
-              <Text
-                style={styles.HeadTitleOrigin}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {formattedCurrentUrl}
-              </Text>
-            ) : (
-              <Text
-                style={styles.HeadTitleFull}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {formattedCurrentUrl}
-              </Text>
-            )}
+            <TouchableOpacity onPress={handleCopyUrl}>
+              {stillInDappOrigin ? (
+                <Text
+                  style={styles.HeadTitleOrigin}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {formattedCurrentUrl}
+                </Text>
+              ) : (
+                <Text
+                  style={styles.HeadTitleFull}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {formattedCurrentUrl}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
           <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
             {headerRightNode}
@@ -287,6 +300,7 @@ const DappWebViewControl2 = React.forwardRef<
       handlePressHeaderLeftClose,
       formattedCurrentUrl,
       styles,
+      handleCopyUrl,
     ]);
 
     const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
