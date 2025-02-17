@@ -166,6 +166,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       navigate(RootNames.TokenDetail, {
         token: token,
         unHold: token._unHold,
+        needUseCacheToken: true,
       });
     },
     [],

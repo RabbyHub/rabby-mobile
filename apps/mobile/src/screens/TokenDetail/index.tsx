@@ -201,14 +201,11 @@ export const TokenDetailScreen = () => {
 
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
-    if (fromPortfolio) {
+    if (fromPortfolio || needUseCacheToken) {
       const iToken = cacheAssets.find(
-        item => item._tokenId === _token.id && item.chain === _token.chain,
+        item =>
+          item._tokenId === _token._tokenId && item.chain === _token.chain,
       );
-      return iToken || _token;
-    }
-    if (needUseCacheToken) {
-      const iToken = cacheAssets.find(item => item.id === _token.id);
       return iToken || _token;
     }
     return _token;
