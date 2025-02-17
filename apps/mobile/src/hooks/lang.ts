@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { findBestLanguageTag, getLocales } from 'react-native-localize';
+import { findBestLanguageTag } from 'react-native-localize';
 import { useAtom } from 'jotai';
 import { atomByMMKV, appJsonStore, IS_BOOTED_USER } from '@/core/storage/mmkv';
 import i18n, {
@@ -9,7 +9,6 @@ import i18n, {
   SupportedLang,
   SupportedLangs,
 } from '@/utils/i18n';
-import useMount from 'react-use/lib/useMount';
 
 function filterOutBestLang() {
   const langs = SupportedLangs.map(item => item.lang);
