@@ -1,10 +1,10 @@
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { ModalLayouts, RootNames } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { Skeleton } from '@rneui/themed';
@@ -17,8 +17,10 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { navigate } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { useCurrentAccount } from '@/hooks/account';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
     paddingHorizontal: 20,
   },
@@ -29,13 +31,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 24,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   skeletonBlock: {
     width: '100%',
     height: 74,
     padding: 0,
     borderRadius: 16,
+    marginTop: 8,
+  },
+  loading: {
     marginTop: 8,
   },
   emptyView: {
@@ -90,8 +97,8 @@ const HistoryList = ({
     if (noMore) {
       return null;
     }
-    return <Skeleton style={styles.skeletonBlock} />;
-  }, [noMore, styles.skeletonBlock]);
+    return <ActivityIndicator style={styles.loading} />;
+  }, [noMore, styles.loading]);
   const { bottom } = useSafeAreaInsets();
 
   const ListEmptyComponent = useMemo(
@@ -208,6 +215,17 @@ export const SwapTxHistory = ({
       bottomRef.current?.dismiss();
     }
   }, [visible]);
+
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+
+  const { syncUserAllHistory } = useSyncHistoryDB();
+  const { currentAccount } = useCurrentAccount();
+  useEffect(() => {
+    if (currentAccount?.address) {
+      syncUserAllHistory(currentAccount?.address);
+    }
+  }, [currentAccount?.address, syncUserAllHistory]);
+
   return (
     <AppBottomSheetModal
       ref={bottomRef}
@@ -216,7 +234,7 @@ export const SwapTxHistory = ({
       enableDismissOnClose
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg2',
+        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
       })}>
       <HistoryList onGotoDetail={goToDetail} />
     </AppBottomSheetModal>
