@@ -406,7 +406,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           ? ''
           : `${ownerAccount.type}-${ownerAccount.address}`;
 
-        const showOwnerAccount = !chainSearchCtx.filterAccountItem;
+        // const showOwnerAccount = !chainSearchCtx.filterAccountItem;
+        /** @description force false now */
+        const showOwnerAccount = false;
 
         if (token.$origin.recentList?.length && token.$origin.TokenRender) {
           const TokenRender = token.$origin.TokenRender;
@@ -654,7 +656,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         fold,
         disabledTips,
         isSingleAddress,
-        chainSearchCtx.filterAccountItem,
+        // chainSearchCtx.filterAccountItem,
       ],
     );
 
