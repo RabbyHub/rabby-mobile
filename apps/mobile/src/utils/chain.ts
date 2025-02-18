@@ -277,6 +277,8 @@ export function varyAndSortChainItems(deps: {
     }
   });
 
+  console.warn('[feat] unpinnedListGroup.withBalance[0]', unpinnedListGroup.withBalance[0]);
+
   const allSearched = searchChains({
     list: _all,
     pinned,

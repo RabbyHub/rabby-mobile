@@ -38,7 +38,17 @@ export default function MixedFlatChainList({
   const { currentAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const { tokenList } = useLocalTokens(currentAccount?.address);
+  // if (currentAccount?.address) {
+  //   console.log('[feat] MixedFlatChainList:: currentAccount', currentAccount);
+  //   console.log('[feat] MixedFlatChainList:: tokenList?.length', tokenList?.length);
+  // }
   const { matteredChainBalances } = useChainBalances();
+
+  // if (currentAccount?.address) {
+  //   console.log('[feat] MixedFlatChainList:: matteredChainBalances[currentAccount?.address]', matteredChainBalances[currentAccount?.address]);
+  //   console.log('[feat] MixedFlatChainList:: matteredList[0]', matteredList[0]);
+  // }
+
   const tokenListMap = useMemo(() => {
     if (!tokenList) {
       return {};

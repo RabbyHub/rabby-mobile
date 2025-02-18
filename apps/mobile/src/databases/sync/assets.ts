@@ -259,8 +259,8 @@ export async function syncBalance(
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
 
   await prepareAppDataSource();
-  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
-  await BalanceEntity.deleteForAddress(address);
+  // // @TODO: remove this line, we don't need delete data first because we use upsert when save data
+  // await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
     taskFor: `balance`,

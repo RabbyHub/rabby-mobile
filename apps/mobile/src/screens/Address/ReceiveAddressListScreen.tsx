@@ -20,6 +20,7 @@ export function ReceiveAddressListScreen(): JSX.Element {
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const handleSelect = async account => {
+    console.log('[feat] ReceiveAddressListScreen:: account', account);
     await switchSceneCurrentAccount('Receive', account);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {

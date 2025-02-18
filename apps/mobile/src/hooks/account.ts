@@ -412,6 +412,7 @@ export function useLoadMatteredChainBalances() {
           if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
             accu[cur.id] = formatChainToDisplay(cur);
           }
+          // accu[cur.id] = formatChainToDisplay(cur);
           return accu;
         },
         {} as MatteredChainBalances,
@@ -432,6 +433,11 @@ export function useLoadMatteredChainBalances() {
         return accu;
       }, {} as MatteredChainBalances);
 
+      console.log(
+        '[feat] next:: currentAccountAddr: %s, mainnetTotalUsdValue: %s, Object.keys(matteredChainBalances): %s',
+        currentAccountAddr, mainnetTotalUsdValue,
+        Object.keys(matteredChainBalances)
+      );
       setMattredChainBalances(matteredChainBalances);
       setTestMattredChainBalances(testnetMatteredChainBalances);
 

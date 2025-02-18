@@ -233,6 +233,7 @@ export const HomeTopArea = ({
         if (!currentAccount) {
           return;
         }
+        console.log('[feat] currentAccount', currentAccount);
         await switchSceneCurrentAccount('Receive', currentAccount);
         navigation.dispatch(
           StackActions.push(RootNames.StackTransaction, {

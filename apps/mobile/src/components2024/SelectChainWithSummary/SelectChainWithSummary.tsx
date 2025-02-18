@@ -63,6 +63,9 @@ const useChainSeletorList = ({
 
   const { mainnetList, testnetList } = useChainList();
 
+  // console.log('[feat] mainnetList[0]', mainnetList[0]);
+  console.log(`[feat] Object.keys(matteredChainBalances): %s; Object.keys(chainBalances): %s`, Object.keys(matteredChainBalances), Object.keys(chainBalances));
+
   const { allSearched, matteredList, unmatteredList } = useMemo(() => {
     const searchKw = search?.trim().toLowerCase();
     const result = varyAndSortChainItems({
@@ -89,6 +92,8 @@ const useChainSeletorList = ({
     mainnetList,
     testnetList,
   ]);
+  // console.warn('[feat] useChainSeletorList:: matteredList[0]', matteredList[0]);
+  // console.log('[feat] useChainSeletorList:: unmatteredList[0]', unmatteredList[0]);
 
   return {
     matteredList,
@@ -142,6 +147,7 @@ export default function SelectChainWithSummary({
     supportChains: supportChains,
     netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
   });
+  // console.warn('[feat] _matteredList[0]', _matteredList[0]);
 
   const [matteredList, unmatteredList] = useMemo(() => {
     if (excludeChains?.length) {
@@ -158,6 +164,8 @@ export default function SelectChainWithSummary({
     }
     setCanSearch(!canSearch);
   };
+
+  // console.log('[feat] matteredList[0]', matteredList[0]);
 
   return (
     <AutoLockView
