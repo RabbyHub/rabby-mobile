@@ -234,9 +234,9 @@ export const ImportSeedPhraseScreen2024 = () => {
 
       if (errorList.length) {
         setError(
-          `${errorList.length} ${t('background.error.errorWords')}: ${errorList
-            .map(i => `${i.index + 1}.${i.word}`)
-            .join(', ')}`,
+          `${t('background.error.errorWords', {
+            count: errorList.length,
+          })}: ${errorList.map(i => `${i.index + 1}.${i.word}`).join(', ')}`,
         );
         return false;
       }
