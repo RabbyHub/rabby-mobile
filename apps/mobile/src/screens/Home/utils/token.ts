@@ -121,10 +121,18 @@ export const sortWalletTokens = (wallet: DisplayedProject) => {
     .sort((m, n) => (n._usdValue || 0) - (m._usdValue || 0));
 };
 
-export const tagTokenList = (
-  tokens: AbstractPortfolioToken[],
-  tokenSetting: ITokenSetting,
-) => {
+export type TaggedPortfolioToken<
+  T extends AbstractPortfolioToken = AbstractPortfolioToken,
+> = T & {
+  _isPined: boolean;
+  _isFold: boolean;
+  _isManualFold: boolean;
+  _isExcludeBalance: boolean;
+  _pinIndex: number;
+};
+export function tagTokenItem<
+  T extends AbstractPortfolioToken = AbstractPortfolioToken,
+>(i: T, tokenSetting: ITokenSetting) {
   const {
     pinedQueue = [],
     includeDefiAndTokens = [],
@@ -132,67 +140,67 @@ export const tagTokenList = (
     foldTokens = [],
     unfoldTokens = [],
   } = tokenSetting;
-
-  return tokens.map(i => {
-    const pinIndex = pinedQueue.findIndex(
-      x => x.chainId === i.chain && x.tokenId === i._tokenId,
-    );
-    const isPin = pinIndex !== -1;
-    const isFold = (() => {
-      if (
-        foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-      ) {
-        return true;
-      }
-      if (
-        unfoldTokens.some(
-          x => x.chainId === i.chain && x.tokenId === i._tokenId,
-        )
-      ) {
-        return false;
-      }
-      if (!i.is_core || (i._usdValue || 0) < 1) {
-        return true;
-      }
+  const pinIndex = pinedQueue.findIndex(
+    x => x.chainId === i.chain && x.tokenId === i._tokenId,
+  );
+  const isPin = pinIndex !== -1;
+  const isFold = (() => {
+    if (
+      foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
+    ) {
+      return true;
+    }
+    if (
+      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
+    ) {
       return false;
-    })();
+    }
+    if (!i.is_core || (i._usdValue || 0) < 1) {
+      return true;
+    }
+    return false;
+  })();
 
-    const isExcludeBalance = (() => {
-      if (
-        excludeDefiAndTokens.some(
-          x =>
-            x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
-        )
-      ) {
-        return true;
-      }
-      if (
-        includeDefiAndTokens.some(
-          x =>
-            x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
-        )
-      ) {
-        return false;
-      }
-      if (!i.is_core) {
-        return true;
-      }
+  const isExcludeBalance = (() => {
+    if (
+      excludeDefiAndTokens.some(
+        x => x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
+      )
+    ) {
+      return true;
+    }
+    if (
+      includeDefiAndTokens.some(
+        x => x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
+      )
+    ) {
       return false;
-    })();
+    }
+    if (!i.is_core) {
+      return true;
+    }
+    return false;
+  })();
 
-    const isManualFold = foldTokens.some(
-      x => x.chainId === i.chain && x.tokenId === i._tokenId,
-    );
+  const isManualFold = foldTokens.some(
+    x => x.chainId === i.chain && x.tokenId === i._tokenId,
+  );
 
-    return {
-      ...i,
-      _isPined: isPin,
-      _isFold: isFold,
-      _isManualFold: isManualFold,
-      _isExcludeBalance: isExcludeBalance,
-      _pinIndex: pinIndex,
-    };
-  });
+  return {
+    ...i,
+    _isPined: isPin,
+    _isFold: isFold,
+    _isManualFold: isManualFold,
+    _isExcludeBalance: isExcludeBalance,
+    _pinIndex: pinIndex,
+  };
+}
+
+export const tagTokenList = (
+  tokens: AbstractPortfolioToken[],
+  tokenSetting: ITokenSetting,
+) => {
+  return tokens.map(i => tagTokenItem(i, tokenSetting));
 };
 
 export const ensureAbstractPortfolioToken = (

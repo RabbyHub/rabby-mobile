@@ -22,6 +22,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { TaggedPortfolioToken, tagTokenItem } from '@/screens/Home/utils/token';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
   // ownerAddress?: string;
@@ -57,15 +58,21 @@ export function makeKeyForTokenItemMaybeWithOwner(
   return token_key;
 }
 
+type ExtractFromPromise<T> = T extends Promise<infer U> ? U : T;
+
 const getInitData = () => ({
   accounts: [],
   addressIndexedTokens: {},
-  accountIndexedTokens: new Map(),
+  userTokenSettings: {},
 });
 const allAccountsTokensMapAtom = atom<{
   accounts: Account[];
   addressIndexedTokens: { [addr: string]: TokenItemMaybeWithOwner[] };
-  accountIndexedTokens: Map<Account, TokenItemMaybeWithOwner[]>;
+  userTokenSettings: Partial<
+    ExtractFromPromise<
+      ReturnType<typeof preferenceService.getUserTokenSettings>
+    >
+  >;
 }>(getInitData());
 const isRequestingRef = { current: false };
 
@@ -114,13 +121,26 @@ export function useQueryLocalTokens() {
       if (isRequestingRef.current) return;
       setIsRequesting(true);
 
-      const allAccounts = await fetchAccountsForTokens().then(accounts =>
-        accounts.filter(account => !isWatchOrSafeAccount(account)),
-      );
+      const [allAccounts, tokenSettings] = await Promise.all([
+        fetchAccountsForTokens().then(accounts =>
+          accounts.filter(account => !isWatchOrSafeAccount(account)),
+        ),
+        preferenceService
+          .getUserTokenSettings()
+          .then(res => res || {})
+          .catch(err => {
+            console.error('fetchAllLocalTokens', err);
+            return {};
+          }),
+      ]);
 
       const { keyword, chain_server_id } = filters || {};
 
-      setAccountTokenMap(prev => ({ ...prev, accounts: allAccounts }));
+      setAccountTokenMap(prev => ({
+        ...prev,
+        accounts: allAccounts,
+        userTokenSettings: tokenSettings,
+      }));
 
       const addressSet = new Set(allAccounts.map(account => account.address));
 
@@ -174,7 +194,7 @@ export function useQueryLocalTokens() {
       },
       {
         tokenItems: [] as TokenItemMaybeWithOwner[],
-        displayTokens: [] as DisplayedTokenWithOwner[],
+        displayTokens: [] as TaggedPortfolioToken<DisplayedTokenWithOwner>[],
       },
     );
 
@@ -186,9 +206,11 @@ export function useQueryLocalTokens() {
       return bUsdValue - aUsdValue;
     });
 
-    result.displayTokens = result.tokenItems.map(token =>
-      tokenItem2AbstractTokenWithOwner(token),
-    );
+    result.displayTokens = result.tokenItems.map(token => {
+      const data = tokenItem2AbstractTokenWithOwner(token);
+
+      return tagTokenItem(data, accountTokenMap.userTokenSettings);
+    });
 
     return result;
   }, [accountTokenMap]);
