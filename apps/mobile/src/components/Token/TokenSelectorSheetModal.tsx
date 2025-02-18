@@ -521,7 +521,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 </View>
                 {showOwnerAccount ? (
                   !ownerAccount ? null : (
-                    <AccountInfoInTokenRow ownerAccount={ownerAccount} />
+                    <AccountInfoInTokenRow
+                      containerStyle={{ marginTop: 2 }}
+                      ownerAccount={ownerAccount}
+                    />
                   )
                 ) : (
                   <Text
