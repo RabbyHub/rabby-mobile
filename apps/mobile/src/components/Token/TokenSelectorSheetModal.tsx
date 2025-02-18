@@ -521,7 +521,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 </View>
                 {showOwnerAccount ? (
                   !ownerAccount ? null : (
-                    <AccountInfoInTokenRow ownerAccount={ownerAccount} />
+                    <AccountInfoInTokenRow
+                      containerStyle={{ marginTop: 2 }}
+                      ownerAccount={ownerAccount}
+                    />
                   )
                 ) : (
                   <Text
@@ -797,7 +800,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
-            {willShowAccountFilter && (
+            {/* {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
                 onRemoveFilter={account => {
@@ -811,7 +814,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }
                 }}
               />
-            )}
+            )} */}
 
             {/* TODO: chain selector */}
             {willShowChainFilter && (

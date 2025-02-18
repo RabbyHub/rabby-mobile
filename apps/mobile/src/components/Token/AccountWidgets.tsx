@@ -3,12 +3,14 @@ import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { Text, View, ViewStyle } from 'react-native';
 
 export function AccountInfoInTokenRow({
   ownerAccount,
+  containerStyle,
 }: {
   ownerAccount?: Account | null;
+  containerStyle?: ViewStyle;
 }) {
   const { styles } = useTheme2024({
     getStyle: getAccountInfoInTokenRowStyle,
@@ -20,7 +22,7 @@ export function AccountInfoInTokenRow({
     <AddressItem account={ownerAccount}>
       {({ WalletIcon }) => {
         return (
-          <View style={styles.accountContainer}>
+          <View style={[styles.accountContainer, containerStyle]}>
             <WalletIcon style={styles.walletIcon} />
             <Text style={styles.accountAddress}>
               {ownerAccount.aliasName || ellipsisAddress(ownerAccount?.address)}
@@ -49,7 +51,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
     accountAddress: {
       color: colors2024['neutral-body'],
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
       fontFamily: 'SF Pro Rounded',
       marginHorizontal: 6,
     },

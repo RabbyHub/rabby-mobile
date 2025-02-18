@@ -166,7 +166,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       fetchAllLocalTokens,
     } = useQueryLocalTokens();
 
-    const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
+    // const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
     useEffect(() => {
       if (!queryConds.account)
         fetchAllLocalTokens({
@@ -537,7 +537,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           selectToken={token}
           placeholder={placeholder}
           headerTitle={headerTitle}
-          displayAccountFilter={allowClearAccountFilter}
+          // displayAccountFilter={allowClearAccountFilter}
+          displayAccountFilter={false}
           filterAccount={queryConds.account}
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}

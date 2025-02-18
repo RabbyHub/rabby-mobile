@@ -108,15 +108,44 @@ function useTopTokensByAccount() {
     [setAddressTop5Tokens],
   );
 
+  function getTop5Tokens(tokens: TokenItem[]): TokenItem[] {
+    const tokenMap: { [symbol: string]: TokenItem } = {};
+    let sum = 0;
+    tokens.forEach(token => {
+      sum += token.price * token.amount;
+      if (tokenMap[token.symbol]) {
+        tokenMap[token.symbol].usd_value! += token.price * token.amount;
+      } else {
+        tokenMap[token.symbol] = {
+          ...token,
+          usd_value: token.price * token.amount,
+        };
+      }
+    });
+
+    const aggregatedTokens = Object.values(tokenMap);
+
+    aggregatedTokens.sort((a, b) => (b.usd_value ?? 0) - (a.usd_value ?? 0));
+
+    return aggregatedTokens
+      .slice(0, 5)
+      .filter(
+        item => (item.usd_value || 0) > 10 && (item.usd_value || 0) > sum * 0.1,
+      );
+  }
+
   const fetchTokensByAddress = useCallback(
     (addr?: string, count = 5) => {
       if (!addr) return;
       if (addressTop5TokensRequestingRefs[addr]) return;
       addressTop5TokensRequestingRefs[addr] = true;
 
-      TokenItemEntity.queryTokensByOwner(addr, { topCount: count })
+      TokenItemEntity.queryTokensByOwner(addr, {
+        filter_tokenGte10Dollar: false,
+        filter_tokenProportionGte10Percent: false,
+      })
         .then(tokens => {
-          setTokensByAddr(addr, tokens);
+          setTokensByAddr(addr, getTop5Tokens(tokens));
         })
         .catch(error => {
           console.error('[useTopTokensByAccount] error', error);
