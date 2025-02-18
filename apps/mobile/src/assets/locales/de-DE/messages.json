@@ -933,7 +933,8 @@
         "swapDesc": "Rabby Wallet wird stets den bestmöglichen Kurs von den führenden Aggregatoren finden und die Zuverlässigkeit ihrer Angebote überprüfen. Rabby erhebt eine Gebühr von <1>0,25%</1> (0% für Wrapping), die automatisch im Angebot enthalten ist."
       },
       "swapped": "Getauscht",
-      "historyTitle": "Tauschhistorie"
+      "historyTitle": "Tauschhistorie",
+      "selectChainModalTitle": "Kette auswählen"
     },
     "bridge": {
       "liquidity": "Liquidität",

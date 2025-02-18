@@ -32,11 +32,9 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import {
-  RcIconEyeCC,
-  RcIconEyeCloseCC,
-  RcArrowRightCC,
-} from '@/assets/icons/common';
+import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
+import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
+import { RcArrowRightCC } from '@/assets/icons/common';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 function ReceiveScreen(): JSX.Element {
@@ -102,14 +100,14 @@ function ReceiveScreen(): JSX.Element {
           onPress={() => setShowName(e => !e)}>
           {showName ? (
             <RcIconEyeCC
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               color={colors2024['neutral-title-1']}
             />
           ) : (
             <RcIconEyeCloseCC
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               color={colors2024['neutral-title-1']}
             />
           )}
@@ -197,27 +195,8 @@ function ReceiveScreen(): JSX.Element {
   return (
     <FooterButtonScreenContainer
       as="View"
-      buttonProps={{
-        title: (
-          <View style={styles.copyButtonTextWrapper}>
-            <RcIconMCopy color={colors2024['brand-default']} />
-            <Text style={styles.copyButtonText}>
-              {t('page.receive.copyAddress')}
-            </Text>
-          </View>
-        ),
-        onPress: handleCopy,
-        disabled: isShowWatchModeModal,
-        buttonStyle: styles.copyButtonStyle,
-        titleStyle: {
-          color: colors2024['brand-default'],
-        },
-      }}
       style={styles.screen}
-      footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 24,
-      }}>
+      footerBottomOffset={56}>
       <View style={styles.container}>
         <View style={styles.receiveContainer}>
           <View style={styles.qrCard}>
@@ -271,6 +250,25 @@ function ReceiveScreen(): JSX.Element {
               </Text>
             </Pressable>
           </View>
+          <Button
+            title={
+              <View style={styles.copyButtonTextWrapper}>
+                <RcIconMCopy color={colors2024['brand-default']} />
+                <Text style={styles.copyButtonText}>
+                  {t('page.receive.copyAddress')}
+                </Text>
+              </View>
+            }
+            onPress={handleCopy}
+            disabled={isShowWatchModeModal}
+            buttonStyle={styles.copyButtonStyle}
+            containerStyle={{
+              width: '100%',
+            }}
+            titleStyle={{
+              color: colors2024['brand-default'],
+            }}
+          />
         </View>
 
         <Modal
@@ -310,7 +308,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   screen: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   container: {
     flex: 1,
@@ -320,16 +318,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   receiveContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
     width: '100%',
   },
   qrCard: {
     alignItems: 'center',
     borderRadius: 30,
-    width: '100%',
-    paddingVertical: 35,
+    width: 320,
+    paddingTop: 23,
+    paddingBottom: 35,
     backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
+    paddingHorizontal: 30,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    marginBottom: 48,
   },
   qrCardHeader: {
     fontSize: 17,
@@ -354,7 +356,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   addressDetailContainer: {
     width: '100%',
-    marginBottom: 27,
   },
   qrCardAddress: {
     fontFamily: 'SF Pro Rounded',

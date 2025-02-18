@@ -9,7 +9,7 @@ import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import type { Chain } from './constant/chains';
+import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type {
   AbstractPortfolio,
@@ -245,8 +245,14 @@ export type TransactionNavigatorParamList = {
     collectionName?: string;
     address?: string;
   };
-  [RootNames.Swap]?: {};
-  [RootNames.MultiSwap]?: {};
+  [RootNames.Swap]?: {
+    chainEnum?: CHAINS_ENUM | undefined;
+    tokenId?: TokenItem['id'];
+    type?: 'Buy' | 'Sell';
+    swapAgain?: boolean;
+    swapTokenId?: TokenItem['id'][];
+  };
+  [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};

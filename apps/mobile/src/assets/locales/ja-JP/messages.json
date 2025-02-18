@@ -732,7 +732,8 @@
       },
       "directlySwap": "スマートコントラクトで{{symbol}}トークンを直接ラッピングする",
       "historyTitle": "スワップ履歴",
-      "swapped": "スワップ完了"
+      "swapped": "スワップ完了",
+      "selectChainModalTitle": "チェーンを選択します"
     },
     "signTypedData": {
       "createKey": {

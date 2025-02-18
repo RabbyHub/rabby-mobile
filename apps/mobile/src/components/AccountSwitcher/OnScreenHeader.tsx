@@ -16,6 +16,7 @@ import {
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
 import useMount from 'react-use/lib/useMount';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -81,10 +82,19 @@ export function ScreenHeaderAccountSwitcher({
       <View style={styles.addressRow}>
         {!isSceneUsingAllAccounts ? (
           !!finalSceneCurrentAccount && (
-            <Text style={styles.address}>
-              {finalSceneCurrentAccount.aliasName ||
-                ellipsisAddress(finalSceneCurrentAccount?.address)}
-            </Text>
+            <AddressItem account={finalSceneCurrentAccount}>
+              {({ WalletIcon, WalletAddress }) => {
+                return (
+                  <View style={styles.addressRow}>
+                    <WalletIcon style={styles.walletIcon} />
+                    <Text style={styles.address}>
+                      {finalSceneCurrentAccount.aliasName ||
+                        ellipsisAddress(finalSceneCurrentAccount?.address)}
+                    </Text>
+                  </View>
+                );
+              }}
+            </AddressItem>
           )
         ) : (
           <Text style={styles.address}>
@@ -126,6 +136,12 @@ const getStyle = createGetStyles2024(ctx => {
     addressRow: {
       flexDirection: 'row',
       alignItems: 'center',
+    },
+    walletIcon: {
+      borderRadius: 4,
+      width: 18,
+      height: 18,
+      marginRight: 4,
     },
     address: {
       margin: 4,

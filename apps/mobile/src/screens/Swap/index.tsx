@@ -55,7 +55,9 @@ import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
 import {
   PropsForAccountSwitchScreen,
+  ScreenSceneAccountProvider,
   useSceneAccountInfo,
+  useScreenSceneAccountContext,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -66,6 +68,9 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useSwapRecentToTokens } from './hooks/recent';
 import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
+import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import { naviReplace } from '@/utils/navigation';
+import { TransactionNavigatorParamList } from '@/navigation-type';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -73,6 +78,9 @@ const Swap = ({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen) => {
   useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
+  const { switchAccountOnSelectedToken } =
+    useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -151,6 +159,13 @@ const Swap = ({
     finishedQuotes,
   } = useTokenPair(currentAccount!.address);
 
+  const { sceneScreenRenderId } = useScreenSceneAccountContext();
+
+  useEffect(() => {
+    // clear form
+    handleAmountChange('');
+  }, [sceneScreenRenderId, handleAmountChange]);
+
   const {
     autoSlippage,
     isCustomSlippage,
@@ -191,15 +206,7 @@ const Swap = ({
           r.name ===
           (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
       )?.params,
-  ) as
-    | {
-        chainEnum?: CHAINS_ENUM | undefined;
-        tokenId?: TokenItem['id'];
-        type?: 'Buy' | 'Sell';
-        swapAgain?: boolean;
-        swapTokenId?: TokenItem['id'][];
-      }
-    | undefined;
+  ) as TransactionNavigatorParamList['Swap'] | undefined;
 
   useMount(() => {
     if (!navState?.chainEnum) {
@@ -568,12 +575,36 @@ const Swap = ({
               token={payToken}
               onTokenChange={token => {
                 const chainItem = findChainByServerID(token.chain);
-                if (chainItem?.enum !== chain) {
-                  switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                  setReceiveToken(undefined);
+                const normalSetChainToken = () => {
+                  if (chainItem?.enum !== chain) {
+                    switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+                    setReceiveToken(undefined);
+                  }
+                  setPayToken(token);
+                };
+
+                if (!isForMultipleAdderss) {
+                  normalSetChainToken();
+                } else {
+                  const { accountSwitchTo } = switchAccountOnSelectedToken({
+                    token,
+                    currentAccount,
+                  });
+                  if (!accountSwitchTo) {
+                    normalSetChainToken();
+                  } else {
+                    const chainItem = findChainByServerID(token.chain);
+                    naviReplace(RootNames.StackTransaction, {
+                      screen: RootNames.MultiSwap,
+                      params: {
+                        chainEnum: chainItem?.enum,
+                        tokenId: token.id,
+                      },
+                    });
+                  }
                 }
-                setPayToken(token);
               }}
+              account={currentAccount}
               chainId={chainServerId}
               type={'from'}
               excludeTokens={receiveToken?.id ? [receiveToken?.id] : undefined}
@@ -605,6 +636,7 @@ const Swap = ({
                   ? payAmount
                   : '0'
               }
+              account={currentAccount}
               chainId={chainServerId}
               type={'to'}
               currentQuote={activeProvider}
@@ -786,9 +818,15 @@ const ForMultipleAddress = (
   const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-
   return (
-    <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
+    <ScreenSceneAccountProvider
+      value={{
+        forScene: 'MakeTransactionAbout',
+        ofScreen: 'MultiSwap',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
+      }}>
+      <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
+    </ScreenSceneAccountProvider>
   );
 };
 

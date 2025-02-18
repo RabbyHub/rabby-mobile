@@ -28,7 +28,9 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { ellipsisOverflowedText } from '@/utils/text';
 
-interface TokenSelectProps {
+interface BridgeToTokenSelectProps {
+  // allowClearAccountFilter?: boolean;
+  // account?: Account | null;
   token?: TokenItem;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
@@ -39,16 +41,17 @@ interface TokenSelectProps {
   fromTokenId?: string;
 }
 const defaultExcludeTokens = [];
-const TokenSelect = ({
+const BridgeToTokenSelect = ({
   fromChainId,
   fromTokenId,
+  // account,
   token,
   onChange,
   onTokenChange,
   chainId,
   excludeTokens = defaultExcludeTokens,
   placeholder,
-}: TokenSelectProps) => {
+}: BridgeToTokenSelectProps) => {
   const [queryConds, setQueryConds] = useState({
     keyword: '',
   });
@@ -150,6 +153,8 @@ const TokenSelect = ({
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
+        displayAccountFilter={false}
+        // filterAccount={account}
         hideChainFilter={true}
         selectToken={token}
         headerTitle={
@@ -243,4 +248,4 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 }));
 
-export default TokenSelect;
+export default BridgeToTokenSelect;

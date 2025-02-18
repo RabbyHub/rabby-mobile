@@ -148,3 +148,55 @@ export const judgeIsSmallUsdTx = (
 
   return false;
 };
+
+export const judgeIsSmallUsdTxInApi = (
+  item: HistoryDisplayItem,
+  tokenDict: Record<string, TokenItem>,
+  pinedQueue: IManageToken[],
+) => {
+  const currentTime = new Date().getTime();
+  if (item.time_at * 1000 > currentTime - 1000 * 60 * 60) {
+    // 1 hour not filter
+    return false;
+  }
+
+  if (item.tx?.from_addr.toLowerCase() === item.address.toLowerCase()) {
+    return false;
+  }
+
+  const receives = item.receives;
+  if (!receives || !receives.length) {
+    return false;
+  }
+  let allUsd = new BigNumber(0);
+
+  for (const i of receives) {
+    const token =
+      tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
+      tokenDict[i.token_id];
+    const tokenIsNft = i.token_id?.length === 32;
+    if (tokenIsNft) {
+      // reeives nft
+      const nftToken = token as unknown as NFTItem;
+      if (!nftToken || !nftToken.collection) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    const isCore =
+      token?.is_core ||
+      pinedQueue.find(
+        p => p.chainId === item.chain && p.tokenId === i.token_id,
+      );
+    const price = isCore ? token?.price || 0 : 0; // is not core token price to 0
+    const usd = new BigNumber(i.amount).multipliedBy(price || 0);
+    allUsd = allUsd.plus(usd);
+  }
+
+  if (allUsd.isLessThan(new BigNumber(0.1))) {
+    return true;
+  }
+
+  return false;
+};

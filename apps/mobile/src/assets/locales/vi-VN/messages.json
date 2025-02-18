@@ -775,7 +775,8 @@
       "gas-fee-too-high": "Phí gas quá cao",
       "directlySwap": "Gói token {{symbol}} trực tiếp với hợp đồng thông minh",
       "historyTitle": "Lịch sử Swap",
-      "swapped": "Đã trao đổi"
+      "swapped": "Đã trao đổi",
+      "selectChainModalTitle": "Chọn Chuỗi"
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",

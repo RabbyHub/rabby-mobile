@@ -10,7 +10,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, realTransformer } from './_helpers';
+import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 
 @Entity('cache_historyitem')
@@ -70,7 +70,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   token_approve_spender: string = '';
   // token_approve_value
   @Column('real', {
-    transformer: realTransformer,
+    transformer: badRealTransformer,
   })
   token_approve_value: number = 0;
 
@@ -88,14 +88,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   // tx_usd_gas_fee
   @Column('real', {
-    transformer: realTransformer,
+    transformer: badRealTransformer,
   })
   tx_usd_gas_fee: number = 0;
 
   // tx_eth_gas_fee
   @Column('real', {
     default: 0,
-    transformer: realTransformer,
+    transformer: badRealTransformer,
   })
   tx_eth_gas_fee: number = 0;
 

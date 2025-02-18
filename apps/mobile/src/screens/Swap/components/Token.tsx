@@ -11,7 +11,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { Divider, Slider } from '@rneui/themed';
 
-import TokenSelect from './TokenSelect';
+import TokenSelect, { TokenSelectInst } from './TokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -35,6 +35,8 @@ import Animated, {
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { Account } from '@/core/services/preference';
+import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 
 const progressColor = ['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)'];
 
@@ -42,6 +44,7 @@ interface SwapTokenItemProps {
   type: 'from' | 'to';
   token?: TokenItem;
   value: string;
+  account?: Account | null;
   chainId: string;
   onTokenChange: (token: TokenItem) => void;
   onValueChange?: (s: string) => void;
@@ -63,6 +66,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     onTokenChange,
     onValueChange,
     excludeTokens,
+    account,
     chainId,
     slider,
     onChangeSlider,
@@ -72,19 +76,24 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
   } = props;
   const { t } = useTranslation();
 
+  const { sceneScreenRenderId } = useScreenSceneAccountContext();
+
+  useEffect(() => {
+    // clear form
+    onValueChange?.('');
+  }, [sceneScreenRenderId, onValueChange]);
+
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFrom = type === 'from';
 
-  const openTokenModalRef = useRef<{
-    openTokenModal: React.Dispatch<React.SetStateAction<boolean>>;
-  }>(null);
+  const openTokenModalRef = useRef<TokenSelectInst>(null);
 
   const handleTokenModalOpen = useCallback(() => {
     if (!valueLoading && !currentQuote && !isFrom) {
-      openTokenModalRef?.current?.openTokenModal?.(true);
+      openTokenModalRef?.current?.openTokenModal?.({ account });
     }
-  }, [currentQuote, isFrom, valueLoading]);
+  }, [currentQuote, isFrom, valueLoading, account]);
 
   const [balance, usdValue] = useMemo(() => {
     if (token) {
@@ -229,6 +238,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             ref={openTokenModalRef}
             token={token}
             onTokenChange={onTokenSelect}
+            accountInScreen={account}
             chainId={chainId}
             type={isFrom ? 'swapFrom' : 'swapTo'}
             placeholder={t('page.swap.search-by-name-address')}

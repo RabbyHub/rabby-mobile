@@ -37,7 +37,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
 
   await prepareAppDataSource();
 
-  await TokenItemEntity.deleteForAddress(address);
+  // await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
     taskFor: `token`,
@@ -164,6 +164,7 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
   });
 
   await prepareAppDataSource();
+  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
   await NFTItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(NFTItemEntity, nftItems, {
     owner_addr: address,
@@ -199,6 +200,7 @@ export async function syncRemotePortocols(
   });
 
   await prepareAppDataSource();
+  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
   await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
     owner_addr: address,
@@ -257,6 +259,7 @@ export async function syncBalance(
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
 
   await prepareAppDataSource();
+  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
   await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,

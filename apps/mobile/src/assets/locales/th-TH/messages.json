@@ -965,7 +965,8 @@
       "recommend-slippage": "เพื่อป้องกันการซื้อขายล่วงหน้า เราขอแนะนำให้ตั้งค่า slippage ที่ <2>{{ slippage }}</2>%",
       "need-to-approve-token-before-swap": "จำเป็นต้องอนุมัติโทเค็นก่อนการ swap",
       "historyTitle": "ประวัติการ Swap",
-      "swapped": "สลับแล้ว"
+      "swapped": "สลับแล้ว",
+      "selectChainModalTitle": "เลือกโซ่"
     },
     "nextComponent": {
       "addAddress": {

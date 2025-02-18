@@ -18,6 +18,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Account } from '@/core/services/preference';
 import { getWalletIcon2024 } from '@/utils/walletInfo2024';
 import { SvgProps } from 'react-native-svg';
+import { AddressItemSizes } from './AddressItemInPanel';
 
 const ImagesList = [PrivateKeyPNG, SeedPNG, SeedPNG];
 
@@ -183,7 +184,7 @@ export function UseAllAccountsItemInPanel({
 const getUseAllAccountsItemInPanelStyle = createGetStyles2024(ctx => {
   return {
     itemContainer: {
-      borderRadius: 30,
+      borderRadius: AddressItemSizes.radiusValue,
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: ctx.colors2024['neutral-line'],

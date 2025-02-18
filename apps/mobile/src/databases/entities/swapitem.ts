@@ -10,7 +10,6 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, realTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 
 @Entity('cache_swapitem')

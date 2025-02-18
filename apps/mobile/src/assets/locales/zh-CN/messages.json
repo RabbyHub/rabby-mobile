@@ -851,7 +851,8 @@
       "directlySwap": "通过智能合约直接包装{{symbol}}代币",
       "gas-fee-too-high": "Gas 费用过高",
       "swapped": "已交换",
-      "historyTitle": "Swap 历史记录"
+      "historyTitle": "Swap 历史记录",
+      "selectChainModalTitle": "选择链"
     },
     "dashboard": {
       "home": {

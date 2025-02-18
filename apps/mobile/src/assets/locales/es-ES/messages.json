@@ -941,7 +941,8 @@
       },
       "wrap-contract": "Wrap Contract",
       "historyTitle": "Historial de Swap",
-      "swapped": "Intercambiado"
+      "swapped": "Intercambiado",
+      "selectChainModalTitle": "Seleccionar cadena"
     },
     "nextComponent": {
       "addAddress": {

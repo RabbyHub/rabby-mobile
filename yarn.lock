@@ -2012,24 +2012,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@boltcode/react-native-sqlite-storage@npm:7.0.0":
-  version: 7.0.0
-  resolution: "@boltcode/react-native-sqlite-storage@npm:7.0.0"
-  peerDependencies:
-    react-native: ">=0.14.0"
-  checksum: 91aaffc75e0f481be8fe5eb123a121f62c6c170048531d2020dceedb41b276643664fb488f67a8c4220030b73f96c7141537d047a626fa86b30167bac74dc794
-  languageName: node
-  linkType: hard
-
-"@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 7.0.0
-  resolution: "@boltcode/react-native-sqlite-storage@patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch::version=7.0.0&hash=ba898e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  peerDependencies:
-    react-native: ">=0.14.0"
-  checksum: 54aff605d1747bed7d9edc86f16b49b31f89da607ae6757a065dc2f5e788bbc15a1367bc0c644c19abb703aea9184f8a6d5ac0b1b6a4b5d98978252e62df8132
-  languageName: node
-  linkType: hard
-
 "@cnakazawa/watch@npm:^1.0.3":
   version: 1.0.4
   resolution: "@cnakazawa/watch@npm:1.0.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40cnakazawa%2Fwatch%2F-%2Fwatch-1.0.4.tgz"
@@ -6587,6 +6569,15 @@ __metadata:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
   checksum: 2f2eec6d252bd4161c9e88c823ea2fcde57ed83c6a52884983e5377df1631bc5a809135659fa2885ee2842c291f0ae734e5413790d6155341cc13e5b447f992d
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.1":
+  version: 7.0.0-alpha.1
+  resolution: "@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.1"
+  peerDependencies:
+    react-native: ">=0.14.0"
+  checksum: 5ff74a970c782ea47814433d43c33d2bbfb2d2f4c1138d2f1f5245d68901f2f61973983fa445113f4c259d5ea677294a49f3d1bacde2c779273813a3976da15f
   languageName: node
   linkType: hard
 
@@ -27661,7 +27652,6 @@ __metadata:
     "@babel/plugin-transform-private-methods": ^7.25.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
-    "@boltcode/react-native-sqlite-storage": ^7.0.0
     "@debank/common": 0.3.58
     "@debank/festats": 1.0.4
     "@eth-optimism/contracts-ts": ^0.17.0
@@ -27691,6 +27681,7 @@ __metadata:
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.47
+    "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.1
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-clipboard/clipboard": ^1.13.0

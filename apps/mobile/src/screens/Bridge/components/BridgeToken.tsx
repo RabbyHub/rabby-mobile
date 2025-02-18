@@ -22,10 +22,15 @@ import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
+import { Account } from '@/core/services/preference';
+import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
+import { RootNames } from '@/constant/layout';
+import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 
 const BridgeToken = ({
   type = 'from',
   token,
+  account,
   chain,
   excludeChains,
   onChangeToken,
@@ -44,11 +49,10 @@ const BridgeToken = ({
   clickMaxBtnCount?: number;
   handleMax?: () => void;
   isMaxRef?: React.MutableRefObject<boolean>;
-  type?: 'from' | 'to';
-  token?: TokenItem;
+  account: Account | null;
   chain?: CHAINS_ENUM;
   excludeChains?: CHAINS_ENUM[];
-  onChangeToken: (token: TokenItem) => void;
+  onChangeToken: (token: TokenItem | TokenItemMaybeWithOwner) => void;
   onChangeChain: (chain: CHAINS_ENUM) => void;
   value?: string | number;
   onInputChange?: (v: string) => void;
@@ -57,14 +61,23 @@ const BridgeToken = ({
   fromTokenId?: string;
   noQuote?: boolean;
   inSufficient?: boolean;
-}) => {
+} & (
+  | {
+      type?: 'from';
+      token?: TokenItemMaybeWithOwner;
+    }
+  | {
+      type?: 'to';
+      token?: TokenItem;
+    }
+)) => {
   const { t } = useTranslation();
 
   const supportedChains = useBridgeSupportedChains();
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const isFromToken = type === 'from';
-  const isToken = type === 'to';
+  const isToToken = type === 'to';
 
   const name = isFromToken ? t('page.bridge.From') : t('page.bridge.To');
   const chainObj = findChainByEnum(chain);
@@ -91,7 +104,10 @@ const BridgeToken = ({
     // }, 200);
   };
 
-  const showNoQuote = useMemo(() => isToken && !!noQuote, [noQuote, isToken]);
+  const showNoQuote = useMemo(
+    () => isToToken && !!noQuote,
+    [noQuote, isToToken],
+  );
 
   const useValue = useMemo(() => {
     if (token && value) {
@@ -126,7 +142,7 @@ const BridgeToken = ({
       <View style={styles.header}>
         <Text style={styles.headerText}>{name}</Text>
         <ChainInfo
-          type={isToken ? 'to' : 'from'}
+          type={isToToken ? 'to' : 'from'}
           hideTestnetTab={true}
           style={styles.chainSelector}
           chainEnum={chain}
@@ -144,7 +160,7 @@ const BridgeToken = ({
               LinearGradientComponent={Linear}
               style={styles.skeleton}
             />
-          ) : isToken ? (
+          ) : isToToken ? (
             <Text
               numberOfLines={1}
               style={StyleSheet.flatten([
@@ -178,7 +194,7 @@ const BridgeToken = ({
               </TouchableOpacity>
             )}
             <View style={styles.vecticalLine} />
-            {isToken ? (
+            {isToToken ? (
               <BridgeToTokenSelect
                 fromChainId={fromChainId!}
                 fromTokenId={fromTokenId!}
@@ -191,6 +207,7 @@ const BridgeToken = ({
               <TokenSelect
                 // fromChainId={fromChainId!}
                 // fromTokenId={fromTokenId!}
+                accountInScreen={account}
                 token={token}
                 onTokenChange={onChangeToken}
                 chainId={chainObj?.serverId!}

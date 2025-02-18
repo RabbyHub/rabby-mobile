@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Platform,
   Pressable,
+  SectionListRenderItem,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -22,7 +23,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
 import { getTokenSymbol } from '@/utils/token';
@@ -30,7 +31,7 @@ import { formatAmount, formatPrice } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import { findChainByServerID } from '@/utils/chain';
-import ChainFilterItem from './ChainFilterItem';
+import ChainFilterItem, { AccountFilterItem } from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts, RootNames } from '@/constant/layout';
@@ -55,6 +56,13 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { naviPush } from '@/utils/navigation';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { Account } from '@/core/services/preference';
+import { ellipsisAddress } from '@/utils/address';
+import { isSameAccount } from '@/hooks/accountsSwitcher';
+import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { AccountInfoInTokenRow } from './AccountWidgets';
+import { isWatchOrSafeAccount } from '@/utils/account';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -72,29 +80,42 @@ const hitSlop = {
 
 interface SearchCallbackCtx {
   chainServerId?: Chain['serverId'] | null;
+  filterAccountItem: Account | null;
   chainItem: Chain | null;
 }
-export interface TokenSelectorProps {
+
+type TokenSelectType =
+  | 'send'
+  | 'swapFrom'
+  | 'swapTo'
+  | 'bridgeFrom'
+  | 'bridgeTo';
+
+export interface TokenSelectorProps<
+  T extends TokenSelectType = TokenSelectType,
+> {
   visible: boolean;
-  list: TokenItem[];
-  foldTokensList?: TokenItem[];
+  list: TokenItemMaybeWithOwner[];
+  foldTokensList?: TokenItemMaybeWithOwner[];
   isLoading?: boolean;
-  onConfirm(item: TokenItem): void;
+  onConfirm(item: TokenItemMaybeWithOwner): void;
   onCancel(): void;
+  type?: T;
   onSearch: (
-    ctx:
-      | (SearchCallbackCtx & {
+    ctx: T extends 'bridgeTo'
+      ? string
+      : SearchCallbackCtx & {
           keyword: string;
-        })
-      | string,
+        },
   ) => void;
   onRemoveChainFilter?: (ctx: SearchCallbackCtx) => void;
-  type?: 'send' | 'swapFrom' | 'swapTo' | 'bridgeFrom' | 'bridgeTo';
   placeholder?: string;
+  displayAccountFilter?: boolean;
+  filterAccount?: Account | null;
+  hideChainFilter?: boolean;
   chainServerId?: string;
   disabledTips?: string;
   supportChains?: CHAINS_ENUM[] | undefined;
-  hideChainFilter?: boolean;
   headerTitle?: React.ReactNode;
   selectToken?: TokenItem & { tokenId?: string };
   searchPlaceholder?: string;
@@ -117,6 +138,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
       list,
       foldTokensList = [],
       selectToken,
+      displayAccountFilter = false,
+      filterAccount,
       chainServerId,
       onConfirm,
       onCancel,
@@ -210,9 +233,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
         chainSearchCtx: {
           chainServerId: chainServerId ?? null,
           chainItem: chain,
+          filterAccountItem: filterAccount || null,
         },
       };
-    }, [chainServerId]);
+    }, [chainServerId, filterAccount]);
 
     useDebounce(
       () => {
@@ -282,9 +306,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           return accu;
         },
         {
-          natural: [] as TokenItem[],
-          disabled: [] as TokenItem[],
-          ignored: [] as TokenItem[],
+          natural: [] as TokenItemMaybeWithOwner[],
+          disabled: [] as TokenItemMaybeWithOwner[],
+          ignored: [] as TokenItemMaybeWithOwner[],
         },
       );
 
@@ -319,6 +343,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _netWorth: _netWorth,
           _netWorthStr: formatNetworth(_netWorth),
           _chain: x.chain,
+          // @ts-expect-error
           trade_volume_level: x?.trade_volume_level,
           $origin: x,
         };
@@ -367,11 +392,21 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return setFold(pre => !pre);
     }, [setFold]);
 
-    const renderItemRenderComponent = useCallback(
-      ({ item: token }) => {
+    const renderItemRenderComponent = useCallback<
+      SectionListRenderItem<(typeof tokens)[number]>
+    >(
+      ({ item: token, index }) => {
         if (isLoading) {
           return null;
         }
+
+        const ownerAccount =
+          'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
+        const ownerKey = !ownerAccount
+          ? ''
+          : `${ownerAccount.type}-${ownerAccount.address}`;
+
+        const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
         if (token.$origin.recentList?.length && token.$origin.TokenRender) {
           const TokenRender = token.$origin.TokenRender;
@@ -392,7 +427,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     onConfirm(tokenItem);
                     toggleShowSheetModal('collapse');
                   }}>
-                  <TokenRender token={tokenItem} />
+                  <TokenRender token={tokenItem} ownerAccount={ownerAccount} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -402,7 +437,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
         const isPined = token?.$origin.isPined;
         const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
-        const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
+        const token_key = [
+          ownerKey,
+          `${token.$origin.id}-${token._symbol}-${token._chain}`,
+        ]
+          .filter(Boolean)
+          .join('-');
         const currentChainItem = findChainByServerID(token._chain);
         const disabled =
           !!supportChains?.length &&
@@ -479,11 +519,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   {isPined && <TextBadge />}
                   {isManualFold && <TextBadge type="folded" />}
                 </View>
-                <Text
-                  style={[styles.tokenPrice, { marginTop: 4 }]}
-                  numberOfLines={1}>
-                  {token._price}
-                </Text>
+                {showOwnerAccount ? (
+                  !ownerAccount ? null : (
+                    <AccountInfoInTokenRow ownerAccount={ownerAccount} />
+                  )
+                ) : (
+                  <Text
+                    style={[styles.tokenPrice, { marginTop: 4 }]}
+                    numberOfLines={1}>
+                    {token._price}
+                  </Text>
+                )}
               </View>
             </View>
             {isBridgeTo ? (
@@ -605,6 +651,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         fold,
         disabledTips,
         isSingleAddress,
+        chainSearchCtx.filterAccountItem,
       ],
     );
 
@@ -629,8 +676,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 _netWorth: _netWorth,
                 _netWorthStr: formatNetworth(_netWorth),
                 _chain: x.chain,
+                // @ts-expect-error
                 trade_volume_level: x?.trade_volume_level,
-                $origin: x,
+                $origin: x as TokenItemMaybeWithOwner,
               };
             }),
           })),
@@ -645,6 +693,21 @@ export const TokenSelectorSheetModal = React.forwardRef<
         },
       ];
     }, [isBridgeTo, tokens, unshiftList]);
+
+    const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
+      useMemo(() => {
+        const _willShowAccountFilter =
+          !!displayAccountFilter &&
+          !!filterAccount &&
+          !isWatchOrSafeAccount(filterAccount);
+        const _willShowChainFilter = !!chainItem && !hideChainFilter;
+
+        return {
+          willShowChainFilter: _willShowChainFilter,
+          willShowAccountFilter: _willShowAccountFilter,
+          willShowFilterRow: _willShowAccountFilter || _willShowChainFilter,
+        };
+      }, [displayAccountFilter, filterAccount, chainItem, hideChainFilter]);
 
     return (
       <AppBottomSheetModal
@@ -728,22 +791,50 @@ export const TokenSelectorSheetModal = React.forwardRef<
             />
           </View>
 
-          {/* TODO: chain selector */}
-          {chainItem && !hideChainFilter && (
-            <View style={[styles.chainFiltersContainer, styles.internalBlock]}>
-              <ChainFilterItem
-                chainItem={chainItem}
-                onRmove={() => {
-                  onRemoveChainFilter?.({ chainServerId, chainItem });
-                  onSearch({
-                    chainItem: null,
-                    chainServerId: '',
-                    keyword: query,
-                  });
+          <View
+            style={[
+              styles.filterRow,
+              styles.internalBlock,
+              !willShowFilterRow && { display: 'none' },
+            ]}>
+            {willShowAccountFilter && (
+              <AccountFilterItem
+                filterAccount={filterAccount}
+                onRemoveFilter={account => {
+                  if (account && isSameAccount(account, filterAccount)) {
+                    onSearch({
+                      ...chainSearchCtx,
+                      filterAccountItem: null,
+                      chainServerId,
+                      keyword: query,
+                    });
+                  }
                 }}
               />
-            </View>
-          )}
+            )}
+
+            {/* TODO: chain selector */}
+            {willShowChainFilter && (
+              <View style={[styles.chainFiltersContainer]}>
+                <ChainFilterItem
+                  chainItem={chainItem}
+                  onRemoveFilter={() => {
+                    onRemoveChainFilter?.({
+                      chainServerId,
+                      chainItem,
+                      filterAccountItem: null,
+                    });
+                    onSearch({
+                      ...chainSearchCtx,
+                      chainItem: null,
+                      chainServerId: '',
+                      keyword: query,
+                    });
+                  }}
+                />
+              </View>
+            )}
+          </View>
           {(!isSwapTo || (query && !tokens.length)) && (
             <>{customHeaderTitle || DefaultHeaderTitle}</>
           )}
@@ -754,11 +845,18 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[styles.scrollView]}
             onScrollBeginDrag={() => Keyboard.dismiss()}
             windowSize={5}
-            keyExtractor={token =>
-              `${token.id}-${token._symbol}-${token._chain}-${
-                (token.$origin as any)?.group
-              }`
-            }
+            keyExtractor={token => {
+              const ownerKey = !token.$origin.ownerAccount
+                ? ''
+                : `${token.$origin.ownerAccount.type}-${token.$origin.ownerAccount.address}`;
+
+              return [
+                ownerKey,
+                `${token.id}-${token._symbol}-${token._chain}-${token.$origin?.group}`,
+              ]
+                .filter(Boolean)
+                .join('-');
+            }}
             renderSectionHeader={
               isSwapTo
                 ? ({ section }) => {
@@ -917,9 +1015,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 16,
     },
 
+    filterRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      gap: 8,
+      maxHeight: 34,
+      marginBottom: 14,
+      // ...makeDebugBorder(),
+    },
+
     chainFiltersContainer: {
       flexDirection: 'row',
-      marginBottom: 16,
     },
 
     scrollView: {

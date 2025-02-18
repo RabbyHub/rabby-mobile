@@ -76,7 +76,6 @@
     "react-native-quick-crypto@0.7.10": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
     "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch",
     "typeorm@^0.3.20": "patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch",
-    "@boltcode/react-native-sqlite-storage@^7.0.0": "patch:@boltcode/react-native-sqlite-storage@npm%3A7.0.0#./.yarn/patches/@boltcode-react-native-sqlite-storage-npm-7.0.0-7a6f64a2ce.patch",
     "react-native@0.72.7": "patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch"
   },
   "dependencies": {

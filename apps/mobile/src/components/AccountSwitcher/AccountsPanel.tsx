@@ -133,9 +133,9 @@ AccountSwitcherAopProps<{
       } else {
         setNavsCollapsed(prev => ({ ...prev, watch: nextCollapsed }));
       }
-      scrollToBottom();
+      if (!isSceneUsingAllAccounts) scrollToBottom();
     },
-    [scrollToBottom],
+    [scrollToBottom, isSceneUsingAllAccounts],
   );
 
   useEffect(() => {
@@ -187,7 +187,7 @@ AccountSwitcherAopProps<{
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContentContainer}>
           <View style={styles.section}>
-            <View style={styles.addressListContainer}>
+            <View style={[styles.addressListContainer, { marginTop: 0 }]}>
               {isSceneSupportAllAccounts && (
                 <UseAllAccountsItemInPanel
                   style={{

@@ -4,7 +4,11 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import {
+  RootNames,
+  makeHeadersPresets,
+  makeTxPageBackgroundColors,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import SendScreen from '../Send/Send';
@@ -109,7 +113,10 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
+            backgroundColor: makeTxPageBackgroundColors({
+              isLight,
+              colors2024,
+            }),
           },
         }}
       />
@@ -128,7 +135,10 @@ export default function TransactionNavigator() {
             );
           },
           headerStyle: {
-            backgroundColor: isLight ? '#F6F7F7' : colors2024?.['neutral-bg-1'],
+            backgroundColor: makeTxPageBackgroundColors({
+              isLight,
+              colors2024,
+            }),
           },
         }}
       />
@@ -200,34 +210,38 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Swap}
         component={Swap}
-        options={mergeScreenOptions({
-          title: 'Swap',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-                disableSwitch
-              />
-            );
+        options={mergeScreenOptions2024([
+          {
+            title: 'Swap',
+            headerTitle: ctx => {
+              return (
+                <ScreenHeaderAccountSwitcher
+                  forScene="MakeTransactionAbout"
+                  titleText={ctx.children}
+                  disableSwitch
+                />
+              );
+            },
           },
-        })}
+        ])}
       />
 
       <TransactionStack.Screen
         name={RootNames.MultiSwap}
         component={Swap.ForMultipleAddress}
-        options={mergeScreenOptions({
-          title: 'Swap',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-              />
-            );
+        options={mergeScreenOptions2024([
+          {
+            title: 'Swap',
+            headerTitle: ctx => {
+              return (
+                <ScreenHeaderAccountSwitcher
+                  forScene="MakeTransactionAbout"
+                  titleText={ctx.children}
+                />
+              );
+            },
           },
-        })}
+        ])}
       />
 
       <TransactionStack.Screen
@@ -243,36 +257,40 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Bridge}
         component={Bridge}
-        options={mergeScreenOptions({
-          title: 'Bridge',
-          // ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-                disableSwitch
-              />
-            );
+        options={mergeScreenOptions2024([
+          {
+            title: 'Bridge',
+            // ...headerPresets.withBgCard1_2024,
+            headerTitle: ctx => {
+              return (
+                <ScreenHeaderAccountSwitcher
+                  forScene="MakeTransactionAbout"
+                  titleText={ctx.children}
+                  disableSwitch
+                />
+              );
+            },
           },
-        })}
+        ])}
       />
 
       <TransactionStack.Screen
         name={RootNames.MultiBridge}
         component={Bridge.ForMultipleAddress}
-        options={mergeScreenOptions({
-          title: 'Bridge',
-          // ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-              />
-            );
+        options={mergeScreenOptions2024([
+          {
+            title: 'Bridge',
+            // ...headerPresets.withBgCard1_2024,
+            headerTitle: ctx => {
+              return (
+                <ScreenHeaderAccountSwitcher
+                  forScene="MakeTransactionAbout"
+                  titleText={ctx.children}
+                />
+              );
+            },
           },
-        })}
+        ])}
       />
 
       <TransactionStack.Screen

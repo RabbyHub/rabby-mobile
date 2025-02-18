@@ -889,7 +889,8 @@
         "rate": "Комиссия"
       },
       "swapped": "Обменяно",
-      "historyTitle": "История свапов"
+      "historyTitle": "История свапов",
+      "selectChainModalTitle": "Выберите цепь"
     },
     "nextComponent": {
       "multiAddressHome": {
