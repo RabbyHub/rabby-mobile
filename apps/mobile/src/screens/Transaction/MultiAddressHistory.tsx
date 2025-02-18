@@ -67,6 +67,7 @@ import { useSortAddressList } from '../Address/useSortAddressList';
 import {
   ensureHistoryListItemFromDb,
   judgeIsSmallUsdTx,
+  judgeIsSmallUsdTxInApi,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
@@ -248,11 +249,13 @@ function History({
             hasMoreMap.current[addr] = true;
           }
           lastMap.current[addr] = result.last || 0;
+          const pinedQueue = preferenceService.getPinToken();
           list.push(
             ...result.list.map(item => ({
               ...item,
               isLocalSwap: swapList.some(e => e.tx_id === item.id),
               account,
+              isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
             })),
           );
         });
