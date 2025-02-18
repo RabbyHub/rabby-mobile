@@ -249,13 +249,13 @@ function History({
             hasMoreMap.current[addr] = true;
           }
           lastMap.current[addr] = result.last || 0;
-          const pinedQueue = preferenceService.getPinToken();
+          // const pinedQueue = preferenceService.getPinToken();
           list.push(
             ...result.list.map(item => ({
               ...item,
               isLocalSwap: swapList.some(e => e.tx_id === item.id),
               account,
-              isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
+              // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
             })),
           );
         });
