@@ -1787,6 +1787,7 @@
       "emptyAccount": "the current account is empty",
       "invalidPrivateKey": "The private key is invalid",
       "invalidMnemonic": "The seed phrase is invalid, please check!",
+      "errorWords": "incorrect words",
       "notFoundKeyringByAddress": "Can't find keyring by address",
       "duplicateAccount": "The account you're are trying to import is duplicate",
       "canNotUnlock": "Cannot unlock without a previous vault"
