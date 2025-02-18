@@ -219,6 +219,27 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   const verfiyMnemonics = React.useCallback(() => {
     try {
+      const splitMnemonics = mnemonics.split(/\s+|,|\n/).filter(Boolean);
+      const errorList: Array<{ index: number; word: string }> = [];
+      for (let index = 0; index < splitMnemonics.length; index++) {
+        const word = splitMnemonics[index];
+        let v = word?.trim();
+        if (v && !bip39.wordlists.english.includes(v)) {
+          errorList.push({
+            index,
+            word: v,
+          });
+        }
+      }
+
+      if (errorList.length) {
+        setError(
+          `${errorList.length} ${t('background.error.errorWords')}: ${errorList
+            .map(i => `${i.index + 1}.${i.word}`)
+            .join(', ')}`,
+        );
+        return false;
+      }
       if (!HdKeyring.validateMnemonic(mnemonics)) {
         setError(t('background.error.invalidMnemonic'));
         return false;
