@@ -800,7 +800,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
-            {willShowAccountFilter && (
+            {/* {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
                 onRemoveFilter={account => {
@@ -814,7 +814,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }
                 }}
               />
-            )}
+            )} */}
 
             {/* TODO: chain selector */}
             {willShowChainFilter && (
