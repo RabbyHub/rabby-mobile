@@ -35,7 +35,7 @@ export function ApprovalAddressListScreen(): JSX.Element {
     disableAutoFetch: true,
   });
   const { address2Count, getAllApprovalCount } = useApprovalsCount();
-  const { alertInfo } = useApprovalAlertCounts();
+  const { alertInfo } = useApprovalAlertCounts(10 * 60 * 1000);
   const { styles } = useTheme2024({ getStyle });
 
   const displayAccounts: AccountWithApprovalInofItem[] = accounts
@@ -132,7 +132,7 @@ const getStyle = createGetStyles2024(() => ({
   },
   listContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     gap: 12,
   },
   itemGap: {

@@ -177,7 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   listContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 16,
   },
 
@@ -190,6 +190,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   footerCard: {
     backgroundColor: colors2024['neutral-bg-2'],
     marginBottom: 22,
+    padding: 16,
+    borderRadius: 20,
   },
   footerMain: {
     height: 46,
