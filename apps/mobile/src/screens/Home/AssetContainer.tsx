@@ -538,6 +538,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
+    // TODO: buy route
   };
 
   const renderItem = (_type, _data) => {
