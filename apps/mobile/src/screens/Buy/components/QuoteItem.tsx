@@ -79,12 +79,10 @@ export const BuyQuoteItem = ({
       <View style={[styles.row, { justifyContent: 'space-between' }]}>
         <View style={styles.payList}>
           {payments?.map((item, index) => (
-            <View key={index} style={styles.payBox}>
-              <Image
-                source={{ uri: item.logo_url }}
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-              {/* <Skeleton style={styles.payLogo} /> */}
+            <View
+              key={index}
+              style={[styles.payBox, active && styles.payBoxActive]}>
+              <Text>{item.name}</Text>
             </View>
           ))}
         </View>
@@ -199,14 +197,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   payBox: {
-    width: 32,
-    height: 20,
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 4,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
+    borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
+  },
+  payBoxActive: {
+    borderRadius: 4,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors2024['green-light-1'],
+  },
+  payName: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro',
+    fontSize: 10,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 16,
   },
 }));

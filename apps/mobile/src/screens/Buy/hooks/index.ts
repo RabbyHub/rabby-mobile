@@ -112,8 +112,11 @@ export const useBuy = () => {
           receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
         })
         .then(async res => {
+          const sortedData = res.sort(
+            (a, b) => b.token_amount - a.token_amount,
+          );
           const paymentMethods = await Promise.allSettled(
-            res.map(e =>
+            sortedData.map(e =>
               openapi.getBuyPaymentMethods({
                 country_code: region,
                 service_provider: e.service_provider.id,
@@ -121,12 +124,11 @@ export const useBuy = () => {
             ),
           );
 
-          console.log('paymentMethods', paymentMethods);
           const data: ((typeof res)[number] & {
             paymentMethod?: Awaited<
               ReturnType<typeof openapi.getBuyPaymentMethods>
             >;
-          })[] = [...res];
+          })[] = [...sortedData];
           paymentMethods.forEach((item, idx) => {
             if (item.status === 'fulfilled') {
               data[idx].paymentMethod = item.value;
@@ -146,7 +148,7 @@ export const useBuy = () => {
     }
   }, [amount, region, currency, currentAccount?.address, toToken]);
 
-  const [, cancel] = useDebounce(getBuyQuotes, 300, [
+  const [, cancel] = useDebounce(getBuyQuotes, 1000, [
     amount,
     region,
     currency,
@@ -213,6 +215,11 @@ export const useBuy = () => {
     return '';
   }, [isReady, loading, error, quotes, activeProvider]);
 
+  const noQuote = useMemo(
+    () => isReady && !loading && !quotes?.length,
+    [isReady, loading, quotes?.length],
+  );
+
   return {
     currentAddr: currentAccount?.address,
     regionList,
@@ -235,5 +242,6 @@ export const useBuy = () => {
 
     loading,
     quotes,
+    noQuote,
   };
 };
