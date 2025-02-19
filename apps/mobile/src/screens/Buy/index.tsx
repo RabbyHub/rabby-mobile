@@ -15,7 +15,6 @@ import { BuyToken } from './components/Token';
 import { useBuy } from './hooks';
 import { BestQuoteLoading } from '../Bridge/components/loading';
 import { BuyQuoteList } from './components/QuoteList';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '@/components2024/Button';
 import { colord } from 'colord';
@@ -26,6 +25,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { BuyToIcon } from './components/ToIcon';
 import { toast } from '@/components2024/Toast';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 const floatBottom_height = 140;
 
@@ -34,9 +34,10 @@ export const BuyScreen = ({
 }: {
   isForMultipleAdderss?: boolean;
 }) => {
+  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
+
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const headerRight = useCallback(() => <RightHeader />, []);
   useLayoutEffect(() => {
@@ -64,6 +65,7 @@ export const BuyScreen = ({
 
     quotes,
     loading,
+    noQuote,
   } = useBuy();
 
   const isQuoteLoading = loading;
@@ -140,6 +142,10 @@ export const BuyScreen = ({
           </>
         )}
 
+        {noQuote ? (
+          <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
+        ) : null}
+
         {!loading && quotes?.length ? (
           <BuyQuoteList
             symbol={symbol}
@@ -177,10 +183,6 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-  //   forScene: 'MakeTransactionAbout',
-  // });
-
   return <BuyScreen {...props} isForMultipleAdderss />;
 };
 
@@ -301,5 +303,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bottom: {
     height: floatBottom_height,
+  },
+  errorTip: {
+    marginTop: 16,
+    color: colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
   },
 }));
