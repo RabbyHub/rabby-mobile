@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import { apiMnemonic } from '@/core/apis';
@@ -124,10 +124,15 @@ export const ImportSeedPhraseScreen2024 = () => {
   const importToastHiddenRef = React.useRef<() => void>(() => {});
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
   const { setConfirmCB } = useImportAddressProc();
+  const formatMnemonics = useMemo(() => {
+    const trimMnemonics = mnemonics?.trim();
+    const splitMnemonics = trimMnemonics.split(/\s+|,|\n/).filter(Boolean);
+    return splitMnemonics.join(' ');
+  }, [mnemonics]);
 
   const importSeedPhrase = React.useCallback(() => {
     return apiMnemonic
-      .generateKeyringWithMnemonic(mnemonics, '', true)
+      .generateKeyringWithMnemonic(formatMnemonics, '', true)
       .then(async ({ keyringId, isExistedKR }) => {
         const firstAddress = await requestKeyring(
           KEYRING_TYPE.HdKeyring,
@@ -148,7 +153,7 @@ export const ImportSeedPhraseScreen2024 = () => {
           ) {
             await new Promise(resolve => setTimeout(resolve, 1));
             await apiMnemonic.activeAndPersistAccountsByMnemonics(
-              mnemonics,
+              formatMnemonics,
               '',
               firstAddress as any,
               true,
@@ -160,7 +165,7 @@ export const ImportSeedPhraseScreen2024 = () => {
                 brandName: KEYRING_CLASS.MNEMONIC,
                 isFirstImport: true,
                 address: [firstAddress?.[0].address],
-                mnemonics,
+                mnemonics: formatMnemonics,
                 passphrase: '',
                 keyringId: keyringId || undefined,
                 isExistedKR,
@@ -174,7 +179,7 @@ export const ImportSeedPhraseScreen2024 = () => {
           screen: RootNames.ImportMoreAddress,
           params: {
             type: KEYRING_TYPE.HdKeyring,
-            mnemonics,
+            mnemonics: formatMnemonics,
             passphrase: '',
             keyringId: keyringId || undefined,
             isExistedKR,
@@ -191,11 +196,11 @@ export const ImportSeedPhraseScreen2024 = () => {
           });
         } else {
           try {
-            bip39.mnemonicToEntropy(mnemonics?.trim(), bip39.wordlists.english);
+            bip39.mnemonicToEntropy(formatMnemonics, bip39.wordlists.english);
           } catch (e) {
             if ((e as any).message.includes('Unknown letter:')) {
               let errorWords: string[] = [];
-              mnemonics.split(/\s+/).forEach(word => {
+              formatMnemonics.split(/\s+/).forEach(word => {
                 let v = word?.trim();
                 if (v && !bip39.wordlists.english.includes(v)) {
                   errorWords.push(v);
@@ -215,11 +220,11 @@ export const ImportSeedPhraseScreen2024 = () => {
         importToastHiddenRef.current?.();
         setImporting(false);
       });
-  }, [duplicateAddressModal, mnemonics]);
+  }, [duplicateAddressModal, formatMnemonics]);
 
   const verfiyMnemonics = React.useCallback(() => {
     try {
-      const splitMnemonics = mnemonics.split(/\s+|,|\n/).filter(Boolean);
+      const splitMnemonics = formatMnemonics.split(' ');
       const errorList: Array<{ index: number; word: string }> = [];
       for (let index = 0; index < splitMnemonics.length; index++) {
         const word = splitMnemonics[index];
@@ -236,11 +241,11 @@ export const ImportSeedPhraseScreen2024 = () => {
         setError(
           `${t('background.error.errorWords', {
             count: errorList.length,
-          })}: ${errorList.map(i => `${i.index + 1}.${i.word}`).join(', ')}`,
+          })}: ${errorList.map(i => i.word).join(',')}`,
         );
         return false;
       }
-      if (!HdKeyring.validateMnemonic(mnemonics)) {
+      if (!HdKeyring.validateMnemonic(formatMnemonics)) {
         setError(t('background.error.invalidMnemonic'));
         return false;
       }
@@ -249,7 +254,7 @@ export const ImportSeedPhraseScreen2024 = () => {
       setError(t('background.error.invalidMnemonic'));
       return false;
     }
-  }, [mnemonics, t]);
+  }, [formatMnemonics, t]);
 
   const handleConfirm = React.useCallback(async () => {
     // verify mnemonics for setPassword
@@ -305,7 +310,7 @@ export const ImportSeedPhraseScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
-        disabled: !mnemonics || !!error,
+        disabled: !formatMnemonics || !!error,
         loading: importing,
       }}
       style={styles.screen}
