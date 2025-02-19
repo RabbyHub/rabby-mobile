@@ -17,9 +17,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 0,
     flex: 1,
     flexGrow: 1,
-    height: 96,
+    height: 78,
     backgroundColor: colors2024['neutral-bg-1'],
-    padding: 20,
+    padding: 16,
   },
   rootItem: {
     flexDirection: 'row',
@@ -33,13 +33,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   itemInfo: {
-    gap: 6,
+    gap: 4,
     flexGrow: 1,
     flex: 1,
   },
   itemNameText: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
   itemNameTextHasPinned: {
@@ -49,8 +49,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: -52,
   },
   itemBalanceText: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     color: colors2024['neutral-secondary'],
     fontWeight: '500',
   },
@@ -111,7 +111,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       <InnerAddressItem style={styles.rootItem} account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View style={styles.item}>
-            <WalletIcon style={styles.walletIcon} width={40} height={40} />
+            <WalletIcon style={styles.walletIcon} width={46} height={46} />
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
                 <WalletName

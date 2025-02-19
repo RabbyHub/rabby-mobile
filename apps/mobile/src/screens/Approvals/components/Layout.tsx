@@ -89,7 +89,7 @@ export function ApprovalsBottomArea() {
 
   const [showModal, setShowModal] = useState(false);
 
-  const { forceUpdate } = useApprovalAlertCounts();
+  const { forceUpdate } = useApprovalAlertCounts(10 * 60 * 1000);
   const {
     filterType,
     loadApprovals,

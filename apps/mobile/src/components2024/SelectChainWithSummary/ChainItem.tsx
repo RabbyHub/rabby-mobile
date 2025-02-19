@@ -188,9 +188,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginRight: 6,
   },
   usdValueText: {
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
   },
