@@ -1514,6 +1514,13 @@
         "Nft": "NFT",
         "Token": "Token",
         "NoData": "No {{name}}"
+      },
+      "emptyToken": {
+        "title": "Fund Your Wallet",
+        "receiveHeader": "Receive Crypto",
+        "receiveBody": "Transfer tokens from another address.",
+        "buyHeader": "Buy with Fiat",
+        "buyBody": "Purchase crypto using a debit card or bank account."
       }
     },
     "search": {
