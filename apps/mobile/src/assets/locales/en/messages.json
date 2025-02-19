@@ -1501,7 +1501,8 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
-        "Token": "Token"
+        "Token": "Token",
+        "NoData": "No {{name}}"
       }
     },
     "search": {

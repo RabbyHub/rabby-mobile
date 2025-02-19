@@ -110,7 +110,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     nftList,
     loading,
     refreshing,
-    hasAssets,
     updateTokens,
     updatePortfolio,
     reloadNftList,
@@ -539,12 +538,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <AssestAllHeader
             style={styles.assetHeader}
-            hasAssets={hasAssets}
-            loading={loading}
             currentSection={currentSection}
-            showToken={!!tokens?.length}
-            showDefi={!!portfolios.length}
-            showNft={!!nftList?.length}
+            hasToken={!!tokens?.length}
+            hasDefi={!!portfolios.length}
+            hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
         );
@@ -688,12 +685,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           <AssestAllHeader
             style={styles.assetHeader}
-            hasAssets={hasAssets}
-            loading={loading}
             currentSection={currentSection}
-            showToken={!!tokens?.length}
-            showDefi={!!portfolios.length}
-            showNft={!!nftList?.length}
+            hasToken={!!tokens?.length}
+            hasDefi={!!portfolios.length}
+            hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
           {renderStickHeader(firstRowType)}
