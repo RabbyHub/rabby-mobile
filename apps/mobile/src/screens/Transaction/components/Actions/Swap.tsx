@@ -21,7 +21,7 @@ import { TransactionPendingDetail } from '@/screens/TransactionRecord/components
 import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
-import { numberWithCommasIsLtOne } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
+import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { SwapRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
@@ -107,7 +107,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           />
           <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-              {'-'} {numberWithCommasIsLtOne(actionData.payToken.amount, 2)}{' '}
+              {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
               {getTokenSymbol(actionData.payToken as TokenItem)}
             </Text>
             <RcIconRightCC
@@ -128,7 +128,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           />
           <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList]}>
-              {'+'} {numberWithCommasIsLtOne(actionData.minReceive.amount, 2)}{' '}
+              {'+'} {formatTokenAmount(actionData.minReceive.amount)}{' '}
               {getTokenSymbol(actionData.minReceive as TokenItem)}
             </Text>
             <RcIconRightCC
