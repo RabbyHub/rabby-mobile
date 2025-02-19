@@ -5,6 +5,7 @@ import { default as RcIconMoreCC } from './more.svg';
 import { default as RcIconApprovalCC } from './approvals.svg';
 import { default as RcIconBridgeCC } from './bridge.svg';
 import { default as RcIconQueueCC } from './queue.svg';
+import { default as RcIconBuyCC } from './buy.svg';
 
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
@@ -40,6 +41,11 @@ export const RcIconBridge = makeThemeIconFromCC(RcIconBridgeCC, {
 });
 
 export const RcIconQueue = makeThemeIconFromCC(RcIconQueueCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const RcIconBuy = makeThemeIconFromCC(RcIconBuyCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });

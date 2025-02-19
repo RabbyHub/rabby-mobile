@@ -107,7 +107,8 @@ export type ActionHeaderItem = {
     | 'defi_header'
     | 'toggle_defi_fold'
     | 'nft_header'
-    | 'toggle_nft_fold';
+    | 'toggle_nft_fold'
+    | 'empty-token';
   data?: null;
 };
 
