@@ -121,7 +121,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     refreshPositions,
     portfolios,
     nftList,
-    loading,
+    loadingToken,
     refreshing,
     updateTokens,
     updatePortfolio,
@@ -292,7 +292,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
-        show: !loading && !sortTokens.length,
+        show: !loadingToken && !sortTokens.length,
         data: [
           {
             type: 'empty-token',
@@ -329,7 +329,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     foldDefi,
     foldHideList,
     foldNft,
-    loading,
+    loadingToken,
     nftList,
     portfolios,
     sortTokens,
@@ -369,7 +369,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     });
   };
   const handleSwitchTab = (key: AsssetKey) => {
-    if (loading || refreshing) {
+    if (loadingToken || refreshing) {
       toast.info(
         "Ops! The asset wasn't shown yet, please scroll down manually",
       );
