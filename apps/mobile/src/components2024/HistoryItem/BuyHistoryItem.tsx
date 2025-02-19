@@ -36,7 +36,7 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
         <View style={styles.subTitleContainer}>
           <Text style={styles.subTitleText}>
             {t('page.buy.from', {
-              dex: data.service_provider,
+              dex: data?.service_provider?.name,
             })}
           </Text>
           <ArrowRightCC
