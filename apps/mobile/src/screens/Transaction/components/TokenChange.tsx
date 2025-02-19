@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import RcIconUnknown from '@/assets/icons/token/default.svg';
-import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
@@ -62,7 +62,7 @@ const TxChangeItem = ({
         style={[tokenChangeStyle, styles.tokenChangeDelta]}
         numberOfLines={1}>
         {isSend ? '-' : '+'}
-        {isNft ? item.amount : formatAmount(item.amount)}
+        {isNft ? item.amount : formatTokenAmount(item.amount)}
       </Text>
       <TokenLabel
         isForMultipleAdderss={isForMultipleAdderss}
@@ -98,7 +98,7 @@ export const TxChange = ({
   const singleAmount = data?.token_approve?.value;
   const appvoveAmmountStr = singleAmount
     ? singleAmount < 1e9
-      ? formatAmount(singleAmount)
+      ? formatTokenAmount(singleAmount)
       : t('page.transactions.detail.Unlimited')
     : '';
   const tokenId = data?.token_approve?.token_id || '';

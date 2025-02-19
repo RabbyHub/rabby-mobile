@@ -47,7 +47,7 @@ import {
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
@@ -301,7 +301,7 @@ export const TransactionItem = ({
       } else {
         return amount >= 1e9
           ? t('page.transactions.detail.Unlimited')
-          : formatAmount(amount);
+          : formatTokenAmount(amount);
       }
     }
   }, [approveToken, isNft, t]);
@@ -363,7 +363,9 @@ export const TransactionItem = ({
         ]}>
         {approveToken && (
           <View style={styles.txChange}>
-            <Text style={[styles.tokenText]} numberOfLines={1}>
+            <Text
+              style={[styles.tokenText, styles.approveText]}
+              numberOfLines={1}>
               {approveTokenAmountStr}
             </Text>
             <Text
@@ -382,7 +384,7 @@ export const TransactionItem = ({
                   {'+'}{' '}
                   {isNft
                     ? token.amount
-                    : formatAmount(token.amount || token.min_amount)}
+                    : formatTokenAmount(token.amount || token.min_amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText]}
@@ -405,7 +407,7 @@ export const TransactionItem = ({
                       styles.approveText,
                   ]}
                   numberOfLines={1}>
-                  {'-'} {isNft ? token.amount : formatAmount(token.amount)}
+                  {'-'} {isNft ? token.amount : formatTokenAmount(token.amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText, styles.sendText]}
@@ -449,7 +451,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     // width: '50%',
   },
   approveText: {
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
@@ -490,7 +492,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors['green-default'],
+    color: colors2024['green-default'],
     minWidth: 0,
     flexShrink: 1,
     textAlign: 'right',
