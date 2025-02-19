@@ -108,7 +108,7 @@ export const syncProtocols = async (
       protocols.push(...projects.filter(i => !!i));
     }),
   );
-  runOnJS(syncRemotePortocols)(address, protocols);
+  runOnJS(syncRemotePortocols)(address, [...protocols]);
   return protocols;
 };
 
