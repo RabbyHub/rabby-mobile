@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ViewStyle } from 'react-native';
-import React, { memo, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -29,17 +29,21 @@ export const AssestAllHeader = memo(
     const [showDefiTip, setShowDefiTip] = useState(false);
     const [showNftTip, setShowNftTip] = useState(false);
     const [showTokenTip, setShowTokenTip] = useState(false);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const handlePress = (key: AsssetKey) => {
       if (!hasDefi && key === 'defi') {
         setShowDefiTip(true);
+        delayRemoveTips();
         return;
       }
       if (!hasNft && key === 'nft') {
         setShowNftTip(true);
+        delayRemoveTips();
         return;
       }
       if (!hasToken && key === 'token') {
         setShowTokenTip(true);
+        delayRemoveTips();
         return;
       }
       trigger('impactLight', {
@@ -48,6 +52,20 @@ export const AssestAllHeader = memo(
       });
       onPress?.(key);
     };
+    const delayRemoveTips = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        onClose();
+      }, 3000);
+    };
+    useEffect(() => {
+      return () => {
+        timeoutRef.current && clearTimeout(timeoutRef.current);
+        onClose();
+      };
+    }, []);
     const onClose = () => {
       setShowDefiTip(false);
       setShowNftTip(false);

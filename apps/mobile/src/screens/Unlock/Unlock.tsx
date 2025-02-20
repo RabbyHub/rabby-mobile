@@ -288,7 +288,7 @@ export default function UnlockScreen() {
           onTouchInputAway();
         }}>
         <View style={styles.topContainer}>
-          <RcRabbyLogo width={122} height={122} />
+          <RcRabbyLogo width={120} height={120} />
           <Text style={styles.title1}>Rabby Wallet</Text>
         </View>
         <View style={styles.bodyContainer}>
@@ -306,7 +306,6 @@ export default function UnlockScreen() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
-                  placeholder: t('page.unlock.password.placeholder'),
                   placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
                     formik.setFieldError('password', undefined);
@@ -378,7 +377,7 @@ export default function UnlockScreen() {
   );
 }
 
-const getStyles = createGetStyles2024(({ colors2024 }) => {
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       flex: 1,
@@ -400,9 +399,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       padding: 0,
     },
     title1: {
-      color: colors2024['brand-default'],
+      color: isLight
+        ? colors2024['neutral-title-1']
+        : colors2024['brand-default'],
+      fontSize: 22.5,
       fontFamily: 'SF Pro Rounded',
-      fontSize: 26,
       fontWeight: '700',
       marginTop: 13,
     },
@@ -488,7 +489,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
     },
     switchingAuthTypeButton: {
-      color: colors2024['brand-default'],
+      color: colors2024['neutral-foot'],
       fontSize: 17,
       lineHeight: 22,
       fontWeight: '700',

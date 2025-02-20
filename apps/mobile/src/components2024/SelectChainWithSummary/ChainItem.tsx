@@ -66,13 +66,13 @@ export default function ChainItem({
         style={[
           styles.container,
           disabled && styles.disable,
-          isSelected && styles.isSelected,
-          style,
           {
             backgroundColor: isDark
               ? colors2024['neutral-bg-2']
               : colors2024['neutral-bg-1'],
           },
+          isSelected && styles.isSelected,
+          style,
         ]}
         onPress={() => {
           if (disabled) {

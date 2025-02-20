@@ -380,7 +380,7 @@
       "importMore": "Import more addresses"
     },
     "importSeedPhrase": {
-      "enterYourSeedPhrase": "Enter your seed phrase"
+      "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
     },
     "signFooterBar": {
       "processRiskAlert": "Please process the alert before signing",
