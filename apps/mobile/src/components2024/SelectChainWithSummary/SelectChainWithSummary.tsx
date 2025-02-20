@@ -266,7 +266,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 32,
   },
   titleText: {
     color: colors2024['neutral-title-1'],
