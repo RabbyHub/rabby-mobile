@@ -1,20 +1,19 @@
-import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
-  Alert,
   Platform,
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
 } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
-import { Button } from '@/components';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { FormInput } from '@/components/Form/Input';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import TouchableView, {
@@ -41,6 +40,9 @@ import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { sleep } from '@/utils/async';
 import { updateUnlockTime } from '@/core/apis/lock';
+import { Button } from '@/components2024/Button';
+import { NextInput } from '@/components2024/Form/Input';
+import YesIcon from '@/assets2024/icons/common/check.svg';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -48,7 +50,7 @@ const LAYOUTS = {
 };
 
 const isIOS = Platform.OS === 'ios';
-const BiometricsIconSize = 56;
+const BiometricsIconSize = 76;
 
 const hasAutoUnlockByBiometricsRef = { current: false };
 
@@ -161,12 +163,12 @@ function incToReset(isOnMount = false) {
   return unlockFailedRef.current;
 }
 export default function UnlockScreen() {
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
   const {
-    computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
+    computed: { isBiometricsEnabled, isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
@@ -269,115 +271,127 @@ export default function UnlockScreen() {
   useFocusEffect(registerPreventEffect);
 
   return (
-    <SilentTouchableView
-      style={{ height: '100%', flex: 1 }}
-      viewProps={{
-        style: [
-          styles.container,
-          { paddingBottom: safeSizes.containerPaddingBottom },
-        ],
-      }}
-      onPress={onTouchInputAway}>
-      <View style={styles.topContainer}>
-        <RcRabbyLogo style={{ width: 100, height: 100 }} />
-        <Text style={styles.title1}>Rabby Wallet</Text>
-      </View>
-      <View style={styles.bodyContainer}>
-        {usingPassword ? (
-          <View style={styles.formWrapper}>
-            <FormInput
-              clearable
-              ref={passwordInputRef}
-              style={styles.inputContainer}
-              inputStyle={styles.input}
-              errorText={formik.errors.password}
-              inputProps={{
-                value: formik.values.password,
-                secureTextEntry: true,
-                inputMode: 'text',
-                returnKeyType: 'done',
-                placeholder: t('page.unlock.password.placeholder'),
-                placeholderTextColor: colors['neutral-foot'],
-                onChangeText(text) {
-                  // const nextErrors = { ...formik.errors };
-                  // delete nextErrors.password;
-                  // formik.setErrors(nextErrors);
-                  formik.setFieldError('password', undefined);
-                  formik.setFieldValue('password', text);
-                },
-              }}
-            />
-            <View
-              style={[
-                styles.unlockButtonWrapper,
-                { height: safeSizes.footerHeight },
-              ]}>
-              <Button
-                loading={isUnlocking}
-                disabled={shouldDisabled}
-                type="primary"
-                buttonStyle={[styles.buttonShadow]}
-                containerStyle={[
-                  styles.nextButtonContainer,
-                  { height: safeSizes.nextButtonContainerHeight },
-                ]}
-                title={t('page.unlock.btn.unlock')}
-                onPress={evt => {
-                  evt.stopPropagation();
-                  formik.handleSubmit();
-                  checkUnlocked();
+    <KeyboardAvoidingView
+      behavior="padding"
+      style={styles.container}
+      keyboardVerticalOffset={-20}>
+      <SilentTouchableView
+        style={{ height: '100%', flex: 1 }}
+        viewProps={{
+          style: [
+            styles.container,
+            { paddingBottom: safeSizes.containerPaddingBottom },
+          ],
+        }}
+        onPress={() => {
+          Keyboard.dismiss();
+          onTouchInputAway();
+        }}>
+        <View style={styles.topContainer}>
+          <RcRabbyLogo width={122} height={122} />
+          <Text style={styles.title1}>Rabby Wallet</Text>
+        </View>
+        <View style={styles.bodyContainer}>
+          {usingPassword ? (
+            <View style={styles.formWrapper}>
+              <NextInput.Password
+                clearable
+                ref={passwordInputRef}
+                fieldName={t('page.unlock.password.placeholder')}
+                style={styles.inputContainer}
+                inputStyle={styles.input}
+                iconColor={colors2024['neutral-title-1']}
+                inputProps={{
+                  value: formik.values.password,
+                  secureTextEntry: true,
+                  inputMode: 'text',
+                  returnKeyType: 'done',
+                  placeholder: t('page.unlock.password.placeholder'),
+                  placeholderTextColor: colors2024['neutral-foot'],
+                  onChangeText(text) {
+                    formik.setFieldError('password', undefined);
+                    formik.setFieldValue('password', text);
+                  },
                 }}
+                hasError={Boolean(formik.errors.password)}
+                tipText={formik.errors.password}
+                tipIcon={
+                  !formik.errors.password &&
+                  formik.values.password && <YesIcon width={12} height={12} />
+                }
               />
+              <View
+                style={[
+                  styles.unlockButtonWrapper,
+                  { height: safeSizes.footerHeight },
+                ]}>
+                <Button
+                  loading={isUnlocking}
+                  disabled={shouldDisabled}
+                  type="primary"
+                  buttonStyle={[styles.buttonShadow]}
+                  containerStyle={[
+                    styles.nextButtonContainer,
+                    { height: safeSizes.nextButtonContainerHeight },
+                  ]}
+                  title={t('page.unlock.btn.unlock')}
+                  onPress={evt => {
+                    evt.stopPropagation();
+                    formik.handleSubmit();
+                    checkUnlocked();
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        ) : (
-          <View style={styles.biometricsWrapper}>
-            <View style={styles.biometricsBtns}>
-              <TouchableView
-                style={styles.biometricsBtn}
-                onPress={manualUnlockWithBiometrics}>
-                <BiometricsIcon isFaceID={isFaceID} />
-              </TouchableView>
+          ) : (
+            <View style={styles.biometricsWrapper}>
+              <View style={styles.biometricsBtns}>
+                <TouchableView
+                  style={styles.biometricsBtn}
+                  onPress={manualUnlockWithBiometrics}>
+                  <BiometricsIcon isFaceID={isFaceID} />
+                </TouchableView>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {couldSwitchingAuthentication && (
-          <View style={styles.switchingAuthTypeButtonWrapper}>
-            <TouchableText
-              disabled={shouldDisabled}
-              style={styles.switchingAuthTypeButton}
-              onPress={() => {
-                setUsingBiometrics(prev => !prev);
-              }}>
-              {usingBiometrics
-                ? t('page.unlock.btn.switchtype_pwd')
-                : Platform.select({
-                    ios: t('page.unlock.btn.switchtype_faceid'),
-                    android: t('page.unlock.btn.switchtype_fingerprint'),
-                  }) || t('page.unlock.btn.switchtype_fingerprint')}
-            </TouchableText>
-          </View>
-        )}
-      </View>
-    </SilentTouchableView>
+          {couldSwitchingAuthentication && (
+            <View style={styles.switchingAuthTypeButtonWrapper}>
+              <TouchableText
+                disabled={shouldDisabled}
+                style={styles.switchingAuthTypeButton}
+                onPress={() => {
+                  setUsingBiometrics(prev => !prev);
+                }}>
+                {usingBiometrics
+                  ? t('page.unlock.btn.switchtype_pwd')
+                  : Platform.select({
+                      ios: t('page.unlock.btn.switchtype_faceid'),
+                      android: t('page.unlock.btn.switchtype_fingerprint'),
+                    }) || t('page.unlock.btn.switchtype_fingerprint')}
+              </TouchableText>
+            </View>
+          )}
+        </View>
+      </SilentTouchableView>
+    </KeyboardAvoidingView>
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyles = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       flex: 1,
       height: '100%',
-      backgroundColor: colors['neutral-bg1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       justifyContent: 'center',
     },
     topContainer: {
       backgroundColor: 'transparent',
-      paddingBottom: 100,
+      paddingBottom: 0,
       width: '100%',
       height:
-        150 /* min paddingTop */ + 100 /* height */ + 100 /* paddingBottom */,
+        170 /* min paddingTop */ + 100 /* height */ + 100 /* paddingBottom */,
       // height: '100%',
       flexShrink: 0,
       flexDirection: 'column',
@@ -386,8 +400,9 @@ const getStyles = createGetStyles(colors => {
       padding: 0,
     },
     title1: {
-      color: colors['blue-default'],
-      fontSize: 24,
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 26,
       fontWeight: '700',
       marginTop: 13,
     },
@@ -397,8 +412,8 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 0,
       paddingTop: 32,
       paddingBottom: 24,
-      backgroundColor: colors['neutral-bg1'],
-      justifyContent: 'space-between',
+      backgroundColor: colors2024['neutral-bg-1'],
+      justifyContent: 'flex-end',
       // ...makeDebugBorder(),
     },
     formWrapper: {
@@ -407,29 +422,30 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'column',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
+      marginBottom: 66,
     },
 
     inputContainer: {
-      borderRadius: 8,
-      height: 64,
+      borderRadius: 12,
+      height: 56,
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderWidth: 0,
     },
     input: {
-      backgroundColor: colors['neutral-card1'],
-      height: '100%',
       fontSize: 14,
     },
     formFieldError: {
       marginTop: 12,
     },
     formFieldErrorText: {
-      color: colors['red-default'],
+      color: colors2024['red-default'],
       fontSize: 14,
       fontWeight: '400',
       textAlign: 'center',
     },
 
     unlockButtonWrapper: {
-      marginTop: 60,
+      marginTop: 20,
       height: LAYOUTS.footerButtonHeight,
       width: '100%',
       paddingHorizontal: 0,
@@ -452,6 +468,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'column',
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginBottom: 86,
       // ...makeDebugBorder('yellow'),
     },
 
@@ -468,17 +485,14 @@ const getStyles = createGetStyles(colors => {
     },
     switchingAuthTypeButtonWrapper: {
       width: '100%',
-      // marginTop: 60,
       alignItems: 'center',
     },
     switchingAuthTypeButton: {
-      color: colors['blue-default'],
-      fontSize: 16,
-      fontWeight: '400',
-      // ...makeDebugBorder('yellow'),
-      paddingTop: 12,
-      paddingBottom: 4,
-      paddingHorizontal: 10,
+      color: colors2024['brand-default'],
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

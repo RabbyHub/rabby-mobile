@@ -163,6 +163,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         menuTitle: account.aliasName,
         menuActions: menuActions,
       }}
+      preViewBorderRadius={20}
       triggerProps={{ action: 'longPress' }}>
       <AddressItemShadowView>
         <TouchableOpacity
