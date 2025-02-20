@@ -23,6 +23,7 @@ import {
   prepareAppDataSource,
 } from '@/databases/imports';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { BuyItemEntity } from '@/databases/entities/buyItem';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -125,6 +126,7 @@ export default function DevDataPlaygroundModal({
           await Promise.all([
             HistoryItemEntity.clear(),
             SwapItemEntity.clear(),
+            BuyItemEntity.clear(),
           ]);
         },
       },

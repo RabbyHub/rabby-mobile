@@ -1,10 +1,13 @@
 import { toast } from '@/components2024/Toast';
+import { RootNames } from '@/constant/layout';
 import { getChainDefaultToken } from '@/constant/swap';
 import { openapi } from '@/core/request';
 import { useCurrentAccount } from '@/hooks/account';
+import { TransactionNavigatorParamList } from '@/navigation-type';
 import { formatSpeicalAmount } from '@/utils/number';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useNavigationState } from '@react-navigation/native';
 import { atom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
@@ -62,12 +65,22 @@ const useTokenInfo = ({
   return [token, setToken] as const;
 };
 
-export const useBuy = () => {
+export const useBuy = (isForMultipleAdderss?: boolean) => {
+  const navState = useNavigationState(
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy),
+      )?.params,
+  ) as TransactionNavigatorParamList['Buy'] | undefined;
+
   const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const [region, setRegion] = useState(getCountry());
   const [currency, setCurrency] = useState('usd');
   const [toToken, setToToken] = useTokenInfo({
-    defaultToken: getChainDefaultToken(CHAINS_ENUM.ETH),
+    defaultToken:
+      navState?.receiveToken || getChainDefaultToken(CHAINS_ENUM.ETH),
     userAddress: currentAccount?.address,
   });
   const [amount, setAmount] = useState('');
@@ -75,6 +88,12 @@ export const useBuy = () => {
   const [activeProvider, setActiveProvider] = useState<string>('');
 
   const regionList = useAtomValue(regionListAtom);
+
+  const [refreshId, _refresh] = useState(0);
+
+  const refreshQuotes = useCallback(() => {
+    _refresh(e => e + 1);
+  }, []);
 
   const switchRegion = useCallback((v: string) => {
     setRegion(v);
@@ -154,6 +173,7 @@ export const useBuy = () => {
     currency,
     currentAccount?.address,
     toToken,
+    refreshId,
   ]);
 
   const isReady =
@@ -183,7 +203,15 @@ export const useBuy = () => {
       setLoading(false);
       cancel();
     }
-  }, [amount, region, currency, currentAccount?.address, toToken, cancel]);
+  }, [
+    amount,
+    region,
+    currency,
+    currentAccount?.address,
+    toToken,
+    cancel,
+    refreshId,
+  ]);
 
   useEffect(() => {
     if (error) {
@@ -243,5 +271,7 @@ export const useBuy = () => {
     loading,
     quotes,
     noQuote,
+
+    refreshQuotes,
   };
 };

@@ -537,7 +537,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
           )}
-          {Boolean(fromAddr) && (
+          {Boolean(fromAddr) && !data.isLocalBuy && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
                 {t('page.transactions.detail.From')}
@@ -549,12 +549,26 @@ function HistoryDetailScreen(): JSX.Element {
               />
             </View>
           )}
+          {data.isLocalBuy && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.PurchaseFrom')}
+              </Text>
+              <AddressItemInDetail
+                address={data.buyDetails?.service_provider?.name || ''}
+                accounts={accounts}
+                switchAccount={switchAccount}
+              />
+            </View>
+          )}
           {(formatType === HistoryItemCateType.Send ||
+            formatType === HistoryItemCateType.Buy ||
             formatType === HistoryItemCateType.Recieve) &&
             Boolean(toAddr) && (
               <View style={styles.detailItem}>
                 <Text style={styles.itemTitleText}>
-                  {formatType === HistoryItemCateType.Recieve
+                  {formatType === HistoryItemCateType.Buy ||
+                  formatType === HistoryItemCateType.Recieve
                     ? t('page.transactions.detail.RecipientAddress')
                     : t('page.transactions.detail.To')}
                 </Text>

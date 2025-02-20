@@ -259,8 +259,10 @@ export type TransactionNavigatorParamList = {
   [RootNames.Bridge]?: {};
   [RootNames.MultiBridge]?: {};
   [RootNames.GasAccount]?: {};
-  [RootNames.Buy]?: {};
-  [RootNames.MultiBuy]?: {};
+  [RootNames.Buy]?: {
+    receiveToken?: TokenItem;
+  };
+  [RootNames.MultiBuy]?: TransactionNavigatorParamList['Buy'] & object;
 };
 
 export type SettingNavigatorParamList = {

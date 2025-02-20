@@ -39,6 +39,7 @@ export enum HistoryItemCateType {
   Contract = 'contract',
   UnKnown = 'interaction',
   Cancel = 'cancel',
+  Buy = 'buy',
 }
 
 interface ItemIconProps {

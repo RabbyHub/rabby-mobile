@@ -26,6 +26,7 @@ import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { useCurrentAccount } from '@/hooks/account';
 import { ellipsisOverflowedText } from '@/utils/text';
+import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
 
 interface ItemProps {
   status: number;
@@ -293,6 +294,49 @@ export const HistoryTokenList = ({
           </View>
         </View>
       );
+
+    case HistoryItemCateType.Buy:
+      return (
+        <TouchableOpacity onPress={() => handlePress(singeToken, tokenIsNft)}>
+          <View style={[styles.singleBox]}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.iconContainer}>
+                <BuyWalletSVG style={styles.walletIcon} />
+                <AssetAvatar
+                  logo={data?.buyDetails?.receive_token?.logo_url}
+                  size={57}
+                />
+              </View>
+              <View style={[styles.singleColomnBox]}>
+                <Text style={[styles.tokenAmountText]}>
+                  + {formatTokenAmount(data?.receives?.[0]?.amount)}{' '}
+                  {getTokenSymbol(data?.buyDetails?.receive_token)}
+                </Text>
+                <Text
+                  style={[
+                    {
+                      fontSize: 16,
+                      fontWeight: '500',
+                      lineHeight: 20,
+                      fontFamily: 'SF Pro',
+                    },
+                    styles.isSendTextColor,
+                  ]}>
+                  -{data?.buyDetails?.pay_usd_amount || '0'} USD
+                </Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <RcIconSingleArrow
+                width={32}
+                height={32}
+                color={colors2024['neutral-bg-2']}
+              />
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
     case HistoryItemCateType.UnKnown:
@@ -470,5 +514,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
+  },
+  iconContainer: {
+    position: 'relative',
+  },
+  walletIcon: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 24,
+    height: 24,
+    zIndex: 1,
   },
 }));
