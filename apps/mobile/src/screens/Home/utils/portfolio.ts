@@ -96,7 +96,9 @@ export const batchLoadProjects = async (
       if (isTestnet) {
         return testOpenapi.getProtocol({ addr: user_id, id });
       } else {
-        return openapi.getProtocol({ addr: user_id, id });
+        return openapi.getProtocol({ addr: user_id, id }).catch(err => {
+          console.error('[getProtocol] error: ', err, user_id, id);
+        });
       }
     }),
   );
