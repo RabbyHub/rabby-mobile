@@ -23,7 +23,7 @@
     "@ledgerhq/devices": "^6.27.1",
     "@types/chrome": "^0.0.186",
     "@types/events": "^3.0.0",
-    "@types/node": "^17.0.34",
+    "@types/node": "^20.14.8",
     "@types/w3c-web-hid": "^1.0.3",
     "eth-rpc-errors": "^4.0.3",
     "events": "^3.3.0",
