@@ -243,5 +243,3 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     lineHeight: 28,
   },
 }));
-
-export default GasAccountLogoutPopup;

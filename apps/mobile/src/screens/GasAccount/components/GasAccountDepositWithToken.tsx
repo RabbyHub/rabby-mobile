@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Keyboard,
   TextInput,
+  Platform,
 } from 'react-native';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +55,8 @@ import { Skeleton } from '@rneui/themed';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toast } from '@/components2024/Toast';
 import { useAlias } from '@/hooks/alias';
+import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
+import { GasAccountDepositSelect } from './GasAccountDepositSelect';
 
 const amountList = [10, 100];
 
@@ -513,7 +516,7 @@ const SelectAccount = ({
 
 const CUSTOM_AMOUNT = 0;
 
-const GasAccountDepositContent = ({ onClose }) => {
+export const GasAccountDepositWithToken = ({ onClose }) => {
   const { t } = useTranslation();
   const [selectedAmount, setAmount] = useState(amountList[0]);
   const [tokenListVisible, setTokenListVisible] = useState(false);
@@ -810,38 +813,6 @@ const GasAccountDepositContent = ({ onClose }) => {
         />
       </BottomSheetWrapper>
     </KeyboardAwareScrollView>
-  );
-};
-
-export const GasAccountDepositPopup = props => {
-  const { styles, colors2024 } = useTheme2024({
-    getStyle: getStyles,
-  });
-  const modalRef = useRef<AppBottomSheetModal>(null);
-
-  useEffect(() => {
-    if (!props?.visible) {
-      modalRef.current?.close();
-    } else {
-      modalRef.current?.present();
-    }
-  }, [props?.visible]);
-
-  return (
-    <AppBottomSheetModal
-      snapPoints={['90%']}
-      onDismiss={props.onCancel || props.onClose}
-      ref={modalRef}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      {...makeBottomSheetProps({
-        linearGradientType: 'linear',
-        colors: colors2024,
-      })}>
-      <BottomSheetView style={styles.popup}>
-        <GasAccountDepositContent onClose={props.onCancel || props.onClose} />
-      </BottomSheetView>
-    </AppBottomSheetModal>
   );
 };
 

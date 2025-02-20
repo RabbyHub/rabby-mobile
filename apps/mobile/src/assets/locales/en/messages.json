@@ -1460,6 +1460,15 @@
       "switchLoginAddressBeforeDeposit": {
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
+      },
+      "depositPayPopup": {
+        "title": "Buy with Apple Pay",
+        "titleAndroid": "Buy with Google Pay",
+        "balance": "Current GasAccount Balance: "
+      },
+      "depositSelectPopup": {
+        "title": "Deposit to GasAccount",
+        "desc": "Pay Gas Fees on All Chains"
       }
     },
     "tokenDetail": {
@@ -1594,7 +1603,11 @@
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
         "button": "View on DeBank APP"
-      }
+      },
+      "depositWithToken": "Deposit with Token",
+      "depositWithTokenDesc": "No extra fee, instant withdrawals",
+      "depositWithPayDesc": "30% fee, no withdrawals",
+      "depositWithPay": "Buy with"
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",

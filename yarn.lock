@@ -27781,6 +27781,7 @@ __metadata:
     react-native-gesture-handler: ^2.14.0
     react-native-get-random-values: ^1.10.0
     react-native-haptic-feedback: 2.3.3
+    react-native-iap: ^12.16.2
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-indicators: ^0.17.0
     react-native-ios-context-menu: 1.15.3
@@ -28446,6 +28447,20 @@ __metadata:
   peerDependencies:
     react-native: ">=0.60.0"
   checksum: 5ff12aaf44fa1cad8ab3d9c58046a11c631c6622955120294060efc51c625203ee4cd7ccb565663c12b27552ebbb7034a386000d9da738b9eea5ff62d58b14c0
+  languageName: node
+  linkType: hard
+
+"react-native-iap@npm:^12.16.2":
+  version: 12.16.2
+  resolution: "react-native-iap@npm:12.16.2"
+  peerDependencies:
+    expo: ">=47.0.0"
+    react: ">=16.13.1"
+    react-native: ">=0.65.1"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 8d107815f3e352da9bed3aabed8fee519864b25393bfc63c5c6a6ff9ab0d7e0fd187484218279a57f579ebae977072c9674cec322cfba2e46935e14a7cae84d9
   languageName: node
   linkType: hard
 

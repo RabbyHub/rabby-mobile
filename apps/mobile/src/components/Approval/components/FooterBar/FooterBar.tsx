@@ -300,6 +300,33 @@ export const FooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
+        {showGasLess &&
+        !payGasByGasAccount &&
+        (!securityLevel || !hasUnProcessSecurityResult) ? (
+          canUseGasLess ? (
+            <GasLessActivityToSign
+              gasLessEnable={useGasLess}
+              handleFreeGas={() => {
+                enableGasLess?.();
+              }}
+              gasLessConfig={gasLessConfig}
+            />
+          ) : isWatchAddr ? null : (
+            <GasLessNotEnough
+              gasLessFailedReason={gasLessFailedReason}
+              canGotoUseGasAccount={canGotoUseGasAccount}
+              onChangeGasAccount={onChangeGasAccount}
+            />
+          )
+        ) : null}
+        {payGasByGasAccount && !gasAccountCanPay ? (
+          <GasAccountTips
+            gasAccountCost={gasAccountCost}
+            isGasAccountLogin={isGasAccountLogin}
+            isWalletConnect={isWalletConnect}
+            noCustomRPC={noCustomRPC}
+          />
+        ) : null}
         <AccountInfo
           chain={props.chain}
           account={account}
@@ -362,35 +389,6 @@ export const FooterBar: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         )}
-
-        {showGasLess &&
-        !payGasByGasAccount &&
-        (!securityLevel || !hasUnProcessSecurityResult) ? (
-          canUseGasLess ? (
-            <GasLessActivityToSign
-              gasLessEnable={useGasLess}
-              handleFreeGas={() => {
-                enableGasLess?.();
-              }}
-              gasLessConfig={gasLessConfig}
-            />
-          ) : isWatchAddr ? null : (
-            <GasLessNotEnough
-              gasLessFailedReason={gasLessFailedReason}
-              canGotoUseGasAccount={canGotoUseGasAccount}
-              onChangeGasAccount={onChangeGasAccount}
-            />
-          )
-        ) : null}
-
-        {payGasByGasAccount && !gasAccountCanPay ? (
-          <GasAccountTips
-            gasAccountCost={gasAccountCost}
-            isGasAccountLogin={isGasAccountLogin}
-            isWalletConnect={isWalletConnect}
-            noCustomRPC={noCustomRPC}
-          />
-        ) : null}
       </View>
     </View>
   );

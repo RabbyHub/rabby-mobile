@@ -1,28 +1,26 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 // import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { Account } from '@/core/services/preference';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useGasAccountMethods } from '../hooks';
-import { GasAccountBlueLogo } from './GasAccountBlueLogo';
-import { GasAccountWrapperBg } from '../components/WrapperBg';
-import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
-import { Account } from '@/core/services/preference';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { Button } from '@/components2024/Button';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 import { trigger } from 'react-native-haptic-feedback';
+import { useGasAccountMethods } from '../hooks';
+import { useMemoizedFn } from 'ahooks';
 
-const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
+const GasAccountLoginContent: React.FC<{
+  onClose(): void;
+}> = ({ onClose }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { login } = useGasAccountMethods();
@@ -30,41 +28,31 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
 
   const [loading, setLoading] = useState(false);
 
-  const gotoLogin = () => {
-    setToConfirm(true);
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-  };
-
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
-  const confirmAddress = useCallback(
-    async (account: Account | null) => {
-      if (loading) {
-        return;
-      }
-      setLoading(true);
-      try {
-        trigger('impactLight', {
-          enableVibrateFallback: true,
-          ignoreAndroidSystemSettings: false,
-        });
-        await switchSceneCurrentAccount('GasAccount', account);
-        await login(account);
-      } catch (error) {
-        console.error(error);
-      }
+  const confirmAddress = useMemoizedFn(async (account: Account | null) => {
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+    try {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+      await switchSceneCurrentAccount('GasAccount', account);
+      await login(account);
+      onClose?.();
+    } catch (error) {
+      console.error(error);
+    }
 
-      setLoading(false);
-    },
-    [loading, login, switchSceneCurrentAccount],
-  );
+    setLoading(false);
+  });
 
   const filterAccounts = React.useMemo(
     () =>
@@ -76,7 +64,7 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
 
   // const list = useSortAddressList(filterAccounts);
 
-  if (toConfirm && currentAccount) {
+  if (currentAccount) {
     return (
       <LinearGradient
         colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
@@ -103,37 +91,12 @@ const GasAccountLoginContent = ({ onClose, toConfirm, setToConfirm }) => {
     );
   }
 
-  return (
-    <GasAccountWrapperBg style={styles.loginContainer}>
-      <GasAccountBlueLogo style={styles.logo} />
-      <View style={styles.quoteContainer}>
-        <RcIconQuoteStart style={styles.quoteStart} />
-        <Text style={styles.loginTip}>
-          {t('component.gasAccount.loginInTip.title')}
-        </Text>
-      </View>
-      <View style={styles.quoteContainer}>
-        <Text style={styles.loginDesc}>
-          {t('component.gasAccount.loginInTip.desc')}
-        </Text>
-        <RcIconQuoteEnd style={styles.quoteEnd} />
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button
-          containerStyle={styles.confirmButton}
-          onPress={gotoLogin}
-          type="primary"
-          title={t('component.gasAccount.loginInTip.login')}
-        />
-      </View>
-    </GasAccountWrapperBg>
-  );
+  return null;
 };
 
 export const GasAccountLoginPopup = props => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const [toConfirm, setToConfirm] = useState(false);
 
   useEffect(() => {
     if (!props?.visible) {
@@ -146,7 +109,7 @@ export const GasAccountLoginPopup = props => {
   return (
     <AppBottomSheetModal
       enableContentPanningGesture={false} // has scorll list
-      snapPoints={[toConfirm ? '90%' : 420]}
+      snapPoints={['90%']}
       onDismiss={props.onCancel || props.onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
@@ -154,11 +117,7 @@ export const GasAccountLoginPopup = props => {
         colors: colors2024,
       })}>
       <BottomSheetView style={styles.popup}>
-        <GasAccountLoginContent
-          onClose={props.onCancel || props.onClose}
-          toConfirm={toConfirm}
-          setToConfirm={setToConfirm}
-        />
+        <GasAccountLoginContent onClose={props.onCancel || props.onClose} />
       </BottomSheetView>
     </AppBottomSheetModal>
   );
@@ -343,5 +302,3 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     left: -20,
   },
 }));
-
-export default GasAccountLoginPopup;

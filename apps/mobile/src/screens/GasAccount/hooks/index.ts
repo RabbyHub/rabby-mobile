@@ -144,12 +144,12 @@ export const useGasAccountMethods = () => {
       if (result.success) {
         setGasAccount();
         setLogoutVisible(false);
-        gotoDashboard();
+        // gotoDashboard();
       } else {
         toast.show('please retry');
       }
     }
-  }, [accountId, gotoDashboard, setGasAccount, setLogoutVisible, sig]);
+  }, [accountId, setGasAccount, setLogoutVisible, sig]);
 
   return { login, logout };
 };
