@@ -735,30 +735,27 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
-                : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={[
-              styles.floatBottom,
-              { paddingBottom: androidBottomOffset },
-            ]}>
-            <Pressable onPress={handlePressSearch} style={styles.search}>
-              <RcNextSearchCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-              <Text style={styles.searchText}>
-                {t('page.dashboard.home.search')}
-              </Text>
-            </Pressable>
-          </LinearGradient>
         </ScrollView>
+        <LinearGradient
+          colors={
+            isLight
+              ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
+              : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[styles.floatBottom, { paddingBottom: androidBottomOffset }]}>
+          <Pressable onPress={handlePressSearch} style={styles.search}>
+            <RcNextSearchCC
+              width={20}
+              height={20}
+              color={colors2024['neutral-secondary']}
+            />
+            <Text style={styles.searchText}>
+              {t('page.dashboard.home.search')}
+            </Text>
+          </Pressable>
+        </LinearGradient>
       </View>
     </NormalScreenContainer2024>
   );

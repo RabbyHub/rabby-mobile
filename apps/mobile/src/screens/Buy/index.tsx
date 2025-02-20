@@ -26,6 +26,8 @@ import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { BuyToIcon } from './components/ToIcon';
 import { toast } from '@/components2024/Toast';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import { RootNames } from '@/constant/layout';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 const floatBottom_height = 140;
 
@@ -66,7 +68,9 @@ export const BuyScreen = ({
     quotes,
     loading,
     noQuote,
-  } = useBuy();
+
+    refreshQuotes,
+  } = useBuy(isForMultipleAdderss);
 
   const isQuoteLoading = loading;
 
@@ -84,16 +88,43 @@ export const BuyScreen = ({
           usd_amount: amount,
           receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
           service_provider: activeProvider,
+          redirect_url: `https://rabby-io-git-feat-test-redirect-debanker.vercel.app/mobile-redirect/${
+            isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy
+          }`,
         });
-        openInAppBrowser(data.url);
-        onPayMountChange('');
+        // openInAppBrowser(data.url);
+        await InAppBrowser.isAvailable();
+        InAppBrowser.close();
+        const result = await InAppBrowser.open(data.url, {
+          modalPresentationStyle: 'fullScreen',
+          animated: true,
+          animations: {
+            startEnter: 'slide_in_right',
+            startExit: 'slide_out_left',
+            endEnter: 'slide_in_left',
+            endExit: 'slide_out_right',
+          },
+        });
+
+        console.log('InAppBrowser open result', result);
+
+        refreshQuotes();
+        // onPayMountChange('');
       } catch (error) {
         toast.error(String(error));
         console.log('error', error);
       }
       setUrlLoading(false);
     }
-  }, [currentAddr, activeProvider, region, amount, toToken, onPayMountChange]);
+  }, [
+    currentAddr,
+    activeProvider,
+    region,
+    amount,
+    toToken,
+    isForMultipleAdderss,
+    refreshQuotes,
+  ]);
 
   return (
     <NormalScreenContainer>
@@ -126,6 +157,8 @@ export const BuyScreen = ({
             token={toToken}
             onTokenSelect={onToTokenChange}
             value={tokenAmount + ''}
+            noQuote={noQuote}
+            loading={loading}
           />
           <BuyToIcon style={styles.switchButtonContainer} />
         </View>
@@ -143,7 +176,7 @@ export const BuyScreen = ({
         )}
 
         {noQuote ? (
-          <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
+          <Text style={styles.errorTip}>{t('page.buy.noQuote')}</Text>
         ) : null}
 
         {!loading && quotes?.length ? (

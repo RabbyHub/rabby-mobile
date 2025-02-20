@@ -9,6 +9,8 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { BuyTokenSelect } from './SelectBuyToken';
 import { toast } from '@/components2024/Toast';
+import { Skeleton } from '@rneui/themed';
+import LinearGradient from 'react-native-linear-gradient';
 
 export const BuyToken = ({
   type,
@@ -17,6 +19,8 @@ export const BuyToken = ({
   currency = 'USD',
   token,
   onTokenSelect,
+  noQuote,
+  loading,
 }: {
   type: 'from' | 'to';
   // from props
@@ -28,6 +32,7 @@ export const BuyToken = ({
   token?: TokenItem;
   loading?: boolean;
   onTokenSelect?: (token: TokenItem) => void;
+  noQuote?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -50,30 +55,54 @@ export const BuyToken = ({
     });
   };
 
+  const Linear = useCallback(() => {
+    return (
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{ height: '100%' }}
+        colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
+      />
+    );
+  }, [colors2024]);
+
   return (
     <View style={styles.tokenBox}>
       <Text style={styles.label}>
         {isFiat ? t('page.buy.youWillPay') : t('page.buy.youWillReceive')}
       </Text>
       <View style={styles.interfaceBox}>
-        <TextInput
-          numberOfLines={1}
-          multiline={false}
-          textAlign="left"
-          keyboardType="numeric"
-          inputMode="decimal"
-          placeholderTextColor={colors2024['neutral-info']}
-          style={styles.input}
-          placeholder={isFiat ? '$0' : '0'}
-          scrollEnabled={true}
-          value={isFiat && value ? '$' + value : value}
-          onChangeText={e => {
-            onInputChange?.(e.replaceAll('$', ''));
-          }}
-          focusable={isFiat}
-          ref={inputRef}
-          editable={isFiat}
-        />
+        {loading ? (
+          <Skeleton
+            animation="wave"
+            width={120}
+            height={24}
+            LinearGradientComponent={Linear}
+            style={styles.skeleton}
+          />
+        ) : (
+          <TextInput
+            numberOfLines={1}
+            multiline={false}
+            textAlign="left"
+            keyboardType="numeric"
+            inputMode="decimal"
+            placeholderTextColor={colors2024['neutral-info']}
+            style={styles.input}
+            placeholder={
+              isFiat ? '$0' : noQuote ? t('page.buy.noQuotePlaceholder') : '0'
+            }
+            scrollEnabled={true}
+            value={isFiat && value ? '$' + value : value}
+            onChangeText={e => {
+              onInputChange?.(e.replaceAll('$', ''));
+            }}
+            focusable={isFiat}
+            ref={inputRef}
+            editable={isFiat}
+          />
+        )}
         <View style={styles.divider} />
 
         {isFiat && (
@@ -90,13 +119,22 @@ export const BuyToken = ({
         ) : null}
       </View>
 
-      {isReceive && (
-        <Text style={styles.usdValue}>
-          {formatUsdValue(
-            new BigNumber(value || 0).times(token?.price || 0).toString(10),
-          )}
-        </Text>
-      )}
+      {isReceive &&
+        (loading ? (
+          <Skeleton
+            animation="wave"
+            width={40}
+            height={16}
+            LinearGradientComponent={Linear}
+            style={styles.skeleton}
+          />
+        ) : (
+          <Text style={styles.usdValue}>
+            {formatUsdValue(
+              new BigNumber(value || 0).times(token?.price || 0).toString(10),
+            )}
+          </Text>
+        ))}
     </View>
   );
 };
@@ -182,5 +220,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 15,
     fontStyle: 'normal',
     fontWeight: '700',
+  },
+  skeleton: {
+    overflow: 'hidden',
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 100,
   },
 }));

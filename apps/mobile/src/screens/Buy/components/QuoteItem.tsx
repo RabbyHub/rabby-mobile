@@ -82,15 +82,26 @@ export const BuyQuoteItem = ({
             <View
               key={index}
               style={[styles.payBox, active && styles.payBoxActive]}>
+              {/* <Image
+                source={{ uri: item.logo_url }}
+                style={[
+                  item.type.includes('CARD')
+                    ? { width: 20, height: 20 }
+                    : {
+                        width: 28,
+                        height: 28,
+                      },
+                ]}
+              /> */}
               <Text>{item.name}</Text>
             </View>
           ))}
         </View>
-        <IconArrowRightCC
+        {/* <IconArrowRightCC
           color={colors2024['neutral-secondary']}
           width={18}
           height={18}
-        />
+        /> */}
       </View>
     </TouchableOpacity>
   );
@@ -197,6 +208,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   payBox: {
+    // height: 20,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,

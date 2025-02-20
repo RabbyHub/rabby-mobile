@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@rneui/themed';
@@ -8,26 +8,42 @@ import { useTheme2024 } from '@/hooks/theme';
 import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { ModalLayouts } from '@/constant/layout';
+import { ModalLayouts, RootNames } from '@/constant/layout';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBuyHistory } from '../hooks/history';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { navigate } from '@/utils/navigation';
+import { BuyHistoryItem as TBuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
   return <View style={styles.item} />;
 };
 
-const HistoryList = () => {
+const HistoryList = ({
+  onGoToDetail,
+}: {
+  onGoToDetail: (txId: string, chain: string, data: any) => void;
+}) => {
   const { styles } = useTheme2024({ getStyle });
   const { txList, loading, loadMore, noMore } = useBuyHistory();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
   const renderItem = useCallback(
-    ({ item }) => <BuyHistoryItem data={item} />,
-    [],
+    ({ item }: { item: TBuyHistoryItem }) => (
+      <TouchableOpacity
+        onPress={() =>
+          onGoToDetail(item.receive_tx_id, item.receive_chain_id, item)
+        }>
+        <BuyHistoryItem data={item} />
+      </TouchableOpacity>
+    ),
+    [onGoToDetail],
   );
 
   const ListHeaderComponent = useCallback(() => {
@@ -108,14 +124,48 @@ const HistoryList = () => {
 export const BuyHistory = ({
   visible,
   onClose,
+  isForMultipleAdderss,
 }: {
   visible: boolean;
   onClose: () => void;
+  isForMultipleAdderss?: boolean;
 }) => {
+  const { t } = useTranslation();
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const { colors2024 } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
+
+  const { projectDict, tokenDict } = useHistoryTokenDict();
+
+  const goToDetail = useCallback(
+    async (txId: string, chain: string, data: any) => {
+      const historyItem = await HistoryItemEntity.findOne({
+        where: { txHash: txId, chain },
+      });
+
+      if (historyItem) {
+        const detailData = {
+          ...ensureHistoryListItemFromDb(historyItem),
+          isLocalBuy: true,
+          buyDetails: data,
+          projectDict,
+          tokenDict,
+        };
+
+        onClose();
+        navigate(RootNames.StackTransaction, {
+          screen: RootNames.HistoryDetail,
+          params: {
+            isForMultipleAdderss,
+            data: detailData,
+            title: t('page.transactions.itemTitle.Buy'),
+          },
+        });
+      }
+    },
+    [projectDict, tokenDict, onClose, isForMultipleAdderss, t],
+  );
 
   useEffect(() => {
     if (visible) {
@@ -134,7 +184,7 @@ export const BuyHistory = ({
         colors: colors2024,
         linearGradientType: 'bg2',
       })}>
-      <HistoryList />
+      <HistoryList onGoToDetail={goToDetail} />
     </AppBottomSheetModal>
   );
 };

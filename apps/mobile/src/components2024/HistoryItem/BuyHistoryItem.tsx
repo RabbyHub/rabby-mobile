@@ -39,12 +39,12 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
               dex: data?.service_provider?.name,
             })}
           </Text>
-          <ArrowRightCC
+          {/* <ArrowRightCC
             style={styles.arrowIcon}
             width={14}
             height={14}
             color={colors2024['neutral-secondary']}
-          />
+          /> */}
         </View>
       }
       isPending={isPending}

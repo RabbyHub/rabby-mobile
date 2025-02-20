@@ -28,6 +28,7 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  BuyHistoryItem,
   TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -73,6 +74,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
+import { BuyItemEntity } from '@/databases/entities/buyItem';
 
 const PAGE_COUNT = 200;
 
@@ -83,6 +85,8 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   key: string;
   account?: KeyringAccountWithAlias;
+  isLocalBuy?: boolean;
+  buyDetails?: BuyItemEntity & BuyHistoryItem;
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
@@ -160,25 +164,33 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (count?: number) => {
-      const [historyList, swapList] = await Promise.all([
+      const [historyList, swapList, buyList] = await Promise.all([
         HistoryItemEntity.getAllHistoryItemSortedByTime(addresses, count),
         SwapItemEntity.getAllHistoryItem(addresses, count),
+        BuyItemEntity.getAllHistoryItem(addresses, count),
       ]);
 
       const pinedQueue = preferenceService.getPinToken();
-      const list = historyList.map(
-        item =>
-          ({
-            ...ensureHistoryListItemFromDb(item),
-            isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
-            tokenDict,
-            projectDict,
-            isShowSuccess: historySuccessList.includes(
-              `${item.owner_addr}-${item.txHash}`,
-            ),
-          } as HistoryDisplayItem),
-      );
+      const list = historyList.map(item => {
+        const localBuyItem = buyList.find(
+          e =>
+            e.receive_tx_id === item.txHash &&
+            e.receive_chain_id === item.chain,
+        );
+        return {
+          ...ensureHistoryListItemFromDb(item),
+          isLocalBuy: !!localBuyItem,
+          buyDetails: localBuyItem,
+          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
+          tokenDict,
+          projectDict,
+          isShowSuccess: historySuccessList.includes(
+            `${item.owner_addr}-${item.txHash}`,
+          ),
+        } as HistoryDisplayItem;
+      });
+
       setDbData(list);
       return list;
     };
@@ -219,6 +231,8 @@ function History({
 
       // just for single token history
       const swapList = await SwapItemEntity.getAllHistoryItem(addresses);
+      const buyList = await BuyItemEntity.getAllHistoryItem(addresses);
+
       const queue = new PQueue({
         interval: 2000,
         intervalCap: 10,
@@ -250,14 +264,25 @@ function History({
           }
           lastMap.current[addr] = result.last || 0;
           // const pinedQueue = preferenceService.getPinToken();
+
           list.push(
-            ...result.list.map(item => ({
-              ...item,
-              isLocalSwap: swapList.some(e => e.tx_id === item.id),
-              account,
-              // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
-            })),
+            ...result.list.map(item => {
+              const localBuyItem = buyList.find(
+                e =>
+                  e.receive_tx_id === item.id &&
+                  e.receive_chain_id === item.chain,
+              );
+              return {
+                ...item,
+                isLocalBuy: !!localBuyItem,
+                buyDetails: localBuyItem as unknown as any,
+                isLocalSwap: swapList.some(e => e.tx_id === item.id),
+                account,
+                // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
+              };
+            }),
           );
+          console.log('list result', list[0]);
         });
       }
       if (!isReady.current) {

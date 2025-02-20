@@ -4,7 +4,7 @@ import {
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { BackHandler, ColorSchemeName } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -71,6 +71,7 @@ import {
   NFTDetailScreen,
   DeFiDetailScreen,
 } from '@/screens/index.eager';
+import getLinkingConfig from './LinkingConfig';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -256,6 +257,8 @@ export default function AppNavigation({
     ) && routeNameRef.current === RootNames.Unlock;
   // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
 
+  const linking = useMemo(() => getLinkingConfig(), []);
+
   return (
     <AutoLockView.ForAppNav
       style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
@@ -265,6 +268,7 @@ export default function AppNavigation({
       {/* <GlobalAccountSwitcherStub /> */}
 
       <NavigationContainer
+        linking={linking}
         ref={navigationRef}
         // key={userId}
         onReady={onReady}
