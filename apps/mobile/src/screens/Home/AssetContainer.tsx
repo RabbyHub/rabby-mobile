@@ -525,6 +525,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
+    if (!currentAccount?.address) {
+      return;
+    }
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
@@ -533,12 +536,19 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     );
   };
 
-  const handleOnBuy = () => {
+  const handleOnBuy = async () => {
     trigger('impactLight', {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    // TODO: buy route
+    if (!currentAccount?.address) {
+      return;
+    }
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.MultiBuy,
+      params: {},
+    });
   };
 
   const renderItem = (_type, _data) => {
