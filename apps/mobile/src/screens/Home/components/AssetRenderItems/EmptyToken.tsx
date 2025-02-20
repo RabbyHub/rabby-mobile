@@ -69,7 +69,9 @@ const getStyle = createGetStyles2024(ctx => ({
     width: 358,
     height: TOKEN_EMPTY_ROW_HIGHT,
     borderRadius: 24,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     paddingHorizontal: 14.5,
     alignItems: 'center',
   },
