@@ -33,7 +33,7 @@ export const AssestAllHeader = memo(
     const handlePress = (key: AsssetKey) => {
       if (!hasDefi && key === 'defi') {
         setShowDefiTip(true);
-        delayRemoveTips();
+        // delayRemoveTips();
         return;
       }
       if (!hasNft && key === 'nft') {
@@ -98,6 +98,7 @@ export const AssestAllHeader = memo(
         <Tooltip
           {...TOOLTIP_CONFIG}
           visible={showDefiTip}
+          overlayColor="tranparent"
           popover={
             <Text style={styles.tooltipText}>
               {t('page.singleHome.sectionHeader.NoData', {
