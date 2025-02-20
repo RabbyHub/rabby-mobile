@@ -102,7 +102,7 @@ export const GnosisTransactionItem = ({
         to: data.to,
         data: data.data || '0x',
         value: `0x${Number(data.value).toString(16)}`,
-        nonce: intToHex(data.nonce),
+        nonce: intToHex(+data.nonce),
         gasPrice: '0x0',
         gas: '0x0',
       },
@@ -125,7 +125,7 @@ export const GnosisTransactionItem = ({
         to: data.to,
         data: data.data || '0x',
         value: `0x${Number(data.value).toString(16)}`,
-        nonce: intToHex(data.nonce),
+        nonce: intToHex(+data.nonce),
         safeTxGas: data.safeTxGas,
         gasPrice: Number(data.gasPrice),
         baseGas: data.baseGas,
@@ -192,7 +192,7 @@ export const GnosisTransactionItem = ({
         to: toChecksumAddress(data.safe),
         data: '0x',
         value: '0x',
-        nonce: intToHex(data.nonce),
+        nonce: intToHex(+data.nonce),
         safeTxGas: 0,
         gasPrice: '0',
         baseGas: 0,
@@ -215,7 +215,7 @@ export const GnosisTransactionItem = ({
   const isDisabled = useMemo(() => {
     return (
       data.confirmations.length < safeInfo.threshold ||
-      data.nonce !== safeInfo.nonce
+      +data.nonce !== +safeInfo.nonce
     );
   }, [data, safeInfo]);
 

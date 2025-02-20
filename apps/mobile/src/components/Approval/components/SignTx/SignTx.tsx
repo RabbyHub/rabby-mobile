@@ -1080,8 +1080,10 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       networkId,
       safeInfo.nonce,
     );
-    const maxNonceTx = maxBy(pendingTxs.results, item => item.nonce);
-    let recommendSafeNonce = maxNonceTx ? maxNonceTx.nonce + 1 : safeInfo.nonce;
+    const maxNonceTx = maxBy(pendingTxs.results, item => +item.nonce);
+    let recommendSafeNonce = maxNonceTx
+      ? +maxNonceTx.nonce + 1
+      : +safeInfo.nonce;
 
     setSafeInfo(safeInfo);
     setRecommendNonce(`0x${recommendSafeNonce.toString(16)}`);
