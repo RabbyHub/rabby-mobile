@@ -363,9 +363,8 @@ function HistoryDetailScreen(): JSX.Element {
   }, [fetchApproveAllowance, formatType]);
 
   const onOpenTxId = useCallback(
-    (txHash?: string, address?: string) => {
-      const info =
-        typeof data.chain === 'string' ? getChain(data.chain) : data.chain;
+    (txHash?: string, address?: string, chain?: string) => {
+      const info = getChain(chain || data.chain);
 
       if (info?.scanLink) {
         address
@@ -429,6 +428,111 @@ function HistoryDetailScreen(): JSX.Element {
       onOpenTxId,
     ],
   );
+
+  const BridgeAddItem = useMemo(() => {
+    const fromChainItem = getChain(data?.bridgeExtraInfo?.from_chain);
+    const toChainItem = getChain(data?.bridgeExtraInfo?.to_chain);
+    return (
+      <>
+        <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.bridgeFrom')}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            <ChainIconImage
+              size={16}
+              chainServerId={data?.bridgeExtraInfo?.from_chain}
+            />
+            <Text style={styles.itemContentText}>{fromChainItem?.name}</Text>
+          </View>
+        </View>
+        <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.bridgeTo')}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            <ChainIconImage
+              size={16}
+              chainServerId={data?.bridgeExtraInfo?.to_chain}
+            />
+            <Text style={styles.itemContentText}>{toChainItem?.name}</Text>
+          </View>
+        </View>
+        <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.sourceHash')}
+          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              onOpenTxId(
+                data.bridgeExtraInfo?.from_tx_id || '',
+                '',
+                data?.bridgeExtraInfo?.from_chain,
+              )
+            }
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            <Text style={[styles.itemContentText]}>
+              {ellipsisAddress(data.bridgeExtraInfo?.from_tx_id || '')}
+            </Text>
+            <RcIconJumpCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-foot']}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.destinationHash')}
+          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              onOpenTxId(
+                data.bridgeExtraInfo?.to_tx_id || '',
+                '',
+                data?.bridgeExtraInfo?.to_chain,
+              )
+            }
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            <Text style={[styles.itemContentText]}>
+              {ellipsisAddress(data.bridgeExtraInfo?.to_tx_id || '')}
+            </Text>
+            <RcIconJumpCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-foot']}
+            />
+          </TouchableOpacity>
+        </View>
+      </>
+    );
+  }, [
+    onOpenTxId,
+    colors2024,
+    data,
+    t,
+    styles.itemContentText,
+    styles.itemTitleText,
+    styles.detailItem,
+  ]);
 
   return (
     <NormalScreenContainer2024
@@ -530,6 +634,7 @@ function HistoryDetailScreen(): JSX.Element {
               />
             </View>
           )}
+          {data.isBridge && BridgeAddItem}
           {(formatType === HistoryItemCateType.Send ||
             formatType === HistoryItemCateType.Recieve) &&
             Boolean(toAddr) && (
@@ -546,19 +651,21 @@ function HistoryDetailScreen(): JSX.Element {
                 />
               </View>
             )}
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Chain')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 4 }}>
-              <ChainIconImage
-                size={16}
-                chainEnum={chainItem?.enum}
-                isShowRPCStatus={true}
-              />
-              <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
+          {!data.isBridge && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.Chain')}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                <ChainIconImage
+                  size={16}
+                  chainEnum={chainItem?.enum}
+                  isShowRPCStatus={true}
+                />
+                <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
+              </View>
             </View>
-          </View>
+          )}
           {Boolean(usdGasFee) && status === 1 && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
@@ -576,7 +683,7 @@ function HistoryDetailScreen(): JSX.Element {
           )}
           {!isApproveOrRevoke &&
             ProjecRenderItem(t('page.transactions.detail.InteractedContract'))}
-          {
+          {!data.isBridge && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>Hash</Text>
               <TouchableOpacity
@@ -593,7 +700,7 @@ function HistoryDetailScreen(): JSX.Element {
                 />
               </TouchableOpacity>
             </View>
-          }
+          )}
         </View>
       </ScrollView>
       <HistoryBottomBtn

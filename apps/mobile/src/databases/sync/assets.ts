@@ -3,6 +3,7 @@ import { NFTItemEntity } from '../entities/nftItem';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
 import {
+  BridgeHistory,
   ComplexProtocol,
   NFTItem,
   SwapTradeList,
@@ -19,6 +20,7 @@ import {
 import { SwapItemEntity } from '../entities/swapitem';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction } from './_task';
+import { BridgeHistoryItemEntity } from '../entities/bridgeHistoryItem';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   if (_tokens.length === 0) {
@@ -40,7 +42,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   // await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
-    taskFor: `token`,
+    taskFor: 'token',
     batchSize: 300,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
@@ -149,6 +151,63 @@ export async function syncRemoteSwapHistory(
   }
 }
 
+export async function syncRemoteBridgeHistory(
+  address: string,
+  history_list: BridgeHistory[],
+) {
+  try {
+    console.debug('syncRemoteBridgeHistory item0', history_list[0]);
+    console.debug('syncRemoteBridgeHistory item1', history_list[1]);
+    console.debug('syncRemoteBridgeHistory length', history_list.length);
+
+    const historyItems = history_list.map(raw => {
+      const item = new BridgeHistoryItemEntity();
+      BridgeHistoryItemEntity.fillEntity(item, address, raw);
+
+      return item;
+    });
+    await prepareAppDataSource();
+    // // leave here for debug save
+    // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
+    //   console.error('TokenItemEntity.save err', err);
+    //   throw err;
+    // });
+    console.debug('syncRemoteBridgeHistory batchSaveWithPQueueAndTransaction');
+    await batchSaveWithPQueueAndTransaction(
+      BridgeHistoryItemEntity,
+      historyItems,
+      {
+        owner_addr: address,
+        taskFor: 'bridge-history',
+        batchSize: 100,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+        printLog: true,
+      },
+    )
+      .then(({ taskSignal, taskKey }) => {
+        if (taskSignal.aborted) {
+          console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+        } else {
+          console.debug(`[${taskKey}] batch upsert tasks created`);
+        }
+      })
+      .catch(error => {
+        console.error('Batch upsert failed:', error);
+      });
+
+    console.debug(
+      'syncRemoteBridgeHistory batchSaveWithPQueueAndTransaction done',
+    );
+    return {
+      address,
+      history_list: history_list,
+    };
+  } catch (e) {
+    console.error('syncRemoteBridgeHistory', e);
+  }
+}
+
 export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
   if (_nfts.length === 0) {
     _nfts.push(EMPTY_NFT_ITEM);
@@ -204,7 +263,7 @@ export async function syncRemotePortocols(
   await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
     owner_addr: address,
-    taskFor: `protocols`,
+    taskFor: 'protocols',
     batchSize: 200,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
@@ -263,7 +322,7 @@ export async function syncBalance(
   await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
-    taskFor: `balance`,
+    taskFor: 'balance',
     batchSize: 100,
     concurrency: 1,
   })

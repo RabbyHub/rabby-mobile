@@ -3,7 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
 import usePrevious from 'react-use/lib/usePrevious';
-import { syncRemoteHistory, syncRemoteSwapHistory } from '../sync/assets';
+import {
+  syncRemoteBridgeHistory,
+  syncRemoteHistory,
+  syncRemoteSwapHistory,
+} from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
@@ -14,6 +18,7 @@ import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BridgeHistoryItemEntity } from '../entities/bridgeHistoryItem';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -65,6 +70,51 @@ export const useSyncHistoryDB = (
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
   } = useHistoryTokenDict();
+
+  const syncBridgeHistory = useMemoizedFn(
+    async (address: string, start_time?: number, latest_time?: number) => {
+      if (!address) {
+        return [];
+      }
+
+      const latestTime =
+        latest_time || (await BridgeHistoryItemEntity.getLatestTime(address));
+      const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
+      const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
+
+      const time = latestTime || 0;
+
+      console.log(
+        'syncBridgeHistory CUSTOM_LOGGER:=>: lastTime',
+        address,
+        time,
+        'isAddUpdate:',
+        isAddUpdate,
+      );
+      const res = await openapi.getBridgeHistoryListV2({
+        user_addr: address,
+        start_time: Math.floor(start_time || 0),
+        limit: isAddUpdate ? 10 : 100,
+      });
+
+      const lastItemTime =
+        res.history_list[res.history_list.length - 1]?.create_at || 0;
+      res.history_list = res.history_list.filter(i => i.create_at > latestTime);
+
+      console.debug(
+        'syncBridgeHistory sync data length:',
+        res.history_list.length,
+      );
+      if (res.history_list.length) {
+        runOnJS(syncRemoteBridgeHistory)(address, res.history_list);
+        if (isAddUpdate && lastItemTime > latestTime) {
+          console.debug('syncBridgeHistory sync data need to loop:', address);
+          syncBridgeHistory(address, lastItemTime, latestTime);
+        }
+        return res.history_list;
+      }
+    },
+  );
 
   const syncSwapHistory = useMemoizedFn(
     async (address: string, start_time?: number, latest_time?: number) => {
@@ -341,6 +391,7 @@ export const useSyncHistoryDB = (
                 await Promise.all([
                   syncUserAllHistory(address),
                   syncSwapHistory(address),
+                  syncBridgeHistory(address),
                 ]);
               } catch (error) {
                 console.error(
@@ -368,6 +419,7 @@ export const useSyncHistoryDB = (
     Promise.all([
       syncUserAllHistory(address.toLowerCase()),
       syncSwapHistory(address.toLowerCase()),
+      syncBridgeHistory(address.toLowerCase()),
     ]);
   });
 

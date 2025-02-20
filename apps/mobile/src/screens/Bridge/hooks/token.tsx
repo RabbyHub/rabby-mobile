@@ -158,6 +158,8 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     SelectedBridgeQuote | undefined
   >();
 
+  console.log('fromToken', fromToken?.id);
+
   const expiredTimer = useRef<NodeJS.Timeout>();
 
   const inSufficient = useMemo(
@@ -257,20 +259,33 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     | {
         chainEnum?: CHAINS_ENUM | undefined;
         tokenId?: TokenItem['id'];
+        toTokenId?: TokenItem['id'];
+        toChainEnum?: CHAINS_ENUM | undefined;
       }
     | undefined;
 
   useMount(() => {
+    console.log('navState', navState);
     if (!navState?.chainEnum || !navState?.tokenId) {
       return;
     }
 
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
+    const toChainItem = findChainByEnum(navState?.toChainEnum, {
+      fallback: true,
+    });
     switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
     setFromToken({
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.tokenId,
     });
+    navState?.toChainEnum &&
+      switchToChain(navState?.toChainEnum || CHAINS_ENUM.ETH, false);
+    navState?.toTokenId &&
+      setToToken({
+        ...getChainDefaultToken(toChainItem?.enum || CHAINS_ENUM.ETH),
+        id: navState?.toTokenId,
+      });
   });
 
   const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch

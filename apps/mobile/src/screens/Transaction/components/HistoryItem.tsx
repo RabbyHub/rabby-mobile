@@ -64,12 +64,23 @@ export const HistoryItem = React.memo(
       if (isDoubleToken) {
         const send = data.sends[0] || {};
         const receive = data.receives[0] || {};
+        const isBridge = cate === HistoryItemCateType.Bridge;
         const sendToken =
           tokenDict[send?.token_id] ||
-          tokenDict[fetchHistoryTokenUUId(send.token_id, data.chain)];
+          tokenDict[
+            fetchHistoryTokenUUId(
+              send.token_id,
+              isBridge ? data.bridgeExtraInfo?.from_chain || '' : data.chain,
+            )
+          ];
         const receiveToken =
           tokenDict[receive?.token_id] ||
-          tokenDict[fetchHistoryTokenUUId(receive.token_id, data.chain)];
+          tokenDict[
+            fetchHistoryTokenUUId(
+              receive.token_id,
+              isBridge ? data.bridgeExtraInfo?.to_chain || '' : data.chain,
+            )
+          ];
 
         return {
           formatToken: [sendToken, receiveToken],
@@ -138,7 +149,10 @@ export const HistoryItem = React.memo(
       switch (formatType) {
         case HistoryItemCateType.Swap:
           return chainItem?.name || t('page.transactions.detail.Unknown');
-
+        case HistoryItemCateType.Bridge:
+          const fromChainItem = getChain(data.bridgeExtraInfo?.from_chain);
+          const toChainItem = getChain(data.bridgeExtraInfo?.to_chain);
+          return `${fromChainItem?.name}->${toChainItem?.name}`;
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
           const isSend = formatType === HistoryItemCateType.Send;
@@ -295,7 +309,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    // width: '50%',
+    width: '50%',
   },
   textBox: {
     flexDirection: 'column',

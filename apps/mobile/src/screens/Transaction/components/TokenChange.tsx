@@ -47,7 +47,13 @@ const TxChangeItem = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const tokenId = item.token_id;
-  const tokenUUID = `${data.chain}_token:${tokenId}`;
+  const isBridge = data.isBridge;
+  const chain = isBridge
+    ? isSend
+      ? data.bridgeExtraInfo?.from_chain
+      : data.bridgeExtraInfo?.to_chain
+    : data.chain;
+  const tokenUUID = `${chain}_token:${tokenId}`;
   const token = tokenDict[tokenId] || tokenDict[tokenUUID];
   const isNft = item.token_id?.length === 32;
 

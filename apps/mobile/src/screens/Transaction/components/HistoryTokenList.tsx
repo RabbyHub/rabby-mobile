@@ -227,13 +227,20 @@ export const HistoryTokenList = ({
     case HistoryItemCateType.Swap:
       const sendAmount = sends?.[0]?.amount;
       const recieveAmount = receives?.[0]?.amount;
+      const isBridge = type === HistoryItemCateType.Bridge;
       const sendToken = (tokenDict[sends?.[0]?.token_id] ||
         tokenDict[
-          fetchHistoryTokenUUId(sends?.[0]?.token_id, chain)
+          fetchHistoryTokenUUId(
+            sends?.[0]?.token_id,
+            isBridge ? data.bridgeExtraInfo?.from_chain || '' : chain,
+          )
         ]) as TokenItem;
       const recieveToken = (tokenDict[receives?.[0]?.token_id] ||
         tokenDict[
-          fetchHistoryTokenUUId(receives?.[0]?.token_id, chain)
+          fetchHistoryTokenUUId(
+            receives?.[0]?.token_id,
+            isBridge ? data.bridgeExtraInfo?.to_chain || '' : chain,
+          )
         ]) as TokenItem;
       return (
         <View style={[styles.doubleBox]}>

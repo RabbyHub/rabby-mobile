@@ -11,6 +11,8 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
+import { BridgeHistoryItemEntity } from '@/databases/entities/bridgeHistoryItem';
+import { stat } from 'fs';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
@@ -37,6 +39,10 @@ export function getHistoryItemType(
     const isSwap = data.isLocalSwap; // need filter in swap history
     if (isSwap) {
       return HistoryItemCateType.Swap;
+    }
+
+    if (data.isBridge) {
+      return HistoryItemCateType.Bridge;
     }
 
     return HistoryItemCateType.UnKnown;
@@ -88,6 +94,75 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
     key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
     address: item.owner_addr,
 
+    cateDict: {}, // no use
+    debt_liquidated: null,
+  };
+};
+
+const formatStatus = (status: BridgeHistoryItemEntity['status']) => {
+  switch (status) {
+    case 'completed':
+      return 1;
+    case 'failed':
+      return 0;
+    case 'pending':
+      return 99;
+    default:
+      return status;
+  }
+};
+
+export const ensureHistoryListInBridge = (item: BridgeHistoryItemEntity) => {
+  return {
+    ...item,
+    time_at: item.create_at,
+    receives: [
+      {
+        amount: item.to_token_amount,
+        from_addr: item.from_tx_id,
+        token_id: item.to_token_id,
+      },
+    ],
+    sends: [
+      {
+        amount: item.from_token_amount,
+        to_addr: item.from_tx_id,
+        token_id: item.from_token_id,
+      },
+    ],
+    bridgeExtraInfo: {
+      from_chain: item.from_chain,
+      from_tx_id: item.from_tx_id,
+      to_chain: item.to_chain,
+      to_tx_id: item.to_tx_id,
+    },
+    id: item.from_tx_id,
+    key: `${item.owner_addr}_${item.chain}_${item.from_tx_id}`,
+    address: item.owner_addr,
+    status: formatStatus(item.status),
+    tx: {
+      id: item.from_tx_id,
+      status: formatStatus(item.status),
+      from_addr: item.owner_addr,
+      to_addr: '',
+      usd_gas_fee: 0,
+      eth_gas_fee: 0,
+
+      name: '', // no use
+      params: [],
+      value: 0,
+      message: '',
+    },
+    is_scam: false,
+    cate_id: '',
+    project_id: '',
+    projectDict: {},
+    token_approve: {
+      token_id: '',
+      spender: '',
+      value: 0,
+    },
+    other_addr: '',
     cateDict: {}, // no use
     debt_liquidated: null,
   };

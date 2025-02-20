@@ -12,6 +12,7 @@ export type SyncTaskOptions = {
     | 'token'
     | 'all-history'
     | 'swap-history'
+    | 'bridge-history'
     | 'nfts'
     | 'protocols'
     | 'balance';

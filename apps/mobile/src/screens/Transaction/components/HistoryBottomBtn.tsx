@@ -212,10 +212,46 @@ export const HistoryBottomBtn = ({
           />
         </View>
       );
+    case HistoryItemCateType.Bridge:
+      return (
+        <View style={btnContainerViewStyle}>
+          <Button
+            buttonStyle={buttonStyle}
+            onPress={() => {
+              const fromChainItem = !data.bridgeExtraInfo?.from_chain
+                ? null
+                : findChainByServerID(data.bridgeExtraInfo?.from_chain);
+              const toChainItem = !data.bridgeExtraInfo?.to_chain
+                ? null
+                : findChainByServerID(data.bridgeExtraInfo?.to_chain);
+              if (!isForMultipleAdderss) {
+                switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  currentAccount,
+                );
+              }
+              navigation.dispatch(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: isForMultipleAdderss
+                    ? RootNames.MultiBridge
+                    : RootNames.Bridge,
+                  params: {
+                    bridgeAgain: true,
+                    tokenId: sends[0]?.token_id,
+                    chainEnum: fromChainItem?.enum ?? CHAINS_ENUM.ETH,
+                    toTokenId: receives[0]?.token_id,
+                    toChainEnum: toChainItem?.enum ?? CHAINS_ENUM.ETH,
+                  },
+                }),
+              );
+            }}
+            title={t('page.transactions.detail.BridgeAgain')}
+          />
+        </View>
+      );
     // todo
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
-    case HistoryItemCateType.Bridge:
     case HistoryItemCateType.UnKnown:
     default:
       return null;

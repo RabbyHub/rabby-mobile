@@ -9,6 +9,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
+import { prepareAppDataSource } from '../imports';
 
 @Entity('cache_bridgehistoryitem')
 export class BridgeHistoryItemEntity extends EntityAddressAssetBase {
@@ -74,14 +75,14 @@ export class BridgeHistoryItemEntity extends EntityAddressAssetBase {
     e.owner_addr = owner_addr;
     e.create_at = input.create_at;
     e.status = input.status;
-    e.from_tx_id = input.from_tx.tx_id;
-    e.to_tx_id = input.to_tx.tx_id;
-    e.from_chain = input.from_token.chain;
-    e.to_chain = input.to_token.chain;
-    e.from_token_id = input.from_token.id;
-    e.to_token_id = input.to_token.id;
-    e.from_token_amount = input.actual.pay_token_amount;
-    e.to_token_amount = input.actual.receive_token_amount;
+    e.from_tx_id = input.from_tx?.tx_id || '';
+    e.to_tx_id = input.to_tx?.tx_id || '';
+    e.from_chain = input.from_token?.chain || '';
+    e.to_chain = input.to_token?.chain || '';
+    e.from_token_id = input.from_token?.id || '';
+    e.to_token_id = input.to_token?.id || '';
+    e.from_token_amount = input.actual?.pay_token_amount || 0;
+    e.to_token_amount = input.actual?.receive_token_amount || 0;
 
     e.tx_id = e.from_tx_id + '-' + e.to_tx_id;
     e.chain = e.from_chain + '-' + e.to_chain;

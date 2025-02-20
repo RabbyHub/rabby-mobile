@@ -3,6 +3,7 @@ import { DataSourceOptions } from 'typeorm/browser';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { HistoryItemEntity } from './entities/historyItem';
+import { BridgeHistoryItemEntity } from './entities/bridgeHistoryItem';
 import { PortocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
@@ -38,6 +39,7 @@ const dbOptions: DataSourceOptions = {
     NFTItemEntity,
     HistoryItemEntity,
     SwapItemEntity,
+    BridgeHistoryItemEntity,
     BalanceEntity,
     PortocolItemEntity,
   ],

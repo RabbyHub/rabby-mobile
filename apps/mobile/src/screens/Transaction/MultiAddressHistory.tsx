@@ -65,6 +65,7 @@ import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
+  ensureHistoryListInBridge,
   ensureHistoryListItemFromDb,
   judgeIsSmallUsdTx,
   judgeIsSmallUsdTxInApi,
@@ -73,6 +74,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
+import { BridgeHistoryItemEntity } from '@/databases/entities/bridgeHistoryItem';
 
 const PAGE_COUNT = 200;
 
@@ -86,6 +88,14 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
+  isBridge?: boolean;
+  bridgeExtraInfo?: {
+    // juset for bridge
+    from_chain: string;
+    to_chain: string;
+    from_tx_id: string;
+    to_tx_id: string;
+  };
 }
 
 interface IFetchHistory {
@@ -160,15 +170,39 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (count?: number) => {
-      const [historyList, swapList] = await Promise.all([
+      const [historyList, swapList, bridgeList] = await Promise.all([
         HistoryItemEntity.getAllHistoryItemSortedByTime(addresses, count),
         SwapItemEntity.getAllHistoryItem(addresses, count),
+        BridgeHistoryItemEntity.getAllHistoryItem(addresses, count),
       ]);
 
+      console.log(
+        'batchFetchDataV2 bridgeList',
+        bridgeList.length,
+        bridgeList[0],
+      );
+
       const pinedQueue = preferenceService.getPinToken();
-      const list = historyList.map(
-        item =>
-          ({
+      const newList = [] as HistoryDisplayItem[];
+      historyList.forEach(item => {
+        const BridgeItemTx = bridgeList.find(
+          e => e.from_tx_id === item.txHash || e.to_tx_id === item.txHash,
+        );
+
+        if (BridgeItemTx) {
+          const isFromTx = BridgeItemTx.from_tx_id === item.txHash;
+          isFromTx && // just show from tx item show to bridge history
+            newList.push({
+              ...ensureHistoryListInBridge(BridgeItemTx),
+              isBridge: true,
+              tokenDict,
+              projectDict,
+              isShowSuccess: historySuccessList.includes(
+                `${item.owner_addr}-${item.txHash}`,
+              ),
+            } as HistoryDisplayItem);
+        } else {
+          newList.push({
             ...ensureHistoryListItemFromDb(item),
             isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
             isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
@@ -177,10 +211,11 @@ function History({
             isShowSuccess: historySuccessList.includes(
               `${item.owner_addr}-${item.txHash}`,
             ),
-          } as HistoryDisplayItem),
-      );
-      setDbData(list);
-      return list;
+          } as HistoryDisplayItem);
+        }
+      });
+      setDbData(newList);
+      return newList;
     };
     if (!dbData.length) {
       // first init 20 count
