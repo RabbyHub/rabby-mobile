@@ -141,6 +141,19 @@ else
   apk_url=""
 fi
 
+print_manual_upload_sentry_sourcemap() {
+  if [ ! -z $SENTRY_DISABLE_AUTO_UPLOAD ]; then
+    echo "[deploy-android] manual upload sourcemap to sentry:"
+    echo "[deploy-android]
+      ./node_modules/@sentry/cli/bin/sentry-cli react-native gradle \
+      --bundle "app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle" \
+      --sourcemap "app/build/generated/sourcemaps/react/release/index.android.bundle.map" \
+      --release com.debank.rabbymobile@${android_version_name}+${android_version_code} --dist ${android_version_code} --org <org_name> --project <proj_name>
+    "
+  else
+    echo "[deploy-android] will auto upload sourcemap to sentry."
+  fi
+}
 
 echo ""
 echo "[deploy-android] start sync..."
@@ -184,6 +197,8 @@ if [ -z $CI ]; then
   echo "[deploy-android] force fresh CDN:"
   echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android*'\`"
   echo ""
+
+  print_manual_upload_sentry_sourcemap;
 fi
 
 echo "[deploy-android] finish sync."
