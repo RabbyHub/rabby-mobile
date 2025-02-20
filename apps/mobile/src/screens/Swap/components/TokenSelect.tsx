@@ -23,23 +23,16 @@ import {
 } from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useSwapRecentToTokens } from '../hooks/recent';
 import { preferenceService } from '@/core/services';
-import {
-  ensureAbstractPortfolioToken,
-  tagTokenList,
-} from '@/screens/Home/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
-import LinearGradient from 'react-native-linear-gradient';
 import { Account } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
@@ -179,7 +172,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const {
       isLoading: isRemoteSearchLoading,
-      list: remoteSearchedTokenByQuery,
+      list: _remoteSearchedTokenByQuery,
     } = useSearchToken(
       {
         address: currentAccount?.address || '',
@@ -189,6 +182,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       {
         withBalance: isSwapType ? false : true,
       },
+    );
+
+    const remoteSearchedTokenByQuery = useMemo(
+      () => _remoteSearchedTokenByQuery.map(abstractTokenToTokenItem),
+      [_remoteSearchedTokenByQuery],
     );
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
@@ -257,7 +255,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     );
 
     const foldTokensList = useMemo(() => {
-      if (!isFromModalType) {
+      if (!isFromModalType || queryConds.keyword) {
         return [];
       }
 
@@ -272,6 +270,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isExcludedTokens,
       isFromModalType,
       queryConds.chainServerId,
+      queryConds.keyword,
     ]);
 
     const isListLoading = queryConds.keyword

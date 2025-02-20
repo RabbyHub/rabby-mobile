@@ -137,6 +137,10 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     useToken('from');
   const [toChain, toToken, setToToken, switchToChain] = useToken('to');
 
+  if (fromChain && toChain && fromChain === toChain) {
+    switchToChain();
+  }
+
   const [amount, setAmount] = useState('');
 
   const slippageObj = useBridgeSlippage();
