@@ -127,6 +127,7 @@ export type TaggedPortfolioToken<
   _isPined: boolean;
   _isFold: boolean;
   _isManualFold: boolean;
+  _isMiniFold: boolean;
   _isExcludeBalance: boolean;
   _pinIndex: number;
 };
@@ -144,21 +145,24 @@ export function tagTokenItem<
     x => x.chainId === i.chain && x.tokenId === i._tokenId,
   );
   const isPin = pinIndex !== -1;
-  const isFold = (() => {
+  const [isFold, isMiniFold] = (() => {
     if (
       foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
     ) {
-      return true;
+      return [true, false];
     }
     if (
       unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
     ) {
-      return false;
+      return [false, false];
     }
-    if (!i.is_core || (i._usdValue || 0) < 1) {
-      return true;
+    if (!i.is_core) {
+      return [true, false];
     }
-    return false;
+    if ((i._usdValue || 0) < 1) {
+      return [true, true];
+    }
+    return [false, false];
   })();
 
   const isExcludeBalance = (() => {
@@ -191,6 +195,7 @@ export function tagTokenItem<
     _isPined: isPin,
     _isFold: isFold,
     _isManualFold: isManualFold,
+    _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,
     _pinIndex: pinIndex,
   };
