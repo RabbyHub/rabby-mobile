@@ -129,7 +129,7 @@ export const BuyToken = ({
             style={styles.skeleton}
           />
         ) : (
-          <Text style={styles.usdValue}>
+          <Text style={[styles.usdValue, !!value && styles.usdValueBold]}>
             {formatUsdValue(
               new BigNumber(value || 0).times(token?.price || 0).toString(10),
             )}
@@ -213,6 +213,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 18,
+  },
+  usdValueBold: {
+    fontWeight: '700',
   },
   toastText: {
     color: colors2024['neutral-title2'],

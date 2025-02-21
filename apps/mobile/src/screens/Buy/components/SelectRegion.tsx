@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import {
   PropsWithChildren,
@@ -10,8 +10,8 @@ import {
   useState,
 } from 'react';
 import {
+  BottomSheetFlatList,
   BottomSheetModalProps,
-  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components';
 import React from 'react';
@@ -21,6 +21,7 @@ import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 
 type TRegionList = Awaited<
   ReturnType<typeof openapi.getBuySupportedCountryList>
@@ -104,22 +105,36 @@ const SelectRegionInner = ({
           onChange: e => setQuery(e.nativeEvent.text),
           onFocus: handleInputFocus,
           onBlur: handleInputBlur,
-          placeholder: 'Search Token',
+          placeholder: t('page.buy.searchRegionPlaceholder'),
           placeholderTextColor: colors2024['neutral-info'],
         }}
       />
 
-      <BottomSheetScrollView style={[styles.list, { marginBottom: bottom }]}>
-        {displayList?.map(item => (
+      <BottomSheetFlatList
+        contentContainerStyle={styles.flatListContentContainerStyle}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={() => Keyboard.dismiss()}
+        data={displayList}
+        style={styles.flatList}
+        ListEmptyComponent={
+          <NotMatchedHolder
+            style={{
+              height: 400,
+            }}
+            text={t('page.buy.regionBottomSheet.noRegionFound')}
+          />
+        }
+        renderItem={({ item }) => (
           <TouchableOpacity
             key={item.id}
             style={styles.item}
             onPress={() => onSelect(item.id)}>
-            <Image source={{ uri: item.image_url }} width={24} height={24} />
+            <Image source={{ uri: item.image_url }} style={styles.flagLogo} />
             <Text style={styles.itemText}>{item.name}</Text>
           </TouchableOpacity>
-        ))}
-      </BottomSheetScrollView>
+        )}
+        keyExtractor={item => item.id}
+      />
     </View>
   );
 };
@@ -156,7 +171,7 @@ export const SelectRegion = ({
         style={styles.container}>
         <View style={styles.inner}>
           {regionLogo ? (
-            <Image width={16} height={16} source={{ uri: regionLogo }} />
+            <Image source={{ uri: regionLogo }} style={styles.flagLogo} />
           ) : null}
           <RcIconSwapBottomArrow />
         </View>
@@ -258,5 +273,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 20,
+  },
+  flagLogo: {
+    width: 20,
+    height: 20,
+    borderRadius: 2,
+  },
+
+  flatListContentContainerStyle: {
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
+    overflow: 'hidden',
+    paddingHorizontal: 20,
+  },
+  flatList: {
+    flexShrink: 1,
+    // paddingHorizontal: 20,
   },
 }));

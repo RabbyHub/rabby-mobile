@@ -103,6 +103,7 @@ const themeColorsNext2024 = {
     'orange-light-4': 'rgba(255, 159, 10, 0.14)',
 
     'green-default': 'rgba(88, 198, 105, 1)',
+    'green-default-light': 'rgba(117, 212, 101, 0.70',
     'green-light-1': 'rgba(88, 198, 105, 0.8)',
     'green-light-2': 'rgba(88, 198, 105, 0.4)',
     'green-disable': 'rgba(88, 198, 105, 0.27)',
@@ -157,6 +158,7 @@ const themeColorsNext2024 = {
     'orange-light-4': 'rgba(255, 159, 10, 0.14)',
 
     'green-default': 'rgba(88, 198, 105, 1)',
+    'green-default-light': 'rgba(117, 212, 101, 0.70',
     'green-light-1': 'rgba(88, 198, 105, 0.8)',
     'green-light-2': 'rgba(88, 198, 105, 0.4)',
     'green-disable': 'rgba(88, 198, 105, 0.27)',

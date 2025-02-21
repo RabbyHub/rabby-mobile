@@ -20,7 +20,6 @@ import { Button } from '@/components2024/Button';
 import { colord } from 'colord';
 import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
-import { openInAppBrowser } from '@/core/utils/linking';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { BuyToIcon } from './components/ToIcon';
@@ -29,7 +28,7 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { RootNames } from '@/constant/layout';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
-const floatBottom_height = 140;
+const floatBottom_height = 112;
 
 export const BuyScreen = ({
   isForMultipleAdderss,
@@ -92,7 +91,6 @@ export const BuyScreen = ({
             isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy
           }`,
         });
-        // openInAppBrowser(data.url);
         await InAppBrowser.isAvailable();
         InAppBrowser.close();
         const result = await InAppBrowser.open(data.url, {
@@ -204,6 +202,7 @@ export const BuyScreen = ({
             title={t('page.buy.toBuy')}
             onPress={toBuy}
             loading={getUrlLoading}
+            containerStyle={styles.btnContainerStyle}
           />
         </LinearGradient>
       ) : null}
@@ -333,6 +332,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     bottom: 0,
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
   bottom: {
     height: floatBottom_height,
@@ -342,5 +342,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
+  },
+  btnContainerStyle: {
+    width: '100%',
   },
 }));

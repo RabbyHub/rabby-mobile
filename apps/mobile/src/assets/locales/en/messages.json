@@ -1592,9 +1592,13 @@
       "history": "Purchased History",
       "noQuotePlaceholder": "No Quote",
       "noQuote": "No quotes found: Try enter a higher value.",
+      "searchRegionPlaceholder": "Search for region",
+      "paymentMethod": "Payment Method",
+      "paymentProviderTips": "This provider supports the following payment methods:",
       "regionBottomSheet": {
         "title": "Select your region",
-        "searchPlaceholder": "Search fiat currency"
+        "searchPlaceholder": "Search fiat currency",
+        "noRegionFound": "No region found"
       },
       "quote": {
         "title": "Quotes For you",

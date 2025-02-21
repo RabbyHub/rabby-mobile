@@ -12,9 +12,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions } from '@react-navigation/native';
 
-import IconBuyBgLeft from '@/assets2024/icons/home/IconBuyBgLeft.svg';
-import IconBuyBgRight from '@/assets2024/icons/home/IconBuyBgRight.svg';
-
 export const FundYourWallet = () => {
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
@@ -69,20 +66,14 @@ export const FundYourWallet = () => {
   );
   return (
     <View style={styles.noAssetsContainer}>
-      <IconBuyBgLeft style={styles.bgLeft} />
-      <IconBuyBgRight style={styles.bgRight} />
       <Image
-        source={require('@/assets2024/icons/home/buy-bg-b1.png')}
-        style={styles.bgb1}
-      />
-      <Image
-        source={require('@/assets2024/icons/home/buy-bg-b2.png')}
+        source={require('@/assets2024/icons/home/buy-bg.png')}
         style={styles.bgb2}
       />
       <Text style={styles.noAssetsTitle}>
         {t('page.nextComponent.multiAddressHome.fundYourWallet')}
       </Text>
-      <View style={{ gap: 12 }}>
+      <View style={{ gap: 12, paddingHorizontal: 16 }}>
         {noAssetsList.map(item => {
           return (
             <TouchableOpacity
@@ -109,25 +100,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    paddingHorizontal: 16,
-    paddingBottom: 50,
-    borderRadius: 50,
+    borderRadius: 24,
     overflow: 'hidden',
     marginHorizontal: 16,
+    height: 488,
   },
-  bgLeft: { position: 'absolute', top: 0, left: 0 },
-  bgRight: { position: 'absolute', top: 35, right: 0 },
-  bgb1: {
-    position: 'absolute',
-    top: 52,
-    left: 16,
-    transform: [{ scale: 0.5 }],
-  },
+
   bgb2: {
     position: 'absolute',
-    top: 76,
-    right: 34,
-    transform: [{ scale: 0.5 }],
+    width: '100%',
+    height: '100%',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   noAssetsTitle: {
     color: colors2024['neutral-title-1'],
@@ -141,17 +127,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   noAssetsItem: {
+    height: 98,
     paddingHorizontal: 16,
-    paddingVertical: 26,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   noAssetsIconWrapper: {
     width: 28,

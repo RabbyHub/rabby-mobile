@@ -5,19 +5,10 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Keyboard,
-  StyleSheet,
-} from 'react-native';
-import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
-import { uniqBy } from 'lodash';
+import { View, Text, TouchableOpacity, Keyboard } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
-import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
+import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { useCurrentAccount } from '@/hooks/account';
 import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
@@ -36,41 +27,24 @@ import BigNumber from 'bignumber.js';
 import { toast } from '@/components2024/Toast';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts } from '@/constant/layout';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
 import CheckedIcon from '@/assets2024/icons/common/check.svg';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface TokenSelectProps {
   token?: TokenItem;
-  // onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
-  // excludeTokens?: TokenItem['id'][];
-  // placeholder?: string;
-  // tokenList: (TokenItem & {
-  //   currency_code: string;
-  // })[];
 }
 
-export const BuyTokenSelect = ({
-  token,
-  // onChange,
-  onTokenChange,
-}: TokenSelectProps) => {
+export const BuyTokenSelect = ({ token, onTokenChange }: TokenSelectProps) => {
   const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
   const handleCurrentTokenChange = (token: TokenItem) => {
-    // onChange && onChange('');
     onTokenChange(token);
     setTokenSelectorVisible(false);
   };
-
-  // const availableToken = useMemo(() => {
-  //   return uniqBy(tokenList, item => {
-  //     return `${item.chain}-${item.id}`;
-  //   }).filter(e => !excludeTokens.includes(e.id));
-  // }, [tokenList, excludeTokens]);
-
-  // const displayTokenList = useSortToken(availableToken);
 
   const handleTokenSelectorClose = () => {
     setTokenSelectorVisible(false);
@@ -93,7 +67,7 @@ export const BuyTokenSelect = ({
                 size={26}
                 chain={token.chain}
                 logo={token.logo_url}
-                chainSize={0}
+                chainSize={8}
               />
               <Text numberOfLines={1} style={styles.tokenSymbol}>
                 {ellipsisOverflowedText(getTokenSymbol(token), 5)}
@@ -139,6 +113,8 @@ const TokenSelectorInner = ({
   const [query, setQuery] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
+  const { bottom } = useSafeAreaInsets();
+
   const handleInputFocus = () => {
     setIsInputActive(true);
   };
@@ -167,6 +143,7 @@ const TokenSelectorInner = ({
       return (
         list?.filter(
           e =>
+            e.symbol.toLowerCase().includes(query.toLowerCase()) ||
             e.name.toLowerCase().includes(query.toLowerCase()) ||
             e.id.toLowerCase()?.includes(query.toLowerCase()),
         ) || []
@@ -292,13 +269,26 @@ const TokenSelectorInner = ({
         />
       </View>
 
+      <View style={styles.headerBox}>
+        <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
+        <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
+      </View>
+
       <BottomSheetFlatList
-        contentContainerStyle={styles.flatListContentContainerStyle}
+        contentInset={{ bottom }}
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={() => Keyboard.dismiss()}
         data={displayList}
         style={styles.flatList}
         ListHeaderComponent={ListHeader}
+        ListEmptyComponent={
+          <NotMatchedHolder
+            style={{
+              height: 400,
+            }}
+            text="No tokens"
+          />
+        }
         renderItem={Row}
         keyExtractor={item => item.id + item.chain}
       />
@@ -319,8 +309,9 @@ const TokenSelector = ({
   address: string;
   token?: TokenItem;
 }) => {
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  const { colors2024, isLight } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
 
@@ -337,10 +328,39 @@ const TokenSelector = ({
       ref={bottomRef}
       snapPoints={snapPoints}
       onDismiss={onClose}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: 'linear',
-      })}>
+      // renderBackdrop={renderBackdrop}
+      {...{
+        style: {
+          overflow: 'hidden',
+          borderRadius: 32,
+        },
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+          paddingVertical: 18,
+        },
+        backgroundStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      }}>
+      <LinearGradient
+        start={{ x: 0.5, y: 0.64 }}
+        end={{ x: 0.5, y: 1 }}
+        colors={
+          isLight
+            ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-0']]
+            : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
+        }
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: 120,
+        }}
+      />
+
       <TokenSelectorInner
         onChange={onChange}
         address={address}
@@ -370,9 +390,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
 
     paddingHorizontal: 24,
   },
@@ -423,14 +440,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   tokenListItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flex: 1,
-    width: '100%',
+    height: 72,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 6,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 16,
   },
   searchInputContainer: {
     borderRadius: 30,
@@ -512,14 +531,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   selectedToken: {
     backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 0,
+    borderRadius: 16,
+    borderColor: colors2024['brand-light-2'],
+    borderWidth: 1,
+    borderStyle: 'solid',
   },
   flatListContentContainerStyle: {
     borderRadius: 24,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: colors2024['neutral-line'],
-    backgroundColor: colors2024['neutral-bg-1'],
     overflow: 'hidden',
+    gap: 8,
   },
 }));
