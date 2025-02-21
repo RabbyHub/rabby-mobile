@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, In } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
@@ -148,6 +148,22 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     return (
       await this.getRepository().findBy({
         owner_addr,
+      })
+    )
+      .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
+      .map(i => ({
+        ...i,
+        collection: columnConverter.jsonStringToObj(i.collection),
+        pay_token: columnConverter.jsonStringToObj(i.pay_token),
+      }));
+  }
+
+  static async batchMultAddressNFTs(addresses: string[]) {
+    await prepareAppDataSource();
+
+    return (
+      await this.getRepository().findBy({
+        owner_addr: In(addresses),
       })
     )
       .filter(i => i.id !== EMPTY_NFT_ITEM_ID)

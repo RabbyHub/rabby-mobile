@@ -1,5 +1,11 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Dimensions, Keyboard, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -65,6 +71,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     portfolios,
     nftList,
     getCacheTop10Assets,
+    checkIsExpireAndUpdate,
     refreshing,
     isLoading,
   } = useAssets(filterText);
@@ -348,8 +355,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     );
   }, [listData]);
 
-  useEffect(() => {
-    getCacheTop10Assets();
+  useLayoutEffect(() => {
+    getCacheTop10Assets().then(() => {
+      checkIsExpireAndUpdate();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -373,7 +382,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
         </Animated.View>
       )}
       <RecyclerListView
-        style={[styles.bgContainer, styles.list]}
+        style={styles.list}
         dataProvider={listData}
         layoutProvider={layoutProvider}
         rowRenderer={renderItem}
@@ -399,7 +408,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             <RefreshControl
               style={styles.bgContainer}
               onRefresh={() => {
-                getCacheTop10Assets(true);
+                checkIsExpireAndUpdate(true);
               }}
               refreshing={refreshing}
             />
@@ -416,6 +425,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   list: {
     flex: 1,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+    paddingHorizontal: 16,
   },
   stickyHeader: {
     position: 'absolute',
