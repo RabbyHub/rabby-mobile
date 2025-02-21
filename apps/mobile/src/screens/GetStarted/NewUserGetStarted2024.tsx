@@ -196,8 +196,8 @@ function GetStartedScreen2024(): JSX.Element {
 const LOGO_SIZE = {
   wrapperWidth: 156,
   wrapperHeight: 156,
-  width: 120,
-  height: 104,
+  width: 89,
+  height: 77,
 };
 
 const getStyles = createGetStyles2024(ctx =>

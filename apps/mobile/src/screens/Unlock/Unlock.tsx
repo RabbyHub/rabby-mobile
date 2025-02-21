@@ -3,7 +3,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   View,
-  Text,
   TextInput,
   Platform,
   ActivityIndicator,
@@ -12,7 +11,8 @@ import {
 } from 'react-native';
 import * as Yup from 'yup';
 
-import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
+import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
+import { default as RcRabbyLogoDark } from './icons/icon-with-logo-dark.svg';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
@@ -163,9 +163,10 @@ function incToReset(isOnMount = false) {
   return unlockFailedRef.current;
 }
 export default function UnlockScreen() {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
+  const RcRabbyLogo = isLight ? RcRabbyLogoLight : RcRabbyLogoDark;
   const navigation = useRabbyAppNavigation();
   const {
     computed: { isBiometricsEnabled, isFaceID },
@@ -288,8 +289,7 @@ export default function UnlockScreen() {
           onTouchInputAway();
         }}>
         <View style={styles.topContainer}>
-          <RcRabbyLogo width={120} height={120} />
-          <Text style={styles.title1}>Rabby Wallet</Text>
+          <RcRabbyLogo width={125} height={134} />
         </View>
         <View style={styles.bodyContainer}>
           {usingPassword ? (
@@ -383,15 +383,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
       height: '100%',
       backgroundColor: colors2024['neutral-bg-1'],
-      justifyContent: 'center',
+      justifyContent: 'space-between',
     },
     topContainer: {
       backgroundColor: 'transparent',
       paddingBottom: 0,
-      width: '100%',
-      height:
-        170 /* min paddingTop */ + 100 /* height */ + 100 /* paddingBottom */,
-      // height: '100%',
+      height: '50%',
+      transform: [{ translateY: 67 }],
       flexShrink: 0,
       flexDirection: 'column',
       justifyContent: 'flex-end',
@@ -409,9 +407,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
     },
     bodyContainer: {
       flexShrink: 0,
-      height: '50%',
       paddingHorizontal: 0,
-      paddingTop: 32,
       paddingBottom: 24,
       backgroundColor: colors2024['neutral-bg-1'],
       justifyContent: 'flex-end',
