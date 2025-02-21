@@ -548,7 +548,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     }
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
     navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.MultiBuy,
+      screen: RootNames.Buy,
       params: {},
     });
   };
