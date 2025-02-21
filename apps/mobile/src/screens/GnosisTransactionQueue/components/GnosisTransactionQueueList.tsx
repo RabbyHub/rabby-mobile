@@ -197,7 +197,7 @@ export const GnosisTransactionQueueList = (props: {
               to: safeTx.to,
               value: numberToHex(safeTx.value),
               safeTxGas: safeTx.safeTxGas,
-              nonce: safeTx.nonce,
+              nonce: +safeTx.nonce,
               operation: safeTx.operation,
               baseGas: safeTx.baseGas,
             };
@@ -228,7 +228,7 @@ export const GnosisTransactionQueueList = (props: {
               to: safeTx.to,
               value: numberToHex(safeTx.value),
               safeTxGas: safeTx.safeTxGas,
-              nonce: safeTx.nonce,
+              nonce: +safeTx.nonce,
               operation: safeTx.operation,
               baseGas: safeTx.baseGas,
             };
