@@ -309,8 +309,7 @@ const TokenSelector = ({
   address: string;
   token?: TokenItem;
 }) => {
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { colors2024, isLight } = useTheme2024({ getStyle });
   const bottomRef = useRef<BottomSheetModalMethods>(null);
 
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);

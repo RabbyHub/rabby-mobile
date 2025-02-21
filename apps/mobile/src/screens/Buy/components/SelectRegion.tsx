@@ -1,6 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Image, Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Keyboard,
+  ListRenderItem,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import {
   PropsWithChildren,
@@ -22,10 +29,13 @@ import { SearchInput } from '@/components/Form/SearchInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import { BuyCountryItem } from '@rabby-wallet/rabby-api/dist/types';
 
 type TRegionList = Awaited<
   ReturnType<typeof openapi.getBuySupportedCountryList>
 >;
+
+const REGION_ITEM_HEIGHT = 64;
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
@@ -91,6 +101,28 @@ const SelectRegionInner = ({
     return regionList;
   }, [regionList, query]);
 
+  const renderItem: ListRenderItem<BuyCountryItem> = React.useCallback(
+    ({ item }) => (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.item}
+        onPress={() => onSelect(item.id)}>
+        <Image source={{ uri: item.image_url }} style={styles.flagLogo} />
+        <Text style={styles.itemText}>{item.name}</Text>
+      </TouchableOpacity>
+    ),
+    [onSelect, styles.item, styles.flagLogo, styles.itemText],
+  );
+
+  const getItemLayout = React.useCallback(
+    (_, index) => ({
+      length: REGION_ITEM_HEIGHT,
+      offset: REGION_ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+
   return (
     <View style={styles.innerContainer}>
       <Text style={styles.title}>{t('page.buy.regionBottomSheet.title')}</Text>
@@ -111,7 +143,9 @@ const SelectRegionInner = ({
       />
 
       <BottomSheetFlatList
-        contentContainerStyle={styles.flatListContentContainerStyle}
+        contentContainerStyle={
+          displayList.length ? styles.flatListContentContainerStyle : {}
+        }
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={() => Keyboard.dismiss()}
         data={displayList}
@@ -124,16 +158,9 @@ const SelectRegionInner = ({
             text={t('page.buy.regionBottomSheet.noRegionFound')}
           />
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.item}
-            onPress={() => onSelect(item.id)}>
-            <Image source={{ uri: item.image_url }} style={styles.flagLogo} />
-            <Text style={styles.itemText}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
+        renderItem={renderItem}
         keyExtractor={item => item.id}
+        getItemLayout={getItemLayout}
       />
     </View>
   );
@@ -260,7 +287,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   item: {
-    height: 64,
+    height: REGION_ITEM_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
