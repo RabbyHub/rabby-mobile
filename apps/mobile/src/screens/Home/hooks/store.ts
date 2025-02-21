@@ -62,7 +62,6 @@ export interface IAssets {
   portfolios?: DisplayedProject[];
   tokens?: AbstractPortfolioToken[];
   nfts?: DisplayNftItem[];
-  lastUpdateTime?: number;
 }
 
 export const combinedTokens = (assetsMap: {
