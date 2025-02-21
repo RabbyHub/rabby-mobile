@@ -214,6 +214,9 @@ export const HistoryBottomBtn = ({
       );
 
     case HistoryItemCateType.Buy:
+      if (!data.buyDetails?.receive_tx_id || !data.id) {
+        return null;
+      }
       return (
         <View style={btnContainerViewStyle}>
           <Button

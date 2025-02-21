@@ -16,19 +16,27 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import ImageRevolutPay from '../images/revolut-pay.png';
+import ImageBinancePay from '../images/binance-pay.png';
+import ImagePaypal from '../images/paypal.png';
+import ImageApplePay from '../images/apple-pay.png';
+import ImageAch from '../images/ach.png';
+import ImageGooglePay from '../images/google-pay.png';
+import ImageCard from '../images/card.png';
+import ImageOther from '../images/other.png';
 
 const paymentMethodsLogo = {
-  REVOLUT_PAY: require('../images/revolut-pay.png'),
-  BINANCE_CASH_BALANCE: require('../images/binance-pay.png'),
-  BINANCE_P2P: require('../images/binance-pay.png'),
-  PAYPAL: require('../images/paypal.png'),
-  APPLE_PAY: require('../images/apple-pay.png'),
-  QRPH: require('../images/ach.png'),
-  ACH: require('../images/ach.png'),
-  GOOGLE_PAY: require('../images/google-pay.png'),
-  SAME_DAY_ACH: require('../images/ach.png'),
-  CREDIT_DEBIT_CARD: require('../images/card.png'),
-  other: require('../images/other.png'),
+  REVOLUT_PAY: ImageRevolutPay,
+  BINANCE_CASH_BALANCE: ImageBinancePay,
+  BINANCE_P2P: ImageBinancePay,
+  PAYPAL: ImagePaypal,
+  APPLE_PAY: ImageApplePay,
+  QRPH: ImageAch,
+  ACH: ImageAch,
+  SAME_DAY_ACH: ImageAch,
+  GOOGLE_PAY: ImageGooglePay,
+  CREDIT_DEBIT_CARD: ImageCard,
+  other: ImageOther,
 };
 
 const getPaymentMethodLogo = (paymentMethod: string) => {
@@ -67,58 +75,73 @@ export const BuyQuoteItem = ({
     [activeProvider, id],
   );
 
-  const showPaymentTips = (paymentMethods?: typeof payments) => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.DESCRIPTION,
-      title: t('page.buy.paymentMethod'),
-      sections: [],
-      content: (
-        <>
-          <View style={styles.paymentTipsBox}>
-            <RcTipCC
-              color={colors2024['neutral-info']}
-              style={{ position: 'relative', top: 2 }}
-            />
-            <Text style={styles.paymentTipsDesc}>
-              {t('page.buy.paymentProviderTips')}
-            </Text>
-          </View>
+  const showPaymentTips = React.useCallback(
+    (paymentMethods?: typeof payments) => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: t('page.buy.paymentMethod'),
+        sections: [],
+        content: (
+          <>
+            <View style={styles.paymentTipsBox}>
+              <RcTipCC
+                color={colors2024['neutral-info']}
+                style={{ position: 'relative', top: 2 }}
+              />
+              <Text style={styles.paymentTipsDesc}>
+                {t('page.buy.paymentProviderTips')}
+              </Text>
+            </View>
 
-          <View style={styles.payList}>
-            {paymentMethods?.map((item, index) => (
-              <View key={index} style={[styles.payBox]}>
-                <Image
-                  source={getPaymentMethodLogo(item.id)}
-                  style={{
-                    width: 53.257,
-                    height: 23.155,
-                  }}
-                  resizeMode="center"
-                />
-              </View>
-            ))}
-          </View>
-        </>
-      ),
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        snapPoints: ['40%'],
-      },
-      nextButtonProps: {
-        title: (
-          <Text style={styles.closeModalBtnText}>
-            {t('page.tokenDetail.excludeBalanceTipsButton')}
-          </Text>
+            <View style={styles.payList}>
+              {paymentMethods?.map((item, index) => (
+                <View key={index} style={[styles.payBox]}>
+                  <Image
+                    // source={{ uri: item.logo_url }}
+                    source={paymentMethodsLogo[item.id]}
+                    style={{
+                      width: 53.257,
+                      height: 23.155,
+                      backgroundColor: '#fff',
+                    }}
+                    width={53.257}
+                    height={23.155}
+                  />
+                </View>
+              ))}
+            </View>
+          </>
         ),
-        titleStyle: styles.title,
-        onPress: () => {
-          removeGlobalBottomSheetModal2024(modalId);
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['40%'],
         },
-      },
-    });
-  };
+        nextButtonProps: {
+          title: (
+            <Text style={styles.closeModalBtnText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: styles.title,
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    },
+    [
+      t,
+      styles.paymentTipsBox,
+      styles.paymentTipsDesc,
+      styles.payList,
+      styles.closeModalBtnText,
+      styles.title,
+      styles.payBox,
+      colors2024,
+    ],
+  );
 
   return (
     <TouchableOpacity
@@ -145,7 +168,6 @@ export const BuyQuoteItem = ({
       <View style={[styles.row, { justifyContent: 'space-between' }]}>
         <View style={[styles.row, { gap: 8 }]}>
           <Image source={{ uri: logo }} style={styles.logo} />
-          {/* <Skeleton style={styles.logo} /> */}
           <Text style={styles.name}>{name}</Text>
         </View>
         <Text style={styles.amount}>
@@ -165,12 +187,15 @@ export const BuyQuoteItem = ({
           {payments?.map((item, index) => (
             <View key={index} style={[styles.payBox]}>
               <Image
+                // source={{ uri: item.logo_url }}
                 source={getPaymentMethodLogo(item.id)}
                 style={{
                   width: 46,
                   height: 20,
+                  backgroundColor: '#fff',
                 }}
-                resizeMode="center"
+                width={46}
+                height={20}
               />
             </View>
           ))}

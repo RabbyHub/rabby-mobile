@@ -47,10 +47,7 @@ export class BuyItemEntity extends EntityAddressAssetBase {
   receive_token: string = '{}';
 
   makeDbId(): string {
-    return (this._db_id = `${this.owner_addr}-${[
-      this.receive_chain_id,
-      this.receive_tx_id,
-    ]
+    return (this._db_id = `${this.owner_addr}-${[this.receive_chain_id, this.id]
       .filter(Boolean)
       .join('-')}`);
   }
@@ -129,6 +126,23 @@ export class BuyItemEntity extends EntityAddressAssetBase {
       return 0;
     }
     return result.maxTimeAt;
+  }
+
+  static async getAllPending(owner_addr: string) {
+    await prepareAppDataSource();
+
+    return (
+      await this.getRepository()
+        .createQueryBuilder('buyitem')
+        .where('buyitem.owner_addr = :owner_addr', { owner_addr })
+        .andWhere('buyitem.status = :status', { status: 'pending' })
+        .orderBy('buyitem.create_at', 'DESC')
+        .getMany()
+    ).map(i => ({
+      ...i,
+      service_provider: columnConverter.jsonStringToObj(i.service_provider),
+      receive_token: columnConverter.jsonStringToObj(i.receive_token),
+    }));
   }
 
   static async batchQueryHistory(owner_addr: string) {

@@ -16,7 +16,7 @@ import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
-import { navigate } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { BuyHistoryItem as TBuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const ItemSeparator = () => {
@@ -121,6 +121,38 @@ const HistoryList = ({
   );
 };
 
+const generateTempBuyHistoryData = ({
+  addr,
+  chain,
+  time_at,
+  txId,
+}: {
+  addr: string;
+  chain: string;
+  txId?: string;
+  time_at: number;
+}) => ({
+  address: addr,
+  cateDict: {},
+  cate_id: 'receive',
+  chain: chain,
+  debt_liquidated: null,
+  id: txId,
+  is_scam: false,
+  owner_addr: addr,
+  project_id: '',
+  receives: [],
+  sends: [],
+  status: 0,
+  time_at,
+  token_approve: { spender: '', token_id: '', value: 0 },
+  token_approve_id: '',
+  token_approve_spender: '',
+  token_approve_value: 0,
+
+  tx_to_address: addr,
+});
+
 export const BuyHistory = ({
   visible,
   onClose,
@@ -139,30 +171,37 @@ export const BuyHistory = ({
   const { projectDict, tokenDict } = useHistoryTokenDict();
 
   const goToDetail = useCallback(
-    async (txId: string, chain: string, data: any) => {
-      const historyItem = await HistoryItemEntity.findOne({
-        where: { txHash: txId, chain },
+    async (txId: string, chain: string, data: TBuyHistoryItem) => {
+      const historyItem =
+        txId && chain
+          ? await HistoryItemEntity.findOne({
+              where: { txHash: txId, chain },
+            })
+          : null;
+      const detailData = {
+        ...(historyItem
+          ? ensureHistoryListItemFromDb(historyItem)
+          : (generateTempBuyHistoryData({
+              txId: data.receive_tx_id,
+              time_at: data.create_at,
+              addr: data.user_addr,
+              chain: chain,
+            }) as ReturnType<typeof ensureHistoryListItemFromDb>)),
+        isLocalBuy: true,
+        buyDetails: data as unknown as any,
+        projectDict,
+        tokenDict,
+      };
+
+      onClose();
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.HistoryDetail,
+        params: {
+          isForMultipleAdderss,
+          data: detailData,
+          title: t('page.transactions.itemTitle.Buy'),
+        },
       });
-
-      if (historyItem) {
-        const detailData = {
-          ...ensureHistoryListItemFromDb(historyItem),
-          isLocalBuy: true,
-          buyDetails: data,
-          projectDict,
-          tokenDict,
-        };
-
-        onClose();
-        navigate(RootNames.StackTransaction, {
-          screen: RootNames.HistoryDetail,
-          params: {
-            isForMultipleAdderss,
-            data: detailData,
-            title: t('page.transactions.itemTitle.Buy'),
-          },
-        });
-      }
     },
     [projectDict, tokenDict, onClose, isForMultipleAdderss, t],
   );

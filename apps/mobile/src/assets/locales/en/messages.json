@@ -82,7 +82,8 @@
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
         "totalApprovedAmount": "Current Approved Amount",
-        "PurchaseFrom": "Purchased from"
+        "PurchaseFrom": "Purchased from",
+        "WillReceive": "Will Receive: ≈ {{token}}"
       },
       "empty": {
         "title": "No transactions",

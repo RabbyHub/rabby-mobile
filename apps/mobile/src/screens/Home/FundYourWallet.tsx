@@ -51,7 +51,7 @@ export const FundYourWallet = () => {
         title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
         desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
         icon: RcIconBuy,
-        iconStyle: styles.buyIcon,
+        // iconStyle: styles.buyIcon,
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
@@ -62,7 +62,7 @@ export const FundYourWallet = () => {
         },
       },
     ],
-    [t, styles.buyIcon, navigation],
+    [t, navigation],
   );
   return (
     <View style={styles.noAssetsContainer}>
@@ -73,19 +73,21 @@ export const FundYourWallet = () => {
       <Text style={styles.noAssetsTitle}>
         {t('page.nextComponent.multiAddressHome.fundYourWallet')}
       </Text>
-      <View style={{ gap: 12, paddingHorizontal: 16 }}>
+      <View style={styles.list}>
         {noAssetsList.map(item => {
           return (
             <TouchableOpacity
               key={item.title}
               style={styles.noAssetsItem}
               onPress={item.onPress}>
-              <View style={[styles.noAssetsIconWrapper, item?.iconStyle]}>
-                <item.icon width={16.8} height={16.8} />
-              </View>
-              <View style={styles.noAssetsRight}>
-                <Text style={styles.noAssetsItemName}>{item.title}</Text>
-                <Text style={styles.noAssetsItemDesc}>{item.desc}</Text>
+              <View style={styles.itemInner}>
+                <View style={styles.noAssetsIconWrapper}>
+                  <item.icon width={16.8} height={16.8} />
+                </View>
+                <View style={styles.noAssetsRight}>
+                  <Text style={styles.noAssetsItemName}>{item.title}</Text>
+                  <Text style={styles.noAssetsItemDesc}>{item.desc}</Text>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -126,6 +128,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginVertical: 42,
   },
 
+  list: { gap: 12, paddingHorizontal: 16 },
+
   noAssetsItem: {
     height: 98,
     paddingHorizontal: 16,
@@ -137,6 +141,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
   },
+
+  itemInner: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   noAssetsIconWrapper: {
     width: 28,
     height: 28,
@@ -144,9 +153,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 9.8,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  buyIcon: {
-    alignSelf: 'flex-start',
   },
   noAssetsRight: {
     gap: 4,

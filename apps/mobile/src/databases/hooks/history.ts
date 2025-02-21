@@ -212,6 +212,10 @@ export const useSyncHistoryDB = (
       const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
       const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
 
+      const pendingIdList = ((await BuyItemEntity.getAllPending(address)) || [])
+        .filter(i => i.create_at > isExpiredTimeAgo)
+        .map(e => e.id);
+
       const _start = 0 + (start || 0);
       const res = await openapi.getBuyHistory({
         user_addr: address,
@@ -221,7 +225,10 @@ export const useSyncHistoryDB = (
 
       const lastItemTime =
         res.histories[res.histories.length - 1]?.create_at || 0;
-      res.histories = res.histories.filter(i => i.create_at > latestTime);
+
+      res.histories = res.histories.filter(
+        i => pendingIdList.includes(i.id) || i.create_at > latestTime,
+      );
 
       console.debug('getBuyHistory sync data length:', res.histories.length);
       if (res.histories.length) {

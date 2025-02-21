@@ -296,8 +296,18 @@ export const HistoryTokenList = ({
       );
 
     case HistoryItemCateType.Buy:
+      const isPending =
+        data?.buyDetails?.status === 'pending' &&
+        !data?.id &&
+        !data.buyDetails.receive_tx_id;
       return (
-        <TouchableOpacity onPress={() => handlePress(singeToken, tokenIsNft)}>
+        <TouchableOpacity
+          onPress={() =>
+            handlePress(
+              singeToken || data?.buyDetails?.receive_token,
+              tokenIsNft,
+            )
+          }>
           <View style={[styles.singleBox]}>
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -308,24 +318,61 @@ export const HistoryTokenList = ({
                   size={57}
                 />
               </View>
-              <View style={[styles.singleColomnBox]}>
-                <Text style={[styles.tokenAmountText]}>
-                  + {formatTokenAmount(data?.receives?.[0]?.amount)}{' '}
-                  {getTokenSymbol(data?.buyDetails?.receive_token)}
-                </Text>
-                <Text
-                  style={[
-                    {
-                      fontSize: 16,
-                      fontWeight: '500',
-                      lineHeight: 20,
-                      fontFamily: 'SF Pro',
-                    },
-                    styles.isSendTextColor,
-                  ]}>
-                  -{data?.buyDetails?.pay_usd_amount || '0'} USD
-                </Text>
-              </View>
+              {isPending ? (
+                <View style={[styles.singleColomnBox]}>
+                  <Text
+                    style={[
+                      styles.tokenAmountText,
+                      { color: colors2024['neutral-title-1'] },
+                    ]}>
+                    -{' '}
+                    {formatTokenAmount(data?.buyDetails?.pay_usd_amount || '0')}{' '}
+                    USD
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        fontSize: 16,
+                        fontWeight: '500',
+                        lineHeight: 20,
+                        fontFamily: 'SF Pro',
+                      },
+                      styles.isSendTextColor,
+                    ]}>
+                    {t('page.transactions.detail.WillReceive', {
+                      token: `${formatTokenAmount(
+                        data?.receives?.[0]?.amount ||
+                          data?.buyDetails?.receive_amount ||
+                          '0',
+                      )} ${getTokenSymbol(data?.buyDetails?.receive_token)}`,
+                    })}
+                  </Text>
+                </View>
+              ) : (
+                <View style={[styles.singleColomnBox]}>
+                  <Text style={[styles.tokenAmountText]}>
+                    +{' '}
+                    {formatTokenAmount(
+                      data?.receives?.[0]?.amount ||
+                        data?.buyDetails?.receive_amount ||
+                        '0',
+                    )}{' '}
+                    {getTokenSymbol(data?.buyDetails?.receive_token)}
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        fontSize: 16,
+                        fontWeight: '500',
+                        lineHeight: 20,
+                        fontFamily: 'SF Pro',
+                      },
+                      styles.isSendTextColor,
+                    ]}>
+                    -{data?.buyDetails?.pay_usd_amount || '0'} USD
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <RcIconSingleArrow

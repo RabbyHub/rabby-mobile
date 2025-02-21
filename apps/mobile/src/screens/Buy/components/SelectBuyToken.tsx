@@ -64,10 +64,10 @@ export const BuyTokenSelect = ({ token, onTokenChange }: TokenSelectProps) => {
           <>
             <View style={styles.token}>
               <AssetAvatar
-                size={26}
+                size={22}
                 chain={token.chain}
                 logo={token.logo_url}
-                chainSize={8}
+                chainSize={10}
               />
               <Text numberOfLines={1} style={styles.tokenSymbol}>
                 {ellipsisOverflowedText(getTokenSymbol(token), 5)}

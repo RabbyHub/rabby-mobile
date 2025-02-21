@@ -177,6 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 0,
     borderWidth: 0,
     overflow: 'hidden',
+    padding: 0,
   },
 
   divider: {

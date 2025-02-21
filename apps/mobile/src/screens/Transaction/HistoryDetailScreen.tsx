@@ -326,7 +326,8 @@ function HistoryDetailScreen(): JSX.Element {
 
   const fromAddr = data.tx?.from_addr;
   const toAddr =
-    formatType === HistoryItemCateType.Recieve
+    formatType === HistoryItemCateType.Recieve ||
+    formatType === HistoryItemCateType.Buy
       ? data.address
       : formatType === HistoryItemCateType.Send
       ? data.sends[0].to_addr
@@ -482,7 +483,18 @@ function HistoryDetailScreen(): JSX.Element {
               {t('page.transactions.detail.Status')}
             </Text>
             <View>
-              <TxStatusItem status={status} withText={true} />
+              <TxStatusItem
+                status={status}
+                withText={true}
+                {...(data?.isLocalBuy
+                  ? {
+                      isPending:
+                        data?.buyDetails?.status === 'pending' &&
+                        !data.id &&
+                        !data?.buyDetails.receive_tx_id,
+                    }
+                  : {})}
+              />
             </View>
           </View>
           {isNft && Boolean(formatToken) && (
@@ -609,7 +621,7 @@ function HistoryDetailScreen(): JSX.Element {
           )}
           {!isApproveOrRevoke &&
             ProjecRenderItem(t('page.transactions.detail.InteractedContract'))}
-          {
+          {data.id && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>Hash</Text>
               <TouchableOpacity
@@ -626,7 +638,7 @@ function HistoryDetailScreen(): JSX.Element {
                 />
               </TouchableOpacity>
             </View>
-          }
+          )}
         </View>
         {data.cate_id === 'approve' && data.token_approve ? (
           <RevokeTokenBtn
