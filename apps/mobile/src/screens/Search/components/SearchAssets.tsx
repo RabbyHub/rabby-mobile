@@ -60,7 +60,9 @@ const getItemId = item => {
     item.data?._tokenId || ''
   }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
     item.data?.price || ''
-  }/${item.data?.time_at || ''}`;
+  }/${item.data?.time_at || ''}/${item.data?._isFold ? 'fold' : 'unfold'}/${
+    item.data?._isPined ? 'pin' : 'unpin'
+  }`;
 };
 
 export const SearchAssets: React.FC<Props> = ({ filterText }) => {
@@ -165,8 +167,7 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
 
   useEffect(() => {
     setListData(dataProvider.cloneWithRows(dataList));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataList.length, dataProvider]);
+  }, [dataList, dataProvider]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {

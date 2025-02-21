@@ -99,10 +99,12 @@ interface Props {
 const FOOTER_HEIGHT = 56;
 
 const getItemId = item => {
-  return `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
-    item.data?.chain || ''
-  }/${item.data?.price_24h_change || ''}/${item.data?.price || ''}/${
-    item.data?.time_at || ''
+  return `${item.type}/${item.data?.chain || ''}/${item.data?.symbol || ''}/${
+    item.data?._tokenId || ''
+  }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
+    item.data?.price || ''
+  }/${item.data?.time_at || ''}/${item.data?._isFold ? 'fold' : 'unfold'}/${
+    item.data?._isPined ? 'pin' : 'unpin'
   }`;
 };
 
