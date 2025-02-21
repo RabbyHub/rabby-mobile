@@ -1,7 +1,7 @@
 import { Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useRef } from 'react';
 import { Text, View, ViewStyle } from 'react-native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
@@ -63,6 +63,8 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
     resetNavigationTo(navigation, 'Home');
   });
 
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
   return (
     <View style={[styles.card, style]}>
       <View style={styles.cardHeader}>
@@ -79,6 +81,17 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
       <View style={styles.buttonContainer}>
         <Tip
           placement="top"
+          pressableProps={{
+            onPress(ctx) {
+              ctx.turnOn();
+              if (timerRef.current) {
+                clearTimeout(timerRef.current);
+              }
+              timerRef.current = setTimeout(() => {
+                ctx.turnOff();
+              }, 3000);
+            },
+          }}
           content={
             !allowance ? t('page.transactions.detail.NoApproveNeed') : undefined
           }>

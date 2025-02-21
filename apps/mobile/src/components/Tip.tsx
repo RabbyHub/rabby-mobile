@@ -21,6 +21,7 @@ type TipProps = Omit<TooltipProps, 'content'> & {
     onPress?: (ctx: {
       event: GestureResponderEvent;
       turnOn: () => void;
+      turnOff: () => void;
     }) => void;
   };
   noPressable?: boolean;
@@ -73,13 +74,13 @@ export const Tip = ({
   const handleOnPress = useCallback<PressableProps['onPress'] & object>(
     evt => {
       if (typeof pressableProps?.onPress === 'function') {
-        pressableProps.onPress({ event: evt, turnOn });
+        pressableProps.onPress({ event: evt, turnOn, turnOff });
         return;
       }
 
       turnOn();
     },
-    [pressableProps, turnOn],
+    [pressableProps, turnOff, turnOn],
   );
 
   return (

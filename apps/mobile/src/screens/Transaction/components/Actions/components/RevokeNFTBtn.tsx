@@ -1,7 +1,7 @@
 import { Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useRef } from 'react';
 import { Text, View } from 'react-native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
@@ -69,6 +69,8 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
     resetNavigationTo(navigation, 'Home');
   });
 
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -80,6 +82,17 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
       <View style={styles.buttonContainer}>
         <Tip
           placement="top"
+          pressableProps={{
+            onPress(ctx) {
+              ctx.turnOn();
+              if (timerRef.current) {
+                clearTimeout(timerRef.current);
+              }
+              timerRef.current = setTimeout(() => {
+                ctx.turnOff();
+              }, 3000);
+            },
+          }}
           content={
             !isApproved
               ? t('page.transactions.detail.NoApproveNeed')

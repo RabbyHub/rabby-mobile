@@ -10,7 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ParsedActionData } from '@rabby-wallet/rabby-action';
 import { NFTCollection, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -58,6 +58,8 @@ export const RevokeNFTCollectionBtn = ({
     resetNavigationTo(navigation, 'Home');
   });
 
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -69,6 +71,17 @@ export const RevokeNFTCollectionBtn = ({
       <View style={styles.buttonContainer}>
         <Tip
           placement="top"
+          pressableProps={{
+            onPress(ctx) {
+              ctx.turnOn();
+              if (timerRef.current) {
+                clearTimeout(timerRef.current);
+              }
+              timerRef.current = setTimeout(() => {
+                ctx.turnOff();
+              }, 3000);
+            },
+          }}
           content={
             !isApproved
               ? t('page.transactions.detail.NoApproveNeed')
