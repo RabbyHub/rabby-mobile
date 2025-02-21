@@ -71,10 +71,13 @@ export const useAssets = (filterText?: string) => {
 
     let _tokens: AbstractPortfolioToken[] = [];
 
+    const tokenRes = await syncTokens(address, force, !force);
+
+    if (!tokenRes.length) {
+      return;
+    }
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
-
-    const tokenRes = await syncTokens(address, force);
 
     const tokensDict: Record<string, TokenItem[]> = {};
     tokenRes.forEach(token => {
@@ -101,7 +104,10 @@ export const useAssets = (filterText?: string) => {
       return;
     }
     let projectDict: Record<string, DisplayedProject> | null = {};
-    const protocols = await syncProtocols(address, force);
+    const protocols = await syncProtocols(address, force, !force);
+    if (!protocols.length) {
+      return;
+    }
     protocols.forEach(project => {
       if (projectDict) {
         projectDict = produce(projectDict, draft => {
@@ -121,7 +127,10 @@ export const useAssets = (filterText?: string) => {
 
   const loadNFT = async (address: string, force?: boolean) => {
     try {
-      const nfts = await syncNFTs(address, force);
+      const nfts = await syncNFTs(address, force, !force);
+      if (!nfts.length) {
+        return;
+      }
       const tokenSetting = await preferenceService.getUserTokenSettings();
 
       updateNFTs({
