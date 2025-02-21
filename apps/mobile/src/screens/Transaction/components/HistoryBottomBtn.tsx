@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { AssetAvatar, Tip } from '@/components';
 import {
   NFTItem,
@@ -75,6 +75,8 @@ export const HistoryBottomBtn = ({
       buttonStyle: { height: viewStyle.height || 56 },
     };
   }, [styles.buttonContainer, buttonContainerStyle]);
+
+  console.log('datax', JSON.stringify(data));
 
   switch (type) {
     case HistoryItemCateType.Send: {
