@@ -55,7 +55,9 @@ export const CommonHistoryItem: React.FC<Props> = ({
         <View style={styles.mainContainer}>
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>{title}</Text>
-            {isFailed && <RcIconFail style={styles.arrowIcon} />}
+            {isFailed && (
+              <RcIconFail style={styles.arrowIcon} width={18} height={18} />
+            )}
             {!isFailed && isPending && (
               <Animated.View
                 style={{
