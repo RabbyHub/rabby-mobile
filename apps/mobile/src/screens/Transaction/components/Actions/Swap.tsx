@@ -2,10 +2,11 @@
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
-import { findChain } from '@/utils/chain';
+import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
@@ -75,6 +76,14 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
 
     if (chain?.scanLink) {
       openTxExternalUrl({ chain, txHash: tx });
+    } else {
+      toast.error('Unknown chain');
+    }
+  });
+
+  const handleOpenTxAddress = useMemoizedFn((address: string) => {
+    if (chain?.scanLink) {
+      openTxExternalUrl({ chain, address });
     } else {
       toast.error('Unknown chain');
     }
@@ -201,6 +210,35 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             accounts={unionAccounts}
             switchAccount={switchAccount}
           />
+        </View>
+
+        <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.InteractedContract')}
+          </Text>
+          <TouchableOpacity
+            style={{ alignItems: 'flex-end' }}
+            onPress={() => handleOpenTxAddress(requireData?.id)}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
+              <Text style={[styles.itemContentText]}>
+                {requireData?.protocol?.name}
+              </Text>
+              <RcIconJumpCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-foot']}
+              />
+            </View>
+            <Text style={styles.itemAddressText}>
+              {ellipsisAddress(requireData?.id || '')}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.detailItem}>
