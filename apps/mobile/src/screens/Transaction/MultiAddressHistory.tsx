@@ -130,8 +130,8 @@ function History({
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [isShowScam, setIsShowScam] = useState(false);
-  const [isShowSmall, setIsShowSmall] = useState(false);
+  const [isShowAll, setIsShowAll] = useState(false);
+  // const [isShowSmall, setIsShowSmall] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
@@ -479,27 +479,15 @@ function History({
   const displayList = useMemo(() => {
     return allTxHistory
       .filter(tx => {
-        if (isShowScam && isShowSmall) {
+        if (isShowAll) {
           // show all
           return true;
+        } else {
+          if (tx.isSmallUsdTx || tx.is_scam) {
+            return false;
+          }
+          return true;
         }
-
-        if (isShowScam) {
-          // only hide small tx and not scam
-          return !(tx.isSmallUsdTx && !tx.is_scam);
-        }
-
-        if (isShowSmall) {
-          // only hidden scam and not small tx
-          return !(tx.is_scam && !tx.isSmallUsdTx);
-        }
-
-        if (!isShowScam && !isShowSmall) {
-          // hide small tx and scam
-          return !(tx.is_scam || tx.isSmallUsdTx);
-        }
-
-        return true;
       })
       .filter(tx => {
         if (isSceneUsingAllAccounts) {
@@ -513,8 +501,7 @@ function History({
     // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
-    isShowScam,
-    isShowSmall,
+    isShowAll,
     // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -591,13 +578,10 @@ function History({
                 {t('page.transactions.ViewHiddenItems')}
               </Text>
               <View style={styles.valueView}>
-                <AppSwitch2024
-                  value={isShowScam}
-                  onValueChange={setIsShowScam}
-                />
+                <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
               </View>
             </View>
-            <View style={styles.menuItem}>
+            {/* <View style={styles.menuItem}>
               <Text style={styles.menuItemText}>
                 {t('page.transactions.ViewSmallItems')}
               </Text>
@@ -607,7 +591,7 @@ function History({
                   onValueChange={setIsShowSmall}
                 />
               </View>
-            </View>
+            </View> */}
           </View>
         )}
         {/* {isTestnet || isInTokenDetail ? null : (
@@ -708,7 +692,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     right: 16,
     alignItems: 'center',
-    width: 250,
+    width: 270,
     // height: 56,
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 12,
