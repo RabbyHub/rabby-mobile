@@ -272,25 +272,23 @@ export default function UnlockScreen() {
   useFocusEffect(registerPreventEffect);
 
   return (
-    <KeyboardAvoidingView
-      behavior="padding"
-      style={styles.container}
-      keyboardVerticalOffset={-20}>
-      <SilentTouchableView
-        style={{ height: '100%', flex: 1 }}
-        viewProps={{
-          style: [
-            styles.container,
-            { paddingBottom: safeSizes.containerPaddingBottom },
-          ],
-        }}
-        onPress={() => {
-          Keyboard.dismiss();
-          onTouchInputAway();
-        }}>
-        <View style={styles.topContainer}>
-          <RcRabbyLogo width={125} height={134} />
-        </View>
+    <SilentTouchableView
+      style={{ height: '100%', flex: 1 }}
+      viewProps={{
+        style: [
+          styles.container,
+          { paddingBottom: safeSizes.containerPaddingBottom },
+        ],
+      }}
+      onPress={() => {
+        Keyboard.dismiss();
+        onTouchInputAway();
+      }}>
+      <RcRabbyLogo style={styles.logo} width={125} height={134} />
+      <KeyboardAvoidingView
+        behavior="padding"
+        style={styles.innerContainer}
+        keyboardVerticalOffset={-20}>
         <View style={styles.bodyContainer}>
           {usingPassword ? (
             <View style={styles.formWrapper}>
@@ -372,8 +370,8 @@ export default function UnlockScreen() {
             </View>
           )}
         </View>
-      </SilentTouchableView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SilentTouchableView>
   );
 }
 
@@ -383,18 +381,18 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
       height: '100%',
       backgroundColor: colors2024['neutral-bg-1'],
-      justifyContent: 'space-between',
-    },
-    topContainer: {
-      backgroundColor: 'transparent',
-      paddingBottom: 0,
-      height: '50%',
-      transform: [{ translateY: 67 }],
-      flexShrink: 0,
-      flexDirection: 'column',
       justifyContent: 'flex-end',
-      alignItems: 'center',
-      padding: 0,
+      position: 'relative',
+    },
+    innerContainer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    logo: {
+      backgroundColor: 'transparent',
+      position: 'absolute',
+      top: '45%',
+      left: '50%',
+      transform: [{ translateX: -62.5 }, { translateY: -67 }],
     },
     title1: {
       color: isLight
@@ -408,7 +406,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
     bodyContainer: {
       flexShrink: 0,
       paddingHorizontal: 0,
-      paddingBottom: 24,
+      paddingBottom: 56,
       backgroundColor: colors2024['neutral-bg-1'],
       justifyContent: 'flex-end',
       // ...makeDebugBorder(),
