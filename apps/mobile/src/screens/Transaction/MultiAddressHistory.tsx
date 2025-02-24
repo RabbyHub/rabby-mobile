@@ -159,10 +159,14 @@ function History({
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
-    const fetchHistoryFromDbData = async (count?: number) => {
+    const fetchHistoryFromDbData = async (isFirst?: boolean) => {
       const [historyList, swapList] = await Promise.all([
-        HistoryItemEntity.getAllHistoryItemSortedByTime(addresses, count),
-        SwapItemEntity.getAllHistoryItem(addresses, count),
+        HistoryItemEntity.getAllHistoryItemSortedByTime(
+          addresses,
+          isFirst ? 50 : 10000,
+          isFirst, // first not show scam tx
+        ),
+        SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
       ]);
 
       const pinedQueue = preferenceService.getPinToken();
@@ -183,12 +187,12 @@ function History({
       return list;
     };
     if (!dbData.length) {
-      // first init 20 count
-      await fetchHistoryFromDbData(50);
+      // first init 50 count
+      await fetchHistoryFromDbData(true);
     }
 
     // later fetch all data
-    const list = await fetchHistoryFromDbData();
+    const list = await fetchHistoryFromDbData(false);
     return list;
   };
 
