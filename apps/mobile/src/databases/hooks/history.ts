@@ -208,7 +208,7 @@ export const useSyncHistoryDB = (
         return [];
       }
 
-      const latestTime = await BuyItemEntity.getLatestTime(address);
+      const latestTime = (await BuyItemEntity.getLatestTime(address)) || 0;
       const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
       const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
 
