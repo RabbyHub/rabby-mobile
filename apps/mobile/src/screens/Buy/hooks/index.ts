@@ -224,7 +224,6 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
       if (!loading && !error && quotes?.[0]?.service_provider?.id) {
         setActiveProvider(quotes[0].service_provider?.id);
         Keyboard.dismiss();
-        console.log('Keyboard.dismiss');
       }
     },
     100,
