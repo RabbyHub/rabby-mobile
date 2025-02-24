@@ -39,7 +39,7 @@ import {
   HistoryItemCateType,
   HistoryItemIcon,
 } from '@/screens/Transaction/components/HistoryItemIcon';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
   ParsedTransactionActionData,
@@ -54,6 +54,7 @@ import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
+import { transactionHistoryService } from '@/core/services';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {
@@ -88,12 +89,13 @@ export const TransactionItem = ({
   const isCanceled =
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
+  const [showSuccess, setShowSuccess] = useState(false);
   const isShowSuccess = useMemo(
     () =>
       historySuccessList?.includes(
         `${data.maxGasTx.address}-${data.maxGasTx.hash}` || '',
-      ),
-    [data.maxGasTx, historySuccessList],
+      ) || showSuccess,
+    [data.maxGasTx, historySuccessList, showSuccess],
   );
 
   const formatType: HistoryItemCateType = useMemo(() => {
@@ -321,6 +323,15 @@ export const TransactionItem = ({
     }
   }, [sendToken, receiveToken, approveToken]);
 
+  useEffect(() => {
+    if (!data.isPending) {
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      const isShowStatus =
+        transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+      isShowStatus && setShowSuccess(true);
+    }
+  }, [data]);
+
   return (
     <TouchableOpacity
       onPress={hanldeNavigateDetail}
@@ -440,6 +451,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   rightContent: {
     flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'flex-end',
     gap: 3,
     minWidth: 0,
     flexShrink: 1,

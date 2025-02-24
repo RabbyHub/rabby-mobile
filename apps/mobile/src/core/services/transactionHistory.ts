@@ -184,6 +184,19 @@ export class TransactionHistoryService {
     this.store.failList = [];
   }
 
+  clearSuccessAndFailSingleId(id: string) {
+    const successIdx = this.store.successList.findIndex(item => item === id);
+    if (successIdx !== -1) {
+      this.store.successList.splice(successIdx, 1);
+      return true;
+    }
+
+    const failIdx = this.store.failList.findIndex(item => item === id);
+    if (failIdx !== -1) {
+      this.store.failList.splice(failIdx, 1);
+    }
+  }
+
   getTransactionGroups(args?: {
     address?: string;
     chainId?: number;

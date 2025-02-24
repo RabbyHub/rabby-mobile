@@ -135,7 +135,14 @@ function HistoryLocalDetailScreen(): JSX.Element {
     );
   }, [title, styles.headerTitleStyle, t]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!data.isPending) {
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+    }
+  }, [data]);
+
+  useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
     });
