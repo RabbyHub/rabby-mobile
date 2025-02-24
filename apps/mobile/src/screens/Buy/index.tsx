@@ -102,6 +102,7 @@ export const BuyScreen = ({
             endEnter: 'slide_in_left',
             endExit: 'slide_out_right',
           },
+          showInRecents: true,
         });
 
         console.log('InAppBrowser open result', result);
