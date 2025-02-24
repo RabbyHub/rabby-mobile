@@ -417,6 +417,7 @@ function History({
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         batchFetchDataV2();
+        runFetchLocalTx();
       } else {
         cancel();
         refresh();

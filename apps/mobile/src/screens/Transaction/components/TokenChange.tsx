@@ -212,11 +212,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '700',
   },
   textNegative: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   tokenLabel: {
     position: 'relative',

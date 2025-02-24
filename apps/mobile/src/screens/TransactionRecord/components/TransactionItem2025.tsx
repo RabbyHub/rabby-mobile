@@ -511,10 +511,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   sendText: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   cardGray: {
     opacity: 0.3,

@@ -25,6 +25,7 @@ import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { useCurrentAccount } from '@/hooks/account';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 interface ItemProps {
   status: number;
@@ -96,7 +97,10 @@ const TokenItemInlist = ({
               {isSend ? '-' : '+'} {isNft ? amount : formatTokenAmount(amount)}{' '}
               {isNft
                 ? t('page.singleHome.sectionHeader.Nft')
-                : getTokenSymbol(token as TokenItem)}
+                : ellipsisOverflowedText(
+                    getTokenSymbol(token as TokenItem),
+                    16,
+                  )}
             </Text>
           </View>
         </View>
@@ -193,13 +197,17 @@ export const HistoryTokenList = ({
                 <Text
                   style={[
                     styles.tokenAmountText,
-                    (isSend || isApprove) && styles.isSendTextColor,
+                    isSend && styles.isSendTextColor,
+                    isApprove && styles.tokenApproveAmountText,
                   ]}>
                   {!isApprove && (isSend ? '- ' : '+ ')}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
                     ? t('page.singleHome.sectionHeader.Nft')
-                    : getTokenSymbol(singeToken as TokenItem)}
+                    : ellipsisOverflowedText(
+                        getTokenSymbol(singeToken as TokenItem),
+                        16,
+                      )}
                 </Text>
                 {Boolean(!tokenIsNft && singleAmount && singleAmount < 1e9) && (
                   <HistoryItemTokenPrice
@@ -328,6 +336,13 @@ export const HistoryTokenList = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '700',
+  },
+  tokenApproveAmountText: {
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 28,
     lineHeight: 36,
