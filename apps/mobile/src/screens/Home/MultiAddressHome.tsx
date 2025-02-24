@@ -75,7 +75,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
-import RcIconBuy from '@/assets2024/icons/home/IconReceive.svg';
+import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
 import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
 import { FundYourWallet } from './FundYourWallet';
 
