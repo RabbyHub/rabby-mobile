@@ -15,7 +15,7 @@
     android:layout_centerInParent="true"
     android:scaleType="centerInside"
     android:src="@drawable/animated_logo"
-    android:translationY="0dp"
+    android:translationY="-48dp"
     app:loopCount="100"
     tools:ignore="ImageContrastCheck" />
 
