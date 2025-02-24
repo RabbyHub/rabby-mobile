@@ -20,6 +20,7 @@ import {
   RcIconApplePayCC,
   RcIconGooglePayCC,
 } from '@/assets2024/icons/gas-account';
+import { Tip } from '@/components';
 
 const DEPOSIT_LIMIT = 1000;
 
@@ -157,7 +158,24 @@ export const GasAccountCard: React.FC<Props> = ({
         </View>
       ) : (
         <View style={styles.accountFooter}>
-          <Pressable
+          <View
+            style={{
+              flex: 1,
+            }}>
+            <Tip
+              content={
+                'Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance'
+              }>
+              <Button
+                type="ghost"
+                onPress={onWithdrawPress}
+                titleStyle={[styles.btnTitle, styles.btnTitleGhostDisabled]}
+                title={t('page.gasAccount.withdraw')}
+                disabled
+              />
+            </Tip>
+          </View>
+          {/* <Pressable
             style={{
               flex: 1,
             }}
@@ -177,7 +195,7 @@ export const GasAccountCard: React.FC<Props> = ({
               title={t('page.gasAccount.withdraw')}
               disabled={!balance}
             />
-          </Pressable>
+          </Pressable> */}
           <Pressable
             style={{
               flex: 1,
@@ -258,6 +276,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
 
   btnTitleGhost: {
     color: colors2024['brand-default'],
+  },
+  btnTitleGhostDisabled: {
+    color: colors2024['brand-disable'],
   },
 
   btnDesc: {

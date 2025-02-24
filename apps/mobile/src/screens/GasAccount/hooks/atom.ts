@@ -77,6 +77,7 @@ export const useSetGasAccount = () => {
 
 const logoutVisibleAtom = atom(false);
 const loginVisibleAtom = atom(false);
+const switchVisibleAtom = atom(false);
 
 export const useGasAccountLogoutVisible = () => {
   return useAtom(logoutVisibleAtom);
@@ -84,4 +85,8 @@ export const useGasAccountLogoutVisible = () => {
 
 export const useGasAccountLoginVisible = () => {
   return useAtom(loginVisibleAtom);
+};
+
+export const useGasAccountSwitchVisible = () => {
+  return useAtom(switchVisibleAtom);
 };

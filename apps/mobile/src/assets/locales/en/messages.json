@@ -1469,6 +1469,12 @@
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
         "desc": "Pay Gas Fees on All Chains"
+      },
+      "switchAccount": "Switch GasAccount",
+      "gasAccountList": {
+        "address": "Address",
+        "balance": "Balance",
+        "gasAccountBalance": "GasAccount Balance"
       }
     },
     "tokenDetail": {

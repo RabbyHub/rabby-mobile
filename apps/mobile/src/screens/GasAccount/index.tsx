@@ -94,7 +94,10 @@ export const GasAccountScreen = () => {
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const headerRight = useCallback(() => <GasAccountHeader />, []);
+  const headerRight = useCallback(
+    () => (isLogin ? <GasAccountHeader /> : null),
+    [isLogin],
+  );
 
   const handleDepositTips = useCallback(() => {
     if (!canDeposit) {
@@ -132,12 +135,6 @@ export const GasAccountScreen = () => {
   useEffect(() => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
-
-  useEffect(() => {
-    if (!loading && !isLogin) {
-      // setLoginVisible(true);
-    }
-  }, [loading, isLogin, setLoginVisible]);
 
   return (
     <NormalScreenContainer>

@@ -1,13 +1,19 @@
 import { toast } from '@/components/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
+import { Account } from '@/core/services/preference';
+import { openExternalUrl } from '@/core/utils/linking';
+import { navigationRef } from '@/utils/navigation';
+import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { uniqBy } from 'lodash';
 import pRetry from 'p-retry';
-import { useEffect } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Linking, Platform } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import {
   useGasAccountHistoryRefresh,
@@ -17,13 +23,6 @@ import {
   useGasBalanceRefresh,
   useSetGasAccount,
 } from './atom';
-import { openExternalUrl } from '@/core/utils/linking';
-import { Linking, Platform } from 'react-native';
-import { RootNames } from '@/constant/layout';
-import { navigationRef } from '@/utils/navigation';
-import { Account } from '@/core/services/preference';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();

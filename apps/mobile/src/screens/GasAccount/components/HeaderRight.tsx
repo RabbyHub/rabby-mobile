@@ -2,26 +2,40 @@ import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text } from 'react-native';
-import { default as RcIconLogoutCC } from '@/assets/icons/gas-account/logout-cc.svg';
+import { Pressable, Text, View } from 'react-native';
 import { Tip } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { useGasAccountLogoutVisible } from '../hooks/atom';
+import {
+  useGasAccountLoginVisible,
+  useGasAccountLogoutVisible,
+  useGasAccountSign,
+  useGasAccountSwitchVisible,
+} from '../hooks/atom';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RcIconLogoutCC, RcIconSwitchCC } from '@/assets2024/icons/gas-account';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
-export const GasAccountHeader = () => {
+export const GasAccountHeader: React.FC = () => {
   const color = useThemeColors();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const isDark = useGetBinaryMode() === 'dark';
+  const { account } = useGasAccountSign();
 
   const [, setLogoutVisible] = useGasAccountLogoutVisible();
+  const [, setLoginVisible] = useGasAccountLoginVisible();
 
-  const openLogout = useCallback(() => {
+  const handleLogout = useCallback(() => {
     setVisible(false);
     setLogoutVisible(true);
   }, [setLogoutVisible]);
+
+  const handleSwitch = useCallback(() => {
+    setVisible(false);
+    setLoginVisible(true);
+  }, [setLoginVisible]);
 
   return (
     <Tip
@@ -35,13 +49,38 @@ export const GasAccountHeader = () => {
       isVisible={visible}
       onClose={() => setVisible(false)}
       content={
-        <CustomTouchableOpacity style={styles.logout} onPress={openLogout}>
-          <RcIconLogoutCC color={colors2024['neutral-body']} />
-          <Text style={styles.text}>{t('page.gasAccount.logout')}</Text>
-        </CustomTouchableOpacity>
+        <View style={styles.optionList}>
+          <CustomTouchableOpacity
+            style={styles.option}
+            onPress={handleSwitch}
+            hitSlop={10}>
+            <RcIconSwitchCC
+              color={colors2024['neutral-body']}
+              style={styles.optionIcon}
+            />
+            <Text style={styles.text}>
+              {t('page.gasAccount.switchAccount')}
+            </Text>
+          </CustomTouchableOpacity>
+          <CustomTouchableOpacity
+            style={styles.option}
+            onPress={handleLogout}
+            hitSlop={10}>
+            <RcIconLogoutCC
+              color={colors2024['neutral-body']}
+              style={styles.optionIcon}
+            />
+            <Text style={styles.text}>{t('page.gasAccount.logout')}</Text>
+          </CustomTouchableOpacity>
+        </View>
       }>
       <Pressable style={styles.container} onPress={() => setVisible(true)}>
-        <RcIconGasAccountHeaderRight />
+        <WalletIcon
+          type={account?.brandName as KEYRING_TYPE}
+          width={styles.walletIcon.width}
+          height={styles.walletIcon.height}
+          style={styles.walletIcon}
+        />
       </Pressable>
     </Tip>
   );
@@ -49,17 +88,25 @@ export const GasAccountHeader = () => {
 
 const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
-    width: 24,
-    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logout: {
+  walletIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+  },
+  optionList: {
+    display: 'flex',
+    flexDirection: 'column',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    gap: 15,
+  },
+  option: {
     flexDirection: 'row',
     backgroundColor: 'transparent',
-    gap: 6,
-    padding: 14,
-    paddingLeft: 12,
+    gap: 8,
     alignItems: 'center',
   },
   tooltipStyle: {
@@ -77,13 +124,18 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     backgroundColor: colors['neutral-card1'],
     height: 'auto',
     marginLeft: 6,
-    borderRadius: 200,
+    borderRadius: 12,
     shadowOpacity: 0,
+  },
+  optionIcon: {
+    width: 16,
+    height: 16,
   },
   text: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 16,
+    lineHeight: 20,
     fontStyle: 'normal',
     fontWeight: '700',
   },
