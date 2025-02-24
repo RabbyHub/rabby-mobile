@@ -319,7 +319,8 @@ export const HistoryTokenList = ({
                 />
               </View>
               {isPending ? (
-                <View style={[styles.singleColomnBox]}>
+                <View
+                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
                   <Text
                     style={[
                       styles.tokenAmountText,
@@ -327,7 +328,7 @@ export const HistoryTokenList = ({
                     ]}>
                     -{' '}
                     {formatTokenAmount(data?.buyDetails?.pay_usd_amount || '0')}{' '}
-                    USD
+                    {data?.buyDetails?.pay_currency_code || ''}
                   </Text>
                   <Text
                     style={[
@@ -349,7 +350,8 @@ export const HistoryTokenList = ({
                   </Text>
                 </View>
               ) : (
-                <View style={[styles.singleColomnBox]}>
+                <View
+                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
                   <Text style={[styles.tokenAmountText]}>
                     +{' '}
                     {formatTokenAmount(
@@ -369,7 +371,8 @@ export const HistoryTokenList = ({
                       },
                       styles.isSendTextColor,
                     ]}>
-                    -{data?.buyDetails?.pay_usd_amount || '0'} USD
+                    -{data?.buyDetails?.pay_usd_amount || '0'}{' '}
+                    {data?.buyDetails?.pay_currency_code || ''}
                   </Text>
                 </View>
               )}

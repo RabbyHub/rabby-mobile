@@ -219,12 +219,17 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
     }
   }, [error]);
 
-  useEffect(() => {
-    if (!loading && !error && quotes?.[0]?.service_provider?.id) {
-      setActiveProvider(quotes[0].service_provider?.id);
-      Keyboard.dismiss();
-    }
-  }, [quotes, error, loading]);
+  useDebounce(
+    () => {
+      if (!loading && !error && quotes?.[0]?.service_provider?.id) {
+        setActiveProvider(quotes[0].service_provider?.id);
+        Keyboard.dismiss();
+        console.log('Keyboard.dismiss');
+      }
+    },
+    100,
+    [quotes, error, loading],
+  );
 
   const onToTokenChange = useCallback(
     (t: TokenItem) => {

@@ -245,7 +245,10 @@ function HistoryDetailScreen(): JSX.Element {
   const { t } = useTranslation();
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
-  const status = useMemo(() => data.tx?.status ?? 1, [data]);
+  const status = useMemo(
+    () => (data?.buyDetails?.status === 'failed' ? 0 : data.tx?.status) ?? 1,
+    [data],
+  );
   const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });

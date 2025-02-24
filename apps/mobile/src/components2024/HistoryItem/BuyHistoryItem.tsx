@@ -8,7 +8,7 @@ import { Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
-import { formatPrice } from '@/utils/number';
+import { formatPrice, formatUsdValue } from '@/utils/number';
 import { openapi } from '@/core/request';
 
 interface Props {
@@ -21,6 +21,7 @@ interface Props {
 export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
   const isPending = data.status === 'pending';
+  const isFailed = data.status === 'failed';
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
@@ -48,11 +49,13 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
         </View>
       }
       isPending={isPending}
+      isFailed={isFailed}
       rightContainer={
         isPending ? (
           <View style={styles.rightContainer}>
             <Text numberOfLines={1} style={styles.rightText}>
-              {'-$' + formatPrice(data.pay_usd_amount)}
+              {'-' + formatPrice(data.pay_usd_amount)}{' '}
+              {data.pay_currency_code || ''}
             </Text>
           </View>
         ) : null
@@ -67,7 +70,11 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
             })
       }
       receiveTokenAmount={
-        isPending ? null : '-$' + formatPrice(data.pay_usd_amount)
+        isPending
+          ? null
+          : `-${formatPrice(data.pay_usd_amount)} ${
+              data.pay_currency_code || ''
+            }`
       }
     />
   );

@@ -29,6 +29,9 @@ export class BuyItemEntity extends EntityAddressAssetBase {
   pay_usd_amount: string = '0';
 
   @Column('text', { default: '' })
+  pay_currency_code: string = '';
+
+  @Column('text', { default: '' })
   payment_type: string = '';
 
   @Column('text', { default: '' })
@@ -59,6 +62,7 @@ export class BuyItemEntity extends EntityAddressAssetBase {
   ) {
     e.owner_addr = owner_addr;
     e.id = input.id;
+    e.user_addr = input.user_addr;
     e.status = input.status;
     e.create_at = input.create_at;
     e.service_provider = columnConverter.jsonObjToString(
@@ -72,6 +76,7 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     e.receive_token_id = input.receive_token_id;
     e.receive_amount = input.receive_amount + '';
     e.receive_token = columnConverter.jsonObjToString(input.receive_token);
+    e.pay_currency_code = input.pay_currency_code;
 
     e.makeDbId();
   }
