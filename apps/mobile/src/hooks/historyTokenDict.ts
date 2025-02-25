@@ -38,11 +38,16 @@ export function useHistoryTokenDict() {
     }));
   };
 
+  const resetUpdateHistoryTime = useCallback(() => {
+    setUpdateHistoryTime({});
+  }, [setUpdateHistoryTime]);
+
   return {
     projectDict,
     setProjectDict,
     tokenDict,
     setTokenDict,
+    resetUpdateHistoryTime,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
     historyEnsureNoData,

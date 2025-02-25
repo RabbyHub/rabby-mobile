@@ -22,6 +22,7 @@ import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,
 } from '@/databases/imports';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -60,6 +61,8 @@ export default function DevDataPlaygroundModal({
     onCancel?.();
   }, [setDataPlaygroundModalVisible, onCancel]);
 
+  const { resetUpdateHistoryTime } = useHistoryTokenDict();
+
   const navigation = useRabbyAppNavigation();
 
   const Items = (() => {
@@ -88,6 +91,7 @@ export default function DevDataPlaygroundModal({
                 text: 'Clear',
                 style: 'destructive',
                 onPress: async () => {
+                  resetUpdateHistoryTime();
                   await dropAppDataSourceAndQuitApp();
                 },
               },
@@ -116,6 +120,7 @@ export default function DevDataPlaygroundModal({
         label: 'Clear history DB data',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: async () => {
+          resetUpdateHistoryTime();
           await prepareAppDataSource();
           await Promise.all([
             HistoryItemEntity.clear(),
