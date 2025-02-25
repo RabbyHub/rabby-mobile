@@ -33,7 +33,7 @@ export const AssestAllHeader = memo(
     const handlePress = (key: AsssetKey) => {
       if (!hasDefi && key === 'defi') {
         setShowDefiTip(true);
-        // delayRemoveTips();
+        delayRemoveTips();
         return;
       }
       if (!hasNft && key === 'nft') {
