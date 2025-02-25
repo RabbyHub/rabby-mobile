@@ -35,6 +35,7 @@ export interface TransactionHistoryItem {
 
   rawTx: Tx;
   createdAt: number;
+  completedAt: number;
   hash?: string;
   gasUsed?: number;
   // site?: ConnectedSite;
@@ -440,6 +441,7 @@ export class TransactionHistoryService {
           isFailed: !success,
           isCompleted: true,
           gasUsed,
+          completedAt: Date.now(),
         });
         const id = tx.hash || tx.reqId;
         if (success) {
@@ -791,6 +793,10 @@ export class TransactionGroup {
 
   get createdAt() {
     return minBy(this.txs, 'createdAt')?.createdAt || 0;
+  }
+
+  get completedAt() {
+    return this.maxGasTx.completedAt;
   }
 
   get keyringType() {

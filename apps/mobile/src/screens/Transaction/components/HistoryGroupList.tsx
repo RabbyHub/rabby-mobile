@@ -37,16 +37,9 @@ function markFirstItems(
       isFirst: false,
       data: item,
     };
-    if (i === 0) {
-      newItem.isFirst = true;
-    } else {
-      newItem.isFirst = false;
-    }
     if ('projectDict' in item) {
       const prev = arr[i - 1];
       if (i === 0) {
-        newItem.isDateStart = true;
-      } else if ('isPending' in prev) {
         newItem.isDateStart = true;
       } else if ('projectDict' in prev) {
         const curDate = dayjs(item.time_at * 1000);
@@ -54,9 +47,39 @@ function markFirstItems(
         if (!curDate.isSame(prevDate, 'date')) {
           newItem.isDateStart = true;
         }
+      } else if ('isPending' in prev) {
+        if (prev.isPending) {
+          newItem.isDateStart = true;
+        } else {
+          const curDate = dayjs(item.time_at * 1000);
+          const prevDate = dayjs(prev.completedAt);
+          if (!curDate.isSame(prevDate, 'date')) {
+            newItem.isDateStart = true;
+          }
+        }
       }
-      if (newItem.isDateStart && !newItem.isFirst) {
-        newItem.isFirst = true;
+    }
+    if ('isPending' in item) {
+      if (item.isPending) {
+        newItem.isDateStart = false;
+        i === 0 && (newItem.isFirst = true);
+      } else {
+        const prev = arr[i - 1];
+        if (i === 0) {
+          newItem.isDateStart = true;
+        } else if ('isPending' in prev && !prev.isPending) {
+          const curDate = dayjs(item.completedAt);
+          const prevDate = dayjs(prev.completedAt);
+          if (!curDate.isSame(prevDate, 'date')) {
+            newItem.isDateStart = true;
+          }
+        } else if ('projectDict' in prev) {
+          const curDate = dayjs(item.completedAt);
+          const prevDate = dayjs(prev.time_at * 1000);
+          if (!curDate.isSame(prevDate, 'date')) {
+            newItem.isDateStart = true;
+          }
+        }
       }
     }
     newArr.push(newItem);
@@ -149,6 +172,15 @@ export const HistoryList = ({
         <>
           {item.isFirst ? (
             <Text style={[styles.date]}>{t('page.bridge.Pending')}</Text>
+          ) : null}
+          {item.isDateStart ? (
+            <Text
+              style={[
+                styles.date,
+                !isForMultipleAdderss && styles.marginBottom,
+              ]}>
+              {formatTimestamp(item.data.completedAt)}
+            </Text>
           ) : null}
           <TransactionItem
             isForMultipleAdderss={isForMultipleAdderss}

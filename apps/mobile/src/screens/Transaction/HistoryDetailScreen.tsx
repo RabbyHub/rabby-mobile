@@ -559,7 +559,7 @@ function HistoryDetailScreen(): JSX.Element {
               <Text style={[styles.itemContentText]}>{chainItem?.name}</Text>
             </View>
           </View>
-          {Boolean(usdGasFee) && status === 1 && (
+          {Boolean(usdGasFee) && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
                 {t('page.transactions.detail.GasFee')}
