@@ -14,14 +14,22 @@ const storeProjectBase = atomByMMKV<TxAllHistoryResult['project_dict']>(
 );
 
 const historyTimetBase = atomByMMKV<Record<string, number>>(
-  '@HistoryProjectDict',
+  '@HistoryTimeDict',
   {} as Record<string, number>,
+);
+
+const historyEnsureNoDataBase = atomByMMKV<Record<string, boolean>>(
+  '@historyEnsureNoDataDict',
+  {} as Record<string, boolean>,
 );
 
 export function useHistoryTokenDict() {
   const [tokenDict, setTokenDict] = useAtom(storeTokenBase);
   const [projectDict, setProjectDict] = useAtom(storeProjectBase);
   const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimetBase);
+  const [historyEnsureNoData, setHistoryEnsureNoData] = useAtom(
+    historyEnsureNoDataBase,
+  );
 
   const updateHistoryTimeSingleAddress = (add: string) => {
     setUpdateHistoryTime(prev => ({
@@ -29,6 +37,7 @@ export function useHistoryTokenDict() {
       [add]: Date.now(),
     }));
   };
+
   return {
     projectDict,
     setProjectDict,
@@ -36,5 +45,7 @@ export function useHistoryTokenDict() {
     setTokenDict,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
+    historyEnsureNoData,
+    setHistoryEnsureNoData,
   };
 }

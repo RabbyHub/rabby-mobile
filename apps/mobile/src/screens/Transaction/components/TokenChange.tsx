@@ -174,7 +174,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     gap: 3,
     minWidth: 0,
     flexShrink: 1,
-    height: 38,
+    height: 40,
   },
   rowBox: {
     gap: ChangeSizes.gap,

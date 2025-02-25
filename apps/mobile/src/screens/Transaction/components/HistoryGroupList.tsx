@@ -108,6 +108,7 @@ const AddressInfo = ({ account }: { account?: KeyringAccountWithAlias }) => {
 
 export const HistoryList = ({
   loading,
+  ensureCurrentNoDbData,
   historySuccessList,
   loadingMore,
   loadMore,
@@ -118,6 +119,7 @@ export const HistoryList = ({
   onRefresh,
   isForMultipleAdderss = true,
 }: {
+  ensureCurrentNoDbData?: boolean;
   resetTopMenu?: () => void;
   historySuccessList?: string[];
   localTxList?: TransactionGroup[];
@@ -194,22 +196,24 @@ export const HistoryList = ({
     }
   };
 
-  // if (loading) {
-  //   return (
-  //     <View style={styles.skeletonContainer}>
-  //       {range(0, 8).map(i => {
-  //         return <SkeletonCard key={i} />;
-  //       })}
-  //     </View>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <View style={styles.skeletonContainer}>
+        {range(0, 8).map(i => {
+          return <SkeletonCard key={i} />;
+        })}
+      </View>
+    );
+  }
 
   return (
     <Animated.FlatList
       data={markedList}
       renderItem={renderItem}
       windowSize={5}
-      ListEmptyComponent={loading ? null : <Empty />}
+      ListEmptyComponent={
+        loading ? null : ensureCurrentNoDbData ? <Empty /> : null
+      }
       onTouchStart={() => resetTopMenu && resetTopMenu()}
       style={styles.container}
       onEndReached={loadMore}

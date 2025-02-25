@@ -130,6 +130,7 @@ function History({
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
+  const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [isShowAll, setIsShowAll] = useState(false);
   // const [isShowSmall, setIsShowSmall] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
@@ -150,7 +151,7 @@ function History({
 
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
-  const { projectDict, tokenDict } = useHistoryTokenDict();
+  const { projectDict, tokenDict, historyEnsureNoData } = useHistoryTokenDict();
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
@@ -168,6 +169,10 @@ function History({
         ),
         SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
       ]);
+
+      if (isFirst) {
+        setCurrentNoDbData(historyList.length === 0);
+      }
 
       const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(
@@ -563,6 +568,35 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
+  const ensureCurrentNoDbData = useMemo(() => {
+    if (isNeedFetchFromApi) {
+      return false;
+    }
+
+    const addresses = isSceneUsingAllAccounts
+      ? unionAccounts.map(account => account.address.toLowerCase())
+      : [finalSceneCurrentAccount?.address.toLowerCase()!];
+    const isNodata = addresses.every(address => {
+      return historyEnsureNoData[address];
+    });
+    return isNodata;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyEnsureNoData, sceneCurrentAccountDepKey]);
+
+  const fetchFromDbLoading = useMemo(
+    () =>
+      currentNoDbData &&
+      !allTxHistory.length &&
+      !groups?.length &&
+      !ensureCurrentNoDbData,
+    [
+      currentNoDbData,
+      allTxHistory.length,
+      groups?.length,
+      ensureCurrentNoDbData,
+    ],
+  );
+
   // if (!loading && !groups?.length && !allTxHistory.length) {
   //   return <Empty />;
   // }
@@ -621,7 +655,8 @@ function History({
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
-          loading={loading}
+          loading={isNeedFetchFromApi ? loading : fetchFromDbLoading}
+          ensureCurrentNoDbData={ensureCurrentNoDbData}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAdderss={isForMultipleAdderss}

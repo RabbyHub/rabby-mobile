@@ -64,6 +64,7 @@ export const useSyncHistoryDB = (
     setTokenDict,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
+    setHistoryEnsureNoData,
   } = useHistoryTokenDict();
 
   const syncSwapHistory = useMemoizedFn(
@@ -272,6 +273,10 @@ export const useSyncHistoryDB = (
             syncUserAllHistory(address, lastItemTime, latestTime);
           }
         }
+        setHistoryEnsureNoData(prev => ({
+          ...prev,
+          [address]: !res.history_list.length,
+        }));
       } catch (error) {
         console.error('syncUserAllHistory Error fetching data:', error);
       }
