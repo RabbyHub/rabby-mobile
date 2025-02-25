@@ -44,6 +44,7 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -153,11 +154,23 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const {
       isSearchingLocalTokens,
-      sortedTokensWithOwner: searchedLocalTokensWithOwner,
+      // sortedTokensWithOwner: searchedLocalTokensWithOwner,
       sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
       // allLocalTokens: searchedLocalTokens,
       fetchAllLocalTokens,
     } = useQueryLocalTokens();
+
+    const searchedLocalTokensWithOwner = useMemo(
+      () =>
+        searchedLocalDisplayTokensWithOwner.map(
+          e =>
+            ({
+              ...abstractTokenToTokenItem(e),
+              ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
+            } as TokenItemMaybeWithOwner),
+        ),
+      [searchedLocalDisplayTokensWithOwner],
+    );
 
     // const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
     useEffect(() => {
@@ -196,9 +209,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           allTokens: allRemoteTokens,
           allTokenItems: useSwapTokenList
             ? swapTokenList || []
-            : allRemoteTokens
-                .filter(i => !i._isFold)
-                .map(abstractTokenToTokenItem),
+            : allRemoteTokens.map(abstractTokenToTokenItem),
           searchedTokenByQuery: remoteSearchedTokenByQuery,
         };
 
@@ -211,19 +222,15 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           searchedTokenByQuery: searchedLocalTokensWithOwner,
         };
       }, [
-        useSwapTokenList,
-        useLocalDatabase,
-        allRemoteTokens,
-
         isRemoteSearchLoading,
+        allRemoteTokens,
+        useSwapTokenList,
+        swapTokenList,
         remoteSearchedTokenByQuery,
-
+        useLocalDatabase,
         isSearchingLocalTokens,
-        // searchedLocalTokens,
-
         searchedLocalDisplayTokensWithOwner,
         searchedLocalTokensWithOwner,
-        swapTokenList,
       ]);
 
     const isExcludedTokens = useCallback(
@@ -234,20 +241,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
       [excludeTokens],
     );
-
-    const availableToken = useMemo(() => {
-      const _tokens = queryConds.chainServerId
-        ? allTokenItems.filter(
-            token => token.chain === queryConds.chainServerId,
-          )
-        : allTokenItems;
-      return uniqBy(
-        queryConds.keyword ? searchedTokenByQuery : _tokens,
-        token => {
-          return makeKeyForTokenItemMaybeWithOwner(token);
-        },
-      ).filter(e => !isExcludedTokens(e));
-    }, [allTokenItems, searchedTokenByQuery, isExcludedTokens, queryConds]);
 
     const isFromModalType = useMemo(
       () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
@@ -260,17 +253,72 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       }
 
       const list = convertSmallTokenList(
-        allTokens.filter(
-          i => i._isFold && i.chain === queryConds.chainServerId,
-        ),
-      ).map(abstractTokenToTokenItem);
-      return list.filter(e => !isExcludedTokens(e));
+        allTokens.filter(i => {
+          const condition = !!i._isFold || (!i.is_core && !i._isPined);
+          if (queryConds.chainServerId) {
+            return condition && i.chain === queryConds.chainServerId;
+          }
+          return condition;
+        }),
+      ).map(
+        e =>
+          ({
+            ...abstractTokenToTokenItem(e),
+            ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
+          } as TokenItemMaybeWithOwner),
+      );
+      return uniqBy(
+        list.filter(e => !isExcludedTokens(e)),
+        e => makeKeyForTokenItemMaybeWithOwner(e),
+      );
     }, [
       allTokens,
       isExcludedTokens,
       isFromModalType,
       queryConds.chainServerId,
       queryConds.keyword,
+    ]);
+
+    const availableToken = useMemo(() => {
+      const _tokens = queryConds.chainServerId
+        ? allTokenItems.filter(
+            token => token.chain === queryConds.chainServerId,
+          )
+        : allTokenItems;
+      return uniqBy(
+        queryConds.keyword ? searchedTokenByQuery : _tokens,
+        token => {
+          return makeKeyForTokenItemMaybeWithOwner(token);
+        },
+      ).filter(
+        e =>
+          !isExcludedTokens(e) &&
+          !foldTokensList.some(fold => {
+            let foldAccount: string = '';
+            let eAccount: string = '';
+            if ('ownerAccount' in fold) {
+              foldAccount =
+                (fold as TokenItemMaybeWithOwner)?.ownerAccount?.address || '';
+            }
+
+            if ('ownerAccount' in e) {
+              eAccount =
+                (e as TokenItemMaybeWithOwner)?.ownerAccount?.address || '';
+            }
+            return (
+              fold.chain === e.chain &&
+              fold.id === e.id &&
+              isSameAddress(foldAccount, eAccount)
+            );
+          }),
+      );
+    }, [
+      queryConds.chainServerId,
+      queryConds.keyword,
+      allTokenItems,
+      searchedTokenByQuery,
+      isExcludedTokens,
+      foldTokensList,
     ]);
 
     const isListLoading = queryConds.keyword
@@ -536,8 +584,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           selectToken={token}
           placeholder={placeholder}
           headerTitle={headerTitle}
-          // displayAccountFilter={allowClearAccountFilter}
-          displayAccountFilter={false}
+          displayAccountFilter={allowClearAccountFilter}
           filterAccount={queryConds.account}
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}

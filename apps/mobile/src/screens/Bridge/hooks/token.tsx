@@ -38,6 +38,7 @@ import { apiProvider } from '@/core/apis';
 import { useMount } from 'ahooks';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
   shouldApproveToken?: boolean;
@@ -844,6 +845,10 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       setClickMaxBtnCount(e => e + 1);
     }
   }, [fromToken, handleAmountChange, setReserveGasOpen, payTokenIsNativeToken]);
+
+  useEffect(() => {
+    setAmount('');
+  }, [fromChain]);
 
   return {
     clearExpiredTimer,
