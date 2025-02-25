@@ -613,7 +613,7 @@ function History({
           <View style={styles.menuContainer}>
             <View style={styles.menuItem}>
               <Text style={styles.menuItemText}>
-                {t('page.transactions.ViewHiddenItems')}
+                {t('page.transactions.ShowHiddenItems')}
               </Text>
               <View style={styles.valueView}>
                 <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />

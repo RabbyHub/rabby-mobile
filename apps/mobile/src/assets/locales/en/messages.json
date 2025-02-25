@@ -34,7 +34,8 @@
     },
     "transactions": {
       "title": "Transactions",
-      "ViewHiddenItems": "Show hidden transactions",
+      "ViewHiddenItems": "View scam transactions",
+      "ShowHiddenItems": "Show hidden transactions",
       "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
         "Swap": "Swapped",

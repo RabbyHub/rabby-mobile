@@ -261,7 +261,7 @@ export const HistoryTokenList = ({
                 {getTokenSymbol(sendToken as TokenItem)}
               </Text>
               <RcIconRightCC
-                color={colors2024['neutral-foot']}
+                color={colors2024['neutral-title-1']}
                 width={18}
                 height={18}
               />
@@ -371,7 +371,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   isSendTextColor: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
   },
   isFailBox: {
     opacity: 0.3,
