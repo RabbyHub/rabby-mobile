@@ -26,6 +26,7 @@ import { toast } from '@/components2024/Toast';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { RootNames } from '@/constant/layout';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { SelectRegion } from './components/SelectRegion';
 
 const floatBottom_height = 112;
 
@@ -49,6 +50,8 @@ export const BuyScreen = ({
   const {
     currentAddr,
     region,
+    regionList,
+    switchRegion,
 
     toToken,
     onToTokenChange,
@@ -133,7 +136,15 @@ export const BuyScreen = ({
         extraHeight={52}
         keyboardOpeningTime={0}
         contentContainerStyle={styles.screen}>
-        <View style={{ gap: 8, marginTop: 20 }}>
+        <View>
+          <SelectRegion
+            region={region}
+            onSelectRegion={switchRegion}
+            regionList={regionList}
+          />
+        </View>
+        {/* <View style={{ gap: 8, marginTop: 20 }}> */}
+        <View style={{ gap: 8 }}>
           <BuyToken
             type="from"
             currency="USD"
