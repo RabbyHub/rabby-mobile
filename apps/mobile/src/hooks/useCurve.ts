@@ -16,7 +16,7 @@ const formChartData = (
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
 ) => {
-  const startData = data[0] || { value: 0, timestamp: 0 };
+  const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
 
   const list =
     data?.map(x => {
