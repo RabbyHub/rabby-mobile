@@ -2,12 +2,67 @@ import { openapi } from '@/core/request';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { syncRemoteBuyHistory } from '@/databases/sync/assets';
 import { useCurrentAccount } from '@/hooks/account';
-import { BuyHistoryList } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  BuyHistoryItem,
+  BuyHistoryList,
+} from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { uniqBy } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { runOnJS } from 'react-native-reanimated';
 import useAsync from 'react-use/lib/useAsync';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
+import useDebounce from 'react-use/lib/useDebounce';
+
+export const usePendingBuyItemData = (
+  addr: string,
+  id: string,
+  status: BuyHistoryItem['status'],
+) => {
+  const [{ loading, value }, fetchHistory] = useAsyncFn(() => {
+    console.log('fetch usePendingBuyItemData');
+    return openapi.getBuyHistory({
+      user_addr: addr,
+      start: 0,
+      limit: 20,
+    });
+  }, [addr]);
+
+  const isPending = status === 'pending';
+
+  useDebounce(
+    () => {
+      const initFetch = !!addr && !!id && isPending && !loading && !value;
+      const refetch =
+        !!addr &&
+        !!id &&
+        !loading &&
+        !!value &&
+        value?.histories?.find(e => e.id === id)?.status === 'pending';
+      if (initFetch || refetch) {
+        fetchHistory();
+      }
+    },
+    5000,
+    [fetchHistory, id, isPending, loading, value, value?.histories],
+  );
+
+  useEffect(() => {
+    if (addr && value?.histories.length) {
+      syncBuyHistory(addr, value);
+    }
+  }, [addr, value]);
+
+  const data = useMemo(() => {
+    const target = value?.histories?.find(e => e.id === id);
+    if (target && target.status !== 'pending') {
+      return target;
+    }
+    return;
+  }, [value, id]);
+
+  return data;
+};
 
 const syncBuyHistory = async (addr: string, data: BuyHistoryList) => {
   const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago

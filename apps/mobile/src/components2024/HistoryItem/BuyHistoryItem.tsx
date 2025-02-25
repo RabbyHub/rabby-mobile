@@ -1,5 +1,5 @@
 import { AssetAvatar } from '@/components/AssetAvatar';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommonHistoryItem } from './CommonHistoryItem';
 import { getTokenAmountText } from './getTokenAmountText';
@@ -8,8 +8,9 @@ import { Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
-import { formatPrice, formatUsdValue } from '@/utils/number';
+import { formatUsdValue } from '@/utils/number';
 import { openapi } from '@/core/request';
+import { usePendingBuyItemData } from '@/screens/Buy/hooks/history';
 
 interface Props {
   data: Awaited<ReturnType<typeof openapi.getBuyHistory>>['histories'][number];
@@ -18,11 +19,26 @@ interface Props {
 /**
  * @todo add buy history
  */
-export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
+export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
   const { t } = useTranslation();
+
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
+  const fetchedData = usePendingBuyItemData(
+    _data.user_addr,
+    _data.id,
+    _data.status,
+  );
+
+  const data = useMemo(() => {
+    if (fetchedData) {
+      return fetchedData;
+    }
+    return _data;
+  }, [_data, fetchedData]);
+
   const isPending = data.status === 'pending';
   const isFailed = data.status === 'failed';
-  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
     <CommonHistoryItem
@@ -40,12 +56,12 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
               dex: data?.service_provider?.name,
             })}
           </Text>
-          {/* <ArrowRightCC
+          <ArrowRightCC
             style={styles.arrowIcon}
             width={14}
             height={14}
             color={colors2024['neutral-secondary']}
-          /> */}
+          />
         </View>
       }
       isPending={isPending}
@@ -54,7 +70,7 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
         isPending ? (
           <View style={styles.rightContainer}>
             <Text numberOfLines={1} style={styles.rightText}>
-              {'-' + formatPrice(data.pay_usd_amount)}{' '}
+              {'-' + formatUsdValue(data.pay_usd_amount)?.replace('$', '')}{' '}
               {data.pay_currency_code || ''}
             </Text>
           </View>
@@ -70,11 +86,13 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
             })
       }
       receiveTokenAmount={
-        isPending
-          ? null
-          : `-${formatPrice(data.pay_usd_amount)} ${
+        isPending ? null : (
+          <Text style={styles.rightBottomText}>
+            {`-${formatUsdValue(data.pay_usd_amount)?.replace('$', '')} ${
               data.pay_currency_code || ''
-            }`
+            }`}
+          </Text>
+        )
       }
     />
   );
@@ -119,5 +137,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontWeight: '700',
     marginTop: 4,
+  },
+
+  rightBottomText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 }));

@@ -8,7 +8,7 @@ import { formatSpeicalAmount } from '@/utils/number';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useNavigationState } from '@react-navigation/native';
-import { atom, useAtomValue } from 'jotai';
+// import { atom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
 import { getCountry } from 'react-native-localize';
@@ -16,16 +16,16 @@ import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
 
-const regionListAtom = atom<
-  Awaited<ReturnType<typeof openapi.getBuySupportedCountryList>>
->([]);
+// const regionListAtom = atom<
+//   Awaited<ReturnType<typeof openapi.getBuySupportedCountryList>>
+// >([]);
 
-regionListAtom.onMount = set => {
-  set([]);
-  openapi.getBuySupportedCountryList().then(s => {
-    set(s);
-  });
-};
+// regionListAtom.onMount = set => {
+//   set([]);
+//   openapi.getBuySupportedCountryList().then(s => {
+//     set(s);
+//   });
+// };
 
 const useTokenInfo = ({
   userAddress,
@@ -87,7 +87,7 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
 
   const [activeProvider, setActiveProvider] = useState<string>('');
 
-  const regionList = useAtomValue(regionListAtom);
+  // const regionList = useAtomValue(regionListAtom);
 
   const [refreshId, _refresh] = useState(0);
 
@@ -254,7 +254,7 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
 
   return {
     currentAddr: currentAccount?.address,
-    regionList,
+    // regionList,
     region,
     switchRegion,
 

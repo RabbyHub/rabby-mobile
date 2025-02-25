@@ -6,7 +6,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { SelectRegion } from './components/SelectRegion';
 import { useTranslation } from 'react-i18next';
 import React from 'react';
 
@@ -49,9 +48,7 @@ export const BuyScreen = ({
 
   const {
     currentAddr,
-    regionList,
     region,
-    switchRegion,
 
     toToken,
     onToTokenChange,
@@ -136,14 +133,7 @@ export const BuyScreen = ({
         extraHeight={52}
         keyboardOpeningTime={0}
         contentContainerStyle={styles.screen}>
-        <View>
-          <SelectRegion
-            region={region}
-            onSelectRegion={switchRegion}
-            regionList={regionList}
-          />
-        </View>
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: 8, marginTop: 20 }}>
           <BuyToken
             type="from"
             currency="USD"

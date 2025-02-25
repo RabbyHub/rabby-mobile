@@ -30,6 +30,7 @@ import {
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcIconExternalLinkCC } from '@/assets/icons/common';
+
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -69,6 +70,7 @@ import { useTranslation } from 'react-i18next';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '../TransactionRecord/components/TransactionItem2025';
+import { usePendingBuyItemData } from '../Buy/hooks/history';
 
 export const TxStatusItem = ({
   status,
@@ -107,7 +109,7 @@ export const TxStatusItem = ({
           style={{
             transform: [{ rotate: spin }],
           }}>
-          <RcIconPending width={18} height={18} />
+          <RcIconPending width={12} height={12} />
         </Animated.View>
         {withText && (
           <Text
@@ -232,7 +234,25 @@ function HistoryDetailScreen(): JSX.Element {
         'HistoryDetail'
       >['route']
     >();
-  const { data, isForMultipleAdderss, title } = route.params || {};
+  const { data: _data, isForMultipleAdderss, title } = route.params || {};
+
+  const buyItemData = usePendingBuyItemData(
+    _data.address,
+    _data?.buyDetails?.id || '',
+    _data?.buyDetails?.status || '',
+  );
+
+  const data = useMemo(() => {
+    if (_data?.isLocalBuy && buyItemData) {
+      return {
+        ..._data,
+        buyDetails: buyItemData,
+        id: buyItemData?.receive_tx_id ?? _data.id,
+      } as typeof _data;
+    }
+    return _data;
+  }, [_data, buyItemData]);
+
   console.debug(
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],

@@ -79,6 +79,8 @@ import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
 import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
 import { FundYourWallet } from './FundYourWallet';
 
+const HeaderHeight = 50;
+
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
@@ -744,10 +746,7 @@ function MultiAddressHome(): JSX.Element {
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={[
-              styles.floatBottom,
-              { paddingBottom: androidBottomOffset },
-            ]}>
+            style={[styles.floatBottom, { paddingBottom: bottom }]}>
             <Pressable onPress={handlePressSearch} style={styles.search}>
               <RcNextSearchCC
                 width={20}
@@ -795,7 +794,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
   },
   headerBox: {
-    height: ScreenLayouts.headerAreaHeight,
+    height: HeaderHeight,
     // paddingLeft: 8,
     // paddingRight: 38,
     flexDirection: 'row',
@@ -806,7 +805,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // backgroundColor: colors2024['neutral-title-1'],
   },
   leftBox: {
-    height: ScreenLayouts.headerAreaHeight,
+    height: HeaderHeight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -823,7 +822,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceBox: {
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginTop: 10,
-    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -894,7 +892,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
-    marginTop: 10,
+    marginTop: 30,
+    marginBottom: 16,
   },
   pinHeader: {
     marginTop: -8,
@@ -944,7 +943,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    marginBottom: 20,
+    marginTop: 16,
   },
   emptyItem: {
     backgroundColor: 'transparent',
@@ -974,8 +973,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    marginBottom: 20,
-    paddingBottom: 100,
   },
   gridItem: {
     borderWidth: 1,
@@ -1015,14 +1012,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   floatBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
+    // position: 'absolute',
+    // bottom: 0,
+    // left: 0,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     width: Dimensions.get('window').width,
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    height: 128,
+
+    // height: 128,
   },
   search: {
     width: '100%',
