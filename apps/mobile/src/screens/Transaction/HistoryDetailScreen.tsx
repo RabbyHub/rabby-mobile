@@ -19,6 +19,7 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Empty } from './components/Empty';
 import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
+import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -28,7 +29,7 @@ import {
 } from '@/hooks/account';
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
+import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -190,8 +191,8 @@ export const AddressItemInDetail = ({
               </Text>
               {isInAccounts && (
                 <RcIconRightCC
-                  width={14}
-                  height={14}
+                  width={12}
+                  height={12}
                   color={colors2024['neutral-foot']}
                 />
               )}

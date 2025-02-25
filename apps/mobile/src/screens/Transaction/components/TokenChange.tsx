@@ -114,7 +114,7 @@ export const TxChange = ({
   return (
     <View style={[styles.container, style]}>
       {isApprove && (
-        <Text style={[styles.approveText]}>
+        <Text style={[styles.approveText]} numberOfLines={1}>
           {' '}
           {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
           {tokenIsNft
@@ -174,6 +174,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     gap: 3,
     minWidth: 0,
     flexShrink: 1,
+    height: 38,
   },
   rowBox: {
     gap: ChangeSizes.gap,

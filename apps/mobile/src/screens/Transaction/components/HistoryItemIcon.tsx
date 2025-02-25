@@ -1,10 +1,14 @@
 import React, { useMemo } from 'react';
 import RcIconSend from '@/assets2024/icons/history/IconSend.svg';
+import RcIconSendDark from '@/assets2024/icons/history/IconSendDark.svg';
 import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
 // import RcIconContract from '@/assets/icons/history/contract.svg';
 import RcIconApproval from '@/assets2024/icons/history/IconApprove.svg';
+import RcIconApprovalDark from '@/assets2024/icons/history/IconApproveDark.svg';
 import RcIconReceive from '@/assets2024/icons/history/IconReceive.svg';
+import RcIconReceiveDark from '@/assets2024/icons/history/IconReceiveDark.svg';
 import RcIconRevoke from '@/assets2024/icons/history/IconRevoke.svg';
+import RcIconRevokeDark from '@/assets2024/icons/history/IconApproveDark.svg';
 import RcIconContract from '@/assets2024/icons/history/IconContract.svg';
 import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
 import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
@@ -55,8 +59,8 @@ export const HistoryItemIcon = ({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const RcSingleTokenBrIcon = useMemo(() => {
     const size = isInDetail ? 24 : 20;
-    const IconApprove = (
-      <RcIconApproval
+    const IconApprove = !isLight ? (
+      <RcIconApprovalDark
         width={size}
         height={size}
         color={
@@ -64,18 +68,37 @@ export const HistoryItemIcon = ({
         }
         style={[styles.iconBR]}
       />
+    ) : (
+      <RcIconApproval
+        width={size}
+        height={size}
+        color={colors2024['neutral-bg-1']}
+        style={[styles.iconBR]}
+      />
     );
-    const IconSend = (
+    const IconSend = !isLight ? (
+      <RcIconSendDark
+        width={size}
+        height={size}
+        style={[styles.iconBR]}
+        color={colors2024['neutral-bg-2']}
+      />
+    ) : (
       <RcIconSend
         width={size}
         height={size}
         style={[styles.iconBR]}
-        color={
-          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
-        }
+        color={colors2024['neutral-bg-1']}
       />
     );
-    const IconRecieve = (
+    const IconRecieve = !isLight ? (
+      <RcIconReceiveDark
+        width={size}
+        height={size}
+        color={colors2024['neutral-bg-2']}
+        style={[styles.iconBR]}
+      />
+    ) : (
       <RcIconReceive
         style={[styles.iconBR]}
         width={size}
@@ -85,7 +108,16 @@ export const HistoryItemIcon = ({
         }
       />
     );
-    const IconRevoke = (
+    const IconRevoke = !isLight ? (
+      <RcIconRevokeDark
+        width={size}
+        height={size}
+        style={[styles.iconBR]}
+        color={
+          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
+        }
+      />
+    ) : (
       <RcIconRevoke
         width={size}
         height={size}
@@ -144,21 +176,13 @@ export const HistoryItemIcon = ({
         <View style={[styles.imageBox]}>
           <View style={[styles.fromTokenBox]}>
             <AssetAvatar logo={doubleToken?.[0]?.logo_url} size={30} />
-            {/* <FastImage
-                style={tokenFromStyle}
-                source={{
-                  uri: iconUri[0] as string,
-                }}
-              /> */}
           </View>
           <View style={[styles.toTokenBox]}>
-            <AssetAvatar logo={doubleToken?.[1]?.logo_url} size={32} />
-            {/* <FastImage
-                style={tokenToStyle}
-                source={{
-                  uri: iconUri[1] as string,
-                }}
-              /> */}
+            <AssetAvatar
+              logo={doubleToken?.[1]?.logo_url}
+              size={32}
+              logoStyle={styles.swapLogo}
+            />
           </View>
           <RcIconSwitch style={[styles.iconTR]} />
         </View>
@@ -177,6 +201,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   image: {
     width: 46,
     height: 46,
+  },
+  swapLogo: {
+    borderWidth: 2,
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   mediaInDetail: {
     width: 58,
