@@ -12,7 +12,7 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { findChain, findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
@@ -183,7 +183,7 @@ function History({
             ),
           } as HistoryDisplayItem),
       );
-      setDbData(list);
+      setDbData(list.filter(item => item.chain && getChain(item.chain)?.name));
       return list;
     };
     if (!dbData.length) {
