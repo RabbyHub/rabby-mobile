@@ -275,20 +275,19 @@ export default function UnlockScreen() {
     <SilentTouchableView
       style={{ height: '100%', flex: 1 }}
       viewProps={{
-        style: [
-          styles.container,
-          { paddingBottom: safeSizes.containerPaddingBottom },
-        ],
+        style: styles.container,
       }}
       onPress={() => {
         Keyboard.dismiss();
         onTouchInputAway();
       }}>
-      <RcRabbyLogo style={styles.logo} width={125} height={134} />
       <KeyboardAvoidingView
         behavior="padding"
         style={styles.innerContainer}
-        keyboardVerticalOffset={-20}>
+        keyboardVerticalOffset={-80}>
+        <View style={styles.topContainer}>
+          <RcRabbyLogo style={styles.logo} width={125} height={134} />
+        </View>
         <View style={styles.bodyContainer}>
           {usingPassword ? (
             <View style={styles.formWrapper}>
@@ -351,26 +350,25 @@ export default function UnlockScreen() {
               </View>
             </View>
           )}
-
-          {couldSwitchingAuthentication && (
-            <View style={styles.switchingAuthTypeButtonWrapper}>
-              <TouchableText
-                disabled={shouldDisabled}
-                style={styles.switchingAuthTypeButton}
-                onPress={() => {
-                  setUsingBiometrics(prev => !prev);
-                }}>
-                {usingBiometrics
-                  ? t('page.unlock.btn.switchtype_pwd')
-                  : Platform.select({
-                      ios: t('page.unlock.btn.switchtype_faceid'),
-                      android: t('page.unlock.btn.switchtype_fingerprint'),
-                    }) || t('page.unlock.btn.switchtype_fingerprint')}
-              </TouchableText>
-            </View>
-          )}
         </View>
       </KeyboardAvoidingView>
+      {couldSwitchingAuthentication && (
+        <View style={styles.switchingAuthTypeButtonWrapper}>
+          <TouchableText
+            disabled={shouldDisabled}
+            style={styles.switchingAuthTypeButton}
+            onPress={() => {
+              setUsingBiometrics(prev => !prev);
+            }}>
+            {usingBiometrics
+              ? t('page.unlock.btn.switchtype_pwd')
+              : Platform.select({
+                  ios: t('page.unlock.btn.switchtype_faceid'),
+                  android: t('page.unlock.btn.switchtype_fingerprint'),
+                }) || t('page.unlock.btn.switchtype_fingerprint')}
+          </TouchableText>
+        </View>
+      )}
     </SilentTouchableView>
   );
 }
@@ -381,18 +379,23 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
       height: '100%',
       backgroundColor: colors2024['neutral-bg-1'],
-      justifyContent: 'flex-end',
       position: 'relative',
     },
     innerContainer: {
       backgroundColor: colors2024['neutral-bg-1'],
+      height: '100%',
+      paddingBottom: 0,
+      justifyContent: 'space-between',
+    },
+    topContainer: {
+      height: '45%',
+      position: 'relative',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
     },
     logo: {
       backgroundColor: 'transparent',
-      position: 'absolute',
-      top: '45%',
-      left: '50%',
-      transform: [{ translateX: -62.5 }, { translateY: -67 }],
+      transform: [{ translateX: 0 }, { translateY: 67 }],
     },
     title1: {
       color: isLight
@@ -404,12 +407,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       marginTop: 13,
     },
     bodyContainer: {
-      flexShrink: 0,
-      paddingHorizontal: 0,
-      paddingBottom: 56,
-      backgroundColor: colors2024['neutral-bg-1'],
-      justifyContent: 'flex-end',
-      // ...makeDebugBorder(),
+      flexShrink: 1,
+      height: '55%',
+      justifyContent: 'center',
     },
     formWrapper: {
       width: '100%',
@@ -417,7 +417,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'column',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 66,
     },
 
     inputContainer: {
@@ -481,6 +480,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
     switchingAuthTypeButtonWrapper: {
       width: '100%',
       alignItems: 'center',
+      position: 'absolute',
+      bottom: 56,
     },
     switchingAuthTypeButton: {
       color: colors2024['neutral-foot'],
