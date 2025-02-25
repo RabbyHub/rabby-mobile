@@ -90,15 +90,22 @@ export const batchLoadProjects = async (
   user_id: string,
   projectIds: string[],
   isTestnet = false,
+  ignoreSingleError = false,
 ) => {
   const queues = projectIds.map(id =>
-    pQueue.add(() => {
-      if (isTestnet) {
-        return testOpenapi.getProtocol({ addr: user_id, id });
-      } else {
-        return openapi.getProtocol({ addr: user_id, id }).catch(err => {
-          console.error('[getProtocol] error: ', err, user_id, id);
-        });
+    pQueue.add(async () => {
+      try {
+        if (isTestnet) {
+          return await testOpenapi.getProtocol({ addr: user_id, id });
+        } else {
+          return await openapi.getProtocol({ addr: user_id, id });
+        }
+      } catch (error) {
+        console.error(`Failed to load protocol for project ${id}:`, error);
+        if (ignoreSingleError) {
+          return null;
+        }
+        throw error;
       }
     }),
   );

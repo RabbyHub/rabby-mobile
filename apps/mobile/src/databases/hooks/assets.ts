@@ -101,7 +101,7 @@ export const syncProtocols = async (
   const protocols: ComplexProtocol[] = [];
   await Promise.all(
     chunkIds.map(async ids => {
-      const projects = await batchLoadProjects(address, ids);
+      const projects = await batchLoadProjects(address, ids, false, true);
       if (!projects?.length) {
         return;
       }
