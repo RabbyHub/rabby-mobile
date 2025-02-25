@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import IconUSLogo from '@/assets2024/icons/buy/us.svg';
@@ -55,6 +55,16 @@ export const BuyToken = ({
     });
   };
 
+  const displayValue = useMemo(() => {
+    if (isReceive && value) {
+      return formatTokenAmount(value, 6);
+    }
+    if (isFiat && value) {
+      return '$' + value;
+    }
+    return value;
+  }, [isFiat, isReceive, value]);
+
   const Linear = useCallback(() => {
     return (
       <LinearGradient
@@ -94,7 +104,7 @@ export const BuyToken = ({
               isFiat ? '$0' : noQuote ? t('page.buy.noQuotePlaceholder') : '0'
             }
             scrollEnabled={true}
-            value={isFiat && value ? '$' + value : value}
+            value={displayValue}
             onChangeText={e => {
               onInputChange?.(e.replaceAll('$', ''));
             }}
