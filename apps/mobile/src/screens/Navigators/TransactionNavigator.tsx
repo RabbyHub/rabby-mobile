@@ -27,6 +27,10 @@ import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { BuyScreen } from '../Buy';
+import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
+import SendInputScreen from '../Send/SubScreens/SendInput';
+import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
+import SelectWatchScreenScreen from '../Send/SubScreens/SelectWatchAddress';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -47,6 +51,58 @@ export default function TransactionNavigator() {
         headerShadowVisible: false,
         headerShown: true,
       })}>
+      <TransactionStack.Screen
+        name={RootNames.SendTo}
+        component={SendPolyScreen}
+        options={mergeScreenOptions({
+          title: 'Send to',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SendInput}
+        component={SendInputScreen}
+        options={mergeScreenOptions({
+          title: 'Send to',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SelectImportAddress}
+        component={SelectMyAddressScreen}
+        options={mergeScreenOptions({
+          title: 'Select Imported Address',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SelectWatchAddress}
+        component={SelectWatchScreenScreen}
+        options={mergeScreenOptions({
+          title: 'Select Watch-Only Address',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}

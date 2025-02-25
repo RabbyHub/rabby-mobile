@@ -32,7 +32,7 @@ type CurrentAddressProps = NativeStackScreenProps<
   'StackAddress'
 >;
 
-const OtherAddressNav = ({ onPress, text }) => {
+export const OtherAddressNav = ({ onPress, text }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (

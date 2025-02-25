@@ -100,6 +100,10 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  SendTo: 'SendTo',
+  SendInput: 'SendInput',
+  SelectImportAddress: 'SelectImportAddress',
+  SelectWatchAddress: 'SelectWatchAddress',
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',

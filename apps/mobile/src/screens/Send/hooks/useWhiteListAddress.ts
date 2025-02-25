@@ -1,0 +1,71 @@
+import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useWhitelist } from '@/hooks/whitelist';
+import { ellipsisAddress } from '@/utils/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
+import { useEffect, useState } from 'react';
+
+export const useWhiteListAddress = () => {
+  const { whitelist } = useWhitelist({ disableAutoFetch: false });
+  const { accounts } = useAccounts({ disableAutoFetch: true });
+  const [list, setList] = useState<KeyringAccountWithAlias[]>([]);
+  useEffect(() => {
+    const importAddress: KeyringAccountWithAlias[] = accounts
+      .filter(acc => whitelist.includes(acc.address))
+      .map(acc => ({
+        address: acc.address,
+        aliasName: acc.aliasName || ellipsisAddress(acc.address),
+        balance: acc.balance || 0,
+        type: acc.brandName as KeyringTypeName,
+        brandName: acc.brandName,
+      }));
+    const importAddressSet = new Set(importAddress.map(item => item.address));
+    const unimportAddress: KeyringAccountWithAlias[] = whitelist
+      .filter(item => !importAddressSet.has(item))
+      .map(address => ({
+        address,
+        // TODO: get from some way same with sign screen
+        aliasName: ellipsisAddress(address),
+        balance: 0,
+        type: KEYRING_CLASS.WATCH,
+        brandName: KEYRING_CLASS.WATCH,
+      }));
+    setList(
+      [...unimportAddress, ...importAddress].sort(
+        (a, b) => (b.balance || 0) - (a.balance || 0),
+      ),
+    );
+    Promise.allSettled(
+      unimportAddress
+        .filter(acc => !acc.balance)
+        .map(async acc => {
+          const { total_usd_value } = await batchBalanceWithLocalCache({
+            address: acc.address,
+            isCore: false,
+            included_token_uuids: [],
+            excluded_token_uuids: [],
+            excluded_protocol_ids: [],
+            excluded_chain_ids: [],
+          });
+          return { address: acc.address, balance: total_usd_value || 0 };
+        }),
+    ).then(result => {
+      const successRes = result
+        .filter(item => item.status === 'fulfilled')
+        .reduce(
+          (pre, curr) => (pre[curr.value.address] = curr.value.balance),
+          {},
+        );
+      setList(pre =>
+        pre.map(item => ({
+          ...item,
+          balance: successRes[item.address] || item.balance,
+        })),
+      );
+    });
+  }, [accounts, whitelist]);
+  return {
+    list,
+  };
+};

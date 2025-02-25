@@ -493,7 +493,7 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSend,
+              screen: RootNames.SendTo,
               params: {},
             }),
           );

@@ -239,6 +239,10 @@ export type TransactionNavigatorParamList = {
     // recievesToken: (TokenItem | undefined)[];
   };
   [RootNames.Send]?: {};
+  [RootNames.SendTo]?: {};
+  [RootNames.SendInput]?: {};
+  [RootNames.SelectImportAddress]?: {};
+  [RootNames.SelectWatchAddress]?: {};
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;
