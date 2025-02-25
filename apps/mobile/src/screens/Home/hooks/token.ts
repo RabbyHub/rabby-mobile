@@ -157,7 +157,6 @@ export const useTokens = (
           _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
           setMainnetTokens(filterDisplayToken(_tokens));
-          setLoading(false);
         }
       }
 

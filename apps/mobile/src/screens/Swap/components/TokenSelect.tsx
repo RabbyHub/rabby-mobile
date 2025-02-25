@@ -174,11 +174,12 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     // const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
     useEffect(() => {
-      if (!queryConds.account)
+      if (!queryConds.account) {
         fetchAllLocalTokens({
           keyword: queryConds.keyword,
           chain_server_id: queryConds.chainServerId,
         });
+      }
     }, [queryConds, fetchAllLocalTokens]);
 
     const allRemoteTokens = useSortToken(_allTokens);
@@ -296,25 +297,31 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           !foldTokensList.some(fold => {
             let foldAccount: string = '';
             let eAccount: string = '';
-            if ('ownerAccount' in fold) {
-              foldAccount =
-                (fold as TokenItemMaybeWithOwner)?.ownerAccount?.address || '';
+            if (queryConds.account) {
+              if ('ownerAccount' in fold) {
+                foldAccount = (
+                  (fold as TokenItemMaybeWithOwner)?.ownerAccount?.address || ''
+                ).toLowerCase();
+              }
+
+              if ('ownerAccount' in e) {
+                eAccount = (
+                  (e as TokenItemMaybeWithOwner)?.ownerAccount?.address || ''
+                )?.toLowerCase();
+              }
             }
 
-            if ('ownerAccount' in e) {
-              eAccount =
-                (e as TokenItemMaybeWithOwner)?.ownerAccount?.address || '';
-            }
             return (
               fold.chain === e.chain &&
               fold.id === e.id &&
-              isSameAddress(foldAccount, eAccount)
+              foldAccount?.toLowerCase() === eAccount?.toLowerCase()
             );
           }),
       );
     }, [
       queryConds.chainServerId,
       queryConds.keyword,
+      queryConds.account,
       allTokenItems,
       searchedTokenByQuery,
       isExcludedTokens,
