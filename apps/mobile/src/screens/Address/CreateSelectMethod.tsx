@@ -4,7 +4,12 @@ import React from 'react';
 import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
-import { useFocusEffect, useNavigationState } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -19,23 +24,29 @@ function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { seedPhraseList } = useSeedPhrase();
+  const navigation = useNavigation();
 
   const handleCreateNewSeed = React.useCallback(() => {
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.CreateNewAddress,
-      params: {
-        noSetupPassword: true,
-        useCurrentSeed: false,
-        title: '2. Name Your Address',
-      },
-    });
-  }, []);
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.CreateNewAddress,
+        params: {
+          noSetupPassword: true,
+          useCurrentSeed: false,
+          title: '2. Name Your Address',
+        },
+      }),
+    );
+  }, [navigation]);
 
   const handleCreateCurrentSeed = React.useCallback(() => {
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.CreateSelectOnCurrentSeed,
-    });
-  }, []);
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.CreateSelectOnCurrentSeed,
+        params: {},
+      }),
+    );
+  }, [navigation]);
 
   return (
     <TouchableWithoutFeedback
