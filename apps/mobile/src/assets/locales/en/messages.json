@@ -75,7 +75,8 @@
         "RecipientAddress": "Recipient address",
         "name": "Name",
         "RevokeToken": "Revoke Token",
-        "InteractionResults": "Interaction Results"
+        "InteractionResults": "Interaction Results",
+        "totalApprovedAmount": "Total Approved Amount"
       },
       "empty": {
         "title": "No transactions",
@@ -1743,7 +1744,8 @@
       "option_System": "System",
       "option_Light": "Light",
       "option_Dark": "Dark"
-    }
+    },
+    "unlimited": "unlimited"
   },
   "background": {
     "error": {

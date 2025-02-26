@@ -65,6 +65,9 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
+import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { findAccountByPriority } from '../TransactionRecord/components/TransactionItem2025';
 
 export const TxStatusItem = ({
   status,
@@ -430,6 +433,21 @@ function HistoryDetailScreen(): JSX.Element {
     ],
   );
 
+  const txAccount = useMemo(() => {
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    return account;
+  }, [accounts, data.address]);
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
@@ -595,21 +613,40 @@ function HistoryDetailScreen(): JSX.Element {
             </View>
           }
         </View>
+        {data.cate_id === 'approve' && data.token_approve ? (
+          <RevokeTokenBtn
+            style={{
+              marginTop: -8,
+              marginBottom: 20,
+            }}
+            token={
+              data.tokenDict[data.token_approve?.token_id] ||
+              data.tokenDict[
+                `${data.chain}_token:${data.token_approve?.token_id}`
+              ]
+            }
+            spender={data.token_approve?.spender}
+            account={txAccount}
+          />
+        ) : null}
       </ScrollView>
-      <HistoryBottomBtn
-        noRemainValue={noRemainValue}
-        currentApprove={currentApprove}
-        approve={data.token_approve}
-        receives={data.receives}
-        sends={data.sends}
-        type={formatType}
-        chain={data.chain}
-        status={status || 0}
-        data={data}
-        isForMultipleAdderss={isForMultipleAdderss}
-        tokenDict={data.tokenDict}
-        buttonContainerStyle={buttonContainerStyle}
-      />
+
+      {!(data.cate_id === 'approve' && data.token_approve) ? (
+        <HistoryBottomBtn
+          noRemainValue={noRemainValue}
+          currentApprove={currentApprove}
+          approve={data.token_approve}
+          receives={data.receives}
+          sends={data.sends}
+          type={formatType}
+          chain={data.chain}
+          status={status || 0}
+          data={data}
+          isForMultipleAdderss={isForMultipleAdderss}
+          tokenDict={data.tokenDict}
+          buttonContainerStyle={buttonContainerStyle}
+        />
+      ) : null}
     </NormalScreenContainer2024>
   );
 }
