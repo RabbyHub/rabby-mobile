@@ -2,6 +2,11 @@ import { BigNumber } from 'bignumber.js';
 
 export const gasAccountProducts = [
   {
+    id: 'test1001',
+    total: '0.3',
+    price: '0.3',
+  },
+  {
     id: '0001',
     total: '0.29',
     price: '0.2',

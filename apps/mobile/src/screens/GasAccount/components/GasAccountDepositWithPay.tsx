@@ -46,18 +46,22 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         await getProducts({
           skus: [product.id],
         });
-        if (Platform.OS === 'android') {
-          await requestPurchase({
-            skus: [product.id],
-            // obfuscatedAccountIdAndroid: '//todo'
-          });
-        } else {
-          await requestPurchase({
-            sku: product.id,
-            // appAccountToken: '//todo',
-          });
-        }
-        await waitPurchaseUpdated();
+
+        await Promise.all([
+          requestPurchase(
+            Platform.OS === 'android'
+              ? {
+                  skus: [product.id],
+                  // obfuscatedAccountIdAndroid: '//todo'
+                }
+              : {
+                  sku: product.id,
+                  // appAccountToken: '//todo',
+                },
+          ),
+          waitPurchaseUpdated(),
+        ]);
+
         toast.success('Purchase Success!');
       } catch (e) {
         console.error(e);
