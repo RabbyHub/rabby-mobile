@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -132,6 +132,7 @@ export default function SelectChainWithSummary({
   const { selectedTab } = useSwitchNetTab({
     hideTestnetTab,
   });
+  const inputRef = useRef<TextInput | null>(null);
   const {
     search,
     setSearch,
@@ -155,6 +156,13 @@ export default function SelectChainWithSummary({
   const handleToggleSearch = () => {
     if (!canSearch) {
       setSearch('');
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    } else {
+      setTimeout(() => {
+        inputRef.current?.blur();
+      }, 50);
     }
     setCanSearch(!canSearch);
   };
@@ -197,6 +205,7 @@ export default function SelectChainWithSummary({
                 onChangeText={text => {
                   setSearch(text);
                 }}
+                ref={inputRef}
               />
             </View>
             <Pressable onPress={handleToggleSearch}>

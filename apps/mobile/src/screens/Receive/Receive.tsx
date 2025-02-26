@@ -1,10 +1,10 @@
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
-import { CHAINS_ENUM } from '@/constant/chains';
+import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { findChainByEnum } from '@/utils/chain';
+import { findChainByEnum, findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Button } from '@/components2024/Button';
@@ -36,6 +36,7 @@ import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
 import { RcArrowRightCC } from '@/assets/icons/common';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
@@ -43,6 +44,26 @@ function ReceiveScreen(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { currentAccount: account } = useCurrentAccount();
+
+  const isSafe = useMemo(() => {
+    return account?.type === KEYRING_TYPE.GnosisKeyring;
+  }, [account]);
+  const { data: safeNetworks } = useGnosisNetworks({
+    address: account?.address,
+  });
+  const safeChains = useMemo(() => {
+    if (!safeNetworks || safeNetworks.length <= 0) {
+      return [];
+    }
+    const chains: Chain[] = [];
+    for (let i = 0; i < safeNetworks.length; i++) {
+      const chain = findChainByID(Number(safeNetworks[i]));
+      if (chain) {
+        chains.push(chain);
+      }
+    }
+    return chains;
+  }, [safeNetworks]);
 
   const selectedChainInfo = useMemo(() => {
     if (!selectedChain) {
@@ -149,6 +170,7 @@ function ReceiveScreen(): JSX.Element {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
+      supportChains: isSafe ? safeChains.map(item => item.enum) : undefined,
       titleText: t('page.receiveAddressList.selectChainTitle'),
       onChange: (v: CHAINS_ENUM) => {
         setSelectedChain(v);
@@ -192,6 +214,51 @@ function ReceiveScreen(): JSX.Element {
     copyAddress();
   };
 
+  const safeChainsUI =
+    selectedChain || safeChains.length === 1 ? (
+      <View style={styles.selectChainWrapper}>
+        <Image
+          style={styles.selectChianLogo}
+          source={{ uri: (selectedChainInfo || safeChains[0])?.logo }}
+          width={23}
+          height={23}
+        />
+        <Text style={styles.selectChainText}>
+          {(selectedChainInfo || safeChains[0])?.name}
+        </Text>
+      </View>
+    ) : (
+      <View
+        style={{
+          ...styles.selectChainWrapper,
+          ...styles.safeSelectChainWrapper,
+        }}>
+        {safeChains.length > 0 &&
+          safeChains.map(chain => (
+            <Image
+              style={{ ...styles.selectChianLogo, ...styles.safeChainLogo }}
+              source={{ uri: chain.logo }}
+              width={23}
+              height={23}
+              key={chain.serverId}
+            />
+          ))}
+      </View>
+    );
+  const nonSafeChainUI = selectedChain ? (
+    <View style={styles.selectChainWrapper}>
+      <Image
+        style={styles.selectChianLogo}
+        source={{ uri: selectedChainInfo?.logo }}
+        width={23}
+        height={23}
+      />
+      <Text style={styles.selectChainText}>{selectedChainInfo?.name}</Text>
+    </View>
+  ) : (
+    t('page.receive.allEVMChain')
+  );
+
   return (
     <FooterButtonScreenContainer
       as="View"
@@ -205,23 +272,7 @@ function ReceiveScreen(): JSX.Element {
             </Text>
             <Button
               titleStyle={styles.selectChainText}
-              title={
-                selectedChain ? (
-                  <View style={styles.selectChainWrapper}>
-                    <Image
-                      style={styles.selectChianLogo}
-                      source={{ uri: selectedChainInfo?.logo }}
-                      width={23}
-                      height={23}
-                    />
-                    <Text style={styles.selectChainText}>
-                      {selectedChainInfo?.name}
-                    </Text>
-                  </View>
-                ) : (
-                  t('page.receive.allEVMChain')
-                )
-              }
+              title={isSafe ? safeChainsUI : nonSafeChainUI}
               buttonStyle={styles.selectChain}
               iconRight={
                 <RcArrowRightCC
@@ -465,6 +516,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     color: colors2024['brand-default'],
     marginLeft: 6,
+  },
+  safeChainLogo: {
+    borderColor: colors2024['neutral-bg-2'],
+    borderWidth: 2,
+    marginRight: 0,
+    borderRadius: 50,
+  },
+  safeSelectChainWrapper: {
+    gap: -6,
   },
 }));
 
