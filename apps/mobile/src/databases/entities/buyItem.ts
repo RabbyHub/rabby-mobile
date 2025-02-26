@@ -5,7 +5,7 @@ import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 
-@Entity('cache_buyitem')
+@Entity('cache_buy_order')
 export class BuyItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
   id: string = '';
@@ -86,9 +86,9 @@ export class BuyItemEntity extends EntityAddressAssetBase {
 
     return (
       await this.getRepository()
-        .createQueryBuilder('buyitem')
-        .where('buyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-        .orderBy('buyitem.create_at', 'DESC')
+        .createQueryBuilder('buy_order')
+        .where('buy_order.owner_addr IN (:...owner_addrs)', { owner_addrs })
+        .orderBy('buy_order.create_at', 'DESC')
         .take(count || 10000)
         .getMany()
     ).map(i => ({
@@ -104,7 +104,7 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
 
     const result = await repo
-      .createQueryBuilder('buyitem')
+      .createQueryBuilder('buy_order')
       .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
@@ -122,9 +122,9 @@ export class BuyItemEntity extends EntityAddressAssetBase {
 
     const repo = this.getRepository();
     const result = await repo
-      .createQueryBuilder('buyitem')
-      .select('MAX(buyitem.create_at)', 'maxTimeAt')
-      .where('buyitem.owner_addr = :owner_addr', { owner_addr })
+      .createQueryBuilder('buy_order')
+      .select('MAX(buy_order.create_at)', 'maxTimeAt')
+      .where('buy_order.owner_addr = :owner_addr', { owner_addr })
       .getRawOne();
 
     if (!result.maxTimeAt) {
@@ -138,10 +138,10 @@ export class BuyItemEntity extends EntityAddressAssetBase {
 
     return (
       await this.getRepository()
-        .createQueryBuilder('buyitem')
-        .where('buyitem.owner_addr = :owner_addr', { owner_addr })
-        .andWhere('buyitem.status = :status', { status: 'pending' })
-        .orderBy('buyitem.create_at', 'DESC')
+        .createQueryBuilder('buy_order')
+        .where('buy_order.owner_addr = :owner_addr', { owner_addr })
+        .andWhere('buy_order.status = :status', { status: 'pending' })
+        .orderBy('buy_order.create_at', 'DESC')
         .getMany()
     ).map(i => ({
       ...i,

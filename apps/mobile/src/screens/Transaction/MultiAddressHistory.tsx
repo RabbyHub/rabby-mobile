@@ -275,7 +275,6 @@ function History({
               };
             }),
           );
-          console.log('list result', list[0]);
         });
       }
       if (!isReady.current) {

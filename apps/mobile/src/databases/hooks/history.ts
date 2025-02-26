@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
-import usePrevious from 'react-use/lib/usePrevious';
 import {
   syncRemoteBuyHistory,
   syncRemoteHistory,

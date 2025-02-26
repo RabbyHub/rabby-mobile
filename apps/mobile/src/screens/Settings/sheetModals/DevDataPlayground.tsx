@@ -24,6 +24,8 @@ import {
 } from '@/databases/imports';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
+import { downloadDbFile } from '@/databases/dbfs';
+import { IS_IOS } from '@/core/native/utils';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -128,6 +130,14 @@ export default function DevDataPlaygroundModal({
             SwapItemEntity.clear(),
             BuyItemEntity.clear(),
           ]);
+        },
+      },
+      {
+        label: 'Download DB file',
+        icon: <RcCode style={styles.labelIcon} />,
+        visible: IS_IOS,
+        onPress: async () => {
+          downloadDbFile();
         },
       },
     ];

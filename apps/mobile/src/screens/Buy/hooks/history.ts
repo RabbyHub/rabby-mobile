@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { syncRemoteBuyHistory } from '@/databases/sync/assets';
 import { useCurrentAccount } from '@/hooks/account';
@@ -21,8 +22,7 @@ export const usePendingBuyItemData = (
   status: BuyHistoryItem['status'],
 ) => {
   const [{ loading, value }, fetchHistory] = useAsyncFn(() => {
-    console.log('fetch usePendingBuyItemData');
-    return openapi.testBuyHistory({
+    return openapi.getBuyHistory({
       user_addr: addr,
       start: 0,
       limit: 20,
@@ -50,7 +50,15 @@ export const usePendingBuyItemData = (
     [fetchHistory, id, isPending, loading, value, value?.histories],
   );
 
-  useEffect(() => {}, [isPending, addr, id]);
+  useEffect(() => {
+    if (
+      isPending &&
+      addr &&
+      value?.histories?.find(e => e.id === id)?.status === 'success'
+    ) {
+      syncSingleAddress(addr);
+    }
+  }, [isPending, addr, id, value?.histories, syncSingleAddress]);
 
   useEffect(() => {
     if (addr && value?.histories.length) {
@@ -86,7 +94,7 @@ const syncBuyHistory = async (addr: string, data: BuyHistoryList) => {
 };
 
 const getList = async (addr: string, start = 0, limit = 20) => {
-  const data = await openapi.testBuyHistory({
+  const data = await openapi.getBuyHistory({
     user_addr: addr,
     start,
     limit,
@@ -200,21 +208,42 @@ export const usePollBuyPendingNumber = (timer = 10000) => {
 
   const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
 
-  const { value, loading, error } = useAsync(async () => {
+  const {
+    value: pendingData,
+    loading,
+    error,
+  } = useAsync(async () => {
     const account = currentAccount;
     if (!account?.address) {
-      return 0;
+      return [0, undefined, undefined] as const;
     }
 
     const data = await getList(account!.address, 0, 20);
 
-    return data?.list?.filter(item => item?.status === 'pending')?.length || 0;
+    const isSuccess = data?.last?.histories[0].status === 'success';
+
+    const txId = isSuccess
+      ? data?.last?.histories[0]?.receive_tx_id
+      : undefined;
+    const chain = isSuccess
+      ? data?.last?.histories[0]?.receive_chain_id
+      : undefined;
+
+    return [
+      data?.list?.filter(item => item?.status === 'pending')?.length || 0,
+      txId,
+      chain,
+    ] as const;
   }, [refetchCount, currentAccount?.address]);
 
   const timerRef = useRef<NodeJS.Timeout>();
 
+  const [pendingNumber, txId, chain] = pendingData || [];
+
+  const { syncSingleAddress } = useSyncHistoryDB();
+
   useEffect(() => {
-    if ((!loading && value !== undefined) || error) {
+    if ((!loading && pendingNumber !== undefined) || error) {
       timerRef.current = setTimeout(() => {
         setRefetchCount(e => e + 1);
       }, timer);
@@ -223,7 +252,32 @@ export const usePollBuyPendingNumber = (timer = 10000) => {
     return () => {
       timerRef.current && clearTimeout(timerRef.current);
     };
-  }, [loading, value, error, timer]);
+  }, [loading, pendingNumber, error, timer]);
+
+  useEffect(() => {
+    if (currentAccount?.address) {
+      if (pendingNumber === 0) {
+        const sync = async () => {
+          if (!txId || !chain) {
+            return;
+          }
+          const item = await HistoryItemEntity.findOne({
+            where: {
+              txHash: txId,
+              chain: chain,
+            },
+          });
+
+          if (!item) {
+            syncSingleAddress(currentAccount?.address);
+          }
+        };
+        sync();
+      } else {
+        syncSingleAddress(currentAccount?.address);
+      }
+    }
+  }, [pendingNumber, currentAccount?.address, syncSingleAddress, txId, chain]);
 
   useEffect(() => {
     return () => {
@@ -231,5 +285,5 @@ export const usePollBuyPendingNumber = (timer = 10000) => {
     };
   }, []);
 
-  return value;
+  return pendingNumber;
 };
