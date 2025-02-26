@@ -31,6 +31,7 @@ import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { RevokeNFTCollectionBtn } from './components/RevokeNFTCollectionBtn';
+import { formatIntlTimestamp } from '@/utils/time';
 
 interface Props {
   data: TransactionGroup;
@@ -130,17 +131,18 @@ export const ApproveNFTCollection: React.FC<Props> = ({
         </View>
       </TouchableOpacity>
       <View style={styles.detailContainer}>
-        {/* todo get complete time */}
-        {/* {!data.isPending && data.maxGasTx.createdAt && (
+        {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.createdAt)}
+                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
               </Text>
             </View>
           </View>
-        )} */}
+        )}
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.Status')}

@@ -38,6 +38,7 @@ import { Button } from '@/components2024/Button';
 import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { formatIntlTimestamp } from '@/utils/time';
 
 interface Props {
   data: TransactionGroup;
@@ -136,17 +137,18 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
       </TouchableOpacity>
       <View style={styles.detailContainer}>
-        {/* todo get complete time */}
-        {/* {!data.isPending && data.maxGasTx.createdAt && (
+        {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.createdAt)}
+                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
               </Text>
             </View>
           </View>
-        )} */}
+        )}
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.Status')}

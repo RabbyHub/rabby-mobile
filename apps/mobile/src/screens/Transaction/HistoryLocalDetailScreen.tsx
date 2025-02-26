@@ -119,7 +119,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     );
 
     console.debug('fetchRefreshData groups', JSON.stringify(groups));
-    if (groups.length?.[0]) {
+    if (groups?.[0]) {
       setData(groups[0]);
     }
   }, [isPending, data]);
@@ -135,7 +135,14 @@ function HistoryLocalDetailScreen(): JSX.Element {
     );
   }, [title, styles.headerTitleStyle, t]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!data.isPending) {
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+    }
+  }, [data]);
+
+  useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
     });

@@ -22,18 +22,30 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useNavigationState } from '@react-navigation/native';
+import {
+  StackActions,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamsList } from '@/navigation-type';
+
+type CurrentAddressProps = NativeStackScreenProps<
+  RootStackParamsList,
+  'StackAddress'
+>;
 
 function ImportMethods(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
   const { t } = useTranslation();
+  const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
@@ -83,9 +95,12 @@ function ImportMethods(): JSX.Element {
                   return;
                 }
 
-                navigate(RootNames.StackAddress, {
-                  screen: RootNames.ImportMnemonic2024,
-                });
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackAddress, {
+                    screen: RootNames.ImportMnemonic2024,
+                    params: {},
+                  }),
+                );
               }}>
               <SeedPhraseIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -109,9 +124,12 @@ function ImportMethods(): JSX.Element {
                   return;
                 }
 
-                navigate(RootNames.StackAddress, {
-                  screen: RootNames.ImportPrivateKey2024,
-                });
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackAddress, {
+                    screen: RootNames.ImportPrivateKey2024,
+                    params: {},
+                  }),
+                );
               }}>
               <PrivateKeyIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -132,9 +150,12 @@ function ImportMethods(): JSX.Element {
                       ignoreAndroidSystemSettings: false,
                     });
 
-                    navigate(RootNames.StackAddress, {
-                      screen: RootNames.ImportSafeAddress2024,
-                    });
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackAddress, {
+                        screen: RootNames.ImportSafeAddress2024,
+                        params: {},
+                      }),
+                    );
                   }}>
                   <WalletIcon
                     type={KEYRING_TYPE.GnosisKeyring}
@@ -158,9 +179,12 @@ function ImportMethods(): JSX.Element {
                       ignoreAndroidSystemSettings: false,
                     });
 
-                    navigate(RootNames.StackAddress, {
-                      screen: RootNames.ImportWatchAddress2024,
-                    });
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackAddress, {
+                        screen: RootNames.ImportWatchAddress2024,
+                        params: {},
+                      }),
+                    );
                   }}>
                   <WalletIcon
                     type={KEYRING_TYPE.WatchAddressKeyring}
@@ -185,9 +209,12 @@ function ImportMethods(): JSX.Element {
                     ignoreAndroidSystemSettings: false,
                   });
 
-                  navigate(RootNames.StackAddress, {
-                    screen: RootNames.ImportHardwareAddress,
-                  });
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackAddress, {
+                      screen: RootNames.ImportHardwareAddress,
+                      params: {},
+                    }),
+                  );
                 }}>
                 <Image source={HardWareIcon} style={styles.icon} />
                 <Text style={styles.importType}>

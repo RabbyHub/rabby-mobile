@@ -114,6 +114,7 @@ import {
 import { AppCacheSizeText } from './components/SpecialText';
 import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -139,6 +140,7 @@ function SettingsBlocks() {
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
+  const { resetUpdateHistoryTime } = useHistoryTokenDict();
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
@@ -392,8 +394,8 @@ function SettingsBlocks() {
                         style: 'destructive',
                         onPress: async () => {
                           abortAllSyncTasks();
+                          resetUpdateHistoryTime();
                           await clearAppDataSource();
-
                           Alert.alert(
                             t('page.settingModal.clearAppCache.iOSToastTitle'),
                             t('page.settingModal.clearAppCache.iOSToastDesc'),
@@ -407,6 +409,7 @@ function SettingsBlocks() {
                         ),
                         style: 'destructive',
                         onPress: async () => {
+                          resetUpdateHistoryTime();
                           await dropAppDataSourceAndQuitApp();
                         },
                       },

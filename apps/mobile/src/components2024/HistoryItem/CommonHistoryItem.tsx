@@ -148,10 +148,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
   },
   receiveTokenAmountText: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 }));
