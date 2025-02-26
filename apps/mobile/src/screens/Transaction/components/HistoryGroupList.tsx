@@ -42,13 +42,28 @@ function markFirstItems(
           : new Date().getTime()),
     };
 
-    const prev = newArr[i - 1];
+    const prev = arr[i - 1];
 
     if (i === 0) {
       newItem.isDateStart = true;
     } else {
+      if ('isPending' in prev && 'projectDict' in item) {
+        // remove same item from local tx and db history list
+        const curId = `${item.address.toLowerCase()}-${item.id}`;
+        const preId = `${prev.address.toLowerCase()}-${prev.maxGasTx.hash}`;
+        if (curId === preId) {
+          continue;
+        }
+      }
+
+      // judgs is date start
       const curDate = dayjs(newItem.time);
-      const prevDate = dayjs(prev.time);
+      const prevTime =
+        ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
+        ('completedAt' in prev && prev.completedAt
+          ? prev.completedAt
+          : new Date().getTime());
+      const prevDate = dayjs(prevTime); // get time at
       if (!curDate.isSame(prevDate, 'date')) {
         newItem.isDateStart = true;
       }

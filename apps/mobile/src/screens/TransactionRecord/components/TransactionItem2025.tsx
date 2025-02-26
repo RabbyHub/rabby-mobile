@@ -337,7 +337,7 @@ export const TransactionItem = ({
       onPress={hanldeNavigateDetail}
       style={[
         styles.card,
-        isCanceled || data.isFailed || data.isSubmitFailed || data.isWithdrawed
+        data.isFailed || data.isSubmitFailed || data.isWithdrawed
           ? styles.cardGray
           : null,
       ]}>
