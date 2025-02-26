@@ -209,8 +209,10 @@ export const useSyncHistoryDB = (
       }
 
       const latestTime = (await BuyItemEntity.getLatestTime(address)) || 0;
-      const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
-      const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
+      const isExpiredTimeAgo =
+        (new Date().getTime() - 15 * 24 * 60 * 60 * 1000) / 1000; // 15 days ago
+
+      const isAddUpdate = latestTime > isExpiredTimeAgo;
 
       const pendingIdList = ((await BuyItemEntity.getAllPending(address)) || [])
         .filter(i => i.create_at > isExpiredTimeAgo)

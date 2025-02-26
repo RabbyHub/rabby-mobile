@@ -20,9 +20,20 @@ const regionListAtom = atom<
   Awaited<ReturnType<typeof openapi.getBuySupportedCountryList>>
 >([]);
 
-regionListAtom.onMount = set => {
+// regionListAtom.onMount = set => {
+//   set([]);
+//   openapi.getBuySupportedCountryList().then(s => {
+//     set(s);
+//   });
+// };
+
+const currencyListAtom = atom<
+  Awaited<ReturnType<typeof openapi.getBuyCurrencyList>>
+>([]);
+
+currencyListAtom.onMount = set => {
   set([]);
-  openapi.getBuySupportedCountryList().then(s => {
+  openapi.getBuyCurrencyList().then(s => {
     set(s);
   });
 };
@@ -77,7 +88,7 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
 
   const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const [region, setRegion] = useState(getCountry());
-  const [currency, setCurrency] = useState('usd');
+  const [currency, setCurrency] = useState('USD');
   const [toToken, setToToken] = useTokenInfo({
     defaultToken:
       navState?.receiveToken || getChainDefaultToken(CHAINS_ENUM.ETH),
@@ -88,6 +99,7 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
   const [activeProvider, setActiveProvider] = useState<string>('');
 
   const regionList = useAtomValue(regionListAtom);
+  const currencyList = useAtomValue(currencyListAtom);
 
   const [refreshId, _refresh] = useState(0);
 
@@ -101,6 +113,7 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
 
   const switchCurrency = useCallback((v: string) => {
     setCurrency(v);
+    setAmount('');
   }, []);
 
   const onPayMountChange = useCallback((value: string) => {
@@ -129,16 +142,19 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
           country_code: region,
           usd_amount: amount,
           receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
+          currency_code: currency,
         })
         .then(async res => {
           const sortedData = res.sort(
             (a, b) => b.token_amount - a.token_amount,
           );
+
           const paymentMethods = await Promise.allSettled(
             sortedData.map(e =>
               openapi.getBuyPaymentMethods({
                 country_code: region,
                 service_provider: e.service_provider.id,
+                currency_code: currency,
               }),
             ),
           );
@@ -258,6 +274,7 @@ export const useBuy = (isForMultipleAdderss?: boolean) => {
     region,
     switchRegion,
 
+    currencyList,
     currency,
     switchCurrency,
 

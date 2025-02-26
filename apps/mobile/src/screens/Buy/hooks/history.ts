@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { syncRemoteBuyHistory } from '@/databases/sync/assets';
 import { useCurrentAccount } from '@/hooks/account';
 import {
@@ -21,12 +22,14 @@ export const usePendingBuyItemData = (
 ) => {
   const [{ loading, value }, fetchHistory] = useAsyncFn(() => {
     console.log('fetch usePendingBuyItemData');
-    return openapi.getBuyHistory({
+    return openapi.testBuyHistory({
       user_addr: addr,
       start: 0,
       limit: 20,
     });
   }, [addr]);
+
+  const { syncSingleAddress } = useSyncHistoryDB();
 
   const isPending = status === 'pending';
 
@@ -46,6 +49,8 @@ export const usePendingBuyItemData = (
     5000,
     [fetchHistory, id, isPending, loading, value, value?.histories],
   );
+
+  useEffect(() => {}, [isPending, addr, id]);
 
   useEffect(() => {
     if (addr && value?.histories.length) {
@@ -81,7 +86,7 @@ const syncBuyHistory = async (addr: string, data: BuyHistoryList) => {
 };
 
 const getList = async (addr: string, start = 0, limit = 20) => {
-  const data = await openapi.getBuyHistory({
+  const data = await openapi.testBuyHistory({
     user_addr: addr,
     start,
     limit,

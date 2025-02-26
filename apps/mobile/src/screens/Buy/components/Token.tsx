@@ -3,20 +3,21 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TextInput, Pressable } from 'react-native';
-import IconUSLogo from '@/assets2024/icons/buy/us.svg';
+import { View, Text, TextInput } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { BuyTokenSelect } from './SelectBuyToken';
-import { toast } from '@/components2024/Toast';
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
+import { SelectCurrency, TCurrencyList } from './SelectCurrency';
 
 export const BuyToken = ({
   type,
   value,
   onInputChange,
   currency = 'USD',
+  onSelectCurrency,
+  currencyList,
   token,
   onTokenSelect,
   noQuote,
@@ -27,6 +28,8 @@ export const BuyToken = ({
   value?: string;
   onInputChange?: (v: string) => void;
   currency?: string;
+  onSelectCurrency?: (v: string) => void;
+  currencyList?: TCurrencyList;
 
   // to props
   token?: TokenItem;
@@ -48,19 +51,12 @@ export const BuyToken = ({
     }
   }, [isFiat]);
 
-  const onlyUsdToast = () => {
-    toast.show(t('page.buy.paymentsOnly', { currency: 'USD' }), {
-      position: toast.positions.CENTER,
-      textStyle: styles.toastText,
-    });
-  };
-
   const displayValue = useMemo(() => {
     if (isReceive && value) {
       return formatTokenAmount(value, 6);
     }
     if (isFiat && value) {
-      return '$' + value;
+      return value;
     }
     return value;
   }, [isFiat, isReceive, value]);
@@ -101,7 +97,7 @@ export const BuyToken = ({
             placeholderTextColor={colors2024['neutral-info']}
             style={styles.input}
             placeholder={
-              isFiat ? '$0' : noQuote ? t('page.buy.noQuotePlaceholder') : '0'
+              isFiat ? '0' : noQuote ? t('page.buy.noQuotePlaceholder') : '0'
             }
             scrollEnabled={true}
             value={displayValue}
@@ -116,12 +112,11 @@ export const BuyToken = ({
         <View style={styles.divider} />
 
         {isFiat && (
-          <Pressable onPress={onlyUsdToast}>
-            <View style={styles.token}>
-              <IconUSLogo width={24} height={24} />
-              <Text style={styles.tokenText}>{currency}</Text>
-            </View>
-          </Pressable>
+          <SelectCurrency
+            value={currency}
+            list={currencyList || []}
+            onSelect={onSelectCurrency}
+          />
         )}
 
         {isReceive && onTokenSelect ? (

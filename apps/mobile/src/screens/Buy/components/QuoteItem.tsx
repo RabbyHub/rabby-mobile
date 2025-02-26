@@ -16,35 +16,6 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import ImageRevolutPay from '../images/revolut-pay.png';
-import ImageBinancePay from '../images/binance-pay.png';
-import ImagePaypal from '../images/paypal.png';
-import ImageApplePay from '../images/apple-pay.png';
-import ImageAch from '../images/ach.png';
-import ImageGooglePay from '../images/google-pay.png';
-import ImageCard from '../images/card.png';
-import ImageOther from '../images/other.png';
-
-const paymentMethodsLogo = {
-  REVOLUT_PAY: ImageRevolutPay,
-  BINANCE_CASH_BALANCE: ImageBinancePay,
-  BINANCE_P2P: ImageBinancePay,
-  PAYPAL: ImagePaypal,
-  APPLE_PAY: ImageApplePay,
-  QRPH: ImageAch,
-  ACH: ImageAch,
-  SAME_DAY_ACH: ImageAch,
-  GOOGLE_PAY: ImageGooglePay,
-  CREDIT_DEBIT_CARD: ImageCard,
-  other: ImageOther,
-};
-
-const getPaymentMethodLogo = (paymentMethod: string) => {
-  if (paymentMethodsLogo[paymentMethod]) {
-    return paymentMethodsLogo[paymentMethod];
-  }
-  return paymentMethodsLogo.other;
-};
 
 export const BuyQuoteItem = ({
   id,
@@ -97,8 +68,7 @@ export const BuyQuoteItem = ({
               {paymentMethods?.map((item, index) => (
                 <View key={index} style={[styles.payBox]}>
                   <Image
-                    // source={{ uri: item.logo_url }}
-                    source={paymentMethodsLogo[item.id]}
+                    source={{ uri: item.logo_url }}
                     style={{
                       width: 53.257,
                       height: 23.155,
@@ -148,7 +118,6 @@ export const BuyQuoteItem = ({
       style={[styles.container, active && styles.active]}
       onPress={() => {
         setActiveProvider(id);
-        console.log('345');
       }}>
       {isBest && (
         <View style={styles.bestQuote}>
@@ -187,8 +156,7 @@ export const BuyQuoteItem = ({
           {payments?.map((item, index) => (
             <View key={index} style={[styles.payBox]}>
               <Image
-                // source={{ uri: item.logo_url }}
-                source={getPaymentMethodLogo(item.id)}
+                source={{ uri: item.logo_url }}
                 style={{
                   width: 46,
                   height: 20,
@@ -310,6 +278,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 8,
     flexWrap: 'wrap',
+    flex: 1,
   },
   payBox: {
     borderRadius: 4,

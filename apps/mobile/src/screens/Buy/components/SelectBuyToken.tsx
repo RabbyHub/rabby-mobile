@@ -31,6 +31,8 @@ import CheckedIcon from '@/assets2024/icons/common/check.svg';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { preferenceService } from '@/core/services';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -59,20 +61,18 @@ export const BuyTokenSelect = ({ token, onTokenChange }: TokenSelectProps) => {
 
   return (
     <>
-      <TouchableOpacity onPress={handleSelectToken} style={styles.wrapper}>
+      <TouchableOpacity onPress={handleSelectToken} style={styles.token}>
         {token ? (
           <>
-            <View style={styles.token}>
-              <AssetAvatar
-                size={22}
-                chain={token.chain}
-                logo={token.logo_url}
-                chainSize={10}
-              />
-              <Text numberOfLines={1} style={styles.tokenSymbol}>
-                {ellipsisOverflowedText(getTokenSymbol(token), 5)}
-              </Text>
-            </View>
+            <AssetAvatar
+              size={22}
+              chain={token.chain}
+              logo={token.logo_url}
+              chainSize={10}
+            />
+            <Text numberOfLines={1} style={styles.tokenSymbol}>
+              {ellipsisOverflowedText(getTokenSymbol(token), 5)}
+            </Text>
             <RcIconSwapBottomArrow />
           </>
         ) : (
@@ -126,6 +126,15 @@ const TokenSelectorInner = ({
   const handleQueryChange = (value: string) => {
     setQuery(value);
   };
+  const { currentAccount } = useCurrentAccount();
+
+  const { value: pinedQueue } = useAsync(async () => {
+    if (currentAccount?.address) {
+      const data = await preferenceService.getUserTokenSettings();
+      return data?.pinedQueue || [];
+    }
+    return [];
+  }, [currentAccount?.address]);
 
   const {
     value: list,
@@ -137,11 +146,36 @@ const TokenSelectorInner = ({
     toast.error(error?.message ? String(error?.message) : String(error));
   }
 
+  const sortedList = useMemo(() => {
+    if (pinedQueue?.length) {
+      return list
+        ?.map(e => ({
+          ...e,
+          isPined: pinedQueue?.some(
+            x => x.chainId === e.chain && x.tokenId === e.id,
+          ),
+          pinIndex: pinedQueue?.findIndex(
+            x => x.chainId === e.chain && x.tokenId === e.id,
+          ),
+        }))
+        .sort((a, b) => {
+          if (a.pinIndex > -1 && b.pinIndex > -1) {
+            return a.pinIndex - b.pinIndex;
+          }
+
+          const a1 = a.isPined ? 1 : 0;
+          const b1 = b.isPined ? 1 : 0;
+          return b1 - a1;
+        });
+    }
+    return list;
+  }, [pinedQueue, list]);
+
   const displayList = useMemo(() => {
     const k = query?.trim();
     if (k) {
       return (
-        list?.filter(
+        sortedList?.filter(
           e =>
             e.symbol.toLowerCase().includes(query.toLowerCase()) ||
             e.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -149,8 +183,8 @@ const TokenSelectorInner = ({
         ) || []
       );
     }
-    return list || [];
-  }, [query, list]);
+    return sortedList || [];
+  }, [query, sortedList]);
 
   const { tokens, updateData } = useTokens(address, false, 0, undefined, true);
 
@@ -159,7 +193,7 @@ const TokenSelectorInner = ({
   }, [updateData]);
 
   const Row = useCallback(
-    ({ item }: { item: TokenItem & { pinned?: boolean } }) => {
+    ({ item }: { item: TokenItem & { isPined?: boolean } }) => {
       const isSelected = token?.id === item.id && token.chain === item.chain;
 
       const cachedToken = tokens?.find(
@@ -185,7 +219,15 @@ const TokenSelectorInner = ({
                 <Text style={styles.tokenName} numberOfLines={1}>
                   {ellipsisOverflowedText(getTokenSymbol(item), 15)}
                 </Text>
-                {isSelected && <CheckedIcon width={16} height={16} />}
+                {item.isPined && <TextBadge />}
+
+                {isSelected && (
+                  <CheckedIcon
+                    width={16}
+                    height={16}
+                    style={{ marginLeft: 4 }}
+                  />
+                )}
               </View>
               <Text
                 style={[styles.tokenPrice, { marginTop: 4 }]}
@@ -371,15 +413,6 @@ const TokenSelector = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  wrapper: {
-    borderRadius: 12,
-    backgroundColor: colors2024['neutral-line'],
-    padding: 4,
-    paddingHorizontal: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   liquidityBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -400,10 +433,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
   },
   token: {
+    padding: 4,
+    paddingLeft: 12,
+    height: 34,
+    minWidth: 96,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-line'],
   },
   tokenSymbol: {
     fontSize: 16,
@@ -475,9 +513,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenNameBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
   tokenName: {
-    marginRight: 8,
     color: colors2024['neutral-title-1'],
     fontSize: 16,
     justifyContent: 'center',

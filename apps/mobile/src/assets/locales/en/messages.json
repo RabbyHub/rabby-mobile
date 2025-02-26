@@ -1602,6 +1602,11 @@
         "searchPlaceholder": "Search fiat currency",
         "noRegionFound": "No region found"
       },
+      "currencyBottomSheet": {
+        "title": "Select a Currency",
+        "searchPlaceholder": "Search currency",
+        "NoFound": "No Currency found"
+      },
       "quote": {
         "title": "Quotes For you",
         "best": "Best Quotes"
