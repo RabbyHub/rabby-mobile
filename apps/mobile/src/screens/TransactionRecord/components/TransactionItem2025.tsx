@@ -450,7 +450,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   },
   rightContent: {
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'flex-end',
     gap: 3,
     minWidth: 0,
