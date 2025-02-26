@@ -89,8 +89,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100054
-        versionName "0.6.0"
+        versionCode 100057
+        versionName "0.6.1"
         missingDimensionStrategy "store", "play"
     }
     splits {
@@ -212,6 +212,7 @@ dependencies {
     // implementation project(':isudaji_react-native-install-apk')
 
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
+    implementation 'com.android.billingclient:billing:7.0.0'
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

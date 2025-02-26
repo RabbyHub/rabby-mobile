@@ -406,7 +406,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           ? ''
           : `${ownerAccount.type}-${ownerAccount.address}`;
 
-        const showOwnerAccount = !chainSearchCtx.filterAccountItem;
+        // const showOwnerAccount = !chainSearchCtx.filterAccountItem;
+        /** @description force false now */
+        const showOwnerAccount = false;
 
         if (token.$origin.recentList?.length && token.$origin.TokenRender) {
           const TokenRender = token.$origin.TokenRender;
@@ -521,7 +523,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 </View>
                 {showOwnerAccount ? (
                   !ownerAccount ? null : (
-                    <AccountInfoInTokenRow ownerAccount={ownerAccount} />
+                    <AccountInfoInTokenRow
+                      containerStyle={{ marginTop: 2 }}
+                      ownerAccount={ownerAccount}
+                    />
                   )
                 ) : (
                   <Text
@@ -651,7 +656,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         fold,
         disabledTips,
         isSingleAddress,
-        chainSearchCtx.filterAccountItem,
+        // chainSearchCtx.filterAccountItem,
       ],
     );
 
@@ -797,7 +802,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
-            {willShowAccountFilter && (
+            {/* {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
                 onRemoveFilter={account => {
@@ -811,7 +816,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }
                 }}
               />
-            )}
+            )} */}
 
             {/* TODO: chain selector */}
             {willShowChainFilter && (
