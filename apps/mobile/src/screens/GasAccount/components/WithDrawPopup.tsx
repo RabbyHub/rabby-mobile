@@ -13,7 +13,7 @@ import {
   useGasBalanceRefresh,
 } from '../hooks/atom';
 import { toast } from '@/components/Toast';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Button } from '@/components2024/Button';
 import { DestinationChain, RecipientAddress } from './WithdrawSelectPopup';
 import { useWithdrawData } from '../hooks/withdraw';

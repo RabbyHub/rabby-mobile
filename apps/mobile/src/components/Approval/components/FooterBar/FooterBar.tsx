@@ -1,31 +1,26 @@
-import { Tip } from '@/components/Tip';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { Chain } from '@/constant/chains';
+import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
+import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { Chain } from '@/constant/chains';
+import { navigate } from '@/utils/navigation';
+import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { DappInfo } from '@/core/services/dappService';
 import clsx from 'clsx';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
-import {
-  GasLessConfig,
-  GasLessNotEnough,
-  GasLessActivityToSign,
-  GasAccountTips,
-} from './GasLessComponents';
-import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { GasAccountTips } from './GasLessComponent/GasAccountTips';
+import { GasLessNotEnough } from './GasLessComponent/GasLessNotEnough';
+import { GasLessActivityToSign, GasLessConfig } from './GasLessComponents';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -55,6 +50,8 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
+  canDepositUseGasAccount?: boolean;
+  rejectApproval?(): void;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -200,6 +197,8 @@ export const FooterBar: React.FC<Props> = ({
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
+  canDepositUseGasAccount,
+  rejectApproval,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -302,29 +301,29 @@ export const FooterBar: React.FC<Props> = ({
         {Header}
         {showGasLess &&
         !payGasByGasAccount &&
+        canGotoUseGasAccount &&
         (!securityLevel || !hasUnProcessSecurityResult) ? (
-          canUseGasLess ? (
-            <GasLessActivityToSign
-              gasLessEnable={useGasLess}
-              handleFreeGas={() => {
-                enableGasLess?.();
-              }}
-              gasLessConfig={gasLessConfig}
-            />
-          ) : isWatchAddr ? null : (
+          canUseGasLess ? null : isWatchAddr ? null : (
             <GasLessNotEnough
-              gasLessFailedReason={gasLessFailedReason}
               canGotoUseGasAccount={canGotoUseGasAccount}
+              canDepositUseGasAccount={canDepositUseGasAccount}
               onChangeGasAccount={onChangeGasAccount}
             />
           )
         ) : null}
-        {payGasByGasAccount && !gasAccountCanPay ? (
+        {(payGasByGasAccount || showGasLess) && !gasAccountCanPay ? (
           <GasAccountTips
             gasAccountCost={gasAccountCost}
             isGasAccountLogin={isGasAccountLogin}
             isWalletConnect={isWalletConnect}
             noCustomRPC={noCustomRPC}
+            onGotoGasAccount={() => {
+              rejectApproval?.();
+              navigate(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              });
+            }}
           />
         ) : null}
         <AccountInfo
@@ -389,6 +388,18 @@ export const FooterBar: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         )}
+        {showGasLess &&
+        !payGasByGasAccount &&
+        (!securityLevel || !hasUnProcessSecurityResult) &&
+        canUseGasLess ? (
+          <GasLessActivityToSign
+            gasLessEnable={useGasLess}
+            handleFreeGas={() => {
+              enableGasLess?.();
+            }}
+            gasLessConfig={gasLessConfig}
+          />
+        ) : null}
       </View>
     </View>
   );

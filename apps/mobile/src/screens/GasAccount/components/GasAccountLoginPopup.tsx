@@ -6,7 +6,7 @@ import LinearGradient from 'react-native-linear-gradient';
 // import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Account } from '@/core/services/preference';
 import { useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';

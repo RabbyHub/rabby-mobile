@@ -1,89 +1,23 @@
+import { RcArrowRight2CC, RcArrowRightCC } from '@/assets/icons/common';
 import {
   RcIconApplePayCC,
   RcIconGooglePayCC,
 } from '@/assets2024/icons/gas-account';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
-import { useAccounts } from '@/hooks/account';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
-import { gasAccountProducts } from '@/constant/app-purchase';
-import { getProducts, requestPurchase } from 'react-native-iap';
-import { waitPurchaseUpdated } from '@/utils/iap';
-import { toast } from '@/components2024/Toast';
 
-const amountList = [0.7, 1.4, 7];
-
-interface Props {
-  onClose?(): void;
-  minPrice?: number;
-}
-
-export const GasAccountDepositWithPay: React.FC<Props> = ({
-  onClose,
-  minPrice = 0,
-}) => {
+export const GasAccountDepositTipSelect: React.FC<{
+  onSelect(type: 'token' | 'pay'): void;
+}> = ({ onSelect }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
-
-  const products = useMemo(() => {
-    return gasAccountProducts
-      .filter(item => +item.price > +minPrice)
-      .slice(0, 3);
-  }, [minPrice]);
-  const [selectedProduct, setSelectedProduct] = useState(products[0]);
-  const { account } = useGasAccountSign();
-
-  const { runAsync: handleDeposit, loading: isPurchasing } = useRequest(
-    async (product: (typeof products)[0]) => {
-      try {
-        await getProducts({
-          skus: [product.id],
-        });
-        if (Platform.OS === 'android') {
-          await requestPurchase({
-            skus: [product.id],
-            // obfuscatedAccountIdAndroid: '//todo'
-          });
-        } else {
-          await requestPurchase({
-            sku: product.id,
-            // appAccountToken: '//todo',
-          });
-        }
-        await waitPurchaseUpdated();
-        toast.success('Purchase Success!');
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    {
-      manual: true,
-    },
-  );
-
-  const { accounts } = useAccounts({ disableAutoFetch: true });
-
-  // const [depositAccount, setDepositAccount] = useState(() => {
-  //   const last = gasAccountService.getLastDepositAccount() || account!;
-  //   if (
-  //     accounts.some(
-  //       a => isSameAddress(a.address, last.address) && a.type === last.type,
-  //     )
-  //   ) {
-  //     return last as Account;
-  //   }
-  //   return account! as Account;
-  // });
 
   return (
     <KeyboardAwareScrollView
@@ -94,67 +28,51 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
-          {Platform.OS === 'android'
-            ? t('page.gasAccount.depositPayPopup.titleAndroid')
-            : t('page.gasAccount.depositPayPopup.title')}
+          {t('page.gasAccount.depositSelectPopup.title')}
         </Text>
         <Text style={styles.description}>
-          {t('page.gasAccount.depositPayPopup.balance')}
-          todo $0.1
+          {t('page.gasAccount.depositSelectPopup.desc')}
         </Text>
-
-        <Text style={styles.tokenLabel}>
-          {t('page.gasAccount.depositPopup.amount')}
-        </Text>
-        <View style={styles.amountSelector}>
-          {products.map(item => (
-            <CustomTouchableOpacity
-              key={item.id}
-              onPress={() => setSelectedProduct(item)}
-              style={[
-                styles.amountButton,
-                selectedProduct?.id === item.id && styles.selectedAmountButton,
-              ]}>
-              <Text style={styles.amountText}>${item.price}</Text>
-            </CustomTouchableOpacity>
-          ))}
-        </View>
       </View>
 
-      <View style={styles.btnContainer}>
+      <View style={styles.accountDepositGroup}>
         <Button
           type="primary"
           onPress={() => {
-            handleDeposit(selectedProduct);
+            onSelect('pay');
           }}
           buttonStyle={styles.depositWithPayBtn}
           titleStyle={styles.btnTitle}
-          loading={isPurchasing}
-          disabled={!selectedProduct}
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
+                <Text style={styles.btnTitle}>Buy with</Text>
                 {Platform.OS === 'android' ? (
                   <RcIconGooglePayCC />
                 ) : (
                   <RcIconApplePayCC />
                 )}
-                <Text style={styles.btnTitle}>${selectedProduct.total}</Text>
               </View>
-              <Text style={styles.btnDesc}>
-                Includes a ${selectedProduct.fee}{' '}
-                {Platform.OS === 'android' ? 'Google Pay' : 'Apple Pay'} fee. No
-                withdrawals
-              </Text>
+              <Text style={styles.btnDesc}>30% fee, no withdrawals</Text>
             </View>
           }
         />
+        <View style={styles.depositTokenBtnContainer}>
+          <TouchableOpacity
+            style={styles.depositTokenBtn}
+            onPress={() => {
+              onSelect('token');
+            }}>
+            <Text style={styles.depositTokenBtnText}>Deposit with Token</Text>
+            <RcArrowRight2CC color={colors2024['neutral-body']} />
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAwareScrollView>
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
@@ -229,6 +147,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'flex-end',
   },
 
+  accountDepositGroup: {
+    flexDirection: 'column',
+    gap: 20,
+    width: '100%',
+    marginTop: 30,
+    paddingHorizontal: 20,
+  },
+
   depositWithPayBtn: {
     backgroundColor: '#000',
     height: 60,
@@ -263,5 +189,24 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     color: colors2024['neutral-InvertHighlight'],
     opacity: 0.6,
+  },
+  depositTokenBtnContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  depositTokenBtn: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  depositTokenBtnText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    color: colors2024['neutral-body'],
   },
 }));

@@ -1,5 +1,5 @@
 import { AppBottomSheetModal, AssetAvatar } from '@/components';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByServerID } from '@/utils/chain';

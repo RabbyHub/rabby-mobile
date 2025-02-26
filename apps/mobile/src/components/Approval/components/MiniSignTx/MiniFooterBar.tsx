@@ -18,9 +18,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import {
   GasLessConfig,
-  GasLessNotEnough,
   GasLessActivityToSign,
-  GasAccountTips,
 } from '../FooterBar/GasLessComponents';
 import {
   ActionGroup,
@@ -31,6 +29,8 @@ import { MiniLedgerAction } from './MiniLedgerAction';
 import { MiniCommonAction } from './MiniCommonAction';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import { GasAccountTips } from '../FooterBar/GasLessComponent/GasAccountTips';
+import { GasLessNotEnough } from '../FooterBar/GasLessComponent/GasLessNotEnough';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -303,6 +303,26 @@ export const MiniFooterBar: React.FC<Props> = ({
 
   const footer = (
     <>
+      {showGasLess &&
+      !payGasByGasAccount &&
+      (!securityLevel || !hasUnProcessSecurityResult) ? (
+        canUseGasLess ? (
+          <GasLessActivityToSign
+            gasLessEnable={useGasLess}
+            handleFreeGas={() => {
+              enableGasLess?.();
+            }}
+            gasLessConfig={gasLessConfig}
+          />
+        ) : isWatchAddr ? null : (
+          <GasLessNotEnough
+            // gasLessFailedReason={gasLessFailedReason}
+            canGotoUseGasAccount={canGotoUseGasAccount}
+            onChangeGasAccount={onChangeGasAccount}
+          />
+        )
+      ) : null}
+
       {securityLevel && hasUnProcessSecurityResult && (
         <View
           className="security-level-tip"
@@ -337,26 +357,6 @@ export const MiniFooterBar: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
       )}
-
-      {showGasLess &&
-      !payGasByGasAccount &&
-      (!securityLevel || !hasUnProcessSecurityResult) ? (
-        canUseGasLess ? (
-          <GasLessActivityToSign
-            gasLessEnable={useGasLess}
-            handleFreeGas={() => {
-              enableGasLess?.();
-            }}
-            gasLessConfig={gasLessConfig}
-          />
-        ) : isWatchAddr ? null : (
-          <GasLessNotEnough
-            gasLessFailedReason={gasLessFailedReason}
-            canGotoUseGasAccount={canGotoUseGasAccount}
-            onChangeGasAccount={onChangeGasAccount}
-          />
-        )
-      ) : null}
 
       {payGasByGasAccount && !gasAccountCanPay ? (
         <GasAccountTips

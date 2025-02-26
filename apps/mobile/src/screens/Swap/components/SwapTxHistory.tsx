@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { navigate } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';

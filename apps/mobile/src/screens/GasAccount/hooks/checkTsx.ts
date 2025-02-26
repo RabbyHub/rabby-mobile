@@ -44,6 +44,9 @@ export const useGasAccountTxsCheck = ({
     [sig, accountId, isReady, txs],
   );
 
+  // todo
+  console.log('gasAccountCost', gasAccountCost);
+
   const gasAccountCanPay =
     gasMethod === 'gasAccount' &&
     isSupportedAddr &&
@@ -59,6 +62,13 @@ export const useGasAccountTxsCheck = ({
     !gasAccountCost.chain_not_support &&
     !!gasAccountCost.is_gas_account;
 
+  const canDepositUseGasAccount =
+    isSupportedAddr &&
+    noCustomRPC &&
+    !gasAccountCost?.balance_is_enough &&
+    !gasAccountCost?.chain_not_support &&
+    !!gasAccountCost?.is_gas_account;
+
   return {
     gasAccountCost,
     gasMethod,
@@ -67,5 +77,6 @@ export const useGasAccountTxsCheck = ({
     setIsGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
+    canDepositUseGasAccount,
   };
 };

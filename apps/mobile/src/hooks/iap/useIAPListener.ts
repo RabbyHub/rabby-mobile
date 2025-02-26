@@ -12,6 +12,7 @@ import {
   purchaseErrorListener,
   purchaseUpdatedListener,
 } from 'react-native-iap';
+import { eventBus, EVENTS } from '@/utils/events';
 
 export const useIAPListener = () => {
   useEffect(() => {
@@ -41,6 +42,7 @@ export const useIAPListener = () => {
                 transactionId: purchase.transactionId, // 交易ID
               });
               finishTransaction({ purchase, isConsumable: true });
+              eventBus.emit(EVENTS.PURCHASE_UPDATED, purchase);
             }
           },
         );

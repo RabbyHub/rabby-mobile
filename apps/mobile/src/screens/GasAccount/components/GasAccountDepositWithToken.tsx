@@ -6,7 +6,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Button } from '@/components2024/Button';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { toast } from '@/components2024/Toast';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
