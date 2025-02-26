@@ -35,9 +35,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
   ) {
     e.owner_addr = owner_addr;
     e.balance = input.total_usd_value;
-    e.chain_list = columnConverter.jsonObjToString(
-      input.chain_list.slice(0, 2) || [],
-    );
+    e.chain_list = columnConverter.jsonObjToString(input.chain_list || []);
     e.isCore = !!isCore;
     e.makeDbId();
   }
