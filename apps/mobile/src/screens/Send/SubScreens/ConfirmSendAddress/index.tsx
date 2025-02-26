@@ -5,7 +5,7 @@ import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { useNavigationState } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import AddressPopover from '../../components/AddressPopover';
@@ -14,12 +14,13 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { View } from 'react-native';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
-import { color } from '@rneui/base';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
+  const { navigation } = useSafeSetNavigationOptions();
   const { account } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ConfirmAddress)?.params,
   ) as {
@@ -37,13 +38,19 @@ const ConfirmAddressScreen = () => {
     },
     [account.address, addWhitelist, removeWhitelist],
   );
-  console.log('🔍 CUSTOM_LOGGER:=>: account', account);
 
   const onCancel = () => {
-    console.log('🔍 CUSTOM_LOGGER:=>: onCancel');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
   };
   const handleConfirm = () => {
-    console.log('🔍 CUSTOM_LOGGER:=>: handleConfirm');
+    navigation.dispatch(
+      StackActions.push(RootNames.StackTransaction, {
+        screen: RootNames.MultiSend,
+        params: {},
+      }),
+    );
   };
   return (
     <FooterButtonScreenContainer
@@ -55,7 +62,7 @@ const ConfirmAddressScreen = () => {
       style={styles.screen}
       footerBottomOffset={56}
       footerContainerStyle={{
-        paddingHorizontal: 20,
+        paddingHorizontal: 4,
       }}>
       <AddressPopover address={account.address} />
       <AddressSource account={account} style={styles.addressCard} />
@@ -85,8 +92,6 @@ export default ConfirmAddressScreen;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   screen: {
-    borderWidth: 1,
-    borderColor: 'red',
     paddingHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-1'],
   },
