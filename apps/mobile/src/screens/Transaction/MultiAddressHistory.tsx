@@ -6,12 +6,10 @@ import React, {
   useState,
 } from 'react';
 
-import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -22,22 +20,15 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, set, isString, debounce } from 'lodash';
-import { Text, TouchableWithoutFeedback, View } from 'react-native';
+import { last, unionBy, orderBy, debounce } from 'lodash';
+import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useMyAccounts,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -50,24 +41,18 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { AbstractPortfolioToken } from '../Home/types';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import {
-  useHistoryBasicInfo,
-  useSyncHistoryDB,
-} from '@/databases/hooks/history';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
   ensureHistoryListItemFromDb,
   judgeIsSmallUsdTx,
-  judgeIsSmallUsdTxInApi,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
@@ -135,8 +120,6 @@ function History({
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
-  const navigation = useRabbyAppNavigation();
-  const { bottom } = useSafeAreaInsets();
   const {
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -581,7 +564,7 @@ function History({
       //   setIsShowMenu(false);
       // }}
       // eslint-disable-next-line react-native/no-inline-styles
-      style={{ paddingBottom: bottom, paddingTop: 0, position: 'relative' }}>
+      style={{ paddingTop: 0, position: 'relative' }}>
       <>
         {isShowMenu && (
           <View style={styles.menuContainer}>
@@ -678,7 +661,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
           cleanFocusingToken({ noNeedCloseModal: true });
           setTokenDetailAddress(undefined);
         }}
-        onTriggerDismissFromInternal={ctx => {
+        onTriggerDismissFromInternal={() => {
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
           setTokenDetailAddress(undefined);

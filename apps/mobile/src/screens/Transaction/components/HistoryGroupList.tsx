@@ -15,6 +15,7 @@ import { formatTimestamp } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -111,6 +112,7 @@ export const HistoryList = ({
   }, [list]);
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
   const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
     if ('projectDict' in item.data) {
@@ -182,7 +184,9 @@ export const HistoryList = ({
       style={styles.container}
       onEndReached={loadMore}
       onEndReachedThreshold={0.8}
-      ListFooterComponent={loadingMore ? <SkeletonCard /> : null}
+      ListFooterComponent={
+        loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
+      }
       refreshControl={
         onRefresh && (
           <RefreshControl

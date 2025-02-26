@@ -145,6 +145,7 @@ function ReceiveScreen(): JSX.Element {
   const handleSelectChain = () => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
+      value: selectedChain,
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,

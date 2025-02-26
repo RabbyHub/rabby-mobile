@@ -87,6 +87,7 @@ export default function MixedFlatChainList({
       sections={sections}
       onScrollBeginDrag={onScrollBeginDrag}
       style={style}
+      ListFooterComponent={<View style={{ height: 32 }} />}
       keyExtractor={(item, idx) => `${item.enum}-${idx}`}
       renderItem={({ item, index, section }) => {
         const isSectionFirst = index === 0;

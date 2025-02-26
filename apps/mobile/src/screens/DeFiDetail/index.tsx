@@ -244,7 +244,8 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const { getCacheTop10Assets, refreshing, assetsMap } = useAssets();
+  const { getCacheTop10Assets, checkIsExpireAndUpdate, refreshing, assetsMap } =
+    useAssets();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -330,7 +331,7 @@ export const DeFiDetailScreen = () => {
 
   const { bottom } = useSafeAreaInsets();
   useEffect(() => {
-    getCacheTop10Assets(false, {
+    getCacheTop10Assets({
       disableNFT: true,
       disableToken: true,
     });
@@ -385,7 +386,7 @@ export const DeFiDetailScreen = () => {
         refreshControl={
           <RefreshControl
             onRefresh={() => {
-              getCacheTop10Assets(true, {
+              checkIsExpireAndUpdate(true, {
                 disableNFT: true,
                 disableToken: true,
               });
