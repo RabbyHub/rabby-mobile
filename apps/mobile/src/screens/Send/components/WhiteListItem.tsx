@@ -21,6 +21,9 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { StackActions } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -38,6 +41,8 @@ const WhiteListItem = ({
   const { t } = useTranslation();
   const [isPressing, setIsPressing] = React.useState(false);
   const isDarkTheme = useGetBinaryMode() === 'dark';
+  const { navigation } = useSafeSetNavigationOptions();
+
   const menuActions = React.useMemo(() => {
     return [
       {
@@ -72,6 +77,16 @@ const WhiteListItem = ({
           ])}
           delayLongPress={200} // long press delay
           onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.ConfirmAddress,
+                params: {},
+              }),
+            );
             console.log('🔍 CUSTOM_LOGGER:=>: account', account);
           }}
           onLongPress={() => {

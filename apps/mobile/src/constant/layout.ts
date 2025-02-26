@@ -104,6 +104,7 @@ export const RootNames = {
   SendInput: 'SendInput',
   SelectImportAddress: 'SelectImportAddress',
   SelectWatchAddress: 'SelectWatchAddress',
+  ConfirmAddress: 'ConfirmAddress',
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',

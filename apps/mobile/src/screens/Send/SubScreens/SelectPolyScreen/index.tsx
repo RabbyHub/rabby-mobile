@@ -74,7 +74,7 @@ const SendPolyScreen = () => {
         <ScannerCC color={colors2024['neutral-title-1']} />
       </Pressable>
       <FlatList
-        data={[]}
+        data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
         renderItem={({ item }) => (
