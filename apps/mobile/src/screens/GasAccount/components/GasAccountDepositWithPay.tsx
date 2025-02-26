@@ -4,22 +4,19 @@ import {
 } from '@/assets2024/icons/gas-account';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
+import { toast } from '@/components2024/Toast';
+import { gasAccountProducts } from '@/constant/iap';
 import { useAccounts } from '@/hooks/account';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
+import { waitPurchaseUpdated } from '@/utils/iap';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { useRequest } from 'ahooks';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
-import { gasAccountProducts } from '@/constant/app-purchase';
 import { getProducts, requestPurchase } from 'react-native-iap';
-import { waitPurchaseUpdated } from '@/utils/iap';
-import { toast } from '@/components2024/Toast';
-
-const amountList = [0.7, 1.4, 7];
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useGasAccountSign } from '../hooks/atom';
 
 interface Props {
   onClose?(): void;

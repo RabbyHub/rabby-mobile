@@ -23,6 +23,7 @@ import {
   useGasBalanceRefresh,
   useSetGasAccount,
 } from './atom';
+import { useRequest } from 'ahooks';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -31,18 +32,28 @@ export const useGasAccountInfo = () => {
 
   const setGasAccount = useSetGasAccount();
 
-  const { value, loading, error } = useAsync(async () => {
-    if (!sig || !accountId) {
-      return undefined;
-    }
-    return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
-      if (e.account.id) {
-        return e;
+  const {
+    data: value,
+    loading,
+    error,
+  } = useRequest(
+    async () => {
+      if (!sig || !accountId) {
+        return undefined;
       }
-      setGasAccount();
-      return undefined;
-    });
-  }, [sig, accountId, refreshId]);
+      return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
+        if (e.account.id) {
+          return e;
+        }
+        setGasAccount();
+        return undefined;
+      });
+    },
+    {
+      refreshDeps: [sig, accountId, refreshId],
+      cacheKey: 'current-gas-account-info',
+    },
+  );
 
   if (
     error?.message?.includes('gas account verified failed') &&

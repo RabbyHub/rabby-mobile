@@ -301,6 +301,7 @@ export const MiniFooterBar: React.FC<Props> = ({
 
   const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
 
+  // todo
   const footer = (
     <>
       {showGasLess &&
@@ -377,6 +378,7 @@ export const MiniFooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
+        {footer}
         <View style={styles.actions}>
           {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
             <MiniLedgerAction
@@ -404,7 +406,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   ? gasLessConfig?.dark_color
                   : gasLessConfig?.theme_color
               }
-              footer={footer}
+              // footer={footer}
             />
           ) : (
             <MiniCommonAction
@@ -432,7 +434,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   ? gasLessConfig?.dark_color
                   : gasLessConfig?.theme_color
               }
-              footer={footer}
+              // footer={footer}
             />
           )}
         </View>

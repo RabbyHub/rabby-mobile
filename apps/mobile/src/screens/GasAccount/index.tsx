@@ -139,7 +139,7 @@ export const GasAccountScreen = () => {
   return (
     <NormalScreenContainer>
       <GasAccountCard
-        isLoading={loading}
+        // isLoading={loading}
         isLogin={isLogin}
         gasAccountInfo={gasAccount?.account}
         onLoginPress={() => {

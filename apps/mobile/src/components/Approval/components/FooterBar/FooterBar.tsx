@@ -299,32 +299,33 @@ export const FooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
-        {showGasLess &&
-        !payGasByGasAccount &&
-        canGotoUseGasAccount &&
+
+        {!isWatchAddr &&
+        showGasLess &&
+        !canUseGasLess &&
         (!securityLevel || !hasUnProcessSecurityResult) ? (
-          canUseGasLess ? null : isWatchAddr ? null : (
+          payGasByGasAccount ||
+          (!payGasByGasAccount && !canGotoUseGasAccount) ? (
+            <GasAccountTips
+              gasAccountCost={gasAccountCost}
+              isGasAccountLogin={isGasAccountLogin}
+              isWalletConnect={isWalletConnect}
+              noCustomRPC={noCustomRPC}
+              onGotoGasAccount={() => {
+                rejectApproval?.();
+                navigate(RootNames.StackTransaction, {
+                  screen: RootNames.GasAccount,
+                  params: {},
+                });
+              }}
+            />
+          ) : (
             <GasLessNotEnough
               canGotoUseGasAccount={canGotoUseGasAccount}
               canDepositUseGasAccount={canDepositUseGasAccount}
               onChangeGasAccount={onChangeGasAccount}
             />
           )
-        ) : null}
-        {(payGasByGasAccount || showGasLess) && !gasAccountCanPay ? (
-          <GasAccountTips
-            gasAccountCost={gasAccountCost}
-            isGasAccountLogin={isGasAccountLogin}
-            isWalletConnect={isWalletConnect}
-            noCustomRPC={noCustomRPC}
-            onGotoGasAccount={() => {
-              rejectApproval?.();
-              navigate(RootNames.StackTransaction, {
-                screen: RootNames.GasAccount,
-                params: {},
-              });
-            }}
-          />
         ) : null}
         <AccountInfo
           chain={props.chain}

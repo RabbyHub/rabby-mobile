@@ -35,6 +35,7 @@ import { useCurrentAccountOnAppTop } from './hooks/account';
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
+import { useGasAccountInfo } from './screens/GasAccount/hooks';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -64,6 +65,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useCurrentAccountOnAppTop();
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
+  useGasAccountInfo();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

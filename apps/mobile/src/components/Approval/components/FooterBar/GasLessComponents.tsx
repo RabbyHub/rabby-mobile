@@ -450,10 +450,9 @@ export const GasLessAnimatedWrapper = (
     }
   }, [start, props.gasLess]);
 
-  // todo
-  // if (props.showOrigin) {
-  //   return <>{props.children}</>;
-  // }
+  if (props.showOrigin) {
+    return <>{props.children}</>;
+  }
 
   if (props.showOrigin) {
     return null;
