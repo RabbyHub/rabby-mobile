@@ -2,7 +2,6 @@ import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
-import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigate, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
@@ -16,7 +15,6 @@ import {
 } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
@@ -42,10 +40,6 @@ const SendInputScreen = () => {
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
-  const [ensResult, setEnsResult] = React.useState<null | {
-    addr: string;
-    name: string;
-  }>(null);
 
   const { t } = useTranslation();
 
@@ -56,10 +50,6 @@ const SendInputScreen = () => {
     }
 
     let address = input;
-    if (ensResult && input !== ensResult.addr) {
-      address = ensResult.addr;
-    }
-
     console.log('address', address);
     if (!isValidHexAddress(address as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
@@ -67,16 +57,17 @@ const SendInputScreen = () => {
     }
     try {
       Keyboard.dismiss();
-      await apisAddress.addWatchAddress(address);
-      replaceToFirst(RootNames.StackAddress, {
-        screen: RootNames.ImportSuccess2024,
-        params: {
-          type: KEYRING_TYPE.WatchAddressKeyring,
-          address: address,
-          alias: ellipsisAddress(address),
-          brandName: KEYRING_CLASS.WATCH,
-        },
-      });
+      // await apisAddress.addWatchAddress(address);
+      console.log('🔍 CUSTOM_LOGGER:=>: goto confirm send address');
+      // replaceToFirst(RootNames.StackAddress, {
+      //   screen: RootNames.ImportSuccess2024,
+      //   params: {
+      //     type: KEYRING_TYPE.WatchAddressKeyring,
+      //     address: address,
+      //     alias: ellipsisAddress(address),
+      //     brandName: KEYRING_CLASS.WATCH,
+      //   },
+      // });
     } catch (err: any) {}
   };
 
@@ -84,45 +75,12 @@ const SendInputScreen = () => {
     setInput(text);
   }, []);
 
-  const onSubmitEditing = React.useCallback(() => {
-    if (!error && ensResult && input !== ensResult.addr) {
-      setInput(ensResult.addr);
-    }
-  }, [error, ensResult, input]);
-
   React.useEffect(() => {
     if (scanner.text) {
       setInput(scanner.text);
       scanner.clear();
     }
   }, [scanner]);
-
-  useEffect(() => {
-    if (!input) {
-      setError(undefined);
-      return;
-    }
-    if (isValidHexAddress(input as `0x${string}`)) {
-      setError(undefined);
-      return;
-    }
-    openapi
-      .getEnsAddressByName(input)
-      .then(result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      })
-      .catch(e => {
-        console.log(e);
-        setEnsResult(null);
-        setError(INPUT_ERROR.INVALID_ADDRESS);
-      });
-  }, [input]);
 
   return (
     <FooterButtonScreenContainer
@@ -140,12 +98,6 @@ const SendInputScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.topContent}>
-            <WalletIcon
-              type={KEYRING_TYPE.WatchAddressKeyring}
-              width={40}
-              height={40}
-              style={styles.icon}
-            />
             <View>
               <NextInput.TextArea
                 style={styles.textContainer}
@@ -162,11 +114,10 @@ const SendInputScreen = () => {
                       },
                 )}
                 inputProps={{
-                  placeholder: 'Address / ENS',
+                  placeholder: 'Enter Address',
                   value: input,
                   blurOnSubmit: true,
                   returnKeyType: 'done',
-                  onSubmitEditing: onSubmitEditing,
                   onChangeText: handleSubmit,
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
@@ -183,22 +134,6 @@ const SendInputScreen = () => {
                   </TouchableOpacity>
                 )}
               />
-
-              {!error && ensResult && input === ensResult.addr && (
-                <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
-              )}
-
-              {!error && ensResult && input !== ensResult.addr && (
-                <TouchableOpacity
-                  style={styles.ensResultBox}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setInput(ensResult.addr);
-                  }}>
-                  <Text style={styles.ensResult}>{ensResult.addr}</Text>
-                </TouchableOpacity>
-              )}
-
               {error && (
                 <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
               )}
