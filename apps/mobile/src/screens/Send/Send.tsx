@@ -35,7 +35,6 @@ import {
 } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
-import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -49,6 +48,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { ChainInfo2024 } from './components/ChainInfo2024';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
+import ToAddressControl2024 from './components/ToAddressControl2024';
 
 function SendScreen({
   isForMultipleAdderss = false,
@@ -345,7 +345,7 @@ function SendScreen({
               {/* FromToSection */}
               <View>
                 {/* To */}
-                <ToAddressControl />
+                <ToAddressControl2024 />
 
                 {/* ChainInfo */}
                 <View style={styles.chainSection}>
