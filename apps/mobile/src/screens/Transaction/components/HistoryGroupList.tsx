@@ -147,7 +147,7 @@ export const HistoryList = ({
                 styles.date,
                 !isForMultipleAdderss && styles.marginBottom,
               ]}>
-              {formatTimestamp(item.data.time_at * 1000)}
+              {formatTimestamp(item.data.time_at * 1000, t)}
             </Text>
           ) : null}
           <HistoryItem
@@ -181,7 +181,7 @@ export const HistoryList = ({
                 styles.date,
                 !isForMultipleAdderss && styles.marginBottom,
               ]}>
-              {formatTimestamp(item.data.completedAt)}
+              {formatTimestamp(item.data.completedAt, t)}
             </Text>
           ) : null}
           <TransactionItem

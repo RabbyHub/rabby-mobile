@@ -298,7 +298,7 @@ export const useSyncHistoryDB = (
 
     const currentTime = Date.now();
     const gap = currentTime - latestTime;
-    const expireTime = 1 * 24 * 60 * 60 * 1000; // 1 days ago
+    const expireTime = 10 * 60 * 1000; // 10 min
     console.log(
       '🔍syncTop10History isNeedSyncData time gap',
       gap,

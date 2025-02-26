@@ -152,18 +152,18 @@ export const calcGasEstimated = (seconds?: number) => {
   return '>30 min';
 };
 
-export function formatTimestamp(timestamp: number) {
+export function formatTimestamp(timestamp: number, t: any) {
   const date = new Date(timestamp);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
   if (date.toDateString() === today.toDateString()) {
-    return 'Today';
+    return t('page.transactions.Today');
   }
 
   if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
+    return t('page.transactions.Yesterday');
   }
 
   const months = [
