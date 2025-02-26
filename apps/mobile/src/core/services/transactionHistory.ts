@@ -27,6 +27,7 @@ import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { updateExpiredTime } from '@/databases/sync/assets';
+import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -435,20 +436,23 @@ export class TransactionHistoryService {
     }
     target?.txs?.forEach(tx => {
       if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
-        this.updateTx({
+        const newTxs = {
           ...tx,
           isPending: false,
           isFailed: !success,
           isCompleted: true,
           gasUsed,
           completedAt: Date.now(),
-        });
+        };
+        this.updateTx(newTxs);
         const id = tx.hash || tx.reqId;
         if (success) {
           id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
+        loadTxSaveFromLocalStore(newTxs);
+
         this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
       }
     });

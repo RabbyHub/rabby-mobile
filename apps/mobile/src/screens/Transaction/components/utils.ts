@@ -11,9 +11,14 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
+import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
+  if (data.historyItemCateType) {
+    return data.historyItemCateType;
+  }
+
   if (data.cate_id) {
     switch (data.cate_id) {
       case 'receive':
@@ -199,4 +204,21 @@ export const judgeIsSmallUsdTxInApi = (
   }
 
   return false;
+};
+
+export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
+  try {
+    const actionData = tx.action?.actionData;
+    if (!actionData?.send) {
+      return;
+    }
+
+    console.debug('loadTxSaveFromLocalStore exec', tx);
+    const item = new HistoryItemEntity();
+    HistoryItemEntity.fillEntityFromLocalSend(item, tx);
+    const repo = HistoryItemEntity.getRepository();
+    repo.manager.save(item);
+  } catch (e) {
+    console.log('loadTxSaveFromLocalStore error', e);
+  }
 };

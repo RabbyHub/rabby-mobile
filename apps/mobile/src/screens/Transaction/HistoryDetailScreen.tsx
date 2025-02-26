@@ -234,9 +234,14 @@ function HistoryDetailScreen(): JSX.Element {
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
     data.projectDict.length,
-    data.sends,
+    data.chain,
+    data.historyItemCateType,
     data.id,
     isForMultipleAdderss,
+  );
+  console.debug(
+    'HistoryDetailScreen historyItemCateType :',
+    `1${data.historyItemCateType}1`,
   );
 
   const { t } = useTranslation();

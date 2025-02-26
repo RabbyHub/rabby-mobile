@@ -12,6 +12,13 @@ import {
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
+import {
+  TransactionGroup,
+  TransactionHistoryItem,
+} from '@/core/services/transactionHistory';
+import { findChain } from '@/utils/chain';
+import BigNumber from 'bignumber.js';
+import { HistoryItemCateType } from '@/screens/Transaction/components/HistoryItemIcon';
 
 @Entity('cache_historyitem')
 export class HistoryItemEntity extends EntityAddressAssetBase {
@@ -92,6 +99,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   })
   tx_usd_gas_fee: number = 0;
 
+  // historyItemCateType
+  @Column('text', { default: '' })
+  historyItemCateType: HistoryItemCateType | '' = '';
+
   // tx_eth_gas_fee
   @Column('real', {
     default: 0,
@@ -135,6 +146,50 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  static fillEntityFromLocalSend(
+    e: HistoryItemEntity,
+    input: TransactionHistoryItem,
+  ) {
+    e.owner_addr = input.address;
+
+    e.other_addr = '';
+    e.is_scam = false;
+    e.txHash = input.hash ?? '';
+    e.receives = '[]';
+    const actionData = input.action?.actionData;
+    const amount = new BigNumber(actionData?.send?.token.raw_amount || '0').div(
+      10 ** (actionData?.send?.token.decimals || 0),
+    );
+    e.sends = JSON.stringify([
+      {
+        amount: amount.toNumber(),
+        to_addr: actionData?.send?.to || '',
+        token_id: actionData?.send?.token.id || '',
+      },
+    ]);
+    e.chain =
+      findChain({
+        id: input.chainId,
+      })?.serverId ?? 'eth';
+    e.status = input.isFailed ? 0 : 1;
+    e.time_at = input.completedAt ? Math.floor(input.completedAt / 1000) : 0;
+    e.cate_id = 'fromLocalStore';
+    e.tx_name = '';
+    e.token_approve_id = '';
+    e.token_approve_value = 0;
+    e.token_approve_spender = '';
+    e.project_id = '';
+
+    // todo
+    e.tx_from_address = input.address;
+    e.tx_to_address = actionData?.send?.to || '';
+    e.tx_usd_gas_fee = 0;
+    e.tx_eth_gas_fee = 0;
+    e.historyItemCateType = HistoryItemCateType.Send;
+
+    e.makeDbId();
+  }
+
   static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
@@ -173,6 +228,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         owner_addr,
       });
     }
+
+    // filter from local store items for update new history items from api
+    queryBuilder.andWhere('historyitem.cate_id != :typeValue', {
+      typeValue: 'fromLocalStore',
+    });
 
     const result = await queryBuilder.getRawOne();
 
