@@ -13,6 +13,7 @@ import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { RcIconAddWhiteList } from '@/assets2024/icons/whitelist';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -24,7 +25,7 @@ const WhiteListHeader = ({ gotoAddWhitelist }: IHeaderProps) => {
     <View style={styles.header}>
       <Text style={styles.headerText}>Whitelist Addresses</Text>
       <Pressable onPress={gotoAddWhitelist}>
-        <Text>icon</Text>
+        <RcIconAddWhiteList style={styles.addIcon} />
       </Pressable>
     </View>
   );
@@ -73,7 +74,7 @@ const SendPolyScreen = () => {
         <ScannerCC color={colors2024['neutral-title-1']} />
       </Pressable>
       <FlatList
-        data={list}
+        data={[]}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
         renderItem={({ item }) => (
@@ -104,7 +105,7 @@ export default SendPolyScreen;
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   root: {
     position: 'relative',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   input: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -114,6 +115,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
+    marginHorizontal: 4,
     height: 56,
   },
   item: {
@@ -121,23 +123,31 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   placeHolder: {
     color: colors2024['neutral-secondary'],
-    fontSize: 18,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
   listContainer: {
     flex: 1,
-    paddingTop: 16,
+    paddingTop: 36,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
     paddingVertical: 12,
+    marginBottom: 4,
   },
   headerText: {
-    fontSize: 18,
     color: colors2024['neutral-secondary'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
+  },
+  addIcon: {
+    width: 17,
+    height: 19,
   },
   footer: {
     marginTop: 12,

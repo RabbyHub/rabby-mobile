@@ -40,7 +40,7 @@ const SelectMyAddressScreen = () => {
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <FlatList
-        data={accounts}
+        data={accounts.sort((a, b) => (b.balance || 0) - (a.balance || 0))}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
         renderItem={({ item }) => (

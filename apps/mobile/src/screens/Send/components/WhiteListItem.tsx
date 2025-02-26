@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import {
   ContextMenuView,
   MenuAction,
@@ -21,6 +20,7 @@ import {
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
+import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -41,7 +41,7 @@ const WhiteListItem = ({
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'remove from whitelist',
+        title: 'Remove from Whitelist ',
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
@@ -59,8 +59,9 @@ const WhiteListItem = ({
         menuTitle: account.aliasName,
         menuActions: menuActions,
       }}
+      preViewBorderRadius={20}
       triggerProps={{ action: 'longPress' }}>
-      <AddressItemShadowView>
+      <AddressItemShadowView style={styles.shadowView}>
         <TouchableOpacity
           activeOpacity={1}
           onPressIn={() => setIsPressing(true)}
@@ -95,15 +96,15 @@ const WhiteListItem = ({
                       height={46}
                     />
                     {inWhiteList && (
-                      <ArrowRightCC
+                      <RcIconLockCC
                         style={styles.lockIcon}
                         color={
                           isPressing
                             ? colors2024['brand-default']
                             : colors2024['neutral-body']
                         }
-                        width={20}
-                        height={20}
+                        width={22}
+                        height={22}
                       />
                     )}
                   </View>
@@ -126,14 +127,14 @@ const WhiteListItem = ({
                   styles.arrow,
                   isPressing && styles.arrowPressing,
                 ])}>
-                <ArrowRightCC
+                <RcIconSwitchCC
                   color={
                     isPressing
                       ? colors2024['brand-default']
                       : colors2024['neutral-body']
                   }
-                  width={20}
-                  height={20}
+                  width={24}
+                  height={24}
                 />
               </View>
             )}
@@ -148,12 +149,15 @@ export default WhiteListItem;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    borderRadius: 30,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: colors2024['neutral-bg-3'],
   },
   rootPressing: {
     borderColor: colors2024['brand-light-2'],
+  },
+  shadowView: {
+    borderRadius: 20,
   },
   card: {
     flexDirection: 'row',
@@ -162,7 +166,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 0,
     flex: 1,
     flexGrow: 1,
-    height: 96,
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
   },
@@ -186,7 +189,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    transform: [{ translateX: 8 }, { translateY: 8 }],
+    transform: [{ translateX: 5 }, { translateY: 2 }],
   },
   itemInfo: {
     gap: 6,
