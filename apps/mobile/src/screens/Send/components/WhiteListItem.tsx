@@ -84,7 +84,9 @@ const WhiteListItem = ({
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
                 screen: RootNames.ConfirmAddress,
-                params: {},
+                params: {
+                  account,
+                },
               }),
             );
             console.log('🔍 CUSTOM_LOGGER:=>: account', account);

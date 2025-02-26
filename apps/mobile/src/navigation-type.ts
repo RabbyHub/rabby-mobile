@@ -241,8 +241,8 @@ export type TransactionNavigatorParamList = {
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
   [RootNames.SendInput]?: {};
-  [RootNames.SelectImportAddress]?: { account: KeyringAccountWithAlias };
-  [RootNames.ConfirmAddress]?: {};
+  [RootNames.SelectImportAddress]?: {};
+  [RootNames.ConfirmAddress]?: { account: KeyringAccountWithAlias };
   [RootNames.SelectWatchAddress]?: {};
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
