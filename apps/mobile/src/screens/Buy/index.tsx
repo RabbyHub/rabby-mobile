@@ -173,11 +173,7 @@ export const BuyScreen = ({
         )}
 
         {noQuote ? (
-          <Text style={styles.errorTip}>
-            {Number(amount) > 15
-              ? t('page.buy.noQuote2')
-              : t('page.buy.noQuote')}
-          </Text>
+          <Text style={styles.errorTip}>{t('page.buy.noQuote')}</Text>
         ) : null}
 
         {!loading && quotes?.length ? (

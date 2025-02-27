@@ -27,6 +27,12 @@ import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { useCurrentAccount } from '@/hooks/account';
 import { ellipsisOverflowedText } from '@/utils/text';
 import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
+import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
+
+import { ellipsisOverflowedText } from '@/utils/text';
+import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+
+const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface ItemProps {
   status: number;
@@ -312,7 +318,7 @@ export const HistoryTokenList = ({
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={styles.iconContainer}>
-                <BuyWalletSVG style={styles.walletIcon} />
+                <BuyWalletIcon style={styles.walletIcon} />
                 <AssetAvatar
                   logo={data?.buyDetails?.receive_token?.logo_url}
                   size={57}

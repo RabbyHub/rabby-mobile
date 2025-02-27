@@ -186,7 +186,9 @@ export const HistoryItem = React.memo(
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (
-        <TouchableOpacity onPress={hanldeNavigateDetail}>
+        <TouchableOpacity
+          onPress={hanldeNavigateDetail}
+          style={{ marginBottom: 8 }}>
           <BuyHistoryItem data={data.buyDetails} />
         </TouchableOpacity>
       );

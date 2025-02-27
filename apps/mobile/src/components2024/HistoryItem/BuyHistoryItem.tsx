@@ -13,6 +13,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { openapi } from '@/core/request';
 import { usePendingBuyItemData } from '@/screens/Buy/hooks/history';
+import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+
+const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface Props {
   data: Awaited<ReturnType<typeof openapi.getBuyHistory>>['histories'][number];
@@ -41,11 +44,6 @@ export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
 
   const isPending = data.status === 'pending';
   const isFailed = data.status === 'failed';
-
-  const BuyWalletIcon = useMemo(
-    () => (isLight ? BuyWalletSVG : BuyWalletDarkSVG),
-    [isLight],
-  );
 
   return (
     <CommonHistoryItem
