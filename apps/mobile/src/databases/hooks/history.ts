@@ -115,7 +115,9 @@ export const useSyncHistoryDB = (
   const synHistoryInRealTimeApi = useMemoizedFn(
     async (address: string, latest_time: number, start_time?: number) => {
       try {
-        const latestTime = latest_time;
+        const notNeedUpdateTime =
+          new Date().getTime() / 1000 - 30 * 24 * 60 * 60; // 30 days ago
+        const latestTime = latest_time || notNeedUpdateTime;
         const startTime = start_time || 0;
 
         console.log(
@@ -146,11 +148,6 @@ export const useSyncHistoryDB = (
             res.history_list[res.history_list.length - 1].time_at;
           if (lastItemTime < latestTime) {
             // update done or not all update  to  interup loop
-            // res.history_list = res.history_list.filter(
-            //   i => i.time_at > latestTime,
-            // );
-            // RealTimeApi need to update refresh local data
-
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: update',
               address,
