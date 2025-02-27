@@ -4,6 +4,7 @@ import React from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { Card } from '../Card';
 import RcPending from '@/assets/icons/swap/pending.svg';
+import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 
 interface Props {
   icon: React.ReactNode;
@@ -13,6 +14,7 @@ interface Props {
   payTokenAmount?: React.ReactNode;
   receiveTokenAmount?: React.ReactNode;
   rightContainer?: React.ReactNode;
+  isFailed?: boolean;
 }
 
 export const CommonHistoryItem: React.FC<Props> = ({
@@ -20,6 +22,7 @@ export const CommonHistoryItem: React.FC<Props> = ({
   title,
   subTitle,
   isPending,
+  isFailed,
   payTokenAmount,
   receiveTokenAmount,
   rightContainer,
@@ -52,7 +55,10 @@ export const CommonHistoryItem: React.FC<Props> = ({
         <View style={styles.mainContainer}>
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>{title}</Text>
-            {isPending && (
+            {isFailed && (
+              <RcIconFail style={styles.arrowIcon} width={18} height={18} />
+            )}
+            {!isFailed && isPending && (
               <Animated.View
                 style={{
                   transform: [{ rotate: spin }],
@@ -74,7 +80,7 @@ export const CommonHistoryItem: React.FC<Props> = ({
         <View
           style={StyleSheet.flatten([
             styles.rightContainer,
-            isPending && { opacity: 0.3 },
+            (isPending || isFailed) && { opacity: 0.3 },
           ])}>
           <Text numberOfLines={1} style={styles.payTokenAmountText}>
             {payTokenAmount}

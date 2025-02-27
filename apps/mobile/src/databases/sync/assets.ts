@@ -3,6 +3,7 @@ import { NFTItemEntity } from '../entities/nftItem';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
 import {
+  BuyHistoryList,
   ComplexProtocol,
   NFTItem,
   SwapTradeList,
@@ -19,6 +20,7 @@ import {
 import { SwapItemEntity } from '../entities/swapitem';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction } from './_task';
+import { BuyItemEntity } from '../entities/buyItem';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   if (_tokens.length === 0) {
@@ -221,6 +223,52 @@ export async function syncRemotePortocols(
     .catch(error => {
       console.error('Batch upsert failed:', error);
     });
+}
+
+export async function syncRemoteBuyHistory(
+  address: string,
+  history_list: BuyHistoryList['histories'],
+) {
+  try {
+    console.debug('syncRemoteBuyHistory length', history_list.length);
+
+    const historyItems = history_list.map(raw => {
+      const item = new BuyItemEntity();
+      BuyItemEntity.fillEntity(item, address, raw);
+
+      return item;
+    });
+    await prepareAppDataSource();
+
+    console.debug('syncRemoteSwapHistory batchSaveWithPQueueAndTransaction');
+    await batchSaveWithPQueueAndTransaction(BuyItemEntity, historyItems, {
+      owner_addr: address,
+      taskFor: 'buy-history',
+      batchSize: 100,
+      concurrency: 1,
+      delayBetweenTasks: 1.5 * 1e3,
+    })
+      .then(({ taskSignal, taskKey }) => {
+        if (taskSignal.aborted) {
+          console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+        } else {
+          console.debug(`[${taskKey}] batch upsert tasks created`);
+        }
+      })
+      .catch(error => {
+        console.error('Batch syncRemoteBuyHistory upsert failed:', error);
+      });
+
+    console.debug(
+      'syncRemoteBuyHistory batchSaveWithPQueueAndTransaction done',
+    );
+    return {
+      address,
+      history_list: history_list,
+    };
+  } catch (e) {
+    console.error('syncRemoteBuyHistory', e);
+  }
 }
 
 export const deleteDBResourceForAddress = async (_address: string) => {

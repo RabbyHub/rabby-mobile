@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
-import usePrevious from 'react-use/lib/usePrevious';
-import { syncRemoteHistory, syncRemoteSwapHistory } from '../sync/assets';
+import {
+  syncRemoteBuyHistory,
+  syncRemoteHistory,
+  syncRemoteSwapHistory,
+} from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
@@ -13,7 +16,8 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BuyHistoryList, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BuyItemEntity } from '../entities/buyItem';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -197,6 +201,52 @@ export const useSyncHistoryDB = (
     },
   );
 
+  const syncBuyHistory = useMemoizedFn(
+    async (address: string, start?: number) => {
+      if (!address) {
+        return [];
+      }
+
+      const latestTime = (await BuyItemEntity.getLatestTime(address)) || 0;
+      const isExpiredTimeAgo =
+        (new Date().getTime() - 15 * 24 * 60 * 60 * 1000) / 1000; // 15 days ago
+
+      const isAddUpdate = latestTime > isExpiredTimeAgo;
+
+      const pendingIdList = ((await BuyItemEntity.getAllPending(address)) || [])
+        .filter(i => i.create_at > isExpiredTimeAgo)
+        .map(e => e.id);
+
+      const _start = 0 + (start || 0);
+      const res = await openapi.getBuyHistory({
+        user_addr: address,
+        start: _start,
+        limit: isAddUpdate ? 20 : 100,
+      });
+
+      const lastItemTime =
+        res.histories[res.histories.length - 1]?.create_at || 0;
+
+      res.histories = res.histories.filter(
+        i => pendingIdList.includes(i.id) || i.create_at > latestTime,
+      );
+
+      console.debug('getBuyHistory sync data length:', res.histories.length);
+      if (res.histories.length) {
+        console.log('syncRemoteBuyHistory', address, res.histories);
+        runOnJS(syncRemoteBuyHistory)(
+          address,
+          res.histories as unknown as BuyHistoryList['histories'],
+        );
+        if (isAddUpdate && lastItemTime > latestTime) {
+          console.debug('getBuyHistory sync data need to loop:', address);
+          syncBuyHistory(address, _start + res.histories.length - 1);
+        }
+        return res.histories;
+      }
+    },
+  );
+
   const syncUserAllHistory = useMemoizedFn(
     async (
       address: string,
@@ -360,6 +410,7 @@ export const useSyncHistoryDB = (
                 await Promise.all([
                   syncUserAllHistory(address, 0, 0, isUserRealTiemApi),
                   syncSwapHistory(address),
+                  syncBuyHistory(address),
                 ]);
               } catch (error) {
                 console.error(
@@ -390,6 +441,7 @@ export const useSyncHistoryDB = (
     Promise.all([
       syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi),
       syncSwapHistory(address.toLowerCase()),
+      syncBuyHistory(address.toLowerCase()),
     ]);
   });
 

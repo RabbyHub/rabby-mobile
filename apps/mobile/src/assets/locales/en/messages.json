@@ -48,7 +48,8 @@
         "Revoke": "Revoked Approval",
         "Contract": "Deploy Contract",
         "Cancel": "Cancel Pending Transction",
-        "Default": "Interaction"
+        "Default": "Interaction",
+        "Buy": "Purchased"
       },
       "detail": {
         "Unknown": "Unknown",
@@ -60,6 +61,7 @@
         "Failed": "Failed",
         "SendAgain": "Send Again",
         "SwapAgain": "Swap Again",
+        "BuyAgain": "Buy Again",
         "Unlimited": "Unlimited",
         "Revoke": "Revoke",
         "Date": "Date",
@@ -79,7 +81,9 @@
         "name": "Name",
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
-        "totalApprovedAmount": "Current Approved Amount"
+        "totalApprovedAmount": "Current Approved Amount",
+        "PurchaseFrom": "Purchased from",
+        "WillReceive": "Will Receive: ≈ {{token}}"
       },
       "empty": {
         "title": "No transactions",
@@ -882,7 +886,15 @@
       "multiAddressHome": {
         "pin": "Pin",
         "services": "Services",
-        "totalBalance": "Total Balance"
+        "totalBalance": "Total Balance",
+        "noAssets": "No Assets?",
+        "fundYourWallet": "Fund Your Wallet",
+        "importAddress": "Import an Address",
+        "importAddressDesc": "Add an existing address with funds.",
+        "receiveCrypto": "Receive Crypto",
+        "receiveCryptoDesc": "Transfer tokens from another address.",
+        "buyWithFiat": "Buy with Fiat",
+        "buyWithFiatDesc": "Purchase crypto using a debit card or bank account."
       },
       "importAddress": {
         "importTitle": "Import Address",
@@ -1569,8 +1581,36 @@
       }
     },
     "buy": {
+      "title": "Buy",
+      "youWillPay": "Pay",
+      "youWillReceive": "Receive",
+      "paymentsOnly": "Payments can only be made in {{currency}}",
+      "searchingQuote": "Searching Quotes For you...",
+      "quotesForYou": "Quotes For you",
       "from": "From {{dex}}",
-      "purchased": "Purchased"
+      "purchased": "Purchased",
+      "toBuy": "Continue to Buy",
+      "history": "Purchased History",
+      "noQuotePlaceholder": "No Quote",
+      "noQuote": "No quotes found: Try enter a higher value.",
+      "noQuote2": "No quotes found.",
+      "searchRegionPlaceholder": "Search for region",
+      "paymentMethod": "Payment Method",
+      "paymentProviderTips": "This provider supports the following payment methods:",
+      "regionBottomSheet": {
+        "title": "Select your region",
+        "searchPlaceholder": "Search fiat currency",
+        "noRegionFound": "No region found"
+      },
+      "currencyBottomSheet": {
+        "title": "Select a Currency",
+        "searchPlaceholder": "Search currency",
+        "NoFound": "No Currency found"
+      },
+      "quote": {
+        "title": "Quotes For you",
+        "best": "Best Quotes"
+      }
     }
   },
   "component": {

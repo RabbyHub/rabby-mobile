@@ -176,7 +176,8 @@
         "Revoke": "เพิกถอนการอนุมัติ",
         "Swap": "สลับแล้ว",
         "Cancel": "ยกเลิกธุรกรรมที่ค้างอยู่",
-        "Approve": "อนุมัติแล้ว"
+        "Approve": "อนุมัติแล้ว",
+        "Buy": "ซื้อแล้ว"
       },
       "detail": {
         "NoApproveNeed": "ไม่จำเป็นต้องเพิกถอน: ไม่มีค่าเผื่อที่เหลืออยู่",
@@ -204,7 +205,13 @@
         "name": "ชื่อ",
         "InteractionResults": "ผลลัพธ์ของการโต้ตอบ",
         "ApproveToken": "อนุมัติโทเค็น",
-        "RevokeToken": "เพิกถอน Token"
+        "RevokeToken": "เพิกถอน Token",
+        "BuyAgain": "ซื้ออีกครั้ง",
+        "Name": "ชื่อ",
+        "PurchaseFrom": "ซื้อจาก",
+        "Collection": "คอลเลกชัน",
+        "WillReceive": "จะได้รับ: ≈ {{token}}",
+        "totalApprovedAmount": "จำนวนเงินที่อนุมัติในปัจจุบัน"
       },
       "empty": {
         "desc": "ไม่พบธุรกรรมบน<1>supported chains</1>",
@@ -224,14 +231,21 @@
         "title": "ซ่อนการทำธุรกรรมหลอกลวง"
       },
       "title": "ธุรกรรม",
-      "ViewHiddenItems": "ดูธุรกรรมหลอกลวง"
+      "ViewHiddenItems": "ดูธุรกรรมหลอกลวง",
+      "Today": "วันนี้",
+      "ViewSmallItems": "ดูธุรกรรม < $0.1",
+      "ShowHiddenItems": "แสดงธุรกรรมที่ซ่อนอยู่",
+      "Yesterday": "เมื่อวานนี้"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "กรอกวลีเมล็ดพันธุ์ของคุณ"
     },
     "receive": {
       "title": "รับ {{token}} บน {{chain}}",
-      "watchModeAlert": "นี่คือที่อยู่ที่ใช้เพื่อดูข้อมูลเท่านั้น คุณแน่ใจหรือไม่ว่าต้องการใช้เพื่อรับสินทรัพย์?"
+      "watchModeAlert": "นี่คือที่อยู่ที่ใช้เพื่อดูข้อมูลเท่านั้น คุณแน่ใจหรือไม่ว่าต้องการใช้เพื่อรับสินทรัพย์?",
+      "newTitle": "รับสินทรัพย์บน",
+      "allEVMChain": "ทุกเครือข่าย EVM",
+      "copyAddress": "คัดลอกที่อยู่"
     },
     "sendNFT": {
       "sendButton": "ส่ง"
@@ -977,7 +991,15 @@
       "multiAddressHome": {
         "services": "บริการ",
         "totalBalance": "ยอดคงเหลือรวม",
-        "pin": "รหัส Pin"
+        "pin": "รหัส Pin",
+        "receiveCrypto": "รับ Crypto",
+        "buyWithFiat": "ซื้อด้วย Fiat",
+        "importAddressDesc": "เพิ่มที่อยู่ที่มีเงินทุนอยู่แล้ว",
+        "noAssets": "ไม่มีทรัพย์สินใช่หรือไม่?",
+        "fundYourWallet": "เติมเงินใน Wallet ของคุณ",
+        "receiveCryptoDesc": "โอนโทเค็นจากที่อยู่อื่น",
+        "importAddress": "นำเข้าที่อยู่",
+        "buyWithFiatDesc": "ซื้อ crypto โดยใช้บัตรเดบิตหรือบัญชีธนาคาร"
       },
       "importAddress": {
         "importTitle": "นำเข้า Address",
@@ -1505,7 +1527,15 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "Token": "Token",
-        "Nft": "NFT"
+        "Nft": "NFT",
+        "NoData": "ไม่มี {{name}}"
+      },
+      "emptyToken": {
+        "buyHeader": "ซื้อด้วยเงินคำสั่ง",
+        "receiveHeader": "รับ Crypto",
+        "title": "เติมเงินให้กระเป๋าของคุณ",
+        "buyBody": "ซื้อคริปโตโดยใช้บัตรเดบิตหรือบัญชีธนาคาร",
+        "receiveBody": "โอนโทเค็นจากที่อยู่อื่น"
       }
     },
     "gasAccount": {
@@ -1683,7 +1713,35 @@
     },
     "buy": {
       "purchased": "ที่ซื้อ",
-      "from": "จาก {{dex}}"
+      "from": "จาก {{dex}}",
+      "regionBottomSheet": {
+        "noRegionFound": "ไม่พบภูมิภาค",
+        "title": "เลือกภูมิภาคของคุณ",
+        "searchPlaceholder": "ค้นหาสกุลเงินคำสั่ง"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "ค้นหา currency",
+        "title": "เลือกสกุลเงิน",
+        "NoFound": "ไม่พบสกุลเงิน"
+      },
+      "quote": {
+        "best": "คำกล่าวที่ดีที่สุด",
+        "title": "คำคมสำหรับคุณ"
+      },
+      "title": "ซื้อ",
+      "youWillPay": "ชำระเงิน",
+      "quotesForYou": "คำคมสำหรับคุณ",
+      "paymentMethod": "วิธีการชำระเงิน",
+      "searchRegionPlaceholder": "ค้นหาภูมิภาค",
+      "searchingQuote": "กำลังค้นหาคำคมให้คุณ...",
+      "noQuote2": "ไม่พบคำพูด",
+      "paymentProviderTips": "ผู้ให้บริการนี้รองรับวิธีการชำระเงินดังต่อไปนี้:",
+      "history": "ประวัติการซื้อ",
+      "youWillReceive": "รับ",
+      "noQuote": "ไม่พบคำเสนอราคา: ลองป้อนมูลค่าสูงกว่า",
+      "paymentsOnly": "การชำระเงินสามารถทำได้เฉพาะใน {{currency}}",
+      "toBuy": "ดําเนินการซื้อต่อ",
+      "noQuotePlaceholder": "ไม่เสนอราคา"
     }
   },
   "native": {
@@ -1738,7 +1796,8 @@
       "option_System": "ระบบ",
       "option_Light": "เบา"
     },
-    "Unknown": "ไม่ทราบ"
+    "Unknown": "ไม่ทราบ",
+    "unlimited": "ไม่จำกัด"
   },
   "background": {
     "transactionWatcher": {
@@ -1763,7 +1822,9 @@
       "invalidMnemonic": "วลี seed ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง!",
       "invalidChainId": "รหัสเครือข่ายไม่ถูกต้อง",
       "invalidPrivateKey": "คีย์ส่วนตัวไม่ถูกต้อง",
-      "canNotUnlock": "ไม่สามารถปลดล็อกได้หากไม่มีหลุมก่อนหน้า"
+      "canNotUnlock": "ไม่สามารถปลดล็อกได้หากไม่มีหลุมก่อนหน้า",
+      "errorWords_other": "{{count}} คำไม่ถูกต้อง",
+      "errorWords_one": "1 คำไม่ถูกต้อง"
     }
   },
   "constant": {
