@@ -18,7 +18,9 @@ import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { varyAndSortChainItems } from '@/utils/chain';
-import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
+import NetSwitchTabs, {
+  useSwitchNetTab,
+} from '@/components2024/PillsSwitch/NetSwitchTabs';
 import MixedFlatChainList from './MixedFlatChainList';
 import AutoLockView from '@/components/AutoLockView';
 import { useChainList } from '@/hooks/useChainList';
@@ -128,8 +130,9 @@ export default function SelectChainWithSummary({
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
+
   const isDark = useGetBinaryMode() === 'dark';
-  const { selectedTab } = useSwitchNetTab({
+  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
     hideTestnetTab,
   });
   const inputRef = useRef<TextInput | null>(null);
@@ -214,6 +217,13 @@ export default function SelectChainWithSummary({
             </Pressable>
           </View>
         )}
+        {isShowTestnet && !hideMainnetTab ? (
+          <NetSwitchTabs
+            value={selectedTab}
+            onTabChange={onTabChange}
+            style={styles.netSwitchTabs}
+          />
+        ) : null}
       </BottomSheetHandlableView>
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (
