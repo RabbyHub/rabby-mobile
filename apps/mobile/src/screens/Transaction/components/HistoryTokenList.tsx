@@ -29,7 +29,6 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
 import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 
-import { ellipsisOverflowedText } from '@/utils/text';
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 
 const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
