@@ -73,7 +73,9 @@
       "emptyAccount": "現在のアカウントは空です。",
       "canNotUnlock": "以前のvaultがないと解除できません。",
       "notFoundGnosisKeyring": "Gnosis keyringが見つかりませんでした。",
-      "notFindChain": "チェーン{{chain}}が見つかりません"
+      "notFindChain": "チェーン{{chain}}が見つかりません",
+      "errorWords_other": "{{count}} 件の誤った単語",
+      "errorWords_one": "1 つの誤字"
     }
   },
   "page": {
@@ -96,7 +98,8 @@
         "Bridge": "ブリッジ済み",
         "Cancel": "保留中止取引をキャンセル",
         "Send": "送信完了",
-        "Approve": "承認済み"
+        "Approve": "承認済み",
+        "Buy": "購入済み"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -124,7 +127,13 @@
         "InteractedContract": "相互作用したコントラクト",
         "Status": "ステータス",
         "GasFee": "Gas Fee",
-        "SwapAgain": "再スワップ"
+        "SwapAgain": "再スワップ",
+        "Name": "名前",
+        "BuyAgain": "再購入",
+        "totalApprovedAmount": "現在の承認額",
+        "Collection": "コレクション",
+        "WillReceive": "受け取る予定: ≈ {{token}}",
+        "PurchaseFrom": "から購入"
       },
       "empty": {
         "desc": "<1>サポートされているチェーン</1>で取引が見つかりませんでした。",
@@ -144,7 +153,11 @@
         "title": "スキャム取引を非表示"
       },
       "ViewHiddenItems": "詐欺トランザクションを表示する",
-      "title": "トランザクション"
+      "title": "トランザクション",
+      "Today": "今日",
+      "Yesterday": "昨日",
+      "ViewSmallItems": "$0.1 以下の取引を表示",
+      "ShowHiddenItems": "非表示のトランザクションを表示"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "シードフレーズを入力してください"
@@ -437,7 +450,10 @@
     },
     "receive": {
       "title": "{{chain}}で{{token}}を受け取る",
-      "watchModeAlert": "これはウォッチオンリーアドレスです。資産を受け取るために使用してもよろしいですか？"
+      "watchModeAlert": "これはウォッチオンリーアドレスです。資産を受け取るために使用してもよろしいですか？",
+      "copyAddress": "アドレスをコピー",
+      "newTitle": "オンで資産を受け取る",
+      "allEVMChain": "全てのEVMチェーン"
     },
     "activities": {
       "signedTx": {
@@ -793,7 +809,15 @@
       "multiAddressHome": {
         "pin": "Pin",
         "totalBalance": "総残高",
-        "services": "サービス"
+        "services": "サービス",
+        "noAssets": "資産なし？",
+        "receiveCrypto": "暗号を受け取る",
+        "importAddress": "アドレスをインポート",
+        "buyWithFiat": "法定通貨で購入",
+        "fundYourWallet": "ウォレットに資金を追加",
+        "buyWithFiatDesc": "デビットカードまたは銀行口座を使用して暗号通貨を購入します。",
+        "importAddressDesc": "既存の資金があるアドレスを追加します。",
+        "receiveCryptoDesc": "別のアドレスからトークンを転送します。"
       },
       "addAddress": {
         "importAddress": "アドレスをインポート",
@@ -1346,7 +1370,15 @@
       "sectionHeader": {
         "Nft": "NFT",
         "Defi": "DeFi",
-        "Token": "トークン"
+        "Token": "トークン",
+        "NoData": "{{name}}がありません"
+      },
+      "emptyToken": {
+        "receiveHeader": "暗号を受け取る",
+        "buyHeader": "法定通貨で購入",
+        "buyBody": "デビットカードまたは銀行口座を使用して暗号を購入します。",
+        "receiveBody": "別のアドレスからトークンを転送します。",
+        "title": "ウォレットに資金を入れる"
       }
     },
     "receiveAddressList": {
@@ -1603,7 +1635,35 @@
     },
     "buy": {
       "purchased": "購入済み",
-      "from": "{{dex}} より"
+      "from": "{{dex}} より",
+      "regionBottomSheet": {
+        "title": "リージョンを選択",
+        "noRegionFound": "地域が見つかりませんでした",
+        "searchPlaceholder": "フィアット通貨を検索"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "通貨を検索",
+        "NoFound": "通貨が見つかりませんでした",
+        "title": "通貨を選択"
+      },
+      "quote": {
+        "title": "あなたへの引用",
+        "best": "ベスト引用"
+      },
+      "youWillPay": "支払い",
+      "title": "購入",
+      "history": "購入履歴",
+      "toBuy": "購入を続ける",
+      "youWillReceive": "受け取る",
+      "paymentsOnly": "支払いは{{currency}}でのみ行えます。",
+      "searchingQuote": "お見積もりを検索しています…",
+      "quotesForYou": "あなたへの引用",
+      "searchRegionPlaceholder": "地域を検索",
+      "paymentMethod": "支払い方法",
+      "noQuote2": "引用が見つかりませんでした。",
+      "noQuotePlaceholder": "引用符号なし",
+      "paymentProviderTips": "このプロバイダーは以下の支払い方法をサポートしています。",
+      "noQuote": "見積もりが見つかりません: より高い値を入力してみてください。"
     }
   },
   "global": {
@@ -1643,7 +1703,8 @@
       "option_System": "システム",
       "option_Light": "ライト"
     },
-    "Unknown": "不明"
+    "Unknown": "不明",
+    "unlimited": "無制限"
   },
   "bluetooth": {
     "powered_off_alert": {
