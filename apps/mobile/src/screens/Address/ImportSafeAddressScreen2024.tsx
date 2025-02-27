@@ -104,7 +104,8 @@ export const ImportSafeAddressScreen2024 = () => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleNext,
-        disabled: !input || !!error || loading,
+        disabled:
+          !input || !!error || loading || (chainList && chainList.length <= 0),
       }}
       style={styles.screen}
       footerBottomOffset={56}
