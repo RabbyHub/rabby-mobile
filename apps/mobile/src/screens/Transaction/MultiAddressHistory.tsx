@@ -778,7 +778,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 24,
-    color: colors2024['netural-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   netTabs: {
     marginBottom: 12,
