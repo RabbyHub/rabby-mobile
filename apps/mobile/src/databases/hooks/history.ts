@@ -183,6 +183,11 @@ export const useSyncHistoryDB = (
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
           }
         }
+        !startTime &&
+          setHistoryEnsureNoData(prev => ({
+            ...prev,
+            [address]: !res.history_list.length,
+          }));
       } catch (error) {
         console.error('synHistoryInRealTimeApi Error fetching data:', error);
       }
@@ -278,10 +283,11 @@ export const useSyncHistoryDB = (
             );
           }
         }
-        setHistoryEnsureNoData(prev => ({
-          ...prev,
-          [address]: !res.history_list.length,
-        }));
+        !start_time &&
+          setHistoryEnsureNoData(prev => ({
+            ...prev,
+            [address]: !res.history_list.length,
+          }));
       } catch (error) {
         console.error('syncUserAllHistory Error fetching data:', error);
       }
