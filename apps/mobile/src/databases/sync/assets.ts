@@ -68,6 +68,7 @@ export async function syncRemoteHistory(
       const item = new HistoryItemEntity();
       HistoryItemEntity.fillEntity(item, address, raw);
 
+      delete item.historyItemCateType;
       return item;
     });
     await prepareAppDataSource();

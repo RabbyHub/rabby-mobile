@@ -143,11 +143,11 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Recieve:
           const isSend = formatType === HistoryItemCateType.Send;
           const addr = isSend
-            ? data.sends[0].to_addr
-            : data.receives[0].from_addr;
+            ? data.sends[0]?.to_addr
+            : data.receives[0]?.from_addr;
           return (
             (isSend ? ToText : FromText) +
-            (getAliasName(addr) || ellipsisAddress(addr))
+            (getAliasName(addr || '') || ellipsisAddress(addr || ''))
           );
         case HistoryItemCateType.Revoke:
         case HistoryItemCateType.Approve:

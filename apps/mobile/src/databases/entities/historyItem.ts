@@ -101,7 +101,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   // historyItemCateType
   @Column('text', { default: '' })
-  historyItemCateType: HistoryItemCateType | '' = '';
+  historyItemCateType?: HistoryItemCateType | '' = '';
 
   // tx_eth_gas_fee
   @Column('real', {

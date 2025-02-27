@@ -331,7 +331,7 @@ function HistoryDetailScreen(): JSX.Element {
     formatType === HistoryItemCateType.Recieve
       ? data.address
       : formatType === HistoryItemCateType.Send
-      ? data.sends[0].to_addr
+      ? data.sends[0]?.to_addr
       : data.tx?.to_addr;
   const usdGasFee = data.tx?.eth_gas_fee;
 
