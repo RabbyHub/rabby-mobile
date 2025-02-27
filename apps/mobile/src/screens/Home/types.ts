@@ -69,6 +69,7 @@ export type AbstractPortfolioToken = PortfolioItemToken & {
   _realUsdValueChange?: number;
   _isPined?: boolean;
   _isFold?: boolean;
+  _isMiniFold?: boolean;
   _isManualFold?: boolean;
   _isExcludeBalance?: boolean;
   _pinIndex?: number;
@@ -107,7 +108,8 @@ export type ActionHeaderItem = {
     | 'defi_header'
     | 'toggle_defi_fold'
     | 'nft_header'
-    | 'toggle_nft_fold';
+    | 'toggle_nft_fold'
+    | 'empty-token';
   data?: null;
 };
 

@@ -17,7 +17,11 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+} from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
@@ -32,6 +36,9 @@ import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { RevokeNFTCollectionBtn } from './components/RevokeNFTCollectionBtn';
 import { formatIntlTimestamp } from '@/utils/time';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
 
 interface Props {
   data: TransactionGroup;
@@ -69,6 +76,23 @@ export const ApproveNFTCollection: React.FC<Props> = ({
   const unionAccounts = useMemo(() => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
+
+  const txAccount = useMemo(() => {
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (data.keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    return account;
+  }, [accounts, data.address, data.keyringType]);
 
   const { switchAccount } = useCurrentAccount();
 
@@ -258,8 +282,9 @@ export const ApproveNFTCollection: React.FC<Props> = ({
       </View>
       {data.isPending ? null : (
         <RevokeNFTCollectionBtn
-          actionData={actionData}
-          address={data.maxGasTx.address}
+          collection={actionData.collection}
+          spender={actionData.spender}
+          account={txAccount}
         />
       )}
     </>

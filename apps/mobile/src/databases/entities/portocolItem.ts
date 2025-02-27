@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, In } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
@@ -87,6 +87,19 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
 
     return (await this.getRepository().findBy({ owner_addr }))
+      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
+      .map(i => ({
+        ...i,
+        portfolio_item_list: columnConverter.jsonStringToObj(
+          i.portfolio_item_list,
+        ),
+      }));
+  }
+
+  static async batchMultAddressPortocols(addresses: string[]) {
+    await prepareAppDataSource();
+
+    return (await this.getRepository().findBy({ owner_addr: In(addresses) }))
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,

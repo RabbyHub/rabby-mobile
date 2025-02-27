@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   TextInput,
@@ -14,12 +14,8 @@ import {
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInputProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetTextInput';
 
-import { useTheme2024, useThemeStyles } from '@/hooks/theme';
-import {
-  createGetStyles,
-  createGetStyles2024,
-  makeDebugBorder,
-} from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   RcIconCloseCircleCC,
   RcIconEyeCC,
@@ -27,7 +23,6 @@ import {
 } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { IS_ANDROID } from '@/core/native/utils';
 
 const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
 
@@ -264,7 +259,9 @@ const NextInputComponent = React.forwardRef<
     );
 
     const formmatedCustomIcon = useMemo(() => {
-      if (!customIcon) return null;
+      if (!customIcon) {
+        return null;
+      }
 
       const iconWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
       const iconStyle = StyleSheet.flatten([styles.closeIcon]);
@@ -353,6 +350,7 @@ function PasswordInput({
   ...props
 }: NextInputProps & {
   initialPasswordVisible?: boolean;
+  iconColor?: string;
 }) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getPasswordInputStyles,
@@ -375,14 +373,20 @@ function PasswordInput({
             setPasswordVisible(prev => !prev);
           }}>
           {passwordVisible ? (
-            <RcIconEyeCC style={ctx.iconStyle} color={'#090A0B'} />
+            <RcIconEyeCC
+              style={ctx.iconStyle}
+              color={props.iconColor || '#090A0B'}
+            />
           ) : (
-            <RcIconEyeCloseCC style={ctx.iconStyle} color={'#090A0B'} />
+            <RcIconEyeCloseCC
+              style={ctx.iconStyle}
+              color={props.iconColor || '#090A0B'}
+            />
           )}
         </TouchableView>
       )) as React.FC<RenderCtx>)
     );
-  }, [props.customIcon, passwordVisible]);
+  }, [props.customIcon, props.iconColor, passwordVisible]);
   // const inputRef = React.useRef<TextInput>(null);
 
   return (

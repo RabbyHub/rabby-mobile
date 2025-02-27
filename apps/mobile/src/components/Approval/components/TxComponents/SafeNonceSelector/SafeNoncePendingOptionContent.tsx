@@ -35,7 +35,7 @@ export const SafeNoncePendingOptionContent = ({
           to: data.to,
           data: data.data || '0x',
           value: `0x${Number(data.value).toString(16)}`,
-          nonce: intToHex(data.nonce),
+          nonce: intToHex(+data.nonce),
           gasPrice: '0x0',
           gas: '0x0',
         },

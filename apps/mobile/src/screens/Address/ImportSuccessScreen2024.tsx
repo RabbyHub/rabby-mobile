@@ -59,7 +59,6 @@ const DisMissKBWrapper = ({ children }) => (
 );
 
 export const ImportSuccessScreen2024 = () => {
-  const inputRef = React.useRef<TextInput>(null);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { syncSingleAddress } = useSyncHistoryDB();
 
@@ -256,13 +255,11 @@ export const ImportSuccessScreen2024 = () => {
             ]}
             onAnimationFinish={() => {
               setTimeout(() => {
-                !modalRef.current && inputRef.current?.focus();
                 setAnimationFinished(true);
               }, 500);
             }}
             onAnimationFailure={() => {
               setTimeout(() => {
-                !modalRef.current && inputRef.current?.focus();
                 setAnimationFinished(true);
               }, 500);
             }}
@@ -288,7 +285,6 @@ export const ImportSuccessScreen2024 = () => {
               <NextInput
                 containerStyle={styles.inputContainer}
                 inputStyle={styles.inputInner}
-                ref={inputRef}
                 inputProps={{
                   showSoftInputOnFocus: false,
                   editable: !state?.isFirstCreate,
@@ -334,7 +330,6 @@ export const ImportSuccessScreen2024 = () => {
                       <TextInput
                         style={styles.listInput}
                         value={item.aliasName}
-                        ref={index === 0 ? inputRef : null}
                         onChange={nativeEvent => {
                           const _aliasName = nativeEvent.nativeEvent.text;
                           const newImportAddresses = [...importAddresses];

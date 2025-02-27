@@ -62,7 +62,6 @@ export interface IAssets {
   portfolios?: DisplayedProject[];
   tokens?: AbstractPortfolioToken[];
   nfts?: DisplayNftItem[];
-  lastUpdateTime?: number;
 }
 
 export const combinedTokens = (assetsMap: {
@@ -100,6 +99,9 @@ export const combinedTokens = (assetsMap: {
         existingToken.totalUsdValue = existingToken.totalUsdValue?.plus(
           token._usdValue || 0,
         );
+        existingToken._isFold = existingToken._isMiniFold
+          ? existingToken.totalUsdValue.isLessThan(1)
+          : existingToken._isFold;
         existingToken.fromAddress.push({
           address,
           amount: token.amount,

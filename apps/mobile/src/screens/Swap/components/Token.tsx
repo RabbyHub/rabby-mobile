@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { QuoteProvider, useSwapSupportedDexList } from '../hooks';
+import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -27,18 +27,13 @@ import {
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { Account } from '@/core/services/preference';
-import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
-
-const progressColor = ['rgba(112, 132, 255, 0.8)', 'rgba(112, 132, 255, 0.3)'];
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -75,13 +70,6 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     currentQuote,
   } = props;
   const { t } = useTranslation();
-
-  const { sceneScreenRenderId } = useScreenSceneAccountContext();
-
-  useEffect(() => {
-    // clear form
-    onValueChange?.('');
-  }, [sceneScreenRenderId, onValueChange]);
 
   const { colors2024, styles } = useTheme2024({ getStyle });
 

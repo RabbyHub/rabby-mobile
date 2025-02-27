@@ -276,7 +276,7 @@ export const TokenDetailScreen = () => {
     [token, isSingleAddress, finalAccount],
   );
   useEffect(() => {
-    getCacheTop10Assets(false, {
+    getCacheTop10Assets({
       disableNFT: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

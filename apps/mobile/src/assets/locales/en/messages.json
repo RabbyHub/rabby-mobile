@@ -78,7 +78,8 @@
         "RecipientAddress": "Recipient address",
         "name": "Name",
         "RevokeToken": "Revoke Token",
-        "InteractionResults": "Interaction Results"
+        "InteractionResults": "Interaction Results",
+        "totalApprovedAmount": "Total Approved Amount"
       },
       "empty": {
         "title": "No transactions",
@@ -383,7 +384,7 @@
       "importMore": "Import more addresses"
     },
     "importSeedPhrase": {
-      "enterYourSeedPhrase": "Enter your seed phrase"
+      "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
     },
     "signFooterBar": {
       "processRiskAlert": "Please process the alert before signing",
@@ -1504,7 +1505,15 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
-        "Token": "Token"
+        "Token": "Token",
+        "NoData": "No {{name}}"
+      },
+      "emptyToken": {
+        "title": "Fund Your Wallet",
+        "receiveHeader": "Receive Crypto",
+        "receiveBody": "Transfer tokens from another address.",
+        "buyHeader": "Buy with Fiat",
+        "buyBody": "Purchase crypto using a debit card or bank account."
       }
     },
     "search": {
@@ -1746,7 +1755,8 @@
       "option_System": "System",
       "option_Light": "Light",
       "option_Dark": "Dark"
-    }
+    },
+    "unlimited": "unlimited"
   },
   "background": {
     "error": {
@@ -1761,6 +1771,8 @@
       "emptyAccount": "the current account is empty",
       "invalidPrivateKey": "The private key is invalid",
       "invalidMnemonic": "The seed phrase is invalid, please check!",
+      "errorWords_one": "1 incorrect word",
+      "errorWords_other": "{{count}} incorrect words",
       "notFoundKeyringByAddress": "Can't find keyring by address",
       "duplicateAccount": "The account you're are trying to import is duplicate",
       "canNotUnlock": "Cannot unlock without a previous vault"

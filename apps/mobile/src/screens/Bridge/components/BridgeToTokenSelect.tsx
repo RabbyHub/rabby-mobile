@@ -1,23 +1,14 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  ComponentProps,
-  useMemo,
-} from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
-import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
+import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import { useCurrentAccount } from '@/hooks/account';
-import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
-import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
+import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { createGetStyles2024 } from '@/utils/styles';
