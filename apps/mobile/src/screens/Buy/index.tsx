@@ -90,7 +90,7 @@ export const BuyScreen = ({
           receive_token_uuid: `${toToken?.chain}:${toToken?.id}`,
           service_provider: activeProvider,
           currency_code: currency,
-          redirect_url: `https://rabby-io-git-feat-test-redirect-debanker.vercel.app/mobile-redirect/${
+          redirect_url: `https://rabby.io/mobile-redirect/${
             isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy
           }`,
         });
