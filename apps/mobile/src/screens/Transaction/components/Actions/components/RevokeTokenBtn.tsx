@@ -113,11 +113,13 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     padding: 16,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     marginTop: 12,
   },
   cardHeader: {
