@@ -234,15 +234,17 @@ function ReceiveScreen(): JSX.Element {
           ...styles.safeSelectChainWrapper,
         }}>
         {safeChains.length > 0 &&
-          safeChains.map(chain => (
-            <Image
-              style={{ ...styles.selectChianLogo, ...styles.safeChainLogo }}
-              source={{ uri: chain.logo }}
-              width={23}
-              height={23}
-              key={chain.serverId}
-            />
-          ))}
+          safeChains
+            .slice(0, 5)
+            .map(chain => (
+              <Image
+                style={{ ...styles.selectChianLogo, ...styles.safeChainLogo }}
+                source={{ uri: chain.logo }}
+                width={23}
+                height={23}
+                key={chain.serverId}
+              />
+            ))}
       </View>
     );
   const nonSafeChainUI = selectedChain ? (
