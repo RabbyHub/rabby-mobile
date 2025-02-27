@@ -67,98 +67,96 @@ export const WhiteListItem = ({
       }}
       preViewBorderRadius={20}
       triggerProps={{ action: 'longPress' }}>
-      <AddressItemShadowView style={styles.shadowView}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPressIn={() => setIsPressing(true)}
-          onPressOut={() => setIsPressing(false)}
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([
+          styles.root,
+          isPressing && styles.rootPressing,
+        ])}
+        delayLongPress={200} // long press delay
+        onPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTransaction, {
+              screen: RootNames.ConfirmAddress,
+              params: {
+                account,
+              },
+            }),
+          );
+          console.log('🔍 CUSTOM_LOGGER:=>: account', account);
+        }}
+        onLongPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}>
+        <Card
           style={StyleSheet.flatten([
-            styles.root,
-            isPressing && styles.rootPressing,
-          ])}
-          delayLongPress={200} // long press delay
-          onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-            navigation.dispatch(
-              StackActions.push(RootNames.StackTransaction, {
-                screen: RootNames.ConfirmAddress,
-                params: {
-                  account,
-                },
-              }),
-            );
-            console.log('🔍 CUSTOM_LOGGER:=>: account', account);
-          }}
-          onLongPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-          }}>
-          <Card
-            style={StyleSheet.flatten([
-              styles.card,
-              style,
-              isPressing && styles.cardPressing,
-            ])}>
-            <InnerAddressItem style={styles.rootItem} account={account}>
-              {({ WalletIcon, WalletName, WalletBalance }) => (
-                <View style={styles.item}>
-                  <View style={styles.iconWrapper}>
-                    <WalletIcon
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
+            styles.card,
+            style,
+            isPressing && styles.cardPressing,
+          ])}>
+          <InnerAddressItem style={styles.rootItem} account={account}>
+            {({ WalletIcon, WalletName, WalletBalance }) => (
+              <View style={styles.item}>
+                <View style={styles.iconWrapper}>
+                  <WalletIcon
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                  {inWhiteList && (
+                    <RcIconLockCC
+                      style={styles.lockIcon}
+                      color={
+                        isPressing
+                          ? colors2024['brand-default']
+                          : colors2024['neutral-body']
+                      }
+                      width={22}
+                      height={22}
                     />
-                    {inWhiteList && (
-                      <RcIconLockCC
-                        style={styles.lockIcon}
-                        color={
-                          isPressing
-                            ? colors2024['brand-default']
-                            : colors2024['neutral-body']
-                        }
-                        width={22}
-                        height={22}
-                      />
-                    )}
-                  </View>
-                  <View style={styles.itemInfo}>
-                    <View style={styles.itemName}>
-                      <WalletName style={styles.itemNameText} />
-                      <Text style={styles.address}>
-                        {`(${ellipsisAddress(account.address)})`}
-                      </Text>
-                    </View>
-                    <WalletBalance style={styles.itemBalanceText} />
-                  </View>
+                  )}
                 </View>
-              )}
-            </InnerAddressItem>
-
-            {hiddenArrow ? null : (
-              <View
-                style={StyleSheet.flatten([
-                  styles.arrow,
-                  isPressing && styles.arrowPressing,
-                ])}>
-                <RcIconSwitchCC
-                  color={
-                    isPressing
-                      ? colors2024['brand-default']
-                      : colors2024['neutral-body']
-                  }
-                  width={24}
-                  height={24}
-                />
+                <View style={styles.itemInfo}>
+                  <View style={styles.itemName}>
+                    <WalletName style={styles.itemNameText} />
+                    <Text style={styles.address}>
+                      {`(${ellipsisAddress(account.address)})`}
+                    </Text>
+                  </View>
+                  <WalletBalance style={styles.itemBalanceText} />
+                </View>
               </View>
             )}
-          </Card>
-        </TouchableOpacity>
-      </AddressItemShadowView>
+          </InnerAddressItem>
+
+          {hiddenArrow ? null : (
+            <View
+              style={StyleSheet.flatten([
+                styles.arrow,
+                isPressing && styles.arrowPressing,
+              ])}>
+              <RcIconSwitchCC
+                color={
+                  isPressing
+                    ? colors2024['brand-default']
+                    : colors2024['neutral-body']
+                }
+                width={24}
+                height={24}
+              />
+            </View>
+          )}
+        </Card>
+      </TouchableOpacity>
     </ContextMenuView>
   );
 };
