@@ -11,6 +11,7 @@ import { GasAccountDepositWithToken } from './GasAccountDepositWithToken';
 export const GasAccountDepositPopup: React.FC<{
   type?: 'token' | 'pay';
   visible?: boolean;
+  gasAccountAddress: string;
   onCancel?(): void;
   onClose?(): void;
 }> = props => {
@@ -57,7 +58,10 @@ export const GasAccountDepositPopup: React.FC<{
       })}>
       <BottomSheetView style={styles.popup}>
         {step === 'pay' ? (
-          <GasAccountDepositWithPay onClose={props.onCancel || props.onClose} />
+          <GasAccountDepositWithPay
+            onClose={props.onCancel || props.onClose}
+            gasAccountAddress={props.gasAccountAddress}
+          />
         ) : step === 'token' ? (
           <GasAccountDepositWithToken
             onClose={props.onCancel || props.onClose}

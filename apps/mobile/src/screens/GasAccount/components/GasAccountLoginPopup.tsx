@@ -14,16 +14,19 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { trigger } from 'react-native-haptic-feedback';
-import { useGasAccountMethods } from '../hooks';
+import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
 import { SelectGasAccountList } from './SelectGasAccountList';
+import { useGasAccountSign } from '../hooks/atom';
 
 const GasAccountLoginContent: React.FC<{
   onClose(): void;
 }> = ({ onClose }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { login } = useGasAccountMethods();
+  const { login, logout } = useGasAccountMethods();
   const { currentAccount } = useCurrentAccount();
+  const { value: gasAccountInfo } = useGasAccountInfo();
+  const { sig } = useGasAccountSign();
 
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +36,7 @@ const GasAccountLoginContent: React.FC<{
     if (loading) {
       return;
     }
+    const isSwitch = gasAccountInfo?.account.id || sig;
     setLoading(true);
     try {
       trigger('impactLight', {
@@ -40,6 +44,9 @@ const GasAccountLoginContent: React.FC<{
         ignoreAndroidSystemSettings: false,
       });
       await switchSceneCurrentAccount('GasAccount', account);
+      if (isSwitch) {
+        await logout();
+      }
       await login(account);
       onClose?.();
     } catch (error) {

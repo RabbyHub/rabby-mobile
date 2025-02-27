@@ -151,15 +151,18 @@ export const GasAccountScreen = () => {
 
       <GasAccountHistory />
 
-      <GasAccountDepositPopup
-        visible={depositState.isOpen}
-        type={depositState.type}
-        onCancel={() => {
-          setDepositState({
-            isOpen: false,
-          });
-        }}
-      />
+      {gasAccount?.account.id ? (
+        <GasAccountDepositPopup
+          visible={depositState.isOpen}
+          type={depositState.type}
+          gasAccountAddress={gasAccount.account.id}
+          onCancel={() => {
+            setDepositState({
+              isOpen: false,
+            });
+          }}
+        />
+      ) : null}
 
       <WithDrawPopup
         visible={showWithdraw}

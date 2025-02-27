@@ -29,6 +29,7 @@ export const useGasAccountTxsCheck = ({
     if (!sig || !accountId) {
       setIsGasAccountLogin(false);
     }
+    console.log('check_txs', sig, accountId);
     return openapi.checkGasAccountTxs({
       sig: sig || '',
       account_id: accountId!,

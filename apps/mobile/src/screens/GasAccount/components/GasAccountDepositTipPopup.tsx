@@ -12,6 +12,7 @@ import { GasAccountDepositWithTokenAlertModal } from './GasAccountDepositWithTok
 export const GasAccountDepositTipPopup: React.FC<{
   type?: 'token' | 'pay';
   visible?: boolean;
+  gasAccountAddress: string;
   onCancel?(): void;
   onClose?(): void;
   onGotoGasAccount?(): void;
@@ -70,6 +71,7 @@ export const GasAccountDepositTipPopup: React.FC<{
         <BottomSheetView style={styles.popup}>
           {step === 'pay' ? (
             <GasAccountDepositWithPay
+              gasAccountAddress={props.gasAccountAddress}
               onClose={props.onCancel || props.onClose}
             />
           ) : step === 'token' ? null : (

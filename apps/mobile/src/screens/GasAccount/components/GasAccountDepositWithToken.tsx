@@ -1,4 +1,3 @@
-import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { AssetAvatar } from '@/components';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -24,7 +23,6 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import {
-  BottomSheetFlatList,
   BottomSheetModalProps,
   BottomSheetSectionList,
 } from '@gorhom/bottom-sheet';
@@ -42,14 +40,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Keyboard,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useAsync from 'react-use/lib/useAsync';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';

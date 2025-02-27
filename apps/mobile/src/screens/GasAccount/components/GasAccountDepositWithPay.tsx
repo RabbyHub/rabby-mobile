@@ -16,15 +16,16 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 import { getProducts, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useGasAccountSign } from '../hooks/atom';
 
 interface Props {
   onClose?(): void;
   minPrice?: number;
+  gasAccountAddress: string;
 }
 
 export const GasAccountDepositWithPay: React.FC<Props> = ({
   onClose,
+  gasAccountAddress,
   minPrice = 0,
 }) => {
   const { t } = useTranslation();
@@ -38,7 +39,6 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       .slice(0, 3);
   }, [minPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
-  const { account } = useGasAccountSign();
 
   const { runAsync: handleDeposit, loading: isPurchasing } = useRequest(
     async (product: (typeof products)[0]) => {
@@ -52,11 +52,11 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             Platform.OS === 'android'
               ? {
                   skus: [product.id],
-                  // obfuscatedAccountIdAndroid: '//todo'
+                  obfuscatedAccountIdAndroid: gasAccountAddress,
                 }
               : {
                   sku: product.id,
-                  // appAccountToken: '//todo',
+                  appAccountToken: gasAccountAddress,
                 },
           ),
           waitPurchaseUpdated(),
