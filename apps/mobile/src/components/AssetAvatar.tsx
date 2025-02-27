@@ -21,11 +21,23 @@ type AssetAvatarProps = {
 
 // 没有用 svg 因为在 虚拟列表中，会有问题
 const DefaultToken = memo(
-  ({ size = 28, style }: { size?: number; style?: ImageStyle }) => {
+  ({
+    size = 28,
+    style,
+    isLight = true,
+  }: {
+    size?: number;
+    style?: ImageStyle;
+    isLight?: boolean;
+  }) => {
     return (
       <Image
         style={style}
-        source={require('@/assets/icons/token/default-token.png')}
+        source={
+          isLight
+            ? require('@/assets/icons/token/default-token.png')
+            : require('@/assets/icons/token/default-token-dark.png')
+        }
         width={size}
         height={size}
       />
@@ -43,7 +55,7 @@ export const AssetAvatar = memo(
     style,
     logoStyle,
   }: AssetAvatarProps) => {
-    const { styles, colors } = useThemeStyles(getStyles);
+    const { styles, colors, isLight } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
 
     const chainInfo = useFindChain({
@@ -95,7 +107,7 @@ export const AssetAvatar = memo(
       <View style={containerStyle}>
         <View style={tokenStyle}>
           {!logo || on ? (
-            <DefaultToken size={size} style={avatarStyle} />
+            <DefaultToken size={size} style={avatarStyle} isLight={isLight} />
           ) : (
             <FastImage
               source={source}

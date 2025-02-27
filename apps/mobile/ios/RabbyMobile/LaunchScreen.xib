@@ -15,17 +15,17 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreen" id="fD6-F9-dkj" userLabel="splash">
-                    <rect key="frame" x="150" y="386" width="90" height="79"/>
+                    <rect key="frame" x="134" y="316.4" width="125" height="134"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                 </imageView>
             </subviews>
             <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-            <point key="canvasLocation" x="132" y="-11"/>
+            <point key="canvasLocation" x="127.48091603053435" y="-13.380281690140846"/>
         </view>
     </objects>
     <resources>
-        <image name="LaunchScreen" width="91" height="79"/>
+        <image name="LaunchScreen" width="134.66667175292969" height="144.66667175292969"/>
     </resources>
 </document>

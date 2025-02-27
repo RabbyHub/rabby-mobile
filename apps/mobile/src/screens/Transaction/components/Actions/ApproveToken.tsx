@@ -17,7 +17,11 @@ import ViewMore from '@/components/Approval/components/Actions/components/ViewMo
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useCurrentAccount,
+} from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
@@ -32,6 +36,10 @@ import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { RevokeTokenBtn } from './components/RevokeTokenBtn';
+import { formatIntlTimestamp } from '@/utils/time';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
 
 interface Props {
   data: TransactionGroup;
@@ -89,6 +97,23 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
   const unionAccounts = useMemo(() => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
+
+  const txAccount = useMemo(() => {
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (data.keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    return account;
+  }, [accounts, data.address, data.keyringType]);
 
   const { switchAccount } = useCurrentAccount();
 
@@ -152,17 +177,18 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
       </TouchableOpacity>
       <View style={styles.detailContainer}>
-        {/* todo get complete time */}
-        {/* {!data.isPending && data.maxGasTx.createdAt && (
+        {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.createdAt)}
+                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
               </Text>
             </View>
           </View>
-        )} */}
+        )}
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.Status')}
@@ -281,21 +307,24 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
       </View>
       {data.isPending ? null : (
         <RevokeTokenBtn
-          actionData={actionData}
-          address={data.maxGasTx.address}
+          token={actionData.token}
+          spender={actionData.spender}
+          account={txAccount}
         />
       )}
     </>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -365,7 +394,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   singleBox: {
     width: '100%',
     height: 92,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,

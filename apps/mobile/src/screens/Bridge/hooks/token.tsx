@@ -38,6 +38,7 @@ import { apiProvider } from '@/core/apis';
 import { useMount } from 'ahooks';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
   shouldApproveToken?: boolean;
@@ -136,6 +137,13 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
   const [fromChain, fromToken, setFromToken, switchFromChain] =
     useToken('from');
   const [toChain, toToken, setToToken, switchToChain] = useToken('to');
+
+  if (fromChain && toChain && fromChain === toChain) {
+    switchToChain();
+  }
+  if (!toChain && toToken) {
+    switchToChain();
+  }
 
   const [amount, setAmount] = useState('');
 
@@ -337,6 +345,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     if (!/^\d*(\.\d*)?$/.test(v)) {
       return;
     }
+    setUseGasPrice(false);
     setAmount(v);
   }, []);
 
@@ -732,19 +741,13 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     [fromChain],
   );
 
-  const [gasLevel, setGasLevel] = useState<GasLevelType>('normal');
-  const gasPriceRef = useRef<number>();
-
   const { value: gasList } = useAsync(() => {
-    gasPriceRef.current = undefined;
-    setGasLevel('normal');
     return apiProvider.gasMarketV2({
       chainId: chainInfo.serverId,
     });
   }, [chainInfo?.serverId]);
 
   const [passGasPrice, setUseGasPrice] = useState(false);
-  const [reserveGasOpen, setReserveGasOpen] = useState(false);
   const isMaxRef = useRef(false);
   const [clickMaxBtnCount, setClickMaxBtnCount] = useState(0);
 
@@ -770,68 +773,23 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     return false;
   }, [chainInfo?.nativeTokenAddress, fromToken]);
 
-  useEffect(() => {
-    if (payTokenIsNativeToken && gasList) {
-      const checkGasIsEnough = (price: number) => {
-        return new BigNumber(fromToken?.raw_amount_hex_str || 0, 16).gte(
-          new BigNumber(gasLimit).times(price),
-        );
-      };
-      const normalPrice = gasList?.find(e => e.level === 'normal')?.price || 0;
-      const slowPrice = gasList?.find(e => e.level === 'slow')?.price || 0;
-      const isNormalEnough = checkGasIsEnough(normalPrice);
-      const isSlowEnough = checkGasIsEnough(slowPrice);
-      if (isNormalEnough) {
-        setGasLevel('normal');
-        gasPriceRef.current = normalGasPrice;
-      } else if (isSlowEnough) {
-        setGasLevel('slow');
-        gasPriceRef.current = slowPrice;
-      } else {
-        setGasLevel('custom');
-        gasPriceRef.current = 0;
-      }
-    }
-  }, [
-    payTokenIsNativeToken,
-    gasList,
-    gasLimit,
-    fromToken?.raw_amount_hex_str,
-    normalGasPrice,
-  ]);
-
-  const closeReserveGasOpen = useCallback(() => {
-    setReserveGasOpen(false);
-  }, []);
-
-  const closeReserveGasOpenAndUpdatePayAmount = useCallback(() => {
-    setReserveGasOpen(false);
-
-    if (fromToken && gasPriceRef.current !== undefined) {
-      const val = tokenAmountBn(fromToken).minus(
-        new BigNumber(gasLimit)
-          .times(gasPriceRef.current)
-          .div(10 ** nativeTokenDecimals),
-      );
-      setAmount(val.lt(0) ? '0' : val.toString(10));
-      setClickMaxBtnCount(e => e + 1);
-    }
-  }, [fromToken, nativeTokenDecimals, gasLimit]);
-
-  const changeGasPrice = useCallback(
-    (gasLevel: GasLevel) => {
-      gasPriceRef.current = gasLevel.level === 'custom' ? 0 : gasLevel.price;
-      setGasLevel(gasLevel.level as GasLevelType);
-      closeReserveGasOpenAndUpdatePayAmount();
-      setUseGasPrice(true);
-    },
-    [closeReserveGasOpenAndUpdatePayAmount],
-  );
-
   const handleMax = useCallback(() => {
-    if (payTokenIsNativeToken) {
-      setReserveGasOpen(true);
-      return;
+    setUseGasPrice(false);
+
+    if (payTokenIsNativeToken && fromToken) {
+      if (normalGasPrice) {
+        const val = tokenAmountBn(fromToken).minus(
+          new BigNumber(gasLimit)
+            .times(normalGasPrice)
+            .div(10 ** nativeTokenDecimals),
+        );
+        if (!val.lt(0)) {
+          setUseGasPrice(true);
+        }
+        setAmount(
+          val.lt(0) ? tokenAmountBn(fromToken).toString(10) : val.toString(10),
+        );
+      }
     }
 
     if (!payTokenIsNativeToken && fromToken) {
@@ -839,7 +797,18 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       handleAmountChange?.(tokenAmountBn(fromToken)?.toString(10));
       setClickMaxBtnCount(e => e + 1);
     }
-  }, [fromToken, handleAmountChange, setReserveGasOpen, payTokenIsNativeToken]);
+  }, [
+    payTokenIsNativeToken,
+    fromToken,
+    normalGasPrice,
+    gasLimit,
+    nativeTokenDecimals,
+    handleAmountChange,
+  ]);
+
+  useEffect(() => {
+    setAmount('');
+  }, [fromChain]);
 
   return {
     clearExpiredTimer,
@@ -869,12 +838,8 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     bestQuoteId,
     selectedBridgeQuote,
 
-    gasLevel,
     gasLimit,
-    changeGasPrice,
     gasList,
-    reserveGasOpen,
-    closeReserveGasOpen,
     passGasPrice,
     handleMax,
     clickMaxBtnCount,

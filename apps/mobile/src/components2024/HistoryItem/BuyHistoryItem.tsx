@@ -1,37 +1,56 @@
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommonHistoryItem } from './CommonHistoryItem';
 import { getTokenAmountText } from './getTokenAmountText';
 import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
+import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
+
 import { Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
-import { formatPrice } from '@/utils/number';
+// import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { formatUsdValue } from '@/utils/number';
+import { openapi } from '@/core/request';
+import { usePendingBuyItemData } from '@/screens/Buy/hooks/history';
+import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+
+const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface Props {
-  /**
-   * @todo maybe need to change the type
-   */
-  data: SwapItem;
+  data: Awaited<ReturnType<typeof openapi.getBuyHistory>>['histories'][number];
 }
 
 /**
  * @todo add buy history
  */
-export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
+export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
   const { t } = useTranslation();
-  const isPending = data.status === 'Pending';
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+
+  const { styles, isLight } = useTheme2024({ getStyle });
+
+  const fetchedData = usePendingBuyItemData(
+    _data.user_addr,
+    _data.id,
+    _data.status,
+  );
+
+  const data = useMemo(() => {
+    if (fetchedData) {
+      return fetchedData;
+    }
+    return _data;
+  }, [_data, fetchedData]);
+
+  const isPending = data.status === 'pending';
+  const isFailed = data.status === 'failed';
 
   return (
     <CommonHistoryItem
       icon={
         <View style={styles.iconContainer}>
-          <BuyWalletSVG style={styles.walletIcon} />
-          <AssetAvatar logo={data.pay_token.logo_url} size={46} />
+          <BuyWalletIcon style={styles.walletIcon} />
+          <AssetAvatar logo={data.receive_token.logo_url} size={46} />
         </View>
       }
       title={t('page.buy.purchased')}
@@ -39,29 +58,25 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
         <View style={styles.subTitleContainer}>
           <Text style={styles.subTitleText}>
             {t('page.buy.from', {
-              /**
-               * @todo
-               */
-              dex: 'Moonpay',
+              dex: data?.service_provider?.name,
             })}
           </Text>
-          <ArrowRightCC
+          {/* <ArrowRightCC
             style={styles.arrowIcon}
             width={14}
             height={14}
             color={colors2024['neutral-secondary']}
-          />
+          /> */}
         </View>
       }
       isPending={isPending}
+      isFailed={isFailed}
       rightContainer={
         isPending ? (
           <View style={styles.rightContainer}>
             <Text numberOfLines={1} style={styles.rightText}>
-              {'-$' +
-                formatPrice(
-                  data.actual.pay_token_amount * data.pay_token.price,
-                )}
+              {'-' + formatUsdValue(data.pay_usd_amount)?.replace('$', '')}{' '}
+              {data.pay_currency_code || ''}
             </Text>
           </View>
         ) : null
@@ -71,15 +86,18 @@ export const BuyHistoryItem: React.FC<Props> = ({ data }) => {
           ? null
           : '+' +
             getTokenAmountText({
-              amount: data.actual.pay_token_amount,
-              token: data.pay_token,
+              amount: data.receive_token.amount,
+              token: data.receive_token,
             })
       }
       receiveTokenAmount={
-        isPending
-          ? null
-          : '-$' +
-            formatPrice(data.actual.pay_token_amount * data.pay_token.price)
+        isPending ? null : (
+          <Text style={styles.rightBottomText}>
+            {`-${formatUsdValue(data.pay_usd_amount)?.replace('$', '')} ${
+              data.pay_currency_code || ''
+            }`}
+          </Text>
+        )
       }
     />
   );
@@ -124,5 +142,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontWeight: '700',
     marginTop: 4,
+  },
+
+  rightBottomText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 }));

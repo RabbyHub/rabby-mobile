@@ -10,6 +10,7 @@ import { approvalUtils, permit2Utils } from '@rabby-wallet/biz-utils';
 import { AbiCoder } from 'web3-eth-abi';
 import { requestETHRpc } from './provider';
 import { isZeroAddress } from '@ethereumjs/util';
+import { decodeAbiParameters } from 'viem';
 
 export async function approveToken(
   chainServerId: string,
@@ -76,7 +77,7 @@ export async function approveToken(
   );
 }
 
-export async function getErc721ApprovedForAll({
+export async function getNFTApprovedForAll({
   chainServerId,
   contractAddress,
   address,
@@ -85,16 +86,9 @@ export async function getErc721ApprovedForAll({
   chainServerId: string;
   contractAddress: string;
   spender: string;
-  address?: string;
+  address: string;
 }) {
-  const account = await preferenceService.getCurrentAccount();
-  if (!account) throw new Error(t('background.error.noCurrentAccount'));
-  const chainId = findChain({
-    serverId: chainServerId,
-  })?.id;
-  if (!chainId) throw new Error(t('background.error.invalidChainId'));
-
-  const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+  const abi = [
     {
       constant: true,
       inputs: [
@@ -121,20 +115,21 @@ export async function getErc721ApprovedForAll({
       stateMutability: 'view',
       type: 'function',
     },
-    [address || account.address, spender],
+  ] as const;
+  const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+    abi[0] as any,
+    [address, spender],
   );
 
-  const approvedAddress = await requestETHRpc(
+  const res = await requestETHRpc(
     {
       method: 'eth_call',
       params: [{ to: contractAddress, data }, 'latest'],
     },
     chainServerId,
   );
-  if (isZeroAddress(approvedAddress)) {
-    return false;
-  }
-  return true;
+
+  return decodeAbiParameters(abi[0].outputs, res)[0];
 }
 
 export async function getErc721Approved({
@@ -146,16 +141,8 @@ export async function getErc721Approved({
   contractAddress: string;
   nftTokenId: string;
 }) {
-  const account = await preferenceService.getCurrentAccount();
-  if (!account) throw new Error(t('background.error.noCurrentAccount'));
-  const chainId = findChain({
-    serverId: chainServerId,
-  })?.id;
-  if (!chainId) throw new Error(t('background.error.invalidChainId'));
-
-  const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+  const abi = [
     {
-      constant: true,
       inputs: [
         {
           internalType: 'uint256',
@@ -167,28 +154,29 @@ export async function getErc721Approved({
       outputs: [
         {
           internalType: 'address',
-          name: '',
+          name: 'operator',
           type: 'address',
         },
       ],
-      payable: false,
       stateMutability: 'view',
       type: 'function',
     },
+  ] as const;
+
+  const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+    abi[0] as any,
     [nftTokenId],
   );
 
-  const approvedAddress = await requestETHRpc(
+  const res = await requestETHRpc(
     {
       method: 'eth_call',
       params: [{ to: contractAddress, data }, 'latest'],
     },
     chainServerId,
   );
-  if (isZeroAddress(approvedAddress)) {
-    return false;
-  }
-  return true;
+
+  return decodeAbiParameters(abi[0].outputs, res)[0];
 }
 
 // export async function getNFTAllowance(

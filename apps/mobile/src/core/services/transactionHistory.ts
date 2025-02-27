@@ -35,6 +35,7 @@ export interface TransactionHistoryItem {
 
   rawTx: Tx;
   createdAt: number;
+  completedAt: number;
   hash?: string;
   gasUsed?: number;
   // site?: ConnectedSite;
@@ -182,6 +183,19 @@ export class TransactionHistoryService {
   clearSuccessAndFailList() {
     this.store.successList = [];
     this.store.failList = [];
+  }
+
+  clearSuccessAndFailSingleId(id: string) {
+    const successIdx = this.store.successList.findIndex(item => item === id);
+    if (successIdx !== -1) {
+      this.store.successList.splice(successIdx, 1);
+      return true;
+    }
+
+    const failIdx = this.store.failList.findIndex(item => item === id);
+    if (failIdx !== -1) {
+      this.store.failList.splice(failIdx, 1);
+    }
   }
 
   getTransactionGroups(args?: {
@@ -427,6 +441,7 @@ export class TransactionHistoryService {
           isFailed: !success,
           isCompleted: true,
           gasUsed,
+          completedAt: Date.now(),
         });
         const id = tx.hash || tx.reqId;
         if (success) {
@@ -778,6 +793,10 @@ export class TransactionGroup {
 
   get createdAt() {
     return minBy(this.txs, 'createdAt')?.createdAt || 0;
+  }
+
+  get completedAt() {
+    return this.maxGasTx.completedAt;
   }
 
   get keyringType() {

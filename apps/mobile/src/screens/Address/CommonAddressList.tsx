@@ -8,6 +8,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useSortAddressList } from './useSortAddressList';
 import { Card } from '@/components2024/Card';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   type: KeyringTypeName;
@@ -23,6 +24,7 @@ export const CommonAddressList: React.FC<Props> = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const { bottom } = useSafeAreaInsets();
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const filterAccounts = React.useMemo(
@@ -44,16 +46,19 @@ export const CommonAddressList: React.FC<Props> = ({
         </View>
       )}
       ListFooterComponent={
-        <Card style={styles.footer} onPress={footerButtonPress}>
-          <View style={styles.footerMain}>
-            <PlusSVG
-              width={20}
-              height={20}
-              color={colors2024['neutral-secondary']}
-            />
-            <Text style={styles.footerText}>{footerButtonText}</Text>
-          </View>
-        </Card>
+        <>
+          <Card style={styles.footer} onPress={footerButtonPress}>
+            <View style={styles.footerMain}>
+              <PlusSVG
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+              <Text style={styles.footerText}>{footerButtonText}</Text>
+            </View>
+          </Card>
+          <View style={{ height: bottom }} />
+        </>
       }
     />
   );
@@ -70,6 +75,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-4'],
+    padding: 16,
+    borderRadius: 20,
   },
   footerMain: {
     height: 46,

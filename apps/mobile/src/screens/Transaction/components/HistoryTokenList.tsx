@@ -14,7 +14,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,13 @@ import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { useCurrentAccount } from '@/hooks/account';
+import { ellipsisOverflowedText } from '@/utils/text';
+import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
+import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
+
+import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+
+const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface ItemProps {
   status: number;
@@ -93,10 +100,13 @@ const TokenItemInlist = ({
                 styles.tokenAmountTextList,
                 isSend && styles.isSendTextColor,
               ]}>
-              {isSend ? '-' : '+'} {isNft ? amount : formatAmount(amount)}{' '}
+              {isSend ? '-' : '+'} {isNft ? amount : formatTokenAmount(amount)}{' '}
               {isNft
                 ? t('page.singleHome.sectionHeader.Nft')
-                : getTokenSymbol(token as TokenItem)}
+                : ellipsisOverflowedText(
+                    getTokenSymbol(token as TokenItem),
+                    16,
+                  )}
             </Text>
           </View>
         </View>
@@ -171,7 +181,7 @@ export const HistoryTokenList = ({
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
-          ? formatAmount(singleAmount)
+          ? formatTokenAmount(singleAmount)
           : t('page.transactions.detail.Unlimited')
         : '';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
@@ -193,13 +203,17 @@ export const HistoryTokenList = ({
                 <Text
                   style={[
                     styles.tokenAmountText,
-                    (isSend || isApprove) && styles.isSendTextColor,
+                    isSend && styles.isSendTextColor,
+                    isApprove && styles.tokenApproveAmountText,
                   ]}>
                   {!isApprove && (isSend ? '- ' : '+ ')}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
                     ? t('page.singleHome.sectionHeader.Nft')
-                    : getTokenSymbol(singeToken as TokenItem)}
+                    : ellipsisOverflowedText(
+                        getTokenSymbol(singeToken as TokenItem),
+                        16,
+                      )}
                 </Text>
                 {Boolean(!tokenIsNft && singleAmount && singleAmount < 1e9) && (
                   <HistoryItemTokenPrice
@@ -249,11 +263,11 @@ export const HistoryTokenList = ({
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatAmount(sendAmount)}{' '}
+                {'-'} {formatTokenAmount(sendAmount)}{' '}
                 {getTokenSymbol(sendToken as TokenItem)}
               </Text>
               <RcIconRightCC
-                color={colors2024['neutral-foot']}
+                color={colors2024['neutral-title-1']}
                 width={18}
                 height={18}
               />
@@ -270,7 +284,7 @@ export const HistoryTokenList = ({
             />
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text style={[styles.tokenAmountTextList]}>
-                {'+'} {formatAmount(recieveAmount)}{' '}
+                {'+'} {formatTokenAmount(recieveAmount)}{' '}
                 {getTokenSymbol(recieveToken as TokenItem)}
               </Text>
               <RcIconRightCC
@@ -284,6 +298,99 @@ export const HistoryTokenList = ({
             <RcIconSwitchArrow />
           </View>
         </View>
+      );
+
+    case HistoryItemCateType.Buy:
+      const isPending =
+        data?.buyDetails?.status === 'pending' &&
+        !data?.id &&
+        !data.buyDetails.receive_tx_id;
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            handlePress(
+              singeToken || data?.buyDetails?.receive_token,
+              tokenIsNft,
+            )
+          }>
+          <View style={[styles.singleBox]}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.iconContainer}>
+                <BuyWalletIcon style={styles.walletIcon} />
+                <AssetAvatar
+                  logo={data?.buyDetails?.receive_token?.logo_url}
+                  size={57}
+                />
+              </View>
+              {isPending ? (
+                <View
+                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
+                  <Text
+                    style={[
+                      styles.tokenAmountText,
+                      { color: colors2024['neutral-title-1'] },
+                    ]}>
+                    -{' '}
+                    {formatTokenAmount(data?.buyDetails?.pay_usd_amount || '0')}{' '}
+                    {data?.buyDetails?.pay_currency_code || ''}
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        fontSize: 16,
+                        fontWeight: '500',
+                        lineHeight: 20,
+                        fontFamily: 'SF Pro',
+                      },
+                      styles.isSendTextColor,
+                    ]}>
+                    {t('page.transactions.detail.WillReceive', {
+                      token: `${formatTokenAmount(
+                        data?.receives?.[0]?.amount ||
+                          data?.buyDetails?.receive_amount ||
+                          '0',
+                      )} ${getTokenSymbol(data?.buyDetails?.receive_token)}`,
+                    })}
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
+                  <Text style={[styles.tokenAmountText]}>
+                    +{' '}
+                    {formatTokenAmount(
+                      data?.receives?.[0]?.amount ||
+                        data?.buyDetails?.receive_amount ||
+                        '0',
+                    )}{' '}
+                    {getTokenSymbol(data?.buyDetails?.receive_token)}
+                  </Text>
+                  <Text
+                    style={[
+                      {
+                        fontSize: 16,
+                        fontWeight: '500',
+                        lineHeight: 20,
+                        fontFamily: 'SF Pro',
+                      },
+                      styles.isSendTextColor,
+                    ]}>
+                    -{data?.buyDetails?.pay_usd_amount || '0'}{' '}
+                    {data?.buyDetails?.pay_currency_code || ''}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <RcIconSingleArrow
+                width={32}
+                height={32}
+                color={colors2024['neutral-bg-2']}
+              />
+            </View>
+          </View>
+        </TouchableOpacity>
       );
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
@@ -333,6 +440,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 36,
     fontWeight: '700',
   },
+  tokenApproveAmountText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '700',
+  },
   tokenAmountTextList: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -356,7 +470,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   isSendTextColor: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
   },
   isFailBox: {
     opacity: 0.3,
@@ -455,5 +569,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
+  },
+  iconContainer: {
+    position: 'relative',
+  },
+  walletIcon: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 24,
+    height: 24,
+    zIndex: 1,
   },
 }));

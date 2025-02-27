@@ -31,6 +31,7 @@ import {
   ASSETS_SEPARATOR_HEIGHT,
   HEADER_TOP_AREA_HEIGHT,
   RootNames,
+  TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
@@ -50,7 +51,11 @@ import {
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
 import { DisplayedProject } from './utils/project';
-import { useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
 import { useTriggerTagAssets } from './hooks/refresh';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -61,6 +66,11 @@ import {
   DataProvider,
   LayoutProvider,
 } from 'recyclerlistview';
+import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamsList } from '@/navigation-type';
+import { trigger } from 'react-native-haptic-feedback';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -77,6 +87,7 @@ const ViewTypes = {
   HEADER: 0,
   BODY: 1,
   OVERVIEW: 2,
+  EMPTY_TOKEN: 3,
 };
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 32;
@@ -88,10 +99,12 @@ interface Props {
 const FOOTER_HEIGHT = 56;
 
 const getItemId = item => {
-  return `${item.type}/${item.data?._tokenId || ''}/${item.data?.id || ''}/${
-    item.data?.chain || ''
-  }/${item.data?.price_24h_change || ''}/${item.data?.price || ''}/${
-    item.data?.time_at || ''
+  return `${item.type}/${item.data?.chain || ''}/${item.data?.symbol || ''}/${
+    item.data?._tokenId || ''
+  }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
+    item.data?.price || ''
+  }/${item.data?.time_at || ''}/${item.data?._isFold ? 'fold' : 'unfold'}/${
+    item.data?._isPined ? 'pin' : 'unpin'
   }`;
 };
 
@@ -102,15 +115,16 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [firstRowType, setFirstRowType] = useState('');
 
   const { currentAccount, switchAccount } = useCurrentAccount();
+  const navigation =
+    useNavigation<NativeStackScreenProps<RootStackParamsList>['navigation']>();
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const {
     tokens,
     refreshPositions,
     portfolios,
     nftList,
-    loading,
+    loadingToken,
     refreshing,
-    hasAssets,
     updateTokens,
     updatePortfolio,
     reloadNftList,
@@ -140,6 +154,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         if (item.type === 'overview') {
           return ViewTypes.OVERVIEW;
         }
+        if (item.type === 'empty-token') {
+          return ViewTypes.EMPTY_TOKEN;
+        }
         if (
           item?.type?.includes('_header') ||
           item?.type?.includes('toggle_')
@@ -157,6 +174,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           case ViewTypes.HEADER:
             dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
+            break;
+          case ViewTypes.EMPTY_TOKEN:
+            dim.width = SCREEN_WIDTH;
+            dim.height = TOKEN_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           default:
             dim.width = SCREEN_WIDTH;
@@ -178,6 +199,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     () => throttle(reloadNftList, 4000),
     [reloadNftList],
   );
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   useAppOrmSyncEvents({
     taskFor: ['token', 'nfts', 'protocols'],
@@ -272,6 +294,14 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
+        show: !loadingToken && !sortTokens.length,
+        data: [
+          {
+            type: 'empty-token',
+          },
+        ],
+      },
+      {
         show: !!portfolios.length,
         data: [{ type: 'defi_header' }, ...unFoldDefiList],
       },
@@ -297,7 +327,15 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldDefi, foldHideList, foldNft, nftList, portfolios, sortTokens]);
+  }, [
+    foldDefi,
+    foldHideList,
+    foldNft,
+    loadingToken,
+    nftList,
+    portfolios,
+    sortTokens,
+  ]);
 
   useEffect(() => {
     setListData(dataProvider.cloneWithRows(dataList));
@@ -333,12 +371,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     });
   };
   const handleSwitchTab = (key: AsssetKey) => {
-    if (loading || refreshing) {
-      toast.info(
-        "Ops! The asset wasn't shown yet, please scroll down manually",
-      );
-      return;
-    }
     setFoldHideList(true);
     setTimeout(() => {
       listRef.current?.forceUpdate(() => {
@@ -484,6 +516,37 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     [isDarkTheme, singleDeFiRefresh, singleNFTRefresh, t],
   );
 
+  const handleOnReceive = async () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    if (!currentAccount?.address) {
+      return;
+    }
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    navigation.dispatch(
+      StackActions.push(RootNames.StackTransaction, {
+        screen: RootNames.Receive,
+      }),
+    );
+  };
+
+  const handleOnBuy = async () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    if (!currentAccount?.address) {
+      return;
+    }
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.Buy,
+      params: {},
+    });
+  };
+
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
     switch (type) {
@@ -539,12 +602,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <AssestAllHeader
             style={styles.assetHeader}
-            hasAssets={hasAssets}
-            loading={loading}
             currentSection={currentSection}
-            showToken={!!tokens?.length}
-            showDefi={!!portfolios.length}
-            showNft={!!nftList?.length}
+            hasToken={!!tokens?.length}
+            hasDefi={!!portfolios.length}
+            hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
         );
@@ -601,6 +662,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         );
       case 'overview':
         return <HomeTopArea currentAccount={currentAccount} />;
+      case 'empty-token':
+        return (
+          <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
+        );
       default:
         return null;
     }
@@ -688,12 +753,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           <AssestAllHeader
             style={styles.assetHeader}
-            hasAssets={hasAssets}
-            loading={loading}
             currentSection={currentSection}
-            showToken={!!tokens?.length}
-            showDefi={!!portfolios.length}
-            showNft={!!nftList?.length}
+            hasToken={!!tokens?.length}
+            hasDefi={!!portfolios.length}
+            hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
           {renderStickHeader(firstRowType)}
