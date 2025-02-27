@@ -7,6 +7,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GasAccountDepositSelect } from './GasAccountDepositSelect';
 import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
 import { GasAccountDepositWithToken } from './GasAccountDepositWithToken';
+import { useWindowDimensions } from 'react-native';
+import { min } from 'lodash';
 
 export const GasAccountDepositPopup: React.FC<{
   type?: 'token' | 'pay';
@@ -36,15 +38,17 @@ export const GasAccountDepositPopup: React.FC<{
     }
   }, [props.type, props.visible]);
 
+  const { height } = useWindowDimensions();
+
   const snapPoints = useMemo(() => {
     if (step === 'pay') {
       return [355];
     } else if (step === 'token') {
-      return ['90%'];
+      return [Math.min(height - 200, 652)];
     } else {
       return [355];
     }
-  }, [step]);
+  }, [height, step]);
 
   return (
     <AppBottomSheetModal

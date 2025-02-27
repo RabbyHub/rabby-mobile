@@ -1,7 +1,7 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 // import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -110,10 +110,12 @@ export const GasAccountLoginPopup = props => {
     }
   }, [props?.visible]);
 
+  const { height } = useWindowDimensions();
+
   return (
     <AppBottomSheetModal
       enableContentPanningGesture={false} // has scorll list
-      snapPoints={['90%']}
+      snapPoints={[Math.min(height - 200, 652)]}
       onDismiss={props.onCancel || props.onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
