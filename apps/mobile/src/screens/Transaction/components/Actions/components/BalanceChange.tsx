@@ -1,4 +1,4 @@
-import { formatAmount } from '@/utils/number';
+import { formatAmount, formatTokenAmount } from '@/utils/number';
 import {
   BalanceChange as IBalanceChange,
   TokenItem,
@@ -220,7 +220,7 @@ export const BalanceChange = ({
             <View style={styles.logoWithText}>
               <AssetAvatar logo={token.logo_url} size={33} />
               <Text style={styles.changeText}>
-                - {formatAmount(token.amount)} {getTokenSymbol(token)}
+                - {formatTokenAmount(token.amount)} {getTokenSymbol(token)}
               </Text>
             </View>
             <View style={styles.listItemRight}>
@@ -244,7 +244,7 @@ export const BalanceChange = ({
             <View style={styles.logoWithText}>
               <AssetAvatar logo={token.logo_url} size={33} />
               <Text style={[styles.changeText, styles.changeTextPositive]}>
-                + {formatAmount(token.amount)} {getTokenSymbol(token)}
+                + {formatTokenAmount(token.amount)} {getTokenSymbol(token)}
               </Text>
             </View>
             <View style={styles.listItemRight}>

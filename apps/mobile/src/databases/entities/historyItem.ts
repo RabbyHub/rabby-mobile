@@ -223,6 +223,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
+    filterNotScam?: boolean,
   ) {
     await prepareAppDataSource();
 
@@ -230,12 +231,19 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const currentTime = new Date().getTime();
     console.log('getAllHistoryItemSortedByTime exec');
 
-    const res = await repo
+    const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .orderBy('historyitem.time_at', 'DESC')
-      .take(count || 10000) // limit
-      .getMany();
+      .take(count || 10000); // limit
+
+    if (filterNotScam) {
+      queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      });
+    }
+
+    const res = await queryBuilder.getMany();
     console.log(
       'getAllHistoryItemSortedByTime exec done',
       new Date().getTime() - currentTime,

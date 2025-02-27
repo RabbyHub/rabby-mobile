@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import RcIconUnknown from '@/assets/icons/token/default.svg';
-import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
@@ -62,7 +62,7 @@ const TxChangeItem = ({
         style={[tokenChangeStyle, styles.tokenChangeDelta]}
         numberOfLines={1}>
         {isSend ? '-' : '+'}
-        {isNft ? item.amount : formatAmount(item.amount)}
+        {isNft ? item.amount : formatTokenAmount(item.amount)}
       </Text>
       <TokenLabel
         isForMultipleAdderss={isForMultipleAdderss}
@@ -98,7 +98,7 @@ export const TxChange = ({
   const singleAmount = data?.token_approve?.value;
   const appvoveAmmountStr = singleAmount
     ? singleAmount < 1e9
-      ? formatAmount(singleAmount)
+      ? formatTokenAmount(singleAmount)
       : t('page.transactions.detail.Unlimited')
     : '';
   const tokenId = data?.token_approve?.token_id || '';
@@ -114,7 +114,7 @@ export const TxChange = ({
   return (
     <View style={[styles.container, style]}>
       {isApprove && (
-        <Text style={[styles.approveText]}>
+        <Text style={[styles.approveText]} numberOfLines={1}>
           {' '}
           {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
           {tokenIsNft
@@ -174,6 +174,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     gap: 3,
     minWidth: 0,
     flexShrink: 1,
+    height: 40,
   },
   rowBox: {
     gap: ChangeSizes.gap,
@@ -212,11 +213,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '700',
   },
   textNegative: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   tokenLabel: {
     position: 'relative',

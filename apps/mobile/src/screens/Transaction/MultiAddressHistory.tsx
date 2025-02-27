@@ -10,7 +10,8 @@ import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
-import { findChain, findChainByServerID } from '@/utils/chain';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
@@ -115,8 +116,9 @@ function History({
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [isShowScam, setIsShowScam] = useState(false);
-  const [isShowSmall, setIsShowSmall] = useState(false);
+  const [currentNoDbData, setCurrentNoDbData] = useState(false);
+  const [isShowAll, setIsShowAll] = useState(false);
+  // const [isShowSmall, setIsShowSmall] = useState(false);
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
@@ -133,7 +135,7 @@ function History({
 
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
-  const { projectDict, tokenDict } = useHistoryTokenDict();
+  const { projectDict, tokenDict, historyEnsureNoData } = useHistoryTokenDict();
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
@@ -142,11 +144,19 @@ function History({
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
-    const fetchHistoryFromDbData = async (count?: number) => {
+    const fetchHistoryFromDbData = async (isFirst?: boolean) => {
       const [historyList, swapList] = await Promise.all([
-        HistoryItemEntity.getAllHistoryItemSortedByTime(addresses, count),
-        SwapItemEntity.getAllHistoryItem(addresses, count),
+        HistoryItemEntity.getAllHistoryItemSortedByTime(
+          addresses,
+          isFirst ? 50 : 10000,
+          isFirst, // first not show scam tx
+        ),
+        SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
       ]);
+
+      if (isFirst) {
+        setCurrentNoDbData(historyList.length === 0);
+      }
 
       const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(
@@ -162,16 +172,16 @@ function History({
             ),
           } as HistoryDisplayItem),
       );
-      setDbData(list);
+      setDbData(list.filter(item => item.chain && getChain(item.chain)?.name));
       return list;
     };
     if (!dbData.length) {
-      // first init 20 count
-      await fetchHistoryFromDbData(50);
+      // first init 50 count
+      await fetchHistoryFromDbData(true);
     }
 
     // later fetch all data
-    const list = await fetchHistoryFromDbData();
+    const list = await fetchHistoryFromDbData(false);
     return list;
   };
 
@@ -400,6 +410,7 @@ function History({
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         batchFetchDataV2();
+        runFetchLocalTx();
       } else {
         cancel();
         refresh();
@@ -449,7 +460,8 @@ function History({
   }, [_data, isNeedFetchFromApi, dbData]);
 
   const allTxHistory = useMemo(() => {
-    return orderBy(data?.list || [], 'time_at', 'desc');
+    // make receive front of send by cate_id order by asc
+    return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
   }, [data]);
 
   useMount(() => {
@@ -461,27 +473,15 @@ function History({
   const displayList = useMemo(() => {
     return allTxHistory
       .filter(tx => {
-        if (isShowScam && isShowSmall) {
+        if (isShowAll) {
           // show all
           return true;
+        } else {
+          if (tx.isSmallUsdTx || tx.is_scam) {
+            return false;
+          }
+          return true;
         }
-
-        if (isShowScam) {
-          // only hide small tx and not scam
-          return !(tx.isSmallUsdTx && !tx.is_scam);
-        }
-
-        if (isShowSmall) {
-          // only hidden scam and not small tx
-          return !(tx.is_scam && !tx.isSmallUsdTx);
-        }
-
-        if (!isShowScam && !isShowSmall) {
-          // hide small tx and scam
-          return !(tx.is_scam || tx.isSmallUsdTx);
-        }
-
-        return true;
       })
       .filter(tx => {
         if (isSceneUsingAllAccounts) {
@@ -495,8 +495,7 @@ function History({
     // .slice(0, (currentPage + 1) * PAGE_COUNT);
   }, [
     allTxHistory,
-    isShowScam,
-    isShowSmall,
+    isShowAll,
     // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -554,6 +553,35 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
+  const ensureCurrentNoDbData = useMemo(() => {
+    if (isNeedFetchFromApi) {
+      return false;
+    }
+
+    const addresses = isSceneUsingAllAccounts
+      ? unionAccounts.map(account => account.address.toLowerCase())
+      : [finalSceneCurrentAccount?.address.toLowerCase()!];
+    const isNodata = addresses.every(address => {
+      return historyEnsureNoData[address];
+    });
+    return isNodata;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyEnsureNoData, sceneCurrentAccountDepKey]);
+
+  const fetchFromDbLoading = useMemo(
+    () =>
+      currentNoDbData &&
+      !allTxHistory.length &&
+      !groups?.length &&
+      !ensureCurrentNoDbData,
+    [
+      currentNoDbData,
+      allTxHistory.length,
+      groups?.length,
+      ensureCurrentNoDbData,
+    ],
+  );
+
   // if (!loading && !groups?.length && !allTxHistory.length) {
   //   return <Empty />;
   // }
@@ -570,16 +598,13 @@ function History({
           <View style={styles.menuContainer}>
             <View style={styles.menuItem}>
               <Text style={styles.menuItemText}>
-                {t('page.transactions.ViewHiddenItems')}
+                {t('page.transactions.ShowHiddenItems')}
               </Text>
               <View style={styles.valueView}>
-                <AppSwitch2024
-                  value={isShowScam}
-                  onValueChange={setIsShowScam}
-                />
+                <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
               </View>
             </View>
-            <View style={styles.menuItem}>
+            {/* <View style={styles.menuItem}>
               <Text style={styles.menuItemText}>
                 {t('page.transactions.ViewSmallItems')}
               </Text>
@@ -589,7 +614,7 @@ function History({
                   onValueChange={setIsShowSmall}
                 />
               </View>
-            </View>
+            </View> */}
           </View>
         )}
         {/* {isTestnet || isInTokenDetail ? null : (
@@ -615,7 +640,8 @@ function History({
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
-          loading={loading}
+          loading={isNeedFetchFromApi ? loading : fetchFromDbLoading}
+          ensureCurrentNoDbData={ensureCurrentNoDbData}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAdderss={isForMultipleAdderss}
@@ -690,7 +716,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     right: 16,
     alignItems: 'center',
-    width: 250,
+    width: 270,
     // height: 56,
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 12,

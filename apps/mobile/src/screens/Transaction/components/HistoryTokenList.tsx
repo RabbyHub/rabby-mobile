@@ -14,7 +14,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,7 @@ import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { useCurrentAccount } from '@/hooks/account';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 interface ItemProps {
   status: number;
@@ -93,10 +94,13 @@ const TokenItemInlist = ({
                 styles.tokenAmountTextList,
                 isSend && styles.isSendTextColor,
               ]}>
-              {isSend ? '-' : '+'} {isNft ? amount : formatAmount(amount)}{' '}
+              {isSend ? '-' : '+'} {isNft ? amount : formatTokenAmount(amount)}{' '}
               {isNft
                 ? t('page.singleHome.sectionHeader.Nft')
-                : getTokenSymbol(token as TokenItem)}
+                : ellipsisOverflowedText(
+                    getTokenSymbol(token as TokenItem),
+                    16,
+                  )}
             </Text>
           </View>
         </View>
@@ -171,7 +175,7 @@ export const HistoryTokenList = ({
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
-          ? formatAmount(singleAmount)
+          ? formatTokenAmount(singleAmount)
           : t('page.transactions.detail.Unlimited')
         : '';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
@@ -193,13 +197,17 @@ export const HistoryTokenList = ({
                 <Text
                   style={[
                     styles.tokenAmountText,
-                    (isSend || isApprove) && styles.isSendTextColor,
+                    isSend && styles.isSendTextColor,
+                    isApprove && styles.tokenApproveAmountText,
                   ]}>
                   {!isApprove && (isSend ? '- ' : '+ ')}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
                     ? t('page.singleHome.sectionHeader.Nft')
-                    : getTokenSymbol(singeToken as TokenItem)}
+                    : ellipsisOverflowedText(
+                        getTokenSymbol(singeToken as TokenItem),
+                        16,
+                      )}
                 </Text>
                 {Boolean(!tokenIsNft && singleAmount && singleAmount < 1e9) && (
                   <HistoryItemTokenPrice
@@ -249,11 +257,11 @@ export const HistoryTokenList = ({
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatAmount(sendAmount)}{' '}
+                {'-'} {formatTokenAmount(sendAmount)}{' '}
                 {getTokenSymbol(sendToken as TokenItem)}
               </Text>
               <RcIconRightCC
-                color={colors2024['neutral-foot']}
+                color={colors2024['neutral-title-1']}
                 width={18}
                 height={18}
               />
@@ -270,7 +278,7 @@ export const HistoryTokenList = ({
             />
             <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
               <Text style={[styles.tokenAmountTextList]}>
-                {'+'} {formatAmount(recieveAmount)}{' '}
+                {'+'} {formatTokenAmount(recieveAmount)}{' '}
                 {getTokenSymbol(recieveToken as TokenItem)}
               </Text>
               <RcIconRightCC
@@ -333,6 +341,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 36,
     fontWeight: '700',
   },
+  tokenApproveAmountText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '700',
+  },
   tokenAmountTextList: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -356,7 +371,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   isSendTextColor: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
   },
   isFailBox: {
     opacity: 0.3,

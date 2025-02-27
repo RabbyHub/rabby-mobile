@@ -35,6 +35,9 @@
     "transactions": {
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",
+      "ShowHiddenItems": "Show hidden transactions",
+      "Today": "Today",
+      "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
         "Swap": "Swapped",

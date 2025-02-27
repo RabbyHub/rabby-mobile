@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { RevokeTokenBtn } from './components/RevokeTokenBtn';
+import { formatIntlTimestamp } from '@/utils/time';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
@@ -176,17 +177,18 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
       </TouchableOpacity>
       <View style={styles.detailContainer}>
-        {/* todo get complete time */}
-        {/* {!data.isPending && data.maxGasTx.createdAt && (
+        {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.createdAt)}
+                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
               </Text>
             </View>
           </View>
-        )} */}
+        )}
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.Status')}
