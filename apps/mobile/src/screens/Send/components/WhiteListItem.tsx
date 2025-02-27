@@ -11,6 +11,7 @@ import {
   StyleProp,
   ViewStyle,
   TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import {
@@ -31,7 +32,7 @@ interface IProps {
   hiddenArrow?: boolean;
   inWhiteList?: boolean;
 }
-const WhiteListItem = ({
+export const WhiteListItem = ({
   account,
   style,
   hiddenArrow,
@@ -161,8 +162,63 @@ const WhiteListItem = ({
     </ContextMenuView>
   );
 };
+export const WhiteListItemSwitch = ({
+  account,
+  style,
+  inWhiteList,
+}: IProps) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { navigation } = useSafeSetNavigationOptions();
 
-export default WhiteListItem;
+  return (
+    <View style={styles.root}>
+      <Card style={StyleSheet.flatten([styles.card, style])}>
+        <InnerAddressItem style={styles.rootItem} account={account}>
+          {({ WalletIcon, WalletName, WalletBalance }) => (
+            <View style={styles.item}>
+              <View style={styles.iconWrapper}>
+                <WalletIcon style={styles.walletIcon} width={46} height={46} />
+                {inWhiteList && (
+                  <RcIconLockCC
+                    style={styles.lockIcon}
+                    color={colors2024['neutral-body']}
+                    width={22}
+                    height={22}
+                  />
+                )}
+              </View>
+              <View style={styles.itemInfo}>
+                <View style={styles.itemName}>
+                  <WalletName style={styles.itemNameText} />
+                  <Text style={styles.address}>
+                    {`(${ellipsisAddress(account.address)})`}
+                  </Text>
+                </View>
+                <WalletBalance style={styles.itemBalanceText} />
+              </View>
+            </View>
+          )}
+        </InnerAddressItem>
+        <Pressable
+          style={styles.arrow}
+          onPress={() => {
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.SendTo,
+                params: {},
+              }),
+            );
+          }}>
+          <RcIconSwitchCC
+            color={colors2024['neutral-body']}
+            width={24}
+            height={24}
+          />
+        </Pressable>
+      </Card>
+    </View>
+  );
+};
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -179,8 +235,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderWidth: 0,
-    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 20,
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],

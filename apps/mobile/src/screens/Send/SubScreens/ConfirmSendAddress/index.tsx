@@ -48,7 +48,10 @@ const ConfirmAddressScreen = () => {
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.MultiSend,
-        params: {},
+        params: {
+          addressBrandName: account.brandName,
+          toAddress: account.address,
+        },
       }),
     );
   };

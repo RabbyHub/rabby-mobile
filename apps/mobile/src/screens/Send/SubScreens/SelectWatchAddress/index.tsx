@@ -4,7 +4,7 @@ import { FlatList, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import WhiteListItem from '../../components/WhiteListItem';
+import { WhiteListItem } from '../../components/WhiteListItem';
 import EmptyWhiteListHolder from '../../components/EmptyWhiteListHolder';
 import { OtherAddressNav } from '@/screens/Address/AddressListScreen';
 import { trigger } from 'react-native-haptic-feedback';

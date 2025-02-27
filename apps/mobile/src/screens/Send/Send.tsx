@@ -70,8 +70,13 @@ function SendScreen({
         chainEnum?: CHAINS_ENUM | undefined;
         tokenId?: TokenItem['id'];
         toAddress?: string;
+        addressBrandName?: string;
       }
-    | { safeInfo: { nonce: number; chainId: number }; toAddress?: string }
+    | {
+        safeInfo: { nonce: number; chainId: number };
+        toAddress?: string;
+        addressBrandName?: string;
+      }
     | undefined;
 
   const {
@@ -345,7 +350,10 @@ function SendScreen({
               {/* FromToSection */}
               <View>
                 {/* To */}
-                <ToAddressControl2024 />
+                <ToAddressControl2024
+                  address={navParams?.toAddress}
+                  brandName={navParams?.addressBrandName}
+                />
 
                 {/* ChainInfo */}
                 <View style={styles.chainSection}>
