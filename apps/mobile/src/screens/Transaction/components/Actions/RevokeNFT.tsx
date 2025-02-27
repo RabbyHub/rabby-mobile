@@ -249,13 +249,15 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -325,7 +327,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   singleBox: {
     width: '100%',
     height: 92,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,

@@ -76,7 +76,7 @@
         "name": "Name",
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
-        "totalApprovedAmount": "Total Approved Amount"
+        "totalApprovedAmount": "Current Approved Amount"
       },
       "empty": {
         "title": "No transactions",
