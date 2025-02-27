@@ -69,8 +69,8 @@ export const fetchHistoryTokenUUId = (
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
   return {
     ...item,
-    receives: isString(item.receives) && safeParseJSON(item.receives),
-    sends: isString(item.sends) && safeParseJSON(item.sends),
+    receives: safeParseJSON(item.receives || '', { defaultValue: [] }),
+    sends: safeParseJSON(item.sends || '', { defaultValue: [] }),
     id: item.txHash,
     tx: {
       id: item.txHash,

@@ -48,23 +48,23 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   // receives
   @Column({
     type: 'text',
-    default: '[]',
+    default: '',
     transformer: {
       to: (val: any) => columnConverter.jsonObjToString(val),
       from: (val: any) => columnConverter.jsonStringToObj(val),
     },
   })
-  receives: string = '[]';
+  receives?: string = '';
   // sends
   @Column({
     type: 'text',
-    default: '[]',
+    default: '',
     transformer: {
       to: (val: any) => columnConverter.jsonObjToString(val),
       from: (val: any) => columnConverter.jsonStringToObj(val),
     },
   })
-  sends: string = '[]';
+  sends?: string = '';
   // tx_name
   @Column('text', { default: '' })
   tx_name: string = '';

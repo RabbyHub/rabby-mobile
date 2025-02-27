@@ -68,6 +68,12 @@ export async function syncRemoteHistory(
       const item = new HistoryItemEntity();
       HistoryItemEntity.fillEntity(item, address, raw);
 
+      if (!raw.sends || !raw.sends.length) {
+        delete item.sends;
+      }
+      if (!raw.receives || !raw.receives.length) {
+        delete item.receives;
+      }
       delete item.historyItemCateType;
       return item;
     });
