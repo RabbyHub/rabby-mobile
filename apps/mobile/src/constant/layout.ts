@@ -101,6 +101,7 @@ export const RootNames = {
   StackTransaction: 'StackTransaction',
   Send: 'Send',
   SendTo: 'SendTo',
+  SendHistory: 'SendHistory',
   SendInput: 'SendInput',
   SelectImportAddress: 'SelectImportAddress',
   SelectWatchAddress: 'SelectWatchAddress',

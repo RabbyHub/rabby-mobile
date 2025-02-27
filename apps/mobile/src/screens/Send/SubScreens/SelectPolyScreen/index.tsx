@@ -64,7 +64,12 @@ const SendPolyScreen = () => {
   };
   const handleGotoAddWhitelist = () => {
     triggerLight();
-    console.log('🔍 CUSTOM_LOGGER:=>: handleGotoAddWhitelist');
+    navigation.dispatch(
+      StackActions.push(RootNames.StackTransaction, {
+        screen: RootNames.SendHistory,
+        params: {},
+      }),
+    );
   };
 
   return (

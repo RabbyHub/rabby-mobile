@@ -240,6 +240,7 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
+  [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {};
   [RootNames.SelectImportAddress]?: {};
   [RootNames.ConfirmAddress]?: { account: KeyringAccountWithAlias };
