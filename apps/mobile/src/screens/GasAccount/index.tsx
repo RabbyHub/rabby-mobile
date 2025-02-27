@@ -55,7 +55,11 @@ export const GasAccountScreen = () => {
   const [switchAddrVisible, setSwitchAddrVisible] = useState(false);
 
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { value: gasAccount, loading } = useGasAccountInfo();
+  const {
+    value: gasAccount,
+    loading,
+    runFetchGasAccountInfo,
+  } = useGasAccountInfo();
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     if (canDeposit) {
@@ -156,6 +160,12 @@ export const GasAccountScreen = () => {
           visible={depositState.isOpen}
           type={depositState.type}
           gasAccountAddress={gasAccount.account.id}
+          onDeposit={() => {
+            setDepositState({
+              isOpen: false,
+            });
+            runFetchGasAccountInfo();
+          }}
           onCancel={() => {
             setDepositState({
               isOpen: false,

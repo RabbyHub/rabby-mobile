@@ -14,6 +14,7 @@ export const GasAccountDepositPopup: React.FC<{
   gasAccountAddress: string;
   onCancel?(): void;
   onClose?(): void;
+  onDeposit?(): void;
 }> = props => {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -59,7 +60,7 @@ export const GasAccountDepositPopup: React.FC<{
       <BottomSheetView style={styles.popup}>
         {step === 'pay' ? (
           <GasAccountDepositWithPay
-            onClose={props.onCancel || props.onClose}
+            onDeposit={props.onDeposit}
             gasAccountAddress={props.gasAccountAddress}
           />
         ) : step === 'token' ? (

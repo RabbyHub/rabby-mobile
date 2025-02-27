@@ -34,6 +34,7 @@ export const useGasAccountInfo = () => {
 
   const {
     data: value,
+    runAsync: runFetchGasAccountInfo,
     loading,
     error,
   } = useRequest(
@@ -63,7 +64,19 @@ export const useGasAccountInfo = () => {
     setGasAccount();
   }
 
-  return { loading, value };
+  return { loading, value, runFetchGasAccountInfo };
+};
+
+export const useGasAccountInfoV2 = ({ address }: { address: string }) => {
+  return useRequest(
+    async () => {
+      return openapi.getGasAccountInfoV2({ id: address });
+    },
+    {
+      refreshDeps: [address],
+      cacheKey: `gas-account-info-v2-${address}`,
+    },
+  );
 };
 
 export const useGasAccountGoBack = () => {
@@ -167,7 +180,7 @@ export const useGasAccountMethods = () => {
 export const useGasAccountLogin = ({
   loading,
   value,
-}: ReturnType<typeof useGasAccountInfo>) => {
+}: Pick<ReturnType<typeof useGasAccountInfo>, 'loading' | 'value'>) => {
   const { sig, accountId } = useGasAccountSign();
 
   const { login, logout } = useGasAccountMethods();

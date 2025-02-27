@@ -1,6 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StyleProp, Text, TextStyle } from 'react-native';
+import { useGasAccountInfoV2 } from '../hooks';
+import { formatUsdValue } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 
 export interface GasAccountBalanceProps {
   style?: StyleProp<TextStyle>;
@@ -14,7 +16,12 @@ export const GasAccountBalance: React.FC<GasAccountBalanceProps> = ({
   const { styles } = useTheme2024({
     getStyle,
   });
-  return <Text style={[styles.text, style]}>todo</Text>;
+  const { data } = useGasAccountInfoV2({ address });
+  return (
+    <Text style={[styles.text, style]}>
+      {data?.account.balance ? formatUsdValue(data.account.balance) : '$0'}
+    </Text>
+  );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {

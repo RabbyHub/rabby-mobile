@@ -13,6 +13,7 @@ import {
   purchaseUpdatedListener,
 } from 'react-native-iap';
 import { eventBus, EVENTS } from '@/utils/events';
+import { openapi } from '@/core/request';
 
 export const useIAPListener = () => {
   useEffect(() => {
@@ -31,16 +32,26 @@ export const useIAPListener = () => {
           flushFailedPurchasesCachedAsPendingAndroid();
         }
         purchaseUpdateSubscription = purchaseUpdatedListener(
-          (purchase: Purchase) => {
+          async (purchase: Purchase) => {
             devLog('purchaseUpdatedListener -> 1', purchase);
             const receipt = purchase.transactionReceipt;
             if (receipt) {
-              // todo  调后端接口
-              console.log({
-                receipt: purchase.transactionReceipt, // 购买凭证
-                productId: purchase.productId, // 产品ID
-                transactionId: purchase.transactionId, // 交易ID
-              });
+              if (Platform.OS === 'android') {
+                await openapi.confirmIapOrder({
+                  user_id: purchase.obfuscatedAccountIdAndroid || '',
+                  transaction_id: purchase.transactionId || '',
+                  product_id: purchase.productId,
+                  device_type: 'android',
+                });
+              } else {
+                await openapi.confirmIapOrder({
+                  user_id: purchase.appAccountToken || '',
+                  transaction_id: purchase.transactionId || '',
+                  product_id: purchase.productId,
+                  device_type: 'ios',
+                });
+              }
+
               finishTransaction({ purchase, isConsumable: true });
               eventBus.emit(EVENTS.PURCHASE_UPDATED, purchase);
             }

@@ -91,6 +91,10 @@ export const GasAccountTips: React.FC<{
           !isWalletConnect ? tipPopupVisible : false
         }
         onClose={() => setTipPopupVisible(false)}
+        onDeposit={() => {
+          setTipPopupVisible(false);
+          // todo
+        }}
         onGotoGasAccount={() => {
           setTipPopupVisible(false);
           onGotoGasAccount?.();

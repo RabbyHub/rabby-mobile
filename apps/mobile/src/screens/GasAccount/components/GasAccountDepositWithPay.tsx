@@ -18,18 +18,18 @@ import { getProducts, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface Props {
-  onClose?(): void;
+  onDeposit?(): void;
   minPrice?: number;
   gasAccountAddress: string;
 }
 
 export const GasAccountDepositWithPay: React.FC<Props> = ({
-  onClose,
+  onDeposit,
   gasAccountAddress,
   minPrice = 0,
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
   });
 
@@ -62,6 +62,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
           waitPurchaseUpdated(),
         ]);
 
+        await onDeposit?.();
         toast.success('Purchase Success!');
       } catch (e) {
         console.error(e);
