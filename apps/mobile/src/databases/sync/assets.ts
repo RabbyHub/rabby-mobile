@@ -84,6 +84,7 @@ export async function syncRemoteHistory(
       batchSize: 200,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
+      noNeedAbort: true,
     }).then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {
         console.warn(`[${taskKey}] Batch upsertion was aborted.`);
@@ -128,6 +129,7 @@ export async function syncRemoteSwapHistory(
       batchSize: 100,
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
+      noNeedAbort: true,
     })
       .then(({ taskSignal, taskKey }) => {
         if (taskSignal.aborted) {

@@ -42,6 +42,7 @@ export async function batchSaveWithPQueueAndTransaction<
     batchSize?: number;
     concurrency?: number;
     delayBetweenTasks?: number;
+    noNeedAbort?: boolean;
     printLog?: boolean;
     // signal?: AbortSignal;
   },
@@ -53,12 +54,14 @@ export async function batchSaveWithPQueueAndTransaction<
     owner_addr,
     taskFor,
     printLog = false,
+    noNeedAbort = false,
     // signal = syncAbortControllers[taskFor],
   } = options;
 
   const taskKey = makeTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
-  if (syncAbortControllers[taskKey]) syncAbortControllers[taskKey].abort();
+  if (syncAbortControllers[taskKey] && !noNeedAbort)
+    syncAbortControllers[taskKey].abort();
   syncAbortControllers[taskKey] = curAbortController;
 
   const currentSignal = curAbortController.signal;

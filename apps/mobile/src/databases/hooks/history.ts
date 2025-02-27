@@ -115,7 +115,9 @@ export const useSyncHistoryDB = (
   const synHistoryInRealTimeApi = useMemoizedFn(
     async (address: string, latest_time: number, start_time?: number) => {
       try {
-        const latestTime = latest_time;
+        const notNeedUpdateTime =
+          new Date().getTime() / 1000 - 30 * 24 * 60 * 60; // 30 days ago
+        const latestTime = latest_time || notNeedUpdateTime;
         const startTime = start_time || 0;
 
         console.log(
@@ -146,11 +148,6 @@ export const useSyncHistoryDB = (
             res.history_list[res.history_list.length - 1].time_at;
           if (lastItemTime < latestTime) {
             // update done or not all update  to  interup loop
-            // res.history_list = res.history_list.filter(
-            //   i => i.time_at > latestTime,
-            // );
-            // RealTimeApi need to update refresh local data
-
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: update',
               address,
@@ -196,17 +193,20 @@ export const useSyncHistoryDB = (
   );
 
   const syncUserAllHistory = useMemoizedFn(
-    async (address: string, start_time?: number, latest_time?: number) => {
+    async (
+      address: string,
+      start_time?: number,
+      latest_time?: number,
+      forceUseRealTime?: boolean,
+    ) => {
       try {
         const latestTime =
           latest_time || (await HistoryItemEntity.getLatestTime(address));
         const isExpiredTimeAgo =
           new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
         const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
-        const isUseRealTimeApi =
-          latestTime > (new Date().getTime() - 24 * 60 * 60 * 1000) / 1000; // 1 days ago
 
-        if (isUseRealTimeApi) {
+        if (forceUseRealTime) {
           // use other fetch api
           synHistoryInRealTimeApi(address, latestTime, start_time);
           return;
@@ -270,7 +270,12 @@ export const useSyncHistoryDB = (
             runOnJS(syncRemoteHistory)(address, res.history_list);
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
-            syncUserAllHistory(address, lastItemTime, latestTime);
+            syncUserAllHistory(
+              address,
+              lastItemTime,
+              latestTime,
+              forceUseRealTime,
+            );
           }
         }
         setHistoryEnsureNoData(prev => ({
@@ -336,6 +341,9 @@ export const useSyncHistoryDB = (
           const address = account.address.toLowerCase();
           const isForceFetchFromApi = force || (await isNeedSyncData(address));
           if (isForceFetchFromApi) {
+            const latestUpdateTime = updateHistoryTime[address] || 0;
+            const isUserRealTiemApi =
+              latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
             updateHistoryTimeSingleAddress(address);
             console.debug(
               '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
@@ -344,7 +352,7 @@ export const useSyncHistoryDB = (
             queue.add(async () => {
               try {
                 await Promise.all([
-                  syncUserAllHistory(address),
+                  syncUserAllHistory(address, 0, 0, isUserRealTiemApi),
                   syncSwapHistory(address),
                 ]);
               } catch (error) {
@@ -369,9 +377,12 @@ export const useSyncHistoryDB = (
   );
 
   const syncSingleAddress = useMemoizedFn(address => {
+    const latestUpdateTime = updateHistoryTime[address] || 0;
+    const isUserRealTiemApi =
+      latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
     updateHistoryTimeSingleAddress(address);
     Promise.all([
-      syncUserAllHistory(address.toLowerCase()),
+      syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi),
       syncSwapHistory(address.toLowerCase()),
     ]);
   });

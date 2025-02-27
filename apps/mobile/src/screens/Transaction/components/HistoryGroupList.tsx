@@ -19,8 +19,8 @@ import { useTranslation } from 'react-i18next';
 const isIOS = Platform.OS === 'ios';
 
 interface DisplayHistoryItem {
-  isFirst: boolean;
   isDateStart?: boolean;
+  time: number;
   data: HistoryDisplayItem | TransactionGroup;
 }
 
@@ -34,54 +34,91 @@ function markFirstItems(
   for (let i = 0; i < arr.length; i++) {
     const item = arr[i];
     const newItem: DisplayHistoryItem = {
-      isFirst: false,
       data: item,
+      time:
+        ('time_at' in item ? item.time_at * 1000 : undefined) ||
+        ('completedAt' in item && item.completedAt
+          ? item.completedAt
+          : new Date().getTime()),
     };
-    if ('projectDict' in item) {
-      const prev = arr[i - 1];
-      if (i === 0) {
+
+    const prev = arr[i - 1];
+
+    if (i === 0) {
+      newItem.isDateStart = true;
+    } else {
+      if ('isPending' in prev && 'projectDict' in item) {
+        // remove same item from local tx and db history list
+        const curId = `${item.address.toLowerCase()}-${item.id}`;
+        const preId = `${prev.address.toLowerCase()}-${prev.maxGasTx.hash}`;
+        if (curId === preId) {
+          continue;
+        }
+      }
+
+      // judgs is date start
+      const curDate = dayjs(newItem.time);
+      const prevTime =
+        ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
+        ('completedAt' in prev && prev.completedAt
+          ? prev.completedAt
+          : new Date().getTime());
+      const prevDate = dayjs(prevTime); // get time at
+      if (!curDate.isSame(prevDate, 'date')) {
         newItem.isDateStart = true;
-      } else if ('projectDict' in prev) {
-        const curDate = dayjs(item.time_at * 1000);
-        const prevDate = dayjs(prev.time_at * 1000);
-        if (!curDate.isSame(prevDate, 'date')) {
-          newItem.isDateStart = true;
-        }
-      } else if ('isPending' in prev) {
-        if (prev.isPending) {
-          newItem.isDateStart = true;
-        } else {
-          const curDate = dayjs(item.time_at * 1000);
-          const prevDate = dayjs(prev.completedAt);
-          if (!curDate.isSame(prevDate, 'date')) {
-            newItem.isDateStart = true;
-          }
-        }
       }
     }
-    if ('isPending' in item) {
-      if (item.isPending) {
-        newItem.isDateStart = false;
-        i === 0 && (newItem.isFirst = true);
-      } else {
-        const prev = arr[i - 1];
-        if (i === 0) {
-          newItem.isDateStart = true;
-        } else if ('isPending' in prev && !prev.isPending) {
-          const curDate = dayjs(item.completedAt);
-          const prevDate = dayjs(prev.completedAt);
-          if (!curDate.isSame(prevDate, 'date')) {
-            newItem.isDateStart = true;
-          }
-        } else if ('projectDict' in prev) {
-          const curDate = dayjs(item.completedAt);
-          const prevDate = dayjs(prev.time_at * 1000);
-          if (!curDate.isSame(prevDate, 'date')) {
-            newItem.isDateStart = true;
-          }
-        }
-      }
-    }
+
+    // if ('projectDict' in item) {
+    //   const prev = arr[i - 1];
+    //   if (i === 0) {
+    //     newItem.isDateStart = true;
+    //   } else if ('projectDict' in prev) {
+    //     const curDate = dayjs(item.time_at * 1000);
+    //     const prevDate = dayjs(prev.time_at * 1000);
+    //     if (!curDate.isSame(prevDate, 'date')) {
+    //       newItem.isDateStart = true;
+    //     }
+    //   } else if ('isPending' in prev) {
+    //     if (prev.isPending) {
+    //       // pending time is set current time
+    //       const curDate = dayjs(item.time_at * 1000);
+    //       const prevDate = dayjs(new Date().getTime());
+    //       if (!curDate.isSame(prevDate, 'date')) {
+    //         newItem.isDateStart = true;
+    //       }
+    //     } else {
+    //       const curDate = dayjs(item.time_at * 1000);
+    //       const prevDate = dayjs(prev.completedAt);
+    //       if (!curDate.isSame(prevDate, 'date')) {
+    //         newItem.isDateStart = true;
+    //       }
+    //     }
+    //   }
+    // }
+    // if ('isPending' in item) {
+    //   if (item.isPending) {
+    //     newItem.isDateStart = false;
+    //     i === 0 && (newItem.isFirst = true);
+    //   } else {
+    //     const prev = arr[i - 1];
+    //     if (i === 0) {
+    //       newItem.isDateStart = true;
+    //     } else if ('isPending' in prev && !prev.isPending) {
+    //       const curDate = dayjs(item.completedAt);
+    //       const prevDate = dayjs(prev.completedAt);
+    //       if (!curDate.isSame(prevDate, 'date')) {
+    //         newItem.isDateStart = true;
+    //       }
+    //     } else if ('projectDict' in prev) {
+    //       const curDate = dayjs(item.completedAt);
+    //       const prevDate = dayjs(prev.time_at * 1000);
+    //       if (!curDate.isSame(prevDate, 'date')) {
+    //         newItem.isDateStart = true;
+    //       }
+    //     }
+    //   }
+    // }
     newArr.push(newItem);
   }
 
@@ -147,7 +184,7 @@ export const HistoryList = ({
                 styles.date,
                 !isForMultipleAdderss && styles.marginBottom,
               ]}>
-              {formatTimestamp(item.data.time_at * 1000, t)}
+              {formatTimestamp(item.time, t)}
             </Text>
           ) : null}
           <HistoryItem
@@ -172,16 +209,16 @@ export const HistoryList = ({
 
       return (
         <>
-          {item.isFirst ? (
+          {/* {item.isFirst ? (
             <Text style={[styles.date]}>{t('page.bridge.Pending')}</Text>
-          ) : null}
+          ) : null} */}
           {item.isDateStart ? (
             <Text
               style={[
                 styles.date,
                 !isForMultipleAdderss && styles.marginBottom,
               ]}>
-              {formatTimestamp(item.data.completedAt, t)}
+              {formatTimestamp(item.time, t)}
             </Text>
           ) : null}
           <TransactionItem

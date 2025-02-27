@@ -479,7 +479,8 @@ function History({
   }, [_data, isNeedFetchFromApi, dbData]);
 
   const allTxHistory = useMemo(() => {
-    return orderBy(data?.list || [], 'time_at', 'desc');
+    // make receive front of send by cate_id order by asc
+    return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
   }, [data]);
 
   useMount(() => {
