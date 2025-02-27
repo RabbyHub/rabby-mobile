@@ -23,23 +23,16 @@ import {
 } from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useSwapRecentToTokens } from '../hooks/recent';
 import { preferenceService } from '@/core/services';
-import {
-  ensureAbstractPortfolioToken,
-  tagTokenList,
-} from '@/screens/Home/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
-import LinearGradient from 'react-native-linear-gradient';
 import { Account } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
@@ -51,6 +44,7 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -160,26 +154,39 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const {
       isSearchingLocalTokens,
-      sortedTokensWithOwner: searchedLocalTokensWithOwner,
+      // sortedTokensWithOwner: searchedLocalTokensWithOwner,
       sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
       // allLocalTokens: searchedLocalTokens,
       fetchAllLocalTokens,
     } = useQueryLocalTokens();
 
+    const searchedLocalTokensWithOwner = useMemo(
+      () =>
+        searchedLocalDisplayTokensWithOwner.map(
+          e =>
+            ({
+              ...abstractTokenToTokenItem(e),
+              ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
+            } as TokenItemMaybeWithOwner),
+        ),
+      [searchedLocalDisplayTokensWithOwner],
+    );
+
     // const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
     useEffect(() => {
-      if (!queryConds.account)
+      if (!queryConds.account) {
         fetchAllLocalTokens({
           keyword: queryConds.keyword,
           chain_server_id: queryConds.chainServerId,
         });
+      }
     }, [queryConds, fetchAllLocalTokens]);
 
     const allRemoteTokens = useSortToken(_allTokens);
 
     const {
       isLoading: isRemoteSearchLoading,
-      list: remoteSearchedTokenByQuery,
+      list: _remoteSearchedTokenByQuery,
     } = useSearchToken(
       {
         address: currentAccount?.address || '',
@@ -191,6 +198,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
     );
 
+    const remoteSearchedTokenByQuery = useMemo(
+      () => _remoteSearchedTokenByQuery.map(abstractTokenToTokenItem),
+      [_remoteSearchedTokenByQuery],
+    );
+
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
       useMemo(() => {
         const remoteVersion = {
@@ -198,9 +210,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           allTokens: allRemoteTokens,
           allTokenItems: useSwapTokenList
             ? swapTokenList || []
-            : allRemoteTokens
-                .filter(i => !i._isFold)
-                .map(abstractTokenToTokenItem),
+            : allRemoteTokens.map(abstractTokenToTokenItem),
           searchedTokenByQuery: remoteSearchedTokenByQuery,
         };
 
@@ -213,19 +223,15 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           searchedTokenByQuery: searchedLocalTokensWithOwner,
         };
       }, [
-        useSwapTokenList,
-        useLocalDatabase,
-        allRemoteTokens,
-
         isRemoteSearchLoading,
+        allRemoteTokens,
+        useSwapTokenList,
+        swapTokenList,
         remoteSearchedTokenByQuery,
-
+        useLocalDatabase,
         isSearchingLocalTokens,
-        // searchedLocalTokens,
-
         searchedLocalDisplayTokensWithOwner,
         searchedLocalTokensWithOwner,
-        swapTokenList,
       ]);
 
     const isExcludedTokens = useCallback(
@@ -236,6 +242,43 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
       [excludeTokens],
     );
+
+    const isFromModalType = useMemo(
+      () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
+      [type],
+    );
+
+    const foldTokensList = useMemo(() => {
+      if (!isFromModalType || queryConds.keyword) {
+        return [];
+      }
+
+      const list = convertSmallTokenList(
+        allTokens.filter(i => {
+          const condition = !!i._isFold || (!i.is_core && !i._isPined);
+          if (queryConds.chainServerId) {
+            return condition && i.chain === queryConds.chainServerId;
+          }
+          return condition;
+        }),
+      ).map(
+        e =>
+          ({
+            ...abstractTokenToTokenItem(e),
+            ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
+          } as TokenItemMaybeWithOwner),
+      );
+      return uniqBy(
+        list.filter(e => !isExcludedTokens(e)),
+        e => makeKeyForTokenItemMaybeWithOwner(e),
+      );
+    }, [
+      allTokens,
+      isExcludedTokens,
+      isFromModalType,
+      queryConds.chainServerId,
+      queryConds.keyword,
+    ]);
 
     const availableToken = useMemo(() => {
       const _tokens = queryConds.chainServerId
@@ -248,30 +291,41 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         token => {
           return makeKeyForTokenItemMaybeWithOwner(token);
         },
-      ).filter(e => !isExcludedTokens(e));
-    }, [allTokenItems, searchedTokenByQuery, isExcludedTokens, queryConds]);
+      ).filter(
+        e =>
+          !isExcludedTokens(e) &&
+          !foldTokensList.some(fold => {
+            let foldAccount: string = '';
+            let eAccount: string = '';
+            if (queryConds.account) {
+              if ('ownerAccount' in fold) {
+                foldAccount = (
+                  (fold as TokenItemMaybeWithOwner)?.ownerAccount?.address || ''
+                ).toLowerCase();
+              }
 
-    const isFromModalType = useMemo(
-      () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
-      [type],
-    );
+              if ('ownerAccount' in e) {
+                eAccount = (
+                  (e as TokenItemMaybeWithOwner)?.ownerAccount?.address || ''
+                )?.toLowerCase();
+              }
+            }
 
-    const foldTokensList = useMemo(() => {
-      if (!isFromModalType) {
-        return [];
-      }
-
-      const list = convertSmallTokenList(
-        allTokens.filter(
-          i => i._isFold && i.chain === queryConds.chainServerId,
-        ),
-      ).map(abstractTokenToTokenItem);
-      return list.filter(e => !isExcludedTokens(e));
+            return (
+              fold.chain === e.chain &&
+              fold.id === e.id &&
+              foldAccount?.toLowerCase() === eAccount?.toLowerCase()
+            );
+          }),
+      );
     }, [
-      allTokens,
-      isExcludedTokens,
-      isFromModalType,
       queryConds.chainServerId,
+      queryConds.keyword,
+      queryConds.account,
+      allTokenItems,
+      searchedTokenByQuery,
+      isExcludedTokens,
+      foldTokensList,
     ]);
 
     const isListLoading = queryConds.keyword
@@ -537,8 +591,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           selectToken={token}
           placeholder={placeholder}
           headerTitle={headerTitle}
-          // displayAccountFilter={allowClearAccountFilter}
-          displayAccountFilter={false}
+          displayAccountFilter={allowClearAccountFilter}
           filterAccount={queryConds.account}
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}

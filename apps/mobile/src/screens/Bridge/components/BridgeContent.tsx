@@ -224,12 +224,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
     clearExpiredTimer,
 
-    gasLevel,
-    gasLimit,
-    changeGasPrice,
     gasList,
-    reserveGasOpen,
-    closeReserveGasOpen,
     passGasPrice,
     handleMax,
     clickMaxBtnCount,
@@ -295,7 +290,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             shouldTwoStepApprove: !!selectedBridgeQuote.shouldTwoStepApprove,
             gasPrice:
               payTokenIsNativeToken && passGasPrice
-                ? gasList?.find(e => e.level === gasLevel)?.price
+                ? gasList?.find(e => e.level === 'normal')?.price
                 : undefined,
             payTokenId: fromToken.id,
             payTokenChainServerId: fromToken.chain,
@@ -391,7 +386,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             shouldTwoStepApprove: !!selectedBridgeQuote.shouldTwoStepApprove,
             gasPrice:
               payTokenIsNativeToken && passGasPrice
-                ? gasList?.find(e => e.level === gasLevel)?.price
+                ? gasList?.find(e => e.level === 'normal')?.price
                 : undefined,
             payTokenId: fromToken.id,
             payTokenChainServerId: fromToken.chain,
@@ -672,17 +667,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           setTwoStepApproveModalVisible(false);
         }}
         onConfirm={handleBridge}
-      />
-
-      <ReserveGasPopup
-        selectedItem={gasLevel}
-        chain={fromChain || CHAINS_ENUM.ETH}
-        limit={gasLimit}
-        onGasChange={changeGasPrice}
-        gasList={gasList}
-        visible={reserveGasOpen}
-        onClose={closeReserveGasOpen}
-        rawHexBalance={fromToken?.raw_amount_hex_str}
       />
 
       {fromToken && toToken && Number(amount) > 0 ? (
