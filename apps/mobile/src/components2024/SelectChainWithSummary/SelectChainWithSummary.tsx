@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -17,8 +17,10 @@ import { useTranslation } from 'react-i18next';
 import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { varyAndSortChainItems } from '@/utils/chain';
-import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
+import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
+import NetSwitchTabs, {
+  useSwitchNetTab,
+} from '@/components2024/PillsSwitch/NetSwitchTabs';
 import MixedFlatChainList from './MixedFlatChainList';
 import AutoLockView from '@/components/AutoLockView';
 import { useChainList } from '@/hooks/useChainList';
@@ -128,10 +130,12 @@ export default function SelectChainWithSummary({
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
+
   const isDark = useGetBinaryMode() === 'dark';
-  const { selectedTab } = useSwitchNetTab({
+  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
     hideTestnetTab,
   });
+  const inputRef = useRef<TextInput | null>(null);
   const {
     search,
     setSearch,
@@ -152,9 +156,25 @@ export default function SelectChainWithSummary({
     return [_matteredList, _unmatteredList];
   }, [excludeChains, _matteredList, _unmatteredList]);
 
+  useEffect(() => {
+    const chain = findChainByEnum(value);
+    const isTestnet = !!chain?.isTestnet;
+    if (isTestnet) {
+      onTabChange('testnet');
+    }
+  }, [onTabChange, value]);
+
   const handleToggleSearch = () => {
     if (!canSearch) {
       setSearch('');
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    } else {
+      setSearch('');
+      setTimeout(() => {
+        inputRef.current?.blur();
+      }, 50);
     }
     setCanSearch(!canSearch);
   };
@@ -197,6 +217,7 @@ export default function SelectChainWithSummary({
                 onChangeText={text => {
                   setSearch(text);
                 }}
+                ref={inputRef}
               />
             </View>
             <Pressable onPress={handleToggleSearch}>
@@ -204,6 +225,13 @@ export default function SelectChainWithSummary({
             </Pressable>
           </View>
         )}
+        {isShowTestnet && !hideMainnetTab ? (
+          <NetSwitchTabs
+            value={selectedTab}
+            onTabChange={onTabChange}
+            style={styles.netSwitchTabs}
+          />
+        ) : null}
       </BottomSheetHandlableView>
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (

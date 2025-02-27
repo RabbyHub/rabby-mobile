@@ -1,10 +1,6 @@
 import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
 import RcIconRight from '@/assets/icons/dapp/icon-right.svg';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,6 +20,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
 import { DappCard } from '../../components/DappCard';
 import {
   createGlobalBottomSheetModal2024,
@@ -53,6 +50,7 @@ export const DappSearchCardList = ({
   loading?: boolean;
   ListEmptyComponent?: FlatListProps<any>['ListEmptyComponent'];
 }) => {
+  const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const chainInfo = React.useMemo(() => {
     return findChainByEnum(chain);
@@ -60,9 +58,10 @@ export const DappSearchCardList = ({
 
   const activeSelectChainPopup = () => {
     const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+      name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: chain,
       hideTestnetTab: true,
+      titleText: t('page.receiveAddressList.selectChainTitle'),
       onChange: (v: CHAINS_ENUM) => {
         onChainChange?.(v);
         removeGlobalBottomSheetModal2024(id);
