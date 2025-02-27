@@ -18,6 +18,7 @@ import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/ut
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { naviPush } from '@/utils/navigation';
 import { BuyHistoryItem as TBuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -61,10 +62,7 @@ const HistoryList = ({
     () =>
       !loading && (!txList || !txList?.list?.length) ? (
         <View style={styles.emptyView}>
-          <RcIconSwapHistoryEmpty width={52} height={52} />
-          <Text style={styles.emptyText}>
-            {t('page.swap.no-transaction-records')}
-          </Text>
+          <NotMatchedHolder text={t('page.swap.no-transaction-records')} />
         </View>
       ) : loading ? (
         <>
@@ -73,14 +71,7 @@ const HistoryList = ({
           ))}
         </>
       ) : null,
-    [
-      loading,
-      txList,
-      styles.emptyView,
-      styles.emptyText,
-      styles.skeletonBlock,
-      t,
-    ],
+    [loading, txList, styles.emptyView, styles.skeletonBlock, t],
   );
 
   const sortedList = useMemo(() => {
@@ -164,7 +155,7 @@ export const BuyHistory = ({
 }) => {
   const { t } = useTranslation();
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  const { colors2024 } = useTheme2024({ getStyle });
+  const { colors2024, isLight } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
 
@@ -221,14 +212,14 @@ export const BuyHistory = ({
       onDismiss={onClose}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg2',
+        linearGradientType: isLight ? 'bg2' : 'bg1',
       })}>
       <HistoryList onGoToDetail={goToDetail} />
     </AppBottomSheetModal>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   emptyText: {
     textAlign: 'center',
     fontSize: 14,
@@ -242,7 +233,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 8,
   },
   emptyView: {
-    marginTop: '50%',
+    marginTop: '30%',
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -255,7 +246,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 24,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   flatList: {
     paddingHorizontal: 20,

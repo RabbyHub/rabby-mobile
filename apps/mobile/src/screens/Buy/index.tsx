@@ -130,7 +130,7 @@ export const BuyScreen = ({
   ]);
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer type="bg1">
       {isForMultipleAdderss && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}

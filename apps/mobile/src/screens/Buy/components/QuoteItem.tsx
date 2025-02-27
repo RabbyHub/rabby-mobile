@@ -63,8 +63,7 @@ export const BuyQuoteItem = ({
                 {t('page.buy.paymentProviderTips')}
               </Text>
             </View>
-
-            <View style={styles.payList}>
+            <View style={[styles.payList, { flex: 0 }]}>
               {paymentMethods?.map((item, index) => (
                 <View key={index} style={[styles.payBox]}>
                   <Image

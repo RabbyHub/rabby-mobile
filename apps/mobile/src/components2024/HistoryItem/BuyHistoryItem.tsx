@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { CommonHistoryItem } from './CommonHistoryItem';
 import { getTokenAmountText } from './getTokenAmountText';
 import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
+import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
+
 import { Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
+// import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { formatUsdValue } from '@/utils/number';
 import { openapi } from '@/core/request';
 import { usePendingBuyItemData } from '@/screens/Buy/hooks/history';
@@ -22,7 +24,7 @@ interface Props {
 export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
   const { t } = useTranslation();
 
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   const fetchedData = usePendingBuyItemData(
     _data.user_addr,
@@ -40,11 +42,16 @@ export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
   const isPending = data.status === 'pending';
   const isFailed = data.status === 'failed';
 
+  const BuyWalletIcon = useMemo(
+    () => (isLight ? BuyWalletSVG : BuyWalletDarkSVG),
+    [isLight],
+  );
+
   return (
     <CommonHistoryItem
       icon={
         <View style={styles.iconContainer}>
-          <BuyWalletSVG style={styles.walletIcon} />
+          <BuyWalletIcon style={styles.walletIcon} />
           <AssetAvatar logo={data.receive_token.logo_url} size={46} />
         </View>
       }
@@ -56,12 +63,12 @@ export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
               dex: data?.service_provider?.name,
             })}
           </Text>
-          <ArrowRightCC
+          {/* <ArrowRightCC
             style={styles.arrowIcon}
             width={14}
             height={14}
             color={colors2024['neutral-secondary']}
-          />
+          /> */}
         </View>
       }
       isPending={isPending}
