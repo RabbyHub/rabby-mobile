@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { varyAndSortChainItems } from '@/utils/chain';
+import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {
   useSwitchNetTab,
 } from '@/components2024/PillsSwitch/NetSwitchTabs';
@@ -155,6 +155,14 @@ export default function SelectChainWithSummary({
     }
     return [_matteredList, _unmatteredList];
   }, [excludeChains, _matteredList, _unmatteredList]);
+
+  useEffect(() => {
+    const chain = findChainByEnum(value);
+    const isTestnet = !!chain?.isTestnet;
+    if (isTestnet) {
+      onTabChange('testnet');
+    }
+  }, [onTabChange, value]);
 
   const handleToggleSearch = () => {
     if (!canSearch) {
