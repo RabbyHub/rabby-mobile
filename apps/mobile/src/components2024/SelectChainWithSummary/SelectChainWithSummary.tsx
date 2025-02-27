@@ -160,6 +160,7 @@ export default function SelectChainWithSummary({
         inputRef.current?.focus();
       }, 50);
     } else {
+      setSearch('');
       setTimeout(() => {
         inputRef.current?.blur();
       }, 50);
