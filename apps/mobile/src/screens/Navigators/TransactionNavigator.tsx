@@ -30,7 +30,7 @@ import { BuyScreen } from '../Buy';
 import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
 import SendInputScreen from '../Send/SubScreens/SendInput';
 import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
-import SelectWatchScreenScreen from '../Send/SubScreens/SelectWatchAddress';
+import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import ConfirmAddressScreen from '../Send/SubScreens/ConfirmSendAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
 
@@ -119,16 +119,10 @@ export default function TransactionNavigator() {
         })}
       />
       <TransactionStack.Screen
-        name={RootNames.SelectWatchAddress}
+        name={RootNames.SelectTypeAddress}
         component={SelectWatchScreenScreen}
         options={mergeScreenOptions({
-          title: 'Select Watch-Only Address',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
+          title: '',
         })}
       />
       <TransactionStack.Screen

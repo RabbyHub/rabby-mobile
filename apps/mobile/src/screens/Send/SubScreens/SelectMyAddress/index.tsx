@@ -27,12 +27,12 @@ const SelectMyAddressScreen = () => {
   const { accounts } = useMyAccounts();
   const { whitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
-  const handleGotoImportedAddress = () => {
+  const handleGotoImportedAddress = (type: 'watch' | 'safe') => {
     triggerLight();
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.SelectWatchAddress,
-        params: {},
+        screen: RootNames.SelectTypeAddress,
+        params: { type },
       }),
     );
   };
@@ -56,12 +56,12 @@ const SelectMyAddressScreen = () => {
         ListFooterComponent={
           <View style={styles.footer}>
             <OtherAddressNav
-              onPress={handleGotoImportedAddress}
-              text={'Select to Safe Addresses'}
+              onPress={() => handleGotoImportedAddress('watch')}
+              text={'Select to Watch-Only Addresses'}
             />
             <OtherAddressNav
-              onPress={handleGotoImportedAddress}
-              text={'Select to Watch-Only Addresses'}
+              onPress={() => handleGotoImportedAddress('safe')}
+              text={'Select to Safe Addresses'}
             />
             <View style={styles.footerGap} />
           </View>

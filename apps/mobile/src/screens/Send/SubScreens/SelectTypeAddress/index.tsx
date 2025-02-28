@@ -6,14 +6,14 @@ import { useTranslation } from 'react-i18next';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { WhiteListItem } from '../../components/WhiteListItem';
 import EmptyWhiteListHolder from '../../components/EmptyWhiteListHolder';
-import { OtherAddressNav } from '@/screens/Address/AddressListScreen';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 
 const triggerLight = () => {
   trigger('impactLight', {
@@ -22,12 +22,31 @@ const triggerLight = () => {
   });
 };
 
-const SelectWatchScreenScreen = () => {
+const SelectTypeScreenScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const { type } = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SelectTypeAddress)?.params,
+  ) as {
+    type: 'watch' | 'safe';
+  };
   const { accounts } = useAccounts();
   const { whitelist } = useWhitelist();
-  const { navigation } = useSafeSetNavigationOptions();
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <HeaderTitleText2024 style={styles.headerTitleStyle}>
+        Select {type === 'watch' ? 'Watch-Only' : 'Safe'} Address
+      </HeaderTitleText2024>
+    );
+  }, [styles.headerTitleStyle, type]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+    });
+  }, [setNavigationOptions, getHeaderTitle]);
 
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
@@ -52,12 +71,18 @@ const SelectWatchScreenScreen = () => {
   );
 };
 
-export default SelectWatchScreenScreen;
+export default SelectTypeScreenScreen;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   root: {
     position: 'relative',
     paddingHorizontal: 16,
+  },
+  headerTitleStyle: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
   },
   input: {
     backgroundColor: colors2024['neutral-bg-2'],

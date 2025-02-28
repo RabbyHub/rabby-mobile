@@ -244,7 +244,9 @@ export type TransactionNavigatorParamList = {
   [RootNames.SendInput]?: {};
   [RootNames.SelectImportAddress]?: {};
   [RootNames.ConfirmAddress]?: { account: KeyringAccountWithAlias };
-  [RootNames.SelectWatchAddress]?: {};
+  [RootNames.SelectTypeAddress]?: {
+    type: 'watch' | 'safe';
+  };
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;
