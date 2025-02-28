@@ -44,11 +44,12 @@ export const GasAccountDepositPopup: React.FC<{
     if (step === 'pay') {
       return [355];
     } else if (step === 'token') {
-      return [Math.min(height - 200, 652)];
+      // return [Math.min(height - 200, 652)];
+      return ['90%'];
     } else {
       return [355];
     }
-  }, [height, step]);
+  }, [step]);
 
   return (
     <AppBottomSheetModal

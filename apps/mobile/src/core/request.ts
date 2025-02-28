@@ -30,7 +30,8 @@ export const openapi = new OpenApiService({
     //__DEV__ ? 'https://alpha.rabby.io' : 'https://app-api.rabby.io',
     // host: 'https://app-api.rabby.io',
     // toFix
-    host: 'https://alpha.rabby.io',
+    // host: 'https://alpha.rabby.io',
+    host: 'https://gas-account.rabby-api.debank.dbkops.com',
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',

@@ -52,6 +52,8 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   canGotoUseGasAccount?: boolean;
   canDepositUseGasAccount?: boolean;
   rejectApproval?(): void;
+  onDeposit?(): void;
+  gasAccountAddress?: string;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -197,8 +199,9 @@ export const FooterBar: React.FC<Props> = ({
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
-  canDepositUseGasAccount,
   rejectApproval,
+  onDeposit,
+  gasAccountAddress,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -304,13 +307,14 @@ export const FooterBar: React.FC<Props> = ({
         showGasLess &&
         !canUseGasLess &&
         (!securityLevel || !hasUnProcessSecurityResult) ? (
-          payGasByGasAccount ||
-          (!payGasByGasAccount && !canGotoUseGasAccount) ? (
+          payGasByGasAccount ? (
             <GasAccountTips
+              gasAccountAddress={gasAccountAddress}
               gasAccountCost={gasAccountCost}
               isGasAccountLogin={isGasAccountLogin}
               isWalletConnect={isWalletConnect}
               noCustomRPC={noCustomRPC}
+              onDeposit={onDeposit}
               onGotoGasAccount={() => {
                 rejectApproval?.();
                 navigate(RootNames.StackTransaction, {
@@ -319,10 +323,9 @@ export const FooterBar: React.FC<Props> = ({
                 });
               }}
             />
-          ) : (
+          ) : isWatchAddr ? null : (
             <GasLessNotEnough
               canGotoUseGasAccount={canGotoUseGasAccount}
-              canDepositUseGasAccount={canDepositUseGasAccount}
               onChangeGasAccount={onChangeGasAccount}
             />
           )

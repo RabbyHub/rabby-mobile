@@ -454,6 +454,9 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     gasAccountCanPay,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
+    gasAccountCostFn,
+    gasAccountAddress,
+    sig,
   } = useGasAccountTxsCheck({
     isReady,
     txs,
@@ -837,6 +840,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         reqId,
         isGasLess: gasMethod === 'native' ? useGasLess : false,
         isGasAccount: gasAccountCanPay,
+        sig,
       });
 
       return;
@@ -1553,6 +1557,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             // todo check this prop
             canDepositUseGasAccount={canDepositUseGasAccount}
             rejectApproval={rejectApproval}
+            onDeposit={gasAccountCostFn}
+            gasAccountAddress={gasAccountAddress}
             isGasAccountLogin={isGasAccountLogin}
             isWalletConnect={
               currentAccountType === KEYRING_TYPE.WalletConnectKeyring

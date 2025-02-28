@@ -25,6 +25,8 @@ export const useGasAccountTxsCheck = ({
     !!sig && !!accountId,
   );
 
+  const gasAccountAddress = accountId || currentAccount.address;
+
   const [{ value: gasAccountCost }, gasAccountCostFn] = useAsyncFn(async () => {
     if (!isReady) {
       return;
@@ -35,7 +37,7 @@ export const useGasAccountTxsCheck = ({
     console.log('check_txs', sig, accountId, currentAccount);
     return openapi.checkGasAccountTxs({
       sig: sig || '',
-      account_id: accountId || currentAccount.address,
+      account_id: gasAccountAddress,
       tx_list: txs,
     });
   }, [sig, accountId, isReady, txs]);
@@ -48,7 +50,10 @@ export const useGasAccountTxsCheck = ({
     [sig, accountId, isReady, txs],
   );
 
-  // todo
+  // // todo
+  // if (gasAccountCost) {
+  //   gasAccountCost.balance_is_enough = true;
+  // }
   console.log('gasAccountCost', gasAccountCost);
 
   const gasAccountCanPay =
@@ -62,16 +67,19 @@ export const useGasAccountTxsCheck = ({
   const canGotoUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
-    !!gasAccountCost?.balance_is_enough &&
-    !gasAccountCost.chain_not_support &&
-    !!gasAccountCost.is_gas_account;
+    gasAccountCost &&
+    // !!gasAccountCost?.balance_is_enough &&
+    !gasAccountCost.chain_not_support;
+  // &&
+  // !!gasAccountCost.is_gas_account;
 
   const canDepositUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
+    gasAccountCost &&
     !gasAccountCost?.balance_is_enough &&
-    !gasAccountCost?.chain_not_support &&
-    !!gasAccountCost?.is_gas_account;
+    !gasAccountCost.chain_not_support &&
+    !!gasAccountCost.is_gas_account;
 
   return {
     gasAccountCost,
@@ -82,5 +90,8 @@ export const useGasAccountTxsCheck = ({
     gasAccountCanPay,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
+    gasAccountCostFn,
+    gasAccountAddress,
+    sig,
   };
 };

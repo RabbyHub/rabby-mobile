@@ -9,6 +9,8 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
+  gasAccountAddress?: string;
+  onDeposit?(): void;
   isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
   noCustomRPC?: boolean;
@@ -19,6 +21,8 @@ export const GasAccountTips: React.FC<{
   isWalletConnect,
   noCustomRPC,
   onGotoGasAccount,
+  onDeposit,
+  gasAccountAddress,
 }) => {
   const { t } = useTranslation();
 
@@ -65,7 +69,6 @@ export const GasAccountTips: React.FC<{
 
   if (
     !isWalletConnect &&
-    isGasAccountLogin &&
     gasAccountCost?.balance_is_enough &&
     !gasAccountCost.chain_not_support &&
     noCustomRPC
@@ -85,7 +88,7 @@ export const GasAccountTips: React.FC<{
         </TouchableOpacity>
       ) : null}
       <GasAccountDepositTipPopup
-        gasAccountAddress="//todo"
+        gasAccountAddress={gasAccountAddress}
         visible={
           // !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false
           !isWalletConnect ? tipPopupVisible : false
@@ -93,7 +96,7 @@ export const GasAccountTips: React.FC<{
         onClose={() => setTipPopupVisible(false)}
         onDeposit={() => {
           setTipPopupVisible(false);
-          // todo
+          onDeposit?.();
         }}
         onGotoGasAccount={() => {
           setTipPopupVisible(false);

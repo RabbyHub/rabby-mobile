@@ -5,18 +5,19 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
-import { gasAccountProducts } from '@/constant/iap';
-import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { waitPurchaseUpdated } from '@/utils/iap';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRequest } from 'ahooks';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
-import { getProducts, requestPurchase } from 'react-native-iap';
+import { requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { v4 as uuidV4 } from 'uuid';
+import { useGasAccountInfoV2 } from '../hooks';
+import { useIAPProducts } from '@/hooks/iap/useIAPProducts';
+import { useIAPAccountAddress } from '@/hooks/iap/useIAPAccountAddress';
 
 interface Props {
   onDeposit?(): void;
@@ -33,64 +34,57 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
+  const [gasAccountProducts] = useIAPProducts();
+  const [, setIAPAddress] = useIAPAccountAddress();
+
+  const { data: gasAccountInfo, runAsync: runFetchGasAccountInfo } =
+    useGasAccountInfoV2({
+      address: gasAccountAddress,
+    });
 
   const products = useMemo(() => {
     return gasAccountProducts
       .filter(item => +item.price > +minPrice)
       .slice(0, 3);
-  }, [minPrice]);
+  }, [gasAccountProducts, minPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
   const { runAsync: handleDeposit, loading: isPurchasing } = useRequest(
     async (product: (typeof products)[0]) => {
       try {
-        await getProducts({
-          skus: [product.id],
-        });
+        let uuid = (gasAccountInfo?.account as any).uuid;
+        if (!uuid) {
+          uuid = ((await runFetchGasAccountInfo()) as any).account.uuid;
+        }
 
-        const uuid = uuidV4();
-
+        setIAPAddress(gasAccountAddress);
         await Promise.all([
-          requestPurchase(
-            Platform.OS === 'android'
-              ? {
-                  skus: [product.id],
-                  // obfuscatedAccountIdAndroid: gasAccountAddress,
-                  obfuscatedAccountIdAndroid: uuid,
-                }
-              : {
-                  sku: product.id,
-                  // appAccountToken: gasAccountAddress,
-                  appAccountToken: uuid,
-                },
-          ),
           waitPurchaseUpdated(),
+          requestPurchase(
+            Platform.select({
+              ios: {
+                sku: product.id,
+                appAccountToken: uuid,
+              },
+              android: {
+                skus: [product.id],
+                obfuscatedAccountIdAndroid: gasAccountAddress,
+              },
+            })!,
+          ),
         ]);
 
         await onDeposit?.();
         toast.success('Purchase Success!');
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
+        toast.error(typeof e === 'string' ? e : e?.message);
       }
     },
     {
       manual: true,
     },
   );
-
-  const { accounts } = useAccounts({ disableAutoFetch: true });
-
-  // const [depositAccount, setDepositAccount] = useState(() => {
-  //   const last = gasAccountService.getLastDepositAccount() || account!;
-  //   if (
-  //     accounts.some(
-  //       a => isSameAddress(a.address, last.address) && a.type === last.type,
-  //     )
-  //   ) {
-  //     return last as Account;
-  //   }
-  //   return account! as Account;
-  // });
 
   return (
     <KeyboardAwareScrollView
@@ -107,7 +101,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         </Text>
         <Text style={styles.description}>
           {t('page.gasAccount.depositPayPopup.balance')}
-          todo $0.1
+          {formatUsdValue(gasAccountInfo?.account?.balance || 0)}
         </Text>
 
         <Text style={styles.tokenLabel}>

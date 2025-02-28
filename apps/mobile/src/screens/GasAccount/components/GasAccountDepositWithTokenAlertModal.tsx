@@ -65,8 +65,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
   },
   container: {
-    maxWidth: 340,
-    marginHorizontal: 20,
+    maxWidth: 352,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
     paddingHorizontal: 20,
@@ -101,6 +100,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // width: '100%',
     // height: 40,
     height: 48,
+    flex: 1,
   },
   buttonStyle: {},
 }));

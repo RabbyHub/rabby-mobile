@@ -162,18 +162,26 @@ export const GasAccountCard: React.FC<Props> = ({
             style={{
               flex: 1,
             }}>
-            <Tip
-              content={
-                'Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance'
-              }>
+            {gasAccountInfo.has_iap_order ? (
+              <Tip
+                content={
+                  'Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance'
+                }>
+                <Button
+                  type="ghost"
+                  onPress={onWithdrawPress}
+                  titleStyle={[styles.btnTitle, styles.btnTitleGhostDisabled]}
+                  title={t('page.gasAccount.withdraw')}
+                  disabled
+                />
+              </Tip>
+            ) : (
               <Button
                 type="ghost"
                 onPress={onWithdrawPress}
-                titleStyle={[styles.btnTitle, styles.btnTitleGhostDisabled]}
                 title={t('page.gasAccount.withdraw')}
-                disabled
               />
-            </Tip>
+            )}
           </View>
           {/* <Pressable
             style={{

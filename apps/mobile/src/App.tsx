@@ -13,7 +13,7 @@ import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
-import { withIAPContext } from 'react-native-iap';
+import { setup, withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -36,6 +36,7 @@ import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
+setup({ storekitMode: 'STOREKIT2_MODE' });
 
 const rneuiTheme = createTheme({
   lightColors: {
