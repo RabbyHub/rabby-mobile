@@ -18,6 +18,7 @@ import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
 import { BuyHistoryList, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BuyItemEntity } from '../entities/buyItem';
+import dayjs from 'dayjs';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -208,8 +209,7 @@ export const useSyncHistoryDB = (
       }
 
       const latestTime = (await BuyItemEntity.getLatestTime(address)) || 0;
-      const isExpiredTimeAgo =
-        (new Date().getTime() - 15 * 24 * 60 * 60 * 1000) / 1000; // 15 days ago
+      const isExpiredTimeAgo = dayjs().subtract(15, 'days').unix(); // 15 days ago
 
       const isAddUpdate = latestTime > isExpiredTimeAgo;
 

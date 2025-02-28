@@ -9,6 +9,7 @@ import {
   BuyHistoryList,
 } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
+import dayjs from 'dayjs';
 import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { runOnJS } from 'react-native-reanimated';
@@ -78,7 +79,7 @@ export const usePendingBuyItemData = (
 };
 
 const syncBuyHistory = async (addr: string, data: BuyHistoryList) => {
-  const isExpiredTimeAgo = new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
+  const isExpiredTimeAgo = dayjs().subtract(15, 'days').unix(); // 15 days ago
 
   const latestTime = (await BuyItemEntity.getLatestTime(addr)) || 0;
   const pendingIdList = ((await BuyItemEntity.getAllPending(addr)) || [])
