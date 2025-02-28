@@ -1,31 +1,20 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
+import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { openapi } from '@/core/request';
-import { preferenceService, transactionHistoryService } from '@/core/services';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { findChain, findChainByServerID } from '@/utils/chain';
+import { preferenceService } from '@/core/services';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
-  useMount,
   useRequest,
 } from 'ahooks';
-import PQueue from 'p-queue';
-import { last, unionBy, orderBy, debounce } from 'lodash';
-import { Text, View } from 'react-native';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { unionBy, orderBy, debounce } from 'lodash';
+import { View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import {
+  BuyHistoryItem,
   TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -36,10 +25,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { toast } from '@/components2024/Toast';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import {
@@ -47,10 +33,7 @@ import {
   judgeIsSmallUsdTx,
 } from '@/screens/Transaction/components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-
-const PAGE_COUNT = 200;
+import { BuyItemEntity } from '@/databases/entities/buyItem';
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -59,39 +42,18 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   key: string;
   account?: KeyringAccountWithAlias;
+  isLocalBuy?: boolean;
+  buyDetails?: BuyItemEntity & BuyHistoryItem;
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
 }
-
-interface IFetchHistory {
-  last: number;
-  list: HistoryDisplayItem[];
-}
-
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('empty', () => {
-      if (q.pending <= 0) {
-        resolve(null);
-      }
-    });
-  });
-};
 
 function History(): JSX.Element {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
-  const route =
-    useRoute<
-      GetNestedScreenNavigationProps<
-        'TransactionNavigatorParamList',
-        'MultiAddressHistory'
-      >['route']
-    >();
-  const { tokenItem, isInTokenDetail } = route.params || {};
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
@@ -99,10 +61,8 @@ function History(): JSX.Element {
   const lastMap = useRef<Record<string, number>>({});
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const { styles } = useTheme2024({ getStyle });
+  const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
-  const navigation = useRabbyAppNavigation();
-  const { bottom } = useSafeAreaInsets();
   const {
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -110,186 +70,61 @@ function History(): JSX.Element {
   } = useSceneAccountInfo({
     forScene: 'MultiHistory',
   });
-  const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
-  );
-
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
-  const { projectDict, tokenDict } = useHistoryTokenDict();
+  const { projectDict, tokenDict, historyEnsureNoData } = useHistoryTokenDict();
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
-
     const addresses = isSceneUsingAllAccounts
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
-    const fetchHistoryFromDbData = async (count?: number) => {
+    const fetchHistoryFromDbData = async (isFirst?: boolean) => {
       const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
         addresses,
-        count,
+        isFirst ? 50 : 10000,
+        isFirst, // first not show scam tx
+        'send',
       );
+
+      if (isFirst) {
+        setCurrentNoDbData(historyList.length === 0);
+      }
+
       const pinedQueue = preferenceService.getPinToken();
-      const list = historyList.map(
-        item =>
-          ({
-            ...ensureHistoryListItemFromDb(item),
-            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
-            tokenDict,
-            projectDict,
-            isShowSuccess: historySuccessList.includes(
-              `${item.owner_addr}-${item.txHash}`,
-            ),
-          } as HistoryDisplayItem),
-      );
+      const list = historyList.map(item => {
+        return {
+          ...ensureHistoryListItemFromDb(item),
+          isLocalBuy: false,
+          isLocalSwap: false,
+          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
+          tokenDict,
+          projectDict,
+        } as HistoryDisplayItem;
+      });
+
       setDbData(list);
       return list;
     };
     if (!dbData.length) {
-      // first init 20 count
-      await fetchHistoryFromDbData(50);
+      // first init 50 count
+      await fetchHistoryFromDbData(true);
     }
 
     // later fetch all data
-    const list = await fetchHistoryFromDbData();
+    const list = await fetchHistoryFromDbData(false);
     return list;
   };
 
-  const isNeedFetchFromApi = useMemo(() => {
-    const isUseingContactsOrSafe =
-      !isSceneUsingAllAccounts &&
-      (finalSceneCurrentAccount?.type === KEYRING_CLASS.WATCH ||
-        finalSceneCurrentAccount?.type === KEYRING_CLASS.GNOSIS);
-    return isInTokenDetail || isUseingContactsOrSafe;
-  }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, isInTokenDetail]);
-
   const batchFetchData = async () => {
-    const list: HistoryDisplayItem[] = [];
-
-    if (!isNeedFetchFromApi) {
-      const res = await batchFetchDataV2();
-      if (!isReady.current) {
-        isReady.current = true;
-      }
-      return { list: res };
-    } else {
-      const accountList = isSceneUsingAllAccounts
-        ? unionAccounts
-        : [finalSceneCurrentAccount];
-      const addresses = isSceneUsingAllAccounts
-        ? unionAccounts.map(account => account.address.toLowerCase())
-        : [finalSceneCurrentAccount?.address.toLowerCase()!];
-
-      // just for single token history
-      const swapList = await SwapItemEntity.getAllHistoryItem(addresses);
-      const queue = new PQueue({
-        interval: 2000,
-        intervalCap: 10,
-      });
-      for (let i = 0; i < accountList.length; i++) {
-        queue.add(async () => {
-          const account = accountList[i];
-          if (!account) {
-            return;
-          }
-          const addr = account.address.toLowerCase();
-          if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
-            return;
-          }
-          const needFilter = isInTokenDetail && tokenItem;
-          const result = needFilter
-            ? await fetchData(
-                addr,
-                lastMap.current[addr] || 0,
-                tokenItem.chain,
-                tokenItem._tokenId,
-              )
-            : await fetchData(addr, lastMap.current[addr] || 0);
-
-          if (result.list.length < PAGE_COUNT) {
-            hasMoreMap.current[addr] = false;
-          } else {
-            hasMoreMap.current[addr] = true;
-          }
-          lastMap.current[addr] = result.last || 0;
-          // const pinedQueue = preferenceService.getPinToken();
-          list.push(
-            ...result.list.map(item => ({
-              ...item,
-              isLocalSwap: swapList.some(e => e.tx_id === item.id),
-              account,
-              // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
-            })),
-          );
-        });
-      }
-      if (!isReady.current) {
-        isReady.current = true;
-      }
-      if (accountList.length > 0) {
-        await waitQueueFinished(queue);
-      }
-      return { list: list };
+    const res = await batchFetchDataV2();
+    if (!isReady.current) {
+      isReady.current = true;
     }
-  };
-
-  const fetchData = async (
-    address: string,
-    startTime = 0,
-    chain_id?: string,
-    token_id?: string,
-  ): Promise<IFetchHistory> => {
-    if (!address) {
-      throw new Error('no account');
-    }
-
-    const getHistory = !isInTokenDetail
-      ? openapi.getAllTxHistory
-      : openapi.listTxHisotry;
-    try {
-      const res = await getHistory({
-        id: address,
-        start_time: startTime,
-        page_count: PAGE_COUNT,
-        chain_id,
-        token_id,
-      });
-
-      const {
-        project_dict,
-        cate_dict,
-        token_dict,
-        token_uuid_dict,
-        history_list: list,
-      } = res;
-      const displayList = list
-        .map(item => ({
-          ...item,
-          projectDict: project_dict,
-          cateDict: cate_dict,
-          tokenDict: token_dict || token_uuid_dict,
-          address,
-          key: `${address}_${item.chain}_${item.id}`,
-        }))
-        .sort((v1, v2) => v2.time_at - v1.time_at);
-      return {
-        last: last(displayList)?.time_at || 0,
-        list: displayList,
-      };
-    } catch (e) {
-      toast.error(`${address} fetch failed, ${e}`);
-      return {
-        last: 0,
-        list: [],
-      };
-    }
+    return { list: res };
   };
 
   const batchFetchLocalTx = async () => {
-    if (isInTokenDetail) {
-      return [];
-    }
-
     const list: TransactionGroup[] = [];
     const accountList = isSceneUsingAllAccounts
       ? unionAccounts
@@ -299,53 +134,9 @@ function History(): JSX.Element {
       if (!account) {
         continue;
       }
-      const addr = account.address.toLowerCase();
-      const localTxs = await fetchLocalTx(addr);
-      list.push(...localTxs);
     }
     return list;
   };
-
-  const fetchLocalTx = useMemoizedFn(async (address: string) => {
-    const { pendings: _pendings, completeds: _completeds } =
-      transactionHistoryService.getList(address);
-
-    const pendings = _pendings.filter(item => {
-      const chain = findChain({ id: item.chainId });
-      return !chain?.isTestnet;
-    });
-
-    const completeds = _completeds.filter(item => {
-      const chain = findChain({ id: item.chainId });
-      return !chain?.isTestnet;
-    });
-
-    return [
-      ...pendings,
-      ...completeds.filter(item => {
-        const isSynced =
-          !!allTxHistory.find(tx => {
-            return (
-              tx.id === item.maxGasTx.hash &&
-              findChainByServerID(tx.chain)?.id === item.chainId
-            );
-          }) || item.isSynced;
-
-        if (isSynced && !item.isSynced) {
-          transactionHistoryService.updateTx({
-            ...item.maxGasTx,
-            isSynced: true,
-          });
-        }
-
-        return (
-          item.createdAt >= Date.now() - 3600000 && // gap smaller 1 hour
-          !item.isSubmitFailed && // not submit failed
-          !isSynced // not has synced and not in history list
-        );
-      }),
-    ];
-  });
 
   const { data: groups, runAsync: runFetchLocalTx } = useRequest(async () => {
     return batchFetchLocalTx();
@@ -359,40 +150,22 @@ function History(): JSX.Element {
     setCurrentPage(0);
     runFetchLocalTx();
 
-    if (isNeedFetchFromApi) {
-      reloadAsync();
-    } else {
-      isSceneUsingAllAccounts
-        ? syncTop10History(true)
-        : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
-    }
+    isSceneUsingAllAccounts
+      ? syncTop10History(true)
+      : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
   });
 
   useEffect(() => {
     if (isReady.current) {
-      if (!isNeedFetchFromApi) {
-        batchFetchDataV2();
-      } else {
-        cancel();
-        refresh();
-      }
+      batchFetchDataV2();
+      runFetchLocalTx();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
-  const {
-    data: _data,
-    loading,
-    loadingMore,
-    loadMore,
-    reloadAsync,
-    cancel,
-  } = useInfiniteScroll(() => batchFetchData(), {
+  const { loadingMore, loadMore } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: () => {
-      if (!isNeedFetchFromApi) {
-        return true;
-      }
-      return Object.values(hasMoreMap.current).every(item => !item);
+      return true;
     },
     onSuccess() {
       setCurrentPage(currentPage + 1);
@@ -416,27 +189,13 @@ function History(): JSX.Element {
   });
 
   const data = useMemo(() => {
-    return isNeedFetchFromApi ? _data : { list: dbData };
-  }, [_data, isNeedFetchFromApi, dbData]);
+    return { list: dbData };
+  }, [dbData]);
 
   const allTxHistory = useMemo(() => {
-    return orderBy(data?.list || [], 'time_at', 'desc');
+    // make receive front of send by cate_id order by asc
+    return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
   }, [data]);
-
-  useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
-    setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList();
-  });
-
-  const displayList = useMemo(() => {
-    return allTxHistory.filter(tx => {
-      if (isSceneUsingAllAccounts) {
-        return true;
-      }
-      return isSameAddress(finalSceneCurrentAccount?.address || '', tx.address);
-    });
-  }, [allTxHistory, isSceneUsingAllAccounts, finalSceneCurrentAccount]);
 
   useFocusEffect(() => {
     eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
@@ -445,18 +204,44 @@ function History(): JSX.Element {
     };
   });
 
+  const ensureCurrentNoDbData = useMemo(() => {
+    const addresses = isSceneUsingAllAccounts
+      ? unionAccounts.map(account => account.address.toLowerCase())
+      : [finalSceneCurrentAccount?.address.toLowerCase()!];
+    const isNodata = addresses.every(address => {
+      return historyEnsureNoData[address];
+    });
+    return isNodata;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyEnsureNoData, sceneCurrentAccountDepKey]);
+
+  const fetchFromDbLoading = useMemo(
+    () =>
+      currentNoDbData &&
+      !allTxHistory.length &&
+      !groups?.length &&
+      !ensureCurrentNoDbData,
+    [
+      currentNoDbData,
+      allTxHistory.length,
+      groups?.length,
+      ensureCurrentNoDbData,
+    ],
+  );
+
   return (
-    <View
-      style={{ paddingBottom: bottom, paddingTop: 0, position: 'relative' }}>
+    <View style={{ paddingTop: 0, position: 'relative' }}>
       <HistoryList
-        historySuccessList={historySuccessList}
-        list={[...(groups || []), ...(displayList || [])]}
+        historySuccessList={[]}
+        list={[...(groups || []), ...(allTxHistory || [])]}
         localTxList={groups}
-        loading={loading}
+        loading={fetchFromDbLoading}
+        ensureCurrentNoDbData={ensureCurrentNoDbData}
         loadingMore={loadingMore}
-        refreshLoading={isNeedFetchFromApi && loading}
+        refreshLoading={false}
         isForMultipleAdderss
         loadMore={loadMore}
+        onRefresh={refresh}
       />
     </View>
   );
@@ -489,7 +274,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     right: 16,
     alignItems: 'center',
-    width: 250,
+    width: 270,
     // height: 56,
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 12,
@@ -551,7 +336,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 24,
-    color: colors2024['netural-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   netTabs: {
     marginBottom: 12,

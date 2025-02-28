@@ -228,13 +228,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     owner_addrs: string[],
     count?: number,
     filterNotScam?: boolean,
+    cate_id?: string,
   ) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
-    const currentTime = new Date().getTime();
-    console.log('getAllHistoryItemSortedByTime exec');
-
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
@@ -246,12 +244,13 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         is_scam: false,
       });
     }
+    if (cate_id) {
+      queryBuilder.andWhere('historyitem.cate_id = :cate_id', {
+        cate_id,
+      });
+    }
 
     const res = await queryBuilder.getMany();
-    console.log(
-      'getAllHistoryItemSortedByTime exec done',
-      new Date().getTime() - currentTime,
-    );
     return res;
   }
   static async deleteForAddress(owner_addr: string) {
