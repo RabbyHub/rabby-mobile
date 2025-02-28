@@ -257,6 +257,10 @@ const MiniSignTx = ({
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
 
+  const _currentAccount = useMemo(() => {
+    return preferenceService.getCurrentAccount()!;
+  }, []);
+
   const [txsResult, setTxsResult] = useState<
     {
       tx: Tx;
@@ -438,6 +442,7 @@ const MiniSignTx = ({
     txs: gasAccountTxs,
     noCustomRPC,
     isSupportedAddr,
+    currentAccount: _currentAccount,
   });
 
   useEffect(() => {

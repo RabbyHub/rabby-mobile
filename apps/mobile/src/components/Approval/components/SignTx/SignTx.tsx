@@ -282,6 +282,12 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
 
+  const _currentAccount = useMemo(() => {
+    return isGnosis && account
+      ? account
+      : preferenceService.getCurrentAccount()!;
+  }, [account, isGnosis]);
+
   // useSignPermissionCheck({
   //   origin,
   //   chainId,
@@ -453,6 +459,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     txs,
     noCustomRPC,
     isSupportedAddr,
+    currentAccount: _currentAccount,
   });
 
   useEffect(() => {

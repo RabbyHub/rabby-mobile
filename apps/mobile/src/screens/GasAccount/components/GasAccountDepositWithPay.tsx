@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 import { getProducts, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { v4 as uuidV4 } from 'uuid';
 
 interface Props {
   onDeposit?(): void;
@@ -47,16 +48,20 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
           skus: [product.id],
         });
 
+        const uuid = uuidV4();
+
         await Promise.all([
           requestPurchase(
             Platform.OS === 'android'
               ? {
                   skus: [product.id],
-                  obfuscatedAccountIdAndroid: gasAccountAddress,
+                  // obfuscatedAccountIdAndroid: gasAccountAddress,
+                  obfuscatedAccountIdAndroid: uuid,
                 }
               : {
                   sku: product.id,
-                  appAccountToken: gasAccountAddress,
+                  // appAccountToken: gasAccountAddress,
+                  appAccountToken: uuid,
                 },
           ),
           waitPurchaseUpdated(),

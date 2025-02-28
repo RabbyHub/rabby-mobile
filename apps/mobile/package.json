@@ -183,6 +183,7 @@
     "styled-components": "^6.1.1",
     "typeorm": "^0.3.20",
     "use-count-up": "^3.0.1",
+    "uuid": "11.1.0",
     "viem": "^2.17.4",
     "web3": "^4.3.0",
     "web3-eth-abi": "1.7.0",

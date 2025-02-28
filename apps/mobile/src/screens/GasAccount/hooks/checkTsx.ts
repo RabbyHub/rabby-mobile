@@ -4,17 +4,20 @@ import { useGasAccountSign } from './atom';
 import { openapi } from '@/core/request';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
+import { Account } from '@/core/services/preference';
 
 export const useGasAccountTxsCheck = ({
   isReady,
   txs,
   noCustomRPC,
   isSupportedAddr,
+  currentAccount,
 }: {
   isReady: boolean;
   txs: Tx[];
   noCustomRPC: boolean;
   isSupportedAddr: boolean;
+  currentAccount: Account;
 }) => {
   const [gasMethod, setGasMethod] = useState<'native' | 'gasAccount'>('native');
   const { sig, accountId } = useGasAccountSign();
@@ -29,10 +32,10 @@ export const useGasAccountTxsCheck = ({
     if (!sig || !accountId) {
       setIsGasAccountLogin(false);
     }
-    console.log('check_txs', sig, accountId);
+    console.log('check_txs', sig, accountId, currentAccount);
     return openapi.checkGasAccountTxs({
       sig: sig || '',
-      account_id: accountId!,
+      account_id: accountId || currentAccount.address,
       tx_list: txs,
     });
   }, [sig, accountId, isReady, txs]);
