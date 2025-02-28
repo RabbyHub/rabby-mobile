@@ -115,6 +115,12 @@ function SendHistoryScreen() {
     () => currentNoDbData && !allTxHistory.length && !ensureCurrentNoDbData,
     [currentNoDbData, allTxHistory.length, ensureCurrentNoDbData],
   );
+  const handlePressItem = (item: HistoryDisplayItem) => {
+    console.log(
+      '🔍 CUSTOM_LOGGER:=>: HistoryDisplayItem',
+      item.sends[0].to_addr,
+    );
+  };
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
@@ -125,6 +131,7 @@ function SendHistoryScreen() {
         refreshLoading={false}
         isForMultipleAdderss
         onRefresh={refresh}
+        onPresssItem={handlePressItem}
       />
     </NormalScreenContainer2024>
   );
