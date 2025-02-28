@@ -18,6 +18,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useGasAccountInfoV2 } from '../hooks';
 import { useIAPProducts } from '@/hooks/iap/useIAPProducts';
 import { useIAPAccountAddress } from '@/hooks/iap/useIAPAccountAddress';
+import { gasAccountProducts } from '@/constant/iap';
 
 interface Props {
   onDeposit?(): void;
@@ -34,7 +35,6 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
-  const [gasAccountProducts] = useIAPProducts();
   const [, setIAPAddress] = useIAPAccountAddress();
 
   const { data: gasAccountInfo, runAsync: runFetchGasAccountInfo } =
@@ -43,18 +43,21 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
     });
 
   const products = useMemo(() => {
-    return gasAccountProducts
-      .filter(item => +item.price > +minPrice)
-      .slice(0, 3);
-  }, [gasAccountProducts, minPrice]);
+    return (
+      gasAccountProducts
+        .filter(item => +item.price > +minPrice)
+        // .slice(0, 3)
+        .slice(1, 4)
+    );
+  }, [minPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
   const { runAsync: handleDeposit, loading: isPurchasing } = useRequest(
     async (product: (typeof products)[0]) => {
       try {
-        let uuid = (gasAccountInfo?.account as any).uuid;
+        let uuid = gasAccountInfo?.account?.uuid;
         if (!uuid) {
-          uuid = ((await runFetchGasAccountInfo()) as any).account.uuid;
+          uuid = (await runFetchGasAccountInfo()).account.uuid;
         }
 
         setIAPAddress(gasAccountAddress);

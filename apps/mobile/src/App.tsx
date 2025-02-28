@@ -36,7 +36,6 @@ import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
-setup({ storekitMode: 'STOREKIT2_MODE' });
 
 const rneuiTheme = createTheme({
   lightColors: {

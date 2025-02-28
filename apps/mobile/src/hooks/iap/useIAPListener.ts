@@ -2,11 +2,11 @@ import { devLog } from '@/utils/logger';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
+import { gasAccountProducts } from '@/constant/iap';
 import { openapi } from '@/core/request';
 import { eventBus, EVENTS } from '@/utils/events';
 import * as Sentry from '@sentry/react-native';
-import BigNumber from 'bignumber.js';
-import { keyBy } from 'lodash';
+import { useMemoizedFn } from 'ahooks';
 import {
   finishTransaction,
   flushFailedPurchasesCachedAsPendingAndroid,
@@ -17,14 +17,9 @@ import {
   purchaseErrorListener,
   purchaseUpdatedListener,
 } from 'react-native-iap';
-import { useIAPProducts } from './useIAPProducts';
-import { gasAccountProducts } from '@/constant/iap';
-import { useMemoizedFn } from 'ahooks';
 import { useIAPAccountAddress } from './useIAPAccountAddress';
-import { error } from 'console';
 
 export const useIAPListener = () => {
-  const [, setProducts] = useIAPProducts();
   const [address] = useIAPAccountAddress();
 
   const handlePurchase = useMemoizedFn(async (purchase: Purchase) => {
@@ -68,28 +63,10 @@ export const useIAPListener = () => {
     const init = async () => {
       try {
         await initConnection();
-        const res = await getProducts({
+        getProducts({
           skus: gasAccountProducts.map(item => item.id),
         });
-        if (res.length) {
-          setProducts(prev => {
-            const dict = keyBy(res, 'productId');
-            return prev
-              .map(item => {
-                if (!dict[item.id]) {
-                  return null;
-                }
-                return {
-                  ...item,
-                  total: dict[item.id].price,
-                  fee: new BigNumber(dict[item.id].price)
-                    .minus(item.price)
-                    .toString(),
-                };
-              })
-              .filter(item => !!item);
-          });
-        }
+
         devLog('init IAP listener');
         if (Platform.OS === 'android') {
           flushFailedPurchasesCachedAsPendingAndroid();
@@ -117,5 +94,5 @@ export const useIAPListener = () => {
       purchaseErrorSubscription?.remove();
       purchaseErrorSubscription = null;
     };
-  }, [handlePurchase, setProducts]);
+  }, [handlePurchase]);
 };
