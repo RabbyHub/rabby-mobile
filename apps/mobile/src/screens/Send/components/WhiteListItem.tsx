@@ -18,13 +18,13 @@ import {
   ContextMenuView,
   MenuAction,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { useWhitelist } from '@/hooks/whitelist';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -41,6 +41,7 @@ export const WhiteListItem = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [isPressing, setIsPressing] = React.useState(false);
+  const { removeWhitelist } = useWhitelist({ disableAutoFetch: true });
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
 
@@ -54,11 +55,15 @@ export const WhiteListItem = ({
         androidIconName: 'ic_rabby_menu_un_pin',
         key: 'pin',
         action() {
-          console.log('🔍 CUSTOM_LOGGER:=>: handlePinned');
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+          removeWhitelist(account.address);
         },
       },
     ] as MenuAction[];
-  }, [isDarkTheme]);
+  }, [account.address, isDarkTheme, removeWhitelist]);
   return (
     <ContextMenuView
       menuConfig={{

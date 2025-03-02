@@ -11,7 +11,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useMyAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/dist/types';
 
@@ -23,9 +23,8 @@ const triggerLight = () => {
 };
 
 const SelectMyAddressScreen = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { accounts } = useMyAccounts();
   const { accounts: allAccounts } = useAccounts();
   const { whitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
@@ -42,7 +41,12 @@ const SelectMyAddressScreen = () => {
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <FlatList
-        data={accounts.sort((a, b) => (b.balance || 0) - (a.balance || 0))}
+        data={allAccounts
+          .filter(
+            a =>
+              a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+          )
+          .sort((a, b) => (b.balance || 0) - (a.balance || 0))}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
         renderItem={({ item }) => (
