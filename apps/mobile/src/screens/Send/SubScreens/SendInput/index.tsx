@@ -1,12 +1,10 @@
+import React from 'react';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
-import { apisAddress } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate, replaceToFirst } from '@/utils/navigation';
+import { navigate } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React, { useEffect } from 'react';
 import {
   Keyboard,
   TouchableOpacity,
@@ -19,7 +17,8 @@ import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
-import { ellipsisAddress } from '@/utils/address';
+import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -40,6 +39,9 @@ const SendInputScreen = () => {
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
+  const navigation = useRabbyAppNavigation();
+
+  const { findAccount } = useWhiteListAddress(true);
 
   const { t } = useTranslation();
 
@@ -50,24 +52,29 @@ const SendInputScreen = () => {
     }
 
     let address = input;
-    console.log('address', address);
     if (!isValidHexAddress(address as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
     }
     try {
       Keyboard.dismiss();
-      // await apisAddress.addWatchAddress(address);
-      console.log('🔍 CUSTOM_LOGGER:=>: goto confirm send address');
-      // replaceToFirst(RootNames.StackAddress, {
-      //   screen: RootNames.ImportSuccess2024,
-      //   params: {
-      //     type: KEYRING_TYPE.WatchAddressKeyring,
-      //     address: address,
-      //     alias: ellipsisAddress(address),
-      //     brandName: KEYRING_CLASS.WATCH,
-      //   },
-      // });
+      const { inWhitelist, account } = findAccount(address);
+      if (inWhitelist) {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Send,
+          params: {
+            toAddress: account.address,
+            addressBrandName: account.brandName,
+          },
+        });
+      } else {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.ConfirmAddress,
+          params: {
+            account,
+          },
+        });
+      }
     } catch (err: any) {}
   };
 
