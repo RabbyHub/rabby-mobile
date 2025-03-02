@@ -2,29 +2,19 @@ import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { FlatList, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTranslation } from 'react-i18next';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { WhiteListItem } from '../../components/WhiteListItem';
 import EmptyWhiteListHolder from '../../components/EmptyWhiteListHolder';
-import { trigger } from 'react-native-haptic-feedback';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useMyAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
-
-const triggerLight = () => {
-  trigger('impactLight', {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  });
-};
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 
 const SelectTypeScreenScreen = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { type } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SelectTypeAddress)?.params,
   ) as {
@@ -32,7 +22,7 @@ const SelectTypeScreenScreen = () => {
   };
   const { accounts } = useAccounts();
   const { whitelist } = useWhitelist();
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const getHeaderTitle = React.useCallback(() => {
     return (
@@ -52,7 +42,9 @@ const SelectTypeScreenScreen = () => {
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <FlatList
         data={accounts.filter(
-          acc => acc.type === KEYRING_TYPE.WatchAddressKeyring,
+          acc =>
+            acc.type ===
+            (type === 'watch' ? KEYRING_CLASS.WATCH : KEYRING_CLASS.GNOSIS),
         )}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}

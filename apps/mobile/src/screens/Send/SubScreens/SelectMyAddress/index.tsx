@@ -11,8 +11,9 @@ import { trigger } from 'react-native-haptic-feedback';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { useMyAccounts } from '@/hooks/account';
+import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/dist/types';
 
 const triggerLight = () => {
   trigger('impactLight', {
@@ -25,6 +26,7 @@ const SelectMyAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
+  const { accounts: allAccounts } = useAccounts();
   const { whitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
   const handleGotoImportedAddress = (type: 'watch' | 'safe') => {
@@ -55,14 +57,20 @@ const SelectMyAddressScreen = () => {
         ListEmptyComponent={EmptyWhiteListHolder}
         ListFooterComponent={
           <View style={styles.footer}>
-            <OtherAddressNav
-              onPress={() => handleGotoImportedAddress('watch')}
-              text={'Select to Watch-Only Addresses'}
-            />
-            <OtherAddressNav
-              onPress={() => handleGotoImportedAddress('safe')}
-              text={'Select to Safe Addresses'}
-            />
+            {!!allAccounts.filter(acc => acc.type === KEYRING_CLASS.WATCH)
+              .length && (
+              <OtherAddressNav
+                onPress={() => handleGotoImportedAddress('watch')}
+                text={'Select to Watch-Only Addresses'}
+              />
+            )}
+            {!!allAccounts.filter(acc => acc.brandName === KEYRING_CLASS.GNOSIS)
+              .length && (
+              <OtherAddressNav
+                onPress={() => handleGotoImportedAddress('safe')}
+                text={'Select to Safe Addresses'}
+              />
+            )}
             <View style={styles.footerGap} />
           </View>
         }

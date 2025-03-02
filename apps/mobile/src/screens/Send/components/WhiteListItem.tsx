@@ -81,15 +81,22 @@ export const WhiteListItem = ({
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
           });
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
+          if (inWhiteList) {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Send,
+              params: {
+                toAddress: account.address,
+                addressBrandName: account.brandName,
+              },
+            });
+          } else {
+            navigation.push(RootNames.StackTransaction, {
               screen: RootNames.ConfirmAddress,
               params: {
                 account,
               },
-            }),
-          );
-          console.log('🔍 CUSTOM_LOGGER:=>: account', account);
+            });
+          }
         }}
         onLongPress={() => {
           trigger('impactLight', {
