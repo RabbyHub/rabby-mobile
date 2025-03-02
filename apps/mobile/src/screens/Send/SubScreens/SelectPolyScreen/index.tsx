@@ -12,8 +12,13 @@ import { trigger } from 'react-native-haptic-feedback';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
+import { AppRootName, RootNames } from '@/constant/layout';
 import { RcIconAddWhiteList } from '@/assets2024/icons/whitelist';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -64,12 +69,20 @@ const SendPolyScreen = () => {
   };
   const handleGotoAddWhitelist = () => {
     triggerLight();
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.SendHistory,
-        params: {},
-      }),
-    );
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      navigateTo: (screen: AppRootName, params?: object) => {
+        navigation.dispatch(
+          StackActions.push(RootNames.StackTransaction, {
+            screen,
+            params,
+          }),
+        );
+      },
+    });
   };
 
   return (
