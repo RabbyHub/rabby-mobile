@@ -57,7 +57,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     height: 52,
   },
   loginContainer: {
-    paddingTop: 34,
+    paddingTop: 38,
     paddingBottom: 20,
     paddingHorizontal: 16,
     marginHorizontal: 20,

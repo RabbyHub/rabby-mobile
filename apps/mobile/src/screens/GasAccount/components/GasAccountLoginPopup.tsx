@@ -1,9 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-// import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -12,15 +6,20 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, useWindowDimensions, View } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
+import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
-import { SelectGasAccountList } from './SelectGasAccountList';
 import { useGasAccountSign } from '../hooks/atom';
+import { SelectGasAccountList } from './SelectGasAccountList';
 
 const GasAccountLoginContent: React.FC<{
-  onClose(): void;
-}> = ({ onClose }) => {
+  onLogin?(): void;
+}> = ({ onLogin }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { login, logout } = useGasAccountMethods();
@@ -48,15 +47,13 @@ const GasAccountLoginContent: React.FC<{
         await logout();
       }
       await login(account);
-      onClose?.();
+      onLogin?.();
     } catch (error) {
       console.error(error);
     }
 
     setLoading(false);
   });
-
-  // const list = useSortAddressList(filterAccounts);
 
   if (currentAccount) {
     return (
@@ -98,17 +95,21 @@ const GasAccountLoginContent: React.FC<{
   return null;
 };
 
-export const GasAccountLoginPopup = props => {
+export const GasAccountLoginPopup: React.FC<{
+  visible?: boolean;
+  onClose?(): void;
+  onLogin?(): void;
+}> = ({ visible, onClose, onLogin }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
-    if (!props?.visible) {
+    if (!visible) {
       modalRef.current?.close();
     } else {
       modalRef.current?.present();
     }
-  }, [props?.visible]);
+  }, [visible]);
 
   const { height } = useWindowDimensions();
 
@@ -116,14 +117,14 @@ export const GasAccountLoginPopup = props => {
     <AppBottomSheetModal
       enableContentPanningGesture={false} // has scorll list
       snapPoints={[Math.min(height - 200, 652)]}
-      onDismiss={props.onCancel || props.onClose}
+      onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
         linearGradientType: 'linear',
         colors: colors2024,
       })}>
       <BottomSheetView style={styles.popup}>
-        <GasAccountLoginContent onClose={props.onCancel || props.onClose} />
+        <GasAccountLoginContent onLogin={onLogin} />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

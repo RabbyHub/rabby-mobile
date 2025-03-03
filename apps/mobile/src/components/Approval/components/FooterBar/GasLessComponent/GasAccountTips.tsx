@@ -9,7 +9,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
-  gasAccountAddress?: string;
+  gasAccountAddress: string;
   onDeposit?(): void;
   isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
@@ -102,6 +102,7 @@ export const GasAccountTips: React.FC<{
           setTipPopupVisible(false);
           onGotoGasAccount?.();
         }}
+        minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
       />
 
       {/* <GasAccountLogInTipPopup

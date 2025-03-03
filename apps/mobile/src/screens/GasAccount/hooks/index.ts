@@ -151,11 +151,11 @@ export const useGasAccountMethods = () => {
 
         if (result?.success) {
           setGasAccount(signature, account);
-          setLoginVisible(false);
+          // setLoginVisible(false);
         }
       }
     },
-    [setGasAccount, setLoginVisible],
+    [setGasAccount],
   );
 
   const logout = useCallback(async () => {

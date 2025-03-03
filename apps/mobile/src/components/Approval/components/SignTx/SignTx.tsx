@@ -26,7 +26,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -1554,8 +1554,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             gasAccountCost={gasAccountCost}
             gasAccountCanPay={gasAccountCanPay}
             canGotoUseGasAccount={canGotoUseGasAccount}
-            // todo check this prop
-            canDepositUseGasAccount={canDepositUseGasAccount}
             rejectApproval={rejectApproval}
             onDeposit={gasAccountCostFn}
             gasAccountAddress={gasAccountAddress}

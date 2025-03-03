@@ -5,6 +5,8 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
+import { gasAccountProducts } from '@/constant/iap';
+import { useIAPAccountAddress } from '@/hooks/iap/useIAPAccountAddress';
 import { useTheme2024 } from '@/hooks/theme';
 import { waitPurchaseUpdated } from '@/utils/iap';
 import { formatUsdValue } from '@/utils/number';
@@ -16,20 +18,17 @@ import { Platform, Text, View } from 'react-native';
 import { requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
-import { useIAPProducts } from '@/hooks/iap/useIAPProducts';
-import { useIAPAccountAddress } from '@/hooks/iap/useIAPAccountAddress';
-import { gasAccountProducts } from '@/constant/iap';
 
 interface Props {
   onDeposit?(): void;
-  minPrice?: number;
+  minDepositPrice?: number;
   gasAccountAddress: string;
 }
 
 export const GasAccountDepositWithPay: React.FC<Props> = ({
   onDeposit,
   gasAccountAddress,
-  minPrice = 0,
+  minDepositPrice = 0,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({
@@ -43,13 +42,10 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
     });
 
   const products = useMemo(() => {
-    return (
-      gasAccountProducts
-        .filter(item => +item.price > +minPrice)
-        // .slice(0, 3)
-        .slice(1, 4)
-    );
-  }, [minPrice]);
+    return gasAccountProducts
+      .filter(item => +item.price > +minDepositPrice)
+      .slice(0, 3);
+  }, [minDepositPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
   const { runAsync: handleDeposit, loading: isPurchasing } = useRequest(

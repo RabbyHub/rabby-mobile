@@ -1,11 +1,14 @@
-import RcIconGasAccountBalance from '@/assets/icons/gas-account/balance-acount.svg';
+import {
+  RcIconApplePayCC,
+  RcIconGooglePayCC,
+} from '@/assets2024/icons/gas-account';
+import { Tip } from '@/components';
 import { Button } from '@/components2024/Button';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { toast } from '@/components2024/Toast';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
@@ -14,13 +17,9 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useAml } from '../hooks';
+import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountLoginCard } from './GasAccountLoginCard';
 import { GasAccountWrapperBg } from './WrapperBg';
-import {
-  RcIconApplePayCC,
-  RcIconGooglePayCC,
-} from '@/assets2024/icons/gas-account';
-import { Tip } from '@/components';
 
 const DEPOSIT_LIMIT = 1000;
 
@@ -102,7 +101,7 @@ export const GasAccountCard: React.FC<Props> = ({
   return (
     <GasAccountWrapperBg style={styles.accountContainer}>
       <View style={styles.content}>
-        <RcIconGasAccountBalance style={styles.accountIcon} />
+        <GasAccountBlueLogo style={styles.accountIcon} />
         <Text style={styles.balanceText}>{usd}</Text>
       </View>
       {!gasAccountInfo?.balance && !isLoading ? (
@@ -162,7 +161,7 @@ export const GasAccountCard: React.FC<Props> = ({
             style={{
               flex: 1,
             }}>
-            {gasAccountInfo.has_iap_order ? (
+            {gasAccountInfo?.has_iap_order ? (
               <Tip
                 content={
                   'Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance'
@@ -183,27 +182,6 @@ export const GasAccountCard: React.FC<Props> = ({
               />
             )}
           </View>
-          {/* <Pressable
-            style={{
-              flex: 1,
-            }}
-            onPress={() => {
-              if (!balance) {
-                toast.show(t('page.gasAccount.noBalance'), {
-                  position: toast.positions.CENTER,
-                  textStyle: styles.toastStyle,
-                });
-                return;
-              }
-            }}>
-            <Button
-              type="ghost"
-              onPress={onWithdrawPress}
-              titleStyle={[styles.btnTitle, styles.btnTitleGhost]}
-              title={t('page.gasAccount.withdraw')}
-              disabled={!balance}
-            />
-          </Pressable> */}
           <Pressable
             style={{
               flex: 1,

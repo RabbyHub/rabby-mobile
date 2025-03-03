@@ -64,6 +64,8 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
           continue;
         }
 
+        console.log('sendTransaction', options, tx);
+
         try {
           const result = await sendTransaction({
             ...options,

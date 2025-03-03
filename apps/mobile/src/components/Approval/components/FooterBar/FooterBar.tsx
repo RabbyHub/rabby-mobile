@@ -226,6 +226,8 @@ export const FooterBar: React.FC<Props> = ({
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
 
+  console.log('gasAccountCanPay', gasAccountCanPay);
+
   // const currentChain = useMemo(() => {
   //   if (origin === INTERNAL_REQUEST_ORIGIN) {
   //     return props.chain || CHAINS.ETH;
@@ -293,6 +295,13 @@ export const FooterBar: React.FC<Props> = ({
 
   const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
 
+  console.log('canUseGasLess', {
+    canUseGasLess,
+    showGasLess,
+    payGasByGasAccount,
+    securityLevel,
+  });
+
   return (
     <View style={styles.container}>
       {/* {!isDarkTheme && hasShadow && <Shadow />} */}
@@ -303,33 +312,35 @@ export const FooterBar: React.FC<Props> = ({
         })}>
         {Header}
 
-        {!isWatchAddr &&
-        showGasLess &&
+        {showGasLess &&
+        !payGasByGasAccount &&
+        (!securityLevel || !hasUnProcessSecurityResult) &&
         !canUseGasLess &&
-        (!securityLevel || !hasUnProcessSecurityResult) ? (
-          payGasByGasAccount ? (
-            <GasAccountTips
-              gasAccountAddress={gasAccountAddress}
-              gasAccountCost={gasAccountCost}
-              isGasAccountLogin={isGasAccountLogin}
-              isWalletConnect={isWalletConnect}
-              noCustomRPC={noCustomRPC}
-              onDeposit={onDeposit}
-              onGotoGasAccount={() => {
-                rejectApproval?.();
-                navigate(RootNames.StackTransaction, {
-                  screen: RootNames.GasAccount,
-                  params: {},
-                });
-              }}
-            />
-          ) : isWatchAddr ? null : (
-            <GasLessNotEnough
-              canGotoUseGasAccount={canGotoUseGasAccount}
-              onChangeGasAccount={onChangeGasAccount}
-            />
-          )
+        !isWatchAddr ? (
+          <GasLessNotEnough
+            canGotoUseGasAccount={canGotoUseGasAccount}
+            onChangeGasAccount={onChangeGasAccount}
+          />
         ) : null}
+
+        {payGasByGasAccount && !gasAccountCanPay ? (
+          <GasAccountTips
+            gasAccountAddress={gasAccountAddress!}
+            gasAccountCost={gasAccountCost}
+            isGasAccountLogin={isGasAccountLogin}
+            isWalletConnect={isWalletConnect}
+            noCustomRPC={noCustomRPC}
+            onDeposit={onDeposit}
+            onGotoGasAccount={() => {
+              rejectApproval?.();
+              navigate(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              });
+            }}
+          />
+        ) : null}
+
         <AccountInfo
           chain={props.chain}
           account={account}

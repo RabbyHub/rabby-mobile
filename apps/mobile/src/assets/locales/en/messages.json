@@ -1491,7 +1491,8 @@
         "address": "Address",
         "balance": "Balance",
         "gasAccountBalance": "GasAccount Balance"
-      }
+      },
+      "depositSuccess": "Deposit successful"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Not supported on this chain",

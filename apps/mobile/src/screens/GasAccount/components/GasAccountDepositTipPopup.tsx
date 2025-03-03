@@ -17,6 +17,7 @@ export const GasAccountDepositTipPopup: React.FC<{
   onClose?(): void;
   onGotoGasAccount?(): void;
   onDeposit?(): void;
+  minDepositPrice?: number;
 }> = props => {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -72,6 +73,7 @@ export const GasAccountDepositTipPopup: React.FC<{
         <BottomSheetView style={styles.popup}>
           {step === 'pay' ? (
             <GasAccountDepositWithPay
+              minDepositPrice={props.minDepositPrice}
               gasAccountAddress={props.gasAccountAddress}
               onDeposit={props.onDeposit}
             />

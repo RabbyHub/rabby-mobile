@@ -437,6 +437,9 @@ const MiniSignTx = ({
     isGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
+    gasAccountCostFn,
+    gasAccountAddress,
+    sig,
   } = useGasAccountTxsCheck({
     isReady,
     txs: gasAccountTxs,
@@ -482,6 +485,7 @@ const MiniSignTx = ({
             pushType: pushInfo.type,
             ignoreGasCheck: true,
             ignoreGasNotEnoughCheck: true,
+            sig,
           },
           status: 'idle',
         };
@@ -997,6 +1001,9 @@ const MiniSignTx = ({
         gasAccountCost={gasAccountCost}
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
+        rejectApproval={onReject}
+        onDeposit={gasAccountCostFn}
+        gasAccountAddress={gasAccountAddress}
         isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={
           currentAccountType === KEYRING_TYPE.WalletConnectKeyring

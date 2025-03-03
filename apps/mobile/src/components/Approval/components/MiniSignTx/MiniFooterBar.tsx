@@ -31,6 +31,8 @@ import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountTips } from '../FooterBar/GasLessComponent/GasAccountTips';
 import { GasLessNotEnough } from '../FooterBar/GasLessComponent/GasLessNotEnough';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -61,6 +63,9 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
+  rejectApproval?(): void;
+  onDeposit?(): void;
+  gasAccountAddress?: string;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -210,6 +215,9 @@ export const MiniFooterBar: React.FC<Props> = ({
   noCustomRPC,
   canGotoUseGasAccount,
   task,
+  rejectApproval,
+  onDeposit,
+  gasAccountAddress,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -301,29 +309,8 @@ export const MiniFooterBar: React.FC<Props> = ({
 
   const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
 
-  // todo
   const footer = (
     <>
-      {showGasLess &&
-      !payGasByGasAccount &&
-      (!securityLevel || !hasUnProcessSecurityResult) ? (
-        canUseGasLess ? (
-          <GasLessActivityToSign
-            gasLessEnable={useGasLess}
-            handleFreeGas={() => {
-              enableGasLess?.();
-            }}
-            gasLessConfig={gasLessConfig}
-          />
-        ) : isWatchAddr ? null : (
-          <GasLessNotEnough
-            // gasLessFailedReason={gasLessFailedReason}
-            canGotoUseGasAccount={canGotoUseGasAccount}
-            onChangeGasAccount={onChangeGasAccount}
-          />
-        )
-      ) : null}
-
       {securityLevel && hasUnProcessSecurityResult && (
         <View
           className="security-level-tip"
@@ -358,13 +345,16 @@ export const MiniFooterBar: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
       )}
-
-      {payGasByGasAccount && !gasAccountCanPay ? (
-        <GasAccountTips
-          gasAccountCost={gasAccountCost}
-          isGasAccountLogin={isGasAccountLogin}
-          isWalletConnect={isWalletConnect}
-          noCustomRPC={noCustomRPC}
+      {showGasLess &&
+      !payGasByGasAccount &&
+      (!securityLevel || !hasUnProcessSecurityResult) &&
+      canUseGasLess ? (
+        <GasLessActivityToSign
+          gasLessEnable={useGasLess}
+          handleFreeGas={() => {
+            enableGasLess?.();
+          }}
+          gasLessConfig={gasLessConfig}
         />
       ) : null}
     </>
@@ -378,7 +368,35 @@ export const MiniFooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
-        {footer}
+        {showGasLess &&
+        !payGasByGasAccount &&
+        (!securityLevel || !hasUnProcessSecurityResult) &&
+        !canUseGasLess &&
+        !isWatchAddr ? (
+          <GasLessNotEnough
+            canGotoUseGasAccount={canGotoUseGasAccount}
+            onChangeGasAccount={onChangeGasAccount}
+          />
+        ) : null}
+
+        {payGasByGasAccount && !gasAccountCanPay ? (
+          <GasAccountTips
+            gasAccountAddress={gasAccountAddress!}
+            gasAccountCost={gasAccountCost}
+            isGasAccountLogin={isGasAccountLogin}
+            isWalletConnect={isWalletConnect}
+            noCustomRPC={noCustomRPC}
+            onDeposit={onDeposit}
+            onGotoGasAccount={() => {
+              rejectApproval?.();
+              navigate(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              });
+            }}
+          />
+        ) : null}
+
         <View style={styles.actions}>
           {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
             <MiniLedgerAction
@@ -406,7 +424,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   ? gasLessConfig?.dark_color
                   : gasLessConfig?.theme_color
               }
-              // footer={footer}
+              footer={footer}
             />
           ) : (
             <MiniCommonAction
@@ -434,7 +452,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   ? gasLessConfig?.dark_color
                   : gasLessConfig?.theme_color
               }
-              // footer={footer}
+              footer={footer}
             />
           )}
         </View>
