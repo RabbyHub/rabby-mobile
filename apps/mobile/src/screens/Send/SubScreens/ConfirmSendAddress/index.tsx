@@ -53,6 +53,7 @@ const ConfirmAddressScreen = () => {
         screen: RootNames.MultiSend,
         params: {
           addressBrandName: account.brandName,
+          cexDes: addressDesc?.cex,
           toAddress: account.address,
         },
       }),
@@ -117,6 +118,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
   },
   addressCard: {
@@ -139,6 +141,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
   },
 }));

@@ -31,6 +31,7 @@ import { openapi } from '@/core/request';
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
+  cexDes?: Cex;
   hiddenArrow?: boolean;
   inWhiteList?: boolean;
 }
@@ -101,6 +102,7 @@ export const WhiteListItem = ({
               screen: RootNames.Send,
               params: {
                 toAddress: account.address,
+                cexDes: cexDesc,
                 addressBrandName: account.brandName,
               },
             });
@@ -194,6 +196,7 @@ export const WhiteListItem = ({
 export const WhiteListItemSwitch = ({
   account,
   style,
+  cexDes,
   inWhiteList,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -206,7 +209,20 @@ export const WhiteListItemSwitch = ({
           {({ WalletIcon, WalletName, WalletBalance }) => (
             <View style={styles.item}>
               <View style={styles.iconWrapper}>
-                <WalletIcon style={styles.walletIcon} width={46} height={46} />
+                {cexDes?.logo_url ? (
+                  <Image
+                    source={{ uri: cexDes?.logo_url }}
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                ) : (
+                  <WalletIcon
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                )}
                 {inWhiteList && (
                   <RcIconLockCC
                     style={styles.lockIcon}
@@ -218,7 +234,11 @@ export const WhiteListItemSwitch = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  <WalletName style={styles.itemNameText} />
+                  {cexDes?.name ? (
+                    <Text style={styles.itemNameText}>{cexDes.name}</Text>
+                  ) : (
+                    <WalletName style={styles.itemNameText} />
+                  )}
                   <Text style={styles.address}>
                     {`(${ellipsisAddress(account.address)})`}
                   </Text>

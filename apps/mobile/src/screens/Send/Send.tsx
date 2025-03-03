@@ -5,6 +5,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
+  Modal,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -27,7 +28,7 @@ import {
   makeTokenFromChain,
 } from '@/utils/chain';
 import { preferenceService } from '@/core/services';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Cex, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import {
   useCurrentAccount,
@@ -49,6 +50,7 @@ import { ChainInfo2024 } from './components/ChainInfo2024';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 
 function SendScreen({
   isForMultipleAdderss = false,
@@ -71,11 +73,13 @@ function SendScreen({
         tokenId?: TokenItem['id'];
         toAddress?: string;
         addressBrandName?: string;
+        cexDes?: Cex;
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
+        cexDes?: Cex;
       }
     | undefined;
 
@@ -100,7 +104,12 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
+    isShowDepositeModeModal,
+    setIsShowDepositeModeModal,
 
+    tmpToken,
+    setTmpToken,
+    checkCexSupport,
     chainEnum,
     handleChainChanged,
     loadCurrentToken,
@@ -332,6 +341,7 @@ function SendScreen({
         callbacks: {
           handleCurrentTokenChange,
           handleFieldChange,
+          checkCexSupport,
           handleClickMaxButton,
           handleGasLevelChanged,
         },
@@ -352,6 +362,7 @@ function SendScreen({
                 {/* To */}
                 <ToAddressControl2024
                   address={navParams?.toAddress}
+                  cexDes={navParams?.cexDes}
                   brandName={navParams?.addressBrandName}
                 />
 
@@ -372,6 +383,34 @@ function SendScreen({
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
+        <Modal
+          visible={isShowDepositeModeModal}
+          onRequestClose={() => {
+            setIsShowDepositeModeModal(false);
+          }}
+          transparent
+          animationType="fade">
+          <View style={styles.overlay}>
+            <View
+              style={styles.modalContent}
+              onStartShouldSetResponder={() => true}>
+              <Text style={styles.alertModalText}>'check dex unsupport'</Text>
+              <FooterButtonGroup
+                style={styles.btns}
+                onCancel={() => {
+                  setIsShowDepositeModeModal(false);
+                }}
+                onConfirm={() => {
+                  if (tmpToken) {
+                    handleCurrentTokenChange(tmpToken);
+                    setTmpToken(tmpToken);
+                    setIsShowDepositeModeModal(false);
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
       </NormalScreenContainer2024>
     </SendTokenInternalContextProvider>
   );
@@ -423,6 +462,33 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     button: {
       backgroundColor: colors2024['blue-default'],
+    },
+    overlay: {
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      height: '100%',
+      justifyContent: 'center',
+    },
+    modalContent: {
+      borderRadius: 20,
+      backgroundColor: colors2024['neutral-bg-1'],
+      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      marginHorizontal: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 30,
+    },
+    btns: {
+      padding: 0,
+      marginTop: 30,
+    },
+    alertModalText: {
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+      color: colors2024['neutral-title-1'],
     },
   }),
 );

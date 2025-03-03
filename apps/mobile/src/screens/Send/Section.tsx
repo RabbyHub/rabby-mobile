@@ -44,10 +44,10 @@ export function BalanceSection({ style }: RNViewProps) {
     fns: { putScreenState },
 
     callbacks: {
-      handleCurrentTokenChange,
       handleGasLevelChanged,
       handleFieldChange,
       handleClickMaxButton,
+      checkCexSupport,
     },
   } = useSendTokenInternalContext();
 
@@ -149,7 +149,7 @@ export function BalanceSection({ style }: RNViewProps) {
             // selection={amountInputSelection || undefined}
             token={currentToken}
             chainServerId={chainItem.serverId}
-            onTokenChange={handleCurrentTokenChange}
+            onTokenChange={checkCexSupport}
             // excludeTokens={[]}
             inlinePrize
           />

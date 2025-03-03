@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { openapi } from '@/core/request';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -59,11 +60,13 @@ const SendInputScreen = () => {
     try {
       Keyboard.dismiss();
       const { inWhitelist, account } = findAccount(address);
+      const { desc } = await openapi.addrDesc(address);
       if (inWhitelist) {
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Send,
           params: {
             toAddress: account.address,
+            cexDes: desc.cex,
             addressBrandName: account.brandName,
           },
         });

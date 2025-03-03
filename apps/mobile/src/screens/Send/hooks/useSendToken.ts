@@ -387,6 +387,8 @@ export function useSendTokenForm(toAddress?: string) {
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
+  const [isShowDepositeModeModal, setIsShowDepositeModeModal] = useState(false);
+  const [tmpToken, setTmpToken] = useState<TokenItem>();
 
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
@@ -971,6 +973,28 @@ export function useSendTokenForm(toAddress?: string) {
     ],
   );
 
+  const checkCexSupport = useCallback(
+    async (token: TokenItem) => {
+      if (toAddress) {
+        const { desc } = await openapi.addrDesc(toAddress);
+        if (desc.cex?.id) {
+          const { support } = await openapi.depositCexSupport(
+            token.id,
+            token.chain,
+            desc.cex.id,
+          );
+          if (!support) {
+            setTmpToken(token);
+            setIsShowDepositeModeModal(true);
+            return;
+          }
+        }
+      }
+      handleCurrentTokenChange(token);
+    },
+    [handleCurrentTokenChange, toAddress],
+  );
+
   const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;
 
   const onGasChange = useCallback(
@@ -1240,6 +1264,9 @@ export function useSendTokenForm(toAddress?: string) {
 
     currentToken,
     loadCurrentToken,
+    tmpToken,
+    setTmpToken,
+    checkCexSupport,
     handleCurrentTokenChange,
 
     handleGasLevelChanged,
@@ -1256,6 +1283,9 @@ export function useSendTokenForm(toAddress?: string) {
     whitelist,
     whitelistEnabled,
     computed,
+
+    isShowDepositeModeModal,
+    setIsShowDepositeModeModal,
   };
 }
 export function useSendTokenFormikContext() {
@@ -1291,6 +1321,7 @@ type InternalContext = {
   };
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
+    checkCexSupport: (token: TokenItem) => void;
     handleFieldChange: <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
@@ -1328,6 +1359,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   },
   callbacks: {
     handleCurrentTokenChange: () => {},
+    checkCexSupport: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
