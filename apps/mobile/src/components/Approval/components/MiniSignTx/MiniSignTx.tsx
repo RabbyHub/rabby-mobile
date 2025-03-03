@@ -1002,7 +1002,12 @@ const MiniSignTx = ({
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
         rejectApproval={onReject}
-        onDeposit={gasAccountCostFn}
+        onDeposit={() => {
+          toast.success(t('page.gasAccount.depositSuccess'), {
+            position: toast.positions.CENTER,
+          });
+          gasAccountCostFn();
+        }}
         gasAccountAddress={gasAccountAddress}
         isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={

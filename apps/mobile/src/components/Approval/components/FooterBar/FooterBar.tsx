@@ -20,7 +20,8 @@ import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
 import { GasAccountTips } from './GasLessComponent/GasAccountTips';
 import { GasLessNotEnough } from './GasLessComponent/GasLessNotEnough';
-import { GasLessActivityToSign, GasLessConfig } from './GasLessComponents';
+import { GasLessConfig } from './GasLessComponents';
+import { GasLessActivityToSign } from './GasLessComponent/GasLessActivityToSign';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -314,13 +315,21 @@ export const FooterBar: React.FC<Props> = ({
 
         {showGasLess &&
         !payGasByGasAccount &&
-        (!securityLevel || !hasUnProcessSecurityResult) &&
-        !canUseGasLess &&
-        !isWatchAddr ? (
-          <GasLessNotEnough
-            canGotoUseGasAccount={canGotoUseGasAccount}
-            onChangeGasAccount={onChangeGasAccount}
-          />
+        (!securityLevel || !hasUnProcessSecurityResult) ? (
+          canUseGasLess ? (
+            <GasLessActivityToSign
+              gasLessEnable={useGasLess}
+              handleFreeGas={() => {
+                enableGasLess?.();
+              }}
+              gasLessConfig={gasLessConfig}
+            />
+          ) : isWatchAddr ? null : (
+            <GasLessNotEnough
+              canGotoUseGasAccount={canGotoUseGasAccount}
+              onChangeGasAccount={onChangeGasAccount}
+            />
+          )
         ) : null}
 
         {payGasByGasAccount && !gasAccountCanPay ? (
@@ -403,18 +412,6 @@ export const FooterBar: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         )}
-        {showGasLess &&
-        !payGasByGasAccount &&
-        (!securityLevel || !hasUnProcessSecurityResult) &&
-        canUseGasLess ? (
-          <GasLessActivityToSign
-            gasLessEnable={useGasLess}
-            handleFreeGas={() => {
-              enableGasLess?.();
-            }}
-            gasLessConfig={gasLessConfig}
-          />
-        ) : null}
       </View>
     </View>
   );

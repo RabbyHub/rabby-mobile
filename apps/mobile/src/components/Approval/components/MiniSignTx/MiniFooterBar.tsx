@@ -16,10 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
-import {
-  GasLessConfig,
-  GasLessActivityToSign,
-} from '../FooterBar/GasLessComponents';
+import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import {
   ActionGroup,
   Props as ActionGroupProps,
@@ -33,6 +30,7 @@ import { GasAccountTips } from '../FooterBar/GasLessComponent/GasAccountTips';
 import { GasLessNotEnough } from '../FooterBar/GasLessComponent/GasLessNotEnough';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { GasLessActivityToSign } from '../FooterBar/GasLessComponent/GasLessActivityToSign';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -345,18 +343,6 @@ export const MiniFooterBar: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
       )}
-      {showGasLess &&
-      !payGasByGasAccount &&
-      (!securityLevel || !hasUnProcessSecurityResult) &&
-      canUseGasLess ? (
-        <GasLessActivityToSign
-          gasLessEnable={useGasLess}
-          handleFreeGas={() => {
-            enableGasLess?.();
-          }}
-          gasLessConfig={gasLessConfig}
-        />
-      ) : null}
     </>
   );
 
@@ -368,15 +354,24 @@ export const MiniFooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
+
         {showGasLess &&
         !payGasByGasAccount &&
-        (!securityLevel || !hasUnProcessSecurityResult) &&
-        !canUseGasLess &&
-        !isWatchAddr ? (
-          <GasLessNotEnough
-            canGotoUseGasAccount={canGotoUseGasAccount}
-            onChangeGasAccount={onChangeGasAccount}
-          />
+        (!securityLevel || !hasUnProcessSecurityResult) ? (
+          canUseGasLess ? (
+            <GasLessActivityToSign
+              gasLessEnable={useGasLess}
+              handleFreeGas={() => {
+                enableGasLess?.();
+              }}
+              gasLessConfig={gasLessConfig}
+            />
+          ) : isWatchAddr ? null : (
+            <GasLessNotEnough
+              canGotoUseGasAccount={canGotoUseGasAccount}
+              onChangeGasAccount={onChangeGasAccount}
+            />
+          )
         ) : null}
 
         {payGasByGasAccount && !gasAccountCanPay ? (
