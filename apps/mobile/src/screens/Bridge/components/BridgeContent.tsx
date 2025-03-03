@@ -33,10 +33,9 @@ import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
-import { useBridge } from '../hooks/token';
+import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
-import { ReserveGasPopup } from '@/components/ReserveGasPopup';
-import { CHAINS_ENUM } from '@debank/common';
+
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
 
@@ -438,6 +437,16 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     manual: true,
   });
 
+  const showLoss = useMemo(() => {
+    const impact = tokenPriceImpact(
+      fromToken,
+      toToken,
+      amount,
+      selectedBridgeQuote?.to_token_amount,
+    );
+    return !!impact?.showLoss;
+  }, [fromToken, amount, selectedBridgeQuote?.to_token_amount, toToken]);
+
   const handleBridge = useMemoizedFn(async () => {
     if (
       !toToken?.low_credit_score &&
@@ -445,6 +454,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       toToken?.is_verified !== false &&
       !isSlippageHigh &&
       !isSlippageLow &&
+      !showLoss &&
       [
         KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
