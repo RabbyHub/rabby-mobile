@@ -12,6 +12,7 @@ import RcIconRevokeDark from '@/assets2024/icons/history/IconApproveDark.svg';
 import RcIconContract from '@/assets2024/icons/history/IconContract.svg';
 import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
 import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
+import RcIconCancelDark from '@/assets2024/icons/history/IconCancelDark.svg';
 import FastImage from 'react-native-fast-image';
 import {
   Image,
@@ -38,6 +39,7 @@ export enum HistoryItemCateType {
   Contract = 'contract',
   UnKnown = 'interaction',
   Cancel = 'cancel',
+  Buy = 'buy',
 }
 
 interface ItemIconProps {
@@ -190,7 +192,11 @@ export const HistoryItemIcon = ({
     case HistoryItemCateType.Contract:
       return <RcIconContract style={[styles.image, style]} />;
     case HistoryItemCateType.Cancel:
-      return <RcIconCancel style={[styles.image, style]} />;
+      return isLight ? (
+        <RcIconCancel style={[styles.image, style]} />
+      ) : (
+        <RcIconCancelDark style={[styles.image, style]} />
+      );
     default:
       return <RcIconDefault style={[styles.image, style]} />;
   }

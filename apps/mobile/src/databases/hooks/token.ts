@@ -207,7 +207,7 @@ export function useQueryLocalTokens() {
     });
 
     result.displayTokens = result.tokenItems.map(token => {
-      const data = tokenItem2AbstractTokenWithOwner(token);
+      const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
 
       return tagTokenItem(data, accountTokenMap.userTokenSettings);
     });

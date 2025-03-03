@@ -130,12 +130,16 @@ export function ChainInfo({
         style={[styles.container, style]}
         onPress={createChainModal}>
         <View style={styles.left}>
-          <ChainIconImage
-            size={16}
-            chainEnum={chainEnum}
-            isShowRPCStatus={true}
-          />
-          <Text style={[styles.chainName, titleStyle]}>{chainItem?.name}</Text>
+          {chainEnum ? (
+            <ChainIconImage
+              size={16}
+              chainEnum={chainEnum}
+              isShowRPCStatus={true}
+            />
+          ) : null}
+          <Text style={[styles.chainName, titleStyle]}>
+            {chainItem?.name || t('page.bridge.Select')}
+          </Text>
         </View>
 
         <View>

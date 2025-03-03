@@ -69,8 +69,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     borderRadius: 100,
     overflow: 'hidden',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-line'],
     width: '100%',
+    paddingVertical: 4,
+    paddingHorizontal: 5,
   },
   item: {
     display: 'flex',
@@ -79,7 +81,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
   },
   itemActive: {
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 18,
   },
   itemText: {
@@ -92,6 +94,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   itemActiveText: {
-    color: colors2024['brand-default'],
+    color: colors2024['neutral-body'],
   },
 }));

@@ -14,7 +14,7 @@ export const batchQueryNFTsWithLocalCache = async (
     const isExpired = await NFTItemEntity.isExpired(id);
     if (force || isExpired) {
       const nfts = await openapi.listNFT(id, isAll, sortByCredit);
-      runOnJS(syncRemoteNFTs)(id, nfts);
+      runOnJS(syncRemoteNFTs)(id, [...nfts]);
       return nfts;
     } else {
       return onlySync ? [] : NFTItemEntity.batchQueryNFTs(id);

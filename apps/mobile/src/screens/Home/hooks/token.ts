@@ -57,7 +57,7 @@ export const useTokens = (
   _force?: boolean,
 ) => {
   const abortProcess = useRef<AbortController>();
-  const [isLoading, setLoading] = useSafeState(false);
+  const [isLoading, setLoading] = useSafeState(true);
   const [mainnetTokens, setMainnetTokens] = useSafeState<
     AbstractPortfolioToken[]
   >([]);
@@ -157,7 +157,6 @@ export const useTokens = (
           _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
           setMainnetTokens(filterDisplayToken(_tokens));
-          setLoading(false);
         }
       }
 

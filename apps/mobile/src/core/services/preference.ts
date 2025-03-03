@@ -841,7 +841,7 @@ export class PreferenceService {
       unfoldTokens: this.store.unfoldTokens || [],
       includeDefiAndTokens: this.store.includeDefiAndTokens || [],
       excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
-      pinedQueue: this.store.pinedQueue,
+      pinedQueue: this.store.pinedQueue || [],
       foldNfts: this.store.foldNfts || [],
       unfoldNfts: this.store.unFoldNfts || [],
       foldDefis: this.store.foldDefis || [],

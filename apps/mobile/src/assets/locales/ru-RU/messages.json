@@ -78,7 +78,8 @@
       "option_Dark": "Темный",
       "option_Light": "Лёгкий"
     },
-    "Unknown": "Неизвестный"
+    "Unknown": "Неизвестный",
+    "unlimited": "неограниченный"
   },
   "page": {
     "getStart": {
@@ -100,7 +101,8 @@
         "Swap": "Обменянный",
         "Bridge": "Мостовой (Bridged)",
         "Revoke": "Отозванное разрешение",
-        "Contract": "Развернуть контракт"
+        "Contract": "Развернуть контракт",
+        "Buy": "Куплено"
       },
       "detail": {
         "Date": "Дата",
@@ -128,7 +130,13 @@
         "Succeeded": "Успешно",
         "Failed": "Не удалось",
         "name": "Имя",
-        "InteractionResults": "Результаты взаимодействия"
+        "InteractionResults": "Результаты взаимодействия",
+        "BuyAgain": "Купить снова",
+        "Collection": "Коллекция",
+        "Name": "Имя",
+        "totalApprovedAmount": "Текущая утвержденная сумма",
+        "WillReceive": "Получите: ≈ {{token}}",
+        "PurchaseFrom": "Приобретено от"
       },
       "empty": {
         "title": "Нет транзакций",
@@ -148,7 +156,11 @@
         "title": "Скрыть мошеннические транзакции"
       },
       "title": "Транзакции",
-      "ViewHiddenItems": "Просмотр мошеннических транзакций"
+      "ViewHiddenItems": "Просмотр мошеннических транзакций",
+      "Today": "Сегодня",
+      "ShowHiddenItems": "Показать скрытые транзакции",
+      "Yesterday": "Вчера",
+      "ViewSmallItems": "Просмотр транзакций < $0.1"
     },
     "importSuccess": {
       "addressCount": "{{count}} Адресов",
@@ -646,7 +658,10 @@
     },
     "receive": {
       "title": "Получить {{token}} на {{chain}}",
-      "watchModeAlert": "Это адрес только для просмотра. Вы уверены, что хотите использовать его для получения активов?"
+      "watchModeAlert": "Это адрес только для просмотра. Вы уверены, что хотите использовать его для получения активов?",
+      "copyAddress": "Скопировать адрес",
+      "newTitle": "Получить активы на",
+      "allEVMChain": "Все EVM Chain"
     },
     "approvals": {
       "list": {
@@ -896,7 +911,15 @@
       "multiAddressHome": {
         "totalBalance": "Общий баланс",
         "services": "Услуги",
-        "pin": "Пин-код"
+        "pin": "Пин-код",
+        "receiveCrypto": "Получить Crypto",
+        "noAssets": "Нет активов?",
+        "importAddressDesc": "Добавить существующий адрес с средствами.",
+        "importAddress": "Импортировать адрес",
+        "buyWithFiat": "Купить за фиат",
+        "buyWithFiatDesc": "Приобретайте криптовалюту с помощью дебетовой карты или банковского счета.",
+        "receiveCryptoDesc": "Перевод токенов с другого адреса.",
+        "fundYourWallet": "Пополните ваш кошелек"
       },
       "createNewAddress": {
         "Continue": "Продолжить",
@@ -1401,7 +1424,15 @@
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Токен",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "NoData": "Нет {{name}}"
+      },
+      "emptyToken": {
+        "buyHeader": "Купить за Fiat",
+        "title": "Пополните ваш кошелек",
+        "receiveBody": "Переведите токены с другого адреса.",
+        "receiveHeader": "Получить Crypto",
+        "buyBody": "Купите криптовалюту с помощью дебетовой карты или банковского счета."
       }
     },
     "miniSignFooterBar": {
@@ -1607,7 +1638,35 @@
     },
     "buy": {
       "purchased": "Приобретено",
-      "from": "От {{dex}}"
+      "from": "От {{dex}}",
+      "regionBottomSheet": {
+        "noRegionFound": "Регион не найден",
+        "title": "Выберите ваш регион",
+        "searchPlaceholder": "Поиск фиатной валюты"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "Поиск валюты",
+        "NoFound": "Валюта не найдена",
+        "title": "Выберите валюту"
+      },
+      "quote": {
+        "title": "Цитаты для вас",
+        "best": "Лучшие цитаты"
+      },
+      "youWillPay": "Платить",
+      "title": "Купить",
+      "toBuy": "Продолжить покупку",
+      "youWillReceive": "Получать",
+      "noQuotePlaceholder": "Без котировки",
+      "quotesForYou": "Цитаты для вас",
+      "paymentMethod": "Способ оплаты",
+      "searchingQuote": "Идет поиск котировок для вас...",
+      "noQuote2": "Цитаты не найдены.",
+      "history": "История покупок",
+      "paymentsOnly": "Платежи могут быть произведены только в {{currency}}",
+      "searchRegionPlaceholder": "Поиск региона",
+      "paymentProviderTips": "Этот провайдер поддерживает следующие методы оплаты:",
+      "noQuote": "Котировки не найдены: попробуйте ввести более высокое значение."
     }
   },
   "component": {
@@ -1784,7 +1843,9 @@
       "notFoundTxGnosisKeyring": "В keyring Gnosis не найдено транзакций",
       "invalidAddress": "Недействительный адрес",
       "canNotUnlock": "Невозможно разблокировать без предыдущего хранилища",
-      "duplicateAccount": "Учётная запись, которую вы пытаетесь импортировать, является дублированной"
+      "duplicateAccount": "Учётная запись, которую вы пытаетесь импортировать, является дублированной",
+      "errorWords_one": "1 неверное слово",
+      "errorWords_other": "{{count}} неправильные слова"
     },
     "transactionWatcher": {
       "more": "Нажмите, чтобы просмотреть дополнительную информацию",

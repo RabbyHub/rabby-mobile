@@ -247,6 +247,35 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
 
         <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.InteractedContract')}
+          </Text>
+          <TouchableOpacity
+            style={{ alignItems: 'flex-end' }}
+            onPress={() => handleOpenTxAddress(requireData?.id)}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
+              <Text style={[styles.itemContentText]}>
+                {requireData?.protocol?.name}
+              </Text>
+              <RcIconJumpCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-foot']}
+              />
+            </View>
+            <Text style={styles.itemAddressText}>
+              {ellipsisAddress(requireData?.id || '')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>Hash</Text>
           <TouchableOpacity
             disabled={!chain?.scanLink}
@@ -293,13 +322,15 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -356,7 +387,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
     gap: 10,
@@ -366,7 +399,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
   },

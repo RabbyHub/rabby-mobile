@@ -6,7 +6,6 @@ import React, {
   useState,
 } from 'react';
 
-import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
@@ -22,22 +21,16 @@ import {
   useRequest,
 } from 'ahooks';
 import PQueue from 'p-queue';
-import { last, unionBy, orderBy, set, isString, debounce } from 'lodash';
-import { Text, TouchableWithoutFeedback, View } from 'react-native';
+import { last, unionBy, orderBy, debounce } from 'lodash';
+import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  BuyHistoryItem,
   TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryGroupList';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useMyAccounts,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -50,30 +43,25 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { AbstractPortfolioToken } from '../Home/types';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import {
-  useHistoryBasicInfo,
-  useSyncHistoryDB,
-} from '@/databases/hooks/history';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
   ensureHistoryListItemFromDb,
   judgeIsSmallUsdTx,
-  judgeIsSmallUsdTxInApi,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { HistoryItemCateType } from './components/HistoryItemIcon';
+import { BuyItemEntity } from '@/databases/entities/buyItem';
 
 const PAGE_COUNT = 200;
 
@@ -84,6 +72,8 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   key: string;
   account?: KeyringAccountWithAlias;
+  isLocalBuy?: boolean;
+  buyDetails?: BuyItemEntity & BuyHistoryItem;
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
@@ -138,8 +128,6 @@ function History({
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
-  const navigation = useRabbyAppNavigation();
-  const { bottom } = useSafeAreaInsets();
   const {
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -163,35 +151,42 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const [historyList, swapList] = await Promise.all([
+      const [historyList, swapList, buyList] = await Promise.all([
         HistoryItemEntity.getAllHistoryItemSortedByTime(
           addresses,
           isFirst ? 50 : 10000,
           isFirst, // first not show scam tx
         ),
         SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
+        BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
       ]);
 
       if (isFirst) {
         setCurrentNoDbData(historyList.length === 0);
       }
 
-      console.log('historyList [0]', historyList[0]);
       const pinedQueue = preferenceService.getPinToken();
-      const list = historyList.map(
-        item =>
-          ({
-            ...ensureHistoryListItemFromDb(item),
-            isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
-            isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
-            tokenDict,
-            projectDict,
-            isShowSuccess: historySuccessList.includes(
-              `${item.owner_addr}-${item.txHash}`,
-            ),
-          } as HistoryDisplayItem),
-      );
-      setDbData(list.filter(item => item.chain && getChain(item.chain)?.name));
+      const list = historyList.map(item => {
+        const localBuyItem = buyList.find(
+          e =>
+            e.receive_tx_id === item.txHash &&
+            e.receive_chain_id === item.chain,
+        );
+        return {
+          ...ensureHistoryListItemFromDb(item),
+          isLocalBuy: !!localBuyItem,
+          buyDetails: localBuyItem,
+          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
+          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
+          tokenDict,
+          projectDict,
+          isShowSuccess: historySuccessList.includes(
+            `${item.owner_addr}-${item.txHash}`,
+          ),
+        } as HistoryDisplayItem;
+      });
+
+      setDbData(list);
       return list;
     };
     if (!dbData.length) {
@@ -231,6 +226,8 @@ function History({
 
       // just for single token history
       const swapList = await SwapItemEntity.getAllHistoryItem(addresses);
+      const buyList = await BuyItemEntity.getAllHistoryItem(addresses);
+
       const queue = new PQueue({
         interval: 2000,
         intervalCap: 10,
@@ -262,13 +259,23 @@ function History({
           }
           lastMap.current[addr] = result.last || 0;
           // const pinedQueue = preferenceService.getPinToken();
+
           list.push(
-            ...result.list.map(item => ({
-              ...item,
-              isLocalSwap: swapList.some(e => e.tx_id === item.id),
-              account,
-              // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
-            })),
+            ...result.list.map(item => {
+              const localBuyItem = buyList.find(
+                e =>
+                  e.receive_tx_id === item.id &&
+                  e.receive_chain_id === item.chain,
+              );
+              return {
+                ...item,
+                isLocalBuy: !!localBuyItem,
+                buyDetails: localBuyItem as unknown as any,
+                isLocalSwap: swapList.some(e => e.tx_id === item.id),
+                account,
+                // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
+              };
+            }),
           );
         });
       }
@@ -611,7 +618,7 @@ function History({
       //   setIsShowMenu(false);
       // }}
       // eslint-disable-next-line react-native/no-inline-styles
-      style={{ paddingBottom: bottom, paddingTop: 0, position: 'relative' }}>
+      style={{ paddingTop: 0, position: 'relative' }}>
       <>
         {isShowMenu && (
           <View style={styles.menuContainer}>
@@ -706,7 +713,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
           cleanFocusingToken({ noNeedCloseModal: true });
           setTokenDetailAddress(undefined);
         }}
-        onTriggerDismissFromInternal={ctx => {
+        onTriggerDismissFromInternal={() => {
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
           setTokenDetailAddress(undefined);
@@ -797,7 +804,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 24,
-    color: colors2024['netural-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   netTabs: {
     marginBottom: 12,

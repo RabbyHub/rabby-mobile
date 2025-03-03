@@ -26,7 +26,7 @@ import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
-import { strings } from '@/utils/i18n';
+import { BuyScreen } from '../Buy';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -193,7 +193,9 @@ export default function TransactionNavigator() {
             color: colors['neutral-title-1'],
           },
           headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-2'],
+            backgroundColor: !isLight
+              ? colors2024?.['neutral-bg-1']
+              : colors2024?.['neutral-bg-2'],
           },
         })}
       />
@@ -299,6 +301,41 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'GasAccount',
           ...headerPresets.withBgCard2_2024,
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.Buy}
+        component={BuyScreen}
+        options={mergeScreenOptions({
+          title: 'Buy',
+          // ...headerPresets.withBgCard1_2024,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MakeTransactionAbout"
+                titleText={ctx.children}
+                disableSwitch
+              />
+            );
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.MultiBuy}
+        component={BuyScreen.ForMultipleAddress}
+        options={mergeScreenOptions({
+          title: 'Buy',
+          // ...headerPresets.withBgCard1_2024,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MakeTransactionAbout"
+                titleText={ctx.children}
+              />
+            );
+          },
         })}
       />
     </TransactionStack.Navigator>

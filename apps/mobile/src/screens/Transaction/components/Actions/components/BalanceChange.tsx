@@ -266,13 +266,15 @@ export const BalanceChange = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
   return {
     tokenBalanceChange: {
       paddingVertical: 16,
       paddingLeft: 16,
       paddingRight: 12,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
       borderRadius: 16,
     },
     tokenBalanceChangeHeader: {

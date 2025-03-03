@@ -41,7 +41,8 @@
         "Swap": "교환됨",
         "Cancel": "보류 중인 거래 취소",
         "Default": "상호작용",
-        "Recieve": "수신완료"
+        "Recieve": "수신완료",
+        "Buy": "구매 완료"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -69,7 +70,13 @@
         "RevokeFrom": "에서 철회",
         "InteractedContract": "상호작용된 계약",
         "RevokeToken": "토큰 취소",
-        "name": "이름"
+        "name": "이름",
+        "BuyAgain": "다시 구매하기",
+        "PurchaseFrom": "에서 구매함",
+        "totalApprovedAmount": "현재 승인된 금액",
+        "WillReceive": "수신 예정: ≈ {{token}}",
+        "Collection": "컬렉션",
+        "Name": "이름"
       },
       "empty": {
         "desc": "<1> 지원되는 체인 </1>에서 거래를 찾을 수 없습니다.",
@@ -89,7 +96,11 @@
         "title": "사기 거래 숨기기"
       },
       "title": "트랜잭션",
-      "ViewHiddenItems": "사기 거래 보기"
+      "ViewHiddenItems": "사기 거래 보기",
+      "Today": "오늘",
+      "Yesterday": "어제",
+      "ShowHiddenItems": "숨겨진 거래 표시",
+      "ViewSmallItems": "$0.1 미만의 거래 보기"
     },
     "getStart": {
       "goToHome": "홈으로 이동",
@@ -177,7 +188,10 @@
     },
     "receive": {
       "title": "{{chain}}에서 {{token}} 받기",
-      "watchModeAlert": "이것은 보기 전용 주소입니다. 자산을 받기 위해 사용하시겠습니까?"
+      "watchModeAlert": "이것은 보기 전용 주소입니다. 자산을 받기 위해 사용하시겠습니까?",
+      "newTitle": "자산 수신:",
+      "allEVMChain": "모든 EVM 체인",
+      "copyAddress": "주소 복사"
     },
     "sendTokenComponents": {
       "GasReserved": "예약된 <1>0</1> {{ tokenName }} 가스 비용용"
@@ -847,7 +861,15 @@
       "multiAddressHome": {
         "pin": "핀",
         "totalBalance": "총 잔액",
-        "services": "서비스"
+        "services": "서비스",
+        "receiveCrypto": "암호화폐 받기",
+        "importAddress": "주소 가져오기",
+        "noAssets": "자산 없음?",
+        "buyWithFiat": "법정 화폐로 구매",
+        "fundYourWallet": "지갑에 자금 추가하기",
+        "importAddressDesc": "기존 주소를 추가하여 자금을 보유하세요.",
+        "receiveCryptoDesc": "다른 주소에서 토큰 전송.",
+        "buyWithFiatDesc": "직불 카드 또는 은행 계좌를 사용하여 암호화폐를 구매하세요."
       },
       "createNewAddress": {
         "Continue": "계속하기",
@@ -1241,7 +1263,15 @@
       "sectionHeader": {
         "Token": "토큰",
         "Nft": "NFT",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "NoData": "{{name}} 없음"
+      },
+      "emptyToken": {
+        "buyHeader": "법정 화폐로 구매하기",
+        "buyBody": "직불 카드 또는 은행 계좌를 사용하여 암호화폐를 구매하세요.",
+        "receiveBody": "다른 주소에서 토큰 전송.",
+        "title": "지갑 자금 조달",
+        "receiveHeader": "암호화폐 받기"
       }
     },
     "search": {
@@ -1553,7 +1583,35 @@
     },
     "buy": {
       "purchased": "구매함",
-      "from": "{{dex}} 에서"
+      "from": "{{dex}} 에서",
+      "regionBottomSheet": {
+        "title": "지역을 선택하세요",
+        "noRegionFound": "지역을 찾을 수 없습니다",
+        "searchPlaceholder": "법정 화폐 검색"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "통화 검색",
+        "title": "통화를 선택하세요.",
+        "NoFound": "통화를 찾을 수 없음"
+      },
+      "quote": {
+        "title": "당신을 위한 Quotes",
+        "best": "베스트 명언"
+      },
+      "title": "구매",
+      "youWillPay": "지불",
+      "history": "구매 내역",
+      "youWillReceive": "받기",
+      "paymentMethod": "결제 수단",
+      "searchRegionPlaceholder": "지역 검색",
+      "searchingQuote": "견적을 검색하는 중...",
+      "quotesForYou": "당신을 위한 명언",
+      "noQuote2": "인용문을 찾을 수 없습니다.",
+      "toBuy": "구매 계속하기",
+      "paymentsOnly": "결제는 {{currency}}로만 가능합니다.",
+      "noQuotePlaceholder": "견적 없음",
+      "paymentProviderTips": "이 제공자는 다음 결제 방법을 지원합니다:",
+      "noQuote": "견적을 찾을 수 없음: 더 높은 값을 입력하세요."
     }
   },
   "global": {
@@ -1593,7 +1651,8 @@
       "option_Light": "라이트",
       "option_Dark": "다크"
     },
-    "Unknown": "알 수 없음"
+    "Unknown": "알 수 없음",
+    "unlimited": "무제한"
   },
   "native": {
     "biometrics": {
@@ -1764,7 +1823,9 @@
       "notFindChain": "체인 {{chain}}을(를) 찾을 수 없습니다.",
       "addKeyring404": "addKeyring에 실패했습니다. keyring이 정의되지 않았습니다.",
       "notFoundTxGnosisKeyring": "Gnosis keyring에 거래 내역이 없습니다.",
-      "canNotUnlock": "이전 금고가 없으면 잠금을 해제할 수 없습니다."
+      "canNotUnlock": "이전 금고가 없으면 잠금을 해제할 수 없습니다.",
+      "errorWords_one": "1 개의 잘못된 단어",
+      "errorWords_other": "{{count}} 잘못된 단어"
     },
     "transactionWatcher": {
       "submitted": "트랜잭션 제출됨",

@@ -191,7 +191,8 @@
         "Recieve": "Recibido",
         "Swap": "Cambiado",
         "Contract": "Desplegar Contrato",
-        "Bridge": "Puenteado"
+        "Bridge": "Puenteado",
+        "Buy": "Comprado"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -219,7 +220,13 @@
         "InteractionResults": "Resultados de Interacción",
         "ApproveTo": "Aprobar para",
         "InteractedContract": "Contrato interactuado",
-        "RecipientAddress": "Dirección del destinatario"
+        "RecipientAddress": "Dirección del destinatario",
+        "Name": "Nombre",
+        "totalApprovedAmount": "Cantidad Aprobada Actual",
+        "BuyAgain": "Comprar de nuevo",
+        "PurchaseFrom": "Comprado de",
+        "WillReceive": "Recibirá: ≈ {{token}}",
+        "Collection": "Colección"
       },
       "empty": {
         "desc": "No se encontraron transacciones en <1>supported chains</1>",
@@ -239,7 +246,11 @@
         "title": "Ocultar transacciones fraudulentas"
       },
       "ViewHiddenItems": "Ver transacciones fraudulentas",
-      "title": "Transacciones"
+      "title": "Transacciones",
+      "Yesterday": "Ayer",
+      "Today": "Hoy",
+      "ShowHiddenItems": "Mostrar transacciones ocultas",
+      "ViewSmallItems": "Ver transacciones < $0.1"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Introduce tu frase semilla"
@@ -619,7 +630,10 @@
     },
     "receive": {
       "title": "Recibir {{token}} en {{chain}}",
-      "watchModeAlert": "Esta es una dirección de solo vigilancia. ¿Está seguro de que quiere usarla para recibir activos?"
+      "watchModeAlert": "Esta es una dirección de solo vigilancia. ¿Está seguro de que quiere usarla para recibir activos?",
+      "copyAddress": "Copiar dirección",
+      "allEVMChain": "Todas las cadenas EVM",
+      "newTitle": "Recibir activos en"
     },
     "sendTokenComponents": {
       "GasReserved": "Reservado <1>0</1> {{ tokenName }} para el coste de gas"
@@ -994,7 +1008,15 @@
       "multiAddressHome": {
         "services": "Servicios",
         "totalBalance": "Saldo total",
-        "pin": "PIN"
+        "pin": "PIN",
+        "noAssets": "¿Sin activos?",
+        "receiveCryptoDesc": "Transfiere tokens desde otra dirección.",
+        "importAddress": "Importar una dirección",
+        "receiveCrypto": "Recibir Crypto",
+        "buyWithFiat": "Comprar con Fiat",
+        "fundYourWallet": "Financiar tu wallet",
+        "buyWithFiatDesc": "Compra criptomonedas usando una tarjeta de débito o cuenta bancaria.",
+        "importAddressDesc": "Añadir una dirección existente con fondos."
       }
     },
     "bridge": {
@@ -1524,7 +1546,15 @@
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "NoData": "Sin {{name}}"
+      },
+      "emptyToken": {
+        "receiveHeader": "Recibir Crypto",
+        "title": "Fondea tu Wallet",
+        "receiveBody": "Transferir tokens desde otra dirección.",
+        "buyHeader": "Comprar con Fiat",
+        "buyBody": "Compra criptomonedas usando una tarjeta de débito o cuenta bancaria."
       }
     },
     "customTestnet": {
@@ -1698,7 +1728,35 @@
     },
     "buy": {
       "from": "Desde {{dex}}",
-      "purchased": "Comprado"
+      "purchased": "Comprado",
+      "regionBottomSheet": {
+        "title": "Seleccione su región",
+        "searchPlaceholder": "Buscar moneda fiduciaria",
+        "noRegionFound": "No se encontró ninguna región"
+      },
+      "currencyBottomSheet": {
+        "title": "Seleccionar una moneda",
+        "searchPlaceholder": "Buscar moneda",
+        "NoFound": "No Currency found"
+      },
+      "quote": {
+        "title": "Citas para ti",
+        "best": "Mejores citas"
+      },
+      "title": "Comprar",
+      "youWillPay": "Pagar",
+      "quotesForYou": "Citas para ti",
+      "toBuy": "Continuar comprando",
+      "paymentMethod": "Método de Pago",
+      "youWillReceive": "Recibir",
+      "paymentsOnly": "Los pagos solo se pueden realizar en {{currency}}",
+      "paymentProviderTips": "Este proveedor admite los siguientes métodos de pago:",
+      "searchingQuote": "Buscando cotizaciones para ti...",
+      "noQuote": "No se encontraron cotizaciones: Intenta ingresar un valor más alto.",
+      "noQuotePlaceholder": "Sin cotización",
+      "history": "Historial de Compras",
+      "noQuote2": "No quotes found.",
+      "searchRegionPlaceholder": "Buscar región"
     }
   },
   "global": {
@@ -1738,7 +1796,8 @@
       "option_Light": "Ligero",
       "option_Dark": "Oscuro"
     },
-    "Unknown": "Desconocido"
+    "Unknown": "Desconocido",
+    "unlimited": "ilimitado"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -1783,7 +1842,9 @@
       "notFoundGnosisKeyring": "No Gnosis keyring encontrado",
       "canNotUnlock": "No se puede desbloquear sin una bóveda anterior",
       "invalidMnemonic": "La frase semilla no es válida, ¡por favor verifica!",
-      "duplicateAccount": "La cuenta que estás intentando importar ya está duplicada"
+      "duplicateAccount": "La cuenta que estás intentando importar ya está duplicada",
+      "errorWords_one": "1 palabra incorrecta",
+      "errorWords_other": "{{count}} palabras incorrectas"
     }
   },
   "constant": {

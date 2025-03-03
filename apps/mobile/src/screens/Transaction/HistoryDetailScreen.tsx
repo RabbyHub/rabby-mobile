@@ -30,6 +30,7 @@ import {
 import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RcIconExternalLinkCC } from '@/assets/icons/common';
+
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -66,6 +67,10 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
+import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { findAccountByPriority } from '../TransactionRecord/components/TransactionItem2025';
+import { usePendingBuyItemData } from '../Buy/hooks/history';
 
 export const TxStatusItem = ({
   status,
@@ -104,7 +109,7 @@ export const TxStatusItem = ({
           style={{
             transform: [{ rotate: spin }],
           }}>
-          <RcIconPending width={18} height={18} />
+          <RcIconPending width={12} height={12} />
         </Animated.View>
         {withText && (
           <Text
@@ -229,7 +234,25 @@ function HistoryDetailScreen(): JSX.Element {
         'HistoryDetail'
       >['route']
     >();
-  const { data, isForMultipleAdderss, title } = route.params || {};
+  const { data: _data, isForMultipleAdderss, title } = route.params || {};
+
+  const buyItemData = usePendingBuyItemData(
+    _data.address,
+    _data?.buyDetails?.id || '',
+    _data?.buyDetails?.status || '',
+  );
+
+  const data = useMemo(() => {
+    if (_data?.isLocalBuy && buyItemData) {
+      return {
+        ..._data,
+        buyDetails: buyItemData,
+        id: buyItemData?.receive_tx_id ?? _data.id,
+      } as typeof _data;
+    }
+    return _data;
+  }, [_data, buyItemData]);
+
   console.debug(
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
@@ -247,7 +270,10 @@ function HistoryDetailScreen(): JSX.Element {
   const { t } = useTranslation();
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
-  const status = useMemo(() => data.tx?.status ?? 1, [data]);
+  const status = useMemo(
+    () => (data?.buyDetails?.status === 'failed' ? 0 : data.tx?.status) ?? 1,
+    [data],
+  );
   const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -328,7 +354,8 @@ function HistoryDetailScreen(): JSX.Element {
 
   const fromAddr = data.tx?.from_addr;
   const toAddr =
-    formatType === HistoryItemCateType.Recieve
+    formatType === HistoryItemCateType.Recieve ||
+    formatType === HistoryItemCateType.Buy
       ? data.address
       : formatType === HistoryItemCateType.Send
       ? data.sends[0]?.to_addr
@@ -436,6 +463,21 @@ function HistoryDetailScreen(): JSX.Element {
     ],
   );
 
+  const txAccount = useMemo(() => {
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    return account;
+  }, [accounts, data.address]);
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
@@ -469,7 +511,18 @@ function HistoryDetailScreen(): JSX.Element {
               {t('page.transactions.detail.Status')}
             </Text>
             <View>
-              <TxStatusItem status={status} withText={true} />
+              <TxStatusItem
+                status={status}
+                withText={true}
+                {...(data?.isLocalBuy
+                  ? {
+                      isPending:
+                        data?.buyDetails?.status === 'pending' &&
+                        !data.id &&
+                        !data?.buyDetails.receive_tx_id,
+                    }
+                  : {})}
+              />
             </View>
           </View>
           {isNft && Boolean(formatToken) && (
@@ -524,7 +577,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
           )}
-          {Boolean(fromAddr) && (
+          {Boolean(fromAddr) && !data.isLocalBuy && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
                 {t('page.transactions.detail.From')}
@@ -536,12 +589,26 @@ function HistoryDetailScreen(): JSX.Element {
               />
             </View>
           )}
+          {data.isLocalBuy && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.PurchaseFrom')}
+              </Text>
+              <AddressItemInDetail
+                address={data.buyDetails?.service_provider?.name || ''}
+                accounts={accounts}
+                switchAccount={switchAccount}
+              />
+            </View>
+          )}
           {(formatType === HistoryItemCateType.Send ||
+            formatType === HistoryItemCateType.Buy ||
             formatType === HistoryItemCateType.Recieve) &&
             Boolean(toAddr) && (
               <View style={styles.detailItem}>
                 <Text style={styles.itemTitleText}>
-                  {formatType === HistoryItemCateType.Recieve
+                  {formatType === HistoryItemCateType.Buy ||
+                  formatType === HistoryItemCateType.Recieve
                     ? t('page.transactions.detail.RecipientAddress')
                     : t('page.transactions.detail.To')}
                 </Text>
@@ -582,7 +649,7 @@ function HistoryDetailScreen(): JSX.Element {
           )}
           {!isApproveOrRevoke &&
             ProjecRenderItem(t('page.transactions.detail.InteractedContract'))}
-          {
+          {data.id && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>Hash</Text>
               <TouchableOpacity
@@ -599,23 +666,42 @@ function HistoryDetailScreen(): JSX.Element {
                 />
               </TouchableOpacity>
             </View>
-          }
+          )}
         </View>
+        {data.cate_id === 'approve' && data.token_approve ? (
+          <RevokeTokenBtn
+            style={{
+              marginTop: -8,
+              marginBottom: 20,
+            }}
+            token={
+              data.tokenDict[data.token_approve?.token_id] ||
+              data.tokenDict[
+                `${data.chain}_token:${data.token_approve?.token_id}`
+              ]
+            }
+            spender={data.token_approve?.spender}
+            account={txAccount}
+          />
+        ) : null}
       </ScrollView>
-      <HistoryBottomBtn
-        noRemainValue={noRemainValue}
-        currentApprove={currentApprove}
-        approve={data.token_approve}
-        receives={data.receives}
-        sends={data.sends}
-        type={formatType}
-        chain={data.chain}
-        status={status || 0}
-        data={data}
-        isForMultipleAdderss={isForMultipleAdderss}
-        tokenDict={data.tokenDict}
-        buttonContainerStyle={buttonContainerStyle}
-      />
+
+      {!(data.cate_id === 'approve' && data.token_approve) ? (
+        <HistoryBottomBtn
+          noRemainValue={noRemainValue}
+          currentApprove={currentApprove}
+          approve={data.token_approve}
+          receives={data.receives}
+          sends={data.sends}
+          type={formatType}
+          chain={data.chain}
+          status={status || 0}
+          data={data}
+          isForMultipleAdderss={isForMultipleAdderss}
+          tokenDict={data.tokenDict}
+          buttonContainerStyle={buttonContainerStyle}
+        />
+      ) : null}
     </NormalScreenContainer2024>
   );
 }

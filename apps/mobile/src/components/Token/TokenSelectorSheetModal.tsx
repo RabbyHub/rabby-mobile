@@ -406,9 +406,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           ? ''
           : `${ownerAccount.type}-${ownerAccount.address}`;
 
-        // const showOwnerAccount = !chainSearchCtx.filterAccountItem;
-        /** @description force false now */
-        const showOwnerAccount = false;
+        const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
         if (token.$origin.recentList?.length && token.$origin.TokenRender) {
           const TokenRender = token.$origin.TokenRender;
@@ -656,7 +654,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         fold,
         disabledTips,
         isSingleAddress,
-        // chainSearchCtx.filterAccountItem,
+        chainSearchCtx.filterAccountItem,
       ],
     );
 
@@ -802,7 +800,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
-            {/* {willShowAccountFilter && (
+            {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
                 onRemoveFilter={account => {
@@ -816,7 +814,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }
                 }}
               />
-            )} */}
+            )}
 
             {/* TODO: chain selector */}
             {willShowChainFilter && (
@@ -941,7 +939,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       height: 36,
       width: 100,
       justifyContent: 'center',
@@ -992,7 +992,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     internalBlock: {
-      paddingHorizontal: 24,
+      paddingHorizontal: 16,
     },
     titleArea: {
       justifyContent: 'center',

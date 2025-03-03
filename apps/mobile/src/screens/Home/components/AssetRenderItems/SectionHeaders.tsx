@@ -1,96 +1,144 @@
 import { View, Text, Pressable, ViewStyle } from 'react-native';
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { trigger } from 'react-native-haptic-feedback';
-import { PositionLoader } from '../Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
+import { Tooltip } from '@rneui/themed';
 
 export type AsssetKey = 'token' | 'defi' | 'nft';
 type Props = {
   onPress: (key: AsssetKey) => void;
-  showToken?: boolean;
-  showDefi?: boolean;
-  showNft?: boolean;
-  loading?: boolean;
-  hasAssets?: boolean;
+  hasToken?: boolean;
+  hasDefi?: boolean;
+  hasNft?: boolean;
   currentSection: AsssetKey;
   style?: ViewStyle;
 };
 
+const TOOLTIP_CONFIG = {
+  backgroundColor: 'black',
+  width: 78,
+};
+
 export const AssestAllHeader = memo(
-  ({
-    showDefi,
-    showToken,
-    showNft,
-    onPress,
-    style,
-    loading,
-    hasAssets,
-    currentSection,
-  }: Props) => {
+  ({ hasDefi, hasToken, hasNft, onPress, style, currentSection }: Props) => {
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
+    const [showDefiTip, setShowDefiTip] = useState(false);
+    const [showNftTip, setShowNftTip] = useState(false);
+    const [showTokenTip, setShowTokenTip] = useState(false);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const handlePress = (key: AsssetKey) => {
+      if (!hasDefi && key === 'defi') {
+        setShowDefiTip(true);
+        delayRemoveTips();
+        return;
+      }
+      if (!hasNft && key === 'nft') {
+        setShowNftTip(true);
+        delayRemoveTips();
+        return;
+      }
+      if (!hasToken && key === 'token') {
+        setShowTokenTip(true);
+        delayRemoveTips();
+        return;
+      }
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
       onPress?.(key);
     };
+    const delayRemoveTips = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        onClose();
+      }, 3000);
+    };
+    useEffect(() => {
+      return () => {
+        timeoutRef.current && clearTimeout(timeoutRef.current);
+        onClose();
+      };
+    }, []);
+    const onClose = () => {
+      setShowDefiTip(false);
+      setShowNftTip(false);
+      setShowTokenTip(false);
+    };
 
-    if (hasAssets) {
-      return (
-        <View style={[styles.constainer, style]}>
-          {showToken && (
-            <Pressable onPress={() => handlePress('token')}>
-              <Text
-                style={[
-                  styles.symbol,
-                  currentSection === 'token' && styles.active,
-                ]}>
-                {t('page.singleHome.sectionHeader.Token')}
-              </Text>
-            </Pressable>
-          )}
-          {showDefi && (
-            <Pressable onPress={() => handlePress('defi')}>
-              <Text
-                style={[
-                  styles.symbol,
-                  currentSection === 'defi' && styles.active,
-                ]}>
-                {t('page.singleHome.sectionHeader.Defi')}
-              </Text>
-            </Pressable>
-          )}
-          {showNft && (
-            <Pressable onPress={() => handlePress('nft')}>
-              <Text
-                style={[
-                  styles.symbol,
-                  currentSection === 'nft' && styles.active,
-                ]}>
-                {t('page.singleHome.sectionHeader.Nft')}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      );
-    }
-    if (loading) {
-      return <PositionLoader length={7} space={8} />;
-    }
     return (
-      <View style={styles.emptyHolder}>
-        <EmptyHolder
-          imgStyle={styles.emptyImg}
-          textStyle={styles.emptyText}
-          text="No Assets"
-          type="default"
-        />
+      <View style={[styles.constainer, style]}>
+        <Tooltip
+          {...TOOLTIP_CONFIG}
+          visible={showTokenTip}
+          popover={
+            <Text style={styles.tooltipText}>
+              {t('page.singleHome.sectionHeader.NoData', {
+                name: t('page.singleHome.sectionHeader.Token'),
+              })}
+            </Text>
+          }
+          onClose={onClose}>
+          <Pressable onPress={() => handlePress('token')}>
+            <Text
+              style={[
+                styles.symbol,
+                currentSection === 'token' && styles.active,
+              ]}>
+              {t('page.singleHome.sectionHeader.Token')}
+            </Text>
+          </Pressable>
+        </Tooltip>
+        <Tooltip
+          {...TOOLTIP_CONFIG}
+          visible={showDefiTip}
+          overlayColor="tranparent"
+          popover={
+            <Text style={styles.tooltipText}>
+              {t('page.singleHome.sectionHeader.NoData', {
+                name: t('page.singleHome.sectionHeader.Defi'),
+              })}
+            </Text>
+          }
+          onClose={onClose}>
+          <Pressable onPress={() => handlePress('defi')}>
+            <Text
+              style={[
+                styles.symbol,
+                currentSection === 'defi' && styles.active,
+              ]}>
+              {t('page.singleHome.sectionHeader.Defi')}
+            </Text>
+          </Pressable>
+        </Tooltip>
+
+        <Tooltip
+          {...TOOLTIP_CONFIG}
+          visible={showNftTip}
+          popover={
+            <Text style={styles.tooltipText}>
+              {t('page.singleHome.sectionHeader.NoData', {
+                name: t('page.singleHome.sectionHeader.Nft'),
+              })}
+            </Text>
+          }
+          onClose={onClose}>
+          <Pressable onPress={() => handlePress('nft')}>
+            <Text
+              style={[
+                styles.symbol,
+                currentSection === 'nft' && styles.active,
+              ]}>
+              {t('page.singleHome.sectionHeader.Nft')}
+            </Text>
+          </Pressable>
+        </Tooltip>
       </View>
     );
   },
@@ -132,5 +180,10 @@ const getStyle = createGetStyles2024(ctx => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-info'],
+  },
+  tooltipText: {
+    color: 'white',
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
   },
 }));

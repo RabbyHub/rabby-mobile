@@ -78,7 +78,8 @@
       "option_System": "Hệ thống",
       "option_Dark": "Tối"
     },
-    "Unknown": "Không xác định"
+    "Unknown": "Không xác định",
+    "unlimited": "không giới hạn"
   },
   "page": {
     "transactions": {
@@ -95,7 +96,8 @@
         "Swap": "Đã hoán đổi",
         "Cancel": "Hủy giao dịch đang chờ xử lý",
         "Default": "Tương tác",
-        "Bridge": "Đã bridge"
+        "Bridge": "Đã bridge",
+        "Buy": "Đã mua"
       },
       "detail": {
         "From": "Từ",
@@ -123,7 +125,13 @@
         "InteractionResults": "Kết quả Tương tác",
         "GasFee": "Phí Gas",
         "InteractedContract": "Hợp đồng đã tương tác",
-        "ApproveTo": "Phê duyệt tới"
+        "ApproveTo": "Phê duyệt tới",
+        "WillReceive": "Sẽ Nhận: ≈ {{token}}",
+        "Name": "Tên",
+        "Collection": "Bộ sưu tập",
+        "PurchaseFrom": "Đã mua từ",
+        "totalApprovedAmount": "Số tiền được phê duyệt hiện tại",
+        "BuyAgain": "Mua lại"
       },
       "empty": {
         "title": "Không có giao dịch",
@@ -143,7 +151,11 @@
         "loading": "Quá trình tải có thể mất một chút thời gian và có thể xảy ra trì hoãn dữ liệu"
       },
       "title": "Giao dịch",
-      "ViewHiddenItems": "Xem các giao dịch lừa đảo"
+      "ViewHiddenItems": "Xem các giao dịch lừa đảo",
+      "Today": "Hôm nay",
+      "ViewSmallItems": "Xem giao dịch < $0.1",
+      "ShowHiddenItems": "Hiển thị giao dịch ẩn",
+      "Yesterday": "Hôm qua"
     },
     "getStart": {
       "alreadyHaveAddress": "Tôi đã có một địa chỉ",
@@ -590,7 +602,10 @@
     },
     "receive": {
       "title": "Nhận {{token}} trên {{chain}}",
-      "watchModeAlert": "Đây là một địa chỉ chỉ để theo dõi. Bạn có chắc chắn muốn sử dụng nó để nhận tài sản không?"
+      "watchModeAlert": "Đây là một địa chỉ chỉ để theo dõi. Bạn có chắc chắn muốn sử dụng nó để nhận tài sản không?",
+      "newTitle": "Nhận tài sản trên",
+      "allEVMChain": "Tất cả chuỗi EVM",
+      "copyAddress": "Sao chép địa chỉ"
     },
     "sendToken": {
       "Chain": "Chuỗi",
@@ -881,7 +896,15 @@
       "multiAddressHome": {
         "pin": "Mã PIN",
         "totalBalance": "Tổng số dư",
-        "services": "Dịch vụ"
+        "services": "Dịch vụ",
+        "receiveCrypto": "Nhận Crypto",
+        "buyWithFiat": "Mua bằng Fiat",
+        "buyWithFiatDesc": "Mua tiền điện tử bằng thẻ ghi nợ hoặc tài khoản ngân hàng.",
+        "importAddress": "Nhập một Địa chỉ",
+        "fundYourWallet": "Nạp tiền vào Ví của bạn",
+        "importAddressDesc": "Thêm một địa chỉ hiện có với quỹ.",
+        "receiveCryptoDesc": "Chuyển token từ địa chỉ khác.",
+        "noAssets": "Không có tài sản?"
       },
       "addAddress": {
         "hardwareWallet": "Ví phần cứng",
@@ -1273,7 +1296,15 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
-        "Token": "Token"
+        "Token": "Token",
+        "NoData": "Không có {{name}}"
+      },
+      "emptyToken": {
+        "title": "Nạp tiền vào Ví của bạn",
+        "receiveHeader": "Nhận Crypto",
+        "receiveBody": "Chuyển token từ địa chỉ khác.",
+        "buyHeader": "Mua bằng Fiat",
+        "buyBody": "Mua tiền điện tử bằng cách sử dụng thẻ ghi nợ hoặc tài khoản ngân hàng."
       }
     },
     "approvalsAddressList": {
@@ -1607,7 +1638,35 @@
     },
     "buy": {
       "purchased": "Đã mua",
-      "from": "Từ {{dex}}"
+      "from": "Từ {{dex}}",
+      "regionBottomSheet": {
+        "noRegionFound": "Không tìm thấy khu vực nào",
+        "title": "Chọn khu vực của bạn",
+        "searchPlaceholder": "Tìm kiếm tiền tệ fiat"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "Tìm kiếm tiền tệ",
+        "title": "Chọn một loại tiền tệ",
+        "NoFound": "Không tìm thấy Currency"
+      },
+      "quote": {
+        "best": "Best Quotes",
+        "title": "Báo giá cho bạn"
+      },
+      "youWillPay": "Thanh toán",
+      "title": "Mua",
+      "searchRegionPlaceholder": "Tìm kiếm khu vực",
+      "history": "Lịch sử Đã Mua",
+      "noQuote": "Không có báo giá nào được tìm thấy: Hãy thử nhập giá trị cao hơn.",
+      "searchingQuote": "Đang tìm báo giá cho bạn...",
+      "toBuy": "Tiếp tục Mua",
+      "quotesForYou": "Báo giá cho bạn",
+      "paymentsOnly": "Các khoản thanh toán chỉ có thể được thực hiện bằng {{currency}}",
+      "noQuote2": "Không tìm thấy báo giá.",
+      "paymentProviderTips": "Nhà cung cấp này hỗ trợ các phương thức thanh toán sau:",
+      "noQuotePlaceholder": "Không có báo giá",
+      "paymentMethod": "Phương thức thanh toán",
+      "youWillReceive": "Nhận"
     }
   },
   "component": {
@@ -1792,7 +1851,9 @@
       "emptyAccount": "Tài khoản hiện tại đang trống",
       "duplicateAccount": "Tài khoản bạn đang cố gắng nhập bị trùng lặp.",
       "invalidPrivateKey": "Khóa riêng không hợp lệ",
-      "canNotUnlock": "Không thể mở khóa nếu không có vault trước đó"
+      "canNotUnlock": "Không thể mở khóa nếu không có vault trước đó",
+      "errorWords_one": "1 từ không chính xác",
+      "errorWords_other": "{{count}} từ không chính xác"
     }
   },
   "common": {
