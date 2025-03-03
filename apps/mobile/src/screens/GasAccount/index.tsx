@@ -18,6 +18,7 @@ import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrM
 import { WithDrawPopup } from './components/WithDrawPopup';
 import { useGasAccountInfo, useGasAccountLogin } from './hooks';
 import {
+  useGasAccountHistoryRefresh,
   useGasAccountLoginVisible,
   useGasAccountLogoutVisible,
 } from './hooks/atom';
@@ -43,6 +44,8 @@ export const GasAccountScreen = () => {
     loading,
     runFetchGasAccountInfo,
   } = useGasAccountInfo();
+
+  const { refresh: refreshHistory } = useGasAccountHistoryRefresh();
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
@@ -106,6 +109,7 @@ export const GasAccountScreen = () => {
             setDepositState({
               isOpen: false,
             });
+            refreshHistory();
             toast.success(t('page.gasAccount.depositSuccess'), {
               position: toast.positions.CENTER,
             });
