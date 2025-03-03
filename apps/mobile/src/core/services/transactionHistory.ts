@@ -27,6 +27,7 @@ import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { updateExpiredTime } from '@/databases/sync/assets';
+import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -37,6 +38,11 @@ export interface TransactionHistoryItem {
   createdAt: number;
   completedAt: number;
   hash?: string;
+
+  gasTokenSymbol?: string;
+  gasUSDValue?: number;
+  gasTokenCount?: number;
+
   gasUsed?: number;
   // site?: ConnectedSite;
   site?: DappInfo;
@@ -258,7 +264,9 @@ export class TransactionHistoryService {
       item => item.rawTx.chainId === chainId && item.isSubmitted,
     );
 
-    if (!maxNonceTx) return null;
+    if (!maxNonceTx) {
+      return null;
+    }
 
     const maxLocalNonce = maxNonceTx.nonce;
     const firstSigningNonce =
@@ -433,16 +441,50 @@ export class TransactionHistoryService {
     if (success) {
       updateExpiredTime(address.toLowerCase());
     }
+    const chain = findChain({
+      id: Number(target.chainId),
+    });
     target?.txs?.forEach(tx => {
       if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
-        this.updateTx({
+        const nativeToken =
+          tx.explain?.native_token ||
+          (chain
+            ? customTestnetTokenToTokenItem({
+                id: chain.nativeTokenAddress,
+                chainId: chain.id,
+                symbol: chain.nativeTokenSymbol,
+                decimals: chain.nativeTokenDecimals,
+                amount: 0,
+                rawAmount: '0',
+              })
+            : undefined);
+
+        const hasTokenPrice = !!nativeToken;
+        const gasTokenCount =
+          hasTokenPrice && tx
+            ? (Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0) *
+                (gasUsed || 0)) /
+              1e18
+            : 0;
+        const gasUSDValue =
+          gasTokenCount && nativeToken
+            ? (nativeToken?.price || 0) * gasTokenCount
+            : 0;
+        const gasTokenSymbol =
+          hasTokenPrice && nativeToken ? getTokenSymbol(nativeToken) : '';
+
+        const newTx = {
           ...tx,
           isPending: false,
           isFailed: !success,
           isCompleted: true,
           gasUsed,
+          gasTokenSymbol,
+          gasUSDValue,
+          gasTokenCount,
           completedAt: Date.now(),
-        });
+        };
+        this.updateTx(newTx);
         const id = tx.hash || tx.reqId;
         if (success) {
           id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
@@ -453,16 +495,6 @@ export class TransactionHistoryService {
       }
     });
 
-    // this._setStoreTransaction({
-    //   ...this.store.transactions,
-    //   [normalizedAddress]: {
-    //     ...this.store.transactions[normalizedAddress],
-    //     [key]: target,
-    //   },
-    // });
-    const chain = findChain({
-      id: Number(target.chainId),
-    });
     if (chain) {
       // TODO $ctx
       stats.report('completeTransaction', {

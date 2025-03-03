@@ -11,11 +11,15 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
+import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
   if (data.isLocalBuy) {
     return HistoryItemCateType.Buy;
+  }
+  if (data.historyItemCateType) {
+    return data.historyItemCateType;
   }
   if (data.cate_id) {
     switch (data.cate_id) {
@@ -36,7 +40,6 @@ export function getHistoryItemType(
     }
   } else {
     // todo revoke  bridge  contract
-    const tokenList = [...data.receives, ...data.sends];
     const isSwap = data.isLocalSwap; // need filter in swap history
     if (isSwap) {
       return HistoryItemCateType.Swap;
@@ -202,4 +205,21 @@ export const judgeIsSmallUsdTxInApi = (
   }
 
   return false;
+};
+
+export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
+  try {
+    const actionData = tx.action?.actionData;
+    if (!actionData?.send) {
+      return;
+    }
+
+    console.debug('loadTxSaveFromLocalStore exec', tx);
+    const item = new HistoryItemEntity();
+    // HistoryItemEntity.fillEntityFromLocalSend(item, tx);
+    const repo = HistoryItemEntity.getRepository();
+    repo.manager.save(item);
+  } catch (e) {
+    console.log('loadTxSaveFromLocalStore error', e);
+  }
 };

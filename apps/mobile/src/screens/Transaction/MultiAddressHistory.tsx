@@ -61,6 +61,7 @@ import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
+import { HistoryItemCateType } from './components/HistoryItemIcon';
 
 const PAGE_COUNT = 200;
 
@@ -76,6 +77,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
+  historyItemCateType?: HistoryItemCateType | '';
 }
 
 interface IFetchHistory {

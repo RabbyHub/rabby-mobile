@@ -31,6 +31,7 @@ import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { formatIntlTimestamp } from '@/utils/time';
+import { formatAmount } from '@/utils/number';
 
 interface Props {
   data: TransactionGroup;
@@ -209,16 +210,6 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
           </View>
         </View>
 
-        {/* todo gas fee */}
-        {/* <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.GasFee')}
-          </Text>
-          <Text style={[styles.itemContentText]}>{`-${formatPrice(
-            usdGasFee!,
-          )} USD`}</Text>
-        </View> */}
-
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.From')}
@@ -229,6 +220,19 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
             switchAccount={switchAccount}
           />
         </View>
+
+        {Boolean(data.maxGasTx?.gasUSDValue) && (
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.GasFee')}
+            </Text>
+            <Text style={styles.itemContentText}>
+              {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
+              {data.maxGasTx?.gasTokenSymbol || ''} ($
+              {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
+            </Text>
+          </View>
+        )}
 
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>Hash</Text>
