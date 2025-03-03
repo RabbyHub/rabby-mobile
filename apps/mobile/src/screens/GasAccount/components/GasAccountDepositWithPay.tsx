@@ -74,7 +74,6 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         ]);
 
         await onDeposit?.();
-        toast.success('Purchase Success!');
       } catch (e: any) {
         console.error(e);
         toast.error(typeof e === 'string' ? e : e?.message);
