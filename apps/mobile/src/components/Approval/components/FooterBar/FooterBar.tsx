@@ -227,8 +227,6 @@ export const FooterBar: React.FC<Props> = ({
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
 
-  console.log('gasAccountCanPay', gasAccountCanPay);
-
   // const currentChain = useMemo(() => {
   //   if (origin === INTERNAL_REQUEST_ORIGIN) {
   //     return props.chain || CHAINS.ETH;
@@ -295,13 +293,6 @@ export const FooterBar: React.FC<Props> = ({
     : undefined;
 
   const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
-
-  console.log('canUseGasLess', {
-    canUseGasLess,
-    showGasLess,
-    payGasByGasAccount,
-    securityLevel,
-  });
 
   return (
     <View style={styles.container}>

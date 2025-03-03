@@ -11,12 +11,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 export const GasLessNotEnough: React.FC<{
   onChangeGasAccount?: () => void;
   canGotoUseGasAccount?: boolean;
-  canDepositUseGasAccount?: boolean;
-}> = ({
-  onChangeGasAccount,
-  canGotoUseGasAccount,
-  canDepositUseGasAccount,
-}) => {
+}> = ({ onChangeGasAccount, canGotoUseGasAccount }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
@@ -35,16 +30,6 @@ export const GasLessNotEnough: React.FC<{
           onPress={onChangeGasAccount}>
           <Text style={styles.gasAccountTipBtnText}>
             {t('page.signFooterBar.gasAccount.useGasAccount')}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
-      {/* //todo */}
-      {canDepositUseGasAccount ? (
-        <TouchableOpacity
-          style={[styles.gasAccountBtn]}
-          onPress={onChangeGasAccount}>
-          <Text style={styles.gasAccountTipBtnText}>
-            {t('page.signFooterBar.gasAccount.deposit')}
           </Text>
         </TouchableOpacity>
       ) : null}

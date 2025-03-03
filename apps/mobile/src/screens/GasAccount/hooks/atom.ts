@@ -58,11 +58,9 @@ gasAccountSigAtom.onMount = set => {
   set({
     ...data,
   });
-  console.log('gas atom onMount');
   eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
     const data =
       gasAccountService.getGasAccountData() as GasAccountServiceStore;
-    console.log('auto gas login', data);
     set({
       ...data,
     });

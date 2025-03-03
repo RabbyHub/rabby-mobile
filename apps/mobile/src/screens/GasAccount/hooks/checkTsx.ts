@@ -50,12 +50,6 @@ export const useGasAccountTxsCheck = ({
     [sig, accountId, isReady, txs],
   );
 
-  // // todo
-  // if (gasAccountCost) {
-  //   gasAccountCost.balance_is_enough = true;
-  // }
-  console.log('gasAccountCost', gasAccountCost);
-
   const gasAccountCanPay =
     gasMethod === 'gasAccount' &&
     isSupportedAddr &&

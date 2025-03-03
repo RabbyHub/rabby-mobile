@@ -798,7 +798,6 @@ class ProviderController extends BaseController {
               // log_id: logId,
             } as Parameters<typeof openapi.submitTx>[0]);
 
-            console.log('submitTx', res);
             if (res.access_token) {
               gasAccountService.setGasAccountSig(
                 res.access_token,
