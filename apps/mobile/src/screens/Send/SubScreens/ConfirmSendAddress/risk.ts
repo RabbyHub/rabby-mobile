@@ -1,6 +1,7 @@
 import { openapi } from '@/core/request';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { useEffect, useLayoutEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const enum RiskType {
   NEVER_SEND = 1,
@@ -12,6 +13,8 @@ export const useRisks = (address: string) => {
   const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
     [],
   );
+  const { t } = useTranslation();
+
   const [addressDesc, setAddressDesc] = useState<
     AddrDescResponse['desc'] | undefined
   >();
@@ -34,7 +37,7 @@ export const useRisks = (address: string) => {
       if (addressDesc?.cex && !addressDesc.cex.is_deposit) {
         currRisks.push({
           type: RiskType.CEX_NO_DEPOSITE,
-          value: 'This is an Exchange address but not a depostite address',
+          value: t('page.confirmAddress.dexNoDeposite'),
         });
       }
       if (addressDesc?.contract) {
@@ -49,7 +52,7 @@ export const useRisks = (address: string) => {
       if (!hasSended) {
         setRisks([
           ...currRisks,
-          { type: RiskType.NEVER_SEND, value: 'you have not send' },
+          { type: RiskType.NEVER_SEND, value: t('page.confirmAddress.noSend') },
         ]);
       }
     })();
@@ -58,6 +61,7 @@ export const useRisks = (address: string) => {
     addressDesc?.cex,
     addressDesc?.contract,
     addressDesc?.is_danger,
+    t,
   ]);
   return {
     risks,

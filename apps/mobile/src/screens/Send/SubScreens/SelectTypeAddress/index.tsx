@@ -76,43 +76,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
   },
-  input: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 10,
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    height: 56,
-  },
   item: {
     marginBottom: 8,
-  },
-  placeHolder: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 18,
-    fontFamily: 'SF Pro Rounded',
   },
   listContainer: {
     flex: 1,
     paddingTop: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerText: {
-    fontSize: 18,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  footer: {
-    marginTop: 12,
-  },
-  footerGap: {
-    height: 150,
   },
 }));

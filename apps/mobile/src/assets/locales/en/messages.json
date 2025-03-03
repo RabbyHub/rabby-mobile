@@ -607,7 +607,47 @@
       "balanceError": {
         "insufficientBalance": "Insufficient balance"
       },
-      "ContractAddress": "Contract Address"
+      "ContractAddress": "Contract Address",
+      "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
+      "noSupportBtns": {
+        "confirm": "Proceed Anyway",
+        "cancel": "Cancel"
+      }
+    },
+    "sendPoly": {
+      "enterAddress": "Enter Address",
+      "whitelistTitle": "My Whitelist Addresses",
+      "sendToImportedAddress": "Send to My Imported Addresses",
+      "sendToWatchAddress": "Send to Watch-only Addresses",
+      "sendToSafeAddress": "Send to Safe Addresses",
+      "emptyWhitelistHeader": "Add Whitelist Address",
+      "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
+      "emptyWhitelistTip": "No whitelisted addresses yet, ",
+      "emptyWhitelistBtn": "Add now",
+      "modals": {
+        "header": "Add Address to Whitelist",
+        "content": "Select how you want to add an address:",
+        "addAddress": "New Address",
+        "importedAddress": "Imported Address",
+        "recentAddress": "Recent Sent Addresses"
+      }
+    },
+    "confirmAddress": {
+      "addToWhitelist": "Add to whitelist",
+      "noSend": "You have not sent to this address before. Please confirm if you wish to proceed",
+      "dexNoDeposite": " This is an Exchange address but not a deposit address",
+      "dexNameTail": "Deposit Address",
+      "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time"
+    },
+    "selectAddress": {
+      "selectWatchAddress": "Select from Watch-only addresses",
+      "selectSafeAddress": "Select from Safe addresses"
+    },
+    "whitelist": {
+      "addToWhitelist": "Add to Whitelist",
+      "removeWhitelist": "Remove from Whitelist",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"

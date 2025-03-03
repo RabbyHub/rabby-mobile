@@ -15,17 +15,23 @@ const EmptyWhiteListHolder = () => {
 
   return (
     <Card>
-      <Text style={styles.header1}>Add Whitelist Address</Text>
+      <Text style={styles.header1}>
+        {t('page.sendPoly.emptyWhitelistHeader')}
+      </Text>
       <Text style={styles.header2}>
-        After Whitelist Address After address After Whitelist Address
+        {t('page.sendPoly.emptyWhitelistContent')}
       </Text>
       <Card style={styles.holder}>
         <Text>placeholder</Text>
       </Card>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>No whitelist Address yet, </Text>
+        <Text style={styles.footerText}>
+          {t('page.sendPoly.emptyWhitelistTip')}
+        </Text>
         <Pressable style={styles.footerBtn} onPress={gotoAddWhitelist}>
-          <Text style={styles.footerBtnText}>To Add</Text>
+          <Text style={styles.footerBtnText}>
+            {t('page.sendPoly.emptyWhitelistBtn')}
+          </Text>
         </Pressable>
       </View>
     </Card>

@@ -25,10 +25,11 @@ interface IHeaderProps {
 }
 const WhiteListHeader = ({ gotoAddWhitelist }: IHeaderProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
   return (
     <View style={styles.header}>
-      <Text style={styles.headerText}>Whitelist Addresses</Text>
+      <Text style={styles.headerText}>{t('page.sendPoly.whitelistTitle')}</Text>
       <Pressable onPress={gotoAddWhitelist}>
         <RcIconAddWhiteList style={styles.addIcon} />
       </Pressable>
@@ -88,7 +89,9 @@ const SendPolyScreen = () => {
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <Pressable style={styles.input} onPress={handleGotoInputAddress}>
-        <Text style={styles.placeHolder}>Enter Address</Text>
+        <Text style={styles.placeHolder}>
+          {t('page.sendPoly.enterAddress')}
+        </Text>
         <ScannerCC color={colors2024['neutral-title-1']} />
       </Pressable>
       <FlatList
@@ -108,7 +111,7 @@ const SendPolyScreen = () => {
           <View style={styles.footer}>
             <OtherAddressNav
               onPress={handleGotoImportedAddress}
-              text={'Send to Imported Addresses'}
+              text={t('page.sendPoly.sendToImportedAddress')}
             />
             <View style={styles.footerGap} />
           </View>

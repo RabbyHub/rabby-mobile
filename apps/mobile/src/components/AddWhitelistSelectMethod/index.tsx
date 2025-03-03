@@ -36,7 +36,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
             onDone();
           }}
           style={styles.importItem}
-          title="new whitelist address"
+          title={t('page.sendPoly.modals.addAddress')}
           Icon={<IconCreate style={styles.icon} />}
         />
         <ListItem
@@ -50,7 +50,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
             onDone();
           }}
           style={styles.importItem}
-          title="select imported address"
+          title={t('page.sendPoly.modals.importedAddress')}
           Icon={<IconImport style={styles.icon} />}
         />
         <ListItem
@@ -64,7 +64,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
             onDone();
           }}
           style={styles.importItem}
-          title="select send history"
+          title={t('page.sendPoly.modals.recentAddress')}
           Icon={<Image source={IconHardWare} style={styles.icon} />}
         />
       </View>

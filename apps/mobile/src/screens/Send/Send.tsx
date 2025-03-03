@@ -394,9 +394,13 @@ function SendScreen({
             <View
               style={styles.modalContent}
               onStartShouldSetResponder={() => true}>
-              <Text style={styles.alertModalText}>'check dex unsupport'</Text>
+              <Text style={styles.alertModalText}>
+                {t('page.sendToken.noSupprotTokenForDex')}
+              </Text>
               <FooterButtonGroup
                 style={styles.btns}
+                confirmText={t('page.sendToken.noSupportBtns.confirm')}
+                cancelText={t('page.sendToken.noSupportBtns.cancel')}
                 onCancel={() => {
                   setIsShowDepositeModeModal(false);
                 }}

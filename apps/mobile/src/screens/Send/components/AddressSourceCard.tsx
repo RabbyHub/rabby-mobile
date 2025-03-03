@@ -20,6 +20,7 @@ import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -29,6 +30,7 @@ interface IProps {
 const AddressSource = ({ account, style, cexDesc }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
+  const { t } = useTranslation();
   const editAliasName = useAliasNameEditModal();
 
   const inWhiteList = useMemo(() => {
@@ -76,7 +78,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
                     },
                   ]}>
                   {cexDesc?.name
-                    ? `${cexDesc.name} Deposit Address`
+                    ? `${cexDesc.name} ${t('page.confirmAddress.dexNameTail')}`
                     : account.type}
                 </Text>
               </View>
@@ -103,17 +105,6 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
 export default AddressSource;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  root: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: colors2024['neutral-bg-3'],
-  },
-  rootPressing: {
-    borderColor: colors2024['brand-light-2'],
-  },
-  shadowView: {
-    borderRadius: 20,
-  },
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -161,12 +152,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
-  itemNameTextHasPinned: {
-    paddingRight: 52,
-  },
-  itemNamePinned: {
-    marginLeft: -52,
-  },
   itemType: {
     fontSize: 14,
     lineHeight: 18,
@@ -175,12 +160,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 2,
     borderRadius: 4,
     overflow: 'hidden',
-  },
-  itemBalanceText: {
-    fontSize: 17,
-    lineHeight: 22,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
   },
   itemName: {
     gap: 8,
@@ -193,20 +172,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-  },
-  arrow: {
-    width: 30,
-    height: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardPressing: {
-    backgroundColor: colors2024['brand-light-1'],
-  },
-  arrowPressing: {
-    backgroundColor: colors2024['brand-light-1'],
   },
   walletIcon: {
     borderRadius: 12,

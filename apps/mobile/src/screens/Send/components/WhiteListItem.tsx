@@ -27,6 +27,7 @@ import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -47,6 +48,7 @@ export const WhiteListItem = ({
   const { removeWhitelist } = useWhitelist({ disableAutoFetch: true });
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
+  const { t } = useTranslation();
 
   useLayoutEffect(() => {
     openapi.addrDesc(account.address).then(res => {
@@ -59,12 +61,12 @@ export const WhiteListItem = ({
   const menuActions = React.useMemo(() => {
     return [
       {
-        title: 'Remove from Whitelist ',
+        title: t('page.whitelist.removeWhitelist'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
         androidIconName: 'ic_rabby_menu_un_pin',
-        key: 'pin',
+        key: 'remove',
         action() {
           trigger('impactLight', {
             enableVibrateFallback: true,
@@ -74,7 +76,7 @@ export const WhiteListItem = ({
         },
       },
     ] as MenuAction[];
-  }, [account.address, isDarkTheme, removeWhitelist]);
+  }, [account.address, isDarkTheme, removeWhitelist, t]);
   return (
     <ContextMenuView
       menuConfig={{

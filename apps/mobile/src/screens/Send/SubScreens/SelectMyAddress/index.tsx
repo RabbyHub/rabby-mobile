@@ -65,14 +65,14 @@ const SelectMyAddressScreen = () => {
               .length && (
               <OtherAddressNav
                 onPress={() => handleGotoImportedAddress('watch')}
-                text={'Select to Watch-Only Addresses'}
+                text={t('page.sendPoly.sendToWatchAddress')}
               />
             )}
             {!!allAccounts.filter(acc => acc.brandName === KEYRING_CLASS.GNOSIS)
               .length && (
               <OtherAddressNav
                 onPress={() => handleGotoImportedAddress('safe')}
-                text={'Select to Safe Addresses'}
+                text={t('page.sendPoly.sendToSafeAddress')}
               />
             )}
             <View style={styles.footerGap} />
@@ -85,43 +85,17 @@ const SelectMyAddressScreen = () => {
 
 export default SelectMyAddressScreen;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(() => ({
   root: {
     position: 'relative',
     paddingHorizontal: 16,
   },
-  input: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 10,
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    height: 56,
-  },
   item: {
     marginBottom: 8,
-  },
-  placeHolder: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 18,
-    fontFamily: 'SF Pro Rounded',
   },
   listContainer: {
     flex: 1,
     paddingTop: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerText: {
-    fontSize: 18,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
   },
   footer: {
     marginTop: 12,

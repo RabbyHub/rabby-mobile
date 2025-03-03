@@ -124,7 +124,7 @@ const SendInputScreen = () => {
                       },
                 )}
                 inputProps={{
-                  placeholder: 'Enter Address',
+                  placeholder: t('page.sendPoly.enterAddress'),
                   value: input,
                   blurOnSubmit: true,
                   returnKeyType: 'done',
@@ -187,45 +187,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 12,
     marginBottom: 16,
   },
-  ensResultBox: {
-    // padding: 4,
-    width: '100%',
-    borderRadius: 16,
-    display: 'flex',
-    marginTop: 12,
-    backgroundColor: ctx.colors2024['brand-light-1'],
-  },
 
-  ensResult: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 14,
-    borderRadius: 16,
-    // overflow: 'hidden',
-    color: ctx.colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-  },
-  ensText: {
-    fontSize: 13,
-    color: ctx.colors2024['neutral-body'],
-    marginVertical: 12,
-    marginHorizontal: 8,
-  },
-  icon: {
-    width: 40,
-    height: 40,
-  },
-  itemAddressWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: 4,
-  },
-  qAndASection: {
-    marginBottom: 24,
-  },
   textContainer: {
     marginTop: 20,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -240,13 +202,5 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   pasteButton: {
     marginTop: 58,
-  },
-  tipWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-    width: '100%',
-    marginBottom: 28,
   },
 }));
