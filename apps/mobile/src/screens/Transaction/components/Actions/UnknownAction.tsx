@@ -4,7 +4,11 @@ import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import {
+  formatAmount,
+  formatTokenAmount,
+  formatUsdValue,
+} from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -130,16 +134,6 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
           </View>
         </View>
 
-        {/* todo gas fee */}
-        {/* <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.GasFee')}
-          </Text>
-          <Text style={[styles.itemContentText]}>{`-${formatPrice(
-            usdGasFee!,
-          )} USD`}</Text>
-        </View> */}
-
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.From')}
@@ -150,6 +144,19 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
             switchAccount={switchAccount}
           />
         </View>
+
+        {Boolean(data.maxGasTx?.gasUSDValue) && (
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.GasFee')}
+            </Text>
+            <Text style={styles.itemContentText}>
+              {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
+              {data.maxGasTx?.gasTokenSymbol || ''} ($
+              {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
+            </Text>
+          </View>
+        )}
 
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>Hash</Text>

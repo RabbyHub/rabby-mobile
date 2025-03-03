@@ -3,6 +3,7 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import {
   ExplainTxResponse,
+  GetTxResponse,
   TokenItem,
   Tx,
   TxAllHistoryResult,
@@ -27,7 +28,7 @@ import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { updateExpiredTime } from '@/databases/sync/assets';
-import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
+import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -39,6 +40,10 @@ export interface TransactionHistoryItem {
   completedAt: number;
   hash?: string;
   gasUsed?: number;
+
+  gasTokenSymbol?: string;
+  gasUSDValue?: number;
+  gasTokenCount?: number;
   // site?: ConnectedSite;
   site?: DappInfo;
 
@@ -259,7 +264,9 @@ export class TransactionHistoryService {
       item => item.rawTx.chainId === chainId && item.isSubmitted,
     );
 
-    if (!maxNonceTx) return null;
+    if (!maxNonceTx) {
+      return null;
+    }
 
     const maxLocalNonce = maxNonceTx.nonce;
     const firstSigningNonce =
@@ -434,24 +441,56 @@ export class TransactionHistoryService {
     if (success) {
       updateExpiredTime(address.toLowerCase());
     }
+    const chain = findChain({
+      id: Number(target.chainId),
+    });
     target?.txs?.forEach(tx => {
       if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
-        const newTxs = {
+        const nativeToken =
+          tx.explain?.native_token ||
+          (chain
+            ? customTestnetTokenToTokenItem({
+                id: chain.nativeTokenAddress,
+                chainId: chain.id,
+                symbol: chain.nativeTokenSymbol,
+                decimals: chain.nativeTokenDecimals,
+                amount: 0,
+                rawAmount: '0',
+              })
+            : undefined);
+
+        const hasTokenPrice = !!nativeToken;
+        const gasTokenCount =
+          hasTokenPrice && tx
+            ? (Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0) *
+                (gasUsed || 0)) /
+              1e18
+            : 0;
+        const gasUSDValue =
+          gasTokenCount && nativeToken
+            ? (nativeToken?.price || 0) * gasTokenCount
+            : 0;
+        const gasTokenSymbol =
+          hasTokenPrice && nativeToken ? getTokenSymbol(nativeToken) : '';
+
+        const newTx = {
           ...tx,
           isPending: false,
           isFailed: !success,
           isCompleted: true,
           gasUsed,
+          gasTokenSymbol,
+          gasUSDValue,
+          gasTokenCount,
           completedAt: Date.now(),
         };
-        this.updateTx(newTxs);
+        this.updateTx(newTx);
         const id = tx.hash || tx.reqId;
         if (success) {
           id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
-        loadTxSaveFromLocalStore(newTxs);
 
         this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
       }
@@ -464,9 +503,6 @@ export class TransactionHistoryService {
     //     [key]: target,
     //   },
     // });
-    const chain = findChain({
-      id: Number(target.chainId),
-    });
     if (chain) {
       // TODO $ctx
       stats.report('completeTransaction', {
@@ -553,6 +589,7 @@ export class TransactionHistoryService {
       }
       const completedTx = txs.find(tx => tx.hash === completed.hash)!;
 
+      console.log('completeTx: ', completed);
       this.completeTx({
         address,
         chainId,
