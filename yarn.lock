@@ -30584,54 +30584,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native@patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 0.72.7
-  resolution: "react-native@patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch::version=0.72.7&hash=9f940e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    "@jest/create-cache-key-function": ^29.2.1
-    "@react-native-community/cli": 11.3.10
-    "@react-native-community/cli-platform-android": 11.3.10
-    "@react-native-community/cli-platform-ios": 11.3.10
-    "@react-native/assets-registry": ^0.72.0
-    "@react-native/codegen": ^0.72.7
-    "@react-native/gradle-plugin": ^0.72.11
-    "@react-native/js-polyfills": ^0.72.1
-    "@react-native/normalize-colors": ^0.72.0
-    "@react-native/virtualized-lists": ^0.72.8
-    abort-controller: ^3.0.0
-    anser: ^1.4.9
-    base64-js: ^1.1.2
-    deprecated-react-native-prop-types: ^4.2.3
-    event-target-shim: ^5.0.1
-    flow-enums-runtime: ^0.0.5
-    invariant: ^2.2.4
-    jest-environment-node: ^29.2.1
-    jsc-android: ^250231.0.0
-    memoize-one: ^5.0.0
-    metro-runtime: 0.76.8
-    metro-source-map: 0.76.8
-    mkdirp: ^0.5.1
-    nullthrows: ^1.1.1
-    pretty-format: ^26.5.2
-    promise: ^8.3.0
-    react-devtools-core: ^4.27.2
-    react-refresh: ^0.4.0
-    react-shallow-renderer: ^16.15.0
-    regenerator-runtime: ^0.13.2
-    scheduler: 0.24.0-canary-efb381bbf-20230505
-    stacktrace-parser: ^0.1.10
-    use-sync-external-store: ^1.0.0
-    whatwg-fetch: ^3.0.0
-    ws: ^6.2.2
-    yargs: ^17.6.2
-  peerDependencies:
-    react: 18.2.0
-  bin:
-    react-native: cli.js
-  checksum: 48c2bcaf971374148d3102ce94556103ee43b8f1b49492203403a44c80d90c446467d8a14455e351977078b1a50a75c5aa02a30aec0cd823dd7be7f644024c22
-  languageName: node
-  linkType: hard
-
 "react-refresh@npm:^0.11.0":
   version: 0.11.0
   resolution: "react-refresh@npm:0.11.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-refresh%2F-%2Freact-refresh-0.11.0.tgz"
