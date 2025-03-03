@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,13 +20,13 @@ import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
-import { openapi } from '@/core/request';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
+  cexDesc?: Cex;
 }
-const AddressSource = ({ account, style }: IProps) => {
+const AddressSource = ({ account, style, cexDesc }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const editAliasName = useAliasNameEditModal();
@@ -34,15 +34,6 @@ const AddressSource = ({ account, style }: IProps) => {
   const inWhiteList = useMemo(() => {
     return whitelist.some(item => isSameAddress(item, account.address));
   }, [account.address, whitelist]);
-  const [cexDesc, setCexDesc] = useState<Cex | undefined>();
-
-  useLayoutEffect(() => {
-    openapi.addrDesc(account.address).then(res => {
-      if (res.desc.cex) {
-        setCexDesc(res.desc.cex);
-      }
-    });
-  }, [account.address]);
 
   const brandColors = useMemo(
     () => getBrandColors(cexDesc?.id || account.brandName),
@@ -84,7 +75,9 @@ const AddressSource = ({ account, style }: IProps) => {
                       backgroundColor: brandColors.brandBg,
                     },
                   ]}>
-                  {account.type}
+                  {cexDesc?.name
+                    ? `${cexDesc.name} Deposit Address`
+                    : account.type}
                 </Text>
               </View>
               <TouchableOpacity

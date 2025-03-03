@@ -15,17 +15,20 @@ import { View } from 'react-native';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useRisks } from './risk';
 
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
+
   const { account } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ConfirmAddress)?.params,
   ) as {
     account: KeyringAccountWithAlias;
   };
+  const { risks, addressDesc } = useRisks(account.address);
 
   const inWhiteList = useMemo(
     () => isAddrOnWhitelist(account.address),
@@ -68,7 +71,11 @@ const ConfirmAddressScreen = () => {
         paddingHorizontal: 4,
       }}>
       <AddressPopover address={account.address} />
-      <AddressSource account={account} style={styles.addressCard} />
+      <AddressSource
+        cexDesc={addressDesc?.cex}
+        account={account}
+        style={styles.addressCard}
+      />
       <View style={styles.whitelist}>
         <Text style={styles.text}>
           {t('page.addressDetail.add-to-whitelist')}
@@ -76,16 +83,18 @@ const ConfirmAddressScreen = () => {
         <AppSwitch2024 onValueChange={setInWhitelist} value={inWhiteList} />
       </View>
       <View>
-        <View style={styles.tipItem}>
-          <View style={styles.tipIcon}>
-            <RcTipCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-info']}
-            />
+        {risks.map(risk => (
+          <View key={risk.type} style={styles.tipItem}>
+            <View style={styles.tipIcon}>
+              <RcTipCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+            <Text style={styles.tipText}>{risk.value}</Text>
           </View>
-          <Text style={styles.tipText}>alert group desc</Text>
-        </View>
+        ))}
       </View>
     </FooterButtonScreenContainer>
   );
@@ -117,7 +126,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   tipItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
     marginTop: 32,
   },
