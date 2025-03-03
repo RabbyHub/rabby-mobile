@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import {
@@ -11,18 +10,17 @@ import {
   StyleProp,
   ViewStyle,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { trigger } from 'react-native-haptic-feedback';
-import { ellipsisAddress } from '@/utils/address';
-import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
+import { RcIconLockCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { getBrandColors } from '@/utils/brand';
+import { openapi } from '@/core/request';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -30,14 +28,26 @@ interface IProps {
 }
 const AddressSource = ({ account, style }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
-  const { navigation } = useSafeSetNavigationOptions();
   const { whitelist } = useWhitelist();
   const editAliasName = useAliasNameEditModal();
 
   const inWhiteList = useMemo(() => {
     return whitelist.some(item => isSameAddress(item, account.address));
   }, [account.address, whitelist]);
+  const [cexDesc, setCexDesc] = useState<Cex | undefined>();
+
+  useLayoutEffect(() => {
+    openapi.addrDesc(account.address).then(res => {
+      if (res.desc.cex) {
+        setCexDesc(res.desc.cex);
+      }
+    });
+  }, [account.address]);
+
+  const brandColors = useMemo(
+    () => getBrandColors(cexDesc?.id || account.brandName),
+    [account.brandName, cexDesc?.id],
+  );
 
   return (
     <Card style={StyleSheet.flatten([styles.card, style])}>
@@ -45,7 +55,16 @@ const AddressSource = ({ account, style }: IProps) => {
         {({ WalletIcon, WalletName }) => (
           <View style={styles.item}>
             <View style={styles.iconWrapper}>
-              <WalletIcon style={styles.walletIcon} width={46} height={46} />
+              {cexDesc?.logo_url ? (
+                <Image
+                  source={{ uri: cexDesc?.logo_url }}
+                  style={styles.walletIcon}
+                  width={46}
+                  height={46}
+                />
+              ) : (
+                <WalletIcon style={styles.walletIcon} width={46} height={46} />
+              )}
               {inWhiteList && (
                 <RcIconLockCC
                   style={styles.lockIcon}
@@ -57,7 +76,16 @@ const AddressSource = ({ account, style }: IProps) => {
             </View>
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
-                <Text style={styles.itemType}>{account.type}</Text>
+                <Text
+                  style={[
+                    styles.itemType,
+                    {
+                      color: brandColors.brandColor,
+                      backgroundColor: brandColors.brandBg,
+                    },
+                  ]}>
+                  {account.type}
+                </Text>
               </View>
               <TouchableOpacity
                 style={styles.editAliasWrapper}
@@ -150,6 +178,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   itemBalanceText: {
     fontSize: 17,

@@ -1,5 +1,4 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useLayoutEffect, useState } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,6 +11,7 @@ import {
   ViewStyle,
   TouchableOpacity,
   Pressable,
+  Image,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import {
@@ -25,6 +25,8 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
+import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { openapi } from '@/core/request';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -39,11 +41,19 @@ export const WhiteListItem = ({
   inWhiteList,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+  const [cexDesc, setCexDesc] = useState<Cex | undefined>();
   const [isPressing, setIsPressing] = React.useState(false);
   const { removeWhitelist } = useWhitelist({ disableAutoFetch: true });
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
+
+  useLayoutEffect(() => {
+    openapi.addrDesc(account.address).then(res => {
+      if (res.desc.cex) {
+        setCexDesc(res.desc.cex);
+      }
+    });
+  }, [account.address]);
 
   const menuActions = React.useMemo(() => {
     return [
@@ -119,11 +129,20 @@ export const WhiteListItem = ({
             {({ WalletIcon, WalletName, WalletBalance }) => (
               <View style={styles.item}>
                 <View style={styles.iconWrapper}>
-                  <WalletIcon
-                    style={styles.walletIcon}
-                    width={46}
-                    height={46}
-                  />
+                  {cexDesc?.logo_url ? (
+                    <Image
+                      source={{ uri: cexDesc?.logo_url }}
+                      style={styles.walletIcon}
+                      width={46}
+                      height={46}
+                    />
+                  ) : (
+                    <WalletIcon
+                      style={styles.walletIcon}
+                      width={46}
+                      height={46}
+                    />
+                  )}
                   {inWhiteList && (
                     <RcIconLockCC
                       style={styles.lockIcon}
