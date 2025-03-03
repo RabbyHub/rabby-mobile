@@ -5,14 +5,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { Pressable, View, Text } from 'react-native';
+import { RcIconLock, RcIconMan } from '@/assets2024/icons/whitelist';
 
-const EmptyWhiteListHolder = () => {
+interface IHeaderProps {
+  gotoAddWhitelist: () => void;
+}
+const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const gotoAddWhitelist = () => {
-    console.log('🔍 CUSTOM_LOGGER:=>: gotoAddWhitelist');
-  };
-
   return (
     <Card>
       <Text style={styles.header1}>
@@ -22,7 +22,14 @@ const EmptyWhiteListHolder = () => {
         {t('page.sendPoly.emptyWhitelistContent')}
       </Text>
       <Card style={styles.holder}>
-        <Text>placeholder</Text>
+        <View style={styles.iconWrapper}>
+          <RcIconLock style={styles.lock} />
+          <RcIconMan style={styles.man} />
+        </View>
+        <View style={styles.loadings}>
+          <View style={styles.loadingSection1} />
+          <View style={styles.loadingSection2} />
+        </View>
       </Card>
       <View style={styles.footer}>
         <Text style={styles.footerText}>
@@ -60,6 +67,46 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   holder: {
     width: '100%',
     marginBottom: 28,
+    display: 'flex',
+    flexDirection: 'row',
+    borderColor: colors2024['brand-light-1'],
+    borderRadius: 19,
+    gap: 12,
+  },
+  iconWrapper: {
+    width: 34,
+    height: 34,
+    position: 'relative',
+  },
+  man: {
+    width: 34,
+    height: 34,
+  },
+  lock: {
+    width: 18,
+    height: 18,
+    position: 'absolute',
+    bottom: -4,
+    right: -3,
+    zIndex: 999,
+  },
+  loadings: {
+    flex: 1,
+    height: 25,
+    gap: 8,
+    justifyContent: 'center',
+  },
+  loadingSection1: {
+    width: 37,
+    height: 7,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 8,
+  },
+  loadingSection2: {
+    width: 58,
+    height: 7,
+    backgroundColor: colors2024['brand-light-2'],
+    borderRadius: 8,
   },
   footer: {
     flexDirection: 'row',

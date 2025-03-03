@@ -22,17 +22,20 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
+  hideIcon?: boolean;
 }
-const WhiteListHeader = ({ gotoAddWhitelist }: IHeaderProps) => {
+const WhiteListHeader = ({ hideIcon, gotoAddWhitelist }: IHeaderProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   return (
     <View style={styles.header}>
       <Text style={styles.headerText}>{t('page.sendPoly.whitelistTitle')}</Text>
-      <Pressable onPress={gotoAddWhitelist}>
-        <RcIconAddWhiteList style={styles.addIcon} />
-      </Pressable>
+      {hideIcon ? null : (
+        <Pressable onPress={gotoAddWhitelist}>
+          <RcIconAddWhiteList style={styles.addIcon} />
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -104,9 +107,14 @@ const SendPolyScreen = () => {
           </View>
         )}
         ListHeaderComponent={() => (
-          <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
+          <WhiteListHeader
+            gotoAddWhitelist={handleGotoAddWhitelist}
+            hideIcon={list.length === 0}
+          />
         )}
-        ListEmptyComponent={EmptyWhiteListHolder}
+        ListEmptyComponent={() => (
+          <EmptyWhiteListHolder gotoAddWhitelist={handleGotoAddWhitelist} />
+        )}
         ListFooterComponent={
           <View style={styles.footer}>
             <OtherAddressNav
