@@ -73,9 +73,9 @@ export const WhiteListItem = ({
       {
         title: t('page.whitelist.removeWhitelist'),
         icon: isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
-        androidIconName: 'ic_rabby_menu_un_pin',
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove.png'),
+        androidIconName: 'ic_rabby_menu_remove_whitelist',
         key: 'remove',
         action() {
           trigger('impactLight', {
