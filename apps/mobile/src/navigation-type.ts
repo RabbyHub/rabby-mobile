@@ -239,7 +239,9 @@ export type TransactionNavigatorParamList = {
     // recievesToken: (TokenItem | undefined)[];
   };
   [RootNames.Send]?: {};
-  [RootNames.SendTo]?: {};
+  [RootNames.SendTo]?: {
+    forMultiScreen?: boolean;
+  };
   [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;

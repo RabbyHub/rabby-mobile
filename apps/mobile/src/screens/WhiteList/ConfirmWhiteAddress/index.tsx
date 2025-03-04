@@ -25,6 +25,11 @@ const ConfirmWhitelistScreen = () => {
   ) as {
     account: KeyringAccountWithAlias;
   };
+  const sendToNavParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+  ) as {
+    forMultiScreen?: boolean;
+  };
   const { risks, addressDesc } = useRisks(account.address);
 
   const onCancel = () => {
@@ -37,14 +42,15 @@ const ConfirmWhitelistScreen = () => {
   };
   useEffect(() => {
     if (whitelist.some(item => isSameAddress(item, account.address))) {
+      navigation.popToTop();
       navigation.dispatch(
         StackActions.push(RootNames.StackTransaction, {
           screen: RootNames.SendTo,
-          params: {},
+          params: sendToNavParams,
         }),
       );
     }
-  }, [account, navigation, whitelist]);
+  }, [account, navigation, sendToNavParams, whitelist]);
   return (
     <FooterButtonScreenContainer
       as="View"

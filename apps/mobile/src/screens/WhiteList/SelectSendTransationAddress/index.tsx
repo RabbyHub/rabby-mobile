@@ -16,6 +16,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useNavigationState } from '@react-navigation/native';
 
 function SendHistoryScreen() {
   const { accounts } = useMyAccounts({
@@ -97,6 +98,11 @@ function SendHistoryScreen() {
       }
     },
   });
+  const sendToNavParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+  ) as {
+    forMultiScreen?: boolean;
+  };
 
   const allTxHistory = useMemo(() => {
     // make receive front of send by cate_id order by asc
@@ -124,9 +130,10 @@ function SendHistoryScreen() {
     if (toAddress) {
       const { inWhitelist, account } = findAccount(toAddress);
       if (inWhitelist) {
+        navigation.popToTop();
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.SendTo,
-          params: {},
+          params: sendToNavParams,
         });
       } else {
         navigation.push(RootNames.StackTransaction, {

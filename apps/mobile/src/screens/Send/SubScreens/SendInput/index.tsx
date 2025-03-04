@@ -53,6 +53,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     autoScan?: boolean;
   };
 
+  const sendToNavParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+  ) as {
+    forMultiScreen?: boolean;
+  };
+
   const { findAccount } = useWhiteListAddress(true);
 
   const { t } = useTranslation();
@@ -74,10 +80,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       const { desc } = await openapi.addrDesc(address);
       if (isForWhitelist) {
         if (inWhitelist) {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.SendTo,
-            params: {},
-          });
+          navigation.canGoBack() && navigation.goBack();
         } else {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.WhitelistConfirm,
@@ -90,7 +93,9 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       }
       if (inWhitelist) {
         navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Send,
+          screen: sendToNavParams.forMultiScreen
+            ? RootNames.MultiSend
+            : RootNames.Send,
           params: {
             toAddress: account.address,
             cexDes: desc.cex,

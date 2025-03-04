@@ -22,7 +22,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
@@ -51,6 +51,11 @@ export const WhiteListItem = ({
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
+  const navParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+  ) as {
+    forMultiScreen?: boolean;
+  };
 
   useLayoutEffect(() => {
     openapi.addrDesc(account.address).then(res => {
@@ -103,9 +108,10 @@ export const WhiteListItem = ({
           });
           if (isForWhitelist) {
             if (inWhiteList) {
+              navigation.popToTop();
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.SendTo,
-                params: {},
+                params: navParams,
               });
             } else {
               navigation.push(RootNames.StackTransaction, {
@@ -119,7 +125,9 @@ export const WhiteListItem = ({
           }
           if (inWhiteList) {
             navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
+              screen: navParams.forMultiScreen
+                ? RootNames.MultiSend
+                : RootNames.Send,
               params: {
                 toAddress: account.address,
                 cexDes: cexDesc,
@@ -221,6 +229,11 @@ export const WhiteListItemSwitch = ({
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { navigation } = useSafeSetNavigationOptions();
+  const navParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+  ) as {
+    forMultiScreen?: boolean;
+  };
 
   return (
     <View style={styles.root}>
@@ -267,10 +280,11 @@ export const WhiteListItemSwitch = ({
         <Pressable
           style={styles.arrow}
           onPress={() => {
+            navigation.popToTop();
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
                 screen: RootNames.SendTo,
-                params: {},
+                params: navParams,
               }),
             );
           }}>

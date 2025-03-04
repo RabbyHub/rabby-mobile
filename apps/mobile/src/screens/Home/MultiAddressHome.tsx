@@ -494,7 +494,9 @@ function MultiAddressHome(): JSX.Element {
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.SendTo,
-              params: {},
+              params: {
+                forMultiScreen: true,
+              },
             }),
           );
           break;

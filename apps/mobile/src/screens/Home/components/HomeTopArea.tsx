@@ -222,7 +222,7 @@ export const HomeTopArea = ({
         }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Send,
+          screen: RootNames.SendTo,
           params: {
             // chain: v,
           },
