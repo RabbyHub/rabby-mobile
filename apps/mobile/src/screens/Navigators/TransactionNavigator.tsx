@@ -124,7 +124,7 @@ export default function TransactionNavigator() {
         name={RootNames.WhitelistInput}
         component={SendInputScreen.ForWhitelist}
         options={mergeScreenOptions({
-          title: 'Address Whitelist',
+          title: 'Add New Address to Whitelist',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '800',

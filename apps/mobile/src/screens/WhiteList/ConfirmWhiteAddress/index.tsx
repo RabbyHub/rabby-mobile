@@ -14,11 +14,14 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useRisks } from '@/screens/Send/SubScreens/ConfirmSendAddress/risk';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 const ConfirmWhitelistScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { whitelist, addWhitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
+  const { t } = useTranslation();
 
   const { account } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.WhitelistConfirm)?.params,
@@ -49,8 +52,9 @@ const ConfirmWhitelistScreen = () => {
           params: sendToNavParams,
         }),
       );
+      toast.success(t('page.whitelist.addSuccessful'));
     }
-  }, [account, navigation, sendToNavParams, whitelist]);
+  }, [account, navigation, sendToNavParams, t, whitelist]);
   return (
     <FooterButtonScreenContainer
       as="View"

@@ -123,7 +123,6 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       scanner.clear();
     }
   }, [scanner]);
-  console.log('🔍 CUSTOM_LOGGER:=>: SendInputScreen', navParams);
   useEffect(() => {
     if (navParams?.autoScan) {
       navigate(RootNames.Scanner);

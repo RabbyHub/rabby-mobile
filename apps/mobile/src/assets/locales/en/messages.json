@@ -647,7 +647,8 @@
       "addToWhitelist": "Add to Whitelist",
       "removeWhitelist": "Remove from Whitelist",
       "confirm": "Confirm",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "addSuccessful": "Address added to whitelist"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"
