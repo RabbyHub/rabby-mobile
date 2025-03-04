@@ -17,7 +17,6 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { trigger } from 'react-native-haptic-feedback';
