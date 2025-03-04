@@ -637,6 +637,7 @@
       "noSend": "You have not sent to this address before. Please confirm if you wish to proceed",
       "dexNoDeposite": " This is an Exchange address but not a deposit address",
       "dexNameTail": "Deposit Address",
+      "brandNameTail": "Address",
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time"
     },
     "selectAddress": {

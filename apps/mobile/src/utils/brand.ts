@@ -59,6 +59,18 @@ const ACCOUT_TYPE_COLORS: { [key: string]: IColors } = {
     brandColor: 'rgba(0, 0, 0, 1)',
     brandBg: 'rgba(0, 0, 0, 0.1)',
   },
+  [KEYRING_CLASS.HARDWARE.ONEKEY]: {
+    brandColor: 'rgba(34, 197, 43, 1)',
+    brandBg: 'rgba(34, 197, 43, 0.1)',
+  },
+  [KEYRING_CLASS.HARDWARE.KEYSTONE]: {
+    brandColor: 'rgba(31, 90, 255, 1)',
+    brandBg: 'rgba(31, 90, 255, 0.1)',
+  },
+  [KEYRING_CLASS.GNOSIS]: {
+    brandColor: 'rgba(104, 255, 122, 1)',
+    brandBg: 'rgba(104, 255, 122, 0.1)',
+  },
 };
 export const getBrandColors = (brandName: string) => {
   const brandColor = CEX_BRAND_COLORS[brandName];

@@ -27,6 +27,10 @@ import { useTranslation } from 'react-i18next';
 import { useAlias2 } from '@/hooks/alias';
 import { useAtom } from 'jotai';
 import { ellipsisAddress } from '@/utils/address';
+import {
+  BRAND_ALIAS_TYPE_TEXT,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils/dist/types';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -34,6 +38,7 @@ interface IProps {
   cexDesc?: Cex;
 }
 const AddressSource = ({ account, style, cexDesc }: IProps) => {
+  console.log('🔍 CUSTOM_LOGGER:=>: account', account, cexDesc);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
@@ -84,20 +89,28 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               )}
             </View>
             <View style={styles.itemInfo}>
-              <View style={styles.itemName}>
-                <Text
-                  style={[
-                    styles.itemType,
-                    {
-                      color: brandColors.brandColor,
-                      backgroundColor: brandColors.brandBg,
-                    },
-                  ]}>
-                  {cexDesc?.name
-                    ? `${cexDesc.name} ${t('page.confirmAddress.dexNameTail')}`
-                    : account.type}
-                </Text>
-              </View>
+              {(cexDesc?.id ||
+                account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
+                <View style={styles.itemName}>
+                  <Text
+                    style={[
+                      styles.itemType,
+                      {
+                        color: brandColors.brandColor,
+                        backgroundColor: brandColors.brandBg,
+                      },
+                    ]}>
+                    {cexDesc?.name
+                      ? `${cexDesc.name} ${t(
+                          'page.confirmAddress.dexNameTail',
+                        )}`
+                      : `${
+                          BRAND_ALIAS_TYPE_TEXT[account.type] ||
+                          account.brandName
+                        } ${t('page.confirmAddress.brandNameTail')}`}
+                  </Text>
+                </View>
+              )}
               <TouchableOpacity
                 style={styles.editAliasWrapper}
                 onPress={() => {
