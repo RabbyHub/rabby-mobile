@@ -22,6 +22,10 @@ import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,
 } from '@/databases/imports';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { BuyItemEntity } from '@/databases/entities/buyItem';
+import { downloadDbFile } from '@/databases/dbfs';
+import { IS_IOS } from '@/core/native/utils';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -60,6 +64,8 @@ export default function DevDataPlaygroundModal({
     onCancel?.();
   }, [setDataPlaygroundModalVisible, onCancel]);
 
+  const { resetUpdateHistoryTime } = useHistoryTokenDict();
+
   const navigation = useRabbyAppNavigation();
 
   const Items = (() => {
@@ -88,6 +94,7 @@ export default function DevDataPlaygroundModal({
                 text: 'Clear',
                 style: 'destructive',
                 onPress: async () => {
+                  resetUpdateHistoryTime();
                   await dropAppDataSourceAndQuitApp();
                 },
               },
@@ -116,11 +123,21 @@ export default function DevDataPlaygroundModal({
         label: 'Clear history DB data',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: async () => {
+          resetUpdateHistoryTime();
           await prepareAppDataSource();
           await Promise.all([
             HistoryItemEntity.clear(),
             SwapItemEntity.clear(),
+            BuyItemEntity.clear(),
           ]);
+        },
+      },
+      {
+        label: 'Download DB file',
+        icon: <RcCode style={styles.labelIcon} />,
+        visible: IS_IOS,
+        onPress: async () => {
+          downloadDbFile();
         },
       },
     ];

@@ -152,8 +152,19 @@ export const calcGasEstimated = (seconds?: number) => {
   return '>30 min';
 };
 
-export function formatTimestamp(timestamp: number) {
+export function formatTimestamp(timestamp: number, t: any) {
   const date = new Date(timestamp);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return t('page.transactions.Today');
+  }
+
+  if (date.toDateString() === yesterday.toDateString()) {
+    return t('page.transactions.Yesterday');
+  }
 
   const months = [
     'Jan',
@@ -190,7 +201,7 @@ export function formatIntlTimestamp(timestamp: number): string {
   const timeFormatter = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: 'numeric',
-    hour12: true, // 12 小时制
+    hour12: true,
   });
   const timePart = timeFormatter.format(date);
 

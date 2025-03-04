@@ -55,7 +55,8 @@
         "Revoke": "Approbation Révoquée",
         "Swap": "Échangé",
         "Cancel": "Annuler la transaction en attente",
-        "Send": "Envoyé"
+        "Send": "Envoyé",
+        "Buy": "Acheté"
       },
       "detail": {
         "Status": "Statut",
@@ -83,7 +84,13 @@
         "name": "Nom",
         "SendAgain": "Envoyer à nouveau",
         "Unknown": "Inconnu",
-        "RevokeToken": "Révoquer Token"
+        "RevokeToken": "Révoquer Token",
+        "Name": "Nom",
+        "PurchaseFrom": "Acheté de",
+        "WillReceive": "Recevoira : ≈ {{token}}",
+        "Collection": "Collection",
+        "totalApprovedAmount": "Montant Approuvé Actuel",
+        "BuyAgain": "Acheter à nouveau"
       },
       "empty": {
         "title": "Aucune transaction",
@@ -103,7 +110,11 @@
         "btn": "Masquer les transactions frauduleuses"
       },
       "title": "Transactions",
-      "ViewHiddenItems": "Afficher les transactions frauduleuses"
+      "ViewHiddenItems": "Afficher les transactions frauduleuses",
+      "Today": "Aujourd'hui",
+      "Yesterday": "Hier",
+      "ShowHiddenItems": "Afficher les transactions masquées",
+      "ViewSmallItems": "Voir les transactions < $0,1"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -444,7 +455,10 @@
     },
     "receive": {
       "title": "Recevez {{token}} sur {{chain}}",
-      "watchModeAlert": "Ceci est une adresse en lecture seule. Êtes-vous sûr de vouloir l'utiliser pour recevoir des actifs ?"
+      "watchModeAlert": "Ceci est une adresse en lecture seule. Êtes-vous sûr de vouloir l'utiliser pour recevoir des actifs ?",
+      "copyAddress": "Copier l'adresse",
+      "allEVMChain": "Toutes les chaînes EVM",
+      "newTitle": "Recevoir des actifs sur"
     },
     "signTypedData": {
       "signMultiSig": {
@@ -851,7 +865,15 @@
       "multiAddressHome": {
         "services": "Services",
         "pin": "Pin",
-        "totalBalance": "Solde total"
+        "totalBalance": "Solde total",
+        "importAddress": "Importer une adresse",
+        "receiveCrypto": "Recevoir des Crypto",
+        "importAddressDesc": "Ajoutez une adresse existante avec des fonds.",
+        "noAssets": "Pas d'actifs ?",
+        "buyWithFiat": "Acheter avec Fiat",
+        "fundYourWallet": "Alimentez votre portefeuille",
+        "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse.",
+        "buyWithFiatDesc": "Achetez des cryptos avec une carte de débit ou un compte bancaire."
       },
       "addAddress": {
         "createAddress": "Créer une adresse",
@@ -1329,7 +1351,15 @@
       "sectionHeader": {
         "Token": "Token",
         "Nft": "NFT",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "NoData": "Aucun {{name}}"
+      },
+      "emptyToken": {
+        "buyHeader": "Acheter avec Fiat",
+        "receiveHeader": "Recevoir des cryptos",
+        "receiveBody": "Transférer des tokens depuis une autre adresse.",
+        "buyBody": "Achetez des cryptomonnaies en utilisant une carte de débit ou un compte bancaire.",
+        "title": "Alimentez votre portefeuille"
       }
     },
     "search": {
@@ -1562,7 +1592,35 @@
     },
     "buy": {
       "from": "Depuis {{dex}}",
-      "purchased": "Acheté"
+      "purchased": "Acheté",
+      "regionBottomSheet": {
+        "title": "Sélectionnez votre région",
+        "searchPlaceholder": "Rechercher une devise fiat",
+        "noRegionFound": "Aucune région trouvée"
+      },
+      "currencyBottomSheet": {
+        "title": "Sélectionnez une devise",
+        "NoFound": "Aucune devise trouvée",
+        "searchPlaceholder": "Rechercher la devise"
+      },
+      "quote": {
+        "title": "Citations pour vous",
+        "best": "Meilleures Citations"
+      },
+      "title": "Acheter",
+      "youWillPay": "Payer",
+      "quotesForYou": "Citations pour vous",
+      "paymentMethod": "Méthode de paiement",
+      "searchingQuote": "Recherche de devis pour vous...",
+      "toBuy": "Continuer à acheter",
+      "history": "Historique des achats",
+      "youWillReceive": "Recevoir",
+      "paymentsOnly": "Les paiements peuvent uniquement être effectués en {{currency}}",
+      "searchRegionPlaceholder": "Rechercher une région",
+      "noQuotePlaceholder": "Pas de devis",
+      "noQuote2": "Aucune citation trouvée.",
+      "paymentProviderTips": "Ce fournisseur prend en charge les méthodes de paiement suivantes :",
+      "noQuote": "Aucune cote trouvée : Essayez d'entrer une valeur plus élevée."
     }
   },
   "native": {
@@ -1767,7 +1825,8 @@
       "option_Light": "Léger",
       "option_Dark": "Sombre"
     },
-    "Unknown": "Inconnu"
+    "Unknown": "Inconnu",
+    "unlimited": "illimité"
   },
   "background": {
     "transactionWatcher": {
@@ -1792,7 +1851,9 @@
       "duplicateAccount": "Le compte que vous essayez d'importer est un doublon.",
       "notFindChain": "Impossible de trouver la chaîne {{chain}}",
       "addKeyring404": "échec de l'ajout de keyring, keyring est indéfini",
-      "unknownAbi": "ABI de contrat inconnu"
+      "unknownAbi": "ABI de contrat inconnu",
+      "errorWords_one": "1 mot incorrect",
+      "errorWords_other": "{{count}} mots incorrects"
     }
   },
   "common": {

@@ -99,7 +99,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const isFailed = useMemo(() => data.isFailed, [data]);
   console.debug('HistoryLocalDetailScreen isPending', isPending);
   const { switchAccount } = useCurrentAccount();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
 
@@ -119,7 +119,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     );
 
     console.debug('fetchRefreshData groups', JSON.stringify(groups));
-    if (groups.length?.[0]) {
+    if (groups?.[0]) {
       setData(groups[0]);
     }
   }, [isPending, data]);
@@ -135,7 +135,14 @@ function HistoryLocalDetailScreen(): JSX.Element {
     );
   }, [title, styles.headerTitleStyle, t]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!data.isPending) {
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+    }
+  }, [data]);
+
+  useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
     });
@@ -321,7 +328,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type="bg2"
+      type={!isLight ? 'bg1' : 'bg2'}
       style={{
         // position: 'relative',
         paddingBottom: bottom,

@@ -28,7 +28,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { contactService, keyringService } from '@/core/services';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { useNavigationState } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
 import { replaceToFirst } from '@/utils/navigation';
@@ -141,10 +141,12 @@ function MainListBlocks() {
     }
 
     if (state?.noSetupPassword) {
-      navigation.replace(RootNames.StackAddress, {
-        screen: RootNames.CreateChooseBackup,
-        params: {},
-      });
+      navigation.dispatch(
+        StackActions.push(RootNames.StackAddress, {
+          screen: RootNames.CreateChooseBackup,
+          params: {},
+        }),
+      );
     } else {
       navigation.replace(RootNames.StackAddress, {
         screen: RootNames.SetPassword2024,

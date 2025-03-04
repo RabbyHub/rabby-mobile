@@ -196,8 +196,8 @@ function GetStartedScreen2024(): JSX.Element {
 const LOGO_SIZE = {
   wrapperWidth: 156,
   wrapperHeight: 156,
-  width: 114,
-  height: 99,
+  width: 89,
+  height: 77,
 };
 
 const getStyles = createGetStyles2024(ctx =>
@@ -250,8 +250,10 @@ const getStyles = createGetStyles2024(ctx =>
     appName: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
-      color: ctx.colors2024['neutral-title-1'],
-      fontSize: 22,
+      color: ctx.isLight
+        ? ctx.colors2024['neutral-title-1']
+        : ctx.colors2024['brand-default'],
+      fontSize: 22.5,
       lineHeight: 28,
     },
     appDesc: {

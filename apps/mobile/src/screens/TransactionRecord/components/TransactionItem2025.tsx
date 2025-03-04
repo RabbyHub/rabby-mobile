@@ -39,7 +39,7 @@ import {
   HistoryItemCateType,
   HistoryItemIcon,
 } from '@/screens/Transaction/components/HistoryItemIcon';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
   ParsedTransactionActionData,
@@ -47,13 +47,14 @@ import {
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
+import { transactionHistoryService } from '@/core/services';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {
@@ -88,12 +89,13 @@ export const TransactionItem = ({
   const isCanceled =
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
+  const [showSuccess, setShowSuccess] = useState(false);
   const isShowSuccess = useMemo(
     () =>
       historySuccessList?.includes(
         `${data.maxGasTx.address}-${data.maxGasTx.hash}` || '',
-      ),
-    [data.maxGasTx, historySuccessList],
+      ) || showSuccess,
+    [data.maxGasTx, historySuccessList, showSuccess],
   );
 
   const formatType: HistoryItemCateType = useMemo(() => {
@@ -301,7 +303,7 @@ export const TransactionItem = ({
       } else {
         return amount >= 1e9
           ? t('page.transactions.detail.Unlimited')
-          : formatAmount(amount);
+          : formatTokenAmount(amount);
       }
     }
   }, [approveToken, isNft, t]);
@@ -321,12 +323,21 @@ export const TransactionItem = ({
     }
   }, [sendToken, receiveToken, approveToken]);
 
+  useEffect(() => {
+    if (!data.isPending) {
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      const isShowStatus =
+        transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+      isShowStatus && setShowSuccess(true);
+    }
+  }, [data]);
+
   return (
     <TouchableOpacity
       onPress={hanldeNavigateDetail}
       style={[
         styles.card,
-        isCanceled || data.isFailed || data.isSubmitFailed || data.isWithdrawed
+        data.isFailed || data.isSubmitFailed || data.isWithdrawed
           ? styles.cardGray
           : null,
       ]}>
@@ -363,7 +374,9 @@ export const TransactionItem = ({
         ]}>
         {approveToken && (
           <View style={styles.txChange}>
-            <Text style={[styles.tokenText]} numberOfLines={1}>
+            <Text
+              style={[styles.tokenText, styles.approveText]}
+              numberOfLines={1}>
               {approveTokenAmountStr}
             </Text>
             <Text
@@ -382,7 +395,7 @@ export const TransactionItem = ({
                   {'+'}{' '}
                   {isNft
                     ? token.amount
-                    : formatAmount(token.amount || token.min_amount)}
+                    : formatTokenAmount(token.amount || token.min_amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText]}
@@ -405,7 +418,7 @@ export const TransactionItem = ({
                       styles.approveText,
                   ]}
                   numberOfLines={1}>
-                  {'-'} {isNft ? token.amount : formatAmount(token.amount)}
+                  {'-'} {isNft ? token.amount : formatTokenAmount(token.amount)}
                 </Text>
                 <Text
                   style={[styles.tokenText, styles.sendText]}
@@ -437,7 +450,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   },
   rightContent: {
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
     gap: 3,
     minWidth: 0,
     flexShrink: 1,
@@ -449,7 +463,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     // width: '50%',
   },
   approveText: {
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
@@ -490,17 +504,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors['green-default'],
+    color: colors2024['green-default'],
     minWidth: 0,
     flexShrink: 1,
     textAlign: 'right',
     fontFamily: 'SF Pro Rounded',
   },
   sendText: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   cardGray: {
     opacity: 0.3,

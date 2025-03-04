@@ -87,7 +87,8 @@
       "option_Dark": "深色",
       "option_Light": "輕量版"
     },
-    "Unknown": "未知"
+    "Unknown": "未知",
+    "unlimited": "unlimited"
   },
   "background": {
     "transactionWatcher": {
@@ -112,7 +113,9 @@
       "duplicateAccount": "您嘗試匯入的賬戶重複",
       "canNotUnlock": "沒有之前的保險庫無法解鎖",
       "noCurrentAccount": "無當前賬戶",
-      "invalidMnemonic": "助記詞無效，請檢查！"
+      "invalidMnemonic": "助記詞無效，請檢查！",
+      "errorWords_one": "1 個錯誤的單詞",
+      "errorWords_other": "{{count}} incorrect words"
     }
   },
   "bluetooth": {
@@ -160,7 +163,8 @@
         "Recieve": "收到",
         "Send": "已發送",
         "Approve": "已批准",
-        "Default": "互動"
+        "Default": "互動",
+        "Buy": "已購買"
       },
       "detail": {
         "Unknown": "未知",
@@ -188,7 +192,13 @@
         "InteractionResults": "互動結果",
         "ApproveTo": "批准至",
         "Revoke": "撤销",
-        "name": "名稱"
+        "name": "名稱",
+        "Name": "名稱",
+        "Collection": "收藏品",
+        "BuyAgain": "再次購買",
+        "WillReceive": "將接收：≈ {{token}}",
+        "totalApprovedAmount": "當前已批准金額",
+        "PurchaseFrom": "購買自"
       },
       "empty": {
         "title": "沒有交易",
@@ -208,7 +218,11 @@
         "loading": "加載可能需要一些時間，數據可能會延遲"
       },
       "title": "交易",
-      "ViewHiddenItems": "查看 scam 交易"
+      "ViewHiddenItems": "查看 scam 交易",
+      "Today": "今天",
+      "ViewSmallItems": "查看小於 $0.1 的交易",
+      "ShowHiddenItems": "顯示隱藏的交易",
+      "Yesterday": "昨天"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "輸入您的助記詞"
@@ -218,7 +232,10 @@
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
-      "watchModeAlert": "這是一個觀察地址。您確定要使用它接收資產嗎？"
+      "watchModeAlert": "這是一個觀察地址。您確定要使用它接收資產嗎？",
+      "copyAddress": "複製地址",
+      "newTitle": "接收資產至",
+      "allEVMChain": "所有 EVM 鏈"
     },
     "sendToken": {
       "To": "到",
@@ -988,7 +1005,15 @@
       "multiAddressHome": {
         "pin": "Pin",
         "totalBalance": "總餘額",
-        "services": "服務"
+        "services": "服務",
+        "importAddress": "導入地址",
+        "receiveCrypto": "接收 Crypto",
+        "noAssets": "沒有資產？",
+        "fundYourWallet": "向錢包充值",
+        "buyWithFiat": "法幣購買",
+        "importAddressDesc": "添加已有資金的地址。",
+        "receiveCryptoDesc": "從其他地址轉移代幣。\n",
+        "buyWithFiatDesc": "使用借記卡或銀行帳戶購買加密貨幣。"
       },
       "createNewAddress": {
         "BackupSeedPhrase": "手動備份助記詞",
@@ -1345,7 +1370,15 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
-        "Token": "Token"
+        "Token": "Token",
+        "NoData": "沒有 {{name}}"
+      },
+      "emptyToken": {
+        "receiveHeader": "接收 Crypto",
+        "buyHeader": "使用法幣購買",
+        "title": "為您的錢包充值",
+        "receiveBody": "從另一個地址轉移 tokens。",
+        "buyBody": "使用借記卡或銀行帳戶購買加密貨幣。"
       }
     },
     "rabbyPoints": {
@@ -1662,7 +1695,35 @@
     },
     "buy": {
       "purchased": "已購買",
-      "from": "來自 {{dex}}"
+      "from": "來自 {{dex}}",
+      "regionBottomSheet": {
+        "searchPlaceholder": "搜尋法定貨幣",
+        "title": "選擇您的地區",
+        "noRegionFound": "未找到區域"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "搜索貨幣",
+        "title": "選擇貨幣",
+        "NoFound": "未找到貨幣"
+      },
+      "quote": {
+        "best": "最佳報價",
+        "title": "報價給您"
+      },
+      "youWillPay": "支付",
+      "title": "購買",
+      "paymentsOnly": "付款只能使用{{currency}}",
+      "searchRegionPlaceholder": "搜索地區",
+      "noQuotePlaceholder": "無報價",
+      "toBuy": "繼續購買",
+      "quotesForYou": "為您報價",
+      "searchingQuote": "正在為您搜尋報價...",
+      "history": "購買記錄",
+      "noQuote": "未找到報價：請嘗試輸入較高的值。",
+      "paymentMethod": "支付方式",
+      "noQuote2": "未找到報價。",
+      "paymentProviderTips": "此提供者支持以下支付方式：",
+      "youWillReceive": "接收"
     }
   },
   "component": {

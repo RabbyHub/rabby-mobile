@@ -2,7 +2,7 @@ import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemCateType } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { isString } from 'lodash';
+import { isString, omit } from 'lodash';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import {
   NFTItem,
@@ -14,6 +14,9 @@ import { IManageToken } from '@/core/services/preference';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
+  if (data.isLocalBuy) {
+    return HistoryItemCateType.Buy;
+  }
   if (data.cate_id) {
     switch (data.cate_id) {
       case 'receive':

@@ -103,6 +103,7 @@ const themeColorsNext2024 = {
     'orange-light-4': 'rgba(255, 159, 10, 0.14)',
 
     'green-default': 'rgba(88, 198, 105, 1)',
+    'green-default-light': 'rgba(117, 212, 101, 0.70)',
     'green-light-1': 'rgba(88, 198, 105, 0.8)',
     'green-light-2': 'rgba(88, 198, 105, 0.4)',
     'green-disable': 'rgba(88, 198, 105, 0.27)',
@@ -157,6 +158,7 @@ const themeColorsNext2024 = {
     'orange-light-4': 'rgba(255, 159, 10, 0.14)',
 
     'green-default': 'rgba(88, 198, 105, 1)',
+    'green-default-light': 'rgba(117, 212, 101, 0.70)',
     'green-light-1': 'rgba(88, 198, 105, 0.8)',
     'green-light-2': 'rgba(88, 198, 105, 0.4)',
     'green-disable': 'rgba(88, 198, 105, 0.27)',
@@ -169,7 +171,7 @@ const themeColorsNext2024 = {
     'blue-light-4': 'rgba(10, 132, 255, 0.14)',
 
     'neutral-bg-1': 'rgba(19, 20, 22, 1)',
-    'neutral-bg-2': 'rgba(43, 45, 50, 1)',
+    'neutral-bg-2': 'rgba(35, 36, 40, 1)',
     'neutral-bg-3': 'rgba(28, 28, 29, 1)',
     'neutral-bg-4': 'rgba(56, 59, 65, 1)',
     'neutral-line': 'rgba(69, 72, 79, 1)',

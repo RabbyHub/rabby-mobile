@@ -2,10 +2,11 @@
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
-import { findChain } from '@/utils/chain';
+import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
@@ -21,7 +22,7 @@ import { TransactionPendingDetail } from '@/screens/TransactionRecord/components
 import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
-import { numberWithCommasIsLtOne } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
+import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { SwapRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
@@ -32,6 +33,7 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ellipsisAddress } from '@/utils/address';
+import { formatIntlTimestamp } from '@/utils/time';
 
 interface Props {
   data: TransactionGroup;
@@ -80,6 +82,14 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     }
   });
 
+  const handleOpenTxAddress = useMemoizedFn((address: string) => {
+    if (chain?.scanLink) {
+      openTxExternalUrl({ chain, address });
+    } else {
+      toast.error('Unknown chain');
+    }
+  });
+
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(token),
@@ -107,7 +117,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           />
           <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-              {'-'} {numberWithCommasIsLtOne(actionData.payToken.amount, 2)}{' '}
+              {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
               {getTokenSymbol(actionData.payToken as TokenItem)}
             </Text>
             <RcIconRightCC
@@ -128,7 +138,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           />
           <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList]}>
-              {'+'} {numberWithCommasIsLtOne(actionData.minReceive.amount, 2)}{' '}
+              {'+'} {formatTokenAmount(actionData.minReceive.amount)}{' '}
               {getTokenSymbol(actionData.minReceive as TokenItem)}
             </Text>
             <RcIconRightCC
@@ -143,17 +153,18 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
       </View>
       <View style={styles.detailContainer}>
-        {/* todo get complete time */}
-        {/* {!data.isPending && data.maxGasTx.createdAt && (
+        {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Date</Text>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Date')}
+            </Text>
             <View>
               <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.createdAt)}
+                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
               </Text>
             </View>
           </View>
-        )} */}
+        )}
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.Status')}
@@ -204,6 +215,35 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
 
         <View style={styles.detailItem}>
+          <Text style={styles.itemTitleText}>
+            {t('page.transactions.detail.InteractedContract')}
+          </Text>
+          <TouchableOpacity
+            style={{ alignItems: 'flex-end' }}
+            onPress={() => handleOpenTxAddress(requireData?.id)}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
+              <Text style={[styles.itemContentText]}>
+                {requireData?.protocol?.name}
+              </Text>
+              <RcIconJumpCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-foot']}
+              />
+            </View>
+            <Text style={styles.itemAddressText}>
+              {ellipsisAddress(requireData?.id || '')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>Hash</Text>
           <TouchableOpacity
             disabled={!chain?.scanLink}
@@ -250,13 +290,15 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -313,7 +355,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
     gap: 10,
@@ -323,7 +367,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     flex: 1,
     height: 110,
   },

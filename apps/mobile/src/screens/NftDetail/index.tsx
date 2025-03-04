@@ -328,7 +328,7 @@ export const NFTDetailScreen = () => {
         ];
   }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
   useEffect(() => {
-    getCacheTop10Assets(false, {
+    getCacheTop10Assets({
       disableToken: true,
       disableDefi: true,
     });

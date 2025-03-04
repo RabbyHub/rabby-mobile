@@ -56,9 +56,9 @@ export const SafeNonceOptionList = ({
 
   const recommendNonce = useMemo(() => {
     const maxNonceTx = pendingList?.length
-      ? maxBy(pendingList || [], item => item.nonce)
+      ? maxBy(pendingList || [], item => +item.nonce)
       : null;
-    return maxNonceTx != null ? maxNonceTx.nonce + 1 : safeInfo?.nonce;
+    return maxNonceTx != null ? +maxNonceTx.nonce + 1 : safeInfo?.nonce;
   }, [pendingList, safeInfo]);
 
   if (isLoadingPendingList && !pendingList) {
@@ -97,9 +97,9 @@ export const SafeNonceOptionList = ({
             {t('page.signTx.SafeNonceSelector.optionGroup.recommendTitle')}
           </Text>
           <SafeNonceOptionListItem
-            checked={recommendNonce === value}
+            checked={+recommendNonce === value}
             onPress={() => {
-              onChange?.(recommendNonce);
+              onChange?.(+recommendNonce);
             }}
             isHideDivider>
             <Text>
@@ -117,10 +117,10 @@ export const SafeNonceOptionList = ({
             return (
               <SafeNonceOptionListItem
                 key={item.nonce}
-                checked={item.nonce === value}
+                checked={+item.nonce === value}
                 isHideDivider={index + 1 === list.length}
                 onPress={() => {
-                  onChange?.(item.nonce);
+                  onChange?.(+item.nonce);
                 }}>
                 <SafeNoncePendingOptionContent data={item} chainId={chainId} />
               </SafeNonceOptionListItem>

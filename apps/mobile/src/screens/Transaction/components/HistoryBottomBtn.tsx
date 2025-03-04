@@ -212,6 +212,39 @@ export const HistoryBottomBtn = ({
           />
         </View>
       );
+
+    case HistoryItemCateType.Buy:
+      if (!data.buyDetails?.receive_tx_id || !data.id) {
+        return null;
+      }
+      return (
+        <View style={btnContainerViewStyle}>
+          <Button
+            buttonStyle={buttonStyle}
+            onPress={() => {
+              if (!isForMultipleAdderss) {
+                switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  currentAccount,
+                );
+              }
+              console.log('isForMultipleAdderss', isForMultipleAdderss);
+              navigation.dispatch(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: isForMultipleAdderss
+                    ? RootNames.MultiBuy
+                    : RootNames.Buy,
+                  params: {
+                    buyAgain: true,
+                    receiveToken: data.buyDetails?.receive_token,
+                  },
+                }),
+              );
+            }}
+            title={t('page.transactions.detail.BuyAgain')}
+          />
+        </View>
+      );
     // todo
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
