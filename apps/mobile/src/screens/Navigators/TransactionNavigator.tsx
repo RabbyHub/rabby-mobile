@@ -85,7 +85,7 @@ export default function TransactionNavigator() {
         name={RootNames.ConfirmAddress}
         component={ConfirmAddressScreen}
         options={mergeScreenOptions({
-          title: 'Confrim Address to Send',
+          title: 'Confirm Recipient Address',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '800',

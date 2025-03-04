@@ -28,6 +28,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@/components2024/Toast';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -104,11 +105,7 @@ export const WhiteListItem = ({
         });
         if (isForWhitelist) {
           if (inWhiteList) {
-            navigation.popToTop();
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.SendTo,
-              params: navParams,
-            });
+            toast.show(t('page.whitelist.alreadyAdded'));
           } else {
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.WhitelistConfirm,

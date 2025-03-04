@@ -21,6 +21,7 @@ import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { openapi } from '@/core/request';
 import { useNavigationState } from '@react-navigation/native';
+import { toast } from '@/components2024/Toast';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -80,7 +81,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       const { desc } = await openapi.addrDesc(address);
       if (isForWhitelist) {
         if (inWhitelist) {
-          navigation.canGoBack() && navigation.goBack();
+          toast.show(t('page.whitelist.alreadyAdded'));
         } else {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.WhitelistConfirm,

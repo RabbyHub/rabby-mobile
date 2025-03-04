@@ -78,9 +78,7 @@ const ConfirmAddressScreen = () => {
         style={styles.addressCard}
       />
       <View style={styles.whitelist}>
-        <Text style={styles.text}>
-          {t('page.addressDetail.add-to-whitelist')}
-        </Text>
+        <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
         <AppSwitch2024 onValueChange={setInWhitelist} value={inWhiteList} />
       </View>
       <View>

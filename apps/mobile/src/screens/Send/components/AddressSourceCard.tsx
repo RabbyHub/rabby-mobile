@@ -38,7 +38,6 @@ interface IProps {
   cexDesc?: Cex;
 }
 const AddressSource = ({ account, style, cexDesc }: IProps) => {
-  console.log('🔍 CUSTOM_LOGGER:=>: account', account, cexDesc);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();

@@ -28,22 +28,22 @@ export const useRisks = (address: string) => {
   useEffect(() => {
     (async () => {
       const currRisks: Array<{ type: RiskType; value: string }> = [];
-      if (addressDesc?.is_danger) {
+      if (addressDesc?.is_danger || addressDesc?.is_scam) {
         currRisks.push({
           type: RiskType.SCAM_ADDRESS,
-          value: 'danger address',
+          value: t('page.confirmAddress.risks.scamAddress'),
         });
       }
-      if (addressDesc?.cex && !addressDesc.cex.is_deposit) {
+      if (addressDesc?.cex?.id && !addressDesc.cex.is_deposit) {
         currRisks.push({
           type: RiskType.CEX_NO_DEPOSITE,
-          value: t('page.confirmAddress.dexNoDeposite'),
+          value: t('page.confirmAddress.risks.dexNoDeposite'),
         });
       }
-      if (addressDesc?.contract) {
+      if (Object.keys(addressDesc?.contract || {}).length) {
         currRisks.push({
           type: RiskType.CONTRACT_ADDRESS,
-          value: 'This is a contract address',
+          value: t('page.confirmAddress.risks.contractAddress'),
         });
       }
       setRisks(currRisks);
@@ -51,7 +51,10 @@ export const useRisks = (address: string) => {
       if (!hasSended) {
         setRisks([
           ...currRisks,
-          { type: RiskType.NEVER_SEND, value: t('page.confirmAddress.noSend') },
+          {
+            type: RiskType.NEVER_SEND,
+            value: t('page.confirmAddress.risks.noSend'),
+          },
         ]);
       }
     })();
@@ -60,6 +63,7 @@ export const useRisks = (address: string) => {
     addressDesc?.cex,
     addressDesc?.contract,
     addressDesc?.is_danger,
+    addressDesc?.is_scam,
     t,
   ]);
   return {
