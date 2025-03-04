@@ -36,6 +36,7 @@ interface IProps {
   hiddenArrow?: boolean;
   inWhiteList?: boolean;
   isForWhitelist?: boolean;
+  disableMenu?: boolean;
 }
 export const WhiteListItem = ({
   account,
@@ -43,6 +44,7 @@ export const WhiteListItem = ({
   hiddenArrow,
   isForWhitelist,
   inWhiteList,
+  disableMenu,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [cexDesc, setCexDesc] = useState<Cex | undefined>();
@@ -84,6 +86,141 @@ export const WhiteListItem = ({
       },
     ] as MenuAction[];
   }, [account.address, isDarkTheme, removeWhitelist, t]);
+
+  const children = (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={() => setIsPressing(true)}
+      onPressOut={() => setIsPressing(false)}
+      style={StyleSheet.flatten([
+        styles.root,
+        !disableMenu && isPressing && styles.rootPressing,
+      ])}
+      delayLongPress={200} // long press delay
+      onPress={() => {
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
+        if (isForWhitelist) {
+          if (inWhiteList) {
+            navigation.popToTop();
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.SendTo,
+              params: navParams,
+            });
+          } else {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.WhitelistConfirm,
+              params: {
+                account,
+              },
+            });
+          }
+          return;
+        }
+        if (inWhiteList) {
+          navigation.push(RootNames.StackTransaction, {
+            screen: navParams.forMultiScreen
+              ? RootNames.MultiSend
+              : RootNames.Send,
+            params: {
+              toAddress: account.address,
+              cexDes: cexDesc,
+              addressBrandName: account.brandName,
+            },
+          });
+        } else {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.ConfirmAddress,
+            params: {
+              account,
+            },
+          });
+        }
+      }}
+      onLongPress={() => {
+        if (disableMenu) {
+          return;
+        }
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
+      }}>
+      <Card
+        style={StyleSheet.flatten([
+          styles.card,
+          style,
+          !disableMenu && isPressing && styles.cardPressing,
+        ])}>
+        <InnerAddressItem style={styles.rootItem} account={account}>
+          {({ WalletIcon, WalletName, WalletBalance }) => (
+            <View style={styles.item}>
+              <View style={styles.iconWrapper}>
+                {cexDesc?.logo_url ? (
+                  <Image
+                    source={{ uri: cexDesc?.logo_url }}
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                ) : (
+                  <WalletIcon
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                )}
+                {inWhiteList && (
+                  <RcIconLockCC
+                    style={styles.lockIcon}
+                    color={
+                      isPressing
+                        ? colors2024['brand-default']
+                        : colors2024['neutral-body']
+                    }
+                    width={22}
+                    height={22}
+                  />
+                )}
+              </View>
+              <View style={styles.itemInfo}>
+                <View style={styles.itemName}>
+                  <WalletName style={styles.itemNameText} />
+                  <Text style={styles.address}>
+                    {`(${ellipsisAddress(account.address)})`}
+                  </Text>
+                </View>
+                <WalletBalance style={styles.itemBalanceText} />
+              </View>
+            </View>
+          )}
+        </InnerAddressItem>
+
+        {hiddenArrow ? null : (
+          <View
+            style={StyleSheet.flatten([
+              styles.arrow,
+              isPressing && styles.arrowPressing,
+            ])}>
+            <RcIconSwitchCC
+              color={
+                isPressing
+                  ? colors2024['brand-default']
+                  : colors2024['neutral-body']
+              }
+              width={24}
+              height={24}
+            />
+          </View>
+        )}
+      </Card>
+    </TouchableOpacity>
+  );
+  if (disableMenu) {
+    return children;
+  }
   return (
     <ContextMenuView
       menuConfig={{
@@ -92,132 +229,7 @@ export const WhiteListItem = ({
       }}
       preViewBorderRadius={20}
       triggerProps={{ action: 'longPress' }}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
-        style={StyleSheet.flatten([
-          styles.root,
-          isPressing && styles.rootPressing,
-        ])}
-        delayLongPress={200} // long press delay
-        onPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-          if (isForWhitelist) {
-            if (inWhiteList) {
-              navigation.popToTop();
-              navigation.push(RootNames.StackTransaction, {
-                screen: RootNames.SendTo,
-                params: navParams,
-              });
-            } else {
-              navigation.push(RootNames.StackTransaction, {
-                screen: RootNames.WhitelistConfirm,
-                params: {
-                  account,
-                },
-              });
-            }
-            return;
-          }
-          if (inWhiteList) {
-            navigation.push(RootNames.StackTransaction, {
-              screen: navParams.forMultiScreen
-                ? RootNames.MultiSend
-                : RootNames.Send,
-              params: {
-                toAddress: account.address,
-                cexDes: cexDesc,
-                addressBrandName: account.brandName,
-              },
-            });
-          } else {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.ConfirmAddress,
-              params: {
-                account,
-              },
-            });
-          }
-        }}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}>
-        <Card
-          style={StyleSheet.flatten([
-            styles.card,
-            style,
-            isPressing && styles.cardPressing,
-          ])}>
-          <InnerAddressItem style={styles.rootItem} account={account}>
-            {({ WalletIcon, WalletName, WalletBalance }) => (
-              <View style={styles.item}>
-                <View style={styles.iconWrapper}>
-                  {cexDesc?.logo_url ? (
-                    <Image
-                      source={{ uri: cexDesc?.logo_url }}
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
-                    />
-                  ) : (
-                    <WalletIcon
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
-                    />
-                  )}
-                  {inWhiteList && (
-                    <RcIconLockCC
-                      style={styles.lockIcon}
-                      color={
-                        isPressing
-                          ? colors2024['brand-default']
-                          : colors2024['neutral-body']
-                      }
-                      width={22}
-                      height={22}
-                    />
-                  )}
-                </View>
-                <View style={styles.itemInfo}>
-                  <View style={styles.itemName}>
-                    <WalletName style={styles.itemNameText} />
-                    <Text style={styles.address}>
-                      {`(${ellipsisAddress(account.address)})`}
-                    </Text>
-                  </View>
-                  <WalletBalance style={styles.itemBalanceText} />
-                </View>
-              </View>
-            )}
-          </InnerAddressItem>
-
-          {hiddenArrow ? null : (
-            <View
-              style={StyleSheet.flatten([
-                styles.arrow,
-                isPressing && styles.arrowPressing,
-              ])}>
-              <RcIconSwitchCC
-                color={
-                  isPressing
-                    ? colors2024['brand-default']
-                    : colors2024['neutral-body']
-                }
-                width={24}
-                height={24}
-              />
-            </View>
-          )}
-        </Card>
-      </TouchableOpacity>
+      {children}
     </ContextMenuView>
   );
 };
