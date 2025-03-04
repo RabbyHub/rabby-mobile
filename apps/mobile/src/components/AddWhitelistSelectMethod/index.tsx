@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import IconHardWare from '@/assets2024/icons/common/IconHardWare.png';
 import IconImport from '@/assets2024/icons/common/IconImport.svg';
 import IconCreate from '@/assets2024/icons/common/IconCreate.svg';
+import IconHistory from '@/assets2024/icons/common/IconHistory.svg';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -32,7 +32,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
               enableVibrateFallback: true,
               ignoreAndroidSystemSettings: false,
             });
-            navigateTo(RootNames.SendInput);
+            navigateTo(RootNames.WhitelistInput);
             onDone();
           }}
           style={styles.importItem}
@@ -46,7 +46,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
               ignoreAndroidSystemSettings: false,
             });
 
-            navigateTo(RootNames.SelectImportAddress);
+            navigateTo(RootNames.ImportAddress2Whitelist);
             onDone();
           }}
           style={styles.importItem}
@@ -65,7 +65,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
           }}
           style={styles.importItem}
           title={t('page.sendPoly.modals.recentAddress')}
-          Icon={<Image source={IconHardWare} style={styles.icon} />}
+          Icon={<IconHistory style={styles.icon} />}
         />
       </View>
     </NormalScreenContainer>

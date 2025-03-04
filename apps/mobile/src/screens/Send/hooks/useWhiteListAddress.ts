@@ -1,3 +1,4 @@
+import { contactService } from '@/core/services';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
@@ -27,8 +28,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
       .filter(item => !importAddressSet.has(item))
       .map(address => ({
         address,
-        // TODO: get from some way same with sign screen
-        aliasName: ellipsisAddress(address),
+        aliasName: contactService.getAliasByAddress(address)?.alias,
         balance: 0,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,
@@ -80,8 +80,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         ? findAccountByPriority(targetAccounts)
         : {
             address,
-            // TODO: get from some way same with sign screen
-            aliasName: ellipsisAddress(address),
+            aliasName: contactService.getAliasByAddress(address)?.alias,
             balance: 0,
             type: KEYRING_CLASS.WATCH,
             brandName: KEYRING_CLASS.WATCH,

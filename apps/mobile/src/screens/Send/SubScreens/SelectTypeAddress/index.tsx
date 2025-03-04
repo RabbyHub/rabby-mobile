@@ -13,10 +13,21 @@ import { useWhitelist } from '@/hooks/whitelist';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 
-const SelectTypeScreenScreen = () => {
+const SelectTypeScreenScreen = ({
+  isForWhitelist,
+}: {
+  isForWhitelist: boolean;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { type } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SelectTypeAddress)?.params,
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForWhitelist
+            ? RootNames.TypeAddress2Whitelist
+            : RootNames.SelectTypeAddress),
+      )?.params,
   ) as {
     type: 'watch' | 'safe';
   };
@@ -54,6 +65,7 @@ const SelectTypeScreenScreen = () => {
               account={item}
               inWhiteList={whitelist.includes(item.address)}
               hiddenArrow
+              isForWhitelist={isForWhitelist}
             />
           </View>
         )}
@@ -63,6 +75,9 @@ const SelectTypeScreenScreen = () => {
   );
 };
 
+SelectTypeScreenScreen.ForWhitelist = () => {
+  return <SelectTypeScreenScreen isForWhitelist />;
+};
 export default SelectTypeScreenScreen;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

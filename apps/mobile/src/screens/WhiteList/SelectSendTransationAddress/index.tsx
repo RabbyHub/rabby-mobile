@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { makeTxPageBackgroundColors } from '@/constant/layout';
+import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy, orderBy, debounce } from 'lodash';
@@ -14,6 +14,8 @@ import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 function SendHistoryScreen() {
   const { accounts } = useMyAccounts({
@@ -29,6 +31,7 @@ function SendHistoryScreen() {
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
   const { tokenDict, historyEnsureNoData } = useHistoryTokenDict();
   const { styles } = useTheme2024({ getStyle });
+  const navigation = useRabbyAppNavigation();
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
@@ -110,16 +113,30 @@ function SendHistoryScreen() {
     return isNodata;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyEnsureNoData]);
+  const { findAccount } = useWhiteListAddress(true);
 
   const fetchFromDbLoading = useMemo(
     () => currentNoDbData && !allTxHistory.length && !ensureCurrentNoDbData,
     [currentNoDbData, allTxHistory.length, ensureCurrentNoDbData],
   );
   const handlePressItem = (item: HistoryDisplayItem) => {
-    console.log(
-      '🔍 CUSTOM_LOGGER:=>: HistoryDisplayItem',
-      item.sends[0].to_addr,
-    );
+    const toAddress = item.sends[0]?.to_addr;
+    if (toAddress) {
+      const { inWhitelist, account } = findAccount(toAddress);
+      if (inWhitelist) {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.SendTo,
+          params: {},
+        });
+      } else {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.WhitelistConfirm,
+          params: {
+            account,
+          },
+        });
+      }
+    }
   };
 
   return (

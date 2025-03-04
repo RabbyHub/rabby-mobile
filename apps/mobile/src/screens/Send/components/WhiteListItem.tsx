@@ -35,11 +35,13 @@ interface IProps {
   cexDes?: Cex;
   hiddenArrow?: boolean;
   inWhiteList?: boolean;
+  isForWhitelist?: boolean;
 }
 export const WhiteListItem = ({
   account,
   style,
   hiddenArrow,
+  isForWhitelist,
   inWhiteList,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -99,6 +101,22 @@ export const WhiteListItem = ({
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
           });
+          if (isForWhitelist) {
+            if (inWhiteList) {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.SendTo,
+                params: {},
+              });
+            } else {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.WhitelistConfirm,
+                params: {
+                  account,
+                },
+              });
+            }
+            return;
+          }
           if (inWhiteList) {
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Send,
@@ -236,11 +254,7 @@ export const WhiteListItemSwitch = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  {cexDes?.name ? (
-                    <Text style={styles.itemNameText}>{cexDes.name}</Text>
-                  ) : (
-                    <WalletName style={styles.itemNameText} />
-                  )}
+                  <WalletName style={styles.itemNameText} />
                   <Text style={styles.address}>
                     {`(${ellipsisAddress(account.address)})`}
                   </Text>

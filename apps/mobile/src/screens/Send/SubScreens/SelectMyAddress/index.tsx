@@ -22,7 +22,11 @@ const triggerLight = () => {
   });
 };
 
-const SelectMyAddressScreen = () => {
+const SelectMyAddressScreen = ({
+  isForWhitelist,
+}: {
+  isForWhitelist: boolean;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { accounts: allAccounts } = useAccounts();
@@ -32,7 +36,9 @@ const SelectMyAddressScreen = () => {
     triggerLight();
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.SelectTypeAddress,
+        screen: isForWhitelist
+          ? RootNames.TypeAddress2Whitelist
+          : RootNames.SelectTypeAddress,
         params: { type },
       }),
     );
@@ -55,6 +61,7 @@ const SelectMyAddressScreen = () => {
               account={item}
               inWhiteList={whitelist.includes(item.address)}
               hiddenArrow
+              isForWhitelist={isForWhitelist}
             />
           </View>
         )}
@@ -65,14 +72,22 @@ const SelectMyAddressScreen = () => {
               .length && (
               <OtherAddressNav
                 onPress={() => handleGotoImportedAddress('watch')}
-                text={t('page.sendPoly.sendToWatchAddress')}
+                text={
+                  isForWhitelist
+                    ? t('page.selectAddress.selectWatchAddress')
+                    : t('page.sendPoly.sendToWatchAddress')
+                }
               />
             )}
             {!!allAccounts.filter(acc => acc.brandName === KEYRING_CLASS.GNOSIS)
               .length && (
               <OtherAddressNav
                 onPress={() => handleGotoImportedAddress('safe')}
-                text={t('page.sendPoly.sendToSafeAddress')}
+                text={
+                  isForWhitelist
+                    ? t('page.selectAddress.selectSafeAddress')
+                    : t('page.sendPoly.sendToSafeAddress')
+                }
               />
             )}
             <View style={styles.footerGap} />
@@ -81,6 +96,10 @@ const SelectMyAddressScreen = () => {
       />
     </NormalScreenContainer2024>
   );
+};
+
+SelectMyAddressScreen.ForWhitelist = () => {
+  return <SelectMyAddressScreen isForWhitelist />;
 };
 
 export default SelectMyAddressScreen;

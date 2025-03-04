@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,10 +17,16 @@ import { RcIconLockCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import {
+  useAliasNameEditModal,
+  visibleAtom,
+} from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
 import { useTranslation } from 'react-i18next';
+import { useAlias2 } from '@/hooks/alias';
+import { useAtom } from 'jotai';
+import { ellipsisAddress } from '@/utils/address';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -32,6 +38,11 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
   const editAliasName = useAliasNameEditModal();
+  const [visible] = useAtom(visibleAtom);
+
+  const { adderssAlias, fetchAlias } = useAlias2(account.address, {
+    autoFetch: true,
+  });
 
   const inWhiteList = useMemo(() => {
     return whitelist.some(item => isSameAddress(item, account.address));
@@ -41,11 +52,16 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
     () => getBrandColors(cexDesc?.id || account.brandName),
     [account.brandName, cexDesc?.id],
   );
+  useEffect(() => {
+    if (!visible) {
+      fetchAlias();
+    }
+  }, [fetchAlias, visible]);
 
   return (
     <Card style={StyleSheet.flatten([styles.card, style])}>
       <InnerAddressItem style={styles.rootItem} account={account}>
-        {({ WalletIcon, WalletName }) => (
+        {({ WalletIcon }) => (
           <View style={styles.item}>
             <View style={styles.iconWrapper}>
               {cexDesc?.logo_url ? (
@@ -87,7 +103,9 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
                 onPress={() => {
                   editAliasName.show(account);
                 }}>
-                <WalletName style={styles.itemNameText} />
+                <Text style={styles.itemNameText}>
+                  {adderssAlias || ellipsisAddress(account.address)}
+                </Text>
                 <EditSVG
                   color={colors2024['neutral-foot']}
                   width={14}

@@ -9,6 +9,7 @@ import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { contactService } from '@/core/services';
 
 export default function ToAddressControl2024({
   style,
@@ -36,6 +37,7 @@ export default function ToAddressControl2024({
     return {
       address,
       brandName: KEYRING_TYPE.WatchAddressKeyring,
+      aliasName: contactService.getAliasByAddress(address)?.alias,
       type: KEYRING_TYPE.WatchAddressKeyring,
     };
   }, [accounts, address, brandName]);

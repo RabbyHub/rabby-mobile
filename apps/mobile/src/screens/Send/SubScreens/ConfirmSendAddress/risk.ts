@@ -47,7 +47,6 @@ export const useRisks = (address: string) => {
         });
       }
       setRisks(currRisks);
-      console.log('🔍 CUSTOM_LOGGER:=>: address', address);
       const hasSended = await false;
       if (!hasSended) {
         setRisks([

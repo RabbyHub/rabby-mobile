@@ -35,7 +35,7 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const SendInputScreen = () => {
+const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
@@ -61,6 +61,22 @@ const SendInputScreen = () => {
       Keyboard.dismiss();
       const { inWhitelist, account } = findAccount(address);
       const { desc } = await openapi.addrDesc(address);
+      if (isForWhitelist) {
+        if (inWhitelist) {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.SendTo,
+            params: {},
+          });
+        } else {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.WhitelistConfirm,
+            params: {
+              account,
+            },
+          });
+        }
+        return;
+      }
       if (inWhitelist) {
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Send,
@@ -160,6 +176,10 @@ const SendInputScreen = () => {
       </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>
   );
+};
+
+SendInputScreen.ForWhitelist = () => {
+  return <SendInputScreen isForWhitelist />;
 };
 
 export default SendInputScreen;
