@@ -1,7 +1,26 @@
 import { openapi } from '@/core/request';
+import { useMyAccounts } from '@/hooks/account';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import PQueue from 'p-queue';
+
+const queue = new PQueue({ intervalCap: 10, interval: 1000 });
+
+const hasSend = async (from: string, to: string) => {
+  // TODO: Rabby api
+  return false;
+};
+
+const waitQueueFinished = (q: PQueue) => {
+  return new Promise(resolve => {
+    q.on('empty', () => {
+      if (q.pending <= 0) {
+        resolve(null);
+      }
+    });
+  });
+};
 
 export const enum RiskType {
   NEVER_SEND = 1,
@@ -14,6 +33,7 @@ export const useRisks = (address: string) => {
     [],
   );
   const { t } = useTranslation();
+  const { accounts } = useMyAccounts();
 
   const [addressDesc, setAddressDesc] = useState<
     AddrDescResponse['desc'] | undefined
@@ -46,8 +66,21 @@ export const useRisks = (address: string) => {
           value: t('page.confirmAddress.risks.contractAddress'),
         });
       }
-      setRisks(currRisks);
-      const hasSended = await false;
+      let hasSended = false;
+
+      accounts.forEach(acc => {
+        queue.add(async () => {
+          try {
+            const res = await hasSend(acc.address, address);
+            if (res?.['_has_transfer']) {
+              hasSended = true;
+            }
+          } catch (error) {
+            console.error('_has_transfer fetch error', error);
+          }
+        });
+      });
+      await waitQueueFinished(queue);
       if (!hasSended) {
         setRisks([
           ...currRisks,
@@ -59,6 +92,7 @@ export const useRisks = (address: string) => {
       }
     })();
   }, [
+    accounts,
     address,
     addressDesc?.cex,
     addressDesc?.contract,
