@@ -6145,7 +6145,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6167,7 +6167,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6221,7 +6221,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
     web3-utils: 1.7.0
   languageName: unknown
   linkType: soft
@@ -6246,7 +6246,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6275,7 +6275,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   peerDependencies:
     "@ethereumjs/tx": "*"
     "@rabby-wallet/base-utils": "*"
@@ -6307,7 +6307,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6326,7 +6326,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6386,7 +6386,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6457,7 +6457,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6481,7 +6481,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6666,7 +6666,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
     uuid: ^9.0.1
     webpack: ^5.88.2
     webpack-cli: ^5.1.4
@@ -6689,7 +6689,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6716,7 +6716,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ^5
+    typescript: 5.7.3
   peerDependencies:
     "@rabby-wallet/keyring-utils": "*"
   languageName: unknown
@@ -6768,7 +6768,7 @@ __metadata:
     ts-jest: ^28.0.7
     ts-node: ^10.7.0
     typedoc: ^0.23.15
-    typescript: ^5
+    typescript: 5.7.3
     webextension-polyfill: ^0.10.0
   languageName: unknown
   linkType: soft
@@ -33472,7 +33472,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.7.3, typescript@npm:^5":
+"typescript@npm:5.7.3":
   version: 5.7.3
   resolution: "typescript@npm:5.7.3"
   bin:
@@ -33512,7 +33512,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@5.7.3#~builtin<compat/typescript>, typescript@patch:typescript@^5#~builtin<compat/typescript>":
+"typescript@patch:typescript@5.7.3#~builtin<compat/typescript>":
   version: 5.7.3
   resolution: "typescript@patch:typescript@npm%3A5.7.3#~builtin<compat/typescript>::version=5.7.3&hash=d73830"
   bin:
