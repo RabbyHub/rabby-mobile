@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import IconImport from '@/assets2024/icons/common/IconImport.svg';
@@ -26,6 +26,8 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
       <View style={styles.section}>
+        <Text style={styles.title}>{t('page.sendPoly.modals.header')}</Text>
+        <Text style={styles.desc}>{t('page.sendPoly.modals.content')}</Text>
         <ListItem
           onPress={async () => {
             trigger('impactLight', {
@@ -113,5 +115,24 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '700',
+  },
+  title: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
+    textAlign: 'center',
+    marginTop: 0,
+    fontFamily: 'SF Pro Rounded',
+  },
+  desc: {
+    fontWeight: '400',
+    fontSize: 17,
+    lineHeight: 22,
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginTop: 0,
+    marginBottom: 20,
   },
 }));
