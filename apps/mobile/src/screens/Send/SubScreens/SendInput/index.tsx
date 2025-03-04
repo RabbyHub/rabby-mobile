@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -20,6 +20,7 @@ import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { openapi } from '@/core/request';
+import { useNavigationState } from '@react-navigation/native';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -41,6 +42,16 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const navigation = useRabbyAppNavigation();
+  const navParams = useNavigationState(
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForWhitelist ? RootNames.WhitelistInput : RootNames.SendInput),
+      )?.params,
+  ) as {
+    autoScan?: boolean;
+  };
 
   const { findAccount } = useWhiteListAddress(true);
 
@@ -107,6 +118,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       scanner.clear();
     }
   }, [scanner]);
+  console.log('🔍 CUSTOM_LOGGER:=>: SendInputScreen', navParams);
+  useEffect(() => {
+    if (navParams?.autoScan) {
+      navigate(RootNames.Scanner);
+    }
+  }, [navParams?.autoScan]);
 
   return (
     <FooterButtonScreenContainer

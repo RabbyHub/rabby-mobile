@@ -241,7 +241,9 @@ export type TransactionNavigatorParamList = {
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
   [RootNames.SendHistory]?: {};
-  [RootNames.SendInput]?: {};
+  [RootNames.SendInput]?: {
+    autoScan?: boolean;
+  };
   [RootNames.WhitelistInput]?: {};
   [RootNames.SelectImportAddress]?: {};
   [RootNames.ImportAddress2Whitelist]?: {};

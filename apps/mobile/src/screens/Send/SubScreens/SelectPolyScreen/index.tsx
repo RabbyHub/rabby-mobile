@@ -53,12 +53,14 @@ const SendPolyScreen = () => {
   const { list } = useWhiteListAddress();
   const { navigation } = useSafeSetNavigationOptions();
 
-  const handleGotoInputAddress = () => {
+  const handleGotoInputAddress = (autoScan: boolean) => {
     triggerLight();
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.SendInput,
-        params: {},
+        params: {
+          autoScan,
+        },
       }),
     );
   };
@@ -91,12 +93,18 @@ const SendPolyScreen = () => {
 
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
-      <Pressable style={styles.input} onPress={handleGotoInputAddress}>
-        <Text style={styles.placeHolder}>
-          {t('page.sendPoly.enterAddress')}
-        </Text>
-        <ScannerCC color={colors2024['neutral-title-1']} />
-      </Pressable>
+      <View style={styles.input}>
+        <Pressable
+          style={styles.placeHolderWrapper}
+          onPress={() => handleGotoInputAddress(false)}>
+          <Text style={styles.placeHolder}>
+            {t('page.sendPoly.enterAddress')}
+          </Text>
+        </Pressable>
+        <Pressable onPress={() => handleGotoInputAddress(true)}>
+          <ScannerCC color={colors2024['neutral-title-1']} />
+        </Pressable>
+      </View>
       <FlatList
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
@@ -144,17 +152,23 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
+    gap: 8,
     marginHorizontal: 4,
     height: 56,
   },
   item: {
     marginBottom: 8,
   },
+  placeHolderWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   placeHolder: {
     color: colors2024['neutral-secondary'],
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 56,
     fontWeight: '500',
+    flex: 1,
     fontFamily: 'SF Pro Rounded',
   },
   listContainer: {
