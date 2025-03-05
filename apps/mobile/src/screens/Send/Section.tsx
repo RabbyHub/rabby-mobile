@@ -142,15 +142,13 @@ export function BalanceSection({ style }: RNViewProps) {
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
+            defaultAccount={currentAccount}
             value={formValues.amount}
             onChange={value => {
               handleFieldChange?.('amount', value);
             }}
-            // selection={amountInputSelection || undefined}
             token={currentToken}
-            chainServerId={chainItem.serverId}
             onTokenChange={checkCexSupport}
-            // excludeTokens={[]}
             inlinePrize
           />
         )}

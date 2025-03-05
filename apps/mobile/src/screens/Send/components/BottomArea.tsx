@@ -18,7 +18,7 @@ const isAndroid = Platform.OS === 'android';
 
 export default function BottomArea() {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const { handleSubmit } = useSendTokenFormik();
 

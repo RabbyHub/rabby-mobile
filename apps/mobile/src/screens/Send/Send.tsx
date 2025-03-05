@@ -46,8 +46,11 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { ChainInfo2024 } from './components/ChainInfo2024';
-import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import {
+  PropsForAccountSwitchScreen,
+  ScreenSceneAccountProvider,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
@@ -110,8 +113,6 @@ function SendScreen({
     tmpToken,
     setTmpToken,
     checkCexSupport,
-    chainEnum,
-    handleChainChanged,
     loadCurrentToken,
     handleCurrentTokenChange,
 
@@ -361,21 +362,10 @@ function SendScreen({
               <View>
                 {/* To */}
                 <ToAddressControl2024
-                  address={navParams?.toAddress}
+                  address={navParams?.toAddress || ''}
                   cexDes={navParams?.cexDes}
                   brandName={navParams?.addressBrandName}
                 />
-
-                {/* ChainInfo */}
-                <View style={styles.chainSection}>
-                  <Text style={styles.sectionTitle}>
-                    {t('page.sendToken.Chain')}
-                  </Text>
-                  <ChainInfo2024
-                    chainEnum={chainEnum}
-                    onChange={handleChainChanged}
-                  />
-                </View>
                 {/* balance info */}
                 <BalanceSection />
               </View>
@@ -420,13 +410,25 @@ function SendScreen({
   );
 }
 
-SendScreen.ForMultipleAddress = (
+const ForMultipleAddress = (
   props: Omit<
     React.ComponentProps<typeof SendScreen>,
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  return <SendScreen {...props} isForMultipleAdderss />;
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  return (
+    <ScreenSceneAccountProvider
+      value={{
+        forScene: 'MakeTransactionAbout',
+        ofScreen: 'MultiSend',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSend`,
+      }}>
+      <SendScreen {...props} isForMultipleAdderss />
+    </ScreenSceneAccountProvider>
+  );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) =>
@@ -496,5 +498,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
   }),
 );
-
+SendScreen.ForMultipleAddress = ForMultipleAddress;
 export default SendScreen;

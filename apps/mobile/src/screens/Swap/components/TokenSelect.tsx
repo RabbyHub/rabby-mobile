@@ -92,17 +92,12 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       excludeTokens = defaultExcludeTokens,
       type = 'send',
       placeholder,
-      hideChainIcon = true,
-      value,
-      loading = false,
-      tokenRender,
       useSwapTokenList = false,
       supportChains,
       searchPlaceholder,
     },
     ref,
   ) => {
-    const [fold, setFold] = useState(true);
     const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
       account: accountInScreen,
@@ -375,7 +370,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     }, [accountInScreen]);
 
     const { t } = useTranslation();
-    const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+    const { styles } = useTheme2024({ getStyle });
     const [recentToTokens] = useSwapRecentToTokens();
 
     const recentDisplayToTokens = useMemo(() => {
@@ -521,7 +516,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       return (
         forScene === 'MakeTransactionAbout' &&
         ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-          (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
+          (RootNames.MultiSwap === ofScreen && type === 'swapFrom') ||
+          (RootNames.MultiSend === ofScreen && type === 'send'))
       );
     }, [forScene, ofScreen, currentAccount?.type, type]);
 

@@ -164,6 +164,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
     const isSwapTo = type === 'swapTo';
+    const isSend = type === 'send';
 
     useEffect(() => {
       toggleShowSheetModal(visible ? true : false);
@@ -274,7 +275,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [styles, t]);
 
     const displayList = useMemo(() => {
-      if (isBridgeTo) {
+      if (isBridgeTo || isSend) {
         return list || [];
       }
 
@@ -313,7 +314,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
 
       return [...varied.natural, ...varied.disabled];
-    }, [isBridgeTo, supportChains, list, chainServerId]);
+    }, [isBridgeTo, isSend, supportChains, list, chainServerId]);
 
     const isFromModalType = useMemo(
       () =>

@@ -26,7 +26,10 @@ export default function ToAddressControl2024({
   const { styles } = useTheme2024({ getStyle });
   const { accounts } = useAccounts();
   const { isAddrOnWhitelist } = useWhitelist();
-  const account: KeyringAccountWithAlias = useMemo(() => {
+  const account: KeyringAccountWithAlias | null = useMemo(() => {
+    if (!address) {
+      return null;
+    }
     const currentExistAccount = accounts.find(
       item =>
         isSameAddress(item.address, address) && item.brandName === brandName,
@@ -42,6 +45,10 @@ export default function ToAddressControl2024({
     };
   }, [accounts, address, brandName]);
   const { t } = useTranslation();
+
+  if (!account) {
+    return null;
+  }
 
   return (
     <View style={[styles.control, style]}>
