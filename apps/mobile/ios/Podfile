@@ -101,7 +101,7 @@ target 'RabbyMobile' do
     # if use Xcode > 16, uncomment it to do bitcode strip,
     # but maybe stripped hermes's dysym wouldn't match UUID it's expected on upload asset to App Store
     #
-    system("bash ./handle_bitcode.sh")
+    # system("bash ./handle_bitcode.sh")
   end
 end
 
