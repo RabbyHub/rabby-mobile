@@ -6,6 +6,7 @@ import React, {
   useMemo,
   forwardRef,
   useImperativeHandle,
+  useLayoutEffect,
 } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 
@@ -105,7 +106,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const [fold, setFold] = useState(true);
     const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
-      account: null,
+      account: accountInScreen,
       chainServerId: chainId,
     });
     const queryConds = useDebounceValue(_queryConds, 250);
@@ -391,8 +392,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
     }, [chainId]);
 
-    useEffect(() => {
-      setQueryConds(prev => ({ ...prev, accountInScreen }));
+    useLayoutEffect(() => {
+      setQueryConds(prev => ({ ...prev, account: accountInScreen }));
     }, [accountInScreen]);
 
     const { t } = useTranslation();
