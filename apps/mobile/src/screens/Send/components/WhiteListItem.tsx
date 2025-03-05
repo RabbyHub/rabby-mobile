@@ -34,7 +34,6 @@ interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   cexDes?: Cex;
-  hiddenArrow?: boolean;
   inWhiteList?: boolean;
   isForWhitelist?: boolean;
   disableMenu?: boolean;
@@ -42,7 +41,6 @@ interface IProps {
 export const WhiteListItem = ({
   account,
   style,
-  hiddenArrow,
   isForWhitelist,
   inWhiteList,
   disableMenu,
@@ -194,24 +192,6 @@ export const WhiteListItem = ({
             </View>
           )}
         </InnerAddressItem>
-
-        {hiddenArrow ? null : (
-          <View
-            style={StyleSheet.flatten([
-              styles.arrow,
-              isPressing && styles.arrowPressing,
-            ])}>
-            <RcIconSwitchCC
-              color={
-                isPressing
-                  ? colors2024['brand-default']
-                  : colors2024['neutral-body']
-              }
-              width={24}
-              height={24}
-            />
-          </View>
-        )}
       </Card>
     </TouchableOpacity>
   );

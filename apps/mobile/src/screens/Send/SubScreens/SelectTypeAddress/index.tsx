@@ -64,7 +64,6 @@ const SelectTypeScreenScreen = ({
             <WhiteListItem
               account={item}
               inWhiteList={whitelist.includes(item.address)}
-              hiddenArrow
               isForWhitelist={isForWhitelist}
               disableMenu
             />

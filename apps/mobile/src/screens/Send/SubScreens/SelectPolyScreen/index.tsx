@@ -111,7 +111,7 @@ const SendPolyScreen = () => {
         style={styles.listContainer}
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <WhiteListItem account={item} inWhiteList hiddenArrow />
+            <WhiteListItem account={item} inWhiteList />
           </View>
         )}
         ListHeaderComponent={() => (
