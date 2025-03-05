@@ -12,20 +12,23 @@ import { waitPurchaseUpdated } from '@/utils/iap';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRequest } from 'ahooks';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 import { requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
+import { openapi } from '@/core/request';
 
 interface Props {
+  visible?: boolean;
   onDeposit?(): void;
   minDepositPrice?: number;
   gasAccountAddress: string;
 }
 
 export const GasAccountDepositWithPay: React.FC<Props> = ({
+  visible,
   onDeposit,
   gasAccountAddress,
   minDepositPrice = 0,
@@ -34,12 +37,10 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
-  const [, setIAPAddress] = useIAPAccountAddress();
 
-  const { data: gasAccountInfo, runAsync: runFetchGasAccountInfo } =
-    useGasAccountInfoV2({
-      address: gasAccountAddress,
-    });
+  const { data: gasAccountInfo } = useGasAccountInfoV2({
+    address: gasAccountAddress,
+  });
 
   const products = useMemo(() => {
     return gasAccountProducts
@@ -48,41 +49,51 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   }, [minDepositPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
-  const { runAsync: handleDeposit, loading: isPurchasing } = useRequest(
+  const {
+    runAsync: handleDeposit,
+    loading: isPurchasing,
+    cancel,
+  } = useRequest(
     async (product: (typeof products)[0]) => {
-      try {
-        let uuid = gasAccountInfo?.account?.uuid;
-        if (!uuid) {
-          uuid = (await runFetchGasAccountInfo()).account.uuid;
-        }
-
-        setIAPAddress(gasAccountAddress);
-        await Promise.all([
-          waitPurchaseUpdated(),
-          requestPurchase(
-            Platform.select({
-              ios: {
-                sku: product.id,
-                appAccountToken: uuid,
-              },
-              android: {
-                skus: [product.id],
-                obfuscatedAccountIdAndroid: gasAccountAddress,
-              },
-            })!,
-          ),
-        ]);
-
-        await onDeposit?.();
-      } catch (e: any) {
-        console.error(e);
-        toast.error(typeof e === 'string' ? e : e?.message);
+      const data = await openapi.createGasAccountPayInfo({
+        id: gasAccountAddress,
+      });
+      if (!data.account?.uuid) {
+        throw new Error('get pay info failed');
       }
+      await Promise.all([
+        waitPurchaseUpdated(),
+        requestPurchase(
+          Platform.select({
+            ios: {
+              sku: product.id,
+              appAccountToken: data.account.uuid,
+            },
+            android: {
+              skus: [product.id],
+              obfuscatedAccountIdAndroid: gasAccountAddress,
+            },
+          })!,
+        ),
+      ]);
     },
     {
       manual: true,
+      onSuccess() {
+        onDeposit?.();
+      },
+      onError(e: any) {
+        console.error(e);
+        toast.error(typeof e === 'string' ? e : e?.message);
+      },
     },
   );
+
+  useEffect(() => {
+    if (!visible) {
+      cancel();
+    }
+  }, [cancel, visible]);
 
   return (
     <KeyboardAwareScrollView

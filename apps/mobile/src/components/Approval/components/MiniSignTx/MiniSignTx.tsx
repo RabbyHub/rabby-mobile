@@ -437,6 +437,7 @@ const MiniSignTx = ({
     isGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
+    canDepositUseGasAccount,
     gasAccountCostFn,
     gasAccountAddress,
     sig,
@@ -1001,6 +1002,7 @@ const MiniSignTx = ({
         gasAccountCost={gasAccountCost}
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
+        canDepositUseGasAccount={canDepositUseGasAccount}
         rejectApproval={onReject}
         onDeposit={() => {
           toast.success(t('page.gasAccount.depositSuccess'), {

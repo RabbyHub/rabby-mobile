@@ -1552,6 +1552,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             gasAccountCost={gasAccountCost}
             gasAccountCanPay={gasAccountCanPay}
             canGotoUseGasAccount={canGotoUseGasAccount}
+            canDepositUseGasAccount={canDepositUseGasAccount}
             rejectApproval={rejectApproval}
             onDeposit={() => {
               toast.success(t('page.gasAccount.depositSuccess'), {

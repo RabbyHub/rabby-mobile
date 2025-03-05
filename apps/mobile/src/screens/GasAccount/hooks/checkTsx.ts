@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useGasAccountSign } from './atom';
 import { openapi } from '@/core/request';
@@ -25,6 +25,8 @@ export const useGasAccountTxsCheck = ({
     !!sig && !!accountId,
   );
 
+  const initdRef = useRef(false);
+
   const gasAccountAddress = accountId || currentAccount.address;
 
   const [{ value: gasAccountCost }, gasAccountCostFn] = useAsyncFn(async () => {
@@ -35,11 +37,27 @@ export const useGasAccountTxsCheck = ({
       setIsGasAccountLogin(false);
     }
 
-    return openapi.checkGasAccountTxs({
+    const res = await openapi.checkGasAccountTxs({
       sig: sig || '',
       account_id: gasAccountAddress,
       tx_list: txs,
     });
+
+    if (!initdRef.current) {
+      setGasMethod(
+        isSupportedAddr &&
+          noCustomRPC &&
+          !!res?.balance_is_enough &&
+          !res.chain_not_support &&
+          !!res.is_gas_account
+          ? 'gasAccount'
+          : 'native',
+      );
+    }
+
+    initdRef.current = true;
+
+    return res;
   }, [sig, accountId, isReady, txs]);
 
   useDebounce(
@@ -62,7 +80,7 @@ export const useGasAccountTxsCheck = ({
     isSupportedAddr &&
     noCustomRPC &&
     gasAccountCost &&
-    // !!gasAccountCost?.balance_is_enough &&
+    !!gasAccountCost?.balance_is_enough &&
     !gasAccountCost.chain_not_support;
   // &&
   // !!gasAccountCost.is_gas_account;
@@ -72,8 +90,9 @@ export const useGasAccountTxsCheck = ({
     noCustomRPC &&
     gasAccountCost &&
     !gasAccountCost?.balance_is_enough &&
-    !gasAccountCost.chain_not_support &&
-    !!gasAccountCost.is_gas_account;
+    !gasAccountCost.chain_not_support;
+  // &&
+  // !!gasAccountCost.is_gas_account;
 
   return {
     gasAccountCost,

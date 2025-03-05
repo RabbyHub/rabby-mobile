@@ -18,10 +18,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
-import { GasAccountTips } from './GasLessComponent/GasAccountTips';
-import { GasLessNotEnough } from './GasLessComponent/GasLessNotEnough';
+import { GasAccountTips } from './GasLessComponents/GasAccountTips';
+import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
 import { GasLessConfig } from './GasLessComponents';
-import { GasLessActivityToSign } from './GasLessComponent/GasLessActivityToSign';
+import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -200,6 +200,7 @@ export const FooterBar: React.FC<Props> = ({
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
+  canDepositUseGasAccount,
   rejectApproval,
   onDeposit,
   gasAccountAddress,
@@ -285,6 +286,18 @@ export const FooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { gasLessVisibleState } = useMemo(() => {
+    const res = {
+      gasLess: false,
+      notEnough: false,
+      gasAccount: false,
+    };
+
+    return {
+      gasLessVisibleState: res,
+    };
+  }, []);
+
   if (!account) {
     return null;
   }
@@ -318,7 +331,21 @@ export const FooterBar: React.FC<Props> = ({
           ) : isWatchAddr ? null : (
             <GasLessNotEnough
               canGotoUseGasAccount={canGotoUseGasAccount}
+              canDepositUseGasAccount={canDepositUseGasAccount}
               onChangeGasAccount={onChangeGasAccount}
+              gasAccountAddress={gasAccountAddress!}
+              gasAccountCost={gasAccountCost}
+              onDeposit={() => {
+                onDeposit?.();
+                onChangeGasAccount?.();
+              }}
+              onGotoGasAccount={() => {
+                rejectApproval?.();
+                navigate(RootNames.StackTransaction, {
+                  screen: RootNames.GasAccount,
+                  params: {},
+                });
+              }}
             />
           )
         ) : null}

@@ -26,11 +26,11 @@ import { MiniLedgerAction } from './MiniLedgerAction';
 import { MiniCommonAction } from './MiniCommonAction';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import { GasAccountTips } from '../FooterBar/GasLessComponent/GasAccountTips';
-import { GasLessNotEnough } from '../FooterBar/GasLessComponent/GasLessNotEnough';
+import { GasAccountTips } from '../FooterBar/GasLessComponents/GasAccountTips';
+import { GasLessNotEnough } from '../FooterBar/GasLessComponents/GasLessNotEnough';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { GasLessActivityToSign } from '../FooterBar/GasLessComponent/GasLessActivityToSign';
+import { GasLessActivityToSign } from '../FooterBar/GasLessComponents/GasLessActivityToSign';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -64,6 +64,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   rejectApproval?(): void;
   onDeposit?(): void;
   gasAccountAddress?: string;
+  canDepositUseGasAccount?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -212,6 +213,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
+  canDepositUseGasAccount,
   task,
   rejectApproval,
   onDeposit,
@@ -369,7 +371,21 @@ export const MiniFooterBar: React.FC<Props> = ({
           ) : isWatchAddr ? null : (
             <GasLessNotEnough
               canGotoUseGasAccount={canGotoUseGasAccount}
+              canDepositUseGasAccount={canDepositUseGasAccount}
               onChangeGasAccount={onChangeGasAccount}
+              gasAccountAddress={gasAccountAddress!}
+              gasAccountCost={gasAccountCost}
+              onDeposit={() => {
+                onDeposit?.();
+                onChangeGasAccount?.();
+              }}
+              onGotoGasAccount={() => {
+                rejectApproval?.();
+                navigate(RootNames.StackTransaction, {
+                  screen: RootNames.GasAccount,
+                  params: {},
+                });
+              }}
             />
           )
         ) : null}

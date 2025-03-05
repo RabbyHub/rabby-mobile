@@ -39,15 +39,6 @@ import Animated, {
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
-export type GasLessConfig = {
-  button_text: string;
-  before_click_text: string;
-  after_click_text: string;
-  logo: string;
-  theme_color: string;
-  dark_color: string;
-};
-
 export const GasLessAnimatedWrapper = (
   props: PropsWithChildren<{
     gasLess?: boolean;

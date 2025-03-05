@@ -65,6 +65,7 @@ export const GasAccountDepositPopup: React.FC<{
       <BottomSheetView style={styles.popup}>
         {step === 'pay' ? (
           <GasAccountDepositWithPay
+            visible={props.visible}
             onDeposit={props.onDeposit}
             gasAccountAddress={props.gasAccountAddress}
           />

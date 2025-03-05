@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
 
@@ -7,33 +7,82 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 import { ThemeColors2024 } from '@/constant/theme';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
 
 export const GasLessNotEnough: React.FC<{
+  gasAccountCost?: GasAccountCheckResult;
+  gasAccountAddress: string;
   onChangeGasAccount?: () => void;
   canGotoUseGasAccount?: boolean;
-}> = ({ onChangeGasAccount, canGotoUseGasAccount }) => {
+  canDepositUseGasAccount?: boolean;
+  onDeposit?(): void;
+  onGotoGasAccount?(): void;
+}> = ({
+  gasAccountCost,
+  gasAccountAddress,
+  onChangeGasAccount,
+  canGotoUseGasAccount,
+  canDepositUseGasAccount,
+  onDeposit,
+  onGotoGasAccount,
+}) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
-  return (
-    <View style={[styles.container, {}]}>
-      <View style={styles.tipTriangle} />
-      <View>
-        <Text style={[styles.text]}>
-          {t('page.signFooterBar.gasless.notEnough')}
-        </Text>
-      </View>
+  const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
-      {canGotoUseGasAccount ? (
-        <TouchableOpacity
-          style={[styles.gasAccountBtn]}
-          onPress={onChangeGasAccount}>
-          <Text style={styles.gasAccountTipBtnText}>
-            {t('page.signFooterBar.gasAccount.useGasAccount')}
+  useEffect(() => {
+    return () => {
+      setTipPopupVisible(false);
+    };
+  }, []);
+
+  return (
+    <>
+      <View style={[styles.container, {}]}>
+        <View style={styles.tipTriangle} />
+        <View>
+          <Text style={[styles.text]}>
+            {t('page.signFooterBar.gasless.notEnough')}
           </Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+        </View>
+
+        {canDepositUseGasAccount ? (
+          <TouchableOpacity
+            style={[styles.gasAccountBtn]}
+            onPress={() => {
+              setTipPopupVisible(true);
+            }}>
+            <Text style={styles.gasAccountTipBtnText}>
+              {t('page.signFooterBar.gasAccount.deposit')}
+            </Text>
+          </TouchableOpacity>
+        ) : canGotoUseGasAccount ? (
+          <TouchableOpacity
+            style={[styles.gasAccountBtn]}
+            onPress={onChangeGasAccount}>
+            <Text style={styles.gasAccountTipBtnText}>
+              {t('page.signFooterBar.gasAccount.useGasAccount')}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      <GasAccountDepositTipPopup
+        gasAccountAddress={gasAccountAddress}
+        visible={tipPopupVisible}
+        onClose={() => setTipPopupVisible(false)}
+        onDeposit={() => {
+          setTipPopupVisible(false);
+          onDeposit?.();
+        }}
+        onGotoGasAccount={() => {
+          setTipPopupVisible(false);
+          onGotoGasAccount?.();
+        }}
+        minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+      />
+    </>
   );
 };
 
