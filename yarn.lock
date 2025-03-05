@@ -4972,7 +4972,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@keystonehq/metamask-airgapped-keyring@npm:^0.13.1":
+"@keystonehq/metamask-airgapped-keyring@npm:0.13.1":
   version: 0.13.1
   resolution: "@keystonehq/metamask-airgapped-keyring@npm:0.13.1"
   dependencies:
@@ -4983,6 +4983,20 @@ __metadata:
     rlp: ^2.2.6
     uuid: ^8.3.2
   checksum: 9d9f4743c8017d90da7aeaf58a3f74113aac9852f40f6354ecc864126910e5dd15688d7b25539f0f6672308e551abe7319f1ce794a7a699b9b567cf40d2037ab
+  languageName: node
+  linkType: hard
+
+"@keystonehq/metamask-airgapped-keyring@patch:@keystonehq/metamask-airgapped-keyring@npm%3A0.13.1#./.yarn/patches/@keystonehq-metamask-airgapped-keyring-npm-0.13.1-3b32a92c47.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.13.1
+  resolution: "@keystonehq/metamask-airgapped-keyring@patch:@keystonehq/metamask-airgapped-keyring@npm%3A0.13.1#./.yarn/patches/@keystonehq-metamask-airgapped-keyring-npm-0.13.1-3b32a92c47.patch::version=0.13.1&hash=1fa72d&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@ethereumjs/tx": ^4.0.2
+    "@keystonehq/base-eth-keyring": ^0.14.1
+    "@keystonehq/bc-ur-registry-eth": ^0.19.1
+    "@metamask/obs-store": ^7.0.0
+    rlp: ^2.2.6
+    uuid: ^8.3.2
+  checksum: 6b93b626298a5a31cf82f9f21e4ec6d367a802450bb9c672adac9be55685d860e8d16834b8ec0e07f6be4164e944507f85a57a027f40dc023608e2e376e6f1c3
   languageName: node
   linkType: hard
 
@@ -6122,6 +6136,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6130,7 +6145,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6142,6 +6157,7 @@ __metadata:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/rabby-api": 0.9.11
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
     deepmerge: ^4.2.2
@@ -6151,7 +6167,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6195,6 +6211,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.3.8
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6204,7 +6221,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
     web3-utils: 1.7.0
   languageName: unknown
   linkType: soft
@@ -6219,6 +6236,7 @@ __metadata:
     "@keystonehq/metamask-airgapped-keyring": ^0.13.1
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@types/w3c-web-usb": ^1.0.10
     deepmerge: ^4.2.2
@@ -6228,7 +6246,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6246,6 +6264,7 @@ __metadata:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@types/w3c-web-hid": ^1.0.6
     deepmerge: ^4.2.2
@@ -6256,7 +6275,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   peerDependencies:
     "@ethereumjs/tx": "*"
     "@rabby-wallet/base-utils": "*"
@@ -6276,6 +6295,7 @@ __metadata:
     "@types/bytebuffer": ^5.0.48
     "@types/hdkey": ^2.0.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@types/w3c-web-usb": ^1.0.10
     deepmerge: ^4.2.2
@@ -6287,7 +6307,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6306,7 +6326,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6357,6 +6377,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6365,7 +6386,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6385,7 +6406,7 @@ __metadata:
     "@metamask/eth-json-rpc-provider": ^2.3.0
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
-    "@types/node": ^16.18.54
+    "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
     bn.js: ^5.2.1
@@ -6411,7 +6432,7 @@ __metadata:
     rimraf: ^3.0.2
     simple-git-hooks: ^2.8.0
     ts-node: ^10.9.1
-    typescript: ~4.8.4
+    typescript: 5.7.3
     which: ^3.0.0
   languageName: unknown
   linkType: soft
@@ -6422,6 +6443,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/once": ^1.4.0
     "@types/readable-stream": 4.0.0
     "@types/sinon": ^9.0.10
@@ -6435,7 +6457,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6447,6 +6469,7 @@ __metadata:
     "@rabby-wallet/base-utils": ^0.1.0
     "@types/jest": ^27.4.1
     "@types/lodash.clonedeep": ^4.5.9
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@vue/reactivity": ^3.3.11
     debounce: ^2.0.0
@@ -6458,7 +6481,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6607,7 +6630,7 @@ __metadata:
     "@rollup/plugin-typescript": ^8.3.2
     "@types/chrome": ^0.0.186
     "@types/events": ^3.0.0
-    "@types/node": ^17.0.34
+    "@types/node": ^20.14.8
     "@types/w3c-web-hid": ^1.0.3
     "@types/webextension-polyfill": ^0.10.4
     eth-rpc-errors: ^4.0.3
@@ -6630,6 +6653,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/universal-providers": "workspace:^"
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     babel-loader: ^9.1.3
     deepmerge: ^4.2.2
@@ -6642,7 +6666,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
     uuid: ^9.0.1
     webpack: ^5.88.2
     webpack-cli: ^5.1.4
@@ -6656,6 +6680,7 @@ __metadata:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/persist-store": ^0.1.0
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6664,7 +6689,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   languageName: unknown
   linkType: soft
 
@@ -6691,7 +6716,7 @@ __metadata:
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
+    typescript: 5.7.3
   peerDependencies:
     "@rabby-wallet/keyring-utils": "*"
   languageName: unknown
@@ -6714,7 +6739,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@types/chrome": ^0.0.233
     "@types/jest": ^28.1.6
-    "@types/node": ^17.0.23
+    "@types/node": ^20.14.8
     "@types/uuid": ^9.0.1
     "@types/webextension-polyfill": ^0.10.0
     "@typescript-eslint/eslint-plugin": ^5.43.0
@@ -6743,7 +6768,7 @@ __metadata:
     ts-jest: ^28.0.7
     ts-node: ^10.7.0
     typedoc: ^0.23.15
-    typescript: ~4.8.4
+    typescript: 5.7.3
     webextension-polyfill: ^0.10.0
   languageName: unknown
   linkType: soft
@@ -9512,17 +9537,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^16.11.26, @types/node@npm:^16.11.48, @types/node@npm:^16.18.54":
+"@types/node@npm:^16.11.26, @types/node@npm:^16.11.48":
   version: 16.18.70
   resolution: "@types/node@npm:16.18.70::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fnode%2F-%2Fnode-16.18.70.tgz"
   checksum: 0c8a1ee93f6c0940629fbf6245ff22e0c7423b7c7c74c47e7171dc6342d279c2f931d50894c3d1b9a66238469b2b3d2d3c7fcf21eb3af6a03fc588f9ab6db849
   languageName: node
   linkType: hard
 
-"@types/node@npm:^17.0.23, @types/node@npm:^17.0.34":
-  version: 17.0.45
-  resolution: "@types/node@npm:17.0.45::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fnode%2F-%2Fnode-17.0.45.tgz"
-  checksum: aa04366b9103b7d6cfd6b2ef64182e0eaa7d4462c3f817618486ea0422984c51fc69fd0d436eae6c9e696ddfdbec9ccaa27a917f7c2e8c75c5d57827fe3d95e8
+"@types/node@npm:^20.14.8":
+  version: 20.14.9
+  resolution: "@types/node@npm:20.14.9"
+  dependencies:
+    undici-types: ~5.26.4
+  checksum: 5e9eda1ac8c6cc6bcd1063903ae195eaede9aad1bdad00408a919409cfbcdd2d6535aa3d50346f0d385528f9e03dafc7d1b3bad25aedb1dcd79a6ad39d06c35d
   languageName: node
   linkType: hard
 
@@ -13105,7 +13132,7 @@ __metadata:
 
 "chalk@npm:5.3.0":
   version: 5.3.0
-  resolution: "chalk@npm:5.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fchalk%2F-%2Fchalk-5.3.0.tgz"
+  resolution: "chalk@npm:5.3.0"
   checksum: 623922e077b7d1e9dedaea6f8b9e9352921f8ae3afe739132e0e00c275971bdd331268183b2628cf4ab1727c45ea1f28d7e24ac23ce1db1eb653c414ca8a5a80
   languageName: node
   linkType: hard
@@ -19562,7 +19589,7 @@ __metadata:
 
 "iconv-lite@npm:0.4.24":
   version: 0.4.24
-  resolution: "iconv-lite@npm:0.4.24::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ficonv-lite%2F-%2Ficonv-lite-0.4.24.tgz"
+  resolution: "iconv-lite@npm:0.4.24"
   dependencies:
     safer-buffer: ">= 2.1.2 < 3"
   checksum: bd9f120f5a5b306f0bc0b9ae1edeb1577161503f5f8252a20f1a9e56ef8775c9959fd01c55f2d3a39d9a8abaf3e30c1abeb1895f367dcbbe0a8fd1c9ca01c4f6
@@ -27844,7 +27871,7 @@ __metadata:
     tinycolor2: ^1.6.0
     ts-toolbelt: ^9.6.0
     typeorm: ^0.3.20
-    typescript: 4.8.4
+    typescript: 5.7.3
     use-count-up: ^3.0.1
     viem: ^2.17.4
     web3: ^4.3.0
@@ -29423,9 +29450,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:3.6.2, readable-stream@npm:^3.0.6, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0, readable-stream@npm:^3.6.2":
+"readable-stream@npm:3.6.2":
   version: 3.6.2
-  resolution: "readable-stream@npm:3.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-3.6.2.tgz"
+  resolution: "readable-stream@npm:3.6.2"
   dependencies:
     inherits: ^2.0.3
     string_decoder: ^1.1.1
@@ -29446,6 +29473,17 @@ __metadata:
     string_decoder: ~1.1.1
     util-deprecate: ~1.0.1
   checksum: 65645467038704f0c8aaf026a72fbb588a9e2ef7a75cd57a01702ee9db1c4a1e4b03aaad36861a6a0926546a74d174149c8c207527963e0c2d3eee2f37678a42
+  languageName: node
+  linkType: hard
+
+"readable-stream@npm:^3.0.6, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0, readable-stream@npm:^3.6.2":
+  version: 3.6.2
+  resolution: "readable-stream@npm:3.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-3.6.2.tgz"
+  dependencies:
+    inherits: ^2.0.3
+    string_decoder: ^1.1.1
+    util-deprecate: ^1.0.1
+  checksum: bdcbe6c22e846b6af075e32cf8f4751c2576238c5043169a1c221c92ee2878458a816a4ea33f4c67623c0b6827c8a400409bfb3cf0bf3381392d0b1dfb52ac8d
   languageName: node
   linkType: hard
 
@@ -33434,13 +33472,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.4, typescript@npm:~4.8.4":
-  version: 4.8.4
-  resolution: "typescript@npm:4.8.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ftypescript%2F-%2Ftypescript-4.8.4.tgz"
+"typescript@npm:5.7.3":
+  version: 5.7.3
+  resolution: "typescript@npm:5.7.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 3e4f061658e0c8f36c820802fa809e0fd812b85687a9a2f5430bc3d0368e37d1c9605c3ce9b39df9a05af2ece67b1d844f9f6ea8ff42819f13bcb80f85629af0
+  checksum: 6c38b1e989918e576f0307e6ee013522ea480dfce5f3ca85c9b2d8adb1edeffd37f4f30cd68de0c38a44563d12ba922bdb7e36aa2dac9c51de5d561e6e9a2e9c
   languageName: node
   linkType: hard
 
@@ -33474,13 +33512,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.8.4#~builtin<compat/typescript>, typescript@patch:typescript@~4.8.4#~builtin<compat/typescript>":
-  version: 4.8.4
-  resolution: "typescript@patch:typescript@npm%3A4.8.4%3A%3A__archiveUrl=https%253A%252F%252Fregistry.npmjs.org%252Ftypescript%252F-%252Ftypescript-4.8.4.tgz#~builtin<compat/typescript>::version=4.8.4&hash=0102e9"
+"typescript@patch:typescript@5.7.3#~builtin<compat/typescript>":
+  version: 5.7.3
+  resolution: "typescript@patch:typescript@npm%3A5.7.3#~builtin<compat/typescript>::version=5.7.3&hash=d73830"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 301459fc3eb3b1a38fe91bf96d98eb55da88a9cb17b4ef80b4d105d620f4d547ba776cc27b44cc2ef58b66eda23fe0a74142feb5e79a6fb99f54fc018a696afa
+  checksum: 633cd749d6cd7bc842c6b6245847173bba99742a60776fae3c0fbcc0d1733cd51a733995e5f4dadd8afb0e64e57d3c7dbbeae953a072ee303940eca69e22f311
   languageName: node
   linkType: hard
 

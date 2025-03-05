@@ -23,12 +23,12 @@
   "scripts": {
     "build:docs": "typedoc",
     "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/persist-store",
+    "cov:report": "open ./coverage/index.html",
     "publish:preview": "yarn npm publish --tag preview",
     "test": "jest --reporters=jest-silent-reporter",
     "test:clean": "jest --clearCache",
     "test:verbose": "jest --verbose",
-    "test:watch": "jest --watch",
-    "cov:report": "open ./coverage/index.html"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@rabby-wallet/base-utils": "^0.1.0",
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",
     "@types/jest": "^27.4.1",
+    "@types/node": "^20.14.8",
     "@types/sinon": "^9.0.10",
     "deepmerge": "^4.2.2",
     "jest": "^27.5.1",
@@ -48,7 +49,7 @@
     "ts-jest": "^27.1.4",
     "typedoc": "^0.24.8",
     "typedoc-plugin-missing-exports": "^2.0.0",
-    "typescript": "~4.8.4"
+    "typescript": "5.7.3"
   },
   "engines": {
     "node": ">=16.0.0"

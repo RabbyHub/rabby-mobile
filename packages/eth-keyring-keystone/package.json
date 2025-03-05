@@ -40,6 +40,7 @@
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",
     "@types/jest": "^27.4.1",
+    "@types/node": "^20.14.8",
     "@types/sinon": "^9.0.10",
     "@types/w3c-web-usb": "^1.0.10",
     "deepmerge": "^4.2.2",
@@ -48,7 +49,7 @@
     "ts-jest": "^27.1.4",
     "typedoc": "^0.24.8",
     "typedoc-plugin-missing-exports": "^2.0.0",
-    "typescript": "~4.8.4"
+    "typescript": "5.7.3"
   },
   "engines": {
     "node": ">=16.0.0"
