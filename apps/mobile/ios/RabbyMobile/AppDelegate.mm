@@ -11,6 +11,9 @@
 
 #import "RNDeviceInfo/RNDeviceInfo.h"
 
+#import <React/RCTLinkingManager.h>
+
+
 #if DEBUG
 void devLog(NSString *format, ...) {
   va_list args;
@@ -39,7 +42,6 @@ void devLog(NSString *format, ...) {}
 //   [client start];
 // }
 // #endif
-
 @implementation AppDelegate
 - (NSString *)_getDarwinVersion
 {
@@ -139,6 +141,24 @@ void devLog(NSString *format, ...) {}
 #else
   return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
 #endif
+}
+
+
+// Deep linking
+- (BOOL)application:(UIApplication *)application
+   openURL:(NSURL *)url
+   options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+  return [RCTLinkingManager application:application openURL:url options:options];
+}
+
+// Universal Links
+- (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity
+ restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
+{
+ return [RCTLinkingManager application:application
+                  continueUserActivity:userActivity
+                    restorationHandler:restorationHandler];
 }
 
 @end

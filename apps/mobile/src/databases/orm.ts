@@ -14,6 +14,7 @@ import {
 import { SwapItemEntity } from './entities/swapitem';
 import { BalanceEntity } from './entities/balance';
 import { abortAllSyncTasks } from './sync/_task';
+import { BuyItemEntity } from './entities/buyItem';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -40,6 +41,7 @@ const dbOptions: DataSourceOptions = {
     SwapItemEntity,
     BalanceEntity,
     PortocolItemEntity,
+    BuyItemEntity,
   ],
   maxQueryExecutionTime: 10000,
   // only enable file logger in non-public production env, avoid leaking user's sensitive info

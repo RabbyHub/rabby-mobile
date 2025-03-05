@@ -78,7 +78,8 @@
       "option_System": "System",
       "option_Light": "Licht"
     },
-    "Unknown": "Unbekannt"
+    "Unknown": "Unbekannt",
+    "unlimited": "unbegrenzt"
   },
   "component": {
     "accountSwitcher": {
@@ -225,7 +226,8 @@
         "Bridge": "Überbrückt",
         "Swap": "Getauscht",
         "Cancel": "Anstehende Transaktion abbrechen",
-        "Revoke": "Widerrufene Genehmigung"
+        "Revoke": "Widerrufene Genehmigung",
+        "Buy": "Gekauft"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -253,7 +255,13 @@
         "Pending": "Ausstehend",
         "ApproveToken": "Token genehmigen",
         "Succeeded": "Erfolgreich",
-        "RevokeFrom": "Widerrufen von"
+        "RevokeFrom": "Widerrufen von",
+        "Collection": "Sammlung",
+        "PurchaseFrom": "Gekauft von",
+        "totalApprovedAmount": "Derzeit genehmigter Betrag",
+        "Name": "Name",
+        "WillReceive": "Erhalten wird: ≈ {{token}}",
+        "BuyAgain": "Erneut kaufen"
       },
       "empty": {
         "title": "Keine Transaktionen",
@@ -273,7 +281,11 @@
         "btn": "Betrugstransaktionen ausblenden"
       },
       "ViewHiddenItems": "Betrugs-Transaktionen anzeigen",
-      "title": "Transaktionen"
+      "title": "Transaktionen",
+      "Today": "Heute",
+      "ViewSmallItems": "Transaktionen < $0.1 anzeigen",
+      "ShowHiddenItems": "Verborgene Transaktionen anzeigen",
+      "Yesterday": "Gestern"
     },
     "getStart": {
       "goToHome": "Gehe zu Home",
@@ -290,7 +302,10 @@
     },
     "receive": {
       "title": "Empfangen Sie {{token}} auf {{chain}}",
-      "watchModeAlert": "Dies ist eine Nur-Beobachten-Adresse. Sind Sie sicher, dass Sie sie verwenden möchten, um Vermögenswerte zu empfangen?"
+      "watchModeAlert": "Dies ist eine Nur-Beobachten-Adresse. Sind Sie sicher, dass Sie sie verwenden möchten, um Vermögenswerte zu empfangen?",
+      "allEVMChain": "Alle EVM Chain",
+      "copyAddress": "Adresse kopieren",
+      "newTitle": "Empfange Assets auf"
     },
     "activities": {
       "signedTx": {
@@ -979,7 +994,15 @@
       "multiAddressHome": {
         "pin": "Pin",
         "totalBalance": "Gesamtsaldo",
-        "services": "Dienstleistungen"
+        "services": "Dienstleistungen",
+        "receiveCrypto": "Krypto empfangen",
+        "noAssets": "Keine Assets?",
+        "buyWithFiat": "Mit Fiat kaufen",
+        "importAddress": "Eine Adresse importieren",
+        "receiveCryptoDesc": "Token von einer anderen Adresse übertragen.",
+        "fundYourWallet": "Finanzieren Sie Ihr Wallet",
+        "buyWithFiatDesc": "Kaufen Sie Krypto mit einer Debitkarte oder einem Bankkonto.",
+        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu."
       },
       "addAddress": {
         "importAddress": "Adresse importieren",
@@ -1528,7 +1551,15 @@
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "NoData": "Kein {{name}}"
+      },
+      "emptyToken": {
+        "buyHeader": "Mit Fiat kaufen",
+        "receiveHeader": "Krypto empfangen",
+        "receiveBody": "Übertragen Sie Token von einer anderen Adresse.",
+        "title": "Finanzieren Sie Ihr Wallet",
+        "buyBody": "Kaufen Sie Krypto mit einer Debitkarte oder einem Bankkonto."
       }
     },
     "receiveAddressList": {
@@ -1737,7 +1768,35 @@
     },
     "buy": {
       "from": "Von {{dex}}",
-      "purchased": "Gekauft"
+      "purchased": "Gekauft",
+      "regionBottomSheet": {
+        "searchPlaceholder": "Fiat-Währung suchen",
+        "noRegionFound": "Kein Bereich gefunden",
+        "title": "Wählen Sie Ihre Region aus"
+      },
+      "currencyBottomSheet": {
+        "searchPlaceholder": "Währung suchen",
+        "title": "Wählen Sie eine Währung",
+        "NoFound": "Keine Währung gefunden"
+      },
+      "quote": {
+        "best": "Beste Zitate",
+        "title": "Zitate für Sie"
+      },
+      "youWillPay": "Bezahlen",
+      "title": "Kaufen",
+      "searchRegionPlaceholder": "Region suchen",
+      "noQuote2": "Keine Zitate gefunden.",
+      "history": "Kaufverlauf",
+      "paymentMethod": "Zahlungsmethode",
+      "quotesForYou": "Angebote für Sie",
+      "youWillReceive": "Empfangen",
+      "toBuy": "Weiter einkaufen",
+      "noQuote": "Keine Angebote gefunden: Versuchen Sie, einen höheren Wert einzugeben.",
+      "paymentsOnly": "Zahlungen können nur in {{currency}} erfolgen",
+      "paymentProviderTips": "Dieser Anbieter unterstützt die folgenden Zahlungsmethoden:",
+      "searchingQuote": "Suche nach Angeboten für Sie...",
+      "noQuotePlaceholder": "Kein Angebot"
     }
   },
   "constant": {
@@ -1764,7 +1823,9 @@
       "notFindChain": "Kette {{chain}} nicht gefunden.",
       "duplicateAccount": "Das Konto, das Sie zu importieren versuchen, ist ein Duplikat.",
       "invalidMnemonic": "Die Seed-Phrase ist ungültig, bitte überprüfen!",
-      "unknownAbi": "unbekanntes Vertrags-ABI"
+      "unknownAbi": "unbekanntes Vertrags-ABI",
+      "errorWords_other": "{{count}} falsche Wörter",
+      "errorWords_one": "1 falsches Wort"
     },
     "transactionWatcher": {
       "more": "Klicken Sie, um weitere Informationen zu sehen",

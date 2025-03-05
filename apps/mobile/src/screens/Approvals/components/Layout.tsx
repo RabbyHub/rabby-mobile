@@ -23,6 +23,8 @@ import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
+import RcIconNoFindDark from '@/assets2024/icons/address/not-Found-dark.svg';
+
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useApprovalAlertCounts } from '@/screens/Home/hooks/approvals';
@@ -89,7 +91,7 @@ export function ApprovalsBottomArea() {
 
   const [showModal, setShowModal] = useState(false);
 
-  const { forceUpdate } = useApprovalAlertCounts();
+  const { forceUpdate } = useApprovalAlertCounts(10 * 60 * 1000);
   const {
     filterType,
     loadApprovals,
@@ -378,10 +380,16 @@ export function NotMatchedHolder({
   text = 'Not Matched',
 }: RNViewProps & { text?: string }) {
   const { searchKw, setSearchKw } = useApprovalsPage();
-  const { styles } = useTheme2024({ getStyle: getNotMatchedHolderStyle });
+  const { styles, isLight } = useTheme2024({
+    getStyle: getNotMatchedHolderStyle,
+  });
+  const RcIconNotFound = useMemo(
+    () => (isLight ? RcIconNoFind : RcIconNoFindDark),
+    [isLight],
+  );
   return (
     <View style={[styles.container, style]}>
-      <RcIconNoFind width={159} height={117} />
+      <RcIconNotFound width={159} height={117} />
       <Text style={styles.emptyText}>{text}</Text>
       {!!searchKw && (
         <TouchableOpacity onPress={() => setSearchKw('')}>

@@ -57,6 +57,8 @@ const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
   80 + 70 * actionsNum,
 ];
 
+const ZERO_PERCENT = '+0%';
+
 const Linear = () => {
   const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
 
@@ -341,6 +343,8 @@ export const HomeTopArea = ({
     return latestPercent || previousPercent;
   }, [latestPercent, previousPercent]);
 
+  const isZeroPercent = percent === ZERO_PERCENT;
+
   const handlePressBalanceSection = React.useCallback(() => {
     curveBottomSheetModalRef.current?.dismiss();
     curveBottomSheetModalRef.current?.present();
@@ -386,18 +390,21 @@ export const HomeTopArea = ({
                 !!percent && (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text
-                      style={StyleSheet.compose(
+                      style={StyleSheet.flatten([
                         styles.percent,
                         isDecrease && styles.decrease,
-                      )}>
+                        isZeroPercent && styles.zeroPercent,
+                      ])}>
                       {'  '}
-                      {percent}
+                      {isZeroPercent ? '0%' : percent}
                     </Text>
                     <RcArrowRightCC
                       width={16}
                       height={16}
                       color={
-                        isDecrease
+                        isZeroPercent
+                          ? colors2024['neutral-secondary']
+                          : isDecrease
                           ? colors2024['red-default']
                           : colors2024['green-default']
                       }
@@ -699,6 +706,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   decrease: {
     color: ctx.colors2024['red-default'],
+  },
+  zeroPercent: {
+    color: ctx.colors2024['neutral-secondary'],
   },
   linear: {
     height: '100%',

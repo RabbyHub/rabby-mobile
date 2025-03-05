@@ -208,7 +208,8 @@
       "option_Dark": "Escuro",
       "option_System": "Sistema"
     },
-    "Unknown": "Desconhecido"
+    "Unknown": "Desconhecido",
+    "unlimited": "ilimitado"
   },
   "page": {
     "getStart": {
@@ -230,7 +231,8 @@
         "Send": "Enviado",
         "Recieve": "Recebido",
         "Cancel": "Cancelar Transação Pendente",
-        "Bridge": "Bridgeado"
+        "Bridge": "Bridgeado",
+        "Buy": "Adquirido"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -258,7 +260,13 @@
         "Status": "Status",
         "InteractedContract": "Contrato interagido",
         "InteractionResults": "Resultados de Interação",
-        "ApproveTo": "Aprovar para"
+        "ApproveTo": "Aprovar para",
+        "BuyAgain": "Comprar Novamente",
+        "Name": "Nome",
+        "PurchaseFrom": "Comprado de",
+        "Collection": "Coleção",
+        "totalApprovedAmount": "Montante Aprovado Atual",
+        "WillReceive": "Receberá: ≈ {{token}}"
       },
       "empty": {
         "title": "Sem transações",
@@ -278,7 +286,11 @@
         "loading": "O carregamento pode demorar um momento e são possíveis atrasos de dados"
       },
       "ViewHiddenItems": "Ver transações fraudulentas",
-      "title": "Transações"
+      "title": "Transações",
+      "ShowHiddenItems": "Mostrar transações ocultas",
+      "Yesterday": "Ontem",
+      "ViewSmallItems": "Ver transações < $0,1",
+      "Today": "Hoje"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Insira a sua seed phrase"
@@ -290,7 +302,10 @@
     },
     "receive": {
       "title": "Receber {{token}} em {{chain}}",
-      "watchModeAlert": "Este é um endereço apenas para visualização. Tem a certeza de que quer usá-lo para receber ativos?"
+      "watchModeAlert": "Este é um endereço apenas para visualização. Tem a certeza de que quer usá-lo para receber ativos?",
+      "allEVMChain": "Todas as cadeias EVM",
+      "copyAddress": "Copiar Endereço",
+      "newTitle": "Receba ativos em"
     },
     "activities": {
       "signedTx": {
@@ -1031,7 +1046,15 @@
       "multiAddressHome": {
         "pin": "Pin",
         "totalBalance": "Saldo Total",
-        "services": "Serviços"
+        "services": "Serviços",
+        "importAddress": "Importar um Endereço",
+        "receiveCrypto": "Receber Crypto",
+        "noAssets": "Sem ativos?",
+        "importAddressDesc": "Adicionar um endereço existente com fundos.",
+        "buyWithFiat": "Comprar com Fiat",
+        "fundYourWallet": "Financiar a sua Wallet",
+        "receiveCryptoDesc": "Transferir tokens de outro endereço.",
+        "buyWithFiatDesc": "Compra criptomoedas usando um cartão de débito ou conta bancária."
       },
       "createNewAddress": {
         "Continue": "Continuar",
@@ -1548,7 +1571,15 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
-        "Token": "Token"
+        "Token": "Token",
+        "NoData": "Sem {{name}}"
+      },
+      "emptyToken": {
+        "receiveHeader": "Receber Crypto",
+        "receiveBody": "Transferir tokens de outro endereço.",
+        "buyBody": "Compre criptomoedas usando um cartão de débito ou conta bancária.",
+        "title": "Financiar a Sua Wallet",
+        "buyHeader": "Comprar com Fiat"
       }
     },
     "search": {
@@ -1737,7 +1768,35 @@
     },
     "buy": {
       "from": "De {{dex}}",
-      "purchased": "Comprado"
+      "purchased": "Comprado",
+      "regionBottomSheet": {
+        "title": "Selecione a sua região",
+        "searchPlaceholder": "Pesquisar moeda fiduciária",
+        "noRegionFound": "Nenhuma região encontrada"
+      },
+      "currencyBottomSheet": {
+        "NoFound": "Nenhuma moeda encontrada",
+        "searchPlaceholder": "Pesquisar moeda",
+        "title": "Selecione uma Currency"
+      },
+      "quote": {
+        "best": "Melhores Citações",
+        "title": "Cotações Para você"
+      },
+      "title": "Comprar",
+      "youWillPay": "Pagar",
+      "paymentMethod": "Método de Pagamento",
+      "paymentProviderTips": "Este fornecedor suporta os seguintes métodos de pagamento:",
+      "noQuote": "Não foram encontradas cotações: Tente inserir um valor mais alto.",
+      "searchRegionPlaceholder": "Pesquisar região",
+      "youWillReceive": "Receber",
+      "noQuotePlaceholder": "Sem Cotação",
+      "history": "Histórico de Compras",
+      "toBuy": "Continuar a Comprar",
+      "noQuote2": "Não foram encontradas cotações.",
+      "searchingQuote": "A procurar cotações para si...",
+      "paymentsOnly": "Os pagamentos só podem ser feitos em {{currency}}",
+      "quotesForYou": "Cotações para si"
     }
   },
   "constant": {
@@ -1772,7 +1831,9 @@
       "invalidPrivateKey": "A chave privada é inválida",
       "invalidAddress": "Endereço inválido",
       "addKeyring404": "falha ao adicionar keyring, keyring não está definido",
-      "notFoundKeyringByAddress": "Não é possível encontrar o keyring pelo endereço"
+      "notFoundKeyringByAddress": "Não é possível encontrar o keyring pelo endereço",
+      "errorWords_one": "1 palavra incorreta",
+      "errorWords_other": "{{count}} palavras incorretas"
     }
   },
   "bluetooth": {

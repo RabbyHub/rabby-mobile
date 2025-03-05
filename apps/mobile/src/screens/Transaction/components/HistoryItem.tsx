@@ -28,6 +28,7 @@ import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
+import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -118,6 +119,8 @@ export const HistoryItem = React.memo(
           return t('page.transactions.itemTitle.Cancel');
         case HistoryItemCateType.UnKnown:
           return t('page.transactions.itemTitle.Default');
+        case HistoryItemCateType.Buy:
+          return t('page.transactions.itemTitle.Buy');
         default:
           return data.tx?.name
             ? ellipsisOverflowedText(data.tx?.name, 15)
@@ -159,6 +162,11 @@ export const HistoryItem = React.memo(
           return FromText + chainItem?.name;
         case HistoryItemCateType.Cancel:
           return t('page.transactions.detail.Unknown');
+
+        case HistoryItemCateType.Buy:
+          return t('page.buy.from', {
+            dex: data.buyDetails?.service_provider?.name,
+          });
         default:
           return projectName || t('page.transactions.detail.Unknown');
       }
@@ -175,6 +183,16 @@ export const HistoryItem = React.memo(
         },
       });
     }, [isForMultipleAdderss, navigation, data, formatTitle]);
+
+    if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
+      return (
+        <TouchableOpacity
+          onPress={hanldeNavigateDetail}
+          style={{ marginBottom: 8 }}>
+          <BuyHistoryItem data={data.buyDetails} />
+        </TouchableOpacity>
+      );
+    }
 
     return (
       <TouchableOpacity onPress={hanldeNavigateDetail}>

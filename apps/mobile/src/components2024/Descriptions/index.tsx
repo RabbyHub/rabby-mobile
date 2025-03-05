@@ -13,8 +13,16 @@ export const Descriptions: React.FC<{
     title?: string;
     description?: string;
   }>;
+  content?: React.ReactNode;
   nextButtonProps?: ButtonProps;
-}> = ({ title, sections, nextButtonProps, titleStyle, sectionStyle }) => {
+}> = ({
+  title,
+  sections,
+  nextButtonProps,
+  titleStyle,
+  sectionStyle,
+  content,
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
@@ -33,6 +41,7 @@ export const Descriptions: React.FC<{
             )}
           </View>
         ))}
+        {content}
       </View>
       {nextButtonProps && (
         <Button containerStyle={styles.button} {...nextButtonProps} />

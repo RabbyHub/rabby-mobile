@@ -159,13 +159,6 @@ const Swap = ({
     finishedQuotes,
   } = useTokenPair(currentAccount!.address);
 
-  const { sceneScreenRenderId } = useScreenSceneAccountContext();
-
-  useEffect(() => {
-    // clear form
-    handleAmountChange('');
-  }, [sceneScreenRenderId, handleAmountChange]);
-
   const {
     autoSlippage,
     isCustomSlippage,

@@ -75,6 +75,12 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
+import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
+import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
+import { FundYourWallet } from './FundYourWallet';
+
+const HeaderHeight = 50;
+
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
@@ -246,6 +252,11 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconBridge,
         },
         {
+          key: MultiHomeFeatTitle.Buy,
+          title: t('page.buy.title'),
+          icon: RcIconBuy,
+        },
+        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistory,
@@ -331,6 +342,19 @@ function MultiAddressHome(): JSX.Element {
 
   const { pinAccountsFirstFour, isShowPin, unPinAddress } =
     useHomePinAddress(balanceAccounts);
+
+  const displayFundWallet = useMemo(
+    () =>
+      !!balanceAccounts.length &&
+      balanceAccounts.every(e => e.balance === 0) &&
+      balanceCacheAccounts.every(e => e.balance === 0) &&
+      balanceAccounts.every(
+        e =>
+          transactionHistoryService.getTransactionGroups({ address: e.address })
+            .length === 0,
+      ),
+    [balanceAccounts, balanceCacheAccounts],
+  );
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
@@ -510,6 +534,12 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Ecosystem:
           break;
+        case MultiHomeFeatTitle.Buy:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.MultiBuy,
+            params: {},
+          });
+          break;
         default:
           break;
       }
@@ -644,7 +674,19 @@ function MultiAddressHome(): JSX.Element {
               })}
             </View>
           )}
-          <View style={styles.menuHeader}>
+          {displayFundWallet && (
+            <>
+              <View
+                style={[styles.menuHeader, { justifyContent: 'flex-start' }]}>
+                <IconRabby />
+                <Text style={styles.headerText}>
+                  {t('page.nextComponent.multiAddressHome.noAssets')}
+                </Text>
+              </View>
+              <FundYourWallet />
+            </>
+          )}
+          <View style={[styles.menuHeader, displayFundWallet && styles.hidden]}>
             <Text style={styles.headerText}>
               {t('page.nextComponent.multiAddressHome.services')}
             </Text>
@@ -665,7 +707,7 @@ function MultiAddressHome(): JSX.Element {
               </TouchableOpacity>
             )}
           </View>
-          <View style={[styles.grid]}>
+          <View style={[styles.grid, displayFundWallet && styles.hidden]}>
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity
@@ -704,10 +746,7 @@ function MultiAddressHome(): JSX.Element {
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={[
-              styles.floatBottom,
-              { paddingBottom: androidBottomOffset },
-            ]}>
+            style={[styles.floatBottom, { paddingBottom: bottom }]}>
             <Pressable onPress={handlePressSearch} style={styles.search}>
               <RcNextSearchCC
                 width={20}
@@ -755,7 +794,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
   },
   headerBox: {
-    height: ScreenLayouts.headerAreaHeight,
+    height: HeaderHeight,
     // paddingLeft: 8,
     // paddingRight: 38,
     flexDirection: 'row',
@@ -766,7 +805,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // backgroundColor: colors2024['neutral-title-1'],
   },
   leftBox: {
-    height: ScreenLayouts.headerAreaHeight,
+    height: HeaderHeight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -783,7 +822,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceBox: {
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginTop: 10,
-    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -854,7 +892,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
-    marginTop: 10,
+    marginTop: 30,
+    marginBottom: 16,
   },
   pinHeader: {
     marginTop: -8,
@@ -904,7 +943,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    marginBottom: 20,
+    marginTop: 16,
   },
   emptyItem: {
     backgroundColor: 'transparent',
@@ -934,8 +973,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    marginBottom: 20,
-    paddingBottom: 100,
   },
   gridItem: {
     borderWidth: 1,
@@ -975,14 +1012,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   floatBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
+    // position: 'absolute',
+    // bottom: 0,
+    // left: 0,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     width: Dimensions.get('window').width,
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    height: 128,
+
+    // height: 128,
   },
   search: {
     width: '100%',
@@ -1002,6 +1041,90 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 28,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+
+  noAssetsContainer: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingHorizontal: 16,
+    paddingBottom: 50,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  bgLeft: { position: 'absolute', top: 0, left: 0 },
+  bgRight: { position: 'absolute', top: 35, right: 0 },
+  bgb1: {
+    position: 'absolute',
+    top: 52,
+    left: 16,
+    transform: [{ scale: 0.5 }],
+  },
+  bgb2: {
+    position: 'absolute',
+    top: 76,
+    right: 34,
+    transform: [{ scale: 0.5 }],
+  },
+  noAssetsTitle: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 36,
+    marginVertical: 42,
+  },
+
+  noAssetsItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  noAssetsIconWrapper: {
+    width: 28,
+    height: 28,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 9.8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buyIcon: {
+    alignSelf: 'flex-start',
+  },
+  noAssetsRight: {
+    gap: 4,
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  noAssetsItemName: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  noAssetsItemDesc: {
+    maxWidth: '100%',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  hidden: {
+    display: 'none',
   },
 }));
 

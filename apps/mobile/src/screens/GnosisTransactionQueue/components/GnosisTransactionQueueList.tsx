@@ -11,7 +11,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { validateEOASign, validateETHSign } from '@/utils/gnosis';
 import { createGetStyles } from '@/utils/styles';
-import { SafeTransactionDataPartial } from '@gnosis.pm/safe-core-sdk-types';
+import { SafeTransactionDataPartial } from '@safe-global/types-kit';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
@@ -197,7 +197,7 @@ export const GnosisTransactionQueueList = (props: {
               to: safeTx.to,
               value: numberToHex(safeTx.value),
               safeTxGas: safeTx.safeTxGas,
-              nonce: safeTx.nonce,
+              nonce: +safeTx.nonce,
               operation: safeTx.operation,
               baseGas: safeTx.baseGas,
             };
@@ -228,7 +228,7 @@ export const GnosisTransactionQueueList = (props: {
               to: safeTx.to,
               value: numberToHex(safeTx.value),
               safeTxGas: safeTx.safeTxGas,
-              nonce: safeTx.nonce,
+              nonce: +safeTx.nonce,
               operation: safeTx.operation,
               baseGas: safeTx.baseGas,
             };
@@ -287,7 +287,7 @@ export const GnosisTransactionQueueList = (props: {
         to: data.to,
         data: data.data || '0x',
         value: numberToHex(data.value),
-        nonce: intToHex(data.nonce),
+        nonce: intToHex(+data.nonce),
         safeTxGas: data.safeTxGas,
         gasPrice: Number(data.gasPrice),
         baseGas: data.baseGas,

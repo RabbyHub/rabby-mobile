@@ -1,10 +1,9 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, In } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
-  DECIMALS_INT_RATIO,
   badRealTransformer,
   correctBadRealOnSql,
 } from './_helpers';
@@ -173,6 +172,18 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return (await this.getRepository().findBy({ owner_addr })).filter(
       i => i.id !== EMPTY_TOKEN_ITEM_ID,
     );
+  }
+
+  static async batchMultAddressTokens(addresses: string[]) {
+    await prepareAppDataSource();
+
+    return (
+      await this.getRepository().findBy({
+        owner_addr: In(addresses),
+        is_core: true,
+        is_scam: false,
+      })
+    ).filter(i => i.id !== EMPTY_TOKEN_ITEM_ID);
   }
 
   /**

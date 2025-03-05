@@ -78,7 +78,8 @@
       "option_Light": "浅色",
       "option_Dark": "深色"
     },
-    "Unknown": "未知"
+    "Unknown": "未知",
+    "unlimited": "unlimited"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -104,7 +105,8 @@
         "Bridge": "跨链",
         "Contract": "部署合约",
         "Recieve": "已收到",
-        "Cancel": "取消等待中的交易"
+        "Cancel": "取消等待中的交易",
+        "Buy": "已购买"
       },
       "detail": {
         "Cancel": "取消",
@@ -132,7 +134,13 @@
         "ApproveTo": "批准给",
         "RecipientAddress": "Recipient address",
         "InteractedContract": "已交互合约",
-        "To": "至"
+        "To": "至",
+        "PurchaseFrom": "购买自",
+        "Name": "名称",
+        "WillReceive": "将收到：≈ {{token}}",
+        "BuyAgain": "再次购买",
+        "totalApprovedAmount": "当前批准金额",
+        "Collection": "收藏"
       },
       "empty": {
         "title": "暂无交易",
@@ -152,7 +160,11 @@
         "title": "隐藏诈骗交易"
       },
       "ViewHiddenItems": "查看 scam 交易",
-      "title": "交易"
+      "title": "交易",
+      "ShowHiddenItems": "显示隐藏交易",
+      "ViewSmallItems": "查看交易 < $0.1",
+      "Yesterday": "昨天",
+      "Today": "今天"
     },
     "getStart": {
       "alreadyHaveAddress": "我已经有一个地址",
@@ -557,7 +569,10 @@
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
-      "watchModeAlert": "这是一个观察地址。您确定要使用它接收资产吗？"
+      "watchModeAlert": "这是一个观察地址。您确定要使用它接收资产吗？",
+      "copyAddress": "复制地址",
+      "allEVMChain": "所有 EVM 链",
+      "newTitle": "接收资产在"
     },
     "signTypedData": {
       "signMultiSig": {
@@ -905,7 +920,15 @@
       "multiAddressHome": {
         "services": "服务",
         "totalBalance": "总余额",
-        "pin": "Pin"
+        "pin": "Pin",
+        "fundYourWallet": "为您的钱包充值",
+        "buyWithFiat": "法币购买",
+        "importAddressDesc": "添加一个已有且有资金的地址。",
+        "importAddress": "导入地址",
+        "receiveCrypto": "接收加密货币",
+        "noAssets": "没有资产？",
+        "buyWithFiatDesc": "使用借记卡或银行账户购买加密货币。",
+        "receiveCryptoDesc": "从其他地址转移代币。"
       },
       "createNewAddress": {
         "verificationFailed": "验证失败",
@@ -1382,7 +1405,15 @@
       "sectionHeader": {
         "Nft": "NFT",
         "Defi": "DeFi",
-        "Token": "Token"
+        "Token": "Token",
+        "NoData": "没有 {{name}}"
+      },
+      "emptyToken": {
+        "title": "为您的钱包注资",
+        "receiveBody": "将代币从另一个地址转移。",
+        "buyHeader": "使用法币购买",
+        "buyBody": "使用借记卡或银行账户购买加密货币。",
+        "receiveHeader": "接收 Crypto"
       }
     },
     "miniSignFooterBar": {
@@ -1616,7 +1647,35 @@
     },
     "buy": {
       "from": "来自 {{dex}}",
-      "purchased": "已购买"
+      "purchased": "已购买",
+      "regionBottomSheet": {
+        "title": "选择您的地区",
+        "searchPlaceholder": "搜索法定货币",
+        "noRegionFound": "未找到区域"
+      },
+      "currencyBottomSheet": {
+        "title": "选择货币",
+        "NoFound": "未找到 Currency",
+        "searchPlaceholder": "搜索货币"
+      },
+      "quote": {
+        "best": "最佳报价",
+        "title": "引用报价给您"
+      },
+      "youWillPay": "Pay",
+      "toBuy": "继续购买",
+      "paymentMethod": "支付方式",
+      "searchRegionPlaceholder": "搜索地区",
+      "noQuotePlaceholder": "无报价",
+      "noQuote2": "未找到报价。",
+      "quotesForYou": "为您提供的报价",
+      "paymentsOnly": "支付只能以 {{currency}} 进行",
+      "searchingQuote": "正在为您搜索报价...",
+      "youWillReceive": "接收",
+      "paymentProviderTips": "此提供商支持以下支付方式：",
+      "title": "购买",
+      "history": "Purchased History",
+      "noQuote": "未找到报价：请尝试输入更高的数值。"
     }
   },
   "component": {
@@ -1784,7 +1843,9 @@
       "invalidPrivateKey": "私钥无效",
       "canNotUnlock": "没有之前的保险库无法解锁",
       "invalidAddress": "不是有效的地址",
-      "notFindChain": "未找到链 {{chain}}"
+      "notFindChain": "未找到链 {{chain}}",
+      "errorWords_one": "1 个错误的单词",
+      "errorWords_other": "{{count}} incorrect words"
     },
     "transactionWatcher": {
       "completed": "交易已完成",

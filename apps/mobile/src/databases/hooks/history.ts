@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
-import usePrevious from 'react-use/lib/usePrevious';
-import { syncRemoteHistory, syncRemoteSwapHistory } from '../sync/assets';
+import {
+  syncRemoteBuyHistory,
+  syncRemoteHistory,
+  syncRemoteSwapHistory,
+} from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
@@ -13,7 +16,8 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BuyHistoryList, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BuyItemEntity } from '../entities/buyItem';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -64,6 +68,7 @@ export const useSyncHistoryDB = (
     setTokenDict,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
+    setHistoryEnsureNoData,
   } = useHistoryTokenDict();
 
   const syncSwapHistory = useMemoizedFn(
@@ -114,7 +119,9 @@ export const useSyncHistoryDB = (
   const synHistoryInRealTimeApi = useMemoizedFn(
     async (address: string, latest_time: number, start_time?: number) => {
       try {
-        const latestTime = latest_time;
+        const notNeedUpdateTime =
+          new Date().getTime() / 1000 - 30 * 24 * 60 * 60; // 30 days ago
+        const latestTime = latest_time || notNeedUpdateTime;
         const startTime = start_time || 0;
 
         console.log(
@@ -145,11 +152,6 @@ export const useSyncHistoryDB = (
             res.history_list[res.history_list.length - 1].time_at;
           if (lastItemTime < latestTime) {
             // update done or not all update  to  interup loop
-            // res.history_list = res.history_list.filter(
-            //   i => i.time_at > latestTime,
-            // );
-            // RealTimeApi need to update refresh local data
-
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: update',
               address,
@@ -185,6 +187,11 @@ export const useSyncHistoryDB = (
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
           }
         }
+        !startTime &&
+          setHistoryEnsureNoData(prev => ({
+            ...prev,
+            [address]: !res.history_list.length,
+          }));
       } catch (error) {
         console.error('synHistoryInRealTimeApi Error fetching data:', error);
       }
@@ -194,18 +201,67 @@ export const useSyncHistoryDB = (
     },
   );
 
+  const syncBuyHistory = useMemoizedFn(
+    async (address: string, start?: number) => {
+      if (!address) {
+        return [];
+      }
+
+      const latestTime = (await BuyItemEntity.getLatestTime(address)) || 0;
+      const isExpiredTimeAgo =
+        (new Date().getTime() - 15 * 24 * 60 * 60 * 1000) / 1000; // 15 days ago
+
+      const isAddUpdate = latestTime > isExpiredTimeAgo;
+
+      const pendingIdList = ((await BuyItemEntity.getAllPending(address)) || [])
+        .filter(i => i.create_at > isExpiredTimeAgo)
+        .map(e => e.id);
+
+      const _start = 0 + (start || 0);
+      const res = await openapi.getBuyHistory({
+        user_addr: address,
+        start: _start,
+        limit: isAddUpdate ? 20 : 100,
+      });
+
+      const lastItemTime =
+        res.histories[res.histories.length - 1]?.create_at || 0;
+
+      res.histories = res.histories.filter(
+        i => pendingIdList.includes(i.id) || i.create_at > latestTime,
+      );
+
+      console.debug('getBuyHistory sync data length:', res.histories.length);
+      if (res.histories.length) {
+        console.log('syncRemoteBuyHistory', address, res.histories);
+        runOnJS(syncRemoteBuyHistory)(
+          address,
+          res.histories as unknown as BuyHistoryList['histories'],
+        );
+        if (isAddUpdate && lastItemTime > latestTime) {
+          console.debug('getBuyHistory sync data need to loop:', address);
+          syncBuyHistory(address, _start + res.histories.length - 1);
+        }
+        return res.histories;
+      }
+    },
+  );
+
   const syncUserAllHistory = useMemoizedFn(
-    async (address: string, start_time?: number, latest_time?: number) => {
+    async (
+      address: string,
+      start_time?: number,
+      latest_time?: number,
+      forceUseRealTime?: boolean,
+    ) => {
       try {
         const latestTime =
           latest_time || (await HistoryItemEntity.getLatestTime(address));
         const isExpiredTimeAgo =
           new Date().getTime() - 15 * 24 * 60 * 60 * 1000; // 15 days ago
         const isAddUpdate = latestTime > isExpiredTimeAgo / 1000;
-        const isUseRealTimeApi =
-          latestTime > (new Date().getTime() - 24 * 60 * 60 * 1000) / 1000; // 1 days ago
 
-        if (isUseRealTimeApi) {
+        if (forceUseRealTime) {
           // use other fetch api
           synHistoryInRealTimeApi(address, latestTime, start_time);
           return;
@@ -269,9 +325,19 @@ export const useSyncHistoryDB = (
             runOnJS(syncRemoteHistory)(address, res.history_list);
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
-            syncUserAllHistory(address, lastItemTime, latestTime);
+            syncUserAllHistory(
+              address,
+              lastItemTime,
+              latestTime,
+              forceUseRealTime,
+            );
           }
         }
+        !start_time &&
+          setHistoryEnsureNoData(prev => ({
+            ...prev,
+            [address]: !res.history_list.length,
+          }));
       } catch (error) {
         console.error('syncUserAllHistory Error fetching data:', error);
       }
@@ -293,7 +359,7 @@ export const useSyncHistoryDB = (
 
     const currentTime = Date.now();
     const gap = currentTime - latestTime;
-    const expireTime = 1 * 24 * 60 * 60 * 1000; // 1 days ago
+    const expireTime = 10 * 60 * 1000; // 10 min
     console.log(
       '🔍syncTop10History isNeedSyncData time gap',
       gap,
@@ -331,6 +397,9 @@ export const useSyncHistoryDB = (
           const address = account.address.toLowerCase();
           const isForceFetchFromApi = force || (await isNeedSyncData(address));
           if (isForceFetchFromApi) {
+            const latestUpdateTime = updateHistoryTime[address] || 0;
+            const isUserRealTiemApi =
+              latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
             updateHistoryTimeSingleAddress(address);
             console.debug(
               '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
@@ -339,8 +408,9 @@ export const useSyncHistoryDB = (
             queue.add(async () => {
               try {
                 await Promise.all([
-                  syncUserAllHistory(address),
+                  syncUserAllHistory(address, 0, 0, isUserRealTiemApi),
                   syncSwapHistory(address),
+                  syncBuyHistory(address),
                 ]);
               } catch (error) {
                 console.error(
@@ -364,10 +434,14 @@ export const useSyncHistoryDB = (
   );
 
   const syncSingleAddress = useMemoizedFn(address => {
+    const latestUpdateTime = updateHistoryTime[address] || 0;
+    const isUserRealTiemApi =
+      latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
     updateHistoryTimeSingleAddress(address);
     Promise.all([
-      syncUserAllHistory(address.toLowerCase()),
+      syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi),
       syncSwapHistory(address.toLowerCase()),
+      syncBuyHistory(address.toLowerCase()),
     ]);
   });
 

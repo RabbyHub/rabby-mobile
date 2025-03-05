@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    borderRadius: 30,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
@@ -28,7 +28,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 0,
     flex: 1,
     flexGrow: 1,
-    height: 96,
+    padding: 16,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   rootItem: {
@@ -43,19 +43,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   itemInfo: {
-    gap: 6,
+    gap: 4,
     flexGrow: 1,
     flex: 1,
   },
   itemNameText: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
   approvalCount: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     color: colors2024['neutral-secondary'],
     fontWeight: '500',
   },
@@ -144,7 +144,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         <InnerAddressItem style={styles.rootItem} account={account}>
           {({ WalletIcon, WalletName }) => (
             <View style={styles.item}>
-              <WalletIcon style={styles.walletIcon} width={40} height={40} />
+              <WalletIcon style={styles.walletIcon} width={46} height={46} />
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
                   <WalletName style={styles.itemNameText} />
