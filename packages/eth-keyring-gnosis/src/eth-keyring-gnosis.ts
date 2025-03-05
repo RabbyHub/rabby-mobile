@@ -3,8 +3,8 @@
 import type {
   SafeTransaction,
   SafeTransactionDataPartial,
-} from '@gnosis.pm/safe-core-sdk-types';
-import EthSignSignature from '@gnosis.pm/safe-core-sdk/dist/src/utils/signatures/SafeSignature';
+} from '@safe-global/types-kit';
+import { EthSafeSignature } from '@safe-global/protocol-kit';
 import Safe from '@rabby-wallet/gnosis-sdk';
 import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { addHexPrefix, bufferToHex } from 'ethereumjs-util';
@@ -406,7 +406,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
     if (!this.currentTransaction || !this.safeInstance) {
       throw new Error('No transaction in Gnosis keyring');
     }
-    const sig = new EthSignSignature(address, signature);
+    const sig = new EthSafeSignature(address, signature);
     this.currentTransaction.addSignature(sig);
   }
 
@@ -414,7 +414,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
     if (!this.currentTransaction || !this.safeInstance) {
       throw new Error('No transaction in Gnosis keyring');
     }
-    const sig = new EthSignSignature(address, signature);
+    const sig = new EthSafeSignature(address, signature);
     this.currentTransaction.addSignature(sig);
   }
 
