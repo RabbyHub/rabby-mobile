@@ -298,7 +298,8 @@ export const WhiteListItemSwitch = ({
             );
           }}>
           <RcIconSwitchCC
-            color={colors2024['neutral-body']}
+            fillColor={colors2024['neutral-bg-2']}
+            strokeColor={colors2024['neutral-body']}
             width={24}
             height={24}
           />
