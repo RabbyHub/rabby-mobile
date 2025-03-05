@@ -1,16 +1,12 @@
 import { openapi } from '@/core/request';
 import { useMyAccounts } from '@/hooks/account';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
-const queue = new PQueue({ intervalCap: 10, interval: 1000 });
-
-const hasSend = async (from: string, to: string) => {
-  // TODO: Rabby api
-  return false;
-};
+const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -34,6 +30,7 @@ export const useRisks = (address: string) => {
   );
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
+  const riskGetRef = useRef(false);
 
   const [addressDesc, setAddressDesc] = useState<
     AddrDescResponse['desc'] | undefined
@@ -46,6 +43,10 @@ export const useRisks = (address: string) => {
     });
   }, [address]);
   useEffect(() => {
+    if (riskGetRef.current) {
+      return;
+    }
+    riskGetRef.current = true;
     (async () => {
       const currRisks: Array<{ type: RiskType; value: string }> = [];
       if (addressDesc?.is_danger || addressDesc?.is_scam) {
@@ -67,12 +68,15 @@ export const useRisks = (address: string) => {
         });
       }
       let hasSended = false;
-
       accounts.forEach(acc => {
+        if (isSameAddress(acc.address, address)) {
+          return;
+        }
         queue.add(async () => {
           try {
-            const res = await hasSend(acc.address, address);
-            if (res?.['_has_transfer']) {
+            const res = await openapi.hasTransferAllChain(acc.address, address);
+            // TODO: check res property
+            if (res?.['_has_transfer'] || res?.['has_transfer']) {
               hasSended = true;
             }
           } catch (error) {
