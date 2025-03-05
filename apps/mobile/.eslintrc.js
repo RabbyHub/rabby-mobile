@@ -3,6 +3,7 @@ module.exports = {
   // extends: '@react-native',
   extends: '@react-native-community',
   rules: {
+    '@typescript-eslint/no-non-null-assertion': 'off',
     'react/react-in-jsx-scope': 'off',
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',

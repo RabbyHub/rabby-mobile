@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 /* eslint-disable jsdoc/require-returns */
+import Safe from '@rabby-wallet/gnosis-sdk';
+import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
+import { EthSafeSignature } from '@safe-global/protocol-kit';
 import type {
   SafeTransaction,
   SafeTransactionDataPartial,
 } from '@safe-global/types-kit';
-import { EthSafeSignature } from '@safe-global/protocol-kit';
-import Safe from '@rabby-wallet/gnosis-sdk';
-import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
+import BigNumber from 'bignumber.js';
 import { addHexPrefix, bufferToHex } from 'ethereumjs-util';
 import { EventEmitter } from 'events';
 import type { SemVer } from 'semver';
@@ -504,7 +505,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
       data: transaction.data,
       from: address,
       to: this._normalize(transaction.to),
-      value: this._normalize(transaction.value) || '0x0', // prevent 0x
+      value: new BigNumber(transaction.value || 0).toFixed() || '0',
       safeTxGas: transaction.safeTxGas,
       nonce: transaction.nonce ? Number(transaction.nonce) : undefined,
       baseGas: transaction.baseGas,
@@ -549,7 +550,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
       data: transaction.data,
       from: address,
       to: this._normalize(transaction.to),
-      value: this._normalize(transaction.value) || '0x0', // prevent 0x
+      value: transaction.value || '0', // prevent 0x
       safeTxGas: transaction.safeTxGas,
       nonce: transaction.nonce ? Number(transaction.nonce) : undefined,
       baseGas: transaction.baseGas,
@@ -593,7 +594,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
         data: this._normalize(transaction.data) || '0x',
         from: address,
         to: this._normalize(transaction.to),
-        value: this._normalize(transaction.value) || '0x0', // prevent 0x
+        value: transaction.value.toString() || '0', // prevent 0x
       };
       safeTransaction = await safe.buildTransaction(tx);
       this.currentTransaction = safeTransaction;
