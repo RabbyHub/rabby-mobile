@@ -16,6 +16,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
 import { useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
+import { toast } from '@/components2024/Toast';
 
 const GasAccountLoginContent: React.FC<{
   onLogin?(): void;
@@ -47,9 +48,11 @@ const GasAccountLoginContent: React.FC<{
         await logout();
       }
       await login(account);
-      onLogin?.();
+      await onLogin?.();
+      toast.success(t('page.gasAccount.loginSuccess'));
     } catch (error) {
       console.error(error);
+      toast.error(t('page.gasAccount.loginFailed'));
     }
 
     setLoading(false);

@@ -6,11 +6,12 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
 import { gasAccountProducts } from '@/constant/iap';
-import { useIAPAccountAddress } from '@/hooks/iap/useIAPAccountAddress';
+import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { waitPurchaseUpdated } from '@/utils/iap';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import * as Sentry from '@sentry/react-native';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,6 @@ import { Platform, Text, View } from 'react-native';
 import { requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
-import { openapi } from '@/core/request';
 
 interface Props {
   visible?: boolean;
@@ -43,9 +43,13 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   });
 
   const products = useMemo(() => {
-    return gasAccountProducts
+    const res = gasAccountProducts
       .filter(item => +item.price > +minDepositPrice)
       .slice(0, 3);
+    if (!res.length) {
+      return gasAccountProducts.slice(gasAccountProducts.length - 1);
+    }
+    return res;
   }, [minDepositPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
@@ -84,7 +88,11 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       },
       onError(e: any) {
         console.error(e);
-        toast.error(typeof e === 'string' ? e : e?.message);
+        // toast.error(typeof e === 'string' ? e : e?.message);
+        Sentry.captureException(e);
+        toast.error(t('page.gasAccount.depositPayPopup.depositFailed'), {
+          position: toast.positions.CENTER,
+        });
       },
     },
   );
@@ -152,9 +160,13 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
                 <Text style={styles.btnTitle}>${selectedProduct.total}</Text>
               </View>
               <Text style={styles.btnDesc}>
-                Includes a ${selectedProduct.fee}{' '}
-                {Platform.OS === 'android' ? 'Google Pay' : 'Apple Pay'} fee. No
-                withdrawals
+                {Platform.OS === 'ios'
+                  ? t('page.gasAccount.depositPopup.applePayDesc', {
+                      amount: selectedProduct?.fee || 0,
+                    })
+                  : t('page.gasAccount.depositPopup.googlePayDesc', {
+                      amount: selectedProduct?.fee || 0,
+                    })}
               </Text>
             </View>
           }

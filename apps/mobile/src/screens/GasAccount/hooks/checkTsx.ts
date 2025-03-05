@@ -5,6 +5,7 @@ import { openapi } from '@/core/request';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { Account } from '@/core/services/preference';
+import { useRequest } from 'ahooks';
 
 export const useGasAccountTxsCheck = ({
   isReady,
@@ -24,41 +25,36 @@ export const useGasAccountTxsCheck = ({
   const [isGasAccountLogin, setIsGasAccountLogin] = useState(
     !!sig && !!accountId,
   );
-
-  const initdRef = useRef(false);
+  const [isFirstGasCostLoading, setIsFirstGasCostLoading] = useState(true);
 
   const gasAccountAddress = accountId || currentAccount.address;
 
-  const [{ value: gasAccountCost }, gasAccountCostFn] = useAsyncFn(async () => {
-    if (!isReady) {
-      return;
-    }
-    if (!sig || !accountId) {
-      setIsGasAccountLogin(false);
-    }
+  const { data: gasAccountCost, runAsync: gasAccountCostFn } = useRequest(
+    async () => {
+      if (!isReady) {
+        return;
+      }
+      if (!sig || !accountId) {
+        setIsGasAccountLogin(false);
+      }
 
-    const res = await openapi.checkGasAccountTxs({
-      sig: sig || '',
-      account_id: gasAccountAddress,
-      tx_list: txs,
-    });
+      const res = await openapi.checkGasAccountTxs({
+        sig: sig || '',
+        account_id: gasAccountAddress,
+        tx_list: txs,
+      });
 
-    if (!initdRef.current) {
-      setGasMethod(
-        isSupportedAddr &&
-          noCustomRPC &&
-          !!res?.balance_is_enough &&
-          !res.chain_not_support &&
-          !!res.is_gas_account
-          ? 'gasAccount'
-          : 'native',
-      );
-    }
-
-    initdRef.current = true;
-
-    return res;
-  }, [sig, accountId, isReady, txs]);
+      return res;
+    },
+    {
+      refreshDeps: [sig, accountId, isReady, txs],
+      onFinally() {
+        if (isReady) {
+          setIsFirstGasCostLoading(false);
+        }
+      },
+    },
+  );
 
   useDebounce(
     () => {
@@ -106,5 +102,6 @@ export const useGasAccountTxsCheck = ({
     gasAccountCostFn,
     gasAccountAddress,
     sig,
+    isFirstGasCostLoading,
   };
 };

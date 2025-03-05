@@ -17,6 +17,9 @@ export const GasAccountBalance: React.FC<GasAccountBalanceProps> = ({
     getStyle,
   });
   const { data } = useGasAccountInfoV2({ address });
+  if (data?.account.no_register) {
+    return null;
+  }
   return (
     <Text style={[styles.text, style]}>
       {data?.account.balance ? formatUsdValue(data.account.balance) : '$0'}

@@ -17,34 +17,34 @@ import {
   purchaseErrorListener,
   purchaseUpdatedListener,
 } from 'react-native-iap';
-import { useIAPAccountAddress } from './useIAPAccountAddress';
 
 export const useIAPListener = () => {
-  const [address] = useIAPAccountAddress();
-
   const handlePurchase = useMemoizedFn(async (purchase: Purchase) => {
     devLog('purchaseUpdatedListener -> 1', purchase);
     const receipt = purchase.transactionReceipt;
     if (receipt) {
       try {
-        if (Platform.OS === 'android') {
-          await openapi.confirmIapOrder({
-            user_id: purchase.obfuscatedAccountIdAndroid || '',
-            transaction_id: purchase.transactionId || '',
-            product_id: purchase.productId,
-            device_type: 'android',
-          });
-        } else {
-          await openapi.confirmIapOrder({
-            user_id: address,
-            transaction_id: purchase.transactionId || '',
-            product_id: purchase.productId,
-            device_type: 'ios',
-          });
+        try {
+          if (Platform.OS === 'android') {
+            await openapi.confirmIapOrder({
+              // user_id: purchase.obfuscatedAccountIdAndroid || '',
+              transaction_id: purchase.transactionId || '',
+              product_id: purchase.productId,
+              device_type: 'android',
+            });
+          } else {
+            await openapi.confirmIapOrder({
+              // user_id: address,
+              transaction_id: purchase.transactionId || '',
+              product_id: purchase.productId,
+              device_type: 'ios',
+            });
+          }
+          eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase });
+        } catch (e) {
+          eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
         }
-
         finishTransaction({ purchase, isConsumable: true });
-        eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase });
       } catch (e) {
         eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
         console.error(e);

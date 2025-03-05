@@ -11,7 +11,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { DappInfo } from '@/core/services/dappService';
 import clsx from 'clsx';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
@@ -65,6 +65,8 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   onDeposit?(): void;
   gasAccountAddress?: string;
   canDepositUseGasAccount?: boolean;
+  isFirstGasCostLoading?: boolean;
+  isFirstGasLessLoading?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -218,6 +220,8 @@ export const MiniFooterBar: React.FC<Props> = ({
   rejectApproval,
   onDeposit,
   gasAccountAddress,
+  isFirstGasCostLoading,
+  isFirstGasLessLoading,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -300,6 +304,27 @@ export const MiniFooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isSetGasMethodRef = useRef(false);
+  useEffect(() => {
+    if (isSetGasMethodRef.current) {
+      return;
+    }
+    if (!isFirstGasCostLoading && !isFirstGasLessLoading) {
+      isSetGasMethodRef.current = true;
+
+      if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
+        onChangeGasAccount?.();
+      }
+    }
+  }, [
+    canGotoUseGasAccount,
+    canUseGasLess,
+    isFirstGasCostLoading,
+    isFirstGasLessLoading,
+    onChangeGasAccount,
+    showGasLess,
+  ]);
+
   if (!account) {
     return null;
   }
@@ -357,56 +382,60 @@ export const MiniFooterBar: React.FC<Props> = ({
         })}>
         {Header}
 
-        {showGasLess &&
-        !payGasByGasAccount &&
-        (!securityLevel || !hasUnProcessSecurityResult) ? (
-          canUseGasLess ? (
-            <GasLessActivityToSign
-              gasLessEnable={useGasLess}
-              handleFreeGas={() => {
-                enableGasLess?.();
-              }}
-              gasLessConfig={gasLessConfig}
-            />
-          ) : isWatchAddr ? null : (
-            <GasLessNotEnough
-              canGotoUseGasAccount={canGotoUseGasAccount}
-              canDepositUseGasAccount={canDepositUseGasAccount}
-              onChangeGasAccount={onChangeGasAccount}
-              gasAccountAddress={gasAccountAddress!}
-              gasAccountCost={gasAccountCost}
-              onDeposit={() => {
-                onDeposit?.();
-                onChangeGasAccount?.();
-              }}
-              onGotoGasAccount={() => {
-                rejectApproval?.();
-                navigate(RootNames.StackTransaction, {
-                  screen: RootNames.GasAccount,
-                  params: {},
-                });
-              }}
-            />
-          )
-        ) : null}
+        {isFirstGasCostLoading ? null : (
+          <>
+            {showGasLess &&
+            !payGasByGasAccount &&
+            (!securityLevel || !hasUnProcessSecurityResult) ? (
+              canUseGasLess ? (
+                <GasLessActivityToSign
+                  gasLessEnable={useGasLess}
+                  handleFreeGas={() => {
+                    enableGasLess?.();
+                  }}
+                  gasLessConfig={gasLessConfig}
+                />
+              ) : isWatchAddr ? null : (
+                <GasLessNotEnough
+                  canGotoUseGasAccount={canGotoUseGasAccount}
+                  canDepositUseGasAccount={canDepositUseGasAccount}
+                  onChangeGasAccount={onChangeGasAccount}
+                  gasAccountAddress={gasAccountAddress!}
+                  gasAccountCost={gasAccountCost}
+                  onDeposit={() => {
+                    onDeposit?.();
+                    onChangeGasAccount?.();
+                  }}
+                  onGotoGasAccount={() => {
+                    rejectApproval?.();
+                    navigate(RootNames.StackTransaction, {
+                      screen: RootNames.GasAccount,
+                      params: {},
+                    });
+                  }}
+                />
+              )
+            ) : null}
 
-        {payGasByGasAccount && !gasAccountCanPay ? (
-          <GasAccountTips
-            gasAccountAddress={gasAccountAddress!}
-            gasAccountCost={gasAccountCost}
-            isGasAccountLogin={isGasAccountLogin}
-            isWalletConnect={isWalletConnect}
-            noCustomRPC={noCustomRPC}
-            onDeposit={onDeposit}
-            onGotoGasAccount={() => {
-              rejectApproval?.();
-              navigate(RootNames.StackTransaction, {
-                screen: RootNames.GasAccount,
-                params: {},
-              });
-            }}
-          />
-        ) : null}
+            {payGasByGasAccount && !gasAccountCanPay ? (
+              <GasAccountTips
+                gasAccountAddress={gasAccountAddress!}
+                gasAccountCost={gasAccountCost}
+                isGasAccountLogin={isGasAccountLogin}
+                isWalletConnect={isWalletConnect}
+                noCustomRPC={noCustomRPC}
+                onDeposit={onDeposit}
+                onGotoGasAccount={() => {
+                  rejectApproval?.();
+                  navigate(RootNames.StackTransaction, {
+                    screen: RootNames.GasAccount,
+                    params: {},
+                  });
+                }}
+              />
+            ) : null}
+          </>
+        )}
 
         <View style={styles.actions}>
           {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (

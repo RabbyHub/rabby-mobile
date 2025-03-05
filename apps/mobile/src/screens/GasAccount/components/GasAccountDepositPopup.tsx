@@ -9,12 +9,13 @@ import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
 import { GasAccountDepositWithToken } from './GasAccountDepositWithToken';
 import { useWindowDimensions } from 'react-native';
 import { min } from 'lodash';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 export const GasAccountDepositPopup: React.FC<{
   type?: 'token' | 'pay';
   visible?: boolean;
   gasAccountAddress: string;
-  onCancel?(): void;
   onClose?(): void;
   onDeposit?(): void;
 }> = props => {
@@ -23,6 +24,7 @@ export const GasAccountDepositPopup: React.FC<{
   });
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [step, setStep] = useState<'token' | 'pay' | undefined>(props.type);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!props?.visible) {
@@ -54,7 +56,12 @@ export const GasAccountDepositPopup: React.FC<{
   return (
     <AppBottomSheetModal
       snapPoints={snapPoints}
-      onDismiss={props.onCancel || props.onClose}
+      onDismiss={() => {
+        props.onClose?.();
+        // toast.error(t('page.gasAccount.depositCanceled'), {
+        //   position: toast.positions.CENTER,
+        // });
+      }}
       ref={modalRef}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"

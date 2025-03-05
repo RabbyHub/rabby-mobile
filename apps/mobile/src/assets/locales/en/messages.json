@@ -1438,7 +1438,9 @@
         "paymentAddress": "Payment Address",
         "selectToken": "Select Token",
         "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
-        "followingTokenInSufficient": "The following token balance is insufficient"
+        "followingTokenInSufficient": "The following token balance is insufficient",
+        "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
+        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
         "title": "Select Payment address",
@@ -1480,11 +1482,16 @@
       "depositPayPopup": {
         "title": "Buy with Apple Pay",
         "titleAndroid": "Buy with Google Pay",
-        "balance": "Current GasAccount Balance: "
+        "balance": "Current GasAccount Balance: ",
+        "depositFailed": "Deposit Failed"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
-        "desc": "Pay Gas Fees on All Chains"
+        "desc": "Pay Gas Fees on All Chains",
+        "depositToken": "Deposit with Token",
+        "depositTokenDesc": "No extra fee, instant withdrawals",
+        "buyWith": "Buy with",
+        "buyWithDesc": "30% fee, no withdrawals"
       },
       "switchAccount": "Switch GasAccount",
       "gasAccountList": {
@@ -1492,7 +1499,10 @@
         "balance": "Balance",
         "gasAccountBalance": "GasAccount Balance"
       },
-      "depositSuccess": "Deposit successful"
+      "depositSuccess": "Deposit successful",
+      "loginFailed": "Login Failed",
+      "depositCanceled": "Deposit Canceled",
+      "loginSuccess": "Login Successful"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Not supported on this chain",

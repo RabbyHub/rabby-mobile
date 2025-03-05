@@ -60,6 +60,8 @@ import {
   whitelistService,
 } from '@/core/services';
 import { toast } from '@/components/Toast';
+import { toast as toast2024 } from '@/components2024/Toast';
+
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import { FooterBar } from '../FooterBar/FooterBar';
 import {
@@ -260,6 +262,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     undefined | string
   >();
   const [gasLessLoading, setGasLessLoading] = useState(false);
+  const [isFirstGasLessLoading, setIsFirstGasLessLoading] = useState(true);
   const [canUseGasLess, setCanUseGasLess] = useState(false);
   const [useGasLess, setUseGasLess] = useState(false);
 
@@ -457,6 +460,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     gasAccountCostFn,
     gasAccountAddress,
     sig,
+    isFirstGasCostLoading,
   } = useGasAccountTxsCheck({
     isReady,
     txs,
@@ -1349,9 +1353,12 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       !isCoboArugsAccount
     ) {
       if (isSupportedAddr && noCustomRPC) {
-        checkGasLessStatus();
+        checkGasLessStatus().finally(() => {
+          setIsFirstGasLessLoading(false);
+        });
       } else {
         setGasLessLoading(false);
+        setIsFirstGasLessLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1550,13 +1557,15 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             noCustomRPC={noCustomRPC}
             gasMethod={gasMethod}
             gasAccountCost={gasAccountCost}
+            isFirstGasCostLoading={isFirstGasCostLoading}
+            isFirstGasLessLoading={isFirstGasLessLoading}
             gasAccountCanPay={gasAccountCanPay}
             canGotoUseGasAccount={canGotoUseGasAccount}
             canDepositUseGasAccount={canDepositUseGasAccount}
             rejectApproval={rejectApproval}
             onDeposit={() => {
-              toast.success(t('page.gasAccount.depositSuccess'), {
-                position: toast.positions.CENTER,
+              toast2024.success(t('page.gasAccount.depositSuccess'), {
+                position: toast2024.positions.CENTER,
               });
               gasAccountCostFn();
             }}

@@ -87,7 +87,6 @@ export const GasAccountScreen = () => {
   return (
     <NormalScreenContainer>
       <GasAccountCard
-        // isLoading={loading}
         isLogin={isLogin}
         gasAccountInfo={gasAccount?.account}
         onLoginPress={() => {
@@ -114,7 +113,7 @@ export const GasAccountScreen = () => {
               position: toast.positions.CENTER,
             });
           }}
-          onCancel={() => {
+          onClose={() => {
             setDepositState({
               isOpen: false,
             });

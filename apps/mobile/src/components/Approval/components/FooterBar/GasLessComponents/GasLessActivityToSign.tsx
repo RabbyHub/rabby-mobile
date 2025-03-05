@@ -25,6 +25,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
+import { ThemeColors2024 } from '@/constant/theme';
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
@@ -58,12 +59,12 @@ function FreeGasReady({
           {
             position: 'relative',
             backgroundColor: 'transparent',
-            paddingTop: 13,
           },
         ]}>
         <ActivityFreeGasBg
           borderColor={color!}
           style={styles.activityFreeGasBg}
+          height={40}
         />
         <Image source={{ uri: logo }} style={styles.activityLogo} />
         <Text
@@ -81,12 +82,14 @@ function FreeGasReady({
     <View
       style={{
         width: '100%',
-        height: 58,
+        height: 46,
+        marginTop: -5,
+        marginBottom: 7,
       }}>
       <ImageBackground
-        source={require('@/assets/icons/sign/tx/pay-for-gas.png')}
+        source={require('@/assets/icons/sign/tx/pay-for-gas-1.png')}
         resizeMode="contain"
-        style={{ width: '100%', height: 50, marginTop: 6 }}
+        style={{ width: '100%', height: 46, marginTop: 0 }}
       />
     </View>
   );
@@ -111,9 +114,13 @@ const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
 }) => {
   const { width: defaultWidth } = useWindowDimensions();
 
+  // const trianglePosition = useMemo(() => {
+  //   return (defaultWidth - 20 * 2) * (0.25 * (position === 'left' ? 1 : 3));
+  // }, [defaultWidth, position]);
+
   const trianglePosition = useMemo(() => {
-    return (defaultWidth - 20 * 2) * (0.25 * (position === 'left' ? 1 : 3));
-  }, [defaultWidth, position]);
+    return 18;
+  }, []);
 
   const width = useMemo(
     () => propsWidth || defaultWidth - 20 * 2,
@@ -246,6 +253,7 @@ export function GasLessActivityToSign({
             <ActivityFreeGasBg
               borderColor={themeColor!}
               style={styles.activityFreeGasBg}
+              height={40}
             />
           ) : (
             <View style={styles.tipTriangle} />
@@ -255,14 +263,7 @@ export function GasLessActivityToSign({
               source={{ uri: gasLessConfig?.logo }}
               style={styles.activityLogo}
             />
-          ) : (
-            <RcIconGas
-              width={16}
-              height={16}
-              color={colors['neutral-title-1']}
-              style={{ marginRight: 4 }}
-            />
-          )}
+          ) : null}
           <Text
             style={[
               styles.text,
@@ -278,7 +279,7 @@ export function GasLessActivityToSign({
             {isActivityFreeGas ? (
               <View
                 style={[
-                  styles.linearGradient,
+                  styles.gasAccountBtn,
                   {
                     backgroundColor: themeColor,
                   },
@@ -288,16 +289,21 @@ export function GasLessActivityToSign({
                 </Text>
               </View>
             ) : (
-              <LinearGradient
-                colors={['#60bcff', '#8154ff']}
-                locations={[0.1447, 0.9383]}
-                useAngle
-                angle={94}
-                style={styles.linearGradient}>
-                <Text style={styles.linearGradientText}>
+              <View style={styles.gasAccountBtn}>
+                <Text style={styles.gasAccountTipBtnText}>
                   {t('page.signFooterBar.gasless.GetFreeGasToSign')}
                 </Text>
-              </LinearGradient>
+              </View>
+              // <LinearGradient
+              //   colors={['#60bcff', '#8154ff']}
+              //   locations={[0.1447, 0.9383]}
+              //   useAngle
+              //   angle={94}
+              //   style={styles.linearGradient}>
+              //   <Text style={styles.linearGradientText}>
+              //     {t('page.signFooterBar.gasless.GetFreeGasToSign')}
+              //   </Text>
+              // </LinearGradient>
             )}
           </TouchableOpacity>
         </View>
@@ -313,7 +319,7 @@ export function GasLessActivityToSign({
   );
 }
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   securityLevelTip: {
     display: 'flex',
     flexDirection: 'row',
@@ -400,21 +406,31 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderRadius: 6,
   },
   linearGradientText: {
-    fontSize: 11,
     color: colors['neutral-title-2'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 16,
   },
   gasAccountBtn: {
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 72,
     height: 28,
-    backgroundColor: colors['blue-default'],
-    borderRadius: 6,
+    backgroundColor: colors2024['brand-default'],
+    borderRadius: 100,
     marginLeft: 'auto',
+    paddingHorizontal: 12,
   },
   gasAccountTipBtnText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
-    fontWeight: '500',
-    color: colors['neutral-title-2'],
+    fontStyle: 'normal',
+    fontWeight: '700',
+    color: isLight
+      ? ThemeColors2024.dark['neutral-title-1']
+      : ThemeColors2024.light['neutral-title-1'],
+    lineHeight: 16,
   },
 }));

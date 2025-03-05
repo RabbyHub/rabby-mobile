@@ -41,6 +41,11 @@ export const gasAccountProducts = [
     total: '99.99',
     price: '69.99',
   },
+  {
+    id: '0009',
+    total: '719',
+    price: '503.3',
+  },
 ].map(item => {
   return {
     ...item,

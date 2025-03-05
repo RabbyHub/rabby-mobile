@@ -63,7 +63,7 @@ import {
 } from '@rabby-wallet/rabby-action';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { apiCustomRPC, apiProvider } from '@/core/apis';
-
+import { toast as toast2024 } from '@/components2024/Toast';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -237,6 +237,7 @@ const MiniSignTx = ({
   >();
   const [gasLessLoading, setGasLessLoading] = useState(false);
   const [canUseGasLess, setCanUseGasLess] = useState(false);
+  const [isFirstGasLessLoading, setIsFirstGasLessLoading] = useState(true);
   const [useGasLess, setUseGasLess] = useState(false);
 
   const [isGnosisAccount, setIsGnosisAccount] = useState(false);
@@ -441,6 +442,7 @@ const MiniSignTx = ({
     gasAccountCostFn,
     gasAccountAddress,
     sig,
+    isFirstGasCostLoading,
   } = useGasAccountTxsCheck({
     isReady,
     txs: gasAccountTxs,
@@ -889,9 +891,12 @@ const MiniSignTx = ({
       !isCoboArugsAccount
     ) {
       if (isSupportedAddr && noCustomRPC) {
-        checkGasLessStatus();
+        checkGasLessStatus().finally(() => {
+          setIsFirstGasLessLoading(false);
+        });
       } else {
         setGasLessLoading(false);
+        setIsFirstGasLessLoading(false);
       }
     }
   }, [
@@ -1000,13 +1005,15 @@ const MiniSignTx = ({
         noCustomRPC={noCustomRPC}
         gasMethod={gasMethod}
         gasAccountCost={gasAccountCost}
+        isFirstGasCostLoading={isFirstGasCostLoading}
+        isFirstGasLessLoading={isFirstGasLessLoading}
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
         canDepositUseGasAccount={canDepositUseGasAccount}
         rejectApproval={onReject}
         onDeposit={() => {
-          toast.success(t('page.gasAccount.depositSuccess'), {
-            position: toast.positions.CENTER,
+          toast2024.success(t('page.gasAccount.depositSuccess'), {
+            position: toast2024.positions.CENTER,
           });
           gasAccountCostFn();
         }}

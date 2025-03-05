@@ -152,6 +152,8 @@ export const useGasAccountMethods = () => {
         if (result?.success) {
           setGasAccount(signature, account);
           // setLoginVisible(false);
+        } else {
+          throw new Error('Login failed');
         }
       }
     },

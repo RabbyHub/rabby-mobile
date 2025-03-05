@@ -43,9 +43,11 @@ export const GasAccountDepositSelect: React.FC<{
           titleStyle={styles.btnTitle}
           title={
             <View style={styles.depositWithTitle}>
-              <Text style={styles.btnTitle}>Deposit with Token</Text>
+              <Text style={styles.btnTitle}>
+                {t('page.gasAccount.depositSelectPopup.depositToken')}
+              </Text>
               <Text style={styles.btnDesc}>
-                No extra fee, instant withdrawals
+                {t('page.gasAccount.depositSelectPopup.depositTokenDesc')}
               </Text>
             </View>
           }
@@ -61,14 +63,18 @@ export const GasAccountDepositSelect: React.FC<{
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
-                <Text style={styles.btnTitle}>Buy with</Text>
+                <Text style={styles.btnTitle}>
+                  {t('page.gasAccount.depositSelectPopup.buyWith')}
+                </Text>
                 {Platform.OS === 'android' ? (
                   <RcIconGooglePayCC />
                 ) : (
                   <RcIconApplePayCC />
                 )}
               </View>
-              <Text style={styles.btnDesc}>30% fee, no withdrawals</Text>
+              <Text style={styles.btnDesc}>
+                {t('page.gasAccount.depositSelectPopup.buyWithDesc')}
+              </Text>
             </View>
           }
         />
@@ -103,7 +109,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
-    marginBottom: 18,
   },
   amountSelector: {
     flexDirection: 'row',

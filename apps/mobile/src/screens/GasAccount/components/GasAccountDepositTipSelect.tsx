@@ -1,4 +1,4 @@
-import { RcArrowRight2CC, RcArrowRightCC } from '@/assets/icons/common';
+import { RcArrowRight2CC } from '@/assets/icons/common';
 import {
   RcIconApplePayCC,
   RcIconGooglePayCC,
@@ -46,14 +46,18 @@ export const GasAccountDepositTipSelect: React.FC<{
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
-                <Text style={styles.btnTitle}>Buy with</Text>
+                <Text style={styles.btnTitle}>
+                  {t('page.gasAccount.depositSelectPopup.buyWith')}
+                </Text>
                 {Platform.OS === 'android' ? (
                   <RcIconGooglePayCC />
                 ) : (
                   <RcIconApplePayCC />
                 )}
               </View>
-              <Text style={styles.btnDesc}>30% fee, no withdrawals</Text>
+              <Text style={styles.btnDesc}>
+                {t('page.gasAccount.depositSelectPopup.buyWithDesc')}
+              </Text>
             </View>
           }
         />
@@ -63,7 +67,9 @@ export const GasAccountDepositTipSelect: React.FC<{
             onPress={() => {
               onSelect('token');
             }}>
-            <Text style={styles.depositTokenBtnText}>Deposit with Token</Text>
+            <Text style={styles.depositTokenBtnText}>
+              {t('page.gasAccount.depositSelectPopup.depositToken')}
+            </Text>
             <RcArrowRight2CC color={colors2024['neutral-body']} />
           </TouchableOpacity>
         </View>
@@ -98,7 +104,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
-    marginBottom: 18,
   },
   amountSelector: {
     flexDirection: 'row',
@@ -142,7 +147,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 
   btnContainer: {
-    marginTop: 26,
+    marginTop: 30,
     paddingHorizontal: 20,
     justifyContent: 'flex-end',
   },
