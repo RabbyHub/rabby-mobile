@@ -70,7 +70,7 @@
     "@rabby-wallet/rabby-api": "0.9.12",
     "@rabby-wallet/rabby-security-engine": "2.0.7",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.47",
+    "@rabby-wallet/rabby-swap": "0.0.50",
     "@rabby-wallet/react-native-sqlite-storage": "7.0.0-alpha.1",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
