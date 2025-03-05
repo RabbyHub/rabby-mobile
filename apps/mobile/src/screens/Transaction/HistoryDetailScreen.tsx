@@ -257,9 +257,10 @@ function HistoryDetailScreen(): JSX.Element {
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
     data.projectDict.length,
-    data.sends,
+    data.historyItemCateType,
     data.id,
     isForMultipleAdderss,
+    data.sends[0],
   );
 
   const { t } = useTranslation();

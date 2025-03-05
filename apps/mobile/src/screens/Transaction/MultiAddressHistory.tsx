@@ -62,6 +62,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { HistoryItemCateType } from './components/HistoryItemIcon';
+import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 
 const PAGE_COUNT = 200;
 
@@ -151,15 +152,25 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const [historyList, swapList, buyList] = await Promise.all([
-        HistoryItemEntity.getAllHistoryItemSortedByTime(
-          addresses,
-          isFirst ? 50 : 10000,
-          isFirst, // first not show scam tx
-        ),
-        SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-        BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-      ]);
+      const [localHistoryList, _historyList, swapList, buyList] =
+        await Promise.all([
+          LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
+            addresses,
+            isFirst ? 20 : 10000,
+          ),
+          HistoryItemEntity.getAllHistoryItemSortedByTime(
+            addresses,
+            isFirst ? 50 : 10000,
+            isFirst, // first not show scam tx
+          ),
+          SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
+          BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
+        ]);
+
+      const historyList: HistoryItemEntity[] = unionBy(
+        localHistoryList.concat(_historyList),
+        item => item._db_id,
+      );
 
       if (isFirst) {
         setCurrentNoDbData(historyList.length === 0);

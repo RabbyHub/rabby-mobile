@@ -12,6 +12,8 @@ import {
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
 import { TransactionHistoryItem } from '@/core/services/transactionHistory';
+import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
+import { appJsonStore } from '@/core/storage/mmkv';
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
@@ -207,6 +209,14 @@ export const judgeIsSmallUsdTxInApi = (
   return false;
 };
 
+const localHistoryFillTokenDict = (token: TokenItem) => {
+  const resTokenDict = appJsonStore.getItem('@HistoryTokenDict', {});
+  appJsonStore.setItem('@HistoryTokenDict', {
+    ...resTokenDict,
+    [`${token.chain}_token:${token.id}`]: token,
+  });
+};
+
 export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
   try {
     const actionData = tx.action?.actionData;
@@ -214,11 +224,12 @@ export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
       return;
     }
 
-    console.debug('loadTxSaveFromLocalStore exec', tx);
-    const item = new HistoryItemEntity();
-    // HistoryItemEntity.fillEntityFromLocalSend(item, tx);
-    const repo = HistoryItemEntity.getRepository();
-    repo.manager.save(item);
+    localHistoryFillTokenDict(actionData.send.token);
+
+    const item = new LocalHistoryItemEntity();
+    LocalHistoryItemEntity.fillEntityFromLocalSend(item, tx);
+    const repo = LocalHistoryItemEntity.getRepository();
+    await repo.manager.save(item);
   } catch (e) {
     console.log('loadTxSaveFromLocalStore error', e);
   }

@@ -28,6 +28,7 @@ import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { updateExpiredTime } from '@/databases/sync/assets';
 import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
+import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -491,6 +492,7 @@ export class TransactionHistoryService {
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
+        loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
       }
     });

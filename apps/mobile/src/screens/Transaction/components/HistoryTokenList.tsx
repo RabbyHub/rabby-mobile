@@ -181,9 +181,9 @@ export const HistoryTokenList = ({
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
-          ? formatTokenAmount(singleAmount)
+          ? formatTokenAmount(singleAmount || 0)
           : t('page.transactions.detail.Unlimited')
-        : '';
+        : '0';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const isSend = type === HistoryItemCateType.Send;
       const tokenIsNft = tokenId?.length === 32;
