@@ -63,7 +63,7 @@
     "@rabby-wallet/eth-keyring-onekey": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "*",
     "@rabby-wallet/eth-simple-keyring": "^5.0.1",
-    "@rabby-wallet/gnosis-sdk": "1.4.0",
+    "@rabby-wallet/gnosis-sdk": "1.4.1",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.8",
