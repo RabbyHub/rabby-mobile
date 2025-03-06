@@ -14,8 +14,8 @@ const AddressPopover = ({ address }: IProps) => {
     if (!address) {
       return [];
     }
-    const prefix = address.slice(0, 6);
-    const middle = address.slice(6, -6);
+    const prefix = address.slice(0, 10);
+    const middle = address.slice(10, -6);
     const suffix = address.slice(-6);
 
     return [prefix, middle, suffix];
