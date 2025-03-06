@@ -116,6 +116,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   };
 
   const handleSubmit = React.useCallback((text: string) => {
+    setError(undefined);
     setInput(text);
   }, []);
 
