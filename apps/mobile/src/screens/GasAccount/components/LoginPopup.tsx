@@ -145,7 +145,7 @@ export const GasAccountLoginPopup = props => {
 
   return (
     <AppBottomSheetModal
-      enableContentPanningGesture={false} // has scorll list
+      enableContentPanningGesture={true} // has scorll list
       snapPoints={[toConfirm ? '90%' : 420]}
       onDismiss={props.onCancel || props.onClose}
       ref={modalRef}
