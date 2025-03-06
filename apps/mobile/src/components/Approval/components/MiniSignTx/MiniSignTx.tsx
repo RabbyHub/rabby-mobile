@@ -632,11 +632,13 @@ const MiniSignTx = ({
             : res?.promotion?.config,
         );
       }
+      setIsFirstGasLessLoading(false);
     } catch (error) {
       console.error('gasLessTxCheck error', error);
       setCanUseGasLess(false);
       setGasLessConfig(undefined);
       setGasLessLoading(false);
+      setIsFirstGasLessLoading(false);
     }
   });
 
@@ -891,9 +893,7 @@ const MiniSignTx = ({
       !isCoboArugsAccount
     ) {
       if (isSupportedAddr && noCustomRPC) {
-        checkGasLessStatus().finally(() => {
-          setIsFirstGasLessLoading(false);
-        });
+        checkGasLessStatus();
       } else {
         setGasLessLoading(false);
         setIsFirstGasLessLoading(false);
@@ -1047,14 +1047,18 @@ const MiniSignTx = ({
         onSubmit={() => handleAllow()}
         onIgnoreAllRules={handleIgnoreAllRules}
         enableTooltip={
-          // 3001 use gasless tip
-          checkErrors && checkErrors?.[0]?.code === 3001
+          currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+            ? true
+            : // 3001 use gasless tip
+            checkErrors && checkErrors?.[0]?.code === 3001
             ? false
             : !canProcess ||
               !!checkErrors.find(item => item.level === 'forbidden')
         }
         tooltipContent={
-          checkErrors && checkErrors?.[0]?.code === 3001
+          currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+            ? t('page.signTx.canOnlyUseImportedAddress')
+            : checkErrors && checkErrors?.[0]?.code === 3001
             ? undefined
             : checkErrors.find(item => item.level === 'forbidden')
             ? checkErrors.find(item => item.level === 'forbidden')!.msg

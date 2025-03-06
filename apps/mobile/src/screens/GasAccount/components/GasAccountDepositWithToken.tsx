@@ -45,6 +45,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import useAsync from 'react-use/lib/useAsync';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
+import { maxBy } from 'lodash';
 
 const amountList = [10, 100];
 
@@ -338,10 +339,10 @@ const TokenSelector = ({
 
 const SelectAccount = ({
   onChange,
-  defaultAccount,
+  value,
 }: {
   onChange: (account: Account) => void;
-  defaultAccount: Account;
+  value: Account;
 }) => {
   const { t } = useTranslation();
 
@@ -363,21 +364,7 @@ const SelectAccount = ({
     [accounts],
   );
 
-  const list = useSortAddressList(filterAccounts);
-
-  const [tmpSelectAccount, setTmpSelectAccount] =
-    useState<(typeof list)[number]>(defaultAccount);
-
-  useEffect(() => {
-    const v = gasAccountService.getLastDepositAccount();
-    if (
-      v &&
-      list &&
-      !list.some(a => a.address === v?.address && a.type === v.type)
-    ) {
-      setTmpSelectAccount(account as (typeof list)[number]);
-    }
-  }, [account, list]);
+  // const list = useSortAddressList(filterAccounts);
 
   return (
     <View style={styles.container}>
@@ -387,8 +374,8 @@ const SelectAccount = ({
         </Text>
       </View>
       <SelectGasAccountList
-        value={tmpSelectAccount}
-        onChange={setTmpSelectAccount}
+        value={value}
+        onChange={onChange}
         listHeader={
           <View
             style={{
@@ -422,20 +409,6 @@ const SelectAccount = ({
               </Text>
               {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
             </View>
-          </View>
-        }
-        listFooter={
-          <View style={styles.containerHorizontal}>
-            <Button
-              onPress={() => {
-                onChange(tmpSelectAccount);
-              }}
-              containerStyle={{
-                width: '100%',
-                marginBottom: 35,
-              }}
-              title={t('page.gasAccount.paymentAddressPopup.confirm')}
-            />
           </View>
         }
       />
@@ -562,15 +535,10 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   };
 
   const [depositAccount, setDepositAccount] = useState(() => {
-    const last = gasAccountService.getLastDepositAccount() || account!;
-    if (
-      accounts.some(
-        a => isSameAddress(a.address, last.address) && a.type === last.type,
-      )
-    ) {
-      return last as Account;
-    }
-    return account! as Account;
+    const list = accounts.filter(
+      a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+    );
+    return maxBy(list, a => a.balance || 0) || list[0];
   });
 
   const onChangeAccount = useCallback((account: Account) => {
@@ -736,10 +704,7 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
       <BottomSheetWrapper
         visible={accountListVisible}
         onClose={() => setAccountListVisible(false)}>
-        <SelectAccount
-          onChange={onChangeAccount}
-          defaultAccount={depositAccount}
-        />
+        <SelectAccount onChange={onChangeAccount} value={depositAccount} />
       </BottomSheetWrapper>
     </KeyboardAwareScrollView>
   );

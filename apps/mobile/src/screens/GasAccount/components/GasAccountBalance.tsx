@@ -3,26 +3,28 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { StyleProp, Text, TextStyle } from 'react-native';
 import { useGasAccountInfoV2 } from '../hooks';
 import { formatUsdValue } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
+import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
 
 export interface GasAccountBalanceProps {
   style?: StyleProp<TextStyle>;
-  address: string;
+  account?: GasAccountInfo;
 }
 
 export const GasAccountBalance: React.FC<GasAccountBalanceProps> = ({
   style,
-  address,
+  account,
 }) => {
   const { styles } = useTheme2024({
     getStyle,
   });
-  const { data } = useGasAccountInfoV2({ address });
-  if (data?.account.no_register) {
+
+  if (!account || account.no_register) {
     return null;
   }
+
   return (
     <Text style={[styles.text, style]}>
-      {data?.account.balance ? formatUsdValue(data.account.balance) : '$0'}
+      {account?.balance ? formatUsdValue(account?.balance) : '$0'}
     </Text>
   );
 };

@@ -75,12 +75,13 @@ export const GasAccountHeader: React.FC = () => {
         </View>
       }>
       <Pressable style={styles.container} onPress={() => setVisible(true)}>
-        <WalletIcon
+        {/* <WalletIcon
           type={account?.brandName as KEYRING_TYPE}
           width={styles.walletIcon.width}
           height={styles.walletIcon.height}
           style={styles.walletIcon}
-        />
+        /> */}
+        <RcIconGasAccountHeaderRight />
       </Pressable>
     </Tip>
   );

@@ -22,6 +22,7 @@ import { GasAccountTips } from './GasLessComponents/GasAccountTips';
 import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
 import { GasLessConfig } from './GasLessComponents';
 import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -343,7 +344,8 @@ export const FooterBar: React.FC<Props> = ({
                   }}
                   gasLessConfig={gasLessConfig}
                 />
-              ) : isWatchAddr ? null : (
+              ) : isWatchAddr ||
+                account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasLessNotEnough
                   canGotoUseGasAccount={canGotoUseGasAccount}
                   canDepositUseGasAccount={canDepositUseGasAccount}
@@ -366,7 +368,8 @@ export const FooterBar: React.FC<Props> = ({
             ) : null}
 
             {payGasByGasAccount && !gasAccountCanPay ? (
-              isWatchAddr ? null : (
+              isWatchAddr ||
+              account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasAccountTips
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}

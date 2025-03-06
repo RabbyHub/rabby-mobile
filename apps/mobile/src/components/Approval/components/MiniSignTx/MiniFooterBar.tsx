@@ -21,7 +21,7 @@ import {
   ActionGroup,
   Props as ActionGroupProps,
 } from '../FooterBar/ActionGroup';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MiniLedgerAction } from './MiniLedgerAction';
 import { MiniCommonAction } from './MiniCommonAction';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
@@ -395,7 +395,8 @@ export const MiniFooterBar: React.FC<Props> = ({
                   }}
                   gasLessConfig={gasLessConfig}
                 />
-              ) : isWatchAddr ? null : (
+              ) : isWatchAddr ||
+                account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasLessNotEnough
                   canGotoUseGasAccount={canGotoUseGasAccount}
                   canDepositUseGasAccount={canDepositUseGasAccount}
@@ -418,7 +419,8 @@ export const MiniFooterBar: React.FC<Props> = ({
             ) : null}
 
             {payGasByGasAccount && !gasAccountCanPay ? (
-              isWatchAddr ? null : (
+              isWatchAddr ||
+              account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasAccountTips
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}

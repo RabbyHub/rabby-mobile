@@ -8,8 +8,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useMemoizedFn } from 'ahooks';
-import React, { ReactNode } from 'react';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import React, { ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleProp,
@@ -19,6 +19,9 @@ import {
   ViewStyle,
 } from 'react-native';
 import { GasAccountBalance } from './GasAccountBalance';
+import { openapi } from '@/core/request';
+import { sortBy } from 'lodash';
+import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
 
 export const SelectGasAccountList = ({
   onChange,
@@ -55,7 +58,47 @@ export const SelectGasAccountList = ({
     [accounts],
   );
 
-  const list = useSortAddressList(filterAccounts);
+  const _list = useSortAddressList(filterAccounts);
+
+  const { data: gasAccountBalanceDict } = useRequest(
+    async () => {
+      if (!isGasAccount) {
+        return;
+      }
+      const res = await Promise.all(
+        _list.map(item => {
+          return openapi
+            .getGasAccountInfoV2({
+              id: item.address,
+            })
+            .catch(() => null);
+        }),
+      );
+      const dict: Record<string, GasAccountInfo> = {};
+      res.forEach(item => {
+        if (item?.account) {
+          dict[item.account.id.toLowerCase()] = item.account;
+        }
+      });
+      return dict;
+    },
+    {
+      cacheKey: 'batch-fetch-gas-account-info',
+    },
+  );
+
+  const list = useMemo(() => {
+    if (!isGasAccount || !gasAccountBalanceDict) {
+      return list;
+    }
+    return sortBy(_list, item => {
+      const info = gasAccountBalanceDict[item.address.toLowerCase()];
+      if (!info) {
+        return 2;
+      }
+      return !info.balance ? (info.no_register ? 1 : 0) : -info.balance;
+    });
+  }, [_list, gasAccountBalanceDict, isGasAccount]);
 
   const renderItem = useMemoizedFn(({ item }: { item: Account }) => (
     <TouchableOpacity
@@ -84,7 +127,9 @@ export const SelectGasAccountList = ({
             </View>
             <View style={{ marginLeft: 'auto' }}>
               {isGasAccount ? (
-                <GasAccountBalance address={item.address} />
+                <GasAccountBalance
+                  account={gasAccountBalanceDict?.[item.address.toLowerCase()]}
+                />
               ) : (
                 <WalletBalance />
               )}

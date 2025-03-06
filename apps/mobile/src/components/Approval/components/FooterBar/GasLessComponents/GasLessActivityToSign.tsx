@@ -42,10 +42,12 @@ function FreeGasReady({
   freeGasText,
   color,
   logo,
+  backgroundColor,
 }: {
   freeGasText?: string;
   color?: string;
   logo?: string;
+  backgroundColor?: string;
 }) {
   const { styles } = useTheme2024({
     getStyle,
@@ -64,7 +66,8 @@ function FreeGasReady({
         <ActivityFreeGasBg
           borderColor={color!}
           style={styles.activityFreeGasBg}
-          height={40}
+          backgroundColor={backgroundColor}
+          height={39}
         />
         <Image source={{ uri: logo }} style={styles.activityLogo} />
         <Text
@@ -99,6 +102,7 @@ interface ActivityFreeGasBgProps {
   width?: number;
   height?: number;
   borderColor: string;
+  backgroundColor?: string;
   borderWidth?: number;
   style?: ViewStyle;
   position?: 'left' | 'right';
@@ -110,6 +114,7 @@ const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
   borderWidth = 1,
   borderColor,
   style,
+  backgroundColor = 'none',
   position = 'right',
 }) => {
   const { width: defaultWidth } = useWindowDimensions();
@@ -175,7 +180,7 @@ const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
       width={outerWidth}
       height={outerHeight}
       viewBox={`0 0 ${outerWidth} ${outerHeight}`}
-      fill="none">
+      fill={backgroundColor}>
       <Path d={pathData} stroke={borderColor} />
     </Svg>
   );
@@ -191,12 +196,11 @@ export function GasLessActivityToSign({
   gasLessConfig?: GasLessConfig;
 }) {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const { styles, isLight } = useTheme2024({ getStyle });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
 
   const themeColor = gasLessConfig
     ? (!isLight ? gasLessConfig?.dark_color : gasLessConfig?.theme_color) ||
-      colors['blue-default']
+      colors2024['brand-default']
     : undefined;
 
   const hiddenAnimated = useSharedValue(0);
@@ -232,6 +236,7 @@ export function GasLessActivityToSign({
         freeGasText={gasLessConfig?.after_click_text}
         color={themeColor}
         logo={gasLessConfig?.logo}
+        // backgroundColor={colors2024['brand-light-1']}
       />
     );
   }
@@ -252,8 +257,9 @@ export function GasLessActivityToSign({
           {isActivityFreeGas ? (
             <ActivityFreeGasBg
               borderColor={themeColor!}
+              // backgroundColor={colors2024['brand-light-1']}
               style={styles.activityFreeGasBg}
-              height={40}
+              height={39}
             />
           ) : (
             <View style={styles.tipTriangle} />
