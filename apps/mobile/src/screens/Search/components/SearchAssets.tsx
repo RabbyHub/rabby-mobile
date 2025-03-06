@@ -46,7 +46,7 @@ import {
 const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
 interface Props {
-  filterText?: string;
+  resultTokens: AbstractPortfolioToken[];
 }
 
 const ViewTypes = {
@@ -65,7 +65,7 @@ const getItemId = item => {
   }`;
 };
 
-export const SearchAssets: React.FC<Props> = ({ filterText }) => {
+export const SearchAssets: React.FC<Props> = ({ resultTokens }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const {
@@ -76,10 +76,10 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     checkIsExpireAndUpdate,
     refreshing,
     isLoading,
-  } = useAssets(filterText);
+  } = useAssets('');
 
-  const { resultTokens, searched, loading, handleSearch } =
-    useSearchTokens(filterText);
+  // const { resultTokens, searched, loading, handleSearch } =
+  //   useSearchTokens(filterText);
   const { t } = useTranslation();
   const [firstRowType, setFirstRowType] = useState('');
   const dataProvider = useMemo(
@@ -96,58 +96,58 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
   );
 
   const dataList = useMemo(() => {
-    const unFoldList = tokens
-      .filter(i => filterText || !i._isFold)
-      .map(item => ({
-        type: 'unfold_token',
-        data: item,
-      }));
-    const foldList = tokens
-      .filter(i => i._isFold)
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
+    // const unFoldList = tokens
+    //   .filter(i => filterText || !i._isFold)
+    //   .map(item => ({
+    //     type: 'unfold_token',
+    //     data: item,
+    //   }));
+    // const foldList = tokens
+    //   .filter(i => i._isFold)
+    //   .map(item => ({
+    //     type: 'fold_token',
+    //     data: item,
+    //   }));
     const itemData: Array<{
       show: boolean;
       data: ICombineItem[];
     }> = [
-      {
-        show: !!unFoldList.length,
-        data: [
-          {
-            type: 'asset_header',
-          },
-          ...unFoldList,
-        ],
-      },
-      {
-        show: !!(filterText ? [] : foldList).length,
-        data: [
-          { type: 'toggle_token_fold' },
-          ...(foldHideList ? [] : foldList),
-        ],
-      },
-      {
-        show: !!portfolios.length,
-        data: [
-          { type: 'defi_header' },
-          ...portfolios.map(item => ({
-            type: 'defi',
-            data: item,
-          })),
-        ],
-      },
-      {
-        show: !!(filterText ? nftList : []).length,
-        data: [
-          { type: 'nft_header' },
-          ...nftList.map(item => ({
-            type: 'nft',
-            data: item,
-          })),
-        ],
-      },
+      // {
+      //   show: !!unFoldList.length,
+      //   data: [
+      //     {
+      //       type: 'asset_header',
+      //     },
+      //     ...unFoldList,
+      //   ],
+      // },
+      // {
+      //   show: !!(filterText ? [] : foldList).length,
+      //   data: [
+      //     { type: 'toggle_token_fold' },
+      //     ...(foldHideList ? [] : foldList),
+      //   ],
+      // },
+      // {
+      //   show: !!portfolios.length,
+      //   data: [
+      //     { type: 'defi_header' },
+      //     ...portfolios.map(item => ({
+      //       type: 'defi',
+      //       data: item,
+      //     })),
+      //   ],
+      // },
+      // {
+      //   show: !!(filterText ? nftList : []).length,
+      //   data: [
+      //     { type: 'nft_header' },
+      //     ...nftList.map(item => ({
+      //       type: 'nft',
+      //       data: item,
+      //     })),
+      //   ],
+      // },
       {
         show: true,
         data: [
@@ -163,8 +163,9 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [filterText, foldHideList, nftList, portfolios, resultTokens, tokens]);
+  }, [resultTokens]);
 
+  // const dataList = useMemo(() => resultTokens, [resultTokens]);
   useEffect(() => {
     setListData(dataProvider.cloneWithRows(dataList));
   }, [dataList, dataProvider]);
@@ -195,125 +196,140 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     navigate(RootNames.NftDetail, { token: item });
   };
 
-  const renderItem = (_type, _data) => {
-    const { type, data } = _data;
-    switch (type) {
-      case 'unfold_token':
-      case 'fold_token':
-        return (
-          <TokenRow
-            data={data}
-            onTokenPress={handleOpenTokenDetail}
-            filterText={filterText}
-            logoSize={46}
-            style={styles.renderItemWrapper}
-            chainLogoSize={18}
-            hideFoldTag
-            disableMenu
-          />
-        );
-      case 'nft':
-        return (
-          <NftRow
-            filterText={filterText}
-            item={data}
-            disableMenu
-            hideFoldTag
-            onPress={() => handlePressNft(data)}
-            logoSize={46}
-            chainLogoSize={18}
-          />
-        );
-      case 'defi':
-        return (
-          <DefiRow
-            data={data}
-            filterText={filterText}
-            disableMenu
-            hideFoldTag
-            onPress={() =>
-              handleOpenDefiDetail(data, [...(data._portfolios || [])])
-            }
-            logoSize={46}
-            chainLogoSize={18}
-          />
-        );
-      case 'search-token':
-        return (
+  const renderItem = useCallback(
+    (_type, _data) => {
+      const { type, data } = _data;
+      return (
+        data && (
           <ExternalTokenRow
             data={data}
             style={styles.renderItemWrapper}
-            filterText={filterText}
+            filterText={''}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
           />
-        );
-      case 'asset_header':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.token')}
-          </Text>
-        );
-      case 'toggle_token_fold':
-        return (
-          <TokenRowSectionHeader
-            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'defi_header':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
-        );
-      case 'nft_header':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.NFT')}
-          </Text>
-        );
-      case 'search_token_header':
-        return resultTokens.length ? (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.searchWeb.title')}
-          </Text>
-        ) : null;
-      default:
-        return null;
-    }
-  };
+        )
+      );
+
+      // switch (type) {
+      //   case 'unfold_token':
+      //   case 'fold_token':
+      //     return (
+      //       <TokenRow
+      //         data={data}
+      //         onTokenPress={handleOpenTokenDetail}
+      //         filterText={filterText}
+      //         logoSize={46}
+      //         style={styles.renderItemWrapper}
+      //         chainLogoSize={18}
+      //         hideFoldTag
+      //         disableMenu
+      //       />
+      //     );
+      //   case 'nft':
+      //     return (
+      //       <NftRow
+      //         filterText={filterText}
+      //         item={data}
+      //         disableMenu
+      //         hideFoldTag
+      //         onPress={() => handlePressNft(data)}
+      //         logoSize={46}
+      //         chainLogoSize={18}
+      //       />
+      //     );
+      //   case 'defi':
+      //     return (
+      //       <DefiRow
+      //         data={data}
+      //         filterText={filterText}
+      //         disableMenu
+      //         hideFoldTag
+      //         onPress={() =>
+      //           handleOpenDefiDetail(data, [...(data._portfolios || [])])
+      //         }
+      //         logoSize={46}
+      //         chainLogoSize={18}
+      //       />
+      //     );
+      //   case 'search-token':
+      //     return (
+      //       <ExternalTokenRow
+      //         data={data}
+      //         style={styles.renderItemWrapper}
+      //         filterText={filterText}
+      //         onTokenPress={handleOpenTokenDetail}
+      //         logoSize={40}
+      //       />
+      //     );
+      //   case 'asset_header':
+      //     return (
+      //       <Text style={styles.sectionHeader}>
+      //         {t('page.search.sectionHeader.token')}
+      //       </Text>
+      //     );
+      //   case 'toggle_token_fold':
+      //     return (
+      //       <TokenRowSectionHeader
+      //         str={getTotalFoldToken(tokens.filter(i => i._isFold))}
+      //         fold={foldHideList}
+      //         onPressFold={() => setFoldHideList(pre => !pre)}
+      //       />
+      //     );
+      //   case 'defi_header':
+      //     return (
+      //       <Text style={styles.sectionHeader}>
+      //         {t('page.search.sectionHeader.Defi')}
+      //       </Text>
+      //     );
+      //   case 'nft_header':
+      //     return (
+      //       <Text style={styles.sectionHeader}>
+      //         {t('page.search.sectionHeader.NFT')}
+      //       </Text>
+      //     );
+      //   case 'search_token_header':
+      //     return resultTokens.length ? (
+      //       <Text style={styles.sectionHeader}>
+      //         {t('page.search.searchWeb.title')}
+      //       </Text>
+      //     ) : null;
+      //   default:
+      //     return null;
+      // }
+    },
+    [handleOpenTokenDetail, styles],
+  );
 
   const renderStickHeader = (type: string) => {
     switch (type) {
-      /** header */
-      case 'unfold_token':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.token')}
-          </Text>
-        );
-      case 'fold_token':
-        return (
-          <TokenRowSectionHeader
-            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'nft':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.NFT')}
-          </Text>
-        );
-      case 'defi':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
-        );
+      // /** header */
+      // case 'unfold_token':
+      //   return (
+      //     <Text style={styles.sectionHeader}>
+      //       {t('page.search.sectionHeader.token')}
+      //     </Text>
+      //   );
+      // case 'fold_token':
+      //   return (
+      //     <TokenRowSectionHeader
+      //       str={getTotalFoldToken(tokens.filter(i => i._isFold))}
+      //       fold={foldHideList}
+      //       onPressFold={() => setFoldHideList(pre => !pre)}
+      //     />
+      //   );
+      // case 'nft':
+      //   return (
+      //     <Text style={styles.sectionHeader}>
+      //       {t('page.search.sectionHeader.NFT')}
+      //     </Text>
+      //   );
+      // case 'defi':
+      //   return (
+      //     <Text style={styles.sectionHeader}>
+      //       {t('page.search.sectionHeader.Defi')}
+      //     </Text>
+      //   );
       case 'search-token':
         return (
           <Text style={styles.sectionHeader}>
@@ -392,15 +408,15 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
             setFirstRowType(listData.getDataForIndex(indexes[0]).type);
           }
         }}
-        renderFooter={() => (
-          <SearchOnTheChain
-            filterText={filterText}
-            loading={loading}
-            searched={searched}
-            hasTokens={!!resultTokens.length}
-            handleSearch={() => handleSearch(filterText)}
-          />
-        )}
+        // renderFooter={() => (
+        //   <SearchOnTheChain
+        //     filterText={filterText}
+        //     loading={loading}
+        //     searched={searched}
+        //     hasTokens={!!resultTokens.length}
+        //     handleSearch={() => handleSearch(filterText)}
+        //   />
+        // )}
         onScroll={() => {
           Keyboard.dismiss();
         }}

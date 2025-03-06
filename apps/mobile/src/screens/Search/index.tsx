@@ -9,12 +9,14 @@ import { RcNextLeftCC } from '@/assets/icons/common';
 import { NextSearchBar } from '@/components2024/SearchBar';
 
 import { SearchAssets } from './components/SearchAssets';
-import { useSearch } from './useSearch';
+import { useSearch, useSearchTokens } from './useSearch';
 import { useTranslation } from 'react-i18next';
 import LinearGradient, {
   LinearGradientProps,
 } from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { usePinTokens } from './usePinTokens';
+import { PinedTokenList } from './components/PinedTokenList';
 
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -44,6 +46,11 @@ function SearchScreen(): JSX.Element {
     [colors2024, insets.top, isLight],
   );
 
+  const { resultTokens, searched, loading, handleSearch } =
+    useSearchTokens(debouncedSearchValue);
+  console.log('resultTokens', resultTokens[0]);
+  console.log('searched', searched);
+
   return (
     <NormalScreenContainer2024
       noHeader
@@ -72,11 +79,21 @@ function SearchScreen(): JSX.Element {
           onChangeText={v => {
             setSearchState(v);
           }}
+          returnKeyType="search"
+          onSubmitEditing={() => {
+            console.log('onSubmitEditing', debouncedSearchValue);
+            handleSearch(debouncedSearchValue);
+          }}
           ref={inputRef}
         />
       </View>
       <View style={styles.safeView}>
-        <SearchAssets filterText={debouncedSearchValue} />
+        {searched ? (
+          <SearchAssets resultTokens={resultTokens} />
+        ) : (
+          <PinedTokenList />
+        )}
+        <SearchAssets resultTokens={resultTokens} />
       </View>
     </NormalScreenContainer2024>
   );
