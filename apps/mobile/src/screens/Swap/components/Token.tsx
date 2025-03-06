@@ -268,7 +268,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           />
         ) : (
           <Text numberOfLines={1} style={StyleSheet.flatten([styles.input])}>
-            {value || '0'}
+            {value ? formatTokenAmount(value) : '0'}
           </Text>
         )}
       </View>
