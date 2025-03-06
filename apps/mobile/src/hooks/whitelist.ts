@@ -108,6 +108,13 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
     },
     [whitelist],
   );
+  const removeWhitelistWithoutConfirm = React.useCallback(
+    async (address: string) => {
+      await whitelistService.removeWhitelist(address);
+      await getWhitelist();
+    },
+    [getWhitelist],
+  );
 
   const init = React.useCallback(async () => {
     getWhitelist();
@@ -133,5 +140,6 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
     setWhitelist,
     toggleWhitelist,
     isAddrOnWhitelist,
+    removeWhitelistWithoutConfirm,
   };
 };

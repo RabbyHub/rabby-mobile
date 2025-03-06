@@ -48,7 +48,9 @@ export const WhiteListItem = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [cexDesc, setCexDesc] = useState<Cex | undefined>();
   const [isPressing, setIsPressing] = React.useState(false);
-  const { removeWhitelist } = useWhitelist({ disableAutoFetch: true });
+  const { removeWhitelistWithoutConfirm } = useWhitelist({
+    disableAutoFetch: true,
+  });
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -81,11 +83,11 @@ export const WhiteListItem = ({
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
           });
-          removeWhitelist(account.address);
+          removeWhitelistWithoutConfirm(account.address);
         },
       },
     ] as MenuAction[];
-  }, [account.address, isDarkTheme, removeWhitelist, t]);
+  }, [account.address, isDarkTheme, removeWhitelistWithoutConfirm, t]);
 
   const children = (
     <TouchableOpacity
