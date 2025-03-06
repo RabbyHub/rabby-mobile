@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
 import { useMyAccounts } from '@/hooks/account';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -30,12 +30,19 @@ export const useRisks = (address: string) => {
   );
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
+  const [loading, setLoading] = useState(true);
   const riskGetRef = useRef(false);
 
   const [addressDesc, setAddressDesc] = useState<
     AddrDescResponse['desc'] | undefined
   >();
+
+  const hasSend = useMemo(() => {
+    return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
+  }, [loading, risks]);
+
   useLayoutEffect(() => {
+    riskGetRef.current = false;
     openapi.addrDesc(address).then(res => {
       if (res.desc) {
         setAddressDesc(res.desc);
@@ -48,6 +55,7 @@ export const useRisks = (address: string) => {
     }
     riskGetRef.current = true;
     (async () => {
+      setLoading(true);
       const currRisks: Array<{ type: RiskType; value: string }> = [];
       if (addressDesc?.is_danger || addressDesc?.is_scam) {
         currRisks.push({
@@ -94,6 +102,7 @@ export const useRisks = (address: string) => {
           },
         ]);
       }
+      setLoading(false);
     })();
   }, [
     accounts,
@@ -107,5 +116,6 @@ export const useRisks = (address: string) => {
   return {
     risks,
     addressDesc,
+    hasSend,
   };
 };

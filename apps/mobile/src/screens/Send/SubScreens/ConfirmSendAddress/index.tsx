@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components';
@@ -16,6 +16,7 @@ import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useRisks } from './risk';
+import BottomPopover from '../../components/BottomPopover';
 
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -28,7 +29,8 @@ const ConfirmAddressScreen = () => {
   ) as {
     account: KeyringAccountWithAlias;
   };
-  const { risks, addressDesc } = useRisks(account.address);
+  const { risks, addressDesc, hasSend } = useRisks(account.address);
+  const [showBottomPopover, setShowBottomPopover] = useState(true);
 
   const inWhiteList = useMemo(
     () => isAddrOnWhitelist(account.address),
@@ -81,7 +83,10 @@ const ConfirmAddressScreen = () => {
         <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
         <AppSwitch2024 onValueChange={setInWhitelist} value={inWhiteList} />
       </View>
-      <View>
+      {showBottomPopover && hasSend && !inWhiteList && (
+        <BottomPopover onClose={() => setShowBottomPopover(false)} />
+      )}
+      <View style={styles.riskList}>
         {risks.map(risk => (
           <View key={risk.type} style={styles.tipItem}>
             <View style={styles.tipIcon}>
@@ -110,7 +115,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
-    marginBottom: 33,
+    marginBottom: 12,
   },
   text: {
     fontSize: 14,
@@ -124,11 +129,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 78,
     width: '100%',
   },
+  riskList: {
+    marginTop: 12,
+  },
   tipItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 4,
-    marginTop: 32,
+    marginBottom: 32,
   },
   tipIcon: {
     width: 14,
