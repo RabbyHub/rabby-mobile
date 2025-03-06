@@ -1,11 +1,5 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
@@ -14,10 +8,7 @@ import {
   useSendTokenInternalContext,
 } from './hooks/useSendToken';
 import { useCurrentAccount } from '@/hooks/account';
-import { AddressViewer } from '@/components/AddressViewer';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { useTranslation } from 'react-i18next';
-import { useFindChain } from '@/hooks/useFindChain';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
@@ -34,12 +25,7 @@ export function BalanceSection({ style }: RNViewProps) {
     screenState,
 
     formValues,
-    computed: {
-      chainItem,
-      currentToken,
-      currentTokenBalance,
-      currentTokenPrice,
-    },
+    computed: { chainItem, currentToken, currentTokenBalance },
 
     fns: { putScreenState },
 
@@ -50,15 +36,6 @@ export function BalanceSection({ style }: RNViewProps) {
       checkCexSupport,
     },
   } = useSendTokenInternalContext();
-
-  const tokenChain = useFindChain({
-    serverId: currentToken?.chain,
-  });
-
-  const isNativeToken = useMemo(() => {
-    if (!tokenChain || !currentToken) return true;
-    return tokenChain.nativeTokenAddress === currentToken.id;
-  }, [tokenChain, currentToken]);
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
@@ -118,20 +95,6 @@ export function BalanceSection({ style }: RNViewProps) {
                     {currentTokenBalance}
                   </Text>
                 )}
-                {/* max button */}
-                {currentToken.amount > 0 &&
-                  (screenState.isEstimatingGas ? (
-                    <Skeleton
-                      style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
-                    />
-                  ) : (
-                    <TouchableOpacity
-                      disabled={screenState.isEstimatingGas}
-                      style={styles.maxButtonWrapper}
-                      onPress={handleClickMaxButton}>
-                      <Text style={styles.maxButtonText}>MAX</Text>
-                    </TouchableOpacity>
-                  ))}
               </>
             )}
           </TouchableOpacity>
@@ -148,46 +111,12 @@ export function BalanceSection({ style }: RNViewProps) {
               handleFieldChange?.('amount', value);
             }}
             token={currentToken}
+            isEstimatingGas={screenState.isEstimatingGas}
+            handleClickMaxButton={handleClickMaxButton}
             onTokenChange={checkCexSupport}
             inlinePrize
           />
         )}
-      </View>
-      <View style={styles.tokenDetail}>
-        <View style={styles.tokenDetailBlock}>
-          <View style={styles.tokenDetailTriangle} />
-          {!isNativeToken && (
-            <View style={styles.tokenDetailLine}>
-              <Text style={styles.tokenDetailText}>
-                {t('page.sendToken.ContractAddress')}
-              </Text>
-              <View style={styles.tokenDetailCopy}>
-                <AddressViewer
-                  addressStyle={styles.tokenDetailValue}
-                  address={currentToken.id}
-                  showArrow={false}
-                />
-                <CopyAddressIcon address={currentToken.id} />
-              </View>
-            </View>
-          )}
-          <View style={[styles.tokenDetailLine]}>
-            <Text style={styles.tokenDetailText}>
-              {t('page.sendToken.Chain')}
-            </Text>
-            {tokenChain && (
-              <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
-                {tokenChain.name}
-              </Text>
-            )}
-          </View>
-          <View style={[styles.tokenDetailLine]}>
-            <Text style={styles.tokenDetailText}>{t('global.Price')}</Text>
-            <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
-              {currentTokenPrice}
-            </Text>
-          </View>
-        </View>
       </View>
 
       <SendReserveGasPopup
@@ -230,20 +159,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 26,
       marginBottom: 12,
     },
-    maxButtonWrapper: {
-      marginLeft: 12,
-      padding: 4,
-      backgroundColor: colors2024['brand-light-1'],
-      borderRadius: 8,
-    },
-    maxButtonText: {
-      color: colors2024['brand-default'],
-      fontSize: 14,
-      fontWeight: '700',
-      lineHeight: 18,
-      fontFamily: 'SF Pro Rounded',
-    },
-    maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
 
     balanceArea: {
       flexDirection: 'row',

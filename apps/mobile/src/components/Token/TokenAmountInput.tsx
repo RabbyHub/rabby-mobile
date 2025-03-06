@@ -1,12 +1,11 @@
 import React, {
   useRef,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -17,6 +16,7 @@ import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { useTranslation } from 'react-i18next';
+import { Skeleton } from '@rneui/themed';
 
 function useLoadTokenList({
   onTokenChange,
@@ -50,6 +50,7 @@ interface TokenAmountInputProps {
   value?: string;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
+  handleClickMaxButton?: () => Promise<void> | void;
   /**
    * @deprecated allow amountFocus = true to trigger focus,
    * just for compability
@@ -60,6 +61,7 @@ interface TokenAmountInputProps {
   className?: string;
   type?: TokenSelectorProps['type'];
   placeholder?: string;
+  isEstimatingGas?: boolean;
   defaultAccount?: KeyringAccountWithAlias | null;
 }
 
@@ -80,6 +82,8 @@ export const TokenAmountInput = React.forwardRef<
       inlinePrize,
       excludeTokens = [],
       style,
+      handleClickMaxButton,
+      isEstimatingGas,
       placeholder,
       defaultAccount,
     },
@@ -150,7 +154,20 @@ export const TokenAmountInput = React.forwardRef<
               </Text>
             </View>
           </SilentTouchableView>
-
+          {/* max button */}
+          {token.amount > 0 &&
+            (isEstimatingGas ? (
+              <Skeleton
+                style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
+              />
+            ) : (
+              <TouchableOpacity
+                disabled={isEstimatingGas}
+                style={styles.maxButtonWrapper}
+                onPress={handleClickMaxButton}>
+                <Text style={styles.maxButtonText}>MAX</Text>
+              </TouchableOpacity>
+            ))}
           <View style={styles.placeholder} />
           <TokenSelect
             accountInScreen={defaultAccount}
@@ -246,5 +263,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
+    maxButtonWrapper: {
+      marginLeft: 12,
+      padding: 4,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 8,
+    },
+    maxButtonText: {
+      color: colors2024['brand-default'],
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+    },
+    maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
   };
 });

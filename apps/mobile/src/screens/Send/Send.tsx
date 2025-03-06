@@ -86,13 +86,8 @@ function SendScreen({
       }
     | undefined;
 
-  const {
-    chainItem,
-    currentToken,
-    setCurrentToken,
-    setChainEnum,
-    currentTokenPrice,
-  } = useSendTokenScreenChainToken();
+  const { chainItem, currentToken, setCurrentToken, setChainEnum } =
+    useSendTokenScreenChainToken();
 
   const {
     sendTokenScreenState: screenState,
@@ -329,7 +324,6 @@ function SendScreen({
 
           chainItem,
           currentToken,
-          currentTokenPrice,
           currentTokenBalance: balanceNumText,
         },
         events: sendTokenEvents,
@@ -367,7 +361,7 @@ function SendScreen({
                   brandName={navParams?.addressBrandName}
                 />
                 {/* balance info */}
-                <BalanceSection />
+                <BalanceSection style={styles.balance} />
               </View>
             </KeyboardAwareScrollView>
             <BottomArea />
@@ -445,6 +439,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     mainContent: {
       paddingHorizontal: 24,
       paddingBottom: 200,
+    },
+    balance: {
+      marginTop: 20,
     },
     sectionTitle: {
       color: colors2024['neutral-title-1'],

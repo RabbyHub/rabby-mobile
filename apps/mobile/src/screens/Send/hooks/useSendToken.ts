@@ -27,21 +27,18 @@ import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
-import { formatPrice, formatSpeicalAmount } from '@/utils/number';
+import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
-  ARB_LIKE_L2_CHAINS,
   CAN_ESTIMATE_L1_FEE_CHAINS,
   CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS,
-  L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
-import { toast } from '@/components/Toast';
 import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
@@ -114,7 +111,6 @@ export function useSendTokenScreenChainToken() {
       isNativeToken,
     };
   }, [chainItem, currentToken?.id]);
-  const { putScreenState } = useSendTokenScreenState();
 
   const setChainEnum = useCallback(
     (chain: CHAINS_ENUM) => {
@@ -130,12 +126,6 @@ export function useSendTokenScreenChainToken() {
     [putChainToken],
   );
 
-  const { currentTokenPrice } = useMemo(() => {
-    return {
-      currentTokenPrice: formatPrice(currentToken.price),
-    };
-  }, [currentToken]);
-
   return {
     putChainToken,
     chainItem,
@@ -146,7 +136,6 @@ export function useSendTokenScreenChainToken() {
 
     currentToken,
     setCurrentToken,
-    currentTokenPrice,
   };
 }
 export type SendScreenState = {
@@ -1305,7 +1294,6 @@ type InternalContext = {
     chainItem: Chain | null;
     currentToken: TokenItem | null;
     currentTokenBalance: string;
-    currentTokenPrice: string;
     whitelistEnabled: boolean;
     canSubmit: boolean;
     toAddressInWhitelist: boolean;
@@ -1343,7 +1331,6 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     chainItem: null,
     currentToken: null,
     currentTokenBalance: '',
-    currentTokenPrice: '',
     whitelistEnabled: false,
     canSubmit: false,
     toAddressInWhitelist: false,
