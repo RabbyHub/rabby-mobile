@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@rabby-wallet/base-utils": "workspace:^",
-    "@rabby-wallet/rabby-api": "0.9.14-0",
+    "@rabby-wallet/rabby-api": "0.9.14-beta.2",
     "bignumber.js": "^9.1.2",
     "ethereumjs-util": "^7.1.5"
   },
