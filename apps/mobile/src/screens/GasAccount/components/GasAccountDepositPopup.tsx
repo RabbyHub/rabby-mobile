@@ -77,9 +77,7 @@ export const GasAccountDepositPopup: React.FC<{
             gasAccountAddress={props.gasAccountAddress}
           />
         ) : step === 'token' ? (
-          <GasAccountDepositWithToken
-            onClose={props.onCancel || props.onClose}
-          />
+          <GasAccountDepositWithToken onClose={props.onClose} />
         ) : (
           <GasAccountDepositSelect onSelect={setStep} />
         )}

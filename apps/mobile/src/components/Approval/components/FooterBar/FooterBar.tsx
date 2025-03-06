@@ -366,21 +366,23 @@ export const FooterBar: React.FC<Props> = ({
             ) : null}
 
             {payGasByGasAccount && !gasAccountCanPay ? (
-              <GasAccountTips
-                gasAccountAddress={gasAccountAddress!}
-                gasAccountCost={gasAccountCost}
-                isGasAccountLogin={isGasAccountLogin}
-                isWalletConnect={isWalletConnect}
-                noCustomRPC={noCustomRPC}
-                onDeposit={onDeposit}
-                onGotoGasAccount={() => {
-                  rejectApproval?.();
-                  navigate(RootNames.StackTransaction, {
-                    screen: RootNames.GasAccount,
-                    params: {},
-                  });
-                }}
-              />
+              isWatchAddr ? null : (
+                <GasAccountTips
+                  gasAccountAddress={gasAccountAddress!}
+                  gasAccountCost={gasAccountCost}
+                  isGasAccountLogin={isGasAccountLogin}
+                  isWalletConnect={isWalletConnect}
+                  noCustomRPC={noCustomRPC}
+                  onDeposit={onDeposit}
+                  onGotoGasAccount={() => {
+                    rejectApproval?.();
+                    navigate(RootNames.StackTransaction, {
+                      screen: RootNames.GasAccount,
+                      params: {},
+                    });
+                  }}
+                />
+              )
             ) : null}
           </>
         )}
