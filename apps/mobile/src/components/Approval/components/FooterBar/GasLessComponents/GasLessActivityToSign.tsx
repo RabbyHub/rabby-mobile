@@ -42,14 +42,14 @@ function FreeGasReady({
   freeGasText,
   color,
   logo,
-  backgroundColor,
+  isColorDefined,
 }: {
   freeGasText?: string;
   color?: string;
   logo?: string;
-  backgroundColor?: string;
+  isColorDefined?: boolean;
 }) {
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
@@ -64,18 +64,21 @@ function FreeGasReady({
           },
         ]}>
         <ActivityFreeGasBg
-          borderColor={color!}
+          borderColor={isColorDefined ? color! : colors2024['brand-light-1']}
           style={styles.activityFreeGasBg}
-          backgroundColor={backgroundColor}
+          backgroundColor={
+            isColorDefined ? undefined : colors2024['brand-light-1']
+          }
           height={39}
         />
         <Image source={{ uri: logo }} style={styles.activityLogo} />
         <Text
-          style={{
-            color: color,
-            fontSize: 13,
-            fontWeight: '500',
-          }}>
+          style={[
+            styles.freeReadyText,
+            {
+              color: isColorDefined ? color : colors2024['brand-default'],
+            },
+          ]}>
           {freeGasText}
         </Text>
       </View>
@@ -203,6 +206,10 @@ export function GasLessActivityToSign({
       colors2024['brand-default']
     : undefined;
 
+  const isColorDefined = Boolean(
+    !isLight ? gasLessConfig?.dark_color : gasLessConfig?.theme_color,
+  );
+
   const hiddenAnimated = useSharedValue(0);
 
   const toSignStyle = useAnimatedStyle(() => ({
@@ -236,6 +243,7 @@ export function GasLessActivityToSign({
         freeGasText={gasLessConfig?.after_click_text}
         color={themeColor}
         logo={gasLessConfig?.logo}
+        isColorDefined={isColorDefined}
         // backgroundColor={colors2024['brand-light-1']}
       />
     );
@@ -248,13 +256,13 @@ export function GasLessActivityToSign({
           style={[
             styles.securityLevelTip,
 
-            isActivityFreeGas
+            isActivityFreeGas && isColorDefined
               ? {
                   backgroundColor: 'transparent',
                 }
               : {},
           ]}>
-          {isActivityFreeGas ? (
+          {isActivityFreeGas && isColorDefined ? (
             <ActivityFreeGasBg
               borderColor={themeColor!}
               // backgroundColor={colors2024['brand-light-1']}
@@ -274,15 +282,16 @@ export function GasLessActivityToSign({
             style={[
               styles.text,
               styles.gasText,
-              isActivityFreeGas && {
-                color: themeColor,
-              },
+              isActivityFreeGas &&
+                isColorDefined && {
+                  color: themeColor,
+                },
             ]}>
             {gasLessConfig?.before_click_text ||
               t('page.signFooterBar.gasless.notEnough')}
           </Text>
           <TouchableOpacity onPress={startAnimation}>
-            {isActivityFreeGas ? (
+            {isActivityFreeGas && isColorDefined ? (
               <View
                 style={[
                   styles.gasAccountBtn,
@@ -297,7 +306,8 @@ export function GasLessActivityToSign({
             ) : (
               <View style={styles.gasAccountBtn}>
                 <Text style={styles.gasAccountTipBtnText}>
-                  {t('page.signFooterBar.gasless.GetFreeGasToSign')}
+                  {gasLessConfig?.button_text ||
+                    t('page.signFooterBar.gasless.GetFreeGasToSign')}
                 </Text>
               </View>
               // <LinearGradient
@@ -319,6 +329,7 @@ export function GasLessActivityToSign({
           freeGasText={gasLessConfig?.after_click_text}
           color={themeColor}
           logo={gasLessConfig?.logo}
+          isColorDefined={isColorDefined}
         />
       </Animated.View>
     </>
@@ -367,7 +378,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   activityLogo: {
     width: 16,
     height: 16,
-    marginRight: 4,
+    marginRight: 8,
   },
 
   text: {
@@ -438,5 +449,27 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
       ? ThemeColors2024.dark['neutral-title-1']
       : ThemeColors2024.light['neutral-title-1'],
     lineHeight: 16,
+  },
+
+  // freeReadyContainer: {
+  //   backgroundColor: colors2024['brand-light-1'],
+  //   borderRadius: 8,
+  //   paddingVertical: 8,
+  //   paddingLeft: 12,
+  //   paddingRight: 5,
+
+  //   display: 'flex',
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+
+  //   borderColor: colors2024['brand-light-1'],
+  //   borderWidth: 1,
+  // },
+  // freeReadyTriangle: {},
+  freeReadyText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
   },
 }));

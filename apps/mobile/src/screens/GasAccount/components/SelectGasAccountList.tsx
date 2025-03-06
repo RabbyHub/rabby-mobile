@@ -89,7 +89,7 @@ export const SelectGasAccountList = ({
 
   const list = useMemo(() => {
     if (!isGasAccount || !gasAccountBalanceDict) {
-      return list;
+      return _list;
     }
     return sortBy(_list, item => {
       const info = gasAccountBalanceDict[item.address.toLowerCase()];
