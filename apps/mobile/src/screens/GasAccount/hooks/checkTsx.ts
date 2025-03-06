@@ -37,7 +37,6 @@ export const useGasAccountTxsCheck = ({
       if (!sig || !accountId) {
         setIsGasAccountLogin(false);
       }
-
       const res = await openapi.checkGasAccountTxs({
         sig: sig || '',
         account_id: gasAccountAddress,

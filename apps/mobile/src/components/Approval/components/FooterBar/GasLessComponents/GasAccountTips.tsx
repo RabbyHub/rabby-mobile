@@ -1,11 +1,12 @@
 import { ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
+import { GasAccountDepositWithTokenAlertModal } from '@/screens/GasAccount/components/GasAccountDepositWithTokenAlertModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -87,23 +88,36 @@ export const GasAccountTips: React.FC<{
           <Text style={styles.gasAccountTipBtnText}>{btnText}</Text>
         </TouchableOpacity>
       ) : null}
-      <GasAccountDepositTipPopup
-        gasAccountAddress={gasAccountAddress}
-        visible={
-          // !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false
-          !isWalletConnect ? tipPopupVisible : false
-        }
-        onClose={() => setTipPopupVisible(false)}
-        onDeposit={() => {
-          setTipPopupVisible(false);
-          onDeposit?.();
-        }}
-        onGotoGasAccount={() => {
-          setTipPopupVisible(false);
-          onGotoGasAccount?.();
-        }}
-        minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
-      />
+      {Platform.OS === 'ios' ? (
+        <GasAccountDepositTipPopup
+          gasAccountAddress={gasAccountAddress}
+          visible={
+            // !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false
+            !isWalletConnect ? tipPopupVisible : false
+          }
+          onClose={() => setTipPopupVisible(false)}
+          onDeposit={() => {
+            setTipPopupVisible(false);
+            onDeposit?.();
+          }}
+          onGotoGasAccount={() => {
+            setTipPopupVisible(false);
+            onGotoGasAccount?.();
+          }}
+          minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+        />
+      ) : (
+        <GasAccountDepositWithTokenAlertModal
+          visible={tipPopupVisible}
+          onCancel={() => {
+            setTipPopupVisible(false);
+          }}
+          onConfirm={() => {
+            setTipPopupVisible(false);
+            onGotoGasAccount?.();
+          }}
+        />
+      )}
 
       {/* <GasAccountLogInTipPopup
         visible={

@@ -126,34 +126,37 @@ export const GasAccountCard: React.FC<Props> = ({
               }
             />
           </Pressable>
-          <Pressable onPress={handleDepositTips}>
-            <Button
-              type="primary"
-              onPress={() => {
-                onDepositPress?.('pay');
-              }}
-              buttonStyle={styles.depositWithPayBtn}
-              titleStyle={styles.btnTitle}
-              disabled={!canDeposit || isLoading}
-              title={
-                <View style={styles.depositWithTitle}>
-                  <View style={styles.depositWithPayRow}>
-                    <Text style={styles.btnTitle}>
-                      {t('component.gasAccount.depositWithPay')}
+          {/* hide google pay */}
+          {Platform.OS === 'ios' ? (
+            <Pressable onPress={handleDepositTips}>
+              <Button
+                type="primary"
+                onPress={() => {
+                  onDepositPress?.('pay');
+                }}
+                buttonStyle={styles.depositWithPayBtn}
+                titleStyle={styles.btnTitle}
+                disabled={!canDeposit || isLoading}
+                title={
+                  <View style={styles.depositWithTitle}>
+                    <View style={styles.depositWithPayRow}>
+                      <Text style={styles.btnTitle}>
+                        {t('component.gasAccount.depositWithPay')}
+                      </Text>
+                      {Platform.OS === 'android' ? (
+                        <RcIconGooglePayCC />
+                      ) : (
+                        <RcIconApplePayCC />
+                      )}
+                    </View>
+                    <Text style={styles.btnDesc}>
+                      {t('component.gasAccount.depositWithPayDesc')}
                     </Text>
-                    {Platform.OS === 'android' ? (
-                      <RcIconGooglePayCC />
-                    ) : (
-                      <RcIconApplePayCC />
-                    )}
                   </View>
-                  <Text style={styles.btnDesc}>
-                    {t('component.gasAccount.depositWithPayDesc')}
-                  </Text>
-                </View>
-              }
-            />
-          </Pressable>
+                }
+              />
+            </Pressable>
+          ) : null}
         </View>
       ) : (
         <View style={styles.accountFooter}>
@@ -190,7 +193,11 @@ export const GasAccountCard: React.FC<Props> = ({
             <Button
               type="primary"
               onPress={() => {
-                onDepositPress?.();
+                if (Platform.OS === 'ios') {
+                  onDepositPress?.();
+                } else {
+                  onDepositPress?.('token');
+                }
               }}
               titleStyle={styles.btnTitle}
               disabled={!canDeposit || isLoading}
