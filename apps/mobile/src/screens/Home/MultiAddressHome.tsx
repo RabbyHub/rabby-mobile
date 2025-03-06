@@ -730,7 +730,7 @@ function MultiAddressHome(): JSX.Element {
           )}
           <View
             style={[
-              { marginTop: 40 },
+              { marginTop: 0 },
               styles.grid,
               displayFundWallet && styles.hidden,
             ]}>
@@ -819,7 +819,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceTextBox: {
     marginRight: 12,
     color: colors2024['neutral-title-1'],
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'left',
@@ -898,8 +898,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
-    marginTop: 30,
     marginBottom: 16,
+    marginTop: 0,
   },
   pinHeader: {
     marginTop: -8,

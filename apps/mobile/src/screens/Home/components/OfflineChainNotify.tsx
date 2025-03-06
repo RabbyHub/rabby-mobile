@@ -136,7 +136,7 @@ export const OfflineChainNotify = () => {
     styles.title,
   ]);
   if (!displayWillClosedChain || !chainInfo) {
-    return null;
+    return <View style={{ height: 40 }} />;
   }
   return (
     <View style={styles.container}>
@@ -153,16 +153,17 @@ export const OfflineChainNotify = () => {
             chain: chainInfo.name,
           })}
         </Text>
-        <TouchableOpacity onPress={showTips}>
-          <RcIconTipsCC
-            color={colors2024['orange-default']}
-            width={16}
-            height={16}
-          />
-        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={handleClose}>
+      <TouchableOpacity onPress={showTips} style={{ marginLeft: 40 }}>
+        <RcIconTipsCC
+          color={colors2024['orange-default']}
+          width={16}
+          height={16}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={{ marginLeft: 16 }} onPress={handleClose}>
         <RcIconCloseCC
           color={colors2024['orange-default']}
           width={16}
@@ -176,6 +177,8 @@ export const OfflineChainNotify = () => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     marginTop: 16,
+    marginBottom: 24,
+
     marginHorizontal: 15,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -188,11 +191,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
     height: 16,
     borderRadius: 9999,
+    alignSelf: 'flex-start',
+    position: 'relative',
+    top: 1,
   },
   textWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 10,
     flex: 1,
   },
   text: {
