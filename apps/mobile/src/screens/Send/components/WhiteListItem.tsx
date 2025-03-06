@@ -185,7 +185,13 @@ export const WhiteListItem = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  <WalletName style={styles.itemNameText} />
+                  {cexDesc?.name ? (
+                    <Text style={styles.itemNameText} numberOfLines={1}>
+                      {account.aliasName || cexDesc.name}
+                    </Text>
+                  ) : (
+                    <WalletName style={styles.itemNameText} />
+                  )}
                   <Text style={styles.address}>
                     {`(${ellipsisAddress(account.address)})`}
                   </Text>
@@ -260,7 +266,13 @@ export const WhiteListItemSwitch = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  <WalletName style={styles.itemNameText} />
+                  {cexDes?.name ? (
+                    <Text style={styles.itemNameText} numberOfLines={1}>
+                      {account.aliasName || cexDes.name}
+                    </Text>
+                  ) : (
+                    <WalletName style={styles.itemNameText} />
+                  )}
                   <Text style={styles.address}>
                     {`(${ellipsisAddress(account.address)})`}
                   </Text>
@@ -346,6 +358,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
   itemNameTextHasPinned: {
     paddingRight: 52,
