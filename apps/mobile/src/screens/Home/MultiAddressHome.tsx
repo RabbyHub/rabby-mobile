@@ -82,7 +82,7 @@ import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
 import { FundYourWallet } from './FundYourWallet';
 import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
-import { BlurView } from '@react-native-community/blur';
+import { BlurView } from '@/components';
 
 const HeaderHeight = 24;
 
