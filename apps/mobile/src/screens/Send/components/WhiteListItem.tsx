@@ -273,7 +273,6 @@ export const WhiteListItemSwitch = ({
         <Pressable
           style={styles.arrow}
           onPress={() => {
-            navigation.popToTop();
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
                 screen: RootNames.SendTo,
