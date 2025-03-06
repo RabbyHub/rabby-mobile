@@ -113,7 +113,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               <TouchableOpacity
                 style={styles.editAliasWrapper}
                 onPress={() => {
-                  editAliasName.show(account);
+                  editAliasName.show(account, cexDesc?.logo_url);
                 }}>
                 <Text style={styles.itemNameText}>
                   {adderssAlias || ellipsisAddress(account.address)}

@@ -28,7 +28,9 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
       .filter(item => !importAddressSet.has(item))
       .map(address => ({
         address,
-        aliasName: contactService.getAliasByAddress(address)?.alias,
+        aliasName:
+          contactService.getAliasByAddress(address)?.alias ||
+          ellipsisAddress(address),
         balance: 0,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,
@@ -80,7 +82,9 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         ? findAccountByPriority(targetAccounts)
         : {
             address,
-            aliasName: contactService.getAliasByAddress(address)?.alias,
+            aliasName:
+              contactService.getAliasByAddress(address)?.alias ||
+              ellipsisAddress(address),
             balance: 0,
             type: KEYRING_CLASS.WATCH,
             brandName: KEYRING_CLASS.WATCH,

@@ -185,9 +185,11 @@ export const WhiteListItem = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  {cexDesc?.name ? (
+                  {cexDesc?.name || !account.aliasName ? (
                     <Text style={styles.itemNameText} numberOfLines={1}>
-                      {account.aliasName || cexDesc.name}
+                      {account.aliasName ||
+                        cexDesc?.name ||
+                        ellipsisAddress(account.address)}
                     </Text>
                   ) : (
                     <WalletName style={styles.itemNameText} />
@@ -266,9 +268,11 @@ export const WhiteListItemSwitch = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  {cexDes?.name ? (
+                  {cexDes?.name || !account.aliasName ? (
                     <Text style={styles.itemNameText} numberOfLines={1}>
-                      {account.aliasName || cexDes.name}
+                      {account.aliasName ||
+                        cexDes?.name ||
+                        ellipsisAddress(account.address)}
                     </Text>
                   ) : (
                     <WalletName style={styles.itemNameText} />
