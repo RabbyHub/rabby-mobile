@@ -8,5 +8,6 @@
       "path": "../base-utils"
     }
   ],
-  "include": ["../../types", "./src"]
+  "include": ["../../types", "./src"],
+  "exclude": ["@types/node"]
 }

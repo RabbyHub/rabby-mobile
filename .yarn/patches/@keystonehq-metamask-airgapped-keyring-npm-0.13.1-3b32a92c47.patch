@@ -1,0 +1,13 @@
+diff --git a/dist/MetaMaskKeyring.d.ts b/dist/MetaMaskKeyring.d.ts
+index d040673f7ef58511031e448ab6afe7384ab185fd..6b107c3779ac1fff6c8395f85bcd6a47e48c41f6 100644
+--- a/dist/MetaMaskKeyring.d.ts
++++ b/dist/MetaMaskKeyring.d.ts
+@@ -8,7 +8,7 @@ export declare class MetaMaskKeyring extends BaseKeyring {
+     resetStore: () => void;
+     getMemStore: () => import("./MetaMaskInteractionProvider").IMemState;
+     signTransaction(address: string, tx: any): Promise<any>;
+-    removeAccount: (address: any) => void;
++    removeAccount (address: any): void;
+     forgetDevice: () => void;
+     submitCryptoHDKey: (cbor: string) => void;
+     submitCryptoAccount: (cbor: string) => void;
