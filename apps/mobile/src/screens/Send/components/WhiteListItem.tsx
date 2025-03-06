@@ -52,11 +52,12 @@ export const WhiteListItem = ({
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-  ) as {
-    forMultiScreen?: boolean;
-  };
+  const navParams =
+    (useNavigationState(
+      s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+    ) as {
+      forMultiScreen?: boolean;
+    }) || {};
 
   useLayoutEffect(() => {
     openapi.addrDesc(account.address).then(res => {
@@ -116,7 +117,7 @@ export const WhiteListItem = ({
         }
         if (inWhiteList) {
           navigation.push(RootNames.StackTransaction, {
-            screen: navParams.forMultiScreen
+            screen: navParams?.forMultiScreen
               ? RootNames.MultiSend
               : RootNames.Send,
             params: {
@@ -218,11 +219,12 @@ export const WhiteListItemSwitch = ({
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { navigation } = useSafeSetNavigationOptions();
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-  ) as {
-    forMultiScreen?: boolean;
-  };
+  const navParams =
+    (useNavigationState(
+      s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+    ) as {
+      forMultiScreen?: boolean;
+    }) || {};
 
   return (
     <View style={styles.root}>

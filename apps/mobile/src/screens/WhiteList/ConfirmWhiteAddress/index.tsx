@@ -49,7 +49,7 @@ const ConfirmWhitelistScreen = () => {
       navigation.dispatch(
         StackActions.push(RootNames.StackTransaction, {
           screen: RootNames.SendTo,
-          params: sendToNavParams,
+          params: sendToNavParams || {},
         }),
       );
       toast.success(t('page.whitelist.addSuccessful'));

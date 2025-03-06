@@ -54,11 +54,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     autoScan?: boolean;
   };
 
-  const sendToNavParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-  ) as {
-    forMultiScreen?: boolean;
-  };
+  const sendToNavParams =
+    (useNavigationState(
+      s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
+    ) as {
+      forMultiScreen?: boolean;
+    }) || {};
 
   const { findAccount } = useWhiteListAddress(true);
 
