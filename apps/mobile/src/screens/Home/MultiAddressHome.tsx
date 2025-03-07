@@ -1000,7 +1000,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    height: 100,
+    height: 96,
     gap: 12,
     position: 'relative',
   },
