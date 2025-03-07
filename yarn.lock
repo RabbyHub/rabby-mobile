@@ -6892,7 +6892,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
-    "@rabby-wallet/gnosis-sdk": 1.4.0
+    "@rabby-wallet/gnosis-sdk": 1.4.1
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@safe-global/protocol-kit": 5.0.3
     "@safe-global/types-kit": 1.0.2
@@ -7035,9 +7035,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/gnosis-sdk@npm:1.4.0":
-  version: 1.4.0
-  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.0"
+"@rabby-wallet/gnosis-sdk@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.1"
   dependencies:
     "@ethersproject/bignumber": 5.5.0
     "@ethersproject/bytes": 5.5.0
@@ -7052,7 +7052,7 @@ __metadata:
     ethereumjs-util: 7.1.3
     ethers: 5.5.1
     semver: 7.5.4
-  checksum: 29c6a3d2c188e270a1c5f4cf7338033c8fa9468a85474d0adb82cc58bc34541c4a15440f1992a8c3aca334f9fbc3bc0471074f693188ebedc84e13799f901846
+  checksum: a8a329b61c6b7791857d57b91132ba0782ded0239a5e5c4511f0e8b56e0fe5232e8b507819b46e30f88cee55a3da241f9b79818796df7eea9575be09a8ec46ed
   languageName: node
   linkType: hard
 
@@ -28536,7 +28536,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": ^5.0.1
-    "@rabby-wallet/gnosis-sdk": 1.4.0
+    "@rabby-wallet/gnosis-sdk": 1.4.1
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.8
