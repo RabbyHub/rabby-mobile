@@ -180,6 +180,8 @@ export async function batchSaveWithPQueueAndTransaction<
               `${loggerPrefix}Error inserting batch ${roundText}:`,
               error,
             );
+
+          console.error(`upsert ${taskKey}`, error);
           // Re-throw the error to rollback the transaction
           throw error;
         }

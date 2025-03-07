@@ -172,6 +172,13 @@
         "notPaymentAddress": "Not the payment address",
         "unknownAddress": "Unknown address"
       },
+      "safeTx": {
+        "selfHostConfirm": {
+          "title": "Switch to Rabby's Safe Service",
+          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.<2>",
+          "button": "OK"
+        }
+      },
       "crossChain": {
         "title": "Cross Chain"
       },
@@ -802,7 +809,8 @@
         "dapps": "Dapps",
         "more": "More",
         "queue": "Queue",
-        "websites": "Websites"
+        "websites": "Websites",
+        "search": "Search Token"
       }
     },
     "dashboard": {
@@ -850,6 +858,10 @@
       },
       "hd": {
         "howToSwitch": "How to switch"
+      },
+      "offlineChain": {
+        "chain": "{{chain}} will soon not be integrated.",
+        "tips": "{{chain}} Chain will not be integrated on {{date}}. Your assets won’t be affected but won’t be included in your total balance. To access them, you may add it as a custom network in “Settings”."
       }
     },
     "nextComponent": {

@@ -44,7 +44,6 @@ import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
-import { HistoryItemCateType } from './components/HistoryItemIcon';
 import { HistoryTokenList } from './components/HistoryTokenList';
 import {
   fetchHistoryTokenUUId,
@@ -69,8 +68,23 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '../TransactionRecord/components/TransactionItem2025';
 import { usePendingBuyItemData } from '../Buy/hooks/history';
+import { HistoryItemCateType } from './components/type';
+
+const findAccountByPriority = (accounts: KeyringAccountWithAlias[]) => {
+  const priority = {
+    [KEYRING_TYPE.HdKeyring]: 1,
+    [KEYRING_TYPE.SimpleKeyring]: 2,
+    [KEYRING_TYPE.LedgerKeyring]: 3,
+    [KEYRING_TYPE.OneKeyKeyring]: 4,
+    [KEYRING_TYPE.KeystoneKeyring]: 5,
+    [KEYRING_TYPE.GnosisKeyring]: 6,
+  };
+
+  return accounts.sort((item1, item2) => {
+    return (priority[item1.type] || 100) - (priority[item2.type] || 100);
+  })[0];
+};
 
 export const TxStatusItem = ({
   status,
@@ -257,9 +271,10 @@ function HistoryDetailScreen(): JSX.Element {
     'HistoryDetailScreen',
     data.projectDict[data.project_id!],
     data.projectDict.length,
-    data.sends,
+    data.historyItemCateType,
     data.id,
     isForMultipleAdderss,
+    data.sends[0],
   );
 
   const { t } = useTranslation();

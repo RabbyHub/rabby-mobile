@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
-import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import * as Sentry from '@sentry/react-native';
 
 import { TokenItemEntity } from '../entities/tokenitem';
@@ -23,6 +23,7 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { TaggedPortfolioToken, tagTokenItem } from '@/screens/Home/utils/token';
+import groupBy from 'lodash/groupBy';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
   // ownerAddress?: string;
@@ -118,9 +119,10 @@ export function useQueryLocalTokens() {
 
   const fetchAllLocalTokens = useCallback(
     async (filters?: { keyword?: string; chain_server_id?: string }) => {
-      if (isRequestingRef.current) return;
+      if (isRequestingRef.current) {
+        return;
+      }
       setIsRequesting(true);
-
       const [allAccounts, tokenSettings] = await Promise.all([
         fetchAccountsForTokens().then(accounts =>
           accounts.filter(account => !isWatchOrSafeAccount(account)),
@@ -142,27 +144,27 @@ export function useQueryLocalTokens() {
         userTokenSettings: tokenSettings,
       }));
 
-      const addressSet = new Set(allAccounts.map(account => account.address));
+      const addresses = [
+        ...new Set(allAccounts.map(account => account.address)),
+      ];
 
-      return Promise.all(
-        [...addressSet].map(async address => {
-          return TokenItemEntity.searchAllTokens({
-            owner_addr: address,
-            keyword,
-            chain_server_id,
-          }).then(tokens => {
-            setAccountTokenMap(prev => {
-              const nextAddressIndexedTokens = { ...prev.addressIndexedTokens };
-              nextAddressIndexedTokens[address] = tokens;
-
-              return {
-                ...prev,
-                addressIndexedTokens: nextAddressIndexedTokens,
-              };
-            });
+      return TokenItemEntity.searchAllTokens({
+        addresses,
+        keyword,
+        chain_server_id,
+      })
+        .then(tokens => {
+          if (!tokens.length) {
+            return;
+          }
+          const assestGroup = groupBy(tokens, 'owner_addr');
+          setAccountTokenMap(prev => {
+            return {
+              ...prev,
+              addressIndexedTokens: assestGroup,
+            };
           });
-        }),
-      )
+        })
         .catch(error => {
           console.error('[useQueryLocalTokens] error', error);
           if (__DEV__) setAccountTokenMap(getInitData());

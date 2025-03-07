@@ -1,10 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  View,
-  SectionList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from 'react-native';
+import { View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import orderBy from 'lodash/orderBy';
 
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
@@ -14,6 +9,7 @@ import ChainItem from './ChainItem';
 import { useLocalTokens } from '@/screens/Home/hooks/token';
 import { useChainBalances, useCurrentAccount } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 
 export default function MixedFlatChainList({
   style,
@@ -83,7 +79,7 @@ export default function MixedFlatChainList({
   }, [matteredList, unmatteredList]);
 
   return (
-    <SectionList<Chain>
+    <BottomSheetSectionList<Chain>
       sections={sections}
       onScrollBeginDrag={onScrollBeginDrag}
       style={style}

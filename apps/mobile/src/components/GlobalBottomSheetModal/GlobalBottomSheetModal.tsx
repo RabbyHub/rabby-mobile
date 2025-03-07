@@ -184,7 +184,7 @@ export const GlobalBottomSheetModal = () => {
           <AppBottomSheetModal
             topInset={height.top}
             bottomInset={androidOnlyBottomOffset}
-            enableContentPanningGesture={false}
+            enableContentPanningGesture={true}
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
             {...bottomSheetModalProps}

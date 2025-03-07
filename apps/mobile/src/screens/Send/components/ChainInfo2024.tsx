@@ -97,6 +97,9 @@ export function ChainInfo2024({
       hideMainnetTab,
       hideTestnetTab,
       titleText: t('page.swap.selectChainModalTitle'),
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+      },
       onChange: chain => {
         removeChainModal();
         onChange?.(chain);

@@ -10,6 +10,7 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
+import { SELF_HOST_SAFE_NETWORKS } from '@/constant';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_CLASS,
@@ -95,6 +96,7 @@ import { useFindChain } from '@/hooks/useFindChain';
 import { SignTestnetTx } from '../SignTestnetTx';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { CustomRPCErrorModal } from './CustomRPCErrorModal';
+import { SafeSelfHostModal } from './SafeSelfHostModal';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
@@ -489,6 +491,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const [isShowCustomRPCErrorModal, setIsShowCustomRPCErrorModal] =
     useState(false);
+  const [isShowSafeSelfHostModal, setIsShowSafeSelfHostModal] = useState(false);
 
   const explainTx = async (address: string) => {
     let recommendNonce = '0x0';
@@ -1292,6 +1295,16 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     if (!isViewGnosisSafe) {
       await apisSafe.clearGnosisTransaction();
     }
+    if (SELF_HOST_SAFE_NETWORKS.includes(chainId.toString())) {
+      const hasConfirmed = preferenceService.hasConfirmSafeSelfHost(
+        chainId.toString(),
+      );
+      const sigs = await apisSafe.getGnosisTransactionSignatures();
+      const isNewTx = sigs.length <= 0;
+      if (isNewTx && !hasConfirmed) {
+        setIsShowSafeSelfHostModal(true);
+      }
+    }
   });
 
   const executeSecurityEngine = async () => {
@@ -1639,6 +1652,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           setRPCEnable({ chain: chain.enum, enable: false });
           setIsShowCustomRPCErrorModal(false);
           init();
+        }}
+      />
+      <SafeSelfHostModal
+        visible={isShowSafeSelfHostModal}
+        onConfirm={() => {
+          preferenceService.setConfirmSafeSelfHost(chainId.toString());
+          setIsShowSafeSelfHostModal(false);
         }}
       />
     </>

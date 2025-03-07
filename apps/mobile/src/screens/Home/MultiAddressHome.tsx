@@ -38,6 +38,8 @@ import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
+import RcIconSearch from '@/assets2024/icons/home/IconSearch.svg';
+
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
@@ -78,8 +80,11 @@ import { useUpgradeInfo } from '@/hooks/version';
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
 import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
 import { FundYourWallet } from './FundYourWallet';
+import { OfflineChainNotify } from './components/OfflineChainNotify';
+import { colord } from 'colord';
+import { BlurView } from '@/components';
 
-const HeaderHeight = 50;
+const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
@@ -203,7 +208,9 @@ const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight, appThemeMode } = useTheme2024({
+    getStyle,
+  });
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const [historyCount, setHistoryCount] = useState<{
     success: number;
@@ -284,6 +291,11 @@ function MultiAddressHome(): JSX.Element {
             ? t('page.home.services.websites')
             : t('page.home.services.dapps'),
           icon: RcIconDapps,
+        },
+        {
+          key: MultiHomeFeatTitle.Search,
+          title: t('page.home.services.search'),
+          icon: RcIconSearch,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -464,6 +476,13 @@ function MultiAddressHome(): JSX.Element {
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
 
+  const handlePressSearch = useCallback(() => {
+    navigation.navigate(RootNames.StackHomeNonTab, {
+      screen: RootNames.Search,
+      params: {},
+    });
+  }, [navigation]);
+
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
       trigger('impactLight', {
@@ -532,6 +551,10 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
+        case MultiHomeFeatTitle.Search: {
+          handlePressSearch();
+          break;
+        }
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Buy:
@@ -544,7 +567,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [navigation, toggleUseAllAccountsOnScene],
+    [handlePressSearch, navigation, toggleUseAllAccountsOnScene],
   );
 
   const handleClickPinAccount = useCallback(
@@ -568,14 +591,6 @@ function MultiAddressHome(): JSX.Element {
   const { bottom } = useSafeAreaInsets();
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const androidBottomOffset = IS_ANDROID ? bottom : 0;
-  const handlePressSearch = () => {
-    navigation.navigate(RootNames.StackHomeNonTab, {
-      screen: RootNames.Search,
-      params: {},
-    });
-  };
-
   return (
     <NormalScreenContainer2024
       type="linear"
@@ -585,16 +600,46 @@ function MultiAddressHome(): JSX.Element {
         colors: isLight
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
           : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']],
-        locations: [0.2072, 0.3181],
+        locations: [0, 1],
         start: { x: 0.5, y: 0 },
-        end: { x: 0.5, y: 1 },
+        end: { x: 0.5, y: 0.26 },
+      }}
+      overwriteStyle={{
+        paddingTop: 64,
       }}>
       <View style={styles.paddingContainer}>
         <MultiAddressHomeHeader loading={balanceLoading} />
+        {pendingTxCount > 0 && (
+          <View style={[styles.pendingContainer]} pointerEvents="box-none">
+            <TouchableOpacity
+              onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
+              <BlurView
+                style={styles.pendingBlur}
+                blurType={appThemeMode ?? 'light'}
+                blurAmount={2}>
+                <Animated.View
+                  style={{
+                    transform: [{ rotate: spin }],
+                  }}>
+                  <RcPending width={21} height={21} />
+                </Animated.View>
+                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
+                  'page.bridge.Pending',
+                )}`}</Text>
+                <RcIconOrangeArrow width={21} height={21} />
+              </BlurView>
+            </TouchableOpacity>
+          </View>
+        )}
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            {
+              paddingBottom: bottom,
+            },
+          ]}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
@@ -635,7 +680,6 @@ function MultiAddressHome(): JSX.Element {
                     preViewBorderRadius={10}
                     triggerProps={{ action: 'longPress' }}>
                     <TouchableOpacity
-                      style={StyleSheet.flatten([styles.pinGridItem])}
                       key={index}
                       delayLongPress={200} // long press delay
                       onLongPress={() => {
@@ -651,29 +695,27 @@ function MultiAddressHome(): JSX.Element {
                           action: `Click_${index}`,
                         });
                       }}>
-                      <WalletIcon
-                        type={item.brandName}
-                        width={18}
-                        height={18}
-                        borderRadius={5}
-                      />
-                      <Text style={styles.pinGridText}>
-                        {calcPinPercent(item.balance || 0)}
-                      </Text>
+                      <BlurView
+                        blurType={appThemeMode ?? 'light'}
+                        blurAmount={2}
+                        style={StyleSheet.flatten([styles.pinGridItem])}>
+                        <WalletIcon
+                          type={item.brandName}
+                          width={18}
+                          height={18}
+                          borderRadius={5}
+                        />
+                        <Text style={styles.pinGridText}>
+                          {calcPinPercent(item.balance || 0)}
+                        </Text>
+                      </BlurView>
                     </TouchableOpacity>
                   </ContextMenuView>
-                ) : (
-                  <View
-                    key={index}
-                    style={StyleSheet.flatten([
-                      styles.pinGridItem,
-                      styles.emptyItem,
-                    ])}
-                  />
-                );
+                ) : null;
               })}
             </View>
           )}
+          <OfflineChainNotify />
           {displayFundWallet && (
             <>
               <View
@@ -686,28 +728,12 @@ function MultiAddressHome(): JSX.Element {
               <FundYourWallet />
             </>
           )}
-          <View style={[styles.menuHeader, displayFundWallet && styles.hidden]}>
-            <Text style={styles.headerText}>
-              {t('page.nextComponent.multiAddressHome.services')}
-            </Text>
-            {Boolean(pendingTxCount) && (
-              <TouchableOpacity
-                style={styles.pendingContainer}
-                onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
-                <Animated.View
-                  style={{
-                    transform: [{ rotate: spin }],
-                  }}>
-                  <RcPending width={14} height={14} />
-                </Animated.View>
-                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                  'page.bridge.Pending',
-                )}`}</Text>
-                <RcIconOrangeArrow />
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={[styles.grid, displayFundWallet && styles.hidden]}>
+          <View
+            style={[
+              { marginTop: 0 },
+              styles.grid,
+              displayFundWallet && styles.hidden,
+            ]}>
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity
@@ -738,26 +764,6 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(224, 229, 236, 0)', 'rgba(224, 229, 236, 1)'] //light neutral-line
-                : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)'] //dark bg-1
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={[styles.floatBottom, { paddingBottom: bottom }]}>
-            <Pressable onPress={handlePressSearch} style={styles.search}>
-              <RcNextSearchCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-              <Text style={styles.searchText}>
-                {t('page.dashboard.home.search')}
-              </Text>
-            </Pressable>
-          </LinearGradient>
         </ScrollView>
       </View>
     </NormalScreenContainer2024>
@@ -813,7 +819,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceTextBox: {
     marginRight: 12,
     color: colors2024['neutral-title-1'],
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'left',
@@ -821,7 +827,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   balanceBox: {
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    marginTop: 10,
+    marginTop: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -892,8 +898,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     marginHorizontal: 4,
     margin: 12,
-    marginTop: 30,
     marginBottom: 16,
+    marginTop: 0,
   },
   pinHeader: {
     marginTop: -8,
@@ -922,8 +928,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   badgeStyle: {
-    width: 20,
-    height: 20,
+    // width: 20,
+    // height: 20,
     lineHeight: 20,
   },
   headerText: {
@@ -943,15 +949,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    marginTop: 16,
+    marginTop: 20,
   },
   emptyItem: {
     backgroundColor: 'transparent',
   },
   pinGridItem: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colord(
+      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+    )
+      .alpha(0.6)
+      .toRgbString(),
     borderRadius: 10,
     flexShrink: 0,
     flex: 1,
@@ -963,6 +971,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 46,
     gap: 8,
     position: 'relative',
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderWidth: 1,
   },
   grid: {
     flexDirection: 'row',
@@ -988,20 +1000,36 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    height: 100,
+    height: 96,
     gap: 12,
     position: 'relative',
   },
   pendingContainer: {
+    position: 'absolute',
+    top: -7,
+    left: 0,
+    width: '100%',
     flexDirection: 'row',
-    borderRadius: 100,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors2024['orange-light-4'],
-    borderColor: colors2024['orange-disable'],
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderWidth: 1,
+  },
+  pendingBlur: {
+    paddingLeft: 20,
+    paddingRight: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
     gap: 0,
+    width: 'auto',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors2024['neutral-bg-1'],
+    backgroundColor: colord(
+      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+    )
+      .alpha(0.89)
+      .toRgbString(),
   },
   pendingText: {
     marginLeft: 2,

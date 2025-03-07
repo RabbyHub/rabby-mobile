@@ -110,6 +110,9 @@ export function ChainInfo({
         removeChainModal();
         onChange?.(chain);
       },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+      },
     });
   }, [
     type,
