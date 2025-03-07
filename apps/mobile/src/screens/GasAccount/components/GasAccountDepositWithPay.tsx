@@ -184,7 +184,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     flex: 1,
@@ -260,8 +260,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 
   depositWithPayBtn: {
-    backgroundColor: '#000',
     height: 60,
+    ...(isLight
+      ? {
+          backgroundColor: '#000',
+        }
+      : {
+          backgroundColor: colors2024['neutral-bg-2'],
+          borderWidth: 1,
+          borderColor: colors2024['neutral-line'],
+        }),
   },
   depositWithTitle: {
     display: 'flex',

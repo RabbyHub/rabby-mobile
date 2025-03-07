@@ -459,7 +459,9 @@ export const MiniFooterBar: React.FC<Props> = ({
                   : props.disabledProcess
               }
               enableTooltip={
-                payGasByGasAccount
+                account.type === KEYRING_TYPE.WatchAddressKeyring
+                  ? true
+                  : payGasByGasAccount
                   ? false
                   : useGasLess
                   ? false
