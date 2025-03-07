@@ -8,7 +8,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useEffect, useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { Text, TouchableOpacity, View } from 'react-native';
-
+import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
@@ -193,16 +193,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           </View>
         </View>
 
-        {/* todo gas fee */}
-        {/* <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.GasFee')}
-          </Text>
-          <Text style={[styles.itemContentText]}>{`-${formatPrice(
-            usdGasFee!,
-          )} USD`}</Text>
-        </View> */}
-
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.From')}
@@ -242,6 +232,19 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {Boolean(data.maxGasTx?.gasUSDValue) && (
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.GasFee')}
+            </Text>
+            <Text style={styles.itemContentText}>
+              {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
+              {data.maxGasTx?.gasTokenSymbol || ''} ($
+              {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
+            </Text>
+          </View>
+        )}
 
         <View style={styles.detailItem}>
           <Text style={styles.itemTitleText}>Hash</Text>

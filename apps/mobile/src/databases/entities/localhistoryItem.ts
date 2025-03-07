@@ -12,9 +12,13 @@ import {
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
+import BigNumber from 'bignumber.js';
+import { findChain } from '@/utils/chain';
+import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
-@Entity('cache_historyitem')
-export class HistoryItemEntity extends EntityAddressAssetBase {
+
+@Entity('cache_localhistoryitem')
+export class LocalHistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')
   is_scam: TxHistoryItem['is_scam'] = false;
@@ -101,7 +105,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   // historyItemCateType
   @Column('text', { default: '' })
-  historyItemCateType?: HistoryItemCateType = undefined;
+  historyItemCateType?: HistoryItemCateType = HistoryItemCateType.UnKnown;
 
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
@@ -110,14 +114,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static fillEntity(
-    e: HistoryItemEntity,
+    e: LocalHistoryItemEntity,
     owner_addr: string,
     input: TxHistoryItem,
   ) {
     e.owner_addr = owner_addr;
 
     e.other_addr = input.other_addr ?? '';
-    e.is_scam = input.is_scam ?? false;
+    e.is_scam = false; // local can not is scam
     e.txHash = input.id ?? '';
     e.receives = JSON.stringify(input.receives);
     e.sends = JSON.stringify(input.sends);
@@ -139,6 +143,49 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  static fillEntityFromLocalSend(
+    e: LocalHistoryItemEntity,
+    input: TransactionHistoryItem,
+  ) {
+    e.owner_addr = input.address;
+
+    e.other_addr = '';
+    e.is_scam = false;
+    e.txHash = input.hash ?? '';
+    e.receives = '[]';
+    const actionData = input.action?.actionData;
+    const amount = new BigNumber(actionData?.send?.token.raw_amount || '0').div(
+      10 ** (actionData?.send?.token.decimals || 0),
+    );
+    e.sends = JSON.stringify([
+      {
+        amount: amount.toNumber(),
+        to_addr: actionData?.send?.to || '',
+        token_id: actionData?.send?.token.id || '',
+      },
+    ]);
+    e.chain =
+      findChain({
+        id: input.chainId,
+      })?.serverId ?? 'eth';
+    e.status = input.isFailed ? 0 : 1;
+    e.time_at = input.completedAt ? Math.floor(input.completedAt / 1000) : 0;
+    e.cate_id = 'send';
+    e.tx_name = '';
+    e.token_approve_id = '';
+    e.token_approve_value = 0;
+    e.token_approve_spender = '';
+    e.project_id = '';
+
+    e.tx_from_address = input.address;
+    e.tx_to_address = actionData?.send?.to || '';
+    e.tx_usd_gas_fee = input.gasUSDValue ?? 0;
+    e.tx_eth_gas_fee = input.gasTokenCount ?? 0;
+    e.historyItemCateType = HistoryItemCateType.Send;
+
+    e.makeDbId();
+  }
+
   static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
@@ -151,7 +198,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
 
     const result = await repo
-      .createQueryBuilder('historyitem')
+      .createQueryBuilder('localhistoryitem')
       .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
@@ -169,11 +216,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
     const repo = this.getRepository();
     const queryBuilder = repo
-      .createQueryBuilder('historyitem')
-      .select('MAX(historyitem.time_at)', 'maxTimeAt');
+      .createQueryBuilder('localhistoryitem')
+      .select('MAX(localhistoryitem.time_at)', 'maxTimeAt');
 
     if (owner_addr) {
-      queryBuilder.where('historyitem.owner_addr = :owner_addr', {
+      queryBuilder.where('localhistoryitem.owner_addr = :owner_addr', {
         owner_addr,
       });
     }
@@ -192,66 +239,24 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
     return this.getRepository().findBy({ owner_addr });
   }
-  // static async getAllHistoryItemSortedByTime(
-  //   limit: number = 100,
-  //   lastTimeAt?: number,
-  // ) {
-  //   await prepareAppDataSource();
-
-  //   const repo = this.getRepository();
-
-  //   const queryBuilder = repo
-  //     .createQueryBuilder('historyitem')
-  //     .orderBy('historyitem.time_at', 'DESC')
-  //     .take(limit);
-
-  //   if (lastTimeAt) {
-  //     queryBuilder.where('historyitem.time_at > :lastTimeAt', { lastTimeAt });
-  //   }
-
-  //   const items = await queryBuilder.getMany();
-
-  //   const totalCount = await repo
-  //     .createQueryBuilder('historyitem')
-  //     .select('COUNT(*)', 'count')
-  //     .getRawOne();
-
-  //   const hasMore = totalCount.count > limit + items.length;
-
-  //   return {
-  //     items,
-  //     hasMore,
-  //   };
-  // }
 
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
-    filterNotScam?: boolean,
   ) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
-    const currentTime = new Date().getTime();
-    console.log('getAllHistoryItemSortedByTime exec');
 
     const queryBuilder = repo
-      .createQueryBuilder('historyitem')
-      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-      .orderBy('historyitem.time_at', 'DESC')
+      .createQueryBuilder('localhistoryitem')
+      .where('localhistoryitem.owner_addr IN (:...owner_addrs)', {
+        owner_addrs,
+      })
+      .orderBy('localhistoryitem.time_at', 'DESC')
       .take(count || 10000); // limit
 
-    if (filterNotScam) {
-      queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
-        is_scam: false,
-      });
-    }
-
     const res = await queryBuilder.getMany();
-    console.log(
-      'getAllHistoryItemSortedByTime exec done',
-      new Date().getTime() - currentTime,
-    );
     return res;
   }
   static async deleteForAddress(owner_addr: string) {

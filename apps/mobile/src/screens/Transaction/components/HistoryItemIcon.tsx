@@ -28,19 +28,7 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-export enum HistoryItemCateType {
-  Send = 'send',
-  Approve = 'approve',
-  Recieve = 'receive',
-  Revoke = 'revoke',
-  Bridge = 'bridge',
-  Swap = 'swap',
-  Contract = 'contract',
-  UnKnown = 'interaction',
-  Cancel = 'cancel',
-  Buy = 'buy',
-}
+import { HistoryItemCateType } from './type';
 
 interface ItemIconProps {
   className?: string;

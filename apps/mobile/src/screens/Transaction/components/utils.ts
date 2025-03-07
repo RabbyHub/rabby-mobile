@@ -1,5 +1,4 @@
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { HistoryItemCateType } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { isString, omit } from 'lodash';
@@ -11,11 +10,19 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
+import { TransactionHistoryItem } from '@/core/services/transactionHistory';
+import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
+import { appJsonStore } from '@/core/storage/mmkv';
+import { HistoryItemCateType } from './type';
+
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
   if (data.isLocalBuy) {
     return HistoryItemCateType.Buy;
+  }
+  if (data.historyItemCateType) {
+    return data.historyItemCateType;
   }
   if (data.cate_id) {
     switch (data.cate_id) {
@@ -36,7 +43,6 @@ export function getHistoryItemType(
     }
   } else {
     // todo revoke  bridge  contract
-    const tokenList = [...data.receives, ...data.sends];
     const isSwap = data.isLocalSwap; // need filter in swap history
     if (isSwap) {
       return HistoryItemCateType.Swap;
@@ -202,4 +208,30 @@ export const judgeIsSmallUsdTxInApi = (
   }
 
   return false;
+};
+
+const localHistoryFillTokenDict = (token: TokenItem) => {
+  const resTokenDict = appJsonStore.getItem('@HistoryTokenDict', {});
+  appJsonStore.setItem('@HistoryTokenDict', {
+    ...resTokenDict,
+    [`${token.chain}_token:${token.id}`]: token,
+  });
+};
+
+export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
+  try {
+    const actionData = tx.action?.actionData;
+    if (!actionData?.send) {
+      return;
+    }
+
+    localHistoryFillTokenDict(actionData.send.token);
+
+    const item = new LocalHistoryItemEntity();
+    LocalHistoryItemEntity.fillEntityFromLocalSend(item, tx);
+    const repo = LocalHistoryItemEntity.getRepository();
+    await repo.manager.save(item);
+  } catch (e) {
+    console.log('loadTxSaveFromLocalStore error', e);
+  }
 };

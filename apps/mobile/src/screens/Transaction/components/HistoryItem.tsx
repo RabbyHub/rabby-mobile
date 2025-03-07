@@ -18,7 +18,7 @@ import { TxInterAddressExplain } from './TxInterAddressExplain';
 import React, { useCallback, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
+import { HistoryItemIcon } from './HistoryItemIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -29,6 +29,7 @@ import { TxStatusItem } from '../HistoryDetailScreen';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
+import { HistoryItemCateType } from './type';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;

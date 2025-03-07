@@ -35,10 +35,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import {
-  HistoryItemCateType,
-  HistoryItemIcon,
-} from '@/screens/Transaction/components/HistoryItemIcon';
+import { HistoryItemIcon } from '@/screens/Transaction/components/HistoryItemIcon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
@@ -55,6 +52,7 @@ import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {

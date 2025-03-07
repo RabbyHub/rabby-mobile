@@ -105,7 +105,7 @@ export function BadgeText({
           style,
           isSuccess && styles.successBgColor,
         ]}>
-        {count}
+        {count > 99 ? '99+' : count}
       </Text>
     );
   }
@@ -119,7 +119,9 @@ export function BadgeText({
         style,
         isSuccess && styles.successBgColor,
       ]}>
-      <Text style={[styles.badgeText, style]}>{count}</Text>
+      <Text style={[styles.badgeText, style]}>
+        {count > 99 ? '99+' : count}
+      </Text>
     </View>
   );
 }
@@ -669,7 +671,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['green-default'],
   },
   badgeText: {
-    color: ctx.colors2024['neutral-InvertHighlight'],
+    color: ctx.colors2024['neutral-bg-1'],
     fontSize: 12,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
