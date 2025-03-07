@@ -78,7 +78,11 @@ export const GasMenuButton: React.FC<Props> = ({
       };
     });
 
-    return list.reverse();
+    if (Platform.OS === 'ios') {
+      return list.reverse();
+    }
+
+    return list;
   }, [colors, gasList, selectedGas?.level, showCustomGasPrice, t]);
   const onPressAction = React.useCallback(
     ({ state, id }) => {
