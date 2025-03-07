@@ -1651,6 +1651,9 @@
         "title": "Quotes For you",
         "best": "Best Quotes"
       }
+    },
+    "eip7702": {
+      "alert": "EIP-7702 is not supported yet"
     }
   },
   "component": {

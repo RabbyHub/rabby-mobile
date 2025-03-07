@@ -1797,6 +1797,9 @@
       "searchingQuote": "A procurar cotações para si...",
       "paymentsOnly": "Os pagamentos só podem ser feitos em {{currency}}",
       "quotesForYou": "Cotações para si"
+    },
+    "eip7702": {
+      "alert": "EIP-7702 ainda não foi suportado"
     }
   },
   "constant": {
