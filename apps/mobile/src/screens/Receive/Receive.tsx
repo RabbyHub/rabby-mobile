@@ -168,7 +168,7 @@ function ReceiveScreen(): JSX.Element {
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: selectedChain,
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
+        enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },
       supportChains: isSafe ? safeChains.map(item => item.enum) : undefined,
