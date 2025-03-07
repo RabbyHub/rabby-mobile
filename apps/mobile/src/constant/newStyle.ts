@@ -12,6 +12,7 @@ export enum MultiHomeFeatTitle {
   Ecosystem = 'Ecosystem',
   Points = 'Rabby Points',
   Buy = 'Buy',
+  Search = 'Search',
 }
 
 export enum AccountPannelSectionTitle {
