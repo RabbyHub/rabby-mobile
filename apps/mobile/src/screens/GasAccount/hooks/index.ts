@@ -52,7 +52,7 @@ export const useGasAccountInfo = () => {
     },
     {
       refreshDeps: [sig, accountId, refreshId],
-      cacheKey: 'current-gas-account-info',
+      cacheKey: `current-gas-account-info-${accountId}`,
       onError() {
         setGasAccount();
       },

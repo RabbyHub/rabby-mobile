@@ -48,6 +48,7 @@ const syncDeleteGasAccount = async (
     if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
       // if there is no another type address then reset signature
       gasAccountService.setGasAccountSig();
+      eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
     }
   }
 };

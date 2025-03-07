@@ -74,7 +74,10 @@ export const GasAccountHeader: React.FC = () => {
           </CustomTouchableOpacity>
         </View>
       }>
-      <Pressable style={styles.container} onPress={() => setVisible(true)}>
+      <Pressable
+        style={styles.container}
+        onPress={() => setVisible(true)}
+        hitSlop={10}>
         {/* <WalletIcon
           type={account?.brandName as KEYRING_TYPE}
           width={styles.walletIcon.width}
