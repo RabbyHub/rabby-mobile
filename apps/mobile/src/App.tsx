@@ -13,6 +13,7 @@ import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
+import { setup, withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -33,6 +34,8 @@ import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLong
 import { useCurrentAccountOnAppTop } from './hooks/account';
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
+import { useIAPListener } from './hooks/iap/useIAPListener';
+import { useGasAccountInfo } from './screens/GasAccount/hooks';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -61,6 +64,8 @@ function MainScreen({ rabbitCode }: AppProps) {
   useNoLongerSupports();
   useCurrentAccountOnAppTop();
   useTriggerI18nChangeOnAppTop();
+  useIAPListener();
+  useGasAccountInfo();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
@@ -112,4 +117,4 @@ function App({ rabbitCode }: AppProps): JSX.Element {
   );
 }
 
-export default withExpoSnack(App);
+export default withExpoSnack(withIAPContext(App));

@@ -37,7 +37,7 @@ export interface TransactionHistoryItem {
 
   rawTx: Tx;
   createdAt: number;
-  completedAt: number;
+  completedAt?: number;
   hash?: string;
 
   gasTokenSymbol?: string;

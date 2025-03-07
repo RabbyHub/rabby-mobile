@@ -1,13 +1,19 @@
 import { toast } from '@/components/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
+import { Account } from '@/core/services/preference';
+import { openExternalUrl } from '@/core/utils/linking';
+import { navigationRef } from '@/utils/navigation';
+import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { uniqBy } from 'lodash';
 import pRetry from 'p-retry';
-import { useEffect } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Linking, Platform } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import {
   useGasAccountHistoryRefresh,
@@ -17,13 +23,7 @@ import {
   useGasBalanceRefresh,
   useSetGasAccount,
 } from './atom';
-import { openExternalUrl } from '@/core/utils/linking';
-import { Linking, Platform } from 'react-native';
-import { RootNames } from '@/constant/layout';
-import { navigationRef } from '@/utils/navigation';
-import { Account } from '@/core/services/preference';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
+import { useRequest } from 'ahooks';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -32,18 +32,32 @@ export const useGasAccountInfo = () => {
 
   const setGasAccount = useSetGasAccount();
 
-  const { value, loading, error } = useAsync(async () => {
-    if (!sig || !accountId) {
-      return undefined;
-    }
-    return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
-      if (e.account.id) {
-        return e;
+  const {
+    data: value,
+    runAsync: runFetchGasAccountInfo,
+    loading,
+    error,
+  } = useRequest(
+    async () => {
+      if (!sig || !accountId) {
+        return undefined;
       }
-      setGasAccount();
-      return undefined;
-    });
-  }, [sig, accountId, refreshId]);
+      return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
+        if (e.account.id) {
+          return e;
+        }
+        setGasAccount();
+        return undefined;
+      });
+    },
+    {
+      refreshDeps: [sig, accountId, refreshId],
+      cacheKey: `current-gas-account-info-${accountId}`,
+      onError() {
+        setGasAccount();
+      },
+    },
+  );
 
   if (
     error?.message?.includes('gas account verified failed') &&
@@ -53,7 +67,19 @@ export const useGasAccountInfo = () => {
     setGasAccount();
   }
 
-  return { loading, value };
+  return { loading, value, runFetchGasAccountInfo };
+};
+
+export const useGasAccountInfoV2 = ({ address }: { address: string }) => {
+  return useRequest(
+    async () => {
+      return openapi.getGasAccountInfoV2({ id: address });
+    },
+    {
+      refreshDeps: [address],
+      cacheKey: `gas-account-info-v2-${address}`,
+    },
+  );
 };
 
 export const useGasAccountGoBack = () => {
@@ -128,11 +154,13 @@ export const useGasAccountMethods = () => {
 
         if (result?.success) {
           setGasAccount(signature, account);
-          setLoginVisible(false);
+          // setLoginVisible(false);
+        } else {
+          throw new Error('Login failed');
         }
       }
     },
-    [setGasAccount, setLoginVisible],
+    [setGasAccount],
   );
 
   const logout = useCallback(async () => {
@@ -144,12 +172,12 @@ export const useGasAccountMethods = () => {
       if (result.success) {
         setGasAccount();
         setLogoutVisible(false);
-        gotoDashboard();
+        // gotoDashboard();
       } else {
         toast.show('please retry');
       }
     }
-  }, [accountId, gotoDashboard, setGasAccount, setLogoutVisible, sig]);
+  }, [accountId, setGasAccount, setLogoutVisible, sig]);
 
   return { login, logout };
 };
@@ -157,7 +185,7 @@ export const useGasAccountMethods = () => {
 export const useGasAccountLogin = ({
   loading,
   value,
-}: ReturnType<typeof useGasAccountInfo>) => {
+}: Pick<ReturnType<typeof useGasAccountInfo>, 'loading' | 'value'>) => {
   const { sig, accountId } = useGasAccountSign();
 
   const { login, logout } = useGasAccountMethods();

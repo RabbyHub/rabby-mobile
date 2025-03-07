@@ -27,7 +27,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -61,6 +61,8 @@ import {
   whitelistService,
 } from '@/core/services';
 import { toast } from '@/components/Toast';
+import { toast as toast2024 } from '@/components2024/Toast';
+
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import { FooterBar } from '../FooterBar/FooterBar';
 import {
@@ -99,6 +101,7 @@ import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -262,6 +265,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     undefined | string
   >();
   const [gasLessLoading, setGasLessLoading] = useState(false);
+  const [isFirstGasLessLoading, setIsFirstGasLessLoading] = useState(true);
   const [canUseGasLess, setCanUseGasLess] = useState(false);
   const [useGasLess, setUseGasLess] = useState(false);
 
@@ -283,6 +287,12 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
+
+  const _currentAccount = useMemo(() => {
+    return isGnosis && account
+      ? account
+      : preferenceService.getCurrentAccount()!;
+  }, [account, isGnosis]);
 
   // useSignPermissionCheck({
   //   origin,
@@ -449,11 +459,17 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     isGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
+    canDepositUseGasAccount,
+    gasAccountCostFn,
+    gasAccountAddress,
+    sig,
+    isFirstGasCostLoading,
   } = useGasAccountTxsCheck({
     isReady,
     txs,
     noCustomRPC,
     isSupportedAddr,
+    currentAccount: _currentAccount,
   });
 
   useEffect(() => {
@@ -832,6 +848,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         reqId,
         isGasLess: gasMethod === 'native' ? useGasLess : false,
         isGasAccount: gasAccountCanPay,
+        sig,
       });
 
       return;
@@ -1350,9 +1367,12 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       !isCoboArugsAccount
     ) {
       if (isSupportedAddr && noCustomRPC) {
-        checkGasLessStatus();
+        checkGasLessStatus().finally(() => {
+          setIsFirstGasLessLoading(false);
+        });
       } else {
         setGasLessLoading(false);
+        setIsFirstGasLessLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1387,6 +1407,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData, rules]);
 
+  useGasAccountInfo();
+
   // TODO
   // useEffect(() => {
   //   if (scrollRef.current && scrollInfo && scrollRefSize) {
@@ -1403,6 +1425,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { setRPCEnable } = useCustomRPC();
+
   return (
     <>
       <BottomSheetView style={styles.wrapper}>
@@ -1551,8 +1574,19 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             noCustomRPC={noCustomRPC}
             gasMethod={gasMethod}
             gasAccountCost={gasAccountCost}
+            isFirstGasCostLoading={isFirstGasCostLoading}
+            isFirstGasLessLoading={isFirstGasLessLoading}
             gasAccountCanPay={gasAccountCanPay}
             canGotoUseGasAccount={canGotoUseGasAccount}
+            canDepositUseGasAccount={canDepositUseGasAccount}
+            rejectApproval={rejectApproval}
+            onDeposit={() => {
+              toast2024.success(t('page.gasAccount.depositSuccess'), {
+                position: toast2024.positions.CENTER,
+              });
+              gasAccountCostFn();
+            }}
+            gasAccountAddress={gasAccountAddress}
             isGasAccountLogin={isGasAccountLogin}
             isWalletConnect={
               currentAccountType === KEYRING_TYPE.WalletConnectKeyring
@@ -1584,14 +1618,18 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             onSubmit={() => handleAllow()}
             onIgnoreAllRules={handleIgnoreAllRules}
             enableTooltip={
-              // 3001 use gasless tip
-              checkErrors && checkErrors?.[0]?.code === 3001
+              currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+                ? true
+                : // 3001 use gasless tip
+                checkErrors && checkErrors?.[0]?.code === 3001
                 ? false
                 : !canProcess ||
                   !!checkErrors.find(item => item.level === 'forbidden')
             }
             tooltipContent={
-              checkErrors && checkErrors?.[0]?.code === 3001
+              currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+                ? t('page.signTx.canOnlyUseImportedAddress')
+                : checkErrors && checkErrors?.[0]?.code === 3001
                 ? undefined
                 : checkErrors.find(item => item.level === 'forbidden')
                 ? checkErrors.find(item => item.level === 'forbidden')!.msg

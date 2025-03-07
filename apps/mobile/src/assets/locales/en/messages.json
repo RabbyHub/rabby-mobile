@@ -1450,7 +1450,9 @@
         "paymentAddress": "Payment Address",
         "selectToken": "Select Token",
         "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
-        "followingTokenInSufficient": "The following token balance is insufficient"
+        "followingTokenInSufficient": "The following token balance is insufficient",
+        "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
+        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
         "title": "Select Payment address",
@@ -1488,7 +1490,33 @@
       "switchLoginAddressBeforeDeposit": {
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
-      }
+      },
+      "depositPayPopup": {
+        "title": "Buy with Apple Pay",
+        "titleAndroid": "Buy with Google Pay",
+        "balance": "Current GasAccount Balance: ",
+        "depositFailed": "Deposit Failed",
+        "depositCanceled": "Deposit Canceled"
+      },
+      "depositSelectPopup": {
+        "title": "Deposit to GasAccount",
+        "desc": "Pay Gas Fees on All Chains",
+        "depositToken": "Deposit with Token",
+        "depositTokenDesc": "No extra fee, instant withdrawals",
+        "buyWith": "Buy with",
+        "buyWithDesc": "30% fee, no withdrawals"
+      },
+      "switchAccount": "Switch GasAccount",
+      "gasAccountList": {
+        "address": "Address",
+        "balance": "Balance",
+        "gasAccountBalance": "GasAccount Balance"
+      },
+      "depositSuccess": "Deposit successful",
+      "loginFailed": "Login Failed",
+      "depositCanceled": "Deposit Canceled",
+      "loginSuccess": "Login Successful",
+      "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Not supported on this chain",
@@ -1658,7 +1686,11 @@
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
         "button": "View on DeBank APP"
-      }
+      },
+      "depositWithToken": "Deposit with Token",
+      "depositWithTokenDesc": "No extra fee, instant withdrawals",
+      "depositWithPayDesc": "30% fee, no withdrawals",
+      "depositWithPay": "Buy with"
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",

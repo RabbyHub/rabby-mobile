@@ -11,7 +11,7 @@ import {
   MODAL_ID,
   MODAL_NAMES,
 } from './types';
-import { makeBottomSheetProps, MODAL_VIEWS, SNAP_POINTS } from './utils';
+import { MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
@@ -20,6 +20,7 @@ import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
 import { useSensitiveGlobalModalsOpened } from './security';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { makeBottomSheetProps } from './utils-help';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;

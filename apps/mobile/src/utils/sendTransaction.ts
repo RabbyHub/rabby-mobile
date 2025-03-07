@@ -113,6 +113,7 @@ export const sendTransaction = async ({
   ignoreGasNotEnoughCheck,
   onUseGasAccount,
   ga,
+  sig,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -132,6 +133,7 @@ export const sendTransaction = async ({
   waitCompleted?: boolean;
   pushType?: TxPushType;
   ga?: Record<string, any>;
+  sig?: string;
 }) => {
   onProgress?.('building');
   const chain = findChain({
@@ -462,6 +464,7 @@ export const sendTransaction = async ({
         isGasLess,
         isGasAccount: autoUseGasAccount ? canUseGasAccount : isGasAccount,
         pushType,
+        sig,
       },
       pushed: false,
       result: undefined,

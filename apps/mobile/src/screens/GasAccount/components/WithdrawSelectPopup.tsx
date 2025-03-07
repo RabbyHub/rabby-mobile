@@ -1,5 +1,5 @@
 import { AppBottomSheetModal, AssetAvatar } from '@/components';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByServerID } from '@/utils/chain';
@@ -29,6 +29,7 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '@/components2024/Button';
+import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
@@ -289,7 +290,7 @@ const RecipientAddressInner = ({
       }
       return (
         <TouchableOpacity
-          style={[styles.innerRow, isSelected && styles.selected]}
+          style={[styles.innerRow]}
           onPress={() => {
             setSelectedAddress(item.recharge_addr);
           }}>
@@ -298,7 +299,10 @@ const RecipientAddressInner = ({
               <View style={styles.innerWalletRow}>
                 <WalletIcon style={styles.innerWallet} />
                 <View style={{ gap: 4 }}>
-                  <WalletName style={styles.innerName} />
+                  <View style={styles.walletNameContainer}>
+                    <WalletName style={styles.innerName} />
+                    {isSelected ? <RcIconCheck height={20} /> : null}
+                  </View>
                   <WalletAddress style={styles.innerAddr} />
                 </View>
               </View>
@@ -318,7 +322,7 @@ const RecipientAddressInner = ({
       styles.innerWallet,
       styles.innerWalletRow,
       styles.limit,
-      styles.selected,
+      styles.walletNameContainer,
     ],
   );
 
@@ -334,7 +338,7 @@ const RecipientAddressInner = ({
       locations={[0.0745, 0.2242]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={{ flex: 1, paddingHorizontal: 20 }}>
+      style={{ flex: 1, paddingHorizontal: 20, position: 'relative' }}>
       <Text style={styles.title}>
         {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
       </Text>
@@ -603,10 +607,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   innerRow: {
-    height: 96,
+    // height: 96,
     backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 30,
-    paddingHorizontal: 24,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     flexDirection: 'row',
@@ -621,24 +625,29 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   innerWalletRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     alignItems: 'center',
   },
   innerWallet: {
-    width: 40,
-    height: 40,
-    borderRadius: 11,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+  },
+  walletNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   innerName: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
   innerAddr: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '500',
-    lineHeight: 22,
+    lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
   limit: {
@@ -649,10 +658,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   floatBottom: {
-    width: '100%',
     height: 130,
     paddingBottom: 35,
     position: 'absolute',
+    left: 0,
+    right: 0,
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',

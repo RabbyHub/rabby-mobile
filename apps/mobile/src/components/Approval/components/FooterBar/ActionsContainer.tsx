@@ -4,42 +4,12 @@ import { Chain } from '@/constant/chains';
 import { Account } from '@/core/services/preference';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { notificationService } from '@/core/services';
-import { Button } from '@/components';
 import { StyleSheet, Text, View } from 'react-native';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    button: {
-      height: 48,
-      borderColor: colors['blue-default'],
-      borderWidth: 1,
-      borderRadius: 8,
-    },
-    buttonText: {
-      color: colors['blue-default'],
-      fontSize: 15,
-      fontWeight: '500',
-    },
-    wrapper: {
-      position: 'relative',
-      flexDirection: 'row',
-      marginTop: 12,
-      justifyContent: 'space-between',
-      gap: 12,
-    },
-    cancelWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    cancelIcon: {
-      color: colors['blue-default'],
-    },
-  });
+import { Button } from '@/components2024/Button';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
@@ -120,19 +90,12 @@ export const ActionsContainer: React.FC<
     activePopup('CANCEL_APPROVAL');
   };
 
-  const colors = useThemeColors();
-  const oldStyles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles2024 });
 
-  const { styles: styles2024 } = useTheme2024({ getStyle: getStyles2024 });
-
-  const styles = useMemo(
-    () => (isMiniSignTx ? styles2024 : oldStyles),
-    [styles2024, oldStyles, isMiniSignTx],
-  );
   return (
     <View style={styles.wrapper}>
       <Button
-        type="clear"
+        type="ghost"
         containerStyle={{
           flex: 1,
         }}

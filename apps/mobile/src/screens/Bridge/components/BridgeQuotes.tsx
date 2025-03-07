@@ -26,7 +26,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { BridgeQuoteItem } from './BridgeQuoteItem';
 import { QuoteLoading } from './loading';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {

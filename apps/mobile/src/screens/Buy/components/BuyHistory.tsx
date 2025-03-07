@@ -9,7 +9,7 @@ import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts, RootNames } from '@/constant/layout';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBuyHistory } from '../hooks/history';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';

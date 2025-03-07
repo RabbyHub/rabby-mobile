@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Modal } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { GasAccountCurrentAddress } from './LogoutPopup';
+import { GasAccountCurrentAddress } from './GasAccountLogoutPopup';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { Button } from '@/components';

@@ -1,31 +1,28 @@
-import { Tip } from '@/components/Tip';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { Chain } from '@/constant/chains';
+import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
+import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { Chain } from '@/constant/chains';
+import { navigate } from '@/utils/navigation';
+import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { DappInfo } from '@/core/services/dappService';
 import clsx from 'clsx';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
-import {
-  GasLessConfig,
-  GasLessNotEnough,
-  GasLessActivityToSign,
-  GasAccountTips,
-} from './GasLessComponents';
-import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { GasAccountTips } from './GasLessComponents/GasAccountTips';
+import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
+import { GasLessConfig } from './GasLessComponents';
+import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -55,6 +52,12 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
+  canDepositUseGasAccount?: boolean;
+  rejectApproval?(): void;
+  onDeposit?(): void;
+  gasAccountAddress?: string;
+  isFirstGasCostLoading?: boolean;
+  isFirstGasLessLoading?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -200,6 +203,12 @@ export const FooterBar: React.FC<Props> = ({
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
+  canDepositUseGasAccount,
+  rejectApproval,
+  onDeposit,
+  gasAccountAddress,
+  isFirstGasCostLoading,
+  isFirstGasLessLoading,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -282,6 +291,27 @@ export const FooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isSetGasMethodRef = useRef(false);
+  useEffect(() => {
+    if (isSetGasMethodRef.current) {
+      return;
+    }
+    if (!isFirstGasCostLoading && !isFirstGasLessLoading) {
+      isSetGasMethodRef.current = true;
+
+      if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
+        onChangeGasAccount?.();
+      }
+    }
+  }, [
+    canGotoUseGasAccount,
+    canUseGasLess,
+    isFirstGasCostLoading,
+    isFirstGasLessLoading,
+    onChangeGasAccount,
+    showGasLess,
+  ]);
+
   if (!account) {
     return null;
   }
@@ -300,6 +330,66 @@ export const FooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
+
+        {isFirstGasCostLoading || isFirstGasLessLoading ? null : (
+          <>
+            {showGasLess &&
+            !payGasByGasAccount &&
+            (!securityLevel || !hasUnProcessSecurityResult) ? (
+              canUseGasLess ? (
+                <GasLessActivityToSign
+                  gasLessEnable={useGasLess}
+                  handleFreeGas={() => {
+                    enableGasLess?.();
+                  }}
+                  gasLessConfig={gasLessConfig}
+                />
+              ) : isWatchAddr ||
+                account.type === KEYRING_TYPE.GnosisKeyring ? null : (
+                <GasLessNotEnough
+                  canGotoUseGasAccount={canGotoUseGasAccount}
+                  canDepositUseGasAccount={canDepositUseGasAccount}
+                  onChangeGasAccount={onChangeGasAccount}
+                  gasAccountAddress={gasAccountAddress!}
+                  gasAccountCost={gasAccountCost}
+                  onDeposit={() => {
+                    onDeposit?.();
+                    onChangeGasAccount?.();
+                  }}
+                  onGotoGasAccount={() => {
+                    rejectApproval?.();
+                    navigate(RootNames.StackTransaction, {
+                      screen: RootNames.GasAccount,
+                      params: {},
+                    });
+                  }}
+                />
+              )
+            ) : null}
+
+            {payGasByGasAccount && !gasAccountCanPay ? (
+              isWatchAddr ||
+              account.type === KEYRING_TYPE.GnosisKeyring ? null : (
+                <GasAccountTips
+                  gasAccountAddress={gasAccountAddress!}
+                  gasAccountCost={gasAccountCost}
+                  isGasAccountLogin={isGasAccountLogin}
+                  isWalletConnect={isWalletConnect}
+                  noCustomRPC={noCustomRPC}
+                  onDeposit={onDeposit}
+                  onGotoGasAccount={() => {
+                    rejectApproval?.();
+                    navigate(RootNames.StackTransaction, {
+                      screen: RootNames.GasAccount,
+                      params: {},
+                    });
+                  }}
+                />
+              )
+            ) : null}
+          </>
+        )}
+
         <AccountInfo
           chain={props.chain}
           account={account}
@@ -318,7 +408,9 @@ export const FooterBar: React.FC<Props> = ({
               : props.disabledProcess
           }
           enableTooltip={
-            payGasByGasAccount
+            account.type === KEYRING_TYPE.WatchAddressKeyring
+              ? true
+              : payGasByGasAccount
               ? false
               : useGasLess
               ? false
@@ -362,35 +454,6 @@ export const FooterBar: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         )}
-
-        {showGasLess &&
-        !payGasByGasAccount &&
-        (!securityLevel || !hasUnProcessSecurityResult) ? (
-          canUseGasLess ? (
-            <GasLessActivityToSign
-              gasLessEnable={useGasLess}
-              handleFreeGas={() => {
-                enableGasLess?.();
-              }}
-              gasLessConfig={gasLessConfig}
-            />
-          ) : isWatchAddr ? null : (
-            <GasLessNotEnough
-              gasLessFailedReason={gasLessFailedReason}
-              canGotoUseGasAccount={canGotoUseGasAccount}
-              onChangeGasAccount={onChangeGasAccount}
-            />
-          )
-        ) : null}
-
-        {payGasByGasAccount && !gasAccountCanPay ? (
-          <GasAccountTips
-            gasAccountCost={gasAccountCost}
-            isGasAccountLogin={isGasAccountLogin}
-            isWalletConnect={isWalletConnect}
-            noCustomRPC={noCustomRPC}
-          />
-        ) : null}
       </View>
     </View>
   );
