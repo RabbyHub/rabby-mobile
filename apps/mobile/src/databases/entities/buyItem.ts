@@ -72,7 +72,7 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     e.pay_usd_amount = input.pay_usd_amount + '';
     e.payment_type = input.payment_type;
     e.receive_chain_id = input.receive_chain_id;
-    e.receive_tx_id = input.receive_tx_id;
+    e.receive_tx_id = input.receive_tx_id ?? '';
     e.receive_token_id = input.receive_token_id;
     e.receive_amount = input.receive_amount + '';
     e.receive_token = columnConverter.jsonObjToString(input.receive_token);

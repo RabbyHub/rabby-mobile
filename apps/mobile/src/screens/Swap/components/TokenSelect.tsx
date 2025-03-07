@@ -44,7 +44,6 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -282,46 +281,25 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const availableToken = useMemo(() => {
       const _tokens = queryConds.chainServerId
-        ? allTokenItems.filter(
-            token => token.chain === queryConds.chainServerId,
-          )
+        ? allTokenItems.filter(t => t.chain === queryConds.chainServerId)
         : allTokenItems;
-      return uniqBy(
-        queryConds.keyword ? searchedTokenByQuery : _tokens,
-        token => {
-          return makeKeyForTokenItemMaybeWithOwner(token);
-        },
-      ).filter(
-        e =>
+      return uniqBy(queryConds.keyword ? searchedTokenByQuery : _tokens, t => {
+        return makeKeyForTokenItemMaybeWithOwner(t);
+      }).filter(
+        (e: TokenItemMaybeWithOwner) =>
           !isExcludedTokens(e) &&
-          !foldTokensList.some(fold => {
-            let foldAccount: string = '';
-            let eAccount: string = '';
-            if (queryConds.account) {
-              if ('ownerAccount' in fold) {
-                foldAccount = (
-                  (fold as TokenItemMaybeWithOwner)?.ownerAccount?.address || ''
-                ).toLowerCase();
-              }
-
-              if ('ownerAccount' in e) {
-                eAccount = (
-                  (e as TokenItemMaybeWithOwner)?.ownerAccount?.address || ''
-                )?.toLowerCase();
-              }
-            }
-
+          !foldTokensList.some(f => {
             return (
-              fold.chain === e.chain &&
-              fold.id === e.id &&
-              foldAccount?.toLowerCase() === eAccount?.toLowerCase()
+              f.chain === e.chain &&
+              f.id === e.id &&
+              f?.ownerAccount?.address.toLowerCase() ===
+                e?.ownerAccount?.address.toLowerCase()
             );
           }),
       );
     }, [
       queryConds.chainServerId,
       queryConds.keyword,
-      queryConds.account,
       allTokenItems,
       searchedTokenByQuery,
       isExcludedTokens,
