@@ -1,7 +1,7 @@
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Account } from '@/core/services/preference';
-import { useAccounts } from '@/hooks/account';
+import { useAccounts, usePinAddresses } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,6 +22,8 @@ import { GasAccountBalance } from './GasAccountBalance';
 import { openapi } from '@/core/request';
 import { sortBy } from 'lodash';
 import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
+import { TextBadge } from '@/screens/Address/components/PinBadge';
+import { addressUtils } from '@rabby-wallet/base-utils';
 
 export const SelectGasAccountList = ({
   onChange,
@@ -100,45 +102,61 @@ export const SelectGasAccountList = ({
     });
   }, [_list, gasAccountBalanceDict, isGasAccount]);
 
-  const renderItem = useMemoizedFn(({ item }: { item: Account }) => (
-    <TouchableOpacity
-      style={styles.accountItem}
-      onPress={() => {
-        onChange?.(item);
-      }}>
-      <AddressItem account={item} fetchAccount={false}>
-        {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
-          <View style={styles.itemInner}>
-            <WalletIcon style={styles.walletIcon} />
-            <View style={styles.itemContent}>
-              <View style={styles.walletNameContainer}>
-                <WalletName />
-                {isSameAddress(selectedAccount?.address || '', item.address) &&
-                selectedAccount?.type === item.type ? (
-                  <RcIconCheck height={20} />
-                ) : null}
-              </View>
+  const { pinAddresses } = usePinAddresses({
+    disableAutoFetch: true,
+  });
 
-              {isGasAccount ? (
-                <WalletBalance style={styles.walletBalance} />
-              ) : (
-                <WalletAddress style={styles.walletAddress} />
-              )}
+  const renderItem = useMemoizedFn(({ item }: { item: Account }) => {
+    const isPinned = pinAddresses.some(
+      e =>
+        addressUtils.isSameAddress(e.address, item.address) &&
+        e.brandName === item.brandName,
+    );
+    return (
+      <TouchableOpacity
+        style={styles.accountItem}
+        onPress={() => {
+          onChange?.(item);
+        }}>
+        <AddressItem account={item} fetchAccount={false}>
+          {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+            <View style={styles.itemInner}>
+              <WalletIcon style={styles.walletIcon} />
+              <View style={styles.itemContent}>
+                <View style={styles.walletNameContainer}>
+                  <WalletName />
+                  {!isGasAccount && isPinned ? <TextBadge /> : null}
+                  {isSameAddress(
+                    selectedAccount?.address || '',
+                    item.address,
+                  ) && selectedAccount?.type === item.type ? (
+                    <RcIconCheck height={20} />
+                  ) : null}
+                </View>
+
+                {isGasAccount ? (
+                  <WalletBalance style={styles.walletBalance} />
+                ) : (
+                  <WalletAddress style={styles.walletAddress} />
+                )}
+              </View>
+              <View style={{ marginLeft: 'auto' }}>
+                {isGasAccount ? (
+                  <GasAccountBalance
+                    account={
+                      gasAccountBalanceDict?.[item.address.toLowerCase()]
+                    }
+                  />
+                ) : (
+                  <WalletBalance />
+                )}
+              </View>
             </View>
-            <View style={{ marginLeft: 'auto' }}>
-              {isGasAccount ? (
-                <GasAccountBalance
-                  account={gasAccountBalanceDict?.[item.address.toLowerCase()]}
-                />
-              ) : (
-                <WalletBalance />
-              )}
-            </View>
-          </View>
-        )}
-      </AddressItem>
-    </TouchableOpacity>
-  ));
+          )}
+        </AddressItem>
+      </TouchableOpacity>
+    );
+  });
 
   return (
     <View style={[styles.container, style]}>
