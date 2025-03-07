@@ -338,7 +338,7 @@ const RecipientAddressInner = ({
       locations={[0.0745, 0.2242]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={{ flex: 1, paddingHorizontal: 20 }}>
+      style={{ flex: 1, paddingHorizontal: 20, position: 'relative' }}>
       <Text style={styles.title}>
         {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
       </Text>
@@ -658,10 +658,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   floatBottom: {
-    width: '100%',
     height: 130,
     paddingBottom: 35,
     position: 'absolute',
+    left: 0,
+    right: 0,
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
