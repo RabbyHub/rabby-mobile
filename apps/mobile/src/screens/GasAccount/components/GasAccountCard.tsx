@@ -165,10 +165,7 @@ export const GasAccountCard: React.FC<Props> = ({
               flex: 1,
             }}>
             {gasAccountInfo?.has_iap_order ? (
-              <Tip
-                content={
-                  'Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance'
-                }>
+              <Tip content={t('page.gasAccount.withdrawDisabledIAP')}>
                 <Button
                   type="ghost"
                   onPress={onWithdrawPress}
@@ -210,7 +207,7 @@ export const GasAccountCard: React.FC<Props> = ({
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   accountContainer: {
     paddingVertical: 38,
     paddingHorizontal: 16,
@@ -285,7 +282,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 
   depositWithPayBtn: {
-    backgroundColor: '#000',
+    ...(isLight
+      ? {
+          backgroundColor: '#000',
+        }
+      : {
+          backgroundColor: colors2024['neutral-bg-2'],
+          borderWidth: 1,
+          borderColor: colors2024['neutral-line'],
+        }),
   },
   depositWithTitle: {
     display: 'flex',

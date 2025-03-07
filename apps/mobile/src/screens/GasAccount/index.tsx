@@ -1,5 +1,4 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
@@ -22,6 +21,7 @@ import {
   useGasAccountLoginVisible,
   useGasAccountLogoutVisible,
 } from './hooks/atom';
+import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 export const GasAccountScreen = () => {
   useLastUsedAccountInScreen();
@@ -85,7 +85,7 @@ export const GasAccountScreen = () => {
   }, [setNavigationOptions, headerRight]);
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer type="linear">
       <GasAccountCard
         isLogin={isLogin}
         gasAccountInfo={gasAccount?.account}

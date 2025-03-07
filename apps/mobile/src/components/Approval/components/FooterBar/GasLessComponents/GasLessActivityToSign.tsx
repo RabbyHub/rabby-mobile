@@ -272,7 +272,7 @@ export function GasLessActivityToSign({
           ) : (
             <View style={styles.tipTriangle} />
           )}
-          {isActivityFreeGas ? (
+          {isActivityFreeGas && gasLessConfig?.logo ? (
             <Image
               source={{ uri: gasLessConfig?.logo }}
               style={styles.activityLogo}

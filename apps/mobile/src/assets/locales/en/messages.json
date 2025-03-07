@@ -1503,7 +1503,8 @@
       "depositSuccess": "Deposit successful",
       "loginFailed": "Login Failed",
       "depositCanceled": "Deposit Canceled",
-      "loginSuccess": "Login Successful"
+      "loginSuccess": "Login Successful",
+      "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Not supported on this chain",
