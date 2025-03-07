@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm/browser';
 import { APP_DB_PREFIX } from '../constant';
 
-const buyTableName = `${APP_DB_PREFIX}historyitem`;
+const historyTableName = 'historyitem';
 
 async function checkIfTableExists(queryRunner: QueryRunner, tableName: string) {
   const tableExists = await queryRunner.query(
@@ -20,19 +20,25 @@ export class UpdateHistoryTableAddCateType1741315815094
   transaction = false;
 
   async up(queryRunner: QueryRunner): Promise<void> {
-    const tableExists = await checkIfTableExists(queryRunner, buyTableName);
+    console.debug(
+      `EXEC ALTER TABLE '${APP_DB_PREFIX}${historyTableName}' ADD COLUMN historyItemCateType TEXT`,
+    );
+    const tableExists = await checkIfTableExists(queryRunner, historyTableName);
     if (tableExists) {
+      console.debug(
+        `EXEC ALTER TABLE '${APP_DB_PREFIX}${historyTableName}' ADD COLUMN historyItemCateType TEXT`,
+      );
       await queryRunner.query(
-        `ALTER TABLE '${buyTableName}' ADD COLUMN historyItemCateType TEXT`,
+        `ALTER TABLE '${APP_DB_PREFIX}${historyTableName}' ADD COLUMN historyItemCateType TEXT`,
       );
     }
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    const tableExists = await checkIfTableExists(queryRunner, buyTableName);
+    const tableExists = await checkIfTableExists(queryRunner, historyTableName);
     if (tableExists) {
       await queryRunner.query(
-        `ALTER TABLE '${buyTableName}' DROP COLUMN historyItemCateType`,
+        `ALTER TABLE '${APP_DB_PREFIX}${historyTableName}' DROP COLUMN historyItemCateType`,
       );
     }
   }
