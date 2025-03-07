@@ -8,14 +8,15 @@ export const AppSwitch2024 = React.forwardRef<Switch, SwitchProps>(
 
     return (
       <Switch
-        circleSize={20}
+        circleSize={22}
         renderActiveText={false}
         renderInActiveText={false}
         circleActiveColor={colors2024['neutral-bg-1']}
         circleInActiveColor={colors2024['neutral-bg-1']}
         backgroundActive={colors2024['brand-default']}
         backgroundInactive={colors2024['neutral-line']}
-        circleBorderWidth={1}
+        barHeight={24}
+        circleBorderWidth={2}
         circleBorderActiveColor={colors2024['brand-default']}
         circleBorderInactiveColor={colors2024['neutral-line']}
         {...props}
