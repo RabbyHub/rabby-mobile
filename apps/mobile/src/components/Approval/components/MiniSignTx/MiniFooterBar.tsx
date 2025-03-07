@@ -11,7 +11,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { DappInfo } from '@/core/services/dappService';
 import clsx from 'clsx';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
@@ -305,6 +305,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   }, []);
 
   const isSetGasMethodRef = useRef(false);
+  const [isInited, setIsInited] = useState(false);
   useEffect(() => {
     if (isSetGasMethodRef.current) {
       return;
@@ -315,6 +316,7 @@ export const MiniFooterBar: React.FC<Props> = ({
       if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
         onChangeGasAccount?.();
       }
+      setIsInited(true);
     }
   }, [
     canGotoUseGasAccount,
@@ -382,7 +384,7 @@ export const MiniFooterBar: React.FC<Props> = ({
         })}>
         {Header}
 
-        {isFirstGasCostLoading ? null : (
+        {!isInited ? null : (
           <>
             {showGasLess &&
             !payGasByGasAccount &&
