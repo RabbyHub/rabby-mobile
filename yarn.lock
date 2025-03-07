@@ -28676,7 +28676,6 @@ __metadata:
     typeorm: ^0.3.20
     typescript: 5.7.3
     use-count-up: ^3.0.1
-    uuid: 11.1.0
     viem: ^2.17.4
     web3: ^4.3.0
     web3-eth-abi: 1.7.0
@@ -34882,15 +34881,6 @@ __metadata:
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Futils-merge%2F-%2Futils-merge-1.0.1.tgz"
   checksum: c81095493225ecfc28add49c106ca4f09cdf56bc66731aa8dabc2edbbccb1e1bfe2de6a115e5c6a380d3ea166d1636410b62ef216bb07b3feb1cfde1d95d5080
-  languageName: node
-  linkType: hard
-
-"uuid@npm:11.1.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 840f19758543c4631e58a29439e51b5b669d5f34b4dd2700b6a1d15c5708c7a6e0c3e2c8c4a2eae761a3a7caa7e9884d00c86c02622ba91137bd3deade6b4b4a
   languageName: node
   linkType: hard
 
