@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -89,6 +89,15 @@ export const WhiteListItem = ({
     ] as MenuAction[];
   }, [account.address, isDarkTheme, removeWhitelistWithoutConfirm, t]);
 
+  const { formatName, hideTail } = useMemo(() => {
+    const ellipisName = ellipsisAddress(account.address);
+    const name = cexDesc?.name || account.aliasName || ellipisName;
+    return {
+      formatName: name,
+      hideTail: name === ellipisName,
+    };
+  }, [account.address, account.aliasName, cexDesc?.name]);
+
   const children = (
     <TouchableOpacity
       activeOpacity={1}
@@ -153,7 +162,7 @@ export const WhiteListItem = ({
           !disableMenu && isPressing && styles.cardPressing,
         ])}>
         <InnerAddressItem style={styles.rootItem} account={account}>
-          {({ WalletIcon, WalletName, WalletBalance }) => (
+          {({ WalletIcon, WalletBalance }) => (
             <View style={styles.item}>
               <View style={styles.iconWrapper}>
                 {cexDesc?.logo_url ? (
@@ -185,18 +194,14 @@ export const WhiteListItem = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  {cexDesc?.name || !account.aliasName ? (
-                    <Text style={styles.itemNameText} numberOfLines={1}>
-                      {account.aliasName ||
-                        cexDesc?.name ||
-                        ellipsisAddress(account.address)}
-                    </Text>
-                  ) : (
-                    <WalletName style={styles.itemNameText} />
-                  )}
-                  <Text style={styles.address}>
-                    {`(${ellipsisAddress(account.address)})`}
+                  <Text style={styles.itemNameText} numberOfLines={1}>
+                    {formatName}
                   </Text>
+                  {!hideTail && (
+                    <Text style={styles.address}>
+                      {`(${ellipsisAddress(account.address)})`}
+                    </Text>
+                  )}
                 </View>
                 <WalletBalance style={styles.itemBalanceText} />
               </View>
@@ -235,12 +240,20 @@ export const WhiteListItemSwitch = ({
     ) as {
       forMultiScreen?: boolean;
     }) || {};
+  const { formatName, hideTail } = useMemo(() => {
+    const ellipisName = ellipsisAddress(account.address);
+    const name = cexDes?.name || account.aliasName || ellipisName;
+    return {
+      formatName: name,
+      hideTail: name === ellipisName,
+    };
+  }, [account.address, account.aliasName, cexDes?.name]);
 
   return (
     <View style={styles.root}>
       <Card style={StyleSheet.flatten([styles.card, style])}>
         <InnerAddressItem style={styles.rootItem} account={account}>
-          {({ WalletIcon, WalletName, WalletBalance }) => (
+          {({ WalletIcon, WalletBalance }) => (
             <View style={styles.item}>
               <View style={styles.iconWrapper}>
                 {cexDes?.logo_url ? (
@@ -268,18 +281,14 @@ export const WhiteListItemSwitch = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
-                  {cexDes?.name || !account.aliasName ? (
-                    <Text style={styles.itemNameText} numberOfLines={1}>
-                      {account.aliasName ||
-                        cexDes?.name ||
-                        ellipsisAddress(account.address)}
-                    </Text>
-                  ) : (
-                    <WalletName style={styles.itemNameText} />
-                  )}
-                  <Text style={styles.address}>
-                    {`(${ellipsisAddress(account.address)})`}
+                  <Text style={styles.itemNameText} numberOfLines={1}>
+                    {formatName}
                   </Text>
+                  {!hideTail && (
+                    <Text style={styles.address}>
+                      {`(${ellipsisAddress(account.address)})`}
+                    </Text>
+                  )}
                 </View>
                 <WalletBalance style={styles.itemBalanceText} />
               </View>
