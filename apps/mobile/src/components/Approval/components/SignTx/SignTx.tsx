@@ -1622,7 +1622,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       <SafeSelfHostModal
         visible={isShowSafeSelfHostModal}
         onConfirm={() => {
-          preferenceService.hasConfirmSafeSelfHost(chainId.toString());
+          preferenceService.setConfirmSafeSelfHost(chainId.toString());
           setIsShowSafeSelfHostModal(false);
         }}
       />
