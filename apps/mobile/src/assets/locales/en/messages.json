@@ -1483,7 +1483,8 @@
         "title": "Buy with Apple Pay",
         "titleAndroid": "Buy with Google Pay",
         "balance": "Current GasAccount Balance: ",
-        "depositFailed": "Deposit Failed"
+        "depositFailed": "Deposit Failed",
+        "depositCanceled": "Deposit Canceled"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",

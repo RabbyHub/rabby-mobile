@@ -16,7 +16,7 @@ import { useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
-import { requestPurchase } from 'react-native-iap';
+import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
 
@@ -88,11 +88,19 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       },
       onError(e: any) {
         console.error(e);
-        // toast.error(typeof e === 'string' ? e : e?.message);
         Sentry.captureException(e);
-        toast.error(t('page.gasAccount.depositPayPopup.depositFailed'), {
-          position: toast.positions.CENTER,
-        });
+        if (
+          e instanceof PurchaseError &&
+          e.code === ErrorCode.E_USER_CANCELLED
+        ) {
+          toast.error(t('page.gasAccount.depositPayPopup.depositCanceled'), {
+            position: toast.positions.CENTER,
+          });
+        } else {
+          toast.error(t('page.gasAccount.depositPayPopup.depositFailed'), {
+            position: toast.positions.CENTER,
+          });
+        }
       },
     },
   );
