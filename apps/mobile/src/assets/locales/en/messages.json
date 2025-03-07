@@ -854,7 +854,7 @@
       },
       "offlineChain": {
         "chain": "{{chain}} will soon not be integrated.",
-        "tips": "{{chain}} Chain will not be integrated on {{date}}. Your assets won’t be affected but won’t be included in your total balance. To access them, you may add it as a custom network in “Setting”."
+        "tips": "{{chain}} Chain will not be integrated on {{date}}. Your assets won’t be affected but won’t be included in your total balance. To access them, you may add it as a custom network in “Settings”."
       }
     },
     "nextComponent": {
