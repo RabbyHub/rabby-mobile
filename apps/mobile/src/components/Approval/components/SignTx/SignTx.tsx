@@ -101,6 +101,7 @@ import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -1405,6 +1406,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     executeSecurityEngine();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData, rules]);
+
+  useGasAccountInfo();
 
   // TODO
   // useEffect(() => {

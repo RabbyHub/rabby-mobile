@@ -64,6 +64,7 @@ import {
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -923,6 +924,8 @@ const MiniSignTx = ({
       handleIsGnosisAccountChange();
     }
   }, [handleIsGnosisAccountChange, isGnosisAccount]);
+
+  useGasAccountInfo();
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
