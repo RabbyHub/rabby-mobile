@@ -27,6 +27,9 @@
     "syncrnversion": "./node_modules/.bin/react-native-version --never-amend --never-increment-build",
     "rnversion": "yarn syncrnversion && yarn android:buildversion",
     "android:buildversion": "react-native-version --never-amend --target android --increment-build",
+    "ios:clean:podlock": "rimraf ./ios/Pods ./ios/Podfile.lock",
+    "ios:installpod": "cd ios && bundle install && bundle exec pod install && cd ..",
+    "ios:podlock": "yarn && yarn ios:clean:podlock && yarn ios:installpod",
     "test": "jest",
     "postversion": "react-native-version --never-amend"
   },
@@ -228,6 +231,7 @@
     "react-test-renderer": "18.2.0",
     "reactotron-react-native": "^5.0.4",
     "reflect-metadata": "0.1.13",
+    "rimraf": "^3.0.2",
     "styled-components": "^6.1.1",
     "svg2vectordrawable": "^2.9.1",
     "tailwindcss": "3.3.2",
