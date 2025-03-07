@@ -21,7 +21,8 @@ import BottomPopover from '../../components/BottomPopover';
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
+  const { isAddrOnWhitelist, addWhitelist, removeWhitelistWithoutConfirm } =
+    useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
 
   const { account } = useNavigationState(
@@ -39,9 +40,11 @@ const ConfirmAddressScreen = () => {
 
   const setInWhitelist = useCallback(
     (bool: boolean) => {
-      bool ? addWhitelist(account.address) : removeWhitelist(account.address);
+      bool
+        ? addWhitelist(account.address)
+        : removeWhitelistWithoutConfirm(account.address);
     },
-    [account.address, addWhitelist, removeWhitelist],
+    [account.address, addWhitelist, removeWhitelistWithoutConfirm],
   );
 
   const onCancel = () => {
