@@ -193,7 +193,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     /**
      * @description vary with owner_addr, default is false
      */
-    owner_addr?: string;
+    addresses?: string[];
     only_core_token?: boolean;
     /**
      * @todo support filter by chain
@@ -207,7 +207,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
 
     const {
-      owner_addr,
+      addresses,
       only_core_token = false,
       chain_server_id,
       keyword,
@@ -218,9 +218,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     queryBuilder.where({ id: Not(EMPTY_TOKEN_ITEM_ID) });
 
-    if (owner_addr) queryBuilder.andWhere({ owner_addr });
-    if (only_core_token) queryBuilder.andWhere({ is_core: true });
-    if (chain_server_id) queryBuilder.andWhere({ chain: chain_server_id });
+    if (addresses) {
+      queryBuilder.andWhere({ owner_addr: In(addresses) });
+    }
+    if (only_core_token) {
+      queryBuilder.andWhere({ is_core: true });
+    }
+    if (chain_server_id) {
+      queryBuilder.andWhere({ chain: chain_server_id });
+    }
     if (keyword) {
       queryBuilder.andWhere(
         new Brackets(qb => {
