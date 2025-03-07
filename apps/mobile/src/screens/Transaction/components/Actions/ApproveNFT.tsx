@@ -28,7 +28,7 @@ import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
-import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
+import { HistoryItemIcon } from '../HistoryItemIcon';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { RevokeNFTBtn } from './components/RevokeNFTBtn';
@@ -37,6 +37,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { formatAmount } from '@/utils/number';
+import { HistoryItemCateType } from '../type';
 
 interface Props {
   data: TransactionGroup;

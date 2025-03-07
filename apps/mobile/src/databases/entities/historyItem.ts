@@ -12,8 +12,7 @@ import {
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
-import { HistoryItemCateType } from '@/screens/Transaction/components/HistoryItemIcon';
-
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 @Entity('cache_historyitem')
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam

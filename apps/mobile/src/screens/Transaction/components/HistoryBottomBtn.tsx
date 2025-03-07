@@ -9,7 +9,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
-import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
+import { HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { navigate, naviPush } from '@/utils/navigation';
@@ -26,6 +26,7 @@ import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { HistoryItemCateType } from './type';
 
 interface ItemProps {
   status: number;

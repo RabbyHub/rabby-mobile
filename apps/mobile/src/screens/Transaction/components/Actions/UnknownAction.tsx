@@ -37,7 +37,6 @@ import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
-import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
 import { Button } from '@/components2024/Button';
 import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';

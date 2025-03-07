@@ -1,5 +1,4 @@
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { HistoryItemCateType } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { isString, omit } from 'lodash';
@@ -14,6 +13,8 @@ import { IManageToken } from '@/core/services/preference';
 import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { appJsonStore } from '@/core/storage/mmkv';
+import { HistoryItemCateType } from './type';
+
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {

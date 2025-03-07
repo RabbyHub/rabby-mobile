@@ -15,7 +15,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatTokenAmount } from '@/utils/number';
-import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
+import { HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { naviPush } from '@/utils/navigation';
@@ -30,6 +30,7 @@ import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
 import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+import { HistoryItemCateType } from './type';
 
 const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 

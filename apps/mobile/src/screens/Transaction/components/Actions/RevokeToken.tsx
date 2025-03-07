@@ -37,8 +37,9 @@ import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
-import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
+import { HistoryItemIcon } from '../HistoryItemIcon';
 import { formatIntlTimestamp } from '@/utils/time';
+import { HistoryItemCateType } from '../type';
 
 interface Props {
   data: TransactionGroup;

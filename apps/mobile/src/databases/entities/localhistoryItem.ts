@@ -15,7 +15,7 @@ import { prepareAppDataSource } from '../imports';
 import BigNumber from 'bignumber.js';
 import { findChain } from '@/utils/chain';
 import { TransactionHistoryItem } from '@/core/services/transactionHistory';
-import { HistoryItemCateType } from '@/screens/Transaction/components/HistoryItemIcon';
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 
 @Entity('cache_localhistoryitem')
 export class LocalHistoryItemEntity extends EntityAddressAssetBase {

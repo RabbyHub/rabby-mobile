@@ -30,9 +30,8 @@ import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
-import { HistoryItemCateType, HistoryItemIcon } from '../HistoryItemIcon';
-import { RootNames } from '@/constant/layout';
-import { naviPush } from '@/utils/navigation';
+import { HistoryItemIcon } from '../HistoryItemIcon';
+import { HistoryItemCateType } from '../type';
 import { formatIntlTimestamp } from '@/utils/time';
 import { formatAmount } from '@/utils/number';
 
