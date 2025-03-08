@@ -177,18 +177,48 @@ print_cmd_upload_changelog() {
 
   # android
   if [ -f src/changeLogs/$upload_ver.android.md ]; then
-    echo "aws s3 cp src/changeLogs/$upload_ver.android.md s3://\$RABBY_BUILD_BUCKET/rabby/downloads/wallet-mobile/android/$upload_ver.md --acl authenticated-read --content-type text/plain"
+    echo "aws s3 cp src/changeLogs/$upload_ver.android.md s3://\$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/android/$upload_ver.md --acl authenticated-read --content-type text/plain"
   elif [ -f src/changeLogs/$upload_ver.md ]; then
-    echo "aws s3 cp src/changeLogs/$upload_ver.md s3://\$RABBY_BUILD_BUCKET/rabby/downloads/wallet-mobile/android/$upload_ver.md --acl authenticated-read --content-type text/plain"
+    echo "aws s3 cp src/changeLogs/$upload_ver.md s3://\$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/android/$upload_ver.md --acl authenticated-read --content-type text/plain"
   else
     echo "No change log file found for android version $upload_ver"
   fi
 
   #ios
   if [ -f src/changeLogs/$upload_ver.ios.md ]; then
-    echo "aws s3 cp src/changeLogs/$upload_ver.ios.md s3://\$RABBY_BUILD_BUCKET/rabby/downloads/wallet-mobile/ios/$upload_ver.md --acl authenticated-read --content-type text/plain"
+    echo "aws s3 cp src/changeLogs/$upload_ver.ios.md s3://\$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/ios/$upload_ver.md --acl authenticated-read --content-type text/plain"
   elif [ -f src/changeLogs/$upload_ver.md ]; then
-    echo "aws s3 cp src/changeLogs/$upload_ver.md s3://\$RABBY_BUILD_BUCKET/rabby/downloads/wallet-mobile/ios/$upload_ver.md --acl authenticated-read --content-type text/plain"
+    echo "aws s3 cp src/changeLogs/$upload_ver.md s3://\$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/ios/$upload_ver.md --acl authenticated-read --content-type text/plain"
+  else
+    echo "No change log file found for ios version $upload_ver"
+  fi
+
+  echo ""
+  echo "Now you can upload the markdown files to S3"
+}
+
+run_upload_changelog() {
+  proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
+  if [ -z $upload_ver ]; then
+    upload_ver=$proj_version
+  fi
+  echo "[run_upload_changelog] try to find markdown changelog for version $upload_ver"
+  echo ""
+
+  # android
+  if [ -f src/changeLogs/$upload_ver.android.md ]; then
+    aws s3 cp src/changeLogs/$upload_ver.android.md s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/android/$upload_ver.md --acl authenticated-read --content-type text/plain
+  elif [ -f src/changeLogs/$upload_ver.md ]; then
+    aws s3 cp src/changeLogs/$upload_ver.md s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/android/$upload_ver.md --acl authenticated-read --content-type text/plain
+  else
+    echo "No change log file found for android version $upload_ver"
+  fi
+
+  #ios
+  if [ -f src/changeLogs/$upload_ver.ios.md ]; then
+    aws s3 cp src/changeLogs/$upload_ver.ios.md s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/ios/$upload_ver.md --acl authenticated-read --content-type text/plain
+  elif [ -f src/changeLogs/$upload_ver.md ]; then
+    aws s3 cp src/changeLogs/$upload_ver.md s3://$RABBY_MOBILE_BUILD_BUCKET/rabby/downloads/wallet-mobile/ios/$upload_ver.md --acl authenticated-read --content-type text/plain
   else
     echo "No change log file found for ios version $upload_ver"
   fi
@@ -207,6 +237,9 @@ if [ ! -z $func_to_exec ]; then
       ;;
     "cleanup_fonts_assets")
       cleanup_fonts_assets
+      ;;
+    "run_upload_changelog")
+      run_upload_changelog
       ;;
     "print_cmd_upload_changelog")
       print_cmd_upload_changelog
