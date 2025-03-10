@@ -3,6 +3,7 @@ npm-debug.log
 yarn-error.log
 node_modules
 package-lock.json
+folder-alias.json
 
 # tarball from `yarn pack`
 *.tgz
