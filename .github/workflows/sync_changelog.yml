@@ -1,0 +1,53 @@
+name: Sync Changelog
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
+
+jobs:
+  setup:
+    name: Build
+    runs-on:
+      - self-hosted
+      - macOS
+      - mobile
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v3
+
+      - name: Env Test
+        id: env-test
+        run: |
+          echo "whoami $(whoami)"
+          echo "shell is $(echo $0)"
+          echo "HOME is $HOME"
+          echo "which node $(which node)"
+
+      - name: '[Linux] Setup Nodejs and Yarn'
+        if: runner.os == 'Linux'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Sync Latest Changelog
+        run: |
+          cd apps/mobile;
+
+          sh ./scripts/fns.sh run_upload_changelog
+
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+          GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
+          GITHUB_REF: ${{ github.ref }}

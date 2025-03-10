@@ -76,12 +76,14 @@
     "react-native-quick-crypto@0.7.10": "patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch",
     "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch",
     "typeorm@^0.3.20": "patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch",
-    "react-native@0.72.7": "patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch"
+    "react-native@0.72.7": "patch:react-native@npm%3A0.72.7#./.yarn/patches/react-native-npm-0.72.7-1edea1acc1.patch",
+    "@keystonehq/metamask-airgapped-keyring@^0.13.1": "patch:@keystonehq/metamask-airgapped-keyring@npm%3A0.13.1#./.yarn/patches/@keystonehq-metamask-airgapped-keyring-npm-0.13.1-3b32a92c47.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
     "@debank/common": "^0.3.54",
     "@exodus/patch-broken-hermes-typed-arrays": "^1.0.0-alpha.1",
+    "@rabby-wallet/rabby-api": "0.9.14",
     "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {
@@ -94,7 +96,7 @@
     "@metamask/eth-json-rpc-provider": "^2.3.0",
     "@metamask/json-rpc-engine": "^7.3.0",
     "@metamask/utils": "^8.2.0",
-    "@types/node": "^16.18.54",
+    "@types/node": "^20.14.8",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "bn.js": "^5.2.1",
@@ -119,7 +121,7 @@
     "rimraf": "^3.0.2",
     "simple-git-hooks": "^2.8.0",
     "ts-node": "^10.9.1",
-    "typescript": "~4.8.4",
+    "typescript": "5.7.3",
     "which": "^3.0.0"
   },
   "packageManager": "yarn@3.3.0",

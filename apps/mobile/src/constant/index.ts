@@ -133,3 +133,12 @@ export const GNOSIS_SUPPORT_CHAINS = [
   CHAINS_ENUM.LINEA,
   'XLAYER',
 ];
+
+export const SELF_HOST_SAFE_NETWORKS = [
+  '1',
+  '56',
+  '10',
+  '42161',
+  '137',
+  '8453',
+];

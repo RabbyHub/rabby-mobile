@@ -22,13 +22,14 @@ import {
 } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components';
 import React from 'react';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTranslation } from 'react-i18next';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openapi } from '@/core/request';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import { ModalLayouts } from '@/constant/layout';
 // import { BuyCountryItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export type TCurrencyList = Awaited<
@@ -47,6 +48,8 @@ const BottomSheetWrapper = (
 ) => {
   const { visible, onClose, children, ...others } = props;
 
+  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
+
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useLayoutEffect(() => {
@@ -58,7 +61,7 @@ const BottomSheetWrapper = (
   }, [visible]);
   return (
     <AppBottomSheetModal
-      snapPoints={['90%']}
+      snapPoints={snapPoints}
       onDismiss={onClose}
       ref={modalRef}
       {...others}>

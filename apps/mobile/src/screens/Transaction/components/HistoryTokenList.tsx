@@ -15,7 +15,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatTokenAmount } from '@/utils/number';
-import { HistoryItemCateType, HistoryItemIcon } from './HistoryItemIcon';
+import { HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { naviPush } from '@/utils/navigation';
@@ -30,6 +30,7 @@ import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
 import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+import { HistoryItemCateType } from './type';
 
 const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
@@ -181,9 +182,9 @@ export const HistoryTokenList = ({
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
-          ? formatTokenAmount(singleAmount)
+          ? formatTokenAmount(singleAmount || 0)
           : t('page.transactions.detail.Unlimited')
-        : '';
+        : '0';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const isSend = type === HistoryItemCateType.Send;
       const tokenIsNft = tokenId?.length === 32;

@@ -1,194 +1,125 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { createGetStyles2024 } from '@/utils/styles';
-import { Pressable, Text, View } from 'react-native';
-import {
-  useAml,
-  useGasAccountGoBack,
-  useGasAccountInfo,
-  useGasAccountLogin,
-} from './hooks';
-import { formatUsdValue } from '@/utils/number';
-import { useTheme2024 } from '@/hooks/theme';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { GasAccountDepositPopup } from './components/DepositPopup';
-import { WithDrawPopup } from './components/WithDrawPopup';
-import RcIconGasAccountBalance from '@/assets/icons/gas-account/balance-acount.svg';
-import { GasAccountHistory } from './components/History';
-import { GasAccountLoginPopup } from './components/LoginPopup';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { toast } from '@/components2024/Toast';
+import { useTheme2024 } from '@/hooks/theme';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useMemoizedFn } from 'ahooks';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { trigger } from 'react-native-haptic-feedback';
+import { GasAccountCard } from './components/GasAccountCard';
+import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
+import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';
+import { GasAccountLogoutPopup } from './components/GasAccountLogoutPopup';
 import { GasAccountHeader } from './components/HeaderRight';
-import GasAccountLogoutPopup from './components/LogoutPopup';
+import { GasAccountHistory } from './components/History';
+import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
+import { WithDrawPopup } from './components/WithDrawPopup';
+import { useGasAccountInfo, useGasAccountLogin } from './hooks';
 import {
+  useGasAccountHistoryRefresh,
   useGasAccountLoginVisible,
   useGasAccountLogoutVisible,
 } from './hooks/atom';
-import { GasAccountWrapperBg } from './components/WrapperBg';
-import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
-import { Button } from '@/components2024/Button';
-import { trigger } from 'react-native-haptic-feedback';
-import { toast } from '@/components2024/Toast';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-
-const DEPOSIT_LIMIT = 1000;
+import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 export const GasAccountScreen = () => {
   useLastUsedAccountInScreen();
 
   const { t } = useTranslation();
-  const [showDesposit, setShowDesposit] = useState(false);
+  const [depositState, setDepositState] = useState<{
+    isOpen?: boolean;
+    type?: 'token' | 'pay';
+  }>({
+    isOpen: false,
+  });
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [loginVisible, setLoginVisible] = useGasAccountLoginVisible();
 
   const [switchAddrVisible, setSwitchAddrVisible] = useState(false);
 
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { value, loading } = useGasAccountInfo();
+  const {
+    value: gasAccount,
+    loading,
+    runFetchGasAccountInfo,
+  } = useGasAccountInfo();
 
-  const usd = useMemo(() => {
-    if (value && 'account' in value) {
-      return formatUsdValue(value.account.balance);
-    }
-    return formatUsdValue(0);
-  }, [value]);
+  const { refresh: refreshHistory } = useGasAccountHistoryRefresh();
 
-  const gotoDashboard = useGasAccountGoBack();
+  const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
+    setDepositState({
+      isOpen: true,
+      type,
+    });
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  });
 
-  const gotoDesposit = useCallback(() => {
-    setShowDesposit(true);
-  }, []);
+  const handleWithdraw = useMemoizedFn(() => {
+    setShowWithdraw(true);
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  });
 
-  const { isLogin } = useGasAccountLogin({ value, loading });
+  const { isLogin } = useGasAccountLogin({ value: gasAccount, loading });
 
-  const isRisk = useAml();
-
-  const balance = value?.account?.balance || 0;
-
-  const canDesposit = useMemo(
-    () => !isRisk && balance < DEPOSIT_LIMIT,
-    [balance, isRisk],
-  );
+  const balance = gasAccount?.account?.balance || 0;
 
   const [logoutPopupVisible, setLogoutPopupVisible] =
     useGasAccountLogoutVisible();
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const headerRight = useCallback(() => <GasAccountHeader />, []);
-
-  const handleDepositTips = useCallback(() => {
-    if (!canDesposit) {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.DESCRIPTION,
-        title: 'why cant i deposit?',
-        sections: [
-          {
-            description: isRisk
-              ? t('page.gasAccount.risk')
-              : t('page.gasAccount.gasExceed'),
-          },
-        ],
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          snapPoints: [300],
-        },
-        nextButtonProps: {
-          title: (
-            <Text style={styles.closeModalBtnText}>
-              {t('page.tokenDetail.excludeBalanceTipsButton')}
-            </Text>
-          ),
-          titleStyle: styles.tipTitle,
-          onPress: () => {
-            removeGlobalBottomSheetModal2024(modalId);
-          },
-        },
-      });
-    }
-  }, [canDesposit, isRisk, t, styles.closeModalBtnText, styles.tipTitle]);
+  const headerRight = useCallback(
+    () => (isLogin ? <GasAccountHeader /> : null),
+    [isLogin],
+  );
 
   useEffect(() => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
-  useEffect(() => {
-    if (!loading && !isLogin) {
-      setLoginVisible(true);
-    }
-  }, [loading, isLogin, setLoginVisible]);
-
   return (
-    <NormalScreenContainer>
-      <GasAccountWrapperBg style={styles.accountContainer}>
-        <View style={styles.content}>
-          <RcIconGasAccountBalance style={styles.acountIcon} />
-          <Text style={styles.balanceText}>{usd}</Text>
-        </View>
-        <View style={styles.accountFooter}>
-          <Pressable
-            style={{
-              flex: 1,
-            }}
-            onPress={() => {
-              if (!balance) {
-                toast.show(t('page.gasAccount.noBalance'), {
-                  position: toast.positions.CENTER,
-                  textStyle: styles.toastStyle,
-                });
-                return;
-              }
-            }}>
-            <Button
-              type="ghost"
-              onPress={() => {
-                setShowWithdraw(true);
-                trigger('impactLight', {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
-              }}
-              titleStyle={styles.btnTitle}
-              title={t('page.gasAccount.withdraw')}
-              disabled={!balance}
-            />
-          </Pressable>
-          <Pressable
-            style={{
-              flex: 1,
-            }}
-            onPress={handleDepositTips}>
-            <Button
-              type="primary"
-              onPress={() => {
-                if (canDesposit) {
-                  gotoDesposit();
-                  trigger('impactLight', {
-                    enableVibrateFallback: true,
-                    ignoreAndroidSystemSettings: false,
-                  });
-                }
-              }}
-              titleStyle={styles.btnTitle}
-              disabled={!canDesposit || loading}
-              title={t('component.gasAccount.deposit')}
-            />
-          </Pressable>
-        </View>
-      </GasAccountWrapperBg>
+    <NormalScreenContainer type="linear">
+      <GasAccountCard
+        isLogin={isLogin}
+        gasAccountInfo={gasAccount?.account}
+        onLoginPress={() => {
+          setLoginVisible(true);
+        }}
+        onDepositPress={handleDeposit}
+        onWithdrawPress={handleWithdraw}
+      />
 
       <GasAccountHistory />
 
-      <GasAccountDepositPopup
-        visible={showDesposit}
-        onCancel={() => setShowDesposit(false)}
-      />
+      {gasAccount?.account.id ? (
+        <GasAccountDepositPopup
+          visible={depositState.isOpen}
+          type={depositState.type}
+          gasAccountAddress={gasAccount.account.id}
+          onDeposit={async () => {
+            await runFetchGasAccountInfo();
+            setDepositState({
+              isOpen: false,
+            });
+            refreshHistory();
+            toast.success(t('page.gasAccount.depositSuccess'), {
+              position: toast.positions.CENTER,
+            });
+          }}
+          onClose={() => {
+            setDepositState({
+              isOpen: false,
+            });
+          }}
+        />
+      ) : null}
 
       <WithDrawPopup
         visible={showWithdraw}
@@ -198,11 +129,12 @@ export const GasAccountScreen = () => {
 
       <GasAccountLoginPopup
         visible={loginVisible}
-        onCancel={() => {
+        onClose={() => {
           setLoginVisible(false);
-          if (!isLogin) {
-            gotoDashboard();
-          }
+        }}
+        onLogin={async () => {
+          await runFetchGasAccountInfo();
+          setLoginVisible(false);
         }}
       />
 

@@ -172,6 +172,13 @@
         "notPaymentAddress": "Not the payment address",
         "unknownAddress": "Unknown address"
       },
+      "safeTx": {
+        "selfHostConfirm": {
+          "title": "Switch to Rabby's Safe Service",
+          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.<2>",
+          "button": "OK"
+        }
+      },
       "crossChain": {
         "title": "Cross Chain"
       },
@@ -802,7 +809,8 @@
         "dapps": "Dapps",
         "more": "More",
         "queue": "Queue",
-        "websites": "Websites"
+        "websites": "Websites",
+        "search": "Search Token"
       }
     },
     "dashboard": {
@@ -850,6 +858,10 @@
       },
       "hd": {
         "howToSwitch": "How to switch"
+      },
+      "offlineChain": {
+        "chain": "{{chain}} will soon not be integrated.",
+        "tips": "{{chain}} Chain will not be integrated on {{date}}. Your assets won’t be affected but won’t be included in your total balance. To access them, you may add it as a custom network in “Settings”."
       }
     },
     "nextComponent": {
@@ -1438,7 +1450,9 @@
         "paymentAddress": "Payment Address",
         "selectToken": "Select Token",
         "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
-        "followingTokenInSufficient": "The following token balance is insufficient"
+        "followingTokenInSufficient": "The following token balance is insufficient",
+        "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
+        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
         "title": "Select Payment address",
@@ -1476,7 +1490,33 @@
       "switchLoginAddressBeforeDeposit": {
         "title": "Switch address before deposit",
         "desc": "Please switch to your login address."
-      }
+      },
+      "depositPayPopup": {
+        "title": "Buy with Apple Pay",
+        "titleAndroid": "Buy with Google Pay",
+        "balance": "Current GasAccount Balance: ",
+        "depositFailed": "Deposit Failed",
+        "depositCanceled": "Deposit Canceled"
+      },
+      "depositSelectPopup": {
+        "title": "Deposit to GasAccount",
+        "desc": "Pay Gas Fees on All Chains",
+        "depositToken": "Deposit with Token",
+        "depositTokenDesc": "No extra fee, instant withdrawals",
+        "buyWith": "Buy with",
+        "buyWithDesc": "30% fee, no withdrawals"
+      },
+      "switchAccount": "Switch GasAccount",
+      "gasAccountList": {
+        "address": "Address",
+        "balance": "Balance",
+        "gasAccountBalance": "GasAccount Balance"
+      },
+      "depositSuccess": "Deposit successful",
+      "loginFailed": "Login Failed",
+      "depositCanceled": "Deposit Canceled",
+      "loginSuccess": "Login Successful",
+      "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Not supported on this chain",
@@ -1646,7 +1686,11 @@
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
         "button": "View on DeBank APP"
-      }
+      },
+      "depositWithToken": "Deposit with Token",
+      "depositWithTokenDesc": "No extra fee, instant withdrawals",
+      "depositWithPayDesc": "30% fee, no withdrawals",
+      "depositWithPay": "Buy with"
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",

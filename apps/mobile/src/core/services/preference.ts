@@ -144,6 +144,7 @@ export interface PreferenceStore {
   // themeMode?: DARK_MODE_TYPE;
   addressSortStore: AddressSortStore;
   isInvited?: boolean;
+  safeSelfHostConfirm?: Record<string, boolean>;
   /**
    *  The unique visitor ID
    */
@@ -228,6 +229,7 @@ export class PreferenceService {
           lastUsedAccount: undefined,
           tempCurrentAccount: undefined,
           tokenManageSettingMap: {},
+          safeSelfHostConfirm: {},
         },
       },
       {
@@ -238,7 +240,27 @@ export class PreferenceService {
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
     }
+    if (!this.store.safeSelfHostConfirm) {
+      this.store.safeSelfHostConfirm = {};
+    }
   }
+
+  hasConfirmSafeSelfHost = (networkId: string) => {
+    if (this.store.safeSelfHostConfirm?.[networkId]) {
+      return true;
+    }
+    return false;
+  };
+
+  setConfirmSafeSelfHost = (networkId: string) => {
+    if (!this.store.safeSelfHostConfirm) {
+      this.store.safeSelfHostConfirm = {
+        [networkId]: true,
+      };
+    } else {
+      this.store.safeSelfHostConfirm[networkId] = true;
+    }
+  };
 
   /** @deprecated */
   _dangerouslySetTokenManageSettingMap(input: ITokenManageSettingMap) {

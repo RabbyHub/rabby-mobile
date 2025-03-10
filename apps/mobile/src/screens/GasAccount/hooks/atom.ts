@@ -1,5 +1,6 @@
 import { gasAccountService, keyringService } from '@/core/services';
 import { GasAccountServiceStore } from '@/core/services/gasAccount';
+import { eventBus, EVENTS } from '@/utils/events';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -47,6 +48,7 @@ const syncDeleteGasAccount = async (
     if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
       // if there is no another type address then reset signature
       gasAccountService.setGasAccountSig();
+      eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
     }
   }
 };
@@ -56,6 +58,13 @@ gasAccountSigAtom.onMount = set => {
   const data = gasAccountService.getGasAccountData() as GasAccountServiceStore;
   set({
     ...data,
+  });
+  eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
+    const data =
+      gasAccountService.getGasAccountData() as GasAccountServiceStore;
+    set({
+      ...data,
+    });
   });
 };
 
@@ -77,6 +86,7 @@ export const useSetGasAccount = () => {
 
 const logoutVisibleAtom = atom(false);
 const loginVisibleAtom = atom(false);
+const switchVisibleAtom = atom(false);
 
 export const useGasAccountLogoutVisible = () => {
   return useAtom(logoutVisibleAtom);
@@ -84,4 +94,8 @@ export const useGasAccountLogoutVisible = () => {
 
 export const useGasAccountLoginVisible = () => {
   return useAtom(loginVisibleAtom);
+};
+
+export const useGasAccountSwitchVisible = () => {
+  return useAtom(switchVisibleAtom);
 };

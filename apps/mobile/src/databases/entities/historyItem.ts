@@ -12,7 +12,7 @@ import {
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
-
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 @Entity('cache_historyitem')
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
@@ -98,6 +98,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     transformer: badRealTransformer,
   })
   tx_eth_gas_fee: number = 0;
+
+  // historyItemCateType
+  @Column('text', { default: '' })
+  historyItemCateType?: HistoryItemCateType = undefined;
 
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]

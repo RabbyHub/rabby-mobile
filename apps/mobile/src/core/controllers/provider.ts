@@ -25,6 +25,7 @@ import {
   customTestnetService,
   bridgeService,
   customRPCService,
+  gasAccountService,
 } from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
@@ -132,6 +133,7 @@ interface ApprovalRes extends Tx {
   isGasLess?: boolean;
   isGasAccount?: boolean;
   logId?: string;
+  sig?: string;
 }
 
 interface Web3WalletPermission {
@@ -441,6 +443,7 @@ class ProviderController extends BaseController {
     const lowGasDeadline = approvalRes.lowGasDeadline;
     const preReqId = approvalRes.reqId;
     const isGasLess = approvalRes.isGasLess || false;
+    const sig = approvalRes.sig;
     const logId = approvalRes?.logId || '';
     const isGasAccount = approvalRes.isGasAccount || false;
 
@@ -461,6 +464,7 @@ class ProviderController extends BaseController {
     delete txParams.isCoboSafe;
     delete approvalRes.isGasLess;
     delete approvalRes.isGasAccount;
+    delete approvalRes.sig;
 
     let is1559 = is1559Tx(approvalRes);
     if (
@@ -790,8 +794,17 @@ class ProviderController extends BaseController {
               origin,
               is_gasless: isGasLess,
               is_gas_account: isGasAccount,
+              sig,
               // log_id: logId,
             } as Parameters<typeof openapi.submitTx>[0]);
+
+            if (res.access_token) {
+              gasAccountService.setGasAccountSig(
+                res.access_token,
+                currentAccount,
+              );
+              eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
+            }
 
             hash = res.req.tx_id || undefined;
             reqId = res.req.id || undefined;

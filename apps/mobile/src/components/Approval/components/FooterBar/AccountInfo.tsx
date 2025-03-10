@@ -1,63 +1,23 @@
-import React from 'react';
+import { AddressViewer } from '@/components/AddressViewer';
+import { Tip } from '@/components/Tip';
+import { TruncatedText } from '@/components/TruncatedText';
 import { Chain } from '@/constant/chains';
-import { useTranslation } from 'react-i18next';
+import { contactService } from '@/core/services';
 import { Account } from '@/core/services/preference';
+import { useTheme2024 } from '@/hooks/theme';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { splitNumberByStep } from '@/utils/number';
-import { contactService } from '@/core/services';
-import { useThemeColors } from '@/hooks/theme';
-import { Tip } from '@/components/Tip';
-import { StyleSheet, Text, View } from 'react-native';
-import { AddressViewer } from '@/components/AddressViewer';
-import { AppColorsVariants } from '@/constant/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { getWalletIcon } from '@/utils/walletInfo';
-import { TruncatedText } from '@/components/TruncatedText';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
 
 export interface Props {
   account: Account;
   isTestnet?: boolean;
   chain?: Chain;
 }
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    wrapper: {
-      backgroundColor: colors['neutral-card-3'],
-      borderRadius: 8,
-      padding: 12,
-      paddingHorizontal: 16,
-      gap: 12,
-    },
-    addressInfoContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      height: 18,
-      gap: 16,
-    },
-    addressContainer: {
-      gap: 6,
-      flexDirection: 'row',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
-    nickname: {
-      overflow: 'hidden',
-      fontSize: 15,
-      lineHeight: 20,
-      color: colors['neutral-body'],
-      maxWidth: 130,
-    },
-    addressViewer: {
-      fontSize: 13,
-      color: colors['neutral-foot'],
-    },
-    balance: {
-      fontSize: 13,
-      color: colors['neutral-foot'],
-      fontWeight: '500',
-    },
-  });
 
 export const AccountInfo: React.FC<Props> = ({
   account,
@@ -68,8 +28,7 @@ export const AccountInfo: React.FC<Props> = ({
   const { balance } = useCurrentBalance(account?.address);
   const displayBalance = splitNumberByStep((balance || 0).toFixed(2));
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   const init = async () => {
     const result = await contactService.getAliasByAddress(
@@ -102,6 +61,7 @@ export const AccountInfo: React.FC<Props> = ({
             />
           </Tip>
           <AddressViewer
+            addressStyle={styles.addressStyle}
             disabledPress
             showArrow={false}
             address={account.address}
@@ -114,3 +74,51 @@ export const AccountInfo: React.FC<Props> = ({
     </View>
   );
 };
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  wrapper: {
+    backgroundColor: colors2024['neutral-bg-3'],
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  addressInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 18,
+    gap: 16,
+  },
+  addressContainer: {
+    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  nickname: {
+    overflow: 'hidden',
+    maxWidth: 130,
+
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    color: colors2024['neutral-foot'],
+    lineHeight: 18,
+  },
+  addressStyle: {
+    fontSize: 13,
+    lineHeight: 16,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+  },
+  balance: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 13,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    color: colors2024['neutral-foot'],
+    lineHeight: 16,
+  },
+}));

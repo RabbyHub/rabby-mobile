@@ -10,7 +10,7 @@ import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts } from '@/constant/layout';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BridgeHistoryItem } from '@/components2024/HistoryItem/BridgeHistoryItem';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

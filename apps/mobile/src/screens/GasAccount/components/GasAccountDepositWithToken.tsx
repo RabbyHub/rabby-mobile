@@ -1,59 +1,51 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-  PropsWithChildren,
-} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Keyboard,
-  TextInput,
-} from 'react-native';
+import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { AssetAvatar } from '@/components';
-import { useTranslation } from 'react-i18next';
-import { formatUsdValue } from '@/utils/number';
-import { openapi } from '@/core/request';
-import {
-  BottomSheetFlatList,
-  BottomSheetModalProps,
-  BottomSheetSectionList,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import BigNumber from 'bignumber.js';
-import { getTokenSymbol } from '@/utils/token';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import { findChainByServerID } from '@/utils/chain';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
-import useAsync from 'react-use/lib/useAsync';
-import { topUpGasAccount } from '@/core/apis/gasAccount';
-import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
-import { ListItem } from '@/components2024/ListItem/ListItem';
+import { SearchInput } from '@/components/Form/SearchInput';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { Button } from '@/components2024/Button';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { ListItem } from '@/components2024/ListItem/ListItem';
+import { toast } from '@/components2024/Toast';
+import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
+import { topUpGasAccount } from '@/core/apis/gasAccount';
+import { openapi } from '@/core/request';
 import { gasAccountService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
-import { SearchInput } from '@/components/Form/SearchInput';
-import { Skeleton } from '@rneui/themed';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { toast } from '@/components2024/Toast';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useAlias } from '@/hooks/alias';
+import { useTheme2024 } from '@/hooks/theme';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { findChainByServerID } from '@/utils/chain';
+import { formatUsdValue } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import {
+  BottomSheetModalProps,
+  BottomSheetSectionList,
+} from '@gorhom/bottom-sheet';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Skeleton } from '@rneui/themed';
+import BigNumber from 'bignumber.js';
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import useAsync from 'react-use/lib/useAsync';
+import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
+import { SelectGasAccountList } from './SelectGasAccountList';
+import { maxBy } from 'lodash';
 
 const amountList = [10, 100];
 
@@ -347,10 +339,10 @@ const TokenSelector = ({
 
 const SelectAccount = ({
   onChange,
-  defaultAccount,
+  value,
 }: {
   onChange: (account: Account) => void;
-  defaultAccount: Account;
+  value: Account;
 }) => {
   const { t } = useTranslation();
 
@@ -372,80 +364,7 @@ const SelectAccount = ({
     [accounts],
   );
 
-  const list = useSortAddressList(filterAccounts);
-
-  const [tmpSelectAccount, setTmpSelectAccount] =
-    useState<(typeof list)[number]>(defaultAccount);
-
-  const renderItem = useCallback(
-    ({ item }: { item: Account }) => (
-      <TouchableOpacity
-        style={styles.accountItem}
-        onPress={() => {
-          setTmpSelectAccount(item);
-        }}>
-        <AddressItem account={item} fetchAccount={false}>
-          {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
-            <View
-              style={{
-                width: '100%',
-                flexDirection: 'row',
-                gap: 8,
-                alignItems: 'center',
-              }}>
-              <WalletIcon
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 10,
-                }}
-              />
-              <View style={{ gap: 4 }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    height: 24,
-                  }}>
-                  <WalletName />
-                  {isSameAddress(
-                    tmpSelectAccount?.address || '',
-                    item.address,
-                  ) && tmpSelectAccount.type === item.type ? (
-                    <RcIconCheck />
-                  ) : null}
-                </View>
-
-                <WalletAddress
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '500',
-                    lineHeight: 22,
-                    fontFamily: 'SF Pro Rounded',
-                  }}
-                />
-              </View>
-              <View style={{ marginLeft: 'auto' }}>
-                <WalletBalance />
-              </View>
-            </View>
-          )}
-        </AddressItem>
-      </TouchableOpacity>
-    ),
-    [tmpSelectAccount, styles.accountItem],
-  );
-
-  useEffect(() => {
-    const v = gasAccountService.getLastDepositAccount();
-    if (
-      v &&
-      list &&
-      !list.some(a => a.address === v?.address && a.type === v.type)
-    ) {
-      setTmpSelectAccount(account as (typeof list)[number]);
-    }
-  }, [account, list]);
+  // const list = useSortAddressList(filterAccounts);
 
   return (
     <View style={styles.container}>
@@ -453,26 +372,20 @@ const SelectAccount = ({
         <Text style={styles.title}>
           {t('page.gasAccount.paymentAddressPopup.title')}
         </Text>
-
-        <View
-          style={{
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingHorizontal: 6,
-          }}>
-          <Text
+      </View>
+      <SelectGasAccountList
+        value={value}
+        onChange={onChange}
+        listHeader={
+          <View
             style={{
-              color: colors2024['neutral-secondary'],
-              fontFamily: 'SF Pro Rounded',
-              fontSize: 17,
-              fontWeight: '400',
-              lineHeight: 22,
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 6,
+              marginBottom: 12,
             }}>
-            {t('page.gasAccount.paymentAddressPopup.address')}
-          </Text>
-          <View>
             <Text
               style={{
                 color: colors2024['neutral-secondary'],
@@ -481,39 +394,31 @@ const SelectAccount = ({
                 fontWeight: '400',
                 lineHeight: 22,
               }}>
-              {t('page.gasAccount.paymentAddressPopup.balance')}
+              {t('page.gasAccount.paymentAddressPopup.address')}
             </Text>
-            {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
+            <View>
+              <Text
+                style={{
+                  color: colors2024['neutral-secondary'],
+                  fontFamily: 'SF Pro Rounded',
+                  fontSize: 17,
+                  fontWeight: '400',
+                  lineHeight: 22,
+                }}>
+                {t('page.gasAccount.paymentAddressPopup.balance')}
+              </Text>
+              {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
+            </View>
           </View>
-        </View>
-      </View>
-      <BottomSheetFlatList
-        style={{ flex: 1, width: '100%' }}
-        contentContainerStyle={styles.containerHorizontal}
-        data={list}
-        keyExtractor={(item, index) => item.type + item.address + index}
-        renderItem={renderItem}
-        extraData={tmpSelectAccount}
+        }
       />
-      <View style={styles.containerHorizontal}>
-        <Button
-          onPress={() => {
-            onChange(tmpSelectAccount);
-          }}
-          containerStyle={{
-            width: '100%',
-            marginBottom: 35,
-          }}
-          title={t('page.gasAccount.paymentAddressPopup.confirm')}
-        />
-      </View>
     </View>
   );
 };
 
 const CUSTOM_AMOUNT = 0;
 
-const GasAccountDepositContent = ({ onClose }) => {
+export const GasAccountDepositWithToken = ({ onClose }) => {
   const { t } = useTranslation();
   const [selectedAmount, setAmount] = useState(amountList[0]);
   const [tokenListVisible, setTokenListVisible] = useState(false);
@@ -630,15 +535,10 @@ const GasAccountDepositContent = ({ onClose }) => {
   };
 
   const [depositAccount, setDepositAccount] = useState(() => {
-    const last = gasAccountService.getLastDepositAccount() || account!;
-    if (
-      accounts.some(
-        a => isSameAddress(a.address, last.address) && a.type === last.type,
-      )
-    ) {
-      return last as Account;
-    }
-    return account! as Account;
+    const list = accounts.filter(
+      a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+    );
+    return maxBy(list, a => a.balance || 0) || list[0];
   });
 
   const onChangeAccount = useCallback((account: Account) => {
@@ -804,44 +704,9 @@ const GasAccountDepositContent = ({ onClose }) => {
       <BottomSheetWrapper
         visible={accountListVisible}
         onClose={() => setAccountListVisible(false)}>
-        <SelectAccount
-          onChange={onChangeAccount}
-          defaultAccount={depositAccount}
-        />
+        <SelectAccount onChange={onChangeAccount} value={depositAccount} />
       </BottomSheetWrapper>
     </KeyboardAwareScrollView>
-  );
-};
-
-export const GasAccountDepositPopup = props => {
-  const { styles, colors2024 } = useTheme2024({
-    getStyle: getStyles,
-  });
-  const modalRef = useRef<AppBottomSheetModal>(null);
-
-  useEffect(() => {
-    if (!props?.visible) {
-      modalRef.current?.close();
-    } else {
-      modalRef.current?.present();
-    }
-  }, [props?.visible]);
-
-  return (
-    <AppBottomSheetModal
-      snapPoints={['90%']}
-      onDismiss={props.onCancel || props.onClose}
-      ref={modalRef}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      {...makeBottomSheetProps({
-        linearGradientType: 'linear',
-        colors: colors2024,
-      })}>
-      <BottomSheetView style={styles.popup}>
-        <GasAccountDepositContent onClose={props.onCancel || props.onClose} />
-      </BottomSheetView>
-    </AppBottomSheetModal>
   );
 };
 

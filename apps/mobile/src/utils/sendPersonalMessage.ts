@@ -62,6 +62,8 @@ export const sendPersonalMessage = async ({
   onProgress?.('building');
   const currentAccount = (await preferenceService.getCurrentAccount())!;
 
+  console.log('current', currentAccount);
+
   report({
     action: 'createSignText',
     currentAccount,

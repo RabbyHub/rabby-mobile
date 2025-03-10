@@ -44,7 +44,6 @@ export default function SelectSortedChainModal({
       snapPoints={[ModalLayouts.defaultHeightPercentText]}
       backgroundStyle={styles.sheet}
       onDismiss={onCancel}
-      enableContentPanningGesture={false}
       handleStyle={{
         backgroundColor: colors2024['neutral-bg-0'],
       }}>

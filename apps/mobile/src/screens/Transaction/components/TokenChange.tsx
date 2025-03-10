@@ -20,10 +20,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenLabel from './TokenLabel';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { HistoryItemCateType } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { HistoryItemCateType } from './type';
 
 const TxChangeItem = ({
   item,

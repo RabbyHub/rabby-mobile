@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-export const eventBus = new EventEmitter();
+export const eventBus: EventEmitter = new EventEmitter();
 
 export const SIGN_HELPER_EVENTS = {
   broadcastToUI: 'broadcastToUI',
@@ -39,4 +39,8 @@ export const SIGN_HELPER_EVENTS = {
   },
   LOCK_WALLET: 'LOCK_WALLET',
   RELOAD_TX: 'RELOAD_TX',
+
+  PURCHASE_UPDATED: 'PURCHASE_UPDATED',
+
+  AUTO_LOGIN_GAS_ACCOUNT: 'AUTO_LOGIN_GAS_ACCOUNT',
 };

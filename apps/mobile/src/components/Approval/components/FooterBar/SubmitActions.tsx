@@ -1,86 +1,19 @@
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ActionsContainer, Props } from './ActionsContainer';
-import { StyleSheet, View, Text } from 'react-native';
 import { Button } from '@/components/Button';
-import { Tip } from '@/components/Tip';
-import { AppColorsVariants } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { GasLessAnimatedWrapper } from './GasLessComponents';
-import { colord, extend } from 'colord';
-import mixPlugin from 'colord/plugins/mix';
-import { useSubmitAction } from './useSubmitAction';
 import { globalBottomSheetModalAddListener } from '@/components/GlobalBottomSheetModal';
 import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { Tip } from '@/components/Tip';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { extend } from 'colord';
+import mixPlugin from 'colord/plugins/mix';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
+import { ActionsContainer, Props } from './ActionsContainer';
+import { GasLessAnimatedWrapper } from './GasLessComponents';
+import { useSubmitAction } from './useSubmitAction';
 
 extend([mixPlugin]);
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    button: {
-      height: 48,
-      borderColor: colors['blue-default'],
-      borderWidth: 1,
-      borderRadius: 8,
-    },
-    buttonConfirm: {
-      width: 230,
-      borderColor: colors['blue-default'],
-      backgroundColor: colors['blue-default'],
-      // borderColor: colord(colors['blue-default'])
-      //   .mix(colord(colors['neutral-black']), 0.2)
-      //   .toHex(),
-      // backgroundColor: colord(colors['blue-default'])
-      //   .mix(colord(colors['neutral-black']), 0.2)
-      //   .toHex(),
-    },
-    buttonText: {
-      color: colors['neutral-title-2'],
-      fontSize: 15,
-      fontWeight: '500',
-    },
-    buttonDisabled: {
-      borderColor: colors['blue-light-1'],
-    },
-    buttonWrapper: {},
-    submitButtonWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 6,
-    },
-  });
-
-const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
-  button: {
-    height: 56,
-    borderColor: colors2024['brand-default'],
-    borderWidth: 1,
-    borderRadius: 100,
-  },
-  buttonConfirm: {
-    width: 220,
-    borderColor: colors2024['brand-default'],
-    backgroundColor: colors2024['brand-default'],
-  },
-  buttonText: {
-    color: colors2024['neutral-InvertHighlight'],
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
-  },
-  buttonDisabled: {
-    borderColor: 'transparent', //colors2024['brand-default'],
-  },
-  buttonWrapper: {},
-  submitButtonWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-}));
 
 export const SubmitActions: React.FC<Props> = ({
   disabledProcess,
@@ -100,14 +33,7 @@ export const SubmitActions: React.FC<Props> = ({
     setIsSign(true);
   }, []);
   const colors = useThemeColors();
-  const oldStyles = React.useMemo(() => getStyles(colors), [colors]);
-
-  const { styles: styles2024 } = useTheme2024({ getStyle: getStyles2024 });
-
-  const styles = useMemo(
-    () => (isMiniSignTx ? styles2024 : oldStyles),
-    [isMiniSignTx, styles2024, oldStyles],
-  );
+  const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);
   const { submitText, SubmitIcon, onPress } = useSubmitAction();
   const handlePress = React.useCallback(() => {
@@ -192,3 +118,33 @@ export const SubmitActions: React.FC<Props> = ({
     </ActionsContainer>
   );
 };
+
+const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
+  button: {
+    height: 56,
+    borderColor: colors2024['brand-default'],
+    borderWidth: 1,
+    borderRadius: 100,
+  },
+  buttonConfirm: {
+    width: 220,
+    borderColor: colors2024['brand-default'],
+    backgroundColor: colors2024['brand-default'],
+  },
+  buttonText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
+  buttonDisabled: {
+    borderColor: 'transparent', //colors2024['brand-default'],
+  },
+  buttonWrapper: {},
+  submitButtonWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+}));

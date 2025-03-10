@@ -1,40 +1,12 @@
-import React, { useMemo } from 'react';
-import { ActionsContainer, Props } from './ActionsContainer';
-import { useTranslation } from 'react-i18next';
-import { Tip } from '@/components/Tip';
-import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
+import { Tip } from '@/components/Tip';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { createGetStyles2024 } from '@/utils/styles';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    button: {
-      height: 48,
-      borderColor: colors['blue-default'],
-      borderWidth: 1,
-      borderRadius: 8,
-    },
-    buttonText: {
-      color: colors['blue-default'],
-      fontSize: 15,
-      fontWeight: '500',
-    },
-    disabled: {
-      opacity: 0.5,
-    },
-    holdButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    spin: {
-      width: 16,
-      height: 16,
-    },
-  });
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
+import { ActionsContainer, Props } from './ActionsContainer';
+import { GasLessAnimatedWrapper } from './GasLessComponents';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
@@ -79,14 +51,8 @@ export const ProcessActions: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const oldStyles = React.useMemo(() => getStyles(colors), [colors]);
 
-  const { styles: styles2024 } = useTheme2024({ getStyle: getStyles2024 });
-
-  const styles = useMemo(
-    () => (isMiniSignTx ? styles2024 : oldStyles),
-    [isMiniSignTx, styles2024, oldStyles],
-  );
+  const { styles } = useTheme2024({ getStyle: getStyles2024 });
 
   const buttonIsPrimary = isPrimary || gasLess;
   const buttonText = submitText ?? t('page.signFooterBar.beginSigning');

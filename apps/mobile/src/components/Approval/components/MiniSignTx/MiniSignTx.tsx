@@ -63,7 +63,8 @@ import {
 } from '@rabby-wallet/rabby-action';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { apiCustomRPC, apiProvider } from '@/core/apis';
-
+import { toast as toast2024 } from '@/components2024/Toast';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -237,6 +238,7 @@ const MiniSignTx = ({
   >();
   const [gasLessLoading, setGasLessLoading] = useState(false);
   const [canUseGasLess, setCanUseGasLess] = useState(false);
+  const [isFirstGasLessLoading, setIsFirstGasLessLoading] = useState(true);
   const [useGasLess, setUseGasLess] = useState(false);
 
   const [isGnosisAccount, setIsGnosisAccount] = useState(false);
@@ -256,6 +258,10 @@ const MiniSignTx = ({
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
+
+  const _currentAccount = useMemo(() => {
+    return preferenceService.getCurrentAccount()!;
+  }, []);
 
   const [txsResult, setTxsResult] = useState<
     {
@@ -433,11 +439,17 @@ const MiniSignTx = ({
     isGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
+    canDepositUseGasAccount,
+    gasAccountCostFn,
+    gasAccountAddress,
+    sig,
+    isFirstGasCostLoading,
   } = useGasAccountTxsCheck({
     isReady,
     txs: gasAccountTxs,
     noCustomRPC,
     isSupportedAddr,
+    currentAccount: _currentAccount,
   });
 
   useEffect(() => {
@@ -477,6 +489,7 @@ const MiniSignTx = ({
             pushType: pushInfo.type,
             ignoreGasCheck: true,
             ignoreGasNotEnoughCheck: true,
+            sig,
           },
           status: 'idle',
         };
@@ -620,11 +633,13 @@ const MiniSignTx = ({
             : res?.promotion?.config,
         );
       }
+      setIsFirstGasLessLoading(false);
     } catch (error) {
       console.error('gasLessTxCheck error', error);
       setCanUseGasLess(false);
       setGasLessConfig(undefined);
       setGasLessLoading(false);
+      setIsFirstGasLessLoading(false);
     }
   });
 
@@ -882,6 +897,7 @@ const MiniSignTx = ({
         checkGasLessStatus();
       } else {
         setGasLessLoading(false);
+        setIsFirstGasLessLoading(false);
       }
     }
   }, [
@@ -908,6 +924,8 @@ const MiniSignTx = ({
       handleIsGnosisAccountChange();
     }
   }, [handleIsGnosisAccountChange, isGnosisAccount]);
+
+  useGasAccountInfo();
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -990,8 +1008,19 @@ const MiniSignTx = ({
         noCustomRPC={noCustomRPC}
         gasMethod={gasMethod}
         gasAccountCost={gasAccountCost}
+        isFirstGasCostLoading={isFirstGasCostLoading}
+        isFirstGasLessLoading={isFirstGasLessLoading}
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
+        canDepositUseGasAccount={canDepositUseGasAccount}
+        rejectApproval={onReject}
+        onDeposit={() => {
+          toast2024.success(t('page.gasAccount.depositSuccess'), {
+            position: toast2024.positions.CENTER,
+          });
+          gasAccountCostFn();
+        }}
+        gasAccountAddress={gasAccountAddress}
         isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={
           currentAccountType === KEYRING_TYPE.WalletConnectKeyring
@@ -1021,14 +1050,18 @@ const MiniSignTx = ({
         onSubmit={() => handleAllow()}
         onIgnoreAllRules={handleIgnoreAllRules}
         enableTooltip={
-          // 3001 use gasless tip
-          checkErrors && checkErrors?.[0]?.code === 3001
+          currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+            ? true
+            : // 3001 use gasless tip
+            checkErrors && checkErrors?.[0]?.code === 3001
             ? false
             : !canProcess ||
               !!checkErrors.find(item => item.level === 'forbidden')
         }
         tooltipContent={
-          checkErrors && checkErrors?.[0]?.code === 3001
+          currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+            ? t('page.signTx.canOnlyUseImportedAddress')
+            : checkErrors && checkErrors?.[0]?.code === 3001
             ? undefined
             : checkErrors.find(item => item.level === 'forbidden')
             ? checkErrors.find(item => item.level === 'forbidden')!.msg

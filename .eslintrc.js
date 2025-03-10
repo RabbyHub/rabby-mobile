@@ -59,6 +59,7 @@ module.exports = {
         '@typescript-eslint/restrict-template-expressions': 'warn',
         'no-restricted-syntax': 'off',
         'no-restricted-globals': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
       },
     },
     {

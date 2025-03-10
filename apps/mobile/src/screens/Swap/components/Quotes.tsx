@@ -32,7 +32,7 @@ import {
   QuoteItemProps as QuoteItemPropsOld,
 } from './QuoteItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { IS_ANDROID } from '@/core/native/utils';

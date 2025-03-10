@@ -36,10 +36,6 @@ import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  HistoryItemCateType,
-  HistoryItemIcon,
-} from './components/HistoryItemIcon';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { Button } from '@/components2024/Button';
