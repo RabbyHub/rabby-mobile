@@ -1,6 +1,6 @@
 import { range } from 'lodash';
 import React from 'react';
-import { Animated, FlatListProps, Platform, View } from 'react-native';
+import { FlatList, FlatListProps, Platform, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useTheme2024 } from '@/hooks/theme';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
@@ -46,7 +46,8 @@ export const HistoryList = ({
   });
 
   return (
-    <Animated.FlatList
+    <FlatList
+      removeClippedSubviews
       data={list}
       renderItem={renderItem}
       windowSize={5}
