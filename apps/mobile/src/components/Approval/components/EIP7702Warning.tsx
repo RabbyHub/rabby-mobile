@@ -36,6 +36,7 @@ const getStyle = createGetStyles(colors => {
       paddingHorizontal: 15,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: colors['neutral-bg-4'],
       gap: 16,
     },
     text: {

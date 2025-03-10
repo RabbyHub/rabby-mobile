@@ -858,11 +858,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
-    // is eip7702
-    if (authorizationList) {
-      return <EIP7702Warning />;
-    }
-
     if (isGnosisAccount || isCoboArugsAccount) {
       setDrawerVisible(true);
       return;
@@ -1434,6 +1429,11 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { setRPCEnable } = useCustomRPC();
+
+  // is eip7702
+  if (authorizationList) {
+    return <EIP7702Warning />;
+  }
 
   return (
     <>
