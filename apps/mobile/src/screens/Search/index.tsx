@@ -93,7 +93,6 @@ function SearchScreen(): JSX.Element {
         ) : (
           <PinedTokenList />
         )}
-        <SearchAssets resultTokens={resultTokens} />
       </View>
     </NormalScreenContainer2024>
   );

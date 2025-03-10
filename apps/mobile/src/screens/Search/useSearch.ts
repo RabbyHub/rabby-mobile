@@ -195,7 +195,7 @@ export const useSearchTokens = (filterText?: string) => {
     searchedRef.current = text;
     setLoading(true);
     try {
-      const res = await openapi.searchTokens({
+      const res = await openapi.searchTokensV2({
         q: text,
       });
       setResultTokens(

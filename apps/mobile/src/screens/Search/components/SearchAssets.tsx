@@ -197,12 +197,11 @@ export const SearchAssets: React.FC<Props> = ({ resultTokens }) => {
   };
 
   const renderItem = useCallback(
-    (_type, _data) => {
-      const { type, data } = _data;
+    ({ item }: { item: AbstractPortfolioToken }) => {
       return (
-        data && (
+        item && (
           <ExternalTokenRow
-            data={data}
+            data={item}
             style={styles.renderItemWrapper}
             filterText={''}
             onTokenPress={handleOpenTokenDetail}
@@ -392,7 +391,13 @@ export const SearchAssets: React.FC<Props> = ({ resultTokens }) => {
 
   return (
     <View style={styles.container}>
-      {firstRowType?.includes('_header') ||
+      <Animated.FlatList
+        data={resultTokens}
+        renderItem={({ item }) => renderItem({ item })}
+        style={styles.list}
+      />
+
+      {/* {firstRowType?.includes('_header') ||
       firstRowType?.includes('toggle_') ? null : (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           {renderStickHeader(firstRowType)}
@@ -431,7 +436,7 @@ export const SearchAssets: React.FC<Props> = ({ resultTokens }) => {
             />
           ),
         }}
-      />
+      /> */}
     </View>
   );
 };

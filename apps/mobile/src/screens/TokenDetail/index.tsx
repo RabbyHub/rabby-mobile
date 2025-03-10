@@ -307,6 +307,22 @@ export const TokenDetailScreen = () => {
     },
   );
 
+  const { data: tokenEntity } = useRequest(
+    async () => {
+      if (!token || !token._tokenId) {
+        return;
+      }
+
+      const res = await openapi.getTokenEntity(token.chain, token._tokenId);
+      return res;
+    },
+    {
+      refreshDeps: [token],
+    },
+  );
+
+  console.log('tokenEntity', tokenEntity);
+
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
