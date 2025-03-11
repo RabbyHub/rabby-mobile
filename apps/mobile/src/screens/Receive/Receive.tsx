@@ -32,6 +32,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
 import { RcArrowRightCC } from '@/assets/icons/common';
@@ -250,12 +251,20 @@ function ReceiveScreen(): JSX.Element {
     );
   const nonSafeChainUI = selectedChain ? (
     <View style={styles.selectChainWrapper}>
-      <Image
-        style={styles.selectChianLogo}
-        source={{ uri: selectedChainInfo?.logo }}
-        width={23}
-        height={23}
-      />
+      {selectedChainInfo?.isTestnet ? (
+        <TestnetChainLogo
+          size={23}
+          name={selectedChainInfo.name}
+          style={styles.selectChianLogo}
+        />
+      ) : (
+        <Image
+          style={styles.selectChianLogo}
+          source={{ uri: selectedChainInfo?.logo }}
+          width={23}
+          height={23}
+        />
+      )}
       <Text style={styles.selectChainText}>{selectedChainInfo?.name}</Text>
     </View>
   ) : (
