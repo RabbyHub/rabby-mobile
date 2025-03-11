@@ -68,7 +68,7 @@ const ACCOUT_TYPE_COLORS: { [key: string]: IColors } = {
     brandBg: 'rgba(31, 90, 255, 0.1)',
   },
   [KEYRING_CLASS.GNOSIS]: {
-    brandColor: 'rgba(104, 255, 122, 1)',
+    brandColor: 'rgba(48, 222, 69, 1)',
     brandBg: 'rgba(104, 255, 122, 0.1)',
   },
 };

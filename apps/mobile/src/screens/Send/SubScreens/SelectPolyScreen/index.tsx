@@ -115,10 +115,7 @@ const SendPolyScreen = () => {
           </View>
         )}
         ListHeaderComponent={() => (
-          <WhiteListHeader
-            gotoAddWhitelist={handleGotoAddWhitelist}
-            hideIcon={list.length === 0}
-          />
+          <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
         )}
         ListEmptyComponent={() => (
           <EmptyWhiteListHolder gotoAddWhitelist={handleGotoAddWhitelist} />
