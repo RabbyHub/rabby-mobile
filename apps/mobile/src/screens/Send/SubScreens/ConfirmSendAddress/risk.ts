@@ -50,7 +50,7 @@ export const useRisks = (address: string) => {
     });
   }, [address]);
   useEffect(() => {
-    if (riskGetRef.current) {
+    if (riskGetRef.current && !addressDesc) {
       return;
     }
     riskGetRef.current = true;
@@ -107,6 +107,7 @@ export const useRisks = (address: string) => {
   }, [
     accounts,
     address,
+    addressDesc,
     addressDesc?.cex,
     addressDesc?.contract,
     addressDesc?.is_danger,

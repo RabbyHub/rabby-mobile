@@ -5,7 +5,7 @@ import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { StackActions, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import AddressPopover from '../../components/AddressPopover';
@@ -17,6 +17,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useRisks } from './risk';
 import BottomPopover from '../../components/BottomPopover';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -32,6 +33,7 @@ const ConfirmAddressScreen = () => {
   };
   const { risks, addressDesc, hasSend } = useRisks(account.address);
   const [showBottomPopover, setShowBottomPopover] = useState(true);
+  const { navigateToSendScreen } = useSendRoutes();
 
   const inWhiteList = useMemo(
     () => isAddrOnWhitelist(account.address),
@@ -53,16 +55,11 @@ const ConfirmAddressScreen = () => {
     }
   };
   const handleConfirm = () => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.MultiSend,
-        params: {
-          addressBrandName: account.brandName,
-          cexDes: addressDesc?.cex,
-          toAddress: account.address,
-        },
-      }),
-    );
+    navigateToSendScreen({
+      addressBrandName: account.brandName,
+      cexDes: addressDesc?.cex,
+      toAddress: account.address,
+    });
   };
   return (
     <FooterButtonScreenContainer

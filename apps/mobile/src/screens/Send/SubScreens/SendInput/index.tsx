@@ -22,6 +22,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { openapi } from '@/core/request';
 import { useNavigationState } from '@react-navigation/native';
 import { toast } from '@/components2024/Toast';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -54,12 +55,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     autoScan?: boolean;
   };
 
-  const sendToNavParams =
-    (useNavigationState(
-      s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-    ) as {
-      forMultiScreen?: boolean;
-    }) || {};
+  const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
 
@@ -94,15 +90,10 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         return;
       }
       if (inWhitelist) {
-        navigation.push(RootNames.StackTransaction, {
-          screen: sendToNavParams.forMultiScreen
-            ? RootNames.MultiSend
-            : RootNames.Send,
-          params: {
-            toAddress: account.address,
-            cexDes: desc.cex,
-            addressBrandName: account.brandName,
-          },
+        navigateToSendScreen({
+          toAddress: account.address,
+          cexDes: desc.cex,
+          addressBrandName: account.brandName,
         });
       } else {
         navigation.push(RootNames.StackTransaction, {

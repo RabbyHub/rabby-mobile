@@ -47,8 +47,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   bubble: {
     borderRadius: 12,
     backgroundColor: colors2024['neutral-bg-4'],
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
     paddingHorizontal: 15.5,
     paddingVertical: 15,
     elevation: 5,

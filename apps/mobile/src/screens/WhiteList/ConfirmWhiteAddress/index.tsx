@@ -28,11 +28,6 @@ const ConfirmWhitelistScreen = () => {
   ) as {
     account: KeyringAccountWithAlias;
   };
-  const sendToNavParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-  ) as {
-    forMultiScreen?: boolean;
-  };
   const { risks, addressDesc } = useRisks(account.address);
 
   const onCancel = () => {
@@ -49,12 +44,11 @@ const ConfirmWhitelistScreen = () => {
       navigation.dispatch(
         StackActions.push(RootNames.StackTransaction, {
           screen: RootNames.SendTo,
-          params: sendToNavParams || {},
         }),
       );
       toast.success(t('page.whitelist.addSuccessful'));
     }
-  }, [account, navigation, sendToNavParams, t, whitelist]);
+  }, [account, navigation, t, whitelist]);
   return (
     <FooterButtonScreenContainer
       as="View"

@@ -35,6 +35,7 @@ import { toast } from '@/components/Toast';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 export type ConfirmationProps = {
   owner: string;
@@ -171,18 +172,15 @@ export const GnosisTransactionItem = ({
     setIsLoading(false);
   };
 
-  const navigation = useRabbyAppNavigation();
+  const { navigateToSendPolyScreen } = useSendRoutes();
 
   const handleReplace = async (type: string) => {
     setIsShowReplacePopup(false);
     if (type === 'send') {
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.Send,
-        params: {
-          safeInfo: {
-            nonce: data.nonce,
-            chainId: Number(networkId),
-          },
+      navigateToSendPolyScreen(true, {
+        safeInfo: {
+          nonce: data.nonce,
+          chainId: Number(networkId),
         },
       });
     } else if (type === 'reject') {

@@ -22,13 +22,14 @@ import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions, useNavigationState } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components2024/Toast';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -54,12 +55,6 @@ export const WhiteListItem = ({
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const navParams =
-    (useNavigationState(
-      s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-    ) as {
-      forMultiScreen?: boolean;
-    }) || {};
 
   useLayoutEffect(() => {
     openapi.addrDesc(account.address).then(res => {
@@ -98,6 +93,8 @@ export const WhiteListItem = ({
     };
   }, [account.address, account.aliasName, cexDesc?.name]);
 
+  const { navigateToSendScreen } = useSendRoutes();
+
   const children = (
     <TouchableOpacity
       activeOpacity={1}
@@ -127,15 +124,10 @@ export const WhiteListItem = ({
           return;
         }
         if (inWhiteList) {
-          navigation.push(RootNames.StackTransaction, {
-            screen: navParams?.forMultiScreen
-              ? RootNames.MultiSend
-              : RootNames.Send,
-            params: {
-              toAddress: account.address,
-              cexDes: cexDesc,
-              addressBrandName: account.brandName,
-            },
+          navigateToSendScreen({
+            toAddress: account.address,
+            cexDes: cexDesc,
+            addressBrandName: account.brandName,
           });
         } else {
           navigation.push(RootNames.StackTransaction, {
@@ -231,12 +223,6 @@ export const WhiteListItemSwitch = ({
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { navigation } = useSafeSetNavigationOptions();
-  const navParams =
-    (useNavigationState(
-      s => s.routes.find(r => r.name === RootNames.SendTo)?.params,
-    ) as {
-      forMultiScreen?: boolean;
-    }) || {};
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
     const name = cexDes?.name || account.aliasName || ellipisName;
@@ -299,7 +285,7 @@ export const WhiteListItemSwitch = ({
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
                 screen: RootNames.SendTo,
-                params: navParams,
+                params: {},
               }),
             );
           }}>
