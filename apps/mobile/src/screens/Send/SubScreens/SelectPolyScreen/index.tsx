@@ -193,7 +193,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 19,
   },
   footer: {
-    marginTop: 12,
+    marginTop: 16,
   },
   footerGap: {
     height: 150,

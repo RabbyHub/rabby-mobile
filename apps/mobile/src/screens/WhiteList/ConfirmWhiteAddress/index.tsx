@@ -63,7 +63,7 @@ const ConfirmWhitelistScreen = () => {
         onConfirm: handleConfirm,
       }}
       style={styles.screen}
-      footerBottomOffset={56}
+      footerBottomOffset={76}
       footerContainerStyle={{
         paddingHorizontal: 4,
       }}>
