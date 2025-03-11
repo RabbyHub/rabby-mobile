@@ -42,7 +42,7 @@ export const RelatedDeFi: React.FC<Props> = ({
             <View style={styles.defiItemContent}>
               <AssetAvatar
                 logo={item?.logo}
-                size={26}
+                size={28}
                 chain={item?.chain}
                 chainSize={12}
               />
@@ -58,12 +58,6 @@ export const RelatedDeFi: React.FC<Props> = ({
               <Text style={styles.defiItemText}>{`${formatTokenAmount(
                 item?.amount,
               )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
-              <RcIconRightCC
-                style={styles.arrowStyle}
-                width={13}
-                height={13}
-                color={colors2024['neutral-secondary']}
-              />
             </View>
           </View>
         </TouchableOpacity>
@@ -71,24 +65,49 @@ export const RelatedDeFi: React.FC<Props> = ({
     },
     [
       handleGoDeFi,
-      colors2024,
       styles.defiItem,
       styles.defiItemContent,
       styles.defiItemText,
-      styles.arrowStyle,
       symbol,
     ],
   );
 
+  const handleOpenDeFiDetail = useCallback(() => {}, []);
+
+  const hasMore = useMemo(() => deFiList?.length > 3, [deFiList]);
+
   const ListHeaderComponent = useCallback(() => {
     return (
       <View style={styles.historyHeader}>
-        <Text style={styles.relateTitle}>
-          {t('page.tokenDetail.relateDefi')}
-        </Text>
+        <Text style={styles.relateTitle}>{t('page.tokenDetail.Defi')}</Text>
+        {hasMore && (
+          <TouchableOpacity
+            style={styles.rightContent}
+            onPress={handleOpenDeFiDetail}>
+            <Text style={styles.headerContent}>
+              {t('page.tokenDetail.SeeMore')}
+            </Text>
+            <RcIconRightCC
+              style={styles.arrowStyle}
+              width={13}
+              height={13}
+              color={colors2024['neutral-secondary']}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     );
-  }, [styles.relateTitle, styles.historyHeader, t]);
+  }, [
+    hasMore,
+    handleOpenDeFiDetail,
+    styles.rightContent,
+    styles.relateTitle,
+    styles.headerContent,
+    styles.historyHeader,
+    styles.arrowStyle,
+    colors2024,
+    t,
+  ]);
 
   const sortedList = useMemo(
     () =>
@@ -102,7 +121,9 @@ export const RelatedDeFi: React.FC<Props> = ({
     <View style={styles.container}>
       {ListHeaderComponent()}
       {Boolean(sortedList.length) &&
-        sortedList.map((item, index) => renderItem({ item, index }))}
+        sortedList
+          .slice(0, 3)
+          .map((item, index) => renderItem({ item, index }))}
     </View>
   );
 };
@@ -110,6 +131,9 @@ export const RelatedDeFi: React.FC<Props> = ({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    gap: 16,
   },
   header: {
     width: '100%',
@@ -124,34 +148,57 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
-    // paddingHorizontal: 8,
+    // paddingVertical: 6,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    // borderColor: ctx.colors2024['neutral-line'],
+    // borderWidth: 1,
+    padding: 16,
   },
   defiItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 20,
+    // marginBottom: 16,
+    // paddingHorizontal: 20,
     gap: 6,
   },
   relateTitle: {
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '500',
+    fontWeight: '700',
+  },
+  rightContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
   },
   historyHeader: {
-    marginVertical: 12,
-    paddingHorizontal: 20,
+    // marginVertical: 12,
+    // paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerContent: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    marginLeft: 4,
   },
   defiItemText: {
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '500',
-    marginLeft: 4,
+    fontWeight: '700',
+    marginLeft: 6,
   },
   arrowStyle: {
     marginTop: 0,

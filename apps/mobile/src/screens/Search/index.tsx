@@ -21,7 +21,7 @@ import { PinedTokenList } from './components/PinedTokenList';
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-  const { searchState, debouncedSearchValue, setSearchState } = useSearch();
+  const { searchState, setSearchState } = useSearch();
   const { t } = useTranslation();
 
   const inputRef = useRef<any>(null);
@@ -47,8 +47,8 @@ function SearchScreen(): JSX.Element {
   );
 
   const { resultTokens, searched, loading, handleSearch } =
-    useSearchTokens(debouncedSearchValue);
-  console.log('resultTokens', resultTokens[0]);
+    useSearchTokens(searchState);
+  console.log('resultTokens', JSON.stringify(resultTokens[0]));
   console.log('searched', searched);
 
   return (
@@ -81,15 +81,19 @@ function SearchScreen(): JSX.Element {
           }}
           returnKeyType="search"
           onSubmitEditing={() => {
-            console.log('onSubmitEditing', debouncedSearchValue);
-            handleSearch(debouncedSearchValue);
+            console.log('onSubmitEditing', searchState);
+            handleSearch(searchState);
           }}
           ref={inputRef}
         />
       </View>
       <View style={styles.safeView}>
-        {searched ? (
-          <SearchAssets resultTokens={resultTokens} />
+        {searched || loading ? (
+          <SearchAssets
+            resultTokens={resultTokens}
+            loading={loading}
+            searchState={searchState}
+          />
         ) : (
           <PinedTokenList />
         )}

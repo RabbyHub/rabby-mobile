@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
@@ -24,6 +24,10 @@ export const PinedTokenList = () => {
       needUseCacheToken: true,
     });
   }, []);
+
+  useEffect(() => {
+    handleFetchTokens();
+  }, [handleFetchTokens]);
 
   return (
     pinTokens.length > 0 && (

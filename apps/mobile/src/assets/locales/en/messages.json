@@ -1519,9 +1519,26 @@
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
+      "Mybalance": "My Balance",
+      "Info": "Info",
+      "TokenName": "Token Name",
       "notSupportedOnChain": "Not supported on this chain",
       "noBalance": "No Balance",
       "relateDefi": "Related DeFi",
+      "SeeMore": "See more",
+      "IssuedBy": "Issued by",
+      "BridgeIssue": "Bridged token by a third party",
+      "IssuerWebsite": "Issuer’s Website",
+      "ListedBy": "Listed by",
+      "SupportedExchanges": "Supported Exchanges",
+      "NoListedSite": "No listed site",
+      "NoIssuer": "No issuer information",
+      "NoSupportedExchanges": "No supported exchanges",
+      "OriginIssue": "This token is natively issued on this blockchain.",
+      "Defi": "DeFi",
+      "fdv": "FDV",
+      "fdvTitle": "What's FDV?",
+      "fdvContent": "The market cap if the max supply was in circulation.Fully Diluted Valuation (FDV) = Price × Max Supply. If Max Supply is null, FDV = Price × Total Supply. If neither Max Supply nor Total Supply is defined or infinite, FDV is not displayed.",
       "action": {
         "send": "Send",
         "Buy": "Buy",
@@ -1572,13 +1589,18 @@
       "sectionHeader": {
         "token": "Tokens",
         "Defi": "DeFi",
-        "NFT": "NFT"
+        "NFT": "NFT",
+        "AllChains": "All Chains"
       },
       "header": {
         "placeHolder": "Search"
       },
+      "tokenItem": {
+        "Issuedby": "Issued by"
+      },
       "searchWeb": {
         "noResult": "No Results for",
+        "noResults": "No Results",
         "title": "All Results",
         "searchTips": "Search the web"
       }

@@ -49,6 +49,8 @@ import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
+import LinearGradient from 'react-native-linear-gradient';
+import { IssuerAndListSite } from './components/IssuerAndListSite';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -195,7 +197,7 @@ export const TokenDetailScreen = () => {
     isSingleAddress,
   } = route.params || {};
 
-  const { styles } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -313,7 +315,8 @@ export const TokenDetailScreen = () => {
         return;
       }
 
-      const res = await openapi.getTokenEntity(token.chain, token._tokenId);
+      const res = await openapi.getTokenEntity(token._tokenId, token.chain);
+      console.log('tokenEntity', res, token._tokenId, token.chain);
       return res;
     },
     {
@@ -321,7 +324,7 @@ export const TokenDetailScreen = () => {
     },
   );
 
-  console.log('tokenEntity', tokenEntity);
+  // console.log('tokenEntity', tokenEntity);
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
@@ -347,9 +350,13 @@ export const TokenDetailScreen = () => {
 
   const getHeaderTitle = useCallback(() => {
     return (
-      <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
+      <TokenDetailHeaderArea
+        key={currentAccount?.address}
+        token={token}
+        refreshTags={refreshTag}
+      />
     );
-  }, [currentAccount?.address, token]);
+  }, [currentAccount?.address, token, refreshTag]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
@@ -481,24 +488,23 @@ export const TokenDetailScreen = () => {
   }
 
   return (
-    <NormalScreenContainer2024 type="bg1" style={styles.root}>
+    <NormalScreenContainer2024
+      type="bg1"
+      overwriteStyle={styles.rootScreenContainer}>
       <ScrollView>
         <View style={{ position: 'relative' }}>
-          <HomePinBadge token={token} refreshTags={refreshTag} />
+          {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
           <Text style={styles.currentText}>Current price</Text>
-          <TokenPriceChart
-            token={tokenWithAmount || token}
-            isPin={token._isPined}
-          />
-          <TokenChainAndContract token={token} />
-          <View style={styles.divider} />
-          <TokenArea
-            tokenSupportSwap={tokenSupportSwap}
-            handleSwap={handleSwap}
-            amountList={tokenFromAddress}
-            token={tokenWithAmount || token}
-          />
+          <TokenPriceChart token={tokenWithAmount || token} />
+          {/* <View style={styles.divider} /> */}
         </View>
+        <TokenArea
+          tokenUsdValue={tokenWithAmount?.price}
+          tokenSupportSwap={tokenSupportSwap}
+          handleSwap={handleSwap}
+          amountList={tokenFromAddress}
+          token={tokenWithAmount || token}
+        />
         {relateDefiList.length > 0 && !unHold && (
           <RelatedDeFi
             deFiList={relateDefiList}
@@ -506,62 +512,53 @@ export const TokenDetailScreen = () => {
             handleGoDeFi={handleOpenDefiDetail}
           />
         )}
-        <View style={{ height: isAndroid ? 90 + safeOffBottom : 126 }} />
+        <IssuerAndListSite token={token} tokenEntity={tokenEntity} />
+        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
+        <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      <View
-        style={[
-          styles.buttonGroup,
-          isAndroid && { paddingBottom: 40 + safeOffBottom },
-        ]}>
-        <Button
-          title={t('page.tokenDetail.action.send')}
-          containerStyle={styles.btnContainer}
-          type="ghost"
-          disabled={unHold}
-          onPress={handleSend}
-        />
-        <View style={styles.btnGap} />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              containerStyle={styles.btnContainer}
-              type="ghost"
-              title={t('page.bridge.title')}
-              onPress={handleBridge}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
+      <LinearGradient
+        colors={
+          isLight
+            ? ['#FFF', colors2024['neutral-bg-0']]
+            : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
+        }
+        locations={[0.6393, 1]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 0, y: 0 }}
+        style={styles.floatBottom}>
+        <View
+          style={[
+            styles.buttonGroup,
+            isAndroid && { paddingBottom: 40 + safeOffBottom },
+          ]}>
+          <View style={styles.btnContainer}>
+            <Tip
+              placement="top"
+              content={
+                !tokenSupportSwap
+                  ? t('page.tokenDetail.notSupportedOnChain')
+                  : undefined
+              }>
+              <Button
+                title={t('page.swap.title')}
+                containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                onPress={() => handleSwap('Sell')}
+                disabled={!tokenSupportSwap}
+              />
+            </Tip>
+          </View>
         </View>
-        <View style={styles.btnGap} />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              title={t('page.swap.title')}
-              containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Sell')}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
-        </View>
-      </View>
+      </LinearGradient>
     </NormalScreenContainer2024>
   );
 };
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
-    root: {},
+    rootScreenContainer: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    },
 
     currentText: {
       marginLeft: 26,
@@ -570,6 +567,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
+    },
+    floatBottom: {
+      width: '100%',
+      height: 130,
+      paddingTop: 40,
+      position: 'absolute',
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     divider: {
       marginTop: 28,

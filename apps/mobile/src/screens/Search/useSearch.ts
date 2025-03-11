@@ -193,11 +193,13 @@ export const useSearchTokens = (filterText?: string) => {
       ignoreAndroidSystemSettings: false,
     });
     searchedRef.current = text;
+    setResultTokens([]);
     setLoading(true);
     try {
       const res = await openapi.searchTokensV2({
         q: text,
       });
+      // console.log('get web chain)', JSON.stringify(res));
       setResultTokens(
         res.map(
           token =>
