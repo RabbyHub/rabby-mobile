@@ -154,7 +154,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 56,
   },
   item: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   placeHolderWrapper: {
     flex: 1,

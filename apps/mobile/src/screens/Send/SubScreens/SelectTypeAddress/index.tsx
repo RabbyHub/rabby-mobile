@@ -92,7 +92,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   item: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   listContainer: {
     flex: 1,

@@ -110,7 +110,7 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 16,
   },
   item: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   listContainer: {
     flex: 1,

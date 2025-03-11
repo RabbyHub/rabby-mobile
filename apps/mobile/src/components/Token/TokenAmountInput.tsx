@@ -155,7 +155,8 @@ export const TokenAmountInput = React.forwardRef<
             </View>
           </SilentTouchableView>
           {/* max button */}
-          {token.amount > 0 &&
+          {!value &&
+            token.amount > 0 &&
             (isEstimatingGas ? (
               <Skeleton
                 style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
