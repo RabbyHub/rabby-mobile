@@ -182,11 +182,8 @@ export const WhiteListItem = ({
                 {inWhiteList && (
                   <RcIconLockCC
                     style={styles.lockIcon}
-                    color={
-                      isPressing
-                        ? colors2024['brand-default']
-                        : colors2024['neutral-body']
-                    }
+                    color={colors2024['brand-default']}
+                    surroundColor={colors2024['neutral-bg-1']}
                     width={22}
                     height={22}
                   />
@@ -273,7 +270,8 @@ export const WhiteListItemSwitch = ({
                 {inWhiteList && (
                   <RcIconLockCC
                     style={styles.lockIcon}
-                    color={colors2024['neutral-body']}
+                    color={colors2024['brand-default']}
+                    surroundColor={colors2024['neutral-bg-1']}
                     width={22}
                     height={22}
                   />

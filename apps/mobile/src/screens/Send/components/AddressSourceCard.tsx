@@ -81,7 +81,8 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               {inWhiteList && (
                 <RcIconLockCC
                   style={styles.lockIcon}
-                  color={colors2024['neutral-body']}
+                  color={colors2024['brand-default']}
+                  surroundColor={colors2024['neutral-bg-1']}
                   width={22}
                   height={22}
                 />
