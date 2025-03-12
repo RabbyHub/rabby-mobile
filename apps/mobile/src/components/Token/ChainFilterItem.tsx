@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { Chain } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -42,9 +42,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 export default function ChainFilterItem({
   style,
   chainItem,
+  onPress,
   onRemoveFilter,
 }: RNViewProps & {
   chainItem?: Chain | null;
+  onPress?: () => void;
   onRemoveFilter?: (item: Chain | null) => void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -53,8 +55,13 @@ export default function ChainFilterItem({
 
   return (
     <View style={[styles.chainFilterItem, style]}>
-      <ChainIconImage size={16} chainEnum={chainItem.enum} />
-      <Text style={[styles.chainFilterChainName]}>{chainItem.name}</Text>
+      <Pressable
+        hitSlop={10}
+        onPress={onPress}
+        style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <ChainIconImage size={16} chainEnum={chainItem.enum} />
+        <Text style={[styles.chainFilterChainName]}>{chainItem.name}</Text>
+      </Pressable>
       <TouchableOpacity
         hitSlop={10}
         style={styles.chainFilterItemClose}

@@ -1558,7 +1558,9 @@
         "Defi": "DeFi",
         "Nft": "NFT",
         "Token": "Token",
-        "NoData": "No {{name}}"
+        "NoData": "No {{name}}",
+        "totalChain_one": "Total {{count}} Chain",
+        "totalChain_other": "Total {{count}} Chains"
       },
       "emptyToken": {
         "title": "Fund Your Wallet",

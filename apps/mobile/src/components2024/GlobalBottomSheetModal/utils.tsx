@@ -1,4 +1,4 @@
-import { CreateParams, MODAL_NAMES } from './types';
+import { MODAL_NAMES } from './types';
 import { Approval } from '@/components//Approval';
 import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
 import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
@@ -10,7 +10,7 @@ import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
 import { SelectSortedChain } from '@/components2024/SelectSortedChain';
 import { SelectChainWithSummary } from '@/components2024/SelectChainWithSummary';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import SelectChainWithDistribute from '@/components2024/SelectChainWithDistribute';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
 import { SettingLedger } from '@/components/HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '@/components/Upgrade/TipUpgrade';
@@ -41,11 +41,8 @@ import { SeedPhraseRestoreFromCloud2024 } from '@/components/SeedPhraseRestoreFr
 import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager';
 import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
-import { BackgroundComponent } from './BackgroundComponent';
-import { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { Dimensions, StyleSheet } from 'react-native';
-import { AppColors2024Variants } from '@/constant/theme';
+import { Dimensions } from 'react-native';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -57,6 +54,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SWITCH_CHAIN]: ['45%'],
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
+  [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
@@ -102,6 +100,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: SelectChainWithSummary,
+  [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: SelectChainWithDistribute,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
   [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,

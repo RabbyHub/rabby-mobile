@@ -71,6 +71,12 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { trigger } from 'react-native-haptic-feedback';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -109,7 +115,7 @@ const getItemId = item => {
 };
 
 export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const [firstRowType, setFirstRowType] = useState('');
@@ -136,6 +142,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [selectChainItem, setSelectChainItem] = useState<
+    ChainListItem | undefined
+  >();
   const dataProvider = useMemo(
     () =>
       new DataProvider((r1, r2) => {
@@ -327,7 +336,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     return itemData
       .filter(item => item.show)
       .map(item => item.data)
-      .flat();
+      .flat()
+      .filter(item =>
+        selectChainItem?.chain && item.data?.chain
+          ? item.data.chain === selectChainItem.chain
+          : true,
+      );
   }, [
     foldDefi,
     foldHideList,
@@ -335,6 +349,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loadingToken,
     nftList,
     portfolios,
+    selectChainItem?.chain,
     sortTokens,
   ]);
 
@@ -548,6 +563,47 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     });
   };
 
+  const [extendedState, setExtendedState] = useState<{
+    selectedChain?: ChainListItem;
+  }>({
+    selectedChain: undefined,
+  });
+
+  const handleOnChainClick = useCallback(
+    (clear: boolean) => {
+      if (clear) {
+        setSelectChainItem(undefined);
+        setExtendedState(prev => ({ ...prev, selectedChain: undefined }));
+        return;
+      }
+
+      const id = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
+        value: selectChainItem,
+        bottomSheetModalProps: {
+          // enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+        chainList: chainsInfo.chainAssets,
+        titleText: t('page.receiveAddressList.selectChainTitle'),
+        onChange: (v: ChainListItem) => {
+          setSelectChainItem(v);
+          setExtendedState(prev => ({ ...prev, selectedChain: v }));
+          removeGlobalBottomSheetModal2024(id);
+        },
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(id);
+        },
+      });
+    },
+    [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
+  );
+
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
     switch (type) {
@@ -604,6 +660,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <AssestAllHeader
             style={styles.assetHeader}
             currentSection={currentSection}
+            chainLength={chainsInfo.chainLength}
+            onChainClick={handleOnChainClick}
+            chainServerId={selectChainItem?.chain}
             hasToken={!!tokens?.length}
             hasDefi={!!portfolios.length}
             hasNft={!!nftList?.length}
@@ -756,6 +815,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.assetHeader}
             currentSection={currentSection}
             hasToken={!!tokens?.length}
+            chainLength={chainsInfo.chainLength}
+            onChainClick={handleOnChainClick}
+            chainServerId={selectChainItem?.chain}
             hasDefi={!!portfolios.length}
             hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
@@ -764,6 +826,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         </Animated.View>
       )}
       <RecyclerListView
+        extendedState={extendedState}
         style={[styles.bgContainer, styles.list]}
         dataProvider={listData}
         layoutProvider={layoutProvider}
