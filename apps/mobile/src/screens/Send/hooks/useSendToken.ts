@@ -43,6 +43,10 @@ import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import { naviReplace } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useNavigationState } from '@react-navigation/native';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -361,18 +365,25 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 /**
  * @description only called once at top level
  */
-export function useSendTokenForm(toAddress?: string) {
+export function useSendTokenForm(
+  toAddress?: string,
+  isForMultipleAdderss = false,
+) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
   const { currentAccount } = useCurrentAccount();
+  const { switchAccountOnSelectedToken } =
+    useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
   const { chainEnum, isNativeToken, currentToken, putChainToken, chainItem } =
     useSendTokenScreenChainToken();
 
   const { sendTokenScreenState: screenState, putScreenState } =
     useSendTokenScreenState();
-
+  const multiNavParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.MultiSend)?.params,
+  );
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
@@ -979,9 +990,37 @@ export function useSendTokenForm(toAddress?: string) {
           }
         }
       }
-      handleCurrentTokenChange(token);
+
+      if (!isForMultipleAdderss) {
+        handleCurrentTokenChange(token);
+      } else {
+        const { accountSwitchTo } = switchAccountOnSelectedToken({
+          token,
+          currentAccount,
+        });
+        if (!accountSwitchTo) {
+          handleCurrentTokenChange(token);
+        } else {
+          const currChainItem = findChainByServerID(token.chain);
+          naviReplace(RootNames.StackTransaction, {
+            screen: RootNames.MultiSend,
+            params: {
+              ...(multiNavParams || {}),
+              chainEnum: currChainItem?.enum,
+              tokenId: token.id,
+            },
+          });
+        }
+      }
     },
-    [handleCurrentTokenChange, toAddress],
+    [
+      currentAccount,
+      handleCurrentTokenChange,
+      isForMultipleAdderss,
+      multiNavParams,
+      switchAccountOnSelectedToken,
+      toAddress,
+    ],
   );
 
   const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;

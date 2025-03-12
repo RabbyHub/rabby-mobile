@@ -49,7 +49,7 @@ import { isWatchOrSafeAccount } from '@/utils/account';
 interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
-  onTokenChange(token: TokenItem): void;
+  onTokenChange(token: TokenItem): Promise<void> | void;
   accountInScreen?: Account | null;
   chainId: string;
   useSwapTokenList?: boolean;
@@ -329,9 +329,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const handleCurrentTokenChange = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
     >(
-      token => {
+      async token => {
         onChange && onChange('');
-        onTokenChange(token);
+        await onTokenChange(token);
         setTokenSelectorVisible(false);
       },
       [onChange, onTokenChange],

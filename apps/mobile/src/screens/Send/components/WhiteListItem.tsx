@@ -89,7 +89,7 @@ export const WhiteListItem = ({
     const name = cexDesc?.name || account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name === ellipisName,
+      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
     };
   }, [account.address, account.aliasName, cexDesc?.name]);
 
@@ -228,7 +228,7 @@ export const WhiteListItemSwitch = ({
     const name = cexDes?.name || account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name === ellipisName,
+      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
     };
   }, [account.address, account.aliasName, cexDes?.name]);
 

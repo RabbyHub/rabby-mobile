@@ -30,8 +30,8 @@ function useLoadTokenList({
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
   const handleCurrentTokenChange = useCallback(
-    (token: TokenItem) => {
-      onTokenChange?.(token);
+    async (token: TokenItem) => {
+      await onTokenChange?.(token);
       setTokenSelectorVisible(false);
       tokenInputRef.current?.focus();
     },
@@ -49,7 +49,7 @@ interface TokenAmountInputProps {
   token: TokenItem;
   value?: string;
   onChange?(amount: string): void;
-  onTokenChange(token: TokenItem): void;
+  onTokenChange(token: TokenItem): Promise<void> | void;
   handleClickMaxButton?: () => Promise<void> | void;
   /**
    * @deprecated allow amountFocus = true to trigger focus,

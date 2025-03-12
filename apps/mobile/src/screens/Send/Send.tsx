@@ -118,7 +118,7 @@ function SendScreen({
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendTokenForm(navParams?.toAddress);
+  } = useSendTokenForm(navParams?.toAddress, isForMultipleAdderss);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances();
 
