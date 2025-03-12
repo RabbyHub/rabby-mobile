@@ -49,27 +49,27 @@ const CEX_BRAND_COLORS: { [key: string]: IColors } = {
 const ACCOUT_TYPE_COLORS: { [key: string]: IColors } = {
   [KEYRING_CLASS.PRIVATE_KEY]: {
     brandColor: 'rgba(255, 159, 10, 1)',
-    brandBg: 'rgba(255, 159, 10, 0.1)',
+    brandBg: 'rgba(255, 159, 10, 0.2)',
   },
   [KEYRING_CLASS.MNEMONIC]: {
     brandColor: 'rgba(112, 132, 255, 1)',
-    brandBg: 'rgba(112, 132, 255, 0.12)',
+    brandBg: 'rgba(112, 132, 255, 0.2)',
   },
   [KEYRING_CLASS.HARDWARE.LEDGER]: {
     brandColor: 'rgba(0, 0, 0, 1)',
-    brandBg: 'rgba(0, 0, 0, 0.1)',
+    brandBg: 'rgba(0, 0, 0, 0.2)',
   },
   [KEYRING_CLASS.HARDWARE.ONEKEY]: {
     brandColor: 'rgba(34, 197, 43, 1)',
-    brandBg: 'rgba(34, 197, 43, 0.1)',
+    brandBg: 'rgba(34, 197, 43, 0.2)',
   },
   [KEYRING_CLASS.HARDWARE.KEYSTONE]: {
     brandColor: 'rgba(31, 90, 255, 1)',
-    brandBg: 'rgba(31, 90, 255, 0.1)',
+    brandBg: 'rgba(31, 90, 255, 0.2)',
   },
   [KEYRING_CLASS.GNOSIS]: {
     brandColor: 'rgba(48, 222, 69, 1)',
-    brandBg: 'rgba(104, 255, 122, 0.1)',
+    brandBg: 'rgba(104, 255, 122, 0.2)',
   },
 };
 export const getBrandColors = (brandName: string) => {

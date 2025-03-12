@@ -49,7 +49,7 @@ export const WhiteListItem = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [cexDesc, setCexDesc] = useState<Cex | undefined>();
   const [isPressing, setIsPressing] = React.useState(false);
-  const { removeWhitelistWithoutConfirm } = useWhitelist({
+  const { removeWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
   const isDarkTheme = useGetBinaryMode() === 'dark';
@@ -78,20 +78,20 @@ export const WhiteListItem = ({
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
           });
-          removeWhitelistWithoutConfirm(account.address);
+          removeWhitelist(account.address);
         },
       },
     ] as MenuAction[];
-  }, [account.address, isDarkTheme, removeWhitelistWithoutConfirm, t]);
+  }, [account.address, isDarkTheme, removeWhitelist, t]);
 
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
-    const name = cexDesc?.name || account.aliasName || ellipisName;
+    const name = account.aliasName || ellipisName;
     return {
       formatName: name,
       hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
     };
-  }, [account.address, account.aliasName, cexDesc?.name]);
+  }, [account.address, account.aliasName]);
 
   const { navigateToSendScreen } = useSendRoutes();
 
@@ -225,12 +225,12 @@ export const WhiteListItemSwitch = ({
   const { navigation } = useSafeSetNavigationOptions();
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
-    const name = cexDes?.name || account.aliasName || ellipisName;
+    const name = account.aliasName || ellipisName;
     return {
       formatName: name,
       hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
     };
-  }, [account.address, account.aliasName, cexDes?.name]);
+  }, [account.address, account.aliasName]);
 
   return (
     <View style={styles.root}>

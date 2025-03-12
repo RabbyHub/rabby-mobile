@@ -23,8 +23,7 @@ import { toast } from '@/components2024/Toast';
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { isAddrOnWhitelist, addWhitelist, removeWhitelistWithoutConfirm } =
-    useWhitelist();
+  const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
 
   const { account } = useNavigationState(
@@ -47,10 +46,10 @@ const ConfirmAddressScreen = () => {
         addWhitelist(account.address);
         toast.success(t('page.whitelist.addSuccessful'));
       } else {
-        removeWhitelistWithoutConfirm(account.address);
+        removeWhitelist(account.address);
       }
     },
-    [account.address, addWhitelist, removeWhitelistWithoutConfirm, t],
+    [account.address, addWhitelist, removeWhitelist, t],
   );
 
   const onCancel = () => {

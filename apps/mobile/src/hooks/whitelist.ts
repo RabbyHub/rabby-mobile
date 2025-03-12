@@ -54,19 +54,11 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   );
 
   const removeWhitelist = React.useCallback(
-    async (addresses: string) => {
-      AuthenticationModal.show({
-        title: t('page.addressDetail.remove-from-whitelist'),
-        onFinished: async () => {
-          await whitelistService.removeWhitelist(addresses);
-          await getWhitelist();
-        },
-        validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-      });
+    async (address: string) => {
+      await whitelistService.removeWhitelist(address);
+      await getWhitelist();
     },
-    [getWhitelist, t],
+    [getWhitelist],
   );
 
   const toggleWhitelist = async (bool: boolean) => {
@@ -108,13 +100,6 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
     },
     [whitelist],
   );
-  const removeWhitelistWithoutConfirm = React.useCallback(
-    async (address: string) => {
-      await whitelistService.removeWhitelist(address);
-      await getWhitelist();
-    },
-    [getWhitelist],
-  );
 
   const init = React.useCallback(async () => {
     getWhitelist();
@@ -140,6 +125,5 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
     setWhitelist,
     toggleWhitelist,
     isAddrOnWhitelist,
-    removeWhitelistWithoutConfirm,
   };
 };
