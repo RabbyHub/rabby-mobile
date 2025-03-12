@@ -30,7 +30,7 @@ const SelectMyAddressScreen = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { accounts: allAccounts } = useAccounts();
-  const { whitelist } = useWhitelist();
+  const { isAddrOnWhitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
   const handleGotoImportedAddress = (type: 'watch' | 'safe') => {
     triggerLight();
@@ -59,7 +59,7 @@ const SelectMyAddressScreen = ({
           <View style={styles.item}>
             <WhiteListItem
               account={item}
-              inWhiteList={whitelist.includes(item.address)}
+              inWhiteList={isAddrOnWhitelist(item.address)}
               isForWhitelist={isForWhitelist}
               disableMenu
             />

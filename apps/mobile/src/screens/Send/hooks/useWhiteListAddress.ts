@@ -10,12 +10,14 @@ import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
 import { useEffect, useState } from 'react';
 
 export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
-  const { whitelist } = useWhitelist({ disableAutoFetch: false });
+  const { whitelist, isAddrOnWhitelist } = useWhitelist({
+    disableAutoFetch: false,
+  });
   const { accounts } = useAccounts({ disableAutoFetch: true });
   const [list, setList] = useState<KeyringAccountWithAlias[]>([]);
   useEffect(() => {
     const importAddress: KeyringAccountWithAlias[] = accounts
-      .filter(acc => whitelist.includes(acc.address))
+      .filter(acc => isAddrOnWhitelist(acc.address))
       .map(acc => ({
         address: acc.address,
         aliasName: acc.aliasName || ellipsisAddress(acc.address),
@@ -23,9 +25,13 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         type: acc.brandName as KeyringTypeName,
         brandName: acc.brandName,
       }));
-    const importAddressSet = new Set(importAddress.map(item => item.address));
+    const importPlainAddress = [
+      ...new Set(importAddress.map(item => item.address)),
+    ];
     const unimportAddress: KeyringAccountWithAlias[] = whitelist
-      .filter(item => !importAddressSet.has(item))
+      .filter(
+        item => !importPlainAddress.some(plain => isSameAddress(plain, item)),
+      )
       .map(address => ({
         address,
         aliasName:
@@ -70,7 +76,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         );
       });
     }
-  }, [accounts, disableFetchBalance, whitelist]);
+  }, [accounts, disableFetchBalance, isAddrOnWhitelist, whitelist]);
 
   const findAccount = (address: string) => {
     const targetAccounts = accounts.filter(item =>

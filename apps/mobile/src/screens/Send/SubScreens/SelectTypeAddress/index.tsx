@@ -32,7 +32,7 @@ const SelectTypeScreenScreen = ({
     type: 'watch' | 'safe';
   };
   const { accounts } = useAccounts();
-  const { whitelist } = useWhitelist();
+  const { isAddrOnWhitelist } = useWhitelist();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const getHeaderTitle = React.useCallback(() => {
@@ -63,7 +63,7 @@ const SelectTypeScreenScreen = ({
           <View style={styles.item}>
             <WhiteListItem
               account={item}
-              inWhiteList={whitelist.includes(item.address)}
+              inWhiteList={isAddrOnWhitelist(item.address)}
               isForWhitelist={isForWhitelist}
               disableMenu
             />
