@@ -18,6 +18,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useRisks } from './risk';
 import BottomPopover from '../../components/BottomPopover';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { toast } from '@/components2024/Toast';
 
 const ConfirmAddressScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -42,11 +43,14 @@ const ConfirmAddressScreen = () => {
 
   const setInWhitelist = useCallback(
     (bool: boolean) => {
-      bool
-        ? addWhitelist(account.address)
-        : removeWhitelistWithoutConfirm(account.address);
+      if (bool) {
+        addWhitelist(account.address);
+        toast.success(t('page.whitelist.addSuccessful'));
+      } else {
+        removeWhitelistWithoutConfirm(account.address);
+      }
     },
-    [account.address, addWhitelist, removeWhitelistWithoutConfirm],
+    [account.address, addWhitelist, removeWhitelistWithoutConfirm, t],
   );
 
   const onCancel = () => {
