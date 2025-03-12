@@ -128,6 +128,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     updateTokens,
     updatePortfolio,
     reloadNftList,
+    chainsInfo,
   } = useQueryProjects(currentAccount?.address);
   const sortTokens = useSortToken(tokens);
   const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
