@@ -54,6 +54,9 @@ export const useQueryProjects = (userAddr: string | undefined) => {
           percentage: new BigNumber(0),
         };
       }
+      if (token._isExcludeBalance) {
+        return;
+      }
       chainAssets[chainId].total = chainAssets[chainId].total.plus(
         token._usdValue || 0,
       );
@@ -69,6 +72,9 @@ export const useQueryProjects = (userAddr: string | undefined) => {
           total: new BigNumber(0),
           percentage: new BigNumber(0),
         };
+      }
+      if (portfolio._isExcludeBalance) {
+        return;
       }
       chainAssets[chainId].total = chainAssets[chainId].total.plus(
         portfolio.netWorth || 0,

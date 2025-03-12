@@ -125,10 +125,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     useNavigation<NativeStackScreenProps<RootStackParamsList>['navigation']>();
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const {
-    tokens,
+    tokens: _rawTokens,
     refreshPositions,
-    portfolios,
-    nftList,
+    portfolios: _rawPortfolios,
+    nftList: _rawNftList,
     loadingToken,
     refreshing,
     updateTokens,
@@ -136,15 +136,35 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     reloadNftList,
     chainsInfo,
   } = useQueryProjects(currentAccount?.address);
+  const [selectChainItem, setSelectChainItem] = useState<
+    ChainListItem | undefined
+  >();
+  const { tokens, portfolios, nftList } = useMemo(() => {
+    return {
+      tokens: _rawTokens?.filter(item =>
+        selectChainItem?.chain && item?.chain
+          ? item.chain === selectChainItem.chain
+          : true,
+      ),
+      portfolios: _rawPortfolios.filter(item =>
+        selectChainItem?.chain && item?.chain
+          ? item.chain === selectChainItem.chain
+          : true,
+      ),
+      nftList: _rawNftList.filter(item =>
+        selectChainItem?.chain && item?.chain
+          ? item.chain === selectChainItem.chain
+          : true,
+      ),
+    };
+  }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
+
   const sortTokens = useSortToken(tokens);
   const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
     useTriggerTagAssets();
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
   const dataProvider = useMemo(
     () =>
       new DataProvider((r1, r2) => {
@@ -336,12 +356,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     return itemData
       .filter(item => item.show)
       .map(item => item.data)
-      .flat()
-      .filter(item =>
-        selectChainItem?.chain && item.data?.chain
-          ? item.data.chain === selectChainItem.chain
-          : true,
-      );
+      .flat();
   }, [
     foldDefi,
     foldHideList,
@@ -349,7 +364,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     loadingToken,
     nftList,
     portfolios,
-    selectChainItem?.chain,
     sortTokens,
   ]);
 
