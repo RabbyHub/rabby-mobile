@@ -1,15 +1,19 @@
-import { AssetAvatar, Text } from '@/components';
+/* eslint-disable react-native/no-inline-styles */
+import { AppBottomSheetModal, AssetAvatar, Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolio, AbstractProject } from '@/screens/Home/types';
 import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconRightCC } from '@/assets/icons/common';
 import BigNumber from 'bignumber.js';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RelatedDeFiType } from '..';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 
 interface Props {
   deFiList: RelatedDeFiType[];
@@ -21,12 +25,115 @@ interface Props {
   symbol: string;
 }
 
+interface PopupProps {
+  deFiList: RelatedDeFiType[];
+  handleGoDeFi: (
+    data: AbstractProject,
+    itemList: AbstractPortfolio[],
+    symbol: string,
+  ) => void;
+  symbol: string;
+  visible: boolean;
+  onClose: () => void;
+}
+
+const DeFiListPopup = ({
+  deFiList,
+  handleGoDeFi,
+  symbol,
+  visible,
+  onClose,
+}: PopupProps) => {
+  const bottomRef = useRef<BottomSheetModalMethods>(null);
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: RelatedDeFiType; index: number }) => {
+      return (
+        <TouchableOpacity
+          key={index}
+          onPress={() => {
+            onClose();
+            handleGoDeFi(item, [...(item._portfolios || [])], symbol);
+          }}>
+          <View style={styles.defiItem}>
+            <View style={styles.defiItemContent}>
+              <AssetAvatar
+                logo={item?.logo}
+                size={28}
+                chain={item?.chain}
+                chainSize={12}
+              />
+              <Text
+                style={styles.defiItemText}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {/* {token?.name} */}
+                {ellipsisOverflowedText(item?.name, 10)}
+              </Text>
+            </View>
+            <View style={styles.defiItemContent}>
+              <Text style={styles.defiItemText}>{`${formatTokenAmount(
+                item?.amount,
+              )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [
+      handleGoDeFi,
+      onClose,
+      styles.defiItem,
+      styles.defiItemContent,
+      styles.defiItemText,
+      symbol,
+    ],
+  );
+
+  useEffect(() => {
+    if (visible) {
+      bottomRef.current?.present();
+    } else {
+      bottomRef.current?.dismiss();
+    }
+  }, [visible]);
+
+  return (
+    <AppBottomSheetModal
+      ref={bottomRef}
+      snapPoints={['85%']}
+      onDismiss={onClose}
+      enableDismissOnClose
+      {...makeBottomSheetProps({
+        linearGradientType: 'tx-page',
+        colors: colors2024,
+      })}
+      // enableContentPanningGesture={false}
+      handleStyle={styles.bottomBg}
+      backgroundStyle={styles.bottomBg}>
+      <BottomSheetScrollView style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <Text style={styles.popupRelateTitle}>
+            {t('page.tokenDetail.Defi')}
+          </Text>
+          {Boolean(deFiList.length) &&
+            deFiList.map((item, index) => renderItem({ item, index }))}
+        </View>
+        <View style={{ height: 120 }} />
+      </BottomSheetScrollView>
+    </AppBottomSheetModal>
+  );
+};
+
 export const RelatedDeFi: React.FC<Props> = ({
   deFiList,
   handleGoDeFi,
   symbol,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [popupVisible, setPopupVisible] = React.useState(false);
 
   const { t } = useTranslation();
 
@@ -72,7 +179,9 @@ export const RelatedDeFi: React.FC<Props> = ({
     ],
   );
 
-  const handleOpenDeFiDetail = useCallback(() => {}, []);
+  const handleOpenDeFiDetail = useCallback(() => {
+    setPopupVisible(true);
+  }, []);
 
   const hasMore = useMemo(() => deFiList?.length > 3, [deFiList]);
 
@@ -118,13 +227,24 @@ export const RelatedDeFi: React.FC<Props> = ({
   );
 
   return (
-    <View style={styles.container}>
-      {ListHeaderComponent()}
-      {Boolean(sortedList.length) &&
-        sortedList
-          .slice(0, 3)
-          .map((item, index) => renderItem({ item, index }))}
-    </View>
+    <>
+      <View style={styles.container}>
+        {ListHeaderComponent()}
+        {Boolean(sortedList.length) &&
+          sortedList
+            .slice(0, 3)
+            .map((item, index) => renderItem({ item, index }))}
+      </View>
+      <DeFiListPopup
+        deFiList={sortedList}
+        handleGoDeFi={handleGoDeFi}
+        symbol={symbol}
+        visible={popupVisible}
+        onClose={() => {
+          setPopupVisible(false);
+        }}
+      />
+    </>
   );
 };
 
@@ -133,7 +253,12 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     paddingHorizontal: 20,
     marginTop: 20,
-    gap: 16,
+    gap: 8,
+  },
+  bottomBg: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
   },
   header: {
     width: '100%',
@@ -163,6 +288,15 @@ const getStyles = createGetStyles2024(ctx => ({
     // marginBottom: 16,
     // paddingHorizontal: 20,
     gap: 6,
+  },
+  popupRelateTitle: {
+    color: ctx.colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    marginBottom: 12,
   },
   relateTitle: {
     color: ctx.colors2024['neutral-foot'],

@@ -272,7 +272,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    paddingTop: ASSETS_SECTION_HEADER,
+    marginTop: ASSETS_SECTION_HEADER,
   },
   close: {
     paddingHorizontal: 4,

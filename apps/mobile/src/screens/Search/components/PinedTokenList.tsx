@@ -79,7 +79,9 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     padding: 8,
     borderRadius: 10,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     gap: 8,
   },
   titleText: {
@@ -95,6 +97,6 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     fontStyle: 'normal',
     fontWeight: '700',
-    color: ctx.colors2024['neutral-tilte-1'],
+    color: ctx.colors2024['neutral-title-1'],
   },
 }));

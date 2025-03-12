@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
@@ -25,10 +26,13 @@ import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatUsdValue } from '@/utils/number';
 import { openExternalUrl } from '@/core/utils/linking';
+import { Skeleton } from '@rneui/themed';
+import { LoadingLinear } from './TokenPriceChart/LoadingLinear';
 
 interface Props {
   token: AbstractPortfolioToken;
   tokenEntity?: TokenEntityDetail;
+  entityLoading: boolean;
 }
 
 const DomainUrlLink = ({
@@ -48,7 +52,7 @@ const DomainUrlLink = ({
   return (
     <TouchableOpacity style={styles.externalLink} onPress={handlePress}>
       <AssetAvatar logo={logo_url} size={16} />
-      <Text style={styles.urlText}>{url}</Text>
+      <Text style={styles.urlText}>{name}</Text>
       <RcIconExternalLinkCC
         style={styles.icon}
         width={12}
@@ -59,7 +63,11 @@ const DomainUrlLink = ({
   );
 };
 
-export const IssuerAndListSite: React.FC<Props> = ({ token, tokenEntity }) => {
+export const IssuerAndListSite: React.FC<Props> = ({
+  token,
+  tokenEntity,
+  entityLoading,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -72,102 +80,135 @@ export const IssuerAndListSite: React.FC<Props> = ({ token, tokenEntity }) => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
-      <View style={styles.itemCard}>
-        {tokenEntity?.domain_id ? (
-          <>
-            {isVerified && (
-              <View
-                style={[styles.itemIssuerContainer, styles.itemIssuePadding]}>
-                {isBridgeDomain ? (
-                  <View style={styles.itemIssuerContainer}>
-                    <IconBridgeTo />
-                    <Text style={styles.itemIssuerText}>
-                      {t('page.tokenDetail.BridgeIssue')}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.itemIssuerContainer}>
-                    <IconOrigin />
-                    <Text style={styles.itemIssuerText}>
-                      {t('page.tokenDetail.OriginIssue')}
-                    </Text>
-                  </View>
-                )}
+      {entityLoading ? (
+        <Skeleton
+          width={'100%'}
+          height={68}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : (
+        <View style={styles.itemCard}>
+          {tokenEntity?.domain_id ? (
+            <>
+              {isVerified && (
+                <View
+                  style={[
+                    styles.itemIssuerContainer,
+                    styles.itemIssuePadding,
+                    { marginBottom: 12 },
+                  ]}>
+                  {isBridgeDomain ? (
+                    <View style={styles.itemIssuerContainer}>
+                      <IconBridgeTo />
+                      <Text style={styles.itemIssuerText}>
+                        {t('page.tokenDetail.BridgeIssue')}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.itemIssuerContainer}>
+                      <IconOrigin />
+                      <Text style={styles.itemIssuerText}>
+                        {t('page.tokenDetail.OriginIssue')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              <View style={[styles.itemContainer, styles.itemIssuePadding]}>
+                <Text style={styles.itemIssuerTitle}>
+                  {isBridgeDomain
+                    ? t('page.tokenDetail.BridgeProvider')
+                    : t('page.tokenDetail.IssuerWebsite')}
+                </Text>
+                <DomainUrlLink
+                  url={`https://www.${tokenEntity?.domain_id}`}
+                  name={tokenEntity?.domain_id}
+                  logo_url={token?.logo_url}
+                />
               </View>
-            )}
-            <View style={[styles.itemContainer, styles.itemIssuePadding]}>
-              <Text style={styles.itemIssuerTitle}>
-                {t('page.tokenDetail.IssuerWebsite')}
+            </>
+          ) : (
+            <View>
+              <Text style={styles.itemIssuerText}>
+                {t('page.tokenDetail.NoIssuer')}
               </Text>
-              <DomainUrlLink
-                url={tokenEntity?.domain_id}
-                name={tokenEntity?.domain_id}
-                logo_url={token?.logo_url}
-              />
             </View>
-          </>
-        ) : (
-          <View>
-            <Text style={styles.itemIssuerText}>
-              {t('page.tokenDetail.NoIssuer')}
-            </Text>
-          </View>
-        )}
-      </View>
+          )}
+        </View>
+      )}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.ListedBy')}</Text>
       </View>
-      <View style={styles.itemCard}>
-        {!tokenEntity?.listed_sites?.length ? (
-          <View>
-            <Text style={styles.itemIssuerText}>
-              {t('page.tokenDetail.NoListedSite')}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.flexWrap}>
-            {tokenEntity?.listed_sites?.map((item, index) => {
-              return (
-                <View style={styles.itemContainer} key={index}>
-                  <DomainUrlLink
-                    url={item.url}
-                    name={item.name}
-                    logo_url={item.logo_url}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </View>
+      {entityLoading ? (
+        <Skeleton
+          width={'100%'}
+          height={68}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : (
+        <View style={styles.itemCard}>
+          {!tokenEntity?.listed_sites?.length ? (
+            <View>
+              <Text style={styles.itemIssuerText}>
+                {t('page.tokenDetail.NoListedSite')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.flexWrap}>
+              {tokenEntity?.listed_sites?.map((item, index) => {
+                return (
+                  <View style={styles.itemContainer} key={index}>
+                    <DomainUrlLink
+                      url={item.url}
+                      name={item.id}
+                      logo_url={item.logo_url}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      )}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
           {t('page.tokenDetail.SupportedExchanges')}
         </Text>
       </View>
-      <View style={styles.itemCard}>
-        {!tokenEntity?.cex_list?.length ? (
-          <View>
-            <Text style={styles.itemIssuerText}>
-              {t('page.tokenDetail.NoSupportedExchanges')}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.flexWrap}>
-            {tokenEntity?.cex_list?.map((item, index) => {
-              return (
-                <View style={[styles.itemContainerLink]} key={index}>
-                  <DomainUrlLink
-                    url={item.id}
-                    name={item.name}
-                    logo_url={item.logo_url}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </View>
+      {entityLoading ? (
+        <Skeleton
+          width={'100%'}
+          height={68}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : (
+        <View style={styles.itemCard}>
+          {!tokenEntity?.cex_list?.length ? (
+            <View>
+              <Text style={styles.itemIssuerText}>
+                {t('page.tokenDetail.NoSupportedExchanges')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.flexWrap}>
+              {tokenEntity?.cex_list?.map((item, index) => {
+                return (
+                  <View style={[styles.itemContainerLink]} key={index}>
+                    <DomainUrlLink
+                      url={item.id}
+                      name={item.name}
+                      logo_url={item.logo_url}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -182,6 +223,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     flexDirection: 'column',
     // width: '100%',
+  },
+  skeleton: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   itemCard: {
     // marginTop: 12,
@@ -303,7 +350,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     borderRadius: 64,
     padding: 8,
     paddingHorizontal: 10,

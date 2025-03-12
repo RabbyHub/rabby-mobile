@@ -51,6 +51,11 @@ import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import LinearGradient from 'react-native-linear-gradient';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { unionBy } from 'lodash';
+import { HistoryList } from './components/HistoryList';
+import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
+import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -167,11 +172,6 @@ export const RightMore: React.FC<{
 
   return (
     <>
-      <HeaderRightHistory
-        isInTokenDetail={true}
-        tokenItem={token}
-        isMultiAddress={isMultiAddress}
-      />
       <DropDownMenuView
         menuConfig={{
           menuActions: menuActions,
@@ -182,6 +182,32 @@ export const RightMore: React.FC<{
         </CustomTouchableOpacity>
       </DropDownMenuView>
     </>
+  );
+};
+
+export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyle,
+  });
+  const { t } = useTranslation();
+  return isDanger ? (
+    <View style={styles.searchTokenDanger}>
+      <View style={styles.tokenRowContent}>
+        <RcIconDanger />
+        <Text style={styles.searchTokenDangerText}>
+          {t('page.search.tokenItem.verifyDangerTips')}
+        </Text>
+      </View>
+    </View>
+  ) : (
+    <View style={styles.searchTokenWarning}>
+      <View style={styles.tokenRowContent}>
+        <RcIconWarning />
+        <Text style={styles.searchTokenWarningText}>
+          {t('page.search.tokenItem.scamWarningTips')}
+        </Text>
+      </View>
+    </View>
   );
 };
 
@@ -202,6 +228,7 @@ export const TokenDetailScreen = () => {
   });
 
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
+
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio || needUseCacheToken) {
       const iToken = cacheAssets.find(
@@ -305,11 +332,11 @@ export const TokenDetailScreen = () => {
       });
     },
     {
-      refreshDeps: [token, finalAccount],
+      refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
     },
   );
 
-  const { data: tokenEntity } = useRequest(
+  const { data: tokenEntity, loading: entityLoading } = useRequest(
     async () => {
       if (!token || !token._tokenId) {
         return;
@@ -320,11 +347,9 @@ export const TokenDetailScreen = () => {
       return res;
     },
     {
-      refreshDeps: [token],
+      refreshDeps: [token._tokenId, token.chain],
     },
   );
-
-  // console.log('tokenEntity', tokenEntity);
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
@@ -492,6 +517,12 @@ export const TokenDetailScreen = () => {
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
       <ScrollView>
+        <View style={styles.riskContainer}>
+          {token.is_verified === false && <RiskTokenTips isDanger={true} />}
+          {token.is_verified !== false && token.is_scam && (
+            <RiskTokenTips isDanger={false} />
+          )}
+        </View>
         <View style={{ position: 'relative' }}>
           {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
           <Text style={styles.currentText}>Current price</Text>
@@ -503,7 +534,7 @@ export const TokenDetailScreen = () => {
           tokenSupportSwap={tokenSupportSwap}
           handleSwap={handleSwap}
           amountList={tokenFromAddress}
-          token={tokenWithAmount || token}
+          token={token}
         />
         {relateDefiList.length > 0 && !unHold && (
           <RelatedDeFi
@@ -512,8 +543,18 @@ export const TokenDetailScreen = () => {
             handleGoDeFi={handleOpenDefiDetail}
           />
         )}
-        <IssuerAndListSite token={token} tokenEntity={tokenEntity} />
+        <IssuerAndListSite
+          token={token}
+          tokenEntity={tokenEntity}
+          entityLoading={entityLoading}
+        />
         <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
+        <HistoryList
+          accounts={accounts}
+          finalAccount={finalAccount}
+          isForMultipleAdderss={!isSingleAddress}
+          token={token}
+        />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
       <LinearGradient
@@ -560,6 +601,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         : colors2024['neutral-bg-1'],
     },
 
+    riskContainer: {
+      paddingHorizontal: 20,
+      marginBottom: 12,
+    },
     currentText: {
       marginLeft: 26,
       color: colors2024['neutral-secondary'],
@@ -646,6 +691,46 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     btnGap: {
       width: 10,
+    },
+    searchTokenDanger: {
+      flex: 1,
+      justifyContent: 'center',
+      flexDirection: 'row',
+      width: '100%',
+      padding: 8,
+      backgroundColor: colors2024['red-light-1'],
+      borderRadius: 8,
+      // marginTop: 12,
+    },
+    tokenRowContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    searchTokenWarning: {
+      flex: 1,
+      justifyContent: 'center',
+      flexDirection: 'row',
+      width: '100%',
+      padding: 8,
+      backgroundColor: colors2024['orange-light-1'],
+      borderRadius: 8,
+      // marginTop: 12,
+    },
+
+    searchTokenWarningText: {
+      color: colors2024['orange-default'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+    },
+    searchTokenDangerText: {
+      color: colors2024['red-default'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

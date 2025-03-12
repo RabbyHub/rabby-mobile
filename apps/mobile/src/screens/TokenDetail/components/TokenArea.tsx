@@ -8,7 +8,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
 import { TokenFromAddressItem } from '..';
-import { formatNumber, formatUsdValue } from '@/utils/number';
+import { formatAmount, formatNumber, formatUsdValue } from '@/utils/number';
 
 interface Props {
   token: AbstractPortfolioToken;
@@ -34,12 +34,12 @@ export const TokenArea: React.FC<Props> = ({
   const { t } = useTranslation();
 
   const amountSum = useMemo(() => {
-    let sum = 0;
-    amountList.map((item, index) => {
-      sum = sum + item.amount;
-    });
-    return sum;
-  }, [amountList]);
+    // let sum = 0;
+    // amountList.map((item, index) => {
+    //   sum = sum + item.amount;
+    // });
+    return token.amount;
+  }, [token.amount]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: TokenFromAddressItem; index: number }) => {
@@ -119,7 +119,7 @@ export const TokenArea: React.FC<Props> = ({
           />
           <View style={styles.tokenBox}>
             <Text style={styles.tokenAmount} numberOfLines={1}>
-              {formatNumber(amountSum)} {token.symbol}
+              {formatAmount(amountSum)} {token.symbol}
             </Text>
             <Text style={styles.tokenUsd}>
               {tokenUsdValue

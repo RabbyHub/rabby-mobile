@@ -9,9 +9,12 @@ import {
 } from 'react-native';
 
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
+RcIconDanger;
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
+import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
+import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -38,6 +41,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatUsdValue } from '@/utils/number';
+import { RiskTokenTips } from '@/screens/TokenDetail';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -280,11 +284,15 @@ export const ExternalTokenRow = memo(
     }, [colors2024, data.price_24h_change]);
 
     const ExtraContent = useMemo(() => {
-      if (!data.entity) {
-        return null;
+      if (data.is_verified === false) {
+        return <RiskTokenTips isDanger={true} />;
       }
 
-      if (data.entity.domain_id) {
+      if (data.is_scam) {
+        return <RiskTokenTips isDanger={false} />;
+      }
+
+      if (data.entity?.domain_id) {
         const isBridgeDomain = data.entity.bridge_ids?.length > 0;
         const isVerified = data.entity.is_domain_verified;
 
@@ -305,7 +313,7 @@ export const ExternalTokenRow = memo(
       }
 
       return null;
-    }, [data.entity, styles, t]);
+    }, [data.entity, styles, t, data.is_verified, data.is_scam]);
 
     return (
       <TouchableOpacity
@@ -476,6 +484,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'column',
     alignItems: 'center',
     paddingVertical: 14,
+    gap: 12,
     // paddingLeft: 12,
     // paddingRight: 16,
     // height: '100%',
@@ -526,7 +535,7 @@ const getStyles = createGetStyles2024(ctx => ({
     padding: 8,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 8,
-    marginTop: 12,
+    // marginTop: 12,
   },
   searchTokenRowTokenInner: {
     // flexShrink: 1,
@@ -634,10 +643,44 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
+  searchTokenWarningText: {
+    color: ctx.colors2024['orange-default'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
+  searchTokenDangerText: {
+    color: ctx.colors2024['red-default'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
   tokenRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  searchTokenDanger: {
+    flex: 1,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    padding: 8,
+    backgroundColor: ctx.colors2024['red-light-1'],
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  searchTokenWarning: {
+    flex: 1,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    padding: 8,
+    backgroundColor: ctx.colors2024['orange-light-1'],
+    borderRadius: 8,
+    marginTop: 12,
   },
   highlightText: {
     color: ctx.colors2024['brand-default'],

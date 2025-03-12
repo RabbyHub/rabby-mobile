@@ -1529,6 +1529,7 @@
       "IssuedBy": "Issued by",
       "BridgeIssue": "Bridged token by a third party",
       "IssuerWebsite": "Issuer’s Website",
+      "BridgeProvider": "Bridge Provider",
       "ListedBy": "Listed by",
       "SupportedExchanges": "Supported Exchanges",
       "NoListedSite": "No listed site",
@@ -1536,6 +1537,8 @@
       "NoSupportedExchanges": "No supported exchanges",
       "OriginIssue": "This token is natively issued on this blockchain.",
       "Defi": "DeFi",
+      "Transaction": "Transaction",
+      "noTransactions": "No transactions",
       "fdv": "FDV",
       "fdvTitle": "What's FDV?",
       "fdvContent": "The market cap if the max supply was in circulation.Fully Diluted Valuation (FDV) = Price × Max Supply. If Max Supply is null, FDV = Price × Total Supply. If neither Max Supply nor Total Supply is defined or infinite, FDV is not displayed.",
@@ -1596,7 +1599,9 @@
         "placeHolder": "Search"
       },
       "tokenItem": {
-        "Issuedby": "Issued by"
+        "Issuedby": "Issued by",
+        "verifyDangerTips": "This is a scam token",
+        "scamWarningTips": "This is a low-quality token and may be a scam"
       },
       "searchWeb": {
         "noResult": "No Results for",
