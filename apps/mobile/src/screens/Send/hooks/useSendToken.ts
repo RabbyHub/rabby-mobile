@@ -990,7 +990,6 @@ export function useSendTokenForm(
           }
         }
       }
-
       if (!isForMultipleAdderss) {
         handleCurrentTokenChange(token);
       } else {
