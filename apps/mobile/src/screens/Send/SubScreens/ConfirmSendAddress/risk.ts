@@ -83,12 +83,11 @@ export const useRisks = (address: string) => {
         queue.add(async () => {
           try {
             const res = await openapi.hasTransferAllChain(acc.address, address);
-            // TODO: check res property
-            if (res?.['_has_transfer'] || res?.['has_transfer']) {
+            if (res?.has_transfer) {
               hasSended = true;
             }
           } catch (error) {
-            console.error('_has_transfer fetch error', error);
+            console.error('has_transfer fetch error', error);
           }
         });
       });
