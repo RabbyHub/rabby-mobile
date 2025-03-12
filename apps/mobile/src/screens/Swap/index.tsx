@@ -818,7 +818,7 @@ const ForMultipleAddress = (
         ofScreen: 'MultiSwap',
         sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
       }}>
-      <Swap {...props} key={sceneCurrentAccountDepKey} isForMultipleAdderss />
+      <Swap {...props} isForMultipleAdderss />
     </ScreenSceneAccountProvider>
   );
 };
