@@ -930,7 +930,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   badgeStyle: {
     // width: 20,
     // height: 20,
-    lineHeight: 20,
+    // lineHeight: 20,
   },
   headerText: {
     color: colors2024['neutral-title-1'],
