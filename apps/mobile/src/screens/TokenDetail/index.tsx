@@ -23,7 +23,14 @@ import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ImageBackground,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -517,6 +524,23 @@ export const TokenDetailScreen = () => {
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
       <ScrollView>
+        <ImageBackground
+          source={
+            isLight
+              ? require('@/assets2024/icons/home/ImgSingleBg.png')
+              : require('@/assets2024/icons/home/ImgSingleBgDark.png')
+          }
+          resizeMode="cover"
+          // width={'100%'}
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: 350,
+          }}
+        />
         <View style={styles.riskContainer}>
           {token.is_verified === false && <RiskTokenTips isDanger={true} />}
           {token.is_verified !== false && token.is_scam && (

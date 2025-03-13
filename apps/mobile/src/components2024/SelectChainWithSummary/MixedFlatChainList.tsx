@@ -15,6 +15,7 @@ export default function MixedFlatChainList({
   style,
   value,
   onChange,
+  needAllAddresses,
   onScrollBeginDrag,
   matteredList = [],
   unmatteredList = [],
@@ -25,6 +26,7 @@ export default function MixedFlatChainList({
   onChange?(value: CHAINS_ENUM): void;
   matteredList?: Chain[];
   unmatteredList?: Chain[];
+  needAllAddresses?: boolean;
   supportChains?: CHAINS_ENUM[];
   onScrollBeginDrag?:
     | ((event: NativeSyntheticEvent<NativeScrollEvent>) => void)
@@ -36,7 +38,7 @@ export default function MixedFlatChainList({
   const { tokenList } = useLocalTokens(currentAccount?.address);
   const { matteredChainBalances } = useChainBalances();
   const tokenListMap = useMemo(() => {
-    if (!tokenList) {
+    if (!tokenList || needAllAddresses) {
       return {};
     }
     const res = tokenList.reduce((map, item) => {
@@ -63,7 +65,7 @@ export default function MixedFlatChainList({
       });
     }
     return res;
-  }, [tokenList, matteredChainBalances]);
+  }, [tokenList, matteredChainBalances, needAllAddresses]);
 
   const sections = React.useMemo(() => {
     return [
@@ -98,6 +100,7 @@ export default function MixedFlatChainList({
               isSectionLast && styles.sectionLast,
             ]}>
             <ChainItem
+              needAllAddresses={needAllAddresses}
               data={item}
               value={value}
               onPress={onChange}
