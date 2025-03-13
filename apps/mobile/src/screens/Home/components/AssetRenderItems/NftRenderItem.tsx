@@ -20,9 +20,10 @@ import {
   ContextMenuView,
   MenuAction,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { DisplayNftItem } from '../../types';
 import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
+import { NftItemWithCollection } from '../../hooks/nft';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const NftRow = memo(
   ({
@@ -36,7 +37,7 @@ export const NftRow = memo(
     hideFoldTag,
     chainLogoSize = 16,
   }: {
-    item: DisplayNftItem;
+    item: NftItemWithCollection;
     filterText?: string;
     style?: ViewStyle;
     logoSize?: number;
@@ -47,11 +48,17 @@ export const NftRow = memo(
     onPress: () => void;
   }) => {
     const { styles } = useTheme2024({ getStyle });
+    const isCollection = 'nft_list' in item && !!item.nft_list.length;
 
     const chain = getCHAIN_ID_LIST().get(item.chain);
     const iconUri = chain?.logo;
-    const isSvgURL = item?.content?.endsWith('.svg');
+    const isSvgURL = isCollection
+      ? item.logo_url?.endsWith('.svg')
+      : (item as NFTItem)?.content?.endsWith('.svg');
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
+    const _isManualFold = isCollection
+      ? item.nft_list.every(i => i._isManualFold)
+      : item._isManualFold;
 
     const children = (
       <TouchableOpacity
@@ -83,8 +90,20 @@ export const NftRow = memo(
                   <IconDefaultNFT width="100%" height="100%" />
                 }
                 type="image_url"
-                src={isSvgURL ? '' : item?.thumbnail_url}
-                thumbnail={isSvgURL ? '' : item?.thumbnail_url}
+                src={
+                  isSvgURL
+                    ? ''
+                    : isCollection
+                    ? item.logo_url
+                    : (item as NFTItem)?.thumbnail_url
+                }
+                thumbnail={
+                  isSvgURL
+                    ? ''
+                    : isCollection
+                    ? item.logo_url
+                    : (item as NFTItem)?.thumbnail_url
+                }
                 mediaStyle={styles.images}
                 style={styles.images}
                 playIconSize={36}
@@ -108,7 +127,7 @@ export const NftRow = memo(
           <View
             style={[
               styles.projectNameBox,
-              item._isManualFold && {
+              _isManualFold && {
                 marginRight: 55,
               },
             ]}>
@@ -120,10 +139,12 @@ export const NftRow = memo(
               searchWords={[filterText || '']}
               textToHighlight={item.name}
             />
-            {!hideFoldTag && item._isManualFold && <TextBadge type="folded" />}
+            {!hideFoldTag && _isManualFold && <TextBadge type="folded" />}
           </View>
         </View>
-        <Text style={styles.amount}>{item.amount}</Text>
+        <Text style={styles.amount}>
+          {isCollection ? item.nft_list.length : item.amount}
+        </Text>
       </TouchableOpacity>
     );
     if (disableMenu) {

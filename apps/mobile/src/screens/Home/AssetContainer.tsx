@@ -77,6 +77,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
+import { collectionNftList } from './hooks/nft';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -290,18 +291,18 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         type: 'unfold_defi',
         data: item,
       }));
-    const foldNftList: ActionItem[] = nftList
-      .filter(i => i._isFold)
-      .map(item => ({
-        type: 'fold_nft',
-        data: item,
-      }));
-    const unFoldNftList: ActionItem[] = nftList
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      }));
+    const foldNftList: ActionItem[] = collectionNftList(
+      nftList.filter(i => i._isFold),
+    ).map(item => ({
+      type: 'fold_nft',
+      data: item,
+    }));
+    const unFoldNftList: ActionItem[] = collectionNftList(
+      nftList.filter(i => !i._isFold),
+    ).map(item => ({
+      type: 'unfold_nft',
+      data: item,
+    }));
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -394,6 +395,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     [currentAccount],
   );
   const handlePressNft = (item: DisplayNftItem) => {
+    // TODO: 区分nft和collection
+    console.log('CUSTOM_LOGGER:=>: handlePressNft', item);
     navigate(RootNames.NftDetail, {
       token: item,
       isSingleAddress: true,

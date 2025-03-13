@@ -3,7 +3,7 @@ import { DisplayNftItem } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { useSafeState } from 'ahooks';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { syncNFTs } from '@/databases/hooks/assets';
 import { singleNFTNounceAtom } from './refresh';
 import { useAtom } from 'jotai';
@@ -92,4 +92,31 @@ export const useQueryNft = (addr?: string, visible = true) => {
     list: list || [],
     reload: fetchData,
   };
+};
+
+export type NftItemWithCollection = NFTItem | CollectionList;
+export const collectionNftList = (nftList: NFTItem[]) => {
+  const collectionList: NftItemWithCollection[] = [];
+  nftList.forEach(item => {
+    if (!item.collection_id || !item.collection) {
+      collectionList.push(item);
+      return;
+    }
+    const collection = collectionList.find(
+      (citem): citem is CollectionList =>
+        'nft_list' in citem &&
+        citem.chain === item.chain &&
+        citem.id === item.collection?.id &&
+        !!citem.nft_list.length,
+    );
+    if (collection) {
+      collection.nft_list.push({ ...item, collection: null });
+    } else {
+      collectionList.push({
+        ...item.collection,
+        nft_list: [{ ...item, collection: null }],
+      } as unknown as CollectionList);
+    }
+  });
+  return collectionList;
 };

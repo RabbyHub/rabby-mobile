@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { syncRemoteNFTs } from '@/databases/sync/assets';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Collection, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { runOnJS } from 'react-native-reanimated';
 
 export const batchQueryNFTsWithLocalCache = async (
@@ -14,7 +14,20 @@ export const batchQueryNFTsWithLocalCache = async (
     const isExpired = await NFTItemEntity.isExpired(id);
     if (force || isExpired) {
       const nfts = await openapi.listNFT(id, isAll, sortByCredit);
-      runOnJS(syncRemoteNFTs)(id, [...nfts]);
+      const collectionNfts = await openapi.collectionList({ id, isAll });
+      const nftsWithCollection = nfts.map(nft => {
+        const collection = collectionNfts.find(
+          c => `${c.chain}:${c.id}` === nft.collection_id,
+        );
+        return {
+          ...nft,
+          collection: {
+            ...(collection || {}),
+            nft_list: [],
+          } as unknown as Collection,
+        };
+      });
+      runOnJS(syncRemoteNFTs)(id, [...nftsWithCollection]);
       return nfts;
     } else {
       return onlySync ? [] : NFTItemEntity.batchQueryNFTs(id);
