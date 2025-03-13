@@ -13,7 +13,6 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
   StackActions,
@@ -57,7 +56,6 @@ import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
-  useScreenSceneAccountContext,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -399,9 +397,6 @@ const Swap = ({
   );
 
   const navigation = useNavigation();
-  const scrollToEnd = () => {
-    keyboardAwareRef.current?.scrollToEnd(true);
-  };
 
   const lowCreditInit = useRef(false);
 
