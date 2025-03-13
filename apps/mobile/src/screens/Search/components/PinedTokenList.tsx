@@ -12,6 +12,7 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const PinedTokenList = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -25,39 +26,45 @@ export const PinedTokenList = () => {
     });
   }, []);
 
-  useEffect(() => {
-    handleFetchTokens();
-  }, [handleFetchTokens]);
-
-  return (
-    pinTokens.length > 0 && (
-      <View style={styles.container}>
-        <View style={styles.titleHeader}>
-          <Text style={styles.titleText}>Pinned Token</Text>
-        </View>
-        <View style={styles.section}>
-          {pinTokens.map((token, index) => (
-            <TouchableOpacity
-              onPress={e =>
-                handleOpenTokenDetail(ensureAbstractPortfolioToken(token))
-              }
-              style={styles.itemContainer}
-              key={index}>
-              <AssetAvatar
-                logo={token?.logo_url}
-                chain={token?.chain}
-                chainSize={10}
-                size={24}
-              />
-              <Text style={styles.tokenText}>
-                {ellipsisOverflowedText(getTokenSymbol(token), 8)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    )
+  useFocusEffect(
+    useCallback(() => {
+      handleFetchTokens();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
   );
+
+  // useEffect(() => {
+  //   handleFetchTokens();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
+
+  return pinTokens.length > 0 ? (
+    <View style={styles.container}>
+      <View style={styles.titleHeader}>
+        <Text style={styles.titleText}>Pinned Token</Text>
+      </View>
+      <View style={styles.section}>
+        {pinTokens.map((token, index) => (
+          <TouchableOpacity
+            onPress={e =>
+              handleOpenTokenDetail(ensureAbstractPortfolioToken(token))
+            }
+            style={styles.itemContainer}
+            key={index}>
+            <AssetAvatar
+              logo={token?.logo_url}
+              chain={token?.chain}
+              chainSize={10}
+              size={24}
+            />
+            <Text style={styles.tokenText}>
+              {ellipsisOverflowedText(getTokenSymbol(token), 8)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  ) : null;
 };
 const getStyles = createGetStyles2024(ctx => ({
   container: {
