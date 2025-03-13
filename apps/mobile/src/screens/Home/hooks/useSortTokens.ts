@@ -58,7 +58,7 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
       const aWorth = a.amount * a.price || 0;
       const bWorth = b.amount * b.price || 0;
       if (a._isExcludeBalance && b._isExcludeBalance) {
-        return bWorth - aWorth;
+        return (b.credit_score || 0) - (a.credit_score || 0) || bWorth - aWorth;
       }
       if (a._isExcludeBalance && !b._isExcludeBalance) {
         return bWorth === 0 ? -1 : 1;

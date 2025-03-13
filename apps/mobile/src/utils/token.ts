@@ -188,6 +188,7 @@ export const abstractTokenToTokenItem = (
     time_at: token.time_at,
     price_24h_change: token.price_24h_change,
     low_credit_score: token?.low_credit_score,
+    credit_score: token?.credit_score,
     // @ts-expect-error
     isFakerFoldRow: token?.id === SMALL_TOKEN_ID,
     smallTokenAllUsdValue:
@@ -219,6 +220,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
   time_at: number;
   price_24h_change?: number | null;
   low_credit_score?: boolean;
+  credit_score?: number;
   _amountStr?: string;
   _priceStr?: string;
   _amountChange?: number;
@@ -258,6 +260,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
     this.time_at = token.time_at;
     this.price_24h_change = token.price_24h_change;
     this.low_credit_score = token.low_credit_score;
+    this.credit_score = token.credit_score;
 
     // 默认是它
     this._usdValueChangeStr = '-';
