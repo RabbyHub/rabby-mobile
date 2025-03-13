@@ -225,6 +225,27 @@ const DappWebViewControl2 = React.forwardRef<
     }, []);
 
     const handlePressHeaderLeftClose = useCallback(() => {
+      if (latestUrl && safeGetOrigin(latestUrl) === safeGetOrigin(dappOrigin)) {
+        const dappInfo = dappService.getDapp(dappOrigin);
+        if (dappInfo) {
+          dappService.updateDapp({
+            ...dappInfo,
+            latestUrl,
+            latestOpenAt: Date.now(),
+          });
+        } else {
+          dappService.addDapp({
+            ...createDappBySession({
+              origin: dappOrigin,
+              name: '',
+              icon: '',
+            }),
+            latestUrl,
+            latestOpenAt: Date.now(),
+          });
+        }
+      }
+
       if (typeof onPressHeaderLeftClose === 'function') {
         return onPressHeaderLeftClose({
           defaultAction: handlePressCloseDefault,
@@ -418,29 +439,6 @@ const DappWebViewControl2 = React.forwardRef<
       webviewRef,
       styles,
     ]);
-
-    useEffect(() => {
-      if (latestUrl && safeGetOrigin(latestUrl) === safeGetOrigin(dappOrigin)) {
-        const dappInfo = dappService.getDapp(dappOrigin);
-        if (dappInfo) {
-          dappService.updateDapp({
-            ...dappInfo,
-            latestUrl,
-            latestOpenAt: Date.now(),
-          });
-        } else {
-          dappService.addDapp({
-            ...createDappBySession({
-              origin: dappOrigin,
-              name: '',
-              icon: '',
-            }),
-            latestUrl,
-            latestOpenAt: Date.now(),
-          });
-        }
-      }
-    }, [latestUrl, dappOrigin]);
 
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>

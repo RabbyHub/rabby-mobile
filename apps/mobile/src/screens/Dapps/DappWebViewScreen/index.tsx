@@ -27,6 +27,7 @@ import { RootNames } from '@/constant/layout';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { useNavigationState } from '@react-navigation/native';
 import { HomeNavigatorParamsList } from '@/navigation-type';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 /**
  * @description this screen will be put on top level of App's navigation
@@ -56,7 +57,8 @@ export function DappWebViewStubScreen() {
 
   const activeDappWebViewControlRef = useRef<DappWebViewControl2Type>(null);
 
-  const { isDappConnected, disconnectDapp, updateFavorite } = useDapps();
+  const { isDappConnected, disconnectDapp, updateFavorite, setDapp, dapps } =
+    useDapps();
 
   const navigation = useRabbyAppNavigation();
 
@@ -237,6 +239,21 @@ export function DappWebViewStubScreen() {
                         }
                         case 'favorite': {
                           updateFavorite(dappInfo.origin, !isFavorited);
+                          const origin = safeGetOrigin(dappInfo.origin);
+                          if (
+                            !isFavorited &&
+                            origin === safeGetOrigin(webviewState.url) &&
+                            dapps[origin]
+                          ) {
+                            setDapp({
+                              ...dapps[origin],
+                              origin: dappInfo.origin,
+                              url: webviewState.url,
+                              latestUrl: webviewState.url,
+                              latestOpenAt: Date.now(),
+                              isFavorite: true,
+                            });
+                          }
                           break;
                         }
                         default:

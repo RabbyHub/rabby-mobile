@@ -59,7 +59,7 @@ export function FavoriteDappsScreen(): JSX.Element {
 
   const handleOpenURLDebounced = useMemo(() => {
     return debounce((dapp: DappInfo) => {
-      handleOpenURL(dapp.latestUrl || dapp.origin);
+      handleOpenURL(dapp.latestUrl || dapp.url || dapp.origin);
     }, 200);
   }, [handleOpenURL]);
 
