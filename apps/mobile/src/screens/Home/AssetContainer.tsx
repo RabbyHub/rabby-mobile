@@ -77,7 +77,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
-import { collectionNftList } from './hooks/nft';
+import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -394,14 +394,38 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     },
     [currentAccount],
   );
-  const handlePressNft = (item: DisplayNftItem) => {
-    // TODO: 区分nft和collection
-    console.log('CUSTOM_LOGGER:=>: handlePressNft', item);
-    navigate(RootNames.NftDetail, {
-      token: item,
-      isSingleAddress: true,
-      account: currentAccount as any,
-    });
+  const handlePressNft = (item: NftItemWithCollection) => {
+    if ('nft_list' in item && item.nft_list.length) {
+      const id = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.COLLECTION_NFTS,
+        data: item,
+        bottomSheetModalProps: {
+          // enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          handleStyle: {
+            backgroundColor: colors2024['neutral-bg-2'],
+          },
+        },
+        titleText: `${item.name}(${item.nft_list.length})`,
+        onPressItem: (v: DisplayNftItem) => {
+          navigate(RootNames.NftDetail, {
+            token: v,
+            isSingleAddress: true,
+            account: currentAccount as any,
+          });
+          removeGlobalBottomSheetModal2024(id);
+        },
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(id);
+        },
+      });
+    } else {
+      navigate(RootNames.NftDetail, {
+        token: item as DisplayNftItem,
+        isSingleAddress: true,
+        account: currentAccount as any,
+      });
+    }
   };
   const handleSwitchTab = (key: AsssetKey) => {
     setFoldHideList(true);
