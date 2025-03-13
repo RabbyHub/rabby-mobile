@@ -1531,6 +1531,7 @@
       "IssuerWebsite": "Issuer’s Website",
       "BridgeProvider": "Bridge Provider",
       "ListedBy": "Listed by",
+      "OriginalToken": "Original Token",
       "SupportedExchanges": "Supported Exchanges",
       "NoListedSite": "No listed site",
       "NoIssuer": "No issuer information",

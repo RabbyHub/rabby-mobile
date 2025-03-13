@@ -234,6 +234,7 @@ export const TokenDetailScreen = () => {
     getStyle,
   });
 
+  const { safeOffHeader, safeTop } = useSafeSizes();
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
@@ -523,12 +524,29 @@ export const TokenDetailScreen = () => {
     <NormalScreenContainer2024
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
+      <ImageBackground
+        source={
+          isLight
+            ? require('@/assets2024/icons/home/ImgSingleBgUp.png')
+            : require('@/assets2024/icons/home/ImgSingleBgUpDark.png')
+        }
+        resizeMode="cover"
+        // width={'100%'}
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: safeOffHeader + 10,
+        }}
+      />
       <ScrollView>
         <ImageBackground
           source={
             isLight
-              ? require('@/assets2024/icons/home/ImgSingleBg.png')
-              : require('@/assets2024/icons/home/ImgSingleBgDark.png')
+              ? require('@/assets2024/icons/home/ImgSingleBgDown.png')
+              : require('@/assets2024/icons/home/ImgSingleBgDownDark.png')
           }
           resizeMode="cover"
           // width={'100%'}
@@ -538,7 +556,7 @@ export const TokenDetailScreen = () => {
             top: 0,
             left: 0,
             width: '100%',
-            height: 350,
+            height: 250,
           }}
         />
         <View style={styles.riskContainer}>

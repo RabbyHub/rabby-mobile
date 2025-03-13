@@ -39,7 +39,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { ellipsisAddress } from '@/utils/address';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenidentityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatUsdValue } from '@/utils/number';
 import { RiskTokenTips } from '@/screens/TokenDetail';
 
@@ -229,7 +229,7 @@ export const TokenRow = memo(
 );
 
 interface TokenRowDataType extends AbstractPortfolioToken {
-  entity?: TokenEntityDetail;
+  identity?: TokenidentityDetail;
 }
 
 export const ExternalTokenRow = memo(
@@ -259,8 +259,8 @@ export const ExternalTokenRow = memo(
 
     const siteList = useMemo(() => {
       return [
-        ...(data?.entity?.listed_sites || []),
-        ...(data?.entity?.cex_list || []),
+        ...(data?.identity?.listed_sites || []),
+        ...(data?.identity?.cex_list || []),
       ];
     }, [data]);
 
@@ -292,9 +292,9 @@ export const ExternalTokenRow = memo(
         return <RiskTokenTips isDanger={false} />;
       }
 
-      if (data.entity?.domain_id) {
-        const isBridgeDomain = data.entity.bridge_ids?.length > 0;
-        const isVerified = data.entity.is_domain_verified;
+      if (data.identity?.domain_id) {
+        const isBridgeDomain = data.identity.bridge_ids?.length > 0;
+        const isVerified = data.identity.is_domain_verified;
 
         return (
           <View style={styles.searchTokenExtraInfo}>
@@ -305,7 +305,7 @@ export const ExternalTokenRow = memo(
               {isVerified &&
                 (isBridgeDomain ? <IconBridgeTo /> : <IconOrigin />)}
               <Text style={styles.searchTokenDomain}>
-                {data.entity?.domain_id}
+                {data.identity?.domain_id}
               </Text>
             </View>
           </View>
@@ -313,7 +313,7 @@ export const ExternalTokenRow = memo(
       }
 
       return null;
-    }, [data.entity, styles, t, data.is_verified, data.is_scam]);
+    }, [data.identity, styles, t, data.is_verified, data.is_scam]);
 
     return (
       <TouchableOpacity
@@ -367,8 +367,8 @@ export const ExternalTokenRow = memo(
                   numberOfLines={1}
                   ellipsizeMode="tail">
                   {`FDV ${
-                    data.entity?.fdv
-                      ? formatUsdValue(data.entity?.fdv || 0)
+                    data.identity?.fdv
+                      ? formatUsdValue(data.identity?.fdv || 0)
                       : '-'
                   }`}
                 </Text>

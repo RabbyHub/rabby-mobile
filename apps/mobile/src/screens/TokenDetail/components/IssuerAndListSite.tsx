@@ -7,7 +7,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
-
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
+import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import {
   RcIconCopyRegularCC,
   RcIconExternalLinkCC,
@@ -28,6 +29,10 @@ import { formatUsdValue } from '@/utils/number';
 import { openExternalUrl } from '@/core/utils/linking';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from './TokenPriceChart/LoadingLinear';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { RootNames } from '@/constant/layout';
+import { navigate, naviPush } from '@/utils/navigation';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
 interface Props {
   token: AbstractPortfolioToken;
@@ -53,11 +58,11 @@ const DomainUrlLink = ({
     <TouchableOpacity style={styles.externalLink} onPress={handlePress}>
       <AssetAvatar logo={logo_url} size={16} />
       <Text style={styles.urlText}>{name}</Text>
-      <RcIconExternalLinkCC
+      <RcIconJumpCC
         style={styles.icon}
         width={12}
         height={12}
-        color={colors2024['neutral-foot']}
+        color={colors2024['neutral-secondary']}
       />
     </TouchableOpacity>
   );
@@ -127,6 +132,45 @@ export const IssuerAndListSite: React.FC<Props> = ({
                   logo_url={token?.logo_url}
                 />
               </View>
+              {isBridgeDomain && tokenEntity.origin_token && (
+                <View style={[styles.itemContainer, styles.itemIssuePadding]}>
+                  <Text style={styles.itemIssuerTitle}>
+                    {t('page.tokenDetail.OriginalToken')}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.externalLink}
+                    onPress={() => {
+                      naviPush(RootNames.TokenDetail, {
+                        token: ensureAbstractPortfolioToken(
+                          tokenEntity.origin_token!,
+                        ),
+                        needUseCacheToken: true,
+                      });
+                    }}>
+                    <AssetAvatar
+                      logo={tokenEntity.origin_token?.logo_url}
+                      // style={mediaStyle}
+                      size={18}
+                      chain={tokenEntity.origin_token?.chain}
+                      chainSize={8}
+                    />
+                    <Text
+                      style={styles.urlText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {ellipsisOverflowedText(
+                        getTokenSymbol(tokenEntity.origin_token),
+                        10,
+                      )}
+                    </Text>
+                    <RcIconRightCC
+                      width={13}
+                      height={13}
+                      color={colors2024['neutral-secondary']}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
             </>
           ) : (
             <View>
@@ -162,7 +206,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
                   <View style={styles.itemContainer} key={index}>
                     <DomainUrlLink
                       url={item.url}
-                      name={item.id}
+                      name={item.name}
                       logo_url={item.logo_url}
                     />
                   </View>
@@ -240,7 +284,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    // gap: 12,
+    gap: 12,
     alignItems: 'center',
     width: '100%',
     flexDirection: 'column',
@@ -349,7 +393,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
