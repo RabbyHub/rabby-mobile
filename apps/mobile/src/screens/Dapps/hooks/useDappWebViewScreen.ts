@@ -3,7 +3,10 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  canoicalizeDappUrl,
+  safeGetOrigin,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import {
@@ -227,6 +230,14 @@ export function useDappWebViewScreen() {
         if (itemIdx === -1) return prev;
 
         prev[itemIdx].lastOpenWebViewId = input.webviewId || null;
+
+        // save latest url
+        if (
+          prev[itemIdx].$openParams &&
+          safeGetOrigin(input.url || '') === dappOrigin
+        ) {
+          prev[itemIdx].$openParams.initialUrl = input.url;
+        }
 
         return [...prev];
       });
