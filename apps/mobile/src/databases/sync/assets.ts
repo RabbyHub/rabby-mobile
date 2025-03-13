@@ -39,7 +39,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
 
   await prepareAppDataSource();
 
-  // await TokenItemEntity.deleteForAddress(address);
+  await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
     taskFor: `token`,
