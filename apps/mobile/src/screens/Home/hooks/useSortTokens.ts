@@ -55,7 +55,18 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
       }
     }
     hasUsdValue.sort((a, b) => {
-      return b.amount * b.price - a.amount * a.price;
+      const aWorth = a.amount * a.price || 0;
+      const bWorth = b.amount * b.price || 0;
+      if (a._isExcludeBalance && b._isExcludeBalance) {
+        return bWorth - aWorth;
+      }
+      if (a._isExcludeBalance && !b._isExcludeBalance) {
+        return bWorth === 0 ? -1 : 1;
+      }
+      if (b._isExcludeBalance && !a._isExcludeBalance) {
+        return aWorth === 0 ? 1 : -1;
+      }
+      return bWorth - aWorth;
     });
     sortByChainBalance(others).then(list => {
       setResult(
