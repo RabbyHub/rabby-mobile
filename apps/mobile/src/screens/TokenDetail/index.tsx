@@ -314,9 +314,8 @@ export const TokenDetailScreen = () => {
   const refreshTag = useCallback(() => {
     if (isSingleAddress) {
       singleTokenRefresh();
-    } else {
-      tokenRefresh();
     }
+    tokenRefresh();
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderRight = useCallback(() => {
