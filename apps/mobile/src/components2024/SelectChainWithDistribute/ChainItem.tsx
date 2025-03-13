@@ -62,6 +62,9 @@ export default function ChainItem({
                 <Text style={styles.usdValueText}>
                   {formatUsdValue(data.total || 0)}
                 </Text>
+                <Text style={styles.percentageText}>
+                  {`${Math.floor(data.percentage)}%`}
+                </Text>
               </View>
             </View>
           )}
@@ -117,6 +120,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   selectChainItemBalance: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  percentageText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro',
   },
   walletIcon: {
     color: colors2024['neutral-foot'],
@@ -126,9 +137,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   usdValueText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
   },
   rightArea: {},
