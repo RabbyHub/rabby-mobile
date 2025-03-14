@@ -519,34 +519,47 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const getDefiOrNftMenuAction = useCallback(
     (
       type: 'nft' | 'defi',
-      data: DisplayedProject | DisplayNftItem,
+      data: DisplayedProject | NftItemWithCollection,
     ): MenuAction[] => {
+      const isFold =
+        'nft_list' in data && data.nft_list.length
+          ? data.nft_list?.every(i => i._isFold)
+          : data._isFold;
       return [
         {
-          title: data._isFold
+          title: isFold
             ? t('page.tokenDetail.action.unfold')
             : t('page.tokenDetail.action.fold'),
-          icon: data._isFold
+          icon: isFold
             ? isDarkTheme
               ? icons.unfoldDark
               : icons.unfoldLight
             : isDarkTheme
             ? icons.foldDark
             : icons.foldLight,
-          androidIconName: data._isFold
+          androidIconName: isFold
             ? 'ic_rabby_menu_unfold'
             : 'ic_rabby_menu_fold',
           key: 'fold',
           action() {
-            if (data._isFold) {
+            if (isFold) {
               if (type === 'defi') {
                 preferenceService.manualUnFoldDefi(data.id);
                 toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
               } else if (type === 'nft' && data.chain) {
-                preferenceService.manualUnFoldNft({
-                  chain: data.chain,
-                  id: data.id,
-                });
+                if ('nft_list' in data && data.nft_list.length) {
+                  data.nft_list.forEach(i => {
+                    preferenceService.manualUnFoldNft({
+                      chain: i.chain,
+                      id: i.id,
+                    });
+                  });
+                } else {
+                  preferenceService.manualUnFoldNft({
+                    chain: data.chain,
+                    id: data.id,
+                  });
+                }
                 toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
               }
             } else {
@@ -554,10 +567,19 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
                 preferenceService.manualFoldDefi(data.id);
                 toast.success(t('page.tokenDetail.actionsTips.fold_success'));
               } else if (type === 'nft' && data.chain) {
-                preferenceService.manualFoldNft({
-                  chain: data.chain,
-                  id: data.id,
-                });
+                if ('nft_list' in data && data.nft_list.length) {
+                  data.nft_list.forEach(i => {
+                    preferenceService.manualFoldNft({
+                      chain: i.chain,
+                      id: i.id,
+                    });
+                  });
+                } else {
+                  preferenceService.manualFoldNft({
+                    chain: data.chain,
+                    id: data.id,
+                  });
+                }
                 toast.success(t('page.tokenDetail.actionsTips.fold_success'));
               }
             }

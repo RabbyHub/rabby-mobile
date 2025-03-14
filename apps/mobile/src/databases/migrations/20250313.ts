@@ -24,7 +24,7 @@ export class UpdateTokenItemAddCreditScore1741862198677
     if (tableExists) {
       await queryRunner.query(`DELETE FROM '${tokenTableName}'`);
       await queryRunner.query(
-        `ALTER TABLE '${tokenTableName}' ADD COLUMN credit_score REAL`,
+        `ALTER TABLE '${tokenTableName}' ADD COLUMN credit_score REAL DEFAULT 0`,
       );
     }
   }

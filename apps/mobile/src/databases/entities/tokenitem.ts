@@ -84,7 +84,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('real')
   usd_value: TokenItem['usd_value'] = 0;
   // credit_score
-  @Column('real')
+  @Column('real', { default: 0 })
   credit_score: TokenItem['credit_score'] = 0;
   // raw_amount
   @Column({
