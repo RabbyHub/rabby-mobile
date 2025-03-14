@@ -567,7 +567,7 @@ export const TokenDetailScreen = () => {
         </View>
         <View style={{ position: 'relative' }}>
           {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
-          <Text style={styles.currentText}>Current price</Text>
+          {/* <Text style={styles.currentText}>Current price</Text> */}
           <TokenPriceChart token={tokenWithAmount || token} />
           {/* <View style={styles.divider} /> */}
         </View>
@@ -602,8 +602,8 @@ export const TokenDetailScreen = () => {
       <LinearGradient
         colors={
           isLight
-            ? ['#FFF', colors2024['neutral-bg-0']]
-            : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
+            ? ['rgba(246, 247, 247, 1)', 'rgba(246, 247, 247, 0.3)']
+            : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.3)']
         }
         locations={[0.6393, 1]}
         start={{ x: 0, y: 1 }}

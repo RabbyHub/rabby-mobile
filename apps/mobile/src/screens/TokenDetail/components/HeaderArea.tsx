@@ -22,6 +22,7 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMemoizedFn } from 'ahooks';
 import { preferenceService } from '@/core/services';
+import { trigger } from 'react-native-haptic-feedback';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -74,6 +75,10 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   const handlePress = useCallback(() => {
     const currentPin = token._isPined;
     token._isPined = !token._isPined;
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     if (currentPin) {
       preferenceService.removePinedToken({
         tokenId: token._tokenId,

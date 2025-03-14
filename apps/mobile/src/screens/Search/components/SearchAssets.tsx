@@ -1,6 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
 import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
+import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
+import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
 import React, {
   useCallback,
   useEffect,
@@ -85,7 +87,7 @@ export const SearchAssets: React.FC<Props> = ({
   loading,
   searchState,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const [chainEnum, setChainEnum] = useState<CHAINS_ENUM | undefined>();
@@ -159,6 +161,11 @@ export const SearchAssets: React.FC<Props> = ({
     () =>
       !loading && (!resultTokens || !resultTokens?.length) ? (
         <View style={styles.emptyView}>
+          {isLight ? (
+            <RcIconEmpty style={styles.image} />
+          ) : (
+            <RcIconEmptyDark style={styles.image} />
+          )}
           <Text style={styles.emptyText}>
             {t('page.search.searchWeb.noResults')}
           </Text>
@@ -172,6 +179,8 @@ export const SearchAssets: React.FC<Props> = ({
       ) : null,
     [
       loading,
+      styles.image,
+      isLight,
       resultTokens,
       styles.emptyView,
       styles.emptyText,
@@ -183,9 +192,19 @@ export const SearchAssets: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       <View style={[styles.bgContainer, styles.stickyHeader]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
           {isValidHexAddress(add0x(searchState)) ? (
-            <View style={{ flexDirection: 'row', gap: 6 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 6,
+                justifyContent: 'center',
+              }}>
               <Text style={styles.sectionHeader}>
                 {t('page.search.searchWeb.searching')}
               </Text>
@@ -196,42 +215,41 @@ export const SearchAssets: React.FC<Props> = ({
           ) : (
             <Text style={styles.sectionHeader}>{t('page.swap.token')}</Text>
           )}
-          <TouchableOpacity
-            onPress={() => {
-              createChainModal();
-              Keyboard.dismiss();
-            }}>
-            {chainInfo ? (
-              <View
-                style={styles.chainInfoContainer}
-                onStartShouldSetResponder={() => true}>
-                <View style={styles.chainInfo}>
-                  <Image
-                    source={{
-                      uri: chainInfo.logo,
-                    }}
-                    style={styles.chainIcon}
-                  />
-                  <Text style={styles.chainName}>{chainInfo.name}</Text>
-                </View>
-                <TouchableWithoutFeedback
-                  disallowInterruption={true}
-                  style={styles.close}
-                  onPress={() => {
-                    setChainEnum?.(undefined);
-                  }}>
-                  <RcIconClose width={12} height={12} />
-                </TouchableWithoutFeedback>
+          {chainInfo ? (
+            <View
+              style={styles.chainInfoContainer}
+              onStartShouldSetResponder={() => true}>
+              <View style={styles.chainInfo}>
+                <Image
+                  source={{
+                    uri: chainInfo.logo,
+                  }}
+                  style={styles.chainIcon}
+                />
+                <Text style={styles.chainName}>{chainInfo.name}</Text>
               </View>
-            ) : (
-              <View style={styles.selectChain}>
-                <Text style={styles.selectChainText}>
-                  {t('page.search.sectionHeader.AllChains')}
-                </Text>
-                <RcIconRight color={colors2024['neutral-foot']} />
-              </View>
-            )}
-          </TouchableOpacity>
+              <TouchableWithoutFeedback
+                disallowInterruption={true}
+                style={styles.close}
+                onPress={() => {
+                  setChainEnum?.(undefined);
+                }}>
+                <RcIconClose width={12} height={12} />
+              </TouchableWithoutFeedback>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.selectChain}
+              onPress={() => {
+                createChainModal();
+                Keyboard.dismiss();
+              }}>
+              <Text style={styles.selectChainText}>
+                {t('page.search.sectionHeader.AllChains')}
+              </Text>
+              <RcIconRight color={colors2024['neutral-foot']} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
       <FlatList
@@ -264,7 +282,8 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
-    paddingTop: 150,
+    marginTop: -50,
+    // paddingTop: -250,
   },
   selectChain: {
     display: 'flex',
@@ -296,7 +315,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 4,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    // backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   chainInfo: {
     paddingLeft: 10,
@@ -353,7 +372,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
-    height: ASSETS_SECTION_HEADER,
+    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
     // backgroundColor: ctx.isLight
     //   ? ctx.colors2024['neutral-bg-0']
@@ -371,6 +390,10 @@ const getStyles = createGetStyles2024(ctx => ({
   renderItemWrapper: {
     // height: ASSETS_ITEM_HEIGHT_NEW,
     marginBottom: 8,
+  },
+  image: {
+    marginTop: 200,
+    // marginBottom: 16,
   },
   footer: {
     height: 200,

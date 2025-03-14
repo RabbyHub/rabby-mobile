@@ -560,7 +560,9 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     width: '100%',
     padding: 8,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-2']
+      : ctx.colors2024['neutral-bg-1'],
     borderRadius: 8,
     // marginTop: 12,
   },
@@ -570,7 +572,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     flexDirection: 'row',
     width: '100%',
-    // gap: 0,
+    // gap: 8,
   },
   colContent: {
     flexDirection: 'column',
@@ -578,7 +580,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 0,
   },
   leftColContent: {
-    maxWidth: '70%',
+    maxWidth: '65%',
     overflow: 'hidden',
   },
   verticalLine: {

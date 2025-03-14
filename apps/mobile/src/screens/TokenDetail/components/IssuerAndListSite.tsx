@@ -104,14 +104,22 @@ export const IssuerAndListSite: React.FC<Props> = ({
                     { marginBottom: 12 },
                   ]}>
                   {isBridgeDomain ? (
-                    <View style={styles.itemIssuerContainer}>
+                    <View
+                      style={[
+                        styles.itemIssuerContainer,
+                        { justifyContent: 'center' },
+                      ]}>
                       <IconBridgeTo />
                       <Text style={styles.itemIssuerText}>
                         {t('page.tokenDetail.BridgeIssue')}
                       </Text>
                     </View>
                   ) : (
-                    <View style={styles.itemIssuerContainer}>
+                    <View
+                      style={[
+                        styles.itemIssuerContainer,
+                        { justifyContent: 'center' },
+                      ]}>
                       <IconOrigin />
                       <Text style={styles.itemIssuerText}>
                         {t('page.tokenDetail.OriginIssue')}

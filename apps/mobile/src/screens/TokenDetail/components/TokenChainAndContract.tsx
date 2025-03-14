@@ -30,6 +30,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { formatUsdValueKMB } from '@/screens/Home/components/AssetRenderItems';
+import { ellipsisOverflowedText } from '@/utils/text';
 interface Props {
   token: AbstractPortfolioToken;
   tokenEntity?: TokenEntityDetail;
@@ -42,6 +43,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
+  console.log('token', token);
   const handleCopyAddress = useMemoizedFn<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(evt => {
@@ -86,7 +88,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
               style={[styles.contentText]}
               numberOfLines={1}
               ellipsizeMode="tail">
-              {getTokenSymbol(token)}
+              {ellipsisOverflowedText(token.name, 15)}
             </Text>
           </View>
         </View>

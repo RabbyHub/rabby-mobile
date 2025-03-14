@@ -76,7 +76,6 @@ export default function MixedFlatChainList({
       return {};
     }
     const res = cacheAssets.reduce((map, item) => {
-      console.log('item', item);
       if (item.totalUsdValue < 10) {
         return map;
       }
