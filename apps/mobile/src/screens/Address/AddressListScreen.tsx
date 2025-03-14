@@ -26,6 +26,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useTranslation } from 'react-i18next';
+import { filterMyAccounts } from '@/utils/account';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -64,10 +65,7 @@ export function AddressListScreen(): JSX.Element {
   }, [accounts]);
 
   const filterAccounts = React.useMemo(
-    () =>
-      [...accounts].filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
+    () => [...filterMyAccounts(accounts)],
     [accounts],
   );
 

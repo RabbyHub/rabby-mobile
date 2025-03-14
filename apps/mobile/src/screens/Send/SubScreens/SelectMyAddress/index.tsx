@@ -14,6 +14,7 @@ import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/dist/types';
+import { filterMyAccounts } from '@/utils/account';
 
 const triggerLight = () => {
   trigger('impactLight', {
@@ -47,12 +48,9 @@ const SelectMyAddressScreen = ({
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <FlatList
-        data={allAccounts
-          .filter(
-            a =>
-              a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-          )
-          .sort((a, b) => (b.balance || 0) - (a.balance || 0))}
+        data={filterMyAccounts(allAccounts).sort(
+          (a, b) => (b.balance || 0) - (a.balance || 0),
+        )}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
         renderItem={({ item }) => (

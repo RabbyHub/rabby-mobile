@@ -1,7 +1,6 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import * as Sentry from '@sentry/react-native';
 
 import { TokenItemEntity } from '../entities/tokenitem';
@@ -21,7 +20,7 @@ import {
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { isWatchOrSafeAccount } from '@/utils/account';
+import { filterMyAccounts, isWatchOrSafeAccount } from '@/utils/account';
 import { TaggedPortfolioToken, tagTokenItem } from '@/screens/Home/utils/token';
 import groupBy from 'lodash/groupBy';
 
@@ -82,12 +81,7 @@ async function fetchAccountsForTokens() {
   try {
     nextAccounts = await keyringService
       .getAllVisibleAccountsArray()
-      .then(accounts => {
-        return accounts.filter(
-          a =>
-            a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-        );
-      });
+      .then(filterMyAccounts);
 
     await Promise.allSettled(
       nextAccounts.map(async (account, idx) => {
