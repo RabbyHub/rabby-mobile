@@ -57,7 +57,7 @@ const useChainSeletorList = ({
       ? fetchAllAddressesChainBalance()
       : fetchMatteredChainBalance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchMatteredChainBalance]);
+  }, [needAllAddresses, fetchMatteredChainBalance]);
 
   const { pinned, chainBalances } = useMemo(() => {
     return {
