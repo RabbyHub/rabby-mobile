@@ -43,8 +43,11 @@ const ConfirmAddressScreen = () => {
   const setInWhitelist = useCallback(
     (bool: boolean) => {
       if (bool) {
-        addWhitelist(account.address);
-        toast.success(t('page.whitelist.addSuccessful'));
+        addWhitelist(account.address, {
+          onAdded: () => {
+            toast.success(t('page.whitelist.addSuccessful'));
+          },
+        });
       } else {
         removeWhitelist(account.address);
       }
@@ -141,7 +144,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tipItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 4,
+    gap: 8,
     marginBottom: 32,
   },
   tipIcon: {
@@ -153,6 +156,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
+    flex: 1,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
   },

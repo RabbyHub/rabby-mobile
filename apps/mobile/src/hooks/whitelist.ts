@@ -22,12 +22,16 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   }, [setWL]);
 
   const addWhitelist = React.useCallback(
-    async (address: string, options?: { hasValidated?: boolean }) => {
+    async (
+      address: string,
+      options?: { hasValidated?: boolean; onAdded?: () => void },
+    ) => {
       const { hasValidated = false } = options || {};
 
       const onFinished = async () => {
         await whitelistService.addWhitelist(address);
-        getWhitelist();
+        await getWhitelist();
+        options?.onAdded?.();
       };
 
       if (hasValidated) {
