@@ -52,11 +52,13 @@ const SelectTypeScreenScreen = ({
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <FlatList
-        data={accounts.filter(
-          acc =>
-            acc.type ===
-            (type === 'watch' ? KEYRING_CLASS.WATCH : KEYRING_CLASS.GNOSIS),
-        )}
+        data={accounts
+          .filter(
+            acc =>
+              acc.type ===
+              (type === 'watch' ? KEYRING_CLASS.WATCH : KEYRING_CLASS.GNOSIS),
+          )
+          .sort((a, b) => (b.balance || 0) - (a.balance || 0))}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
         renderItem={({ item }) => (

@@ -110,6 +110,7 @@ export function BalanceSection({ style }: RNViewProps) {
             onChange={value => {
               handleFieldChange?.('amount', value);
             }}
+            chainId={chainItem.serverId}
             token={currentToken}
             isEstimatingGas={screenState.isEstimatingGas}
             handleClickMaxButton={handleClickMaxButton}

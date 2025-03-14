@@ -54,6 +54,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { ChainInfo2024 } from './components/ChainInfo2024';
 
 function SendScreen({
   isForMultipleAdderss = false,
@@ -105,6 +106,8 @@ function SendScreen({
     isShowDepositeModeModal,
     setIsShowDepositeModeModal,
 
+    chainEnum,
+    handleChainChanged,
     tmpToken,
     setTmpToken,
     checkCexSupport,
@@ -360,6 +363,16 @@ function SendScreen({
                   cexDes={navParams?.cexDes}
                   brandName={navParams?.addressBrandName}
                 />
+                {/* ChainInfo */}
+                <View style={styles.chainSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t('page.sendToken.Chain')}
+                  </Text>
+                  <ChainInfo2024
+                    chainEnum={chainEnum}
+                    onChange={handleChainChanged}
+                  />
+                </View>
                 {/* balance info */}
                 <BalanceSection style={styles.balance} />
               </View>

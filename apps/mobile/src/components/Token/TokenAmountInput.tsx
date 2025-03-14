@@ -48,6 +48,7 @@ function useLoadTokenList({
 interface TokenAmountInputProps {
   token: TokenItem;
   value?: string;
+  chainId: string;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
   handleClickMaxButton?: () => Promise<void> | void;
@@ -77,6 +78,7 @@ export const TokenAmountInput = React.forwardRef<
       token,
       value,
       onChange,
+      chainId,
       onTokenChange,
       amountFocus,
       inlinePrize,
@@ -172,7 +174,7 @@ export const TokenAmountInput = React.forwardRef<
           <View style={styles.placeholder} />
           <TokenSelect
             accountInScreen={defaultAccount}
-            chainId={''}
+            chainId={chainId}
             token={token}
             onTokenChange={handleCurrentTokenChange}
             excludeTokens={excludeTokens}
