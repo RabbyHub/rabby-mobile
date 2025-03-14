@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   Dimensions,
   ScrollView,
@@ -8,6 +8,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -182,7 +183,7 @@ AccountSwitcherAopProps<{
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
-        <ScrollView
+        <BottomSheetScrollView
           ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContentContainer}>
@@ -295,10 +296,7 @@ AccountSwitcherAopProps<{
               )}
             </View>
           )}
-        </ScrollView>
-      </View>
-      <View style={styles.bottomBarContainer}>
-        <View style={styles.bottomBarStyle} />
+        </BottomSheetScrollView>
       </View>
     </LinearGradientContainer>
   );
