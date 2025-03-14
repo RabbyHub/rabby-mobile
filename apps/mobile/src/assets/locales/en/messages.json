@@ -1608,6 +1608,7 @@
         "noResult": "No Results for",
         "noResults": "No Results",
         "title": "All Results",
+        "searching": "Results for",
         "searchTips": "Search the web"
       }
     },

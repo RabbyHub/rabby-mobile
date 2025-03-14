@@ -68,9 +68,9 @@ import { CHAINS_ENUM } from '@debank/common';
 import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
 import { Skeleton } from '@rneui/themed';
-import { isValidAddress } from '@ethereumjs/util';
-import { ellipsisAddress } from '@/utils/address';
+import { add0x, ellipsisAddress } from '@/utils/address';
 import { isAddress } from 'web3-utils';
+import { isValidHexAddress } from '@metamask/utils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
@@ -184,7 +184,18 @@ export const SearchAssets: React.FC<Props> = ({
     <View style={styles.container}>
       <View style={[styles.bgContainer, styles.stickyHeader]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={styles.sectionHeader}>{t('page.swap.token')}</Text>
+          {isValidHexAddress(add0x(searchState)) ? (
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <Text style={styles.sectionHeader}>
+                {t('page.search.searchWeb.searching')}
+              </Text>
+              <Text style={styles.sectionHeaderBlue}>{`"${ellipsisAddress(
+                searchState,
+              )}"`}</Text>
+            </View>
+          ) : (
+            <Text style={styles.sectionHeader}>{t('page.swap.token')}</Text>
+          )}
           <TouchableOpacity
             onPress={() => {
               createChainModal();
@@ -344,9 +355,18 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
+    // backgroundColor: ctx.isLight
+    //   ? ctx.colors2024['neutral-bg-0']
+    //   : ctx.colors2024['neutral-bg-1'],
+  },
+  sectionHeaderBlue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    height: ASSETS_SECTION_HEADER,
+    color: ctx.colors2024['brand-default'],
+    // marginLeft: -24,
   },
   renderItemWrapper: {
     // height: ASSETS_ITEM_HEIGHT_NEW,

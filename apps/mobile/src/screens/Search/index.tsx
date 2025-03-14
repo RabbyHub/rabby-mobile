@@ -80,6 +80,7 @@ function SearchScreen(): JSX.Element {
             setSearchState(v);
           }}
           returnKeyType="search"
+          autoFocus={true}
           onSubmitEditing={() => {
             console.log('onSubmitEditing', searchState);
             handleSearch(searchState);

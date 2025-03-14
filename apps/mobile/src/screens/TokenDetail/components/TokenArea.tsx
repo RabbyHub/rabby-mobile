@@ -9,9 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
 import { TokenFromAddressItem } from '..';
 import { formatAmount, formatNumber, formatUsdValue } from '@/utils/number';
+import { CombineTokensItem } from '@/screens/Home/hooks/store';
 
 interface Props {
-  token: AbstractPortfolioToken;
+  token: CombineTokensItem;
   tokenUsdValue?: number;
   amountList: TokenFromAddressItem[];
   tokenSupportSwap: boolean;
@@ -38,8 +39,8 @@ export const TokenArea: React.FC<Props> = ({
     // amountList.map((item, index) => {
     //   sum = sum + item.amount;
     // });
-    return token.amount;
-  }, [token.amount]);
+    return token.totalAmount as unknown as number;
+  }, [token.totalAmount]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: TokenFromAddressItem; index: number }) => {
