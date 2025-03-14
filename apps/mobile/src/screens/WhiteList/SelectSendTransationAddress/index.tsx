@@ -41,12 +41,11 @@ function SendHistoryScreen() {
       account.address.toLowerCase(),
     );
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
-        addresses,
-        isFirst ? 50 : 10000,
-        true, // first not show scam tx
-        'send',
-      );
+      const historyList =
+        await HistoryItemEntity.getAllSendItemsTriggeredByImportedAddr(
+          addresses,
+          isFirst ? 50 : 10000,
+        );
 
       if (isFirst) {
         setCurrentNoDbData(historyList.length === 0);

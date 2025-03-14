@@ -224,6 +224,32 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   //   };
   // }
 
+  static async getAllSendItemsTriggeredByImportedAddr(
+    owner_addrs: string[],
+    count?: number,
+  ) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      })
+      .andWhere('historyitem.cate_id = :cate_id', {
+        cate_id: 'send',
+      })
+      .andWhere('historyitem.tx_from_address IN (:...tx_from_addresses)', {
+        tx_from_addresses: owner_addrs,
+      })
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(count || 10000); // limit
+
+    const res = await queryBuilder.getMany();
+    return res;
+  }
+
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
