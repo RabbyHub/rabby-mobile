@@ -7,7 +7,7 @@ import {
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -49,6 +49,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiBalance } from '@/core/apis';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { toast } from '@/components2024/Toast';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -64,7 +65,6 @@ export const ImportSuccessScreen2024 = () => {
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
-  const [animationFinished, setAnimationFinished] = useState(false);
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const { t } = useTranslation();
@@ -127,6 +127,21 @@ export const ImportSuccessScreen2024 = () => {
     const addresses = Array.isArray(state?.address)
       ? state?.address
       : [state?.address];
+    toast.success(
+      `${t('page.importSuccess.addressCount', { count: addresses.length })} ${t(
+        'page.importSuccess.success',
+        {
+          type: state?.isFirstCreate ? 'Created' : 'Imported',
+        },
+      )}`,
+      {
+        delay: 500,
+        duration: 3000,
+        containerStyle: {
+          width: 300,
+        },
+      },
+    );
 
     setImportAddresses(
       addresses.map(address => ({
@@ -249,20 +264,7 @@ export const ImportSuccessScreen2024 = () => {
         <View pointerEvents="none" style={styles.animationLayer}>
           <Lottie
             source={AnimationImportSuccess}
-            style={[
-              styles.animationLottie,
-              animationFinished && styles.hideAnimation,
-            ]}
-            onAnimationFinish={() => {
-              setTimeout(() => {
-                setAnimationFinished(true);
-              }, 500);
-            }}
-            onAnimationFailure={() => {
-              setTimeout(() => {
-                setAnimationFinished(true);
-              }, 500);
-            }}
+            style={[styles.animationLottie]}
             // duration={3000}
             loop={false}
             autoPlay
@@ -350,17 +352,6 @@ export const ImportSuccessScreen2024 = () => {
               </ScrollView>
             </View>
           )}
-          <Text style={styles.resultTip}>
-            {importAddresses.length > 1
-              ? t('page.importSuccess.addressCount', {
-                  count: importAddresses.length,
-                })
-              : ''}
-            &nbsp;
-            {t('page.importSuccess.success', {
-              type: state?.isFirstCreate ? 'Created' : 'Imported',
-            })}
-          </Text>
         </View>
 
         {state.isFirstImport && (
@@ -420,7 +411,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: '100%',
       height: '100%',
     },
-    hideAnimation: { display: 'none' },
     addressList: {
       display: 'flex',
       justifyContent: 'center',

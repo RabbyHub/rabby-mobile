@@ -192,6 +192,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
   icon: {
     marginRight: 6,
