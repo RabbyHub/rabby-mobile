@@ -242,7 +242,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
                 return (
                   <View style={[styles.itemContainerLink]} key={index}>
                     <DomainUrlLink
-                      url={item.id}
+                      url={item.site_url}
                       name={item.name}
                       logo_url={item.logo_url}
                     />

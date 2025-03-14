@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import orderBy from 'lodash/orderBy';
 
@@ -10,6 +10,8 @@ import { useLocalTokens } from '@/screens/Home/hooks/token';
 import { useChainBalances, useCurrentAccount } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
+import { useAssets } from '@/screens/Search/useAssets';
+import { CombineTokensItem } from '@/screens/Home/hooks/store';
 
 export default function MixedFlatChainList({
   style,
@@ -34,9 +36,11 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
 }) {
   const { currentAccount } = useCurrentAccount();
+  const { tokens: cacheAssets, getCacheTop10Assets } = useAssets();
   const { styles } = useTheme2024({ getStyle });
   const { tokenList } = useLocalTokens(currentAccount?.address);
-  const { matteredChainBalances } = useChainBalances();
+  const { matteredChainBalances, matteredChainBalancesAll } =
+    useChainBalances();
   const tokenListMap = useMemo(() => {
     if (!tokenList || needAllAddresses) {
       return {};
@@ -67,6 +71,38 @@ export default function MixedFlatChainList({
     return res;
   }, [tokenList, matteredChainBalances, needAllAddresses]);
 
+  const cacheAssetsMap = useMemo(() => {
+    if (!cacheAssets || cacheAssets[0]?._unHold || !needAllAddresses) {
+      return {};
+    }
+    const res = cacheAssets.reduce((map, item) => {
+      console.log('item', item);
+      if (item.totalUsdValue < 10) {
+        return map;
+      }
+      if (map[item.chain]) {
+        return {
+          ...map,
+          [item.chain]: [...map[item.chain], item],
+        };
+      } else {
+        return {
+          ...map,
+          [item.chain]: [item],
+        };
+      }
+    }, {} as Record<string, CombineTokensItem[]>);
+    for (const key in res) {
+      const list = res[key];
+      const chainUsdValue = matteredChainBalancesAll[key]?.usd_value || 0;
+      res[key] = list.filter(item => {
+        return item.totalUsdValue > chainUsdValue * 0.1;
+      });
+    }
+    return res;
+  }, [cacheAssets, matteredChainBalancesAll, needAllAddresses]);
+  console.log('cacheAssetsMap', cacheAssetsMap[0]);
+
   const sections = React.useMemo(() => {
     return [
       {
@@ -79,6 +115,15 @@ export default function MixedFlatChainList({
       },
     ];
   }, [matteredList, unmatteredList]);
+
+  useEffect(() => {
+    needAllAddresses &&
+      getCacheTop10Assets({
+        disableNFT: true,
+        disableDefi: true,
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needAllAddresses]);
 
   return (
     <BottomSheetSectionList<Chain>
@@ -106,13 +151,23 @@ export default function MixedFlatChainList({
               onPress={onChange}
               disabled={disabled}
               disabledTips={disabledTips}
-              tokens={orderBy(
-                tokenListMap[item.serverId],
-                a => a.price * a.amount,
-                'desc',
-              )
-                .filter(t => t.is_core)
-                .slice(0, 5)}
+              tokens={
+                needAllAddresses
+                  ? orderBy(
+                      cacheAssetsMap[item.serverId],
+                      a => a.totalUsdValue,
+                      'desc',
+                    )
+                      .filter(t => t.is_core)
+                      .slice(0, 5)
+                  : orderBy(
+                      tokenListMap[item.serverId],
+                      a => a.price * a.amount,
+                      'desc',
+                    )
+                      .filter(t => t.is_core)
+                      .slice(0, 5)
+              }
             />
           </View>
         );
