@@ -441,7 +441,7 @@ const ForMultipleAddress = (
 const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     chainSection: {
-      marginBottom: 24,
+      marginTop: 8,
     },
     sendScreen: {
       flexDirection: 'column',
@@ -454,7 +454,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       paddingBottom: 200,
     },
     balance: {
-      marginTop: 20,
+      marginTop: 24,
     },
     sectionTitle: {
       color: colors2024['neutral-title-1'],
