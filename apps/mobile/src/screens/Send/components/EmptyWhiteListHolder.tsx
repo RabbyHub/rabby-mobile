@@ -5,13 +5,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { Pressable, View, Text } from 'react-native';
-import { RcIconLock, RcIconMan } from '@/assets2024/icons/whitelist';
+import { RcIconMan } from '@/assets2024/icons/whitelist';
+import { RcIconLockCC } from '@/assets/icons/send';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
 }
 const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   return (
     <Card>
@@ -23,7 +24,13 @@ const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
       </Text>
       <Card style={styles.holder}>
         <View style={styles.iconWrapper}>
-          <RcIconLock style={styles.lock} />
+          <RcIconLockCC
+            style={styles.lock}
+            color={colors2024['brand-default']}
+            surroundColor={colors2024['neutral-bg-1']}
+            width={18}
+            height={18}
+          />
           <RcIconMan style={styles.man} />
         </View>
         <View style={styles.loadings}>
@@ -83,12 +90,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 34,
   },
   lock: {
-    width: 18,
-    height: 18,
     position: 'absolute',
-    bottom: -4,
-    right: -3,
+    bottom: 0,
+    right: 0,
     zIndex: 999,
+    transform: [{ translateX: 3 }, { translateY: 4 }],
   },
   loadings: {
     flex: 1,
