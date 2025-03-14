@@ -29,6 +29,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { formatUsdValueKMB } from '@/screens/Home/components/AssetRenderItems';
 interface Props {
   token: AbstractPortfolioToken;
   tokenEntity?: TokenEntityDetail;
@@ -181,7 +182,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
                 style={[styles.contentText]}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {tokenEntity?.fdv ? formatUsdValue(tokenEntity?.fdv) : '-'}
+                {tokenEntity?.fdv ? formatUsdValueKMB(tokenEntity?.fdv) : '-'}
               </Text>
             </View>
           </View>
