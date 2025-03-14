@@ -388,7 +388,7 @@ export const AuthenticationModal = ({
               <View style={styles.inputWrapper}>
                 <NextInput.Password
                   as={'BottomSheetTextInput'}
-                  fieldName="Enter the Password to Confirm"
+                  fieldName={t('page.whitelist.confirmPassword')}
                   containerStyle={Object.assign(
                     {},
                     error

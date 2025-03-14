@@ -22,7 +22,7 @@ export const enum RiskType {
   NEVER_SEND = 1,
   SCAM_ADDRESS = 2,
   CONTRACT_ADDRESS = 3,
-  CEX_NO_DEPOSITE = 4,
+  CEX_NO_DEPOSIT = 4,
 }
 export const useRisks = (address: string) => {
   const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
@@ -65,7 +65,7 @@ export const useRisks = (address: string) => {
       }
       if (addressDesc?.cex?.id && !addressDesc.cex.is_deposit) {
         currRisks.push({
-          type: RiskType.CEX_NO_DEPOSITE,
+          type: RiskType.CEX_NO_DEPOSIT,
           value: t('page.confirmAddress.risks.dexNoDeposite'),
         });
       }
@@ -82,6 +82,9 @@ export const useRisks = (address: string) => {
         }
         queue.add(async () => {
           try {
+            if (hasSended) {
+              return;
+            }
             const res = await openapi.hasTransferAllChain(acc.address, address);
             if (res?.has_transfer) {
               hasSended = true;

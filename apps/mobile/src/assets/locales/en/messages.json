@@ -654,7 +654,8 @@
       "confirm": "Confirm",
       "cancel": "Cancel",
       "addSuccessful": "Address added to whitelist",
-      "alreadyAdded": "Already added to your whitelist"
+      "alreadyAdded": "Already added to your whitelist",
+      "confirmPassword": "Enter the Password to Confirm"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"
