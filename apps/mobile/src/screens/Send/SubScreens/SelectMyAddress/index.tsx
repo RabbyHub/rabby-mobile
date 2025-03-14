@@ -59,7 +59,7 @@ const SelectMyAddressScreen = ({
               account={item}
               inWhiteList={isAddrOnWhitelist(item.address)}
               isForWhitelist={isForWhitelist}
-              disableMenu
+              disableMenu={!isAddrOnWhitelist(item.address)}
             />
           </View>
         )}

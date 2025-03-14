@@ -53,8 +53,8 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   }, [account.address, whitelist]);
 
   const brandColors = useMemo(
-    () => getBrandColors(cexDesc?.id || account.brandName),
-    [account.brandName, cexDesc?.id],
+    () => getBrandColors(cexDesc?.id || account.type),
+    [account.type, cexDesc?.id],
   );
   useEffect(() => {
     if (!visible) {

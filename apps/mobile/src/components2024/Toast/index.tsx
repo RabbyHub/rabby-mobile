@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   content: {
     color: ThemeColors2024.light['neutral-title-2'],
-    maxWidth: 250,
+    maxWidth: '100%',
     fontSize: 15,
     lineHeight: 18,
     fontWeight: '700',
