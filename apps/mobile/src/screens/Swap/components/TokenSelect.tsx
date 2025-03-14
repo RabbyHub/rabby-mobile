@@ -535,7 +535,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                     size={26}
                     chain={token.chain}
                     logo={token.logo_url}
-                    chainSize={type === 'send' ? 10 : 0}
+                    chainSize={type === 'send' ? 12 : 0}
                   />
                   <Text numberOfLines={1} style={styles.tokenSymbol}>
                     {ellipsisOverflowedText(getTokenSymbol(token), 5)}

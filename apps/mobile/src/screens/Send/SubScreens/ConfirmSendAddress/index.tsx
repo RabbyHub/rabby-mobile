@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components';
@@ -16,7 +16,6 @@ import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useRisks } from './risk';
-import BottomPopover from '../../components/BottomPopover';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { toast } from '@/components2024/Toast';
 
@@ -31,8 +30,7 @@ const ConfirmAddressScreen = () => {
   ) as {
     account: KeyringAccountWithAlias;
   };
-  const { risks, addressDesc, hasSend } = useRisks(account.address);
-  const [showBottomPopover, setShowBottomPopover] = useState(true);
+  const { risks, addressDesc } = useRisks(account.address);
   const { navigateToSendScreen } = useSendRoutes();
 
   const inWhiteList = useMemo(
@@ -89,9 +87,6 @@ const ConfirmAddressScreen = () => {
         <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
         <AppSwitch2024 onValueChange={setInWhitelist} value={inWhiteList} />
       </View>
-      {showBottomPopover && hasSend && !inWhiteList && (
-        <BottomPopover onClose={() => setShowBottomPopover(false)} />
-      )}
       <View style={styles.riskList}>
         {risks.map(risk => (
           <View key={risk.type} style={styles.tipItem}>

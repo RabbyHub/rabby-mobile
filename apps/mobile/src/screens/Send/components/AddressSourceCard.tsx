@@ -38,7 +38,7 @@ interface IProps {
   cexDesc?: Cex;
 }
 const AddressSource = ({ account, style, cexDesc }: IProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
   const editAliasName = useAliasNameEditModal();
@@ -53,8 +53,8 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   }, [account.address, whitelist]);
 
   const brandColors = useMemo(
-    () => getBrandColors(cexDesc?.id || account.type),
-    [account.type, cexDesc?.id],
+    () => getBrandColors(cexDesc?.id || account.type, isLight),
+    [account.type, cexDesc?.id, isLight],
   );
   useEffect(() => {
     if (!visible) {
