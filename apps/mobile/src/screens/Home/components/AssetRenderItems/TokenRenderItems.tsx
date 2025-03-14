@@ -365,11 +365,6 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
-                  {isGasToken && (
-                    <View style={styles.gasBadgeTextRoot}>
-                      <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
-                    </View>
-                  )}
                   {siteList.length > 0 && (
                     <>
                       <View style={styles.verticalLine} />
@@ -389,16 +384,22 @@ export const ExternalTokenRow = memo(
                   )}
                 </View>
 
-                <Text
-                  style={styles.searchSubText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {`FDV ${
-                    data.identity?.fdv
-                      ? formatUsdValueKMB(data.identity?.fdv || 0)
-                      : '-'
-                  }`}
-                </Text>
+                {isGasToken ? (
+                  <View style={styles.gasBadgeTextRoot}>
+                    <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
+                  </View>
+                ) : (
+                  <Text
+                    style={styles.searchSubText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {`FDV ${
+                      data.identity?.fdv
+                        ? formatUsdValueKMB(data.identity?.fdv || 0)
+                        : '-'
+                    }`}
+                  </Text>
+                )}
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>

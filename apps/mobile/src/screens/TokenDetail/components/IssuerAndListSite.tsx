@@ -9,10 +9,6 @@ import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
-import {
-  RcIconCopyRegularCC,
-  RcIconExternalLinkCC,
-} from '@/assets/icons/common';
 import { AssetAvatar, Text } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import ChainIconImage from '@/components/Chain/ChainIconImage';

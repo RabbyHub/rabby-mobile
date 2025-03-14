@@ -3,9 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
-import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import {
   RcIconCopyRegularCC,
@@ -128,17 +126,17 @@ export const TokenChainAndContract: React.FC<Props> = ({
                     address: tokenAddress,
                   });
                 }}>
-                <RcIconExternalLinkCC
+                <RcIconJumpCC
                   style={styles.icon}
                   color={colors2024['neutral-foot']}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleCopyAddress}>
+              {/* <TouchableOpacity onPress={handleCopyAddress}>
                 <RcIconCopyRegularCC
                   style={styles.icon}
                   color={colors2024['neutral-foot']}
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
         )}
