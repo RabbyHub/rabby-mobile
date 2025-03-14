@@ -38,7 +38,7 @@ export const DataHeaderInfo = ({
 
   const usdValue = useDerivedValue(() => {
     return isLoading
-      ? '$0'
+      ? ' '
       : data?.[currentIndex?.value]?.value
       ? data?.[currentIndex.value].netWorth
       : currentBalance;

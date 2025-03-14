@@ -531,8 +531,6 @@ export const TokenDetailScreen = () => {
             : require('@/assets2024/icons/home/ImgSingleBgUpDark.png')
         }
         resizeMode="cover"
-        // width={'100%'}
-        // eslint-disable-next-line react-native/no-inline-styles
         style={{
           position: 'absolute',
           top: 0,
@@ -549,8 +547,6 @@ export const TokenDetailScreen = () => {
               : require('@/assets2024/icons/home/ImgSingleBgDownDark.png')
           }
           resizeMode="cover"
-          // width={'100%'}
-          // eslint-disable-next-line react-native/no-inline-styles
           style={{
             position: 'absolute',
             top: 0,
