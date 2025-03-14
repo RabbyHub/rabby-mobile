@@ -290,6 +290,7 @@ export const WhiteListItemSwitch = ({
         </InnerAddressItem>
         <Pressable
           style={styles.arrow}
+          hitSlop={10}
           onPress={() => {
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
