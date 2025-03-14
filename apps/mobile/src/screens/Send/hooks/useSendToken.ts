@@ -1265,14 +1265,10 @@ export function useSendTokenForm(
         isValidAddress(formValues.to) &&
         !screenState.balanceError &&
         new BigNumber(formValues.amount).gte(0) &&
-        !screenState.isLoading &&
-        (!whitelistEnabled ||
-          screenState.temporaryGrant ||
-          toAddressInWhitelist),
+        !screenState.isLoading,
     };
   }, [
     whitelist,
-    whitelistEnabled,
     isAddrOnContactBook,
     formValues.to,
     screenState,
