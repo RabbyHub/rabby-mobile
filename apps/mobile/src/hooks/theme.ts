@@ -79,6 +79,11 @@ export function makeThemeOptions(t: TFunction) {
   ] as const;
 }
 
+export function useAppThemeConfig() {
+  const appTheme = useAtomValue(ThemeModeStore);
+  return appTheme;
+}
+
 // The useColorScheme value is always either light or dark, but the built-in
 // type suggests that it can be null. This will not happen in practice, so this
 // makes it a bit easier to work with.
