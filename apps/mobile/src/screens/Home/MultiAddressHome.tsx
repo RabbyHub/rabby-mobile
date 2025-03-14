@@ -23,7 +23,11 @@ import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import {
+  useGetBinaryMode,
+  useTheme2024,
+  useAppThemeConfig,
+} from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
@@ -211,6 +215,7 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight, appThemeMode } = useTheme2024({
     getStyle,
   });
+  const appThemeConfig = useAppThemeConfig();
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const [historyCount, setHistoryCount] = useState<{
     success: number;
@@ -590,6 +595,13 @@ function MultiAddressHome(): JSX.Element {
 
   const { bottom } = useSafeAreaInsets();
   const isDarkTheme = useGetBinaryMode() === 'dark';
+
+  useEffect(() => {
+    matomoRequestEvent({
+      category: 'ThemeMode',
+      action: `ThemeMode_${appThemeConfig}`,
+    });
+  }, [appThemeConfig]);
 
   return (
     <NormalScreenContainer2024
