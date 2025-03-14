@@ -100,6 +100,7 @@ import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { EIP7702Warning } from '../EIP7702Warning';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -328,7 +329,10 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     isViewGnosisSafe,
     reqId,
     safeTxGas,
-  } = normalizeTxParams(params.data[0]);
+    authorizationList,
+  } = useMemo(() => {
+    return normalizeTxParams(params.data[0]);
+  }, [params.data]);
 
   const [pushInfo, setPushInfo] = useState<{
     type: TxPushType;
@@ -1422,6 +1426,11 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { setRPCEnable } = useCustomRPC();
+
+  // is eip7702
+  if (authorizationList) {
+    return <EIP7702Warning />;
+  }
 
   return (
     <>
