@@ -610,7 +610,7 @@
       "ContractAddress": "Contract Address",
       "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
       "noSupportBtns": {
-        "confirm": "Proceed Anyway",
+        "confirm": "Proceed",
         "cancel": "Cancel"
       }
     },

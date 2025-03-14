@@ -30,6 +30,8 @@ import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useAtom } from 'jotai';
+import { cexInfoAtoms } from '@/hooks/useCexAccounts';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -46,8 +48,8 @@ export const WhiteListItem = ({
   inWhiteList,
   disableMenu,
 }: IProps) => {
+  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [cexDesc, setCexDesc] = useState<Cex | undefined>();
   const [isPressing, setIsPressing] = React.useState(false);
   const { removeWhitelist } = useWhitelist({
     disableAutoFetch: true,
@@ -55,14 +57,21 @@ export const WhiteListItem = ({
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
+  const cexDesc = useMemo(
+    () => cexInfoStore[account.address],
+    [account.address, cexInfoStore],
+  );
 
   useLayoutEffect(() => {
+    if (cexInfoStore[account.address]) {
+      return;
+    }
     openapi.addrDesc(account.address).then(res => {
       if (res.desc.cex) {
-        setCexDesc(res.desc.cex);
+        setCexInfoStore(prev => ({ ...prev, [account.address]: res.desc.cex }));
       }
     });
-  }, [account.address]);
+  }, [account.address, cexInfoStore, setCexInfoStore]);
 
   const menuActions = React.useMemo(() => {
     return [
