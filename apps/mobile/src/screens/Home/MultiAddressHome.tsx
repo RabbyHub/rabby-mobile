@@ -1028,7 +1028,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colord(
       isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
     )
-      .alpha(0.89)
+      .alpha(IS_ANDROID ? 1 : 0.89)
       .toRgbString(),
   },
   pendingText: {
