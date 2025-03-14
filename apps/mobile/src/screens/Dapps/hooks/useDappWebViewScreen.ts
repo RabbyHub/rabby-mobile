@@ -33,6 +33,11 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
+import {
+  CommonActions,
+  TabActions,
+  useNavigation,
+} from '@react-navigation/native';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -264,6 +269,8 @@ export function useDappWebViewScreen() {
     [openingActiveDappRef, setLastWebViewIdByDappOrigin],
   );
 
+  const navigation = useNavigation();
+
   const openUrlAsDapp = useCallback(
     (
       dappUrl: DappInfo['origin'] | OpenedDappItem,
@@ -385,13 +392,29 @@ export function useDappWebViewScreen() {
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
          **/
-        naviPush(RootNames.StackRoot, {
-          screen: RootNames.DappWebViewStubOnHome,
-          params: {
+        // naviPush(RootNames.StackRoot, {
+        //   screen: RootNames.DappWebViewStubOnHome,
+        //   params: {
+        //     dappsWebViewFromRoute,
+        //     // nextOpenDappInfo: dapps[item.origin],
+        //   },
+        // });
+        // navigate(RootNames.StackRoot, {
+        //   screen: RootNames.DappWebViewStubOnHome,
+        //   params: {
+        //     dappsWebViewFromRoute,
+        //     // nextOpenDappInfo: dapps[item.origin],
+        //   },
+        // });
+        navigation.dispatch(
+          TabActions.jumpTo(RootNames.DappWebViewStubOnHome, {
             dappsWebViewFromRoute,
-            // nextOpenDappInfo: dapps[item.origin],
-          },
-        });
+          }),
+        );
+        // navigation.dispatch(state => {
+        //   console.log('xxx-state', JSON.stringify(state));
+        //   return CommonActions.reset(state);
+        // });
         // try trigger notify again
         setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
       } else {
@@ -400,7 +423,14 @@ export function useDappWebViewScreen() {
 
       return true;
     },
-    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin, activate],
+    [
+      dapps,
+      setOpenedOriginsDapps,
+      activate,
+      addDapp,
+      setActiveDappOrigin,
+      navigation,
+    ],
   );
 
   const removeOpenedDapp = useCallback(

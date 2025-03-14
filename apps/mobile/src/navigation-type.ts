@@ -71,7 +71,8 @@ export type RootStackParamsList = {
  * based on the react-navigation's bottom tab navigator.
  */
 export type HomeNavigatorParamsList = {
-  [RootNames.Home]?: {};
+  [RootNames.StackDapps]?: any;
+  // [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
@@ -87,6 +88,7 @@ export type HomeNonTabNavigatorParamsList = {
 };
 
 export type DappsNavigatorParamsList = {
+  [RootNames.Home]?: {};
   [RootNames.Dapps]?: {};
   [RootNames.FavoriteDapps]?: {};
 };
