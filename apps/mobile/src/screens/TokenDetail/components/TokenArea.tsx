@@ -12,7 +12,7 @@ import { formatAmount, formatNumber, formatUsdValue } from '@/utils/number';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 
 interface Props {
-  token: CombineTokensItem;
+  token: AbstractPortfolioToken | CombineTokensItem;
   tokenUsdValue?: number;
   amountList: TokenFromAddressItem[];
   tokenSupportSwap: boolean;
@@ -39,8 +39,12 @@ export const TokenArea: React.FC<Props> = ({
     // amountList.map((item, index) => {
     //   sum = sum + item.amount;
     // });
-    return token.totalAmount as unknown as number;
-  }, [token.totalAmount]);
+    if ('totalAmount' in token) {
+      return token.totalAmount as unknown as number;
+    } else {
+      return token.amount;
+    }
+  }, [token]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: TokenFromAddressItem; index: number }) => {
