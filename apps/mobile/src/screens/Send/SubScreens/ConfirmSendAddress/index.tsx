@@ -76,7 +76,7 @@ const ConfirmAddressScreen = () => {
       footerContainerStyle={{
         paddingHorizontal: 4,
       }}>
-      <AddressPopover address={account.address} />
+      <AddressPopover address={account.address} style={styles.addressPopover} />
       <AddressSource
         cexDesc={addressDesc?.cex}
         account={account}
@@ -110,6 +110,9 @@ const ConfirmAddressScreen = () => {
 export default ConfirmAddressScreen;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  addressPopover: {
+    marginTop: 10,
+  },
   screen: {
     paddingHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-1'],
@@ -133,7 +136,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   riskList: {
-    marginTop: 12,
+    marginTop: 65,
   },
   tipItem: {
     flexDirection: 'row',

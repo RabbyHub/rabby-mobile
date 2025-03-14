@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -7,8 +7,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 interface IProps {
   address: string;
+  style?: StyleProp<ViewStyle>;
 }
-const AddressPopover = ({ address }: IProps) => {
+const AddressPopover = ({ address, style }: IProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const addressSplit = useMemo(() => {
     if (!address) {
@@ -22,7 +23,7 @@ const AddressPopover = ({ address }: IProps) => {
   }, [address]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={[styles.bubble]}>
         <Text style={styles.qrCardAddress}>
           <Text style={styles.highlightAddrPart}>{addressSplit[0]}</Text>

@@ -638,7 +638,7 @@
       "brandNameTail": "Address",
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
-        "noSend": "You have not sent to this address before. Please confirm if you wish to proceed",
+        "noSend": "You haven't sent funds to this address in the past 180 days. Please confirm if you wish to proceed.",
         "dexNoDeposite": "The recipient address is a non-deposit address from a CEX. Please ensure your deposit address is correct.",
         "contractAddress": "The recipient address is a contract address, potentially causing funds loss",
         "scamAddress": "The recipient address is a scam address flagged by Rabby"

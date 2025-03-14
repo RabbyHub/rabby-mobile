@@ -32,7 +32,7 @@ const WhiteListHeader = ({ hideIcon, gotoAddWhitelist }: IHeaderProps) => {
     <View style={styles.header}>
       <Text style={styles.headerText}>{t('page.sendPoly.whitelistTitle')}</Text>
       {hideIcon ? null : (
-        <Pressable onPress={gotoAddWhitelist}>
+        <Pressable hitSlop={10} onPress={gotoAddWhitelist}>
           <RcIconAddWhiteList style={styles.addIcon} />
         </Pressable>
       )}
@@ -109,6 +109,7 @@ const SendPolyScreen = () => {
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={styles.item}>
             <WhiteListItem account={item} inWhiteList />

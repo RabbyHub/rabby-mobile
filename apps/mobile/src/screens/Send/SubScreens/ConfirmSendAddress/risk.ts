@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
-const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
+const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {

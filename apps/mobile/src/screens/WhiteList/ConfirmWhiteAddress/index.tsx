@@ -61,13 +61,13 @@ const ConfirmWhitelistScreen = () => {
       footerContainerStyle={{
         paddingHorizontal: 4,
       }}>
-      <AddressPopover address={account.address} />
+      <AddressPopover address={account.address} style={styles.addressPopover} />
       <AddressSource
         cexDesc={addressDesc?.cex}
         account={account}
         style={styles.addressCard}
       />
-      <View>
+      <View style={styles.tipContainer}>
         {risks.map(risk => (
           <View key={risk.type} style={styles.tipItem}>
             <View style={styles.tipIcon}>
@@ -127,5 +127,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
+  },
+  addressPopover: {
+    marginTop: 10,
+  },
+  tipContainer: {
+    marginTop: 65,
   },
 }));
