@@ -381,7 +381,7 @@ const getStyles = createGetStyles2024(ctx => ({
   sectionHeaderBlue: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
     height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['brand-default'],

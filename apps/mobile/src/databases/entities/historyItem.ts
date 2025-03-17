@@ -275,7 +275,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
       .andWhere('historyitem.chain = :chain', { chain })
-      .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
+      // .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
       .andWhere(
         new Brackets(qb => {
           qb.where(
@@ -284,13 +284,15 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
               FROM json_each(json_extract(historyitem.receives, '$')) AS json_each
               WHERE json_each.value ->> 'token_id' = :tokenId
             )`,
-          ).orWhere(
-            `EXISTS (
+          )
+            .orWhere(
+              `EXISTS (
               SELECT 1
               FROM json_each(json_extract(historyitem.sends, '$')) AS json_each
               WHERE json_each.value ->> 'token_id' = :tokenId
             )`,
-          );
+            )
+            .orWhere('historyitem.token_approve_id = :tokenId');
         }),
         { tokenId },
       )

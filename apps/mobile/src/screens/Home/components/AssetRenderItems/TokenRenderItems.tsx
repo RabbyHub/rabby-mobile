@@ -581,7 +581,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 0,
   },
   leftColContent: {
-    maxWidth: '65%',
+    maxWidth: '70%',
     overflow: 'hidden',
   },
   verticalLine: {
@@ -595,13 +595,16 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
   },
   gasBadgeText: {
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 16,
     color: ctx.colors2024['brand-default'],
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
   gasBadgeTextRoot: {
+    // flexShrink: 1,
+    width: 70,
+    marginTop: 2,
     borderRadius: 6,
     backgroundColor: ctx.colors2024['brand-light-1'],
     flexDirection: 'row',

@@ -72,6 +72,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
+  console.log('tokenEntity', tokenEntity);
   const isBridgeDomain =
     tokenEntity?.bridge_ids && tokenEntity.bridge_ids.length > 0;
   const isVerified = tokenEntity?.is_domain_verified;
@@ -105,10 +106,12 @@ export const IssuerAndListSite: React.FC<Props> = ({
                         styles.itemIssuerContainer,
                         { justifyContent: 'center' },
                       ]}>
+                      <View style={styles.horizontalLine} />
                       <IconBridgeTo />
                       <Text style={styles.itemIssuerText}>
                         {t('page.tokenDetail.BridgeIssue')}
                       </Text>
+                      <View style={styles.horizontalLine} />
                     </View>
                   ) : (
                     <View
@@ -116,10 +119,12 @@ export const IssuerAndListSite: React.FC<Props> = ({
                         styles.itemIssuerContainer,
                         { justifyContent: 'center' },
                       ]}>
+                      <View style={styles.horizontalLine} />
                       <IconOrigin />
                       <Text style={styles.itemIssuerText}>
                         {t('page.tokenDetail.OriginIssue')}
                       </Text>
+                      <View style={styles.horizontalLine} />
                     </View>
                   )}
                 </View>
@@ -177,10 +182,12 @@ export const IssuerAndListSite: React.FC<Props> = ({
               )}
             </>
           ) : (
-            <View>
+            <View style={[styles.itemIssuerContainer, styles.itemIssuePadding]}>
+              <View style={styles.horizontalLine} />
               <Text style={styles.itemIssuerText}>
                 {t('page.tokenDetail.NoIssuer')}
               </Text>
+              <View style={styles.horizontalLine} />
             </View>
           )}
         </View>
@@ -198,16 +205,18 @@ export const IssuerAndListSite: React.FC<Props> = ({
       ) : (
         <View style={styles.itemCard}>
           {!tokenEntity?.listed_sites?.length ? (
-            <View>
+            <View style={[styles.itemIssuerContainer, styles.itemIssuePadding]}>
+              <View style={styles.horizontalLine} />
               <Text style={styles.itemIssuerText}>
                 {t('page.tokenDetail.NoListedSite')}
               </Text>
+              <View style={styles.horizontalLine} />
             </View>
           ) : (
             <View style={styles.flexWrap}>
               {tokenEntity?.listed_sites?.map((item, index) => {
                 return (
-                  <View style={styles.itemContainer} key={index}>
+                  <View style={styles.itemContainerLink} key={index}>
                     <DomainUrlLink
                       url={item.url}
                       name={item.name}
@@ -235,10 +244,12 @@ export const IssuerAndListSite: React.FC<Props> = ({
       ) : (
         <View style={styles.itemCard}>
           {!tokenEntity?.cex_list?.length ? (
-            <View>
+            <View style={[styles.itemIssuerContainer, styles.itemIssuePadding]}>
+              <View style={styles.horizontalLine} />
               <Text style={styles.itemIssuerText}>
                 {t('page.tokenDetail.NoSupportedExchanges')}
               </Text>
+              <View style={styles.horizontalLine} />
             </View>
           ) : (
             <View style={styles.flexWrap}>
@@ -338,6 +349,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     gap: 8,
     alignItems: 'center',
+  },
+  horizontalLine: {
+    // width: 1,
+    flex: 1,
+    height: 1,
+    backgroundColor: colors2024['neutral-line'],
+    // marginHorizontal: 4,
   },
   itemIssuerText: {
     color: colors2024['neutral-secondary'],

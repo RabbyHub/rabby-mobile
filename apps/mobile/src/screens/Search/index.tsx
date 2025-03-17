@@ -73,6 +73,7 @@ function SearchScreen(): JSX.Element {
           <RcNextLeftCC color={colors2024['neutral-title-1']} />
         </TouchableOpacity>
         <NextSearchBar
+          noCancel={true}
           style={styles.searchBar}
           placeholder={t('page.search.header.placeHolder')}
           value={searchState}

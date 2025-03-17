@@ -606,12 +606,12 @@ export const TokenDetailScreen = () => {
         end={{ x: 0, y: 0 }}
         style={[
           styles.floatBottom,
-          isAndroid && { height: 110 + safeOffBottom },
+          isAndroid && { height: 120 + safeOffBottom },
         ]}>
         <View
           style={[
             styles.buttonGroup,
-            isAndroid && { paddingBottom: 40 + safeOffBottom },
+            isAndroid && { paddingBottom: 50 + safeOffBottom },
           ]}>
           <View style={styles.btnContainer}>
             <Tip
@@ -656,7 +656,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     floatBottom: {
       width: '100%',
-      height: 110,
+      height: 120,
       paddingTop: 20,
       position: 'absolute',
       bottom: 0,
@@ -716,7 +716,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       paddingTop: 20,
       paddingHorizontal: 20,
-      paddingBottom: 56,
+      paddingBottom: 50,
     },
 
     btnContainer: {
