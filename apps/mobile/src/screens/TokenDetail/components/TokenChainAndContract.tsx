@@ -86,7 +86,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
               style={[styles.contentText]}
               numberOfLines={1}
               ellipsizeMode="tail">
-              {ellipsisOverflowedText(token.name, 15)}
+              {ellipsisOverflowedText(token.name || '', 15)}
             </Text>
           </View>
         </View>
