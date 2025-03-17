@@ -10,31 +10,26 @@ import {
   Animated,
   Easing,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { Empty } from './components/Empty';
+import { useTheme2024 } from '@/hooks/theme';
 import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   KeyringAccountWithAlias,
   useAccounts,
   useCurrentAccount,
 } from '@/hooks/account';
-import { HistoryDisplayItem } from './MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RcIconExternalLinkCC } from '@/assets/icons/common';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount, numberWithCommasIsLtOne } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
@@ -45,11 +40,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { HistoryTokenList } from './components/HistoryTokenList';
-import {
-  fetchHistoryTokenUUId,
-  getApproveTokeName,
-  getHistoryItemType,
-} from './components/utils';
+import { getApproveTokeName, getHistoryItemType } from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
@@ -57,11 +48,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { AssetAvatar } from '@/components';
 import { getERC20Allowance } from '@/core/apis/provider';
 import BigNumber from 'bignumber.js';
-import {
-  GetNestedScreenNavigationProps,
-  GetRootScreenNavigationProps,
-  TransactionNavigatorParamList,
-} from '@/navigation-type';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -267,16 +254,6 @@ function HistoryDetailScreen(): JSX.Element {
     return _data;
   }, [_data, buyItemData]);
 
-  console.debug(
-    'HistoryDetailScreen',
-    data.projectDict[data.project_id!],
-    data.projectDict.length,
-    data.historyItemCateType,
-    data.id,
-    isForMultipleAdderss,
-    data.sends[0],
-  );
-
   const { t } = useTranslation();
   const [currentApprove, setCurrentApprove] = useState(0);
   const [noRemainValue, setNoRemainValue] = useState(false);
@@ -322,6 +299,7 @@ function HistoryDetailScreen(): JSX.Element {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  console.log('accounts', accounts);
 
   const formatType: HistoryItemCateType = useMemo(() => {
     return getHistoryItemType(data);
