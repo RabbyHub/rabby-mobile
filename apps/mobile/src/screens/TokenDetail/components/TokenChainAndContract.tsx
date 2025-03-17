@@ -41,7 +41,6 @@ export const TokenChainAndContract: React.FC<Props> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  console.log('token', token);
   const handleCopyAddress = useMemoizedFn<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(evt => {
