@@ -40,7 +40,7 @@ export const tagNfts = (
   });
 };
 export const useQueryNft = (addr?: string, visible = true) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
   const [singleNFTNounce, setSingleNFTNounce] = useAtom(singleNFTNounceAtom);
 
@@ -52,9 +52,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
       try {
         const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
         const tokenSetting = await preferenceService.getUserTokenSettings();
-        if (!cacheNfts.length || force) {
-          setIsLoading(true);
-        }
+        setIsLoading(false);
         setList(tagNfts(cacheNfts, tokenSetting));
         const nfts = await syncNFTs(addr, force);
         setList(tagNfts(nfts, tokenSetting));

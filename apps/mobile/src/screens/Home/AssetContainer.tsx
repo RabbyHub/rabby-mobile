@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -81,6 +82,7 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { openapi } from '@/core/request';
+import { ItemLoader } from './components/Skeleton';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -143,6 +145,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     portfolios: _rawPortfolios,
     nftList: _rawNftList,
     loadingToken,
+    loadingNft,
+    loadingPortfolio,
     refreshing,
     updateTokens,
     updatePortfolio,
@@ -345,6 +349,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
+        show: !!loadingToken && !sortTokens.length,
+        data: Array.from({ length: 5 }, () => ({
+          type: 'loading-skeleton',
+        })),
+      },
+      {
         show: !loadingToken && !sortTokens.length,
         data: [
           {
@@ -369,7 +379,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
-        show: portfolios.length === 0,
+        show: !!loadingPortfolio && !portfolios.length,
+        data: Array.from({ length: 5 }, () => ({
+          type: 'loading-skeleton',
+        })),
+      },
+      {
+        show: !loadingPortfolio && portfolios.length === 0,
         data: [
           {
             type: 'empty-assets',
@@ -388,7 +404,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
       {
-        show: nftList.length === 0,
+        show: !!loadingNft && !nftList.length,
+        data: Array.from({ length: 5 }, () => ({
+          type: 'loading-skeleton',
+        })),
+      },
+      {
+        show: !loadingNft && nftList.length === 0,
         data: [
           {
             type: 'empty-assets',
@@ -407,6 +429,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     foldDefi,
     foldHideList,
     foldNft,
+    loadingNft,
+    loadingPortfolio,
     loadingToken,
     nftList,
     portfolios,
@@ -414,7 +438,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     t,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (currentAccount?.address) {
       openapi.addrDesc(currentAccount?.address).then(res => {
         if (!res.desc.born_at) {
@@ -846,6 +870,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
         );
+      case 'loading-skeleton':
+        return <ItemLoader />;
       case 'empty-assets':
         return <EmptyAssets desc={data} />;
       default:

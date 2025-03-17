@@ -9,16 +9,21 @@ export const useQueryProjects = (userAddr: string | undefined) => {
   const {
     tokens,
     updateData: updateTokens,
-    isLoading,
+    isLoading: isTokenLoading,
   } = useTokens(userAddr, false, 0, undefined);
 
   const {
     data: portfolios,
     hasValue: hasPortfolios,
     updateData: updatePortfolio,
+    isLoading: isPortfolioLoading,
   } = usePortfolios(userAddr, false);
 
-  const { list: nftList, reload: reloadNftList } = useQueryNft(userAddr, false);
+  const {
+    list: nftList,
+    reload: reloadNftList,
+    isLoading: isNftLoading,
+  } = useQueryNft(userAddr, false);
 
   const refreshPositions = useCallback(
     async (force?: boolean) => {
@@ -135,7 +140,9 @@ export const useQueryProjects = (userAddr: string | undefined) => {
     updateTokens,
     updatePortfolio,
     reloadNftList,
-    loadingToken: isLoading,
+    loadingToken: isTokenLoading,
+    loadingPortfolio: isPortfolioLoading,
+    loadingNft: isNftLoading,
     refreshing: refreshing,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
     chainsInfo,

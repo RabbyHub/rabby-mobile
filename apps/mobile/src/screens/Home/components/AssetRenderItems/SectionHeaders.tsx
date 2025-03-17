@@ -87,7 +87,7 @@ export const AssestAllHeader = memo(
             <Pressable
               style={styles.chainContainer}
               onPress={() => onChainClick?.(false)}>
-              <Text style={styles.symbol}>
+              <Text style={styles.countChain}>
                 {t('page.singleHome.sectionHeader.totalChain', {
                   count: chainLength || 0,
                 })}
@@ -119,6 +119,13 @@ const getStyle = createGetStyles2024(ctx => ({
   symbol: {
     fontSize: 16,
     lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  countChain: {
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-body'],

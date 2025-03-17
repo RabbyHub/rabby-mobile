@@ -80,8 +80,8 @@ export const log = (...args: any) => {
 
 export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   const [data, setData] = useSafeState<DisplayedProject[]>([]);
+  const [isLoading, setLoading] = useSafeState(true);
   const [hasValue, setHasValue] = useSafeState(false);
-  const [isLoading, setLoading] = useSafeState(false);
   const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
 
   useEffect(() => {
@@ -127,6 +127,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           );
           const tokenSetting = await preferenceService.getUserTokenSettings();
           setData(tagProfiles(realtimeData, tokenSetting));
+          setLoading(false);
           setHasValue(!!cachePortocols.length);
         }
       }
