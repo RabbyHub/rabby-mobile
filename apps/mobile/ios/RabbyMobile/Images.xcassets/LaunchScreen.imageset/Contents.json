@@ -4,19 +4,73 @@
       "filename": "icon_135x145@1x.png",
       "idiom": "universal",
       "scale": "1x",
-      "size": "135x145"
+      "size": "135x145",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "light"
+        }
+      ]
     },
     {
       "filename": "icon_270x289@2x.png",
       "idiom": "universal",
       "scale": "2x",
-      "size": "270x289"
+      "size": "270x289",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "light"
+        }
+      ]
     },
     {
       "filename": "icon_404x434@3x.png",
       "idiom": "universal",
       "scale": "3x",
-      "size": "404x434"
+      "size": "404x434",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "light"
+        }
+      ]
+    },
+    {
+      "filename": "icon_dark_135x145@1x.png",
+      "idiom": "universal",
+      "scale": "1x",
+      "size": "135x145",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "dark"
+        }
+      ]
+    },
+    {
+      "filename": "icon_dark_270x289@2x.png",
+      "idiom": "universal",
+      "scale": "2x",
+      "size": "270x289",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "dark"
+        }
+      ]
+    },
+    {
+      "filename": "icon_dark_404x434@3x.png",
+      "idiom": "universal",
+      "scale": "3x",
+      "size": "404x434",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "dark"
+        }
+      ]
     }
   ],
   "info": {

@@ -14,7 +14,6 @@ import {
   RcPrivacyPolicy,
   RcScreenRecord,
   RcThemeMode,
-  RcWhitelist,
   RcAddCustomNetwork,
   RcRPC,
   RcGoogleDrive,
@@ -46,7 +45,6 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import type { SwitchToggleType } from '@/components';
 import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
-import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 
 import { toast } from '@/components/Toast';
 import {
@@ -166,8 +164,6 @@ function SettingsBlocks() {
   const disabledBiometrics =
     !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
 
-  const switchWhitelistRef = useRef<SwitchToggleType>(null);
-
   const startSwitchBiometrics = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
@@ -196,14 +192,6 @@ function SettingsBlocks() {
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
-          {
-            label: t('page.setting.enableWhitelist'),
-            icon: RcWhitelist,
-            onPress: () => {
-              switchWhitelistRef.current?.toggle();
-            },
-            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
-          },
           {
             label: biometricsComputed.defaultTypeLabel,
             icon: getBiometricsIcon(isFaceID),

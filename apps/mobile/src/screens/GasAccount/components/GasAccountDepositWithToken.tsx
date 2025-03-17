@@ -46,6 +46,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { maxBy } from 'lodash';
+import { filterMyAccounts } from '@/utils/account';
 
 const amountList = [10, 100];
 
@@ -356,14 +357,6 @@ const SelectAccount = ({
     disableAutoFetch: true,
   });
 
-  const filterAccounts = React.useMemo(
-    () =>
-      [...accounts].filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
-    [accounts],
-  );
-
   // const list = useSortAddressList(filterAccounts);
 
   return (
@@ -535,9 +528,7 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   };
 
   const [depositAccount, setDepositAccount] = useState(() => {
-    const list = accounts.filter(
-      a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-    );
+    const list = filterMyAccounts(accounts);
     return maxBy(list, a => a.balance || 0) || list[0];
   });
 

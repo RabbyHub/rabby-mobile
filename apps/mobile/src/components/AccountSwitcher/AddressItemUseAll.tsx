@@ -117,7 +117,7 @@ export function UseAllAccountsItemInPanel({
   isSelected?: boolean;
   onPress?: () => void;
 } & RNViewProps) {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getUseAllAccountsItemInPanelStyle,
   });
 
@@ -130,9 +130,9 @@ export function UseAllAccountsItemInPanel({
   const imageSourceList = useMemo(() => {
     return allAccounts
       .slice(0, 3)
-      .map(account => getWalletIcon2024(account.brandName))
+      .map(account => getWalletIcon2024(account.brandName, isLight))
       .filter(Boolean);
-  }, [allAccounts]);
+  }, [allAccounts, isLight]);
 
   if (!allAccounts.length) {
     console.warn('UseAllAccountsItemInPanel: allAccounts is empty');

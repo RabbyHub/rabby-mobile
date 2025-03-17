@@ -607,7 +607,55 @@
       "balanceError": {
         "insufficientBalance": "Insufficient balance"
       },
-      "ContractAddress": "Contract Address"
+      "ContractAddress": "Contract Address",
+      "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
+      "noSupportBtns": {
+        "confirm": "Proceed",
+        "cancel": "Cancel"
+      }
+    },
+    "sendPoly": {
+      "enterAddress": "Enter Address",
+      "whitelistTitle": "My Whitelist Addresses",
+      "sendToImportedAddress": "Send to My Imported Addresses",
+      "sendToWatchAddress": "Send to Watch-only Addresses",
+      "sendToSafeAddress": "Send to Safe Addresses",
+      "emptyWhitelistHeader": "Add Whitelist Address",
+      "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
+      "emptyWhitelistTip": "No whitelisted addresses yet, ",
+      "emptyWhitelistBtn": "Add now",
+      "modals": {
+        "header": "Add Address to Whitelist",
+        "content": "Select how you want to add an address:",
+        "addAddress": "New Address",
+        "importedAddress": "Imported Address",
+        "recentAddress": "Recent Sent Addresses"
+      }
+    },
+    "confirmAddress": {
+      "addToWhitelist": "Add to whitelist",
+      "dexNameTail": "Deposit Address",
+      "brandNameTail": "Address",
+      "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
+      "risks": {
+        "noSend": "You haven't sent funds to this address in the past 180 days. Please confirm if you wish to proceed.",
+        "dexNoDeposite": "The recipient address is a non-deposit address from a CEX. Please ensure your deposit address is correct.",
+        "contractAddress": "The recipient address is a contract address, potentially causing funds loss",
+        "scamAddress": "The recipient address is a scam address flagged by Rabby"
+      }
+    },
+    "selectAddress": {
+      "selectWatchAddress": "Select from Watch-only addresses",
+      "selectSafeAddress": "Select from Safe addresses"
+    },
+    "whitelist": {
+      "addToWhitelist": "Add to Whitelist",
+      "removeWhitelist": "Remove from Whitelist",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "addSuccessful": "Address added to whitelist",
+      "alreadyAdded": "Already added to your whitelist",
+      "confirmPassword": "Enter the Password to Confirm"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"

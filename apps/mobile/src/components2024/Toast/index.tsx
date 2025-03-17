@@ -192,6 +192,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   icon: {
     marginRight: 6,
@@ -199,7 +200,6 @@ const styles = StyleSheet.create({
   },
   content: {
     color: ThemeColors2024.light['neutral-title-2'],
-    maxWidth: 250,
     fontSize: 15,
     lineHeight: 18,
     fontWeight: '700',

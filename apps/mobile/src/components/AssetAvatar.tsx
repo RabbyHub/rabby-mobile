@@ -55,7 +55,7 @@ export const AssetAvatar = memo(
     style,
     logoStyle,
   }: AssetAvatarProps) => {
-    const { styles, colors, isLight } = useThemeStyles(getStyles);
+    const { styles, isLight } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
 
     const chainInfo = useFindChain({

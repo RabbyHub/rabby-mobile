@@ -87,6 +87,8 @@ import { FundYourWallet } from './FundYourWallet';
 import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useCexAccounts } from '@/hooks/useCexAccounts';
 
 const HeaderHeight = 24;
 
@@ -345,6 +347,7 @@ function MultiAddressHome(): JSX.Element {
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
+  useCexAccounts();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -480,7 +483,7 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-
+  const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressSearch = useCallback(() => {
     navigation.navigate(RootNames.StackHomeNonTab, {
       screen: RootNames.Search,
@@ -496,12 +499,7 @@ function MultiAddressHome(): JSX.Element {
       });
       switch (key) {
         case MultiHomeFeatTitle.Send:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSend,
-              params: {},
-            }),
-          );
+          navigateToSendPolyScreen(false);
           break;
         case MultiHomeFeatTitle.Receive:
           navigation.dispatch(
@@ -572,7 +570,12 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [handlePressSearch, navigation, toggleUseAllAccountsOnScene],
+    [
+      handlePressSearch,
+      navigateToSendPolyScreen,
+      navigation,
+      toggleUseAllAccountsOnScene,
+    ],
   );
 
   const handleClickPinAccount = useCallback(

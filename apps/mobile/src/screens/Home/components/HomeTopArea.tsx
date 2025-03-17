@@ -50,6 +50,7 @@ import { CurveBottomSheetModal } from './CurveBottomSheet';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import LinearGradient from 'react-native-linear-gradient';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -187,6 +188,7 @@ export const HomeTopArea = ({
   );
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { navigateToSendPolyScreen } = useSendRoutes();
 
   const bridgeItemAction = {
     key: 'Bridge',
@@ -221,12 +223,7 @@ export const HomeTopArea = ({
           return;
         }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Send,
-          params: {
-            // chain: v,
-          },
-        });
+        navigateToSendPolyScreen(true);
       },
     },
     {

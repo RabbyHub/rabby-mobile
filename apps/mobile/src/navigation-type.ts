@@ -241,6 +241,22 @@ export type TransactionNavigatorParamList = {
     // recievesToken: (TokenItem | undefined)[];
   };
   [RootNames.Send]?: {};
+  [RootNames.SendTo]?: {};
+  [RootNames.SendHistory]?: {};
+  [RootNames.SendInput]?: {
+    autoScan?: boolean;
+  };
+  [RootNames.WhitelistInput]?: {};
+  [RootNames.SelectImportAddress]?: {};
+  [RootNames.ImportAddress2Whitelist]?: {};
+  [RootNames.ConfirmAddress]?: { account: KeyringAccountWithAlias };
+  [RootNames.WhitelistConfirm]?: { account: KeyringAccountWithAlias };
+  [RootNames.SelectTypeAddress]?: {
+    type: 'watch' | 'safe';
+  };
+  [RootNames.TypeAddress2Whitelist]?: {
+    type: 'watch' | 'safe';
+  };
   [RootNames.MultiSend]?: {};
   [RootNames.SendNFT]?: {
     nftItem: NFTItem;

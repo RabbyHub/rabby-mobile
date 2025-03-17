@@ -156,6 +156,7 @@ export const HistoryList = ({
   localTxList,
   onRefresh,
   isForMultipleAdderss = true,
+  onPresssItem,
 }: {
   ensureCurrentNoDbData?: boolean;
   resetTopMenu?: () => void;
@@ -166,6 +167,7 @@ export const HistoryList = ({
   loadingMore?: boolean;
   refreshLoading?: boolean;
   isForMultipleAdderss?: boolean;
+  onPresssItem?: (data: HistoryDisplayItem) => void;
   loadMore?: () => void;
   onRefresh?: () => void;
 }) => {
@@ -195,6 +197,7 @@ export const HistoryList = ({
             projectDict={item.data.projectDict}
             cateDict={item.data.cateDict}
             tokenDict={item.data.tokenDict || {}}
+            onPresss={onPresssItem}
           />
         </>
       );

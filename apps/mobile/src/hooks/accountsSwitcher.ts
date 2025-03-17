@@ -493,7 +493,10 @@ function getDefaultSceneAccountInfo() {
     sceneScreenRenderId: '' as const,
   };
 }
-type OfSceneScreen = typeof RootNames.MultiSwap | typeof RootNames.MultiBridge;
+type OfSceneScreen =
+  | typeof RootNames.MultiSwap
+  | typeof RootNames.MultiBridge
+  | typeof RootNames.MultiSend;
 const ScreenSceneAccountContext = React.createContext<
   | {
       forScene: null;

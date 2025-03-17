@@ -31,6 +31,7 @@ import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
+import { filterMyAccounts } from '@/utils/account';
 import { unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 
@@ -141,12 +142,7 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   return {
     accounts: useMemo(() => {
-      return [
-        ...allAccounts.filter(
-          a =>
-            a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-        ),
-      ];
+      return [...filterMyAccounts(allAccounts)];
     }, [allAccounts]),
     fetchAccounts,
   };

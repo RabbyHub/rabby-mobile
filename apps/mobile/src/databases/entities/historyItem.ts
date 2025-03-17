@@ -225,18 +225,43 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   //   };
   // }
 
-  static async getAllHistoryItemSortedByTime(
+  static async getAllSendItemsTriggeredByImportedAddr(
     owner_addrs: string[],
     count?: number,
-    filterNotScam?: boolean,
   ) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      })
+      .andWhere('historyitem.cate_id = :cate_id', {
+        cate_id: 'send',
+      })
+      .andWhere('historyitem.tx_from_address IN (:...tx_from_addresses)', {
+        tx_from_addresses: owner_addrs,
+      })
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(count || 10000); // limit
+
+    const res = await queryBuilder.getMany();
+    return res;
+  }
+
+  static async getAllHistoryItemSortedByTime(
+    owner_addrs: string[],
+    count?: number,
+    filterNotScam?: boolean,
+    cate_id?: string,
+  ) {
+    await prepareAppDataSource();
     const currentTime = new Date().getTime();
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
     console.log('getAllHistoryItemSortedByTime exec');
-
+    const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
@@ -249,12 +274,13 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         is_scam: false,
       });
     }
+    if (cate_id) {
+      queryBuilder.andWhere('historyitem.cate_id = :cate_id', {
+        cate_id,
+      });
+    }
 
     const res = await queryBuilder.getMany();
-    console.log(
-      'getAllHistoryItemSortedByTime exec done',
-      new Date().getTime() - currentTime,
-    );
     return res;
   }
 

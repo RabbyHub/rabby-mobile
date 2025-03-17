@@ -56,6 +56,7 @@ import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 import LinearGradient from 'react-native-linear-gradient';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
@@ -364,9 +365,8 @@ export const TokenDetailScreen = () => {
   const refreshTag = useCallback(() => {
     if (isSingleAddress) {
       singleTokenRefresh();
-    } else {
-      tokenRefresh();
     }
+    tokenRefresh();
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderRight = useCallback(() => {
@@ -391,6 +391,7 @@ export const TokenDetailScreen = () => {
   }, [currentAccount?.address, token, refreshTag]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { navigateToSendPolyScreen } = useSendRoutes();
 
   const handleSend = useMemoizedFn(async () => {
     const chain = findChain({
@@ -399,12 +400,9 @@ export const TokenDetailScreen = () => {
     if (isSingleAddress) {
       await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     }
-    navigation.push(RootNames.StackTransaction, {
-      screen: isSingleAddress ? RootNames.Send : RootNames.MultiSend,
-      params: {
-        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: token?._tokenId,
-      },
+    navigateToSendPolyScreen(!!isSingleAddress, {
+      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+      tokenId: token?._tokenId,
     });
   });
 

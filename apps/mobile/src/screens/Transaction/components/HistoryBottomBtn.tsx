@@ -25,6 +25,7 @@ import { fetchHistoryTokenUUId } from './utils';
 import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 interface ItemProps {
   status: number;
@@ -79,6 +80,7 @@ export const HistoryBottomBtn = ({
       buttonStyle: { height: viewStyle.height || 56 },
     };
   }, [styles.buttonContainer, buttonContainerStyle]);
+  const { navigateToSendPolyScreen } = useSendRoutes();
 
   if (!fromAddrIsImported) {
     return null;
@@ -105,18 +107,11 @@ export const HistoryBottomBtn = ({
                   currentAccount,
                 );
               }
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
-                    ? RootNames.MultiSend
-                    : RootNames.Send,
-                  params: {
-                    chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                    tokenId: sends[0]?.token_id,
-                    toAddress: sends[0]?.to_addr,
-                  },
-                }),
-              );
+              navigateToSendPolyScreen(!isForMultipleAdderss, {
+                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                tokenId: sends[0]?.token_id,
+                toAddress: sends[0]?.to_addr,
+              });
             }}
             title={t('page.transactions.detail.SendAgain')}
           />
