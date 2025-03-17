@@ -127,7 +127,7 @@ export const TxChange = ({
               {filterSends.length > 1 && <Text style={styles.text}>...</Text>}
             </View>
             {filterRecieves.length === 0 && (
-              <Text style={styles.text}>{calcUsdValue(filterSends[0])}</Text>
+              <Text style={styles.usdText}>{calcUsdValue(filterSends[0])}</Text>
             )}
           </>
         )}
