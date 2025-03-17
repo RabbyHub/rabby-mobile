@@ -55,7 +55,7 @@ export const tagProfiles = (
     })();
 
     i._isExcludeBalance = isExcludeBalance;
-    i._isFold = isFold;
+    i._isFold = isFold || isExcludeBalance;
     i._isManualFold = isManualFold;
 
     return i;

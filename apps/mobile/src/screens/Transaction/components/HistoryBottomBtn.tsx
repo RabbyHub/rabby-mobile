@@ -1,20 +1,18 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { AssetAvatar, Tip } from '@/components';
+import { Tip } from '@/components';
 import {
   NFTItem,
   TokenItem,
   TxDisplayItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { addressUtils } from '@rabby-wallet/base-utils';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { formatNumber, numberWithCommasIsLtOne } from '@/utils/number';
-import { HistoryItemIcon } from './HistoryItemIcon';
+import { createGetStyles2024 } from '@/utils/styles';
+import { numberWithCommasIsLtOne } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
-import { navigate, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { Button } from '@/components2024/Button';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
@@ -24,7 +22,7 @@ import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
-import { useCurrentAccount } from '@/hooks/account';
+import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
 
@@ -58,14 +56,19 @@ export const HistoryBottomBtn = ({
   isForMultipleAdderss = true,
   buttonContainerStyle,
 }: ItemProps) => {
-  console.log('HistoryBottomBtn type', type);
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { accounts } = useMyAccounts();
 
-  // const isFail = useMemo(() => status !== 1, [status]);
+  const fromAddrIsImported = useMemo(() => {
+    return accounts.some(account =>
+      addressUtils.isSameAddress(account.address, data.tx?.from_addr || ''),
+    );
+  }, [accounts, data]);
+
   const { btnContainerViewStyle, buttonStyle } = useMemo(() => {
     const viewStyle = StyleSheet.flatten([
       styles.buttonContainer,
@@ -76,6 +79,10 @@ export const HistoryBottomBtn = ({
       buttonStyle: { height: viewStyle.height || 56 },
     };
   }, [styles.buttonContainer, buttonContainerStyle]);
+
+  if (!fromAddrIsImported) {
+    return null;
+  }
 
   switch (type) {
     case HistoryItemCateType.Send: {

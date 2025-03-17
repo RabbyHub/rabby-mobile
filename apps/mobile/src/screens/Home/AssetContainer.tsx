@@ -242,18 +242,38 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         type: 'unfold_token',
         data: item,
       }));
-    const foldTokenList: ActionItem[] = sortTokens
-      .filter(i => i._isFold)
+    const foldAndIncludeBalanceTokenList: ActionItem[] = sortTokens
+      .filter(i => i._isFold && !i._isExcludeBalance && i._realUsdValue > 0)
       .map(item => ({
         type: 'fold_token',
         data: item,
       }));
-    const foldDefiList: ActionItem[] = portfolios
-      .filter(i => i._isFold)
+    const foldAndExcludeBalanceTokenList: ActionItem[] = sortTokens
+      .filter(i => i._isFold && (i._isExcludeBalance || i._realUsdValue === 0))
+      .map(item => ({
+        type: 'fold_token',
+        data: item,
+      }));
+    const foldTokenList = [
+      ...foldAndIncludeBalanceTokenList,
+      ...foldAndExcludeBalanceTokenList,
+    ];
+    const foldAndIncludeBalanceDefiList: ActionItem[] = portfolios
+      .filter(i => i._isFold && !i._isExcludeBalance && i.netWorth > 0)
       .map(item => ({
         type: 'fold_defi',
         data: item,
       }));
+    const foldAndExcludeBalanceDefiList: ActionItem[] = portfolios
+      .filter(i => i._isFold && (i._isExcludeBalance || i.netWorth === 0))
+      .map(item => ({
+        type: 'fold_defi',
+        data: item,
+      }));
+    const foldDefiList: ActionItem[] = [
+      ...foldAndIncludeBalanceDefiList,
+      ...foldAndExcludeBalanceDefiList,
+    ];
     const unFoldDefiList: ActionItem[] = portfolios
       .filter(i => !i._isFold)
       .map(item => ({
