@@ -31,7 +31,6 @@ import { navigate, naviPush } from '@/utils/navigation';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
 interface Props {
-  token: AbstractPortfolioToken;
   tokenEntity?: TokenEntityDetail;
   entityLoading: boolean;
 }
@@ -43,7 +42,7 @@ const DomainUrlLink = ({
 }: {
   url: string;
   name: string;
-  logo_url: string;
+  logo_url?: string;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const handlePress = useCallback(() => {
@@ -52,7 +51,7 @@ const DomainUrlLink = ({
 
   return (
     <TouchableOpacity style={styles.externalLink} onPress={handlePress}>
-      <AssetAvatar logo={logo_url} size={16} />
+      {logo_url && <AssetAvatar logo={logo_url} size={16} />}
       <Text style={styles.urlText}>{name}</Text>
       <RcIconJumpCC
         style={styles.icon}
@@ -65,7 +64,6 @@ const DomainUrlLink = ({
 };
 
 export const IssuerAndListSite: React.FC<Props> = ({
-  token,
   tokenEntity,
   entityLoading,
 }) => {
@@ -138,7 +136,6 @@ export const IssuerAndListSite: React.FC<Props> = ({
                 <DomainUrlLink
                   url={`https://www.${tokenEntity?.domain_id}`}
                   name={tokenEntity?.domain_id}
-                  logo_url={token?.logo_url}
                 />
               </View>
               {isBridgeDomain && tokenEntity.origin_token && (

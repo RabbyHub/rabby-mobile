@@ -247,7 +247,11 @@ export const SearchAssets: React.FC<Props> = ({
               <Text style={styles.selectChainText}>
                 {t('page.search.sectionHeader.AllChains')}
               </Text>
-              <RcIconRight color={colors2024['neutral-foot']} />
+              <RcIconRight
+                width={12}
+                height={12}
+                color={colors2024['neutral-foot']}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -308,18 +312,16 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   close: {
     paddingHorizontal: 4,
-    paddingVertical: 6,
+    // paddingVertical: 6,
   },
   chainInfoContainer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 4,
-    // backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   chainInfo: {
     paddingLeft: 10,
-    paddingVertical: 6,
+    // paddingVertical: 6,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -383,7 +385,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-    height: ASSETS_SECTION_HEADER,
+    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['brand-default'],
     // marginLeft: -24,
   },

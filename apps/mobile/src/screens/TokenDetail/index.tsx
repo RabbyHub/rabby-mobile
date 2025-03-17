@@ -582,7 +582,6 @@ export const TokenDetailScreen = () => {
           />
         )}
         <IssuerAndListSite
-          token={token}
           tokenEntity={tokenEntity}
           entityLoading={entityLoading}
         />
