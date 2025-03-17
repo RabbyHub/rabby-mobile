@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -46,6 +46,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const navigation = useRabbyAppNavigation();
+  const [loading, setLoading] = useState(false);
   const navParams = useNavigationState(
     s =>
       s.routes.find(
@@ -76,14 +77,10 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       return;
     }
     try {
+      setLoading(true);
       Keyboard.dismiss();
       const { inWhitelist, account } = await findAccount(address);
-      let cexDes = cexInfoStore[address];
-      if (!cexDes) {
-        const { desc } = await openapi.addrDesc(address);
-        cexDes = desc.cex;
-        setCexInfoStore(prev => ({ ...prev, [address]: cexDes }));
-      }
+
       if (isForWhitelist) {
         if (inWhitelist) {
           toast.show(t('page.whitelist.alreadyAdded'));
@@ -98,6 +95,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         return;
       }
       if (inWhitelist) {
+        let cexDes = cexInfoStore[address];
+        if (!cexDes) {
+          const { desc } = await openapi.addrDesc(address);
+          cexDes = desc.cex;
+          setCexInfoStore(prev => ({ ...prev, [address]: cexDes }));
+        }
         navigateToSendScreen({
           toAddress: account.address,
           cexDes: cexDes,
@@ -111,7 +114,10 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
           },
         });
       }
-    } catch (err: any) {}
+    } catch (err: any) {
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = React.useCallback((text: string) => {
@@ -137,6 +143,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
+        loading: loading,
         disabled: !input || !!error,
       }}
       style={styles.screen}
