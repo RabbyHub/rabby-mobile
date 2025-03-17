@@ -187,6 +187,8 @@ export const abstractTokenToTokenItem = (
     symbol: token.symbol,
     time_at: token.time_at,
     price_24h_change: token.price_24h_change,
+    //@ts-expect-error lack value_24h_change
+    value_24h_change: token?.value_24h_change,
     low_credit_score: token?.low_credit_score,
     credit_score: token?.credit_score,
     // @ts-expect-error
@@ -259,6 +261,9 @@ export class DisplayedToken implements AbstractPortfolioToken {
     this.name = token.name;
     this.time_at = token.time_at;
     this.price_24h_change = token.price_24h_change;
+    // @ts-expect-error
+    this.value_24h_change = token.value_24h_change;
+
     this.low_credit_score = token.low_credit_score;
     this.credit_score = token.credit_score;
 
@@ -362,6 +367,8 @@ export const customTestnetTokenToTokenItem = (
     symbol: token.symbol,
     time_at: 0,
     price_24h_change: 0,
+    //@ts-expect-error
+    value_24h_change: 0,
   };
 };
 

@@ -13,6 +13,9 @@ import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { runOnJS } from 'react-native-reanimated';
+import dayjs from 'dayjs';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import BigNumber from 'bignumber.js';
 
 export const queryTokensCache = async (user_id: string, isTestnet = false) => {
   return requestOpenApiWithChainId(
@@ -71,7 +74,36 @@ export const batchQueryTokensWithLocalCache = async (
     const isExpired = await TokenItemEntity.isExpired(user_id);
     if (force || isExpired) {
       const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
-      runOnJS(syncRemoteTokens)(user_id, [...tokens]);
+      const historyTokens = await batchQueryHistoryTokens(
+        user_id,
+        dayjs().subtract(1, 'days').unix(),
+        isTestnet,
+      );
+
+      const writeTokens = [...tokens] as (TokenItem & {
+        value_24h_change?: string;
+      })[];
+      historyTokens?.forEach(e => {
+        const idx = tokens.findIndex(
+          t => isSameAddress(e.id, t.id) && e.chain === t.chain,
+        );
+        if (idx > -1) {
+          const token24hAgo = new BigNumber(e.amount).times(e.price || 1);
+          writeTokens[idx].value_24h_change = new BigNumber(
+            writeTokens[idx].amount,
+          )
+            .times(writeTokens[idx].price || 1)
+            .minus(token24hAgo)
+            .div(token24hAgo)
+            .toString();
+        }
+
+        if (writeTokens[idx].value_24h_change === 'NaN') {
+          writeTokens[idx].value_24h_change = '0';
+        }
+      });
+
+      runOnJS(syncRemoteTokens)(user_id, writeTokens);
       return tokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
