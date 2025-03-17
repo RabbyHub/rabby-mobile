@@ -1621,6 +1621,9 @@
       "noQuote2": "Aucune citation trouvée.",
       "paymentProviderTips": "Ce fournisseur prend en charge les méthodes de paiement suivantes :",
       "noQuote": "Aucune cote trouvée : Essayez d'entrer une valeur plus élevée."
+    },
+    "eip7702": {
+      "alert": "EIP-7702 n'est pas encore pris en charge"
     }
   },
   "native": {

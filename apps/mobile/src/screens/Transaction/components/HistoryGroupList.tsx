@@ -1,6 +1,6 @@
 import { minBy, range } from 'lodash';
 import React, { useMemo } from 'react';
-import { Animated, Platform, View, Text } from 'react-native';
+import { FlatList, Platform, View, Text } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import dayjs from 'dayjs';
 import { HistoryItem } from './HistoryItem';
@@ -246,7 +246,8 @@ export const HistoryList = ({
   }
 
   return (
-    <Animated.FlatList
+    <FlatList
+      removeClippedSubviews
       data={markedList}
       renderItem={renderItem}
       windowSize={5}

@@ -108,8 +108,8 @@ jobs:
             # cd ../;
             ./scripts/deploy-ios-adhoc.sh
 
-            # cleanup packager
-            ps axo pid,command | grep -E 'launchPackager\.command' | grep -v grep | awk '{print $1}' | xargs kill -9; > /dev/null 2>&1
+            # # cleanup packager
+            # ps axo pid,command | grep -E 'launchPackager\.command' | grep -v grep | awk '{print $1}' | xargs kill -9; > /dev/null 2>&1
           fi
 
         env:

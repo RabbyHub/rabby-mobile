@@ -1612,6 +1612,9 @@
       "noQuotePlaceholder": "견적 없음",
       "paymentProviderTips": "이 제공자는 다음 결제 방법을 지원합니다:",
       "noQuote": "견적을 찾을 수 없음: 더 높은 값을 입력하세요."
+    },
+    "eip7702": {
+      "alert": "EIP-7702는 아직 지원되지 않았습니다"
     }
   },
   "global": {

@@ -1724,6 +1724,9 @@
       "noQuote2": "未找到報價。",
       "paymentProviderTips": "此提供者支持以下支付方式：",
       "youWillReceive": "接收"
+    },
+    "eip7702": {
+      "alert": "EIP-7702尚未支持"
     }
   },
   "component": {

@@ -54,6 +54,12 @@ export const normalizeTxParams = tx => {
         copy.data = `0x${tx.data}`;
       }
     }
+
+    if ('authorizationList' in copy) {
+      copy.authorizationList = copy.authorizationList.map(item => {
+        return normalizeHex(item);
+      });
+    }
   } catch (e) {
     Sentry.captureException(
       new Error(`normalizeTxParams failed, ${JSON.stringify(e)}`),

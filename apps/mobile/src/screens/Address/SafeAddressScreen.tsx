@@ -2,15 +2,21 @@ import React from 'react';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { CommonAddressList } from './CommonAddressList';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTranslation } from 'react-i18next';
+import { StackActions, useNavigation } from '@react-navigation/native';
+import { CurrentAddressProps } from './components/AddressListScreenContainer';
 
 export function SafeAddressListScreen(): JSX.Element {
+  const navigation = useNavigation<CurrentAddressProps['navigation']>();
+
   const handlePress = () => {
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.ImportSafeAddress2024,
-    });
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.ImportSafeAddress2024,
+        params: {},
+      }),
+    );
   };
   const { t } = useTranslation();
 

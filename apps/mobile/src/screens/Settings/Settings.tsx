@@ -49,7 +49,12 @@ import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAut
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 
 import { toast } from '@/components/Toast';
-import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
+import {
+  APP_FEATURE_SWITCH,
+  APP_URLS,
+  APP_VERSIONS,
+  INTERNAL_REQUEST_SESSION,
+} from '@/constant';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useCurrentAccount } from '@/hooks/account';
@@ -115,6 +120,7 @@ import { AppCacheSizeText } from './components/SpecialText';
 import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { sendRequest } from '@/core/apis/sendRequest';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -694,6 +700,28 @@ function DevSettingsBlocks() {
                     nftItem: RABBY_GENESIS_NFT_DATA.nftToken,
                   },
                 });
+              },
+            },
+            {
+              label: 'Test EIP-7702',
+              icon: RcInfo,
+              onPress: () => {
+                sendRequest(
+                  {
+                    method: 'eth_sendTransaction',
+                    params: [
+                      {
+                        from: '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85',
+                        to: '0x093ccbaecb0e0006c8bffca92e9929d117fec583',
+                        value: '0x0',
+                        data: '0x13af40350000000000000000000000007c754e12423bc46a2120303ad239b955ccb94f1a',
+                        chainId: 1,
+                        authorizationList: [],
+                      },
+                    ],
+                  },
+                  INTERNAL_REQUEST_SESSION,
+                );
               },
             },
             // {

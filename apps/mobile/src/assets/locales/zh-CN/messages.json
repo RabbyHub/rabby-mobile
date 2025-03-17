@@ -1676,6 +1676,9 @@
       "title": "购买",
       "history": "Purchased History",
       "noQuote": "未找到报价：请尝试输入更高的数值。"
+    },
+    "eip7702": {
+      "alert": "EIP-7702尚未支持"
     }
   },
   "component": {

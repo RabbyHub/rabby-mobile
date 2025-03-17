@@ -357,10 +357,10 @@ export default function AppNavigation({
             name={RootNames.StackAddress}
             component={AddressNavigator}
           />
-          <RootStack.Screen
+          {/* <RootStack.Screen
             name={RootNames.StackDapps}
             component={DappsNavigator}
-          />
+          /> */}
           <RootStack.Screen
             name={RootNames.NftDetail}
             component={NFTDetailScreen}

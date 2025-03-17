@@ -1797,6 +1797,9 @@
       "paymentProviderTips": "Dieser Anbieter unterstützt die folgenden Zahlungsmethoden:",
       "searchingQuote": "Suche nach Angeboten für Sie...",
       "noQuotePlaceholder": "Kein Angebot"
+    },
+    "eip7702": {
+      "alert": "EIP-7702 wird noch nicht unterstützt"
     }
   },
   "constant": {

@@ -7,6 +7,7 @@ import { DappsScreen } from '../Dapps/DappsScreen';
 import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { FavoriteDappsScreen } from '../Dapps/FavoriteDappsScreen';
+import MultiAddressHome from '../Home/MultiAddressHome';
 
 const DappsStack = createCustomNativeStackNavigator<DappsNavigatorParamsList>();
 
@@ -29,7 +30,12 @@ export function DappsNavigator() {
         },
         headerTintColor: colors['neutral-title-1'],
       })}
-      initialRouteName={RootNames.Dapps}>
+      initialRouteName={RootNames.Home}>
+      <DappsStack.Screen
+        name={RootNames.Home}
+        component={MultiAddressHome}
+        options={{ headerShown: false }}
+      />
       <DappsStack.Screen
         name={RootNames.Dapps}
         component={DappsScreen}

@@ -1757,6 +1757,9 @@
       "history": "Historial de Compras",
       "noQuote2": "No quotes found.",
       "searchRegionPlaceholder": "Buscar región"
+    },
+    "eip7702": {
+      "alert": "EIP-7702 aún no es compatible"
     }
   },
   "global": {
