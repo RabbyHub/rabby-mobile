@@ -7,8 +7,8 @@ import KeystonePNG from '@/assets2024/icons/wallet/keystone.png';
 import OneKeyPNG from '@/assets2024/icons/wallet/onekey.png';
 import PrivateKeyPNG from '@/assets2024/icons/wallet/private-key.png';
 import SeedPNG from '@/assets2024/icons/wallet/seed.png';
-import WatchPNG from '@/assets2024/icons/wallet/watch.png';
-import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark.png';
+import WatchPNG from '@/assets2024/icons/wallet/watch@2x.png';
+import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark@2x.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
 import { WALLET_INFO } from './walletInfo';
 
