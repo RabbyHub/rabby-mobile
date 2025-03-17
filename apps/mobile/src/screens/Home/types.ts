@@ -110,8 +110,9 @@ export type ActionHeaderItem = {
     | 'toggle_defi_fold'
     | 'nft_header'
     | 'toggle_nft_fold'
+    | 'empty-assets'
     | 'empty-token';
-  data?: null;
+  data?: null | string;
 };
 
 export type ActionItem =

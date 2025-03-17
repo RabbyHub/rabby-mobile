@@ -26,6 +26,7 @@ import {
   DisplayNftItem,
 } from './types';
 import {
+  ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
@@ -78,6 +79,8 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { collectionNftList, NftItemWithCollection } from './hooks/nft';
+import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
+import { openapi } from '@/core/request';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -95,8 +98,17 @@ const ViewTypes = {
   BODY: 1,
   OVERVIEW: 2,
   EMPTY_TOKEN: 3,
+  EMPTY_ASSETS: 4,
 };
 
+const NOT_BORN_DATA = [
+  {
+    type: 'overview',
+  },
+  {
+    type: 'empty-token',
+  },
+];
 const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -166,6 +178,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [notBorn, setNotBorn] = useState(false);
   const dataProvider = useMemo(
     () =>
       new DataProvider((r1, r2) => {
@@ -188,6 +201,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         if (item.type === 'empty-token') {
           return ViewTypes.EMPTY_TOKEN;
         }
+        if (item.type === 'empty-assets') {
+          return ViewTypes.EMPTY_ASSETS;
+        }
         if (
           item?.type?.includes('_header') ||
           item?.type?.includes('toggle_')
@@ -209,6 +225,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           case ViewTypes.EMPTY_TOKEN:
             dim.width = SCREEN_WIDTH;
             dim.height = TOKEN_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
+            break;
+          case ViewTypes.EMPTY_ASSETS:
+            dim.width = SCREEN_WIDTH;
+            dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           default:
             dim.width = SCREEN_WIDTH;
@@ -328,12 +348,15 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         show: !loadingToken && !sortTokens.length,
         data: [
           {
-            type: 'empty-token',
+            type: 'empty-assets',
+            data: t('page.singleHome.sectionHeader.NoData', {
+              name: t('page.singleHome.sectionHeader.Token'),
+            }),
           },
         ],
       },
       {
-        show: !!portfolios.length,
+        show: true,
         data: [{ type: 'defi_header' }, ...unFoldDefiList],
       },
       {
@@ -346,12 +369,34 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         ],
       },
       {
-        show: !!nftList.length,
+        show: portfolios.length === 0,
+        data: [
+          {
+            type: 'empty-assets',
+            data: t('page.singleHome.sectionHeader.NoData', {
+              name: t('page.singleHome.sectionHeader.Defi'),
+            }),
+          },
+        ],
+      },
+      {
+        show: true,
         data: [{ type: 'nft_header' }, ...unFoldNftList],
       },
       {
         show: !!foldNftList.length,
         data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
+      },
+      {
+        show: nftList.length === 0,
+        data: [
+          {
+            type: 'empty-assets',
+            data: t('page.singleHome.sectionHeader.NoData', {
+              name: t('page.singleHome.sectionHeader.Nft'),
+            }),
+          },
+        ],
       },
     ];
     return itemData
@@ -366,11 +411,26 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     nftList,
     portfolios,
     sortTokens,
+    t,
   ]);
 
   useEffect(() => {
-    setListData(dataProvider.cloneWithRows(dataList));
-  }, [dataList, dataProvider]);
+    if (currentAccount?.address) {
+      openapi.addrDesc(currentAccount?.address).then(res => {
+        if (!res.desc.born_at) {
+          setNotBorn(true);
+        }
+      });
+    }
+  }, [currentAccount?.address]);
+
+  useEffect(() => {
+    if (notBorn) {
+      setListData(dataProvider.cloneWithRows(NOT_BORN_DATA));
+    } else {
+      setListData(dataProvider.cloneWithRows(dataList));
+    }
+  }, [dataList, dataProvider, notBorn]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -726,9 +786,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             chainLength={chainsInfo.chainLength}
             onChainClick={handleOnChainClick}
             chainServerId={selectChainItem?.chain}
-            hasToken={!!tokens?.length}
-            hasDefi={!!portfolios.length}
-            hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
         );
@@ -789,6 +846,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
         );
+      case 'empty-assets':
+        return <EmptyAssets desc={data} />;
       default:
         return null;
     }
@@ -877,12 +936,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <AssestAllHeader
             style={styles.assetHeader}
             currentSection={currentSection}
-            hasToken={!!tokens?.length}
             chainLength={chainsInfo.chainLength}
             onChainClick={handleOnChainClick}
             chainServerId={selectChainItem?.chain}
-            hasDefi={!!portfolios.length}
-            hasNft={!!nftList?.length}
             onPress={handleSwitchTab}
           />
           {renderStickHeader(firstRowType)}
