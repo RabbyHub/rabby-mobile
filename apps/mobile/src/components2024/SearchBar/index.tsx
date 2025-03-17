@@ -24,6 +24,7 @@ import {
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
   onCancel?(): void;
+  noCancel?: boolean;
   ref?: React.ForwardedRef<{
     focus(): void;
     blur(): void;
@@ -41,6 +42,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
       onBlur,
       onFocus,
       onCancel,
+      noCancel,
       ...rest
     },
     ref,
@@ -120,7 +122,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
             </TouchableWithoutFeedback>
           ) : null}
         </View>
-        {isFocus ? (
+        {isFocus && !noCancel ? (
           <TouchableOpacity
             onPress={() => {
               onCancel?.();

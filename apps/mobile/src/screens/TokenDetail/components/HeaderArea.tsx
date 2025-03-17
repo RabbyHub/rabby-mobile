@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 
+import RcIconPin from '@/assets2024/icons/home/RcIconPin.svg';
+import RcIconUnPin from '@/assets2024/icons/home/RcIconUnpin.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -19,12 +21,18 @@ import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMemoizedFn } from 'ahooks';
+import { preferenceService } from '@/core/services';
+import { trigger } from 'react-native-haptic-feedback';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
   token: AbstractPortfolioToken;
+  refreshTags: () => void;
 }
-export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
+export const TokenDetailHeaderArea: React.FC<Props> = ({
+  token,
+  refreshTags,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const handleCopyAddress = useMemoizedFn<
@@ -64,6 +72,27 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
     [token],
   );
 
+  const handlePress = useCallback(() => {
+    const currentPin = token._isPined;
+    token._isPined = !token._isPined;
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    if (currentPin) {
+      preferenceService.removePinedToken({
+        tokenId: token._tokenId,
+        chainId: token.chain,
+      });
+    } else {
+      preferenceService.pinToken({
+        tokenId: token._tokenId,
+        chainId: token.chain,
+      });
+    }
+    refreshTags();
+  }, [refreshTags, token]);
+
   return (
     <View style={styles.root}>
       <View style={styles.container}>
@@ -81,6 +110,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
             ellipsizeMode="tail">
             {ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
+          <TouchableOpacity onPress={handlePress}>
+            {token._isPined ? <RcIconUnPin /> : <RcIconPin />}
+          </TouchableOpacity>
         </View>
         {/* <View style={styles.contract}>
           <ChainIconImage

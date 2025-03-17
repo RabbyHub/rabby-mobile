@@ -22,9 +22,11 @@ export default function ChainItem({
   onPress,
   disabled = false,
   disabledTips = 'Coming soon',
+  needAllAddresses,
   tokens = [],
 }: RNViewProps & {
   data: Chain;
+  needAllAddresses?: boolean;
   value?: CHAINS_ENUM;
   onPress?(value: CHAINS_ENUM): void;
   disabled?: boolean;
@@ -34,8 +36,17 @@ export default function ChainItem({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const isDark = useGetBinaryMode() === 'dark';
 
-  const { matteredChainBalances, testnetMatteredChainBalances } =
-    useChainBalances();
+  const {
+    matteredChainBalances: _matteredChainBalances,
+    matteredChainBalancesAll,
+    testnetMatteredChainBalances,
+  } = useChainBalances();
+
+  const matteredChainBalances = useMemo(
+    () =>
+      needAllAddresses ? matteredChainBalancesAll : _matteredChainBalances,
+    [matteredChainBalancesAll, _matteredChainBalances, needAllAddresses],
+  );
 
   const chainBalanceItem = useMemo(() => {
     return (
