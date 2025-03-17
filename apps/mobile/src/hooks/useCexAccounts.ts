@@ -47,12 +47,15 @@ export const useCexAccounts = () => {
       }
       queue.add(async () => {
         try {
+          if (cexInfo[address]) {
+            return;
+          }
           const res = await openapi.addrDesc(address);
           if (res.desc.cex) {
             setCexInfo(prev => ({ ...prev, [address]: res.desc.cex }));
           }
         } catch (error) {
-          console.error('has_transfer fetch error', error);
+          console.error('cex desc fetch error', error);
         }
       });
     });
