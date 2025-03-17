@@ -10,12 +10,15 @@ import { Image, TouchableOpacity, View } from 'react-native';
 import { TokenFromAddressItem } from '..';
 import { formatAmount, formatNumber, formatUsdValue } from '@/utils/number';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
   token: AbstractPortfolioToken | CombineTokensItem;
   tokenUsdValue?: number;
   amountList: TokenFromAddressItem[];
   tokenSupportSwap: boolean;
+  isSingleAddress?: boolean;
+  finalAccount?: KeyringAccountWithAlias;
   handleSwap: (
     type: 'Buy' | 'Sell',
     address: string,
@@ -27,6 +30,8 @@ export const TokenArea: React.FC<Props> = ({
   token,
   amountList,
   handleSwap,
+  isSingleAddress,
+  finalAccount,
   tokenSupportSwap,
   tokenUsdValue,
 }) => {
@@ -39,12 +44,19 @@ export const TokenArea: React.FC<Props> = ({
     // amountList.map((item, index) => {
     //   sum = sum + item.amount;
     // });
-    if ('totalAmount' in token) {
+    if ('totalAmount' in token && !isSingleAddress) {
       return token.totalAmount as unknown as number;
     } else {
+      const currentAddress = finalAccount?.address;
+      if ('fromAddress' in token && currentAddress) {
+        const tokenAmount = token.fromAddress.find(
+          item => item.address === currentAddress,
+        );
+        return tokenAmount?.amount ?? token.amount;
+      }
       return token.amount;
     }
-  }, [token]);
+  }, [token, isSingleAddress, finalAccount]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: TokenFromAddressItem; index: number }) => {

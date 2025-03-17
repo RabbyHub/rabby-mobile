@@ -46,7 +46,7 @@ import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { naviPush } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
@@ -256,7 +256,6 @@ export const TokenDetailScreen = () => {
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
-
     Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
@@ -568,13 +567,15 @@ export const TokenDetailScreen = () => {
           {/* <View style={styles.divider} /> */}
         </View>
         <TokenArea
+          isSingleAddress={isSingleAddress}
           tokenUsdValue={tokenWithAmount?.price}
+          finalAccount={finalAccount}
           tokenSupportSwap={tokenSupportSwap}
           handleSwap={handleSwap}
           amountList={tokenFromAddress}
           token={token}
         />
-        {relateDefiList.length > 0 && !unHold && (
+        {relateDefiList.length > 0 && (
           <RelatedDeFi
             deFiList={relateDefiList}
             symbol={token.symbol}
