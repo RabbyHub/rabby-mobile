@@ -113,9 +113,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   nameText: {
     fontSize: 16,
     lineHeight: 20,
-    color: colors2024['neutral-title-1'],
-    fontWeight: '700',
-    fontFamily: 'SF Pro',
+    color: colors2024['neutral-foot'],
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   selectChainItemBalance: {
     flexDirection: 'row',
@@ -127,7 +127,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '500',
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
   },
   walletIcon: {
     color: colors2024['neutral-foot'],
@@ -140,7 +140,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
   },
   rightArea: {},
   badgeStyle: {

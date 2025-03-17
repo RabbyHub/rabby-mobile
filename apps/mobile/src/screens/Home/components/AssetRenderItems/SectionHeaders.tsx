@@ -160,31 +160,32 @@ export const AssestAllHeader = memo(
             </Pressable>
           </Tooltip>
         </View>
-        {chainInfo?.id ? (
-          <View style={styles.chainContainer}>
-            <ChainFilterItem
-              style={styles.chainFilterItem}
-              chainItem={chainInfo}
-              onPress={() => onChainClick?.(false)}
-              onRemoveFilter={() => onChainClick?.(true)}
-            />
-          </View>
-        ) : (
-          <Pressable
-            style={styles.chainContainer}
-            onPress={() => onChainClick?.(false)}>
-            <Text style={styles.symbol}>
-              {t('page.singleHome.sectionHeader.totalChain', {
-                count: chainLength || 0,
-              })}
-            </Text>
-            <ArrowRightSVG
-              style={styles.icon}
-              width={16}
-              color={colors2024['neutral-foot']}
-            />
-          </Pressable>
-        )}
+        {!!chainLength &&
+          (chainInfo?.id ? (
+            <View style={styles.chainContainer}>
+              <ChainFilterItem
+                style={styles.chainFilterItem}
+                chainItem={chainInfo}
+                onPress={() => onChainClick?.(false)}
+                onRemoveFilter={() => onChainClick?.(true)}
+              />
+            </View>
+          ) : (
+            <Pressable
+              style={styles.chainContainer}
+              onPress={() => onChainClick?.(false)}>
+              <Text style={styles.symbol}>
+                {t('page.singleHome.sectionHeader.totalChain', {
+                  count: chainLength || 0,
+                })}
+              </Text>
+              <ArrowRightSVG
+                style={styles.icon}
+                width={16}
+                color={colors2024['neutral-body']}
+              />
+            </Pressable>
+          ))}
       </View>
     );
   },
@@ -207,7 +208,7 @@ const getStyle = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-body'],
   },
   active: {
     fontSize: 18,
@@ -245,7 +246,6 @@ const getStyle = createGetStyles2024(ctx => ({
     gap: 4,
   },
   chainFilterItem: {
-    height: 24,
     backgroundColor: 'transparent',
   },
 }));
