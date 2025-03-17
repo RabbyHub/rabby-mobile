@@ -8,6 +8,9 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { useWhiteListAddress } from '../hooks/useWhiteListAddress';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { ellipsisAddress } from '@/utils/address';
+import { contactService } from '@/core/services';
 
 export default function ToAddressControl2024({
   style,
@@ -24,13 +27,24 @@ export default function ToAddressControl2024({
   const { styles } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
   const { findAccount } = useWhiteListAddress(true);
-  const [currentAccount, setCurrentAccount] =
-    useState<KeyringAccountWithAlias>();
+  const [currentAccount, setCurrentAccount] = useState<KeyringAccountWithAlias>(
+    {
+      address,
+      brandName: brandName || KEYRING_CLASS.WATCH,
+      aliasName:
+        contactService.getAliasByAddress(address)?.alias ||
+        ellipsisAddress(address),
+      balance: 0,
+      type: KEYRING_CLASS.WATCH,
+    },
+  );
 
   useEffect(() => {
     if (address) {
       findAccount(address, brandName).then(res => {
-        setCurrentAccount(res.account);
+        if (res.account) {
+          setCurrentAccount(res.account);
+        }
       });
     }
   }, [address, brandName, findAccount]);
