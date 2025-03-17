@@ -1,7 +1,8 @@
+/* eslint-disable react-native/no-inline-styles */
 import { findChainByServerID, getChain } from '@/utils/chain';
 import { numberWithCommasIsLtOne } from '@/utils/number';
 import { sinceTime } from '@/utils/time';
-import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem, TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import {
   StyleProp,
@@ -30,12 +31,22 @@ import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemCateType } from './type';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
+
+export type TokenChangeDataItem = {
+  amount: number;
+  token: TokenItem;
+  token_id: string;
+  price?: number;
+  type: 'send' | 'receive' | 'approve';
+};
 
 export const HistoryItem = React.memo(
   ({
@@ -139,39 +150,57 @@ export const HistoryItem = React.memo(
       const projectName = data?.project_id
         ? projectDict[data?.project_id]?.name
         : '';
-      switch (formatType) {
-        case HistoryItemCateType.Swap:
-          return chainItem?.name || t('page.transactions.detail.Unknown');
 
+      let address = '';
+      switch (formatType) {
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
           const isSend = formatType === HistoryItemCateType.Send;
           const addr = isSend
             ? data.sends[0].to_addr
             : data.receives[0].from_addr;
-          return (
+          address =
             (isSend ? ToText : FromText) +
-            (getAliasName(addr) || ellipsisAddress(addr))
-          );
-        case HistoryItemCateType.Revoke:
-        case HistoryItemCateType.Approve:
-          const isRevoke = formatType === HistoryItemCateType.Revoke;
-          return isRevoke
-            ? FromText + (projectName || t('page.transactions.detail.Unknown'))
-            : ToText + (projectName || t('page.transactions.detail.Unknown'));
-        case HistoryItemCateType.Contract:
-          return FromText + chainItem?.name;
-        case HistoryItemCateType.Cancel:
-          return t('page.transactions.detail.Unknown');
+            (getAliasName(addr) || ellipsisAddress(addr));
+          break;
+        // case HistoryItemCateType.Revoke:
+        // case HistoryItemCateType.Approve:
+        //   const isRevoke = formatType === HistoryItemCateType.Revoke;
+        //   return isRevoke
+        //     ? FromText + (projectName || t('page.transactions.detail.Unknown'))
+        //     : ToText + (projectName || t('page.transactions.detail.Unknown'));
+        // case HistoryItemCateType.Contract:
+        //   return FromText + chainItem?.name;
+        // case HistoryItemCateType.Cancel:
+        //   return t('page.transactions.detail.Unknown');
 
         case HistoryItemCateType.Buy:
-          return t('page.buy.from', {
-            dex: data.buyDetails?.service_provider?.name,
-          });
+          address = FromText + data.buyDetails?.service_provider?.name;
+          //  t('page.buy.from', {
+          //   dex: data.buyDetails?.service_provider?.name,
+          // });
+          break;
+        case HistoryItemCateType.Cancel:
+        case HistoryItemCateType.Contract:
+        case HistoryItemCateType.Revoke:
+        case HistoryItemCateType.Approve:
+        case HistoryItemCateType.Swap:
         default:
-          return projectName || t('page.transactions.detail.Unknown');
+          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          break;
       }
-    }, [formatType, data, chainItem, projectDict, t]);
+
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <ChainIconImage
+            size={16}
+            chainEnum={chainItem?.enum}
+            isShowRPCStatus={true}
+          />
+          <Text style={styles.describeText}>{address}</Text>
+        </View>
+      );
+    }, [formatType, data, chainItem, projectDict, t, styles.describeText]);
 
     const navigation = useRabbyAppNavigation();
     const hanldeNavigateDetail = useCallback(() => {
@@ -184,6 +213,68 @@ export const HistoryItem = React.memo(
         },
       });
     }, [isForMultipleAdderss, navigation, data, formatTitle]);
+
+    const noNeedTokenChangeType = useMemo(
+      () =>
+        [
+          HistoryItemCateType.Cancel,
+          HistoryItemCateType.Approve,
+          HistoryItemCateType.Revoke,
+        ].includes(formatType),
+      [formatType],
+    );
+
+    const tokenChangeData = useMemo(() => {
+      const res: TokenChangeDataItem[] = [];
+
+      data?.receives?.forEach(item => {
+        const tokenId = item?.token_id;
+        const tokenUUID = `${data.chain}_token:${tokenId}`;
+        const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+        res.push({
+          amount: item.amount,
+          token,
+          token_id: tokenId,
+          price: item.price as number,
+          type: 'receive',
+        });
+      });
+
+      data.sends?.forEach(item => {
+        const tokenId = item?.token_id;
+        const tokenUUID = `${data.chain}_token:${tokenId}`;
+        const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+        res.push({
+          amount: item.amount,
+          token,
+          token_id: tokenId,
+          price: item.price as number,
+          type: 'send',
+        });
+      });
+
+      return res;
+    }, [data, tokenDict]);
+
+    const tokenApproveData = useMemo(() => {
+      const res: TokenChangeDataItem[] = [];
+
+      if (!data.token_approve?.token_id) {
+        return res;
+      }
+
+      const tokenId = data.token_approve?.token_id || '';
+      const tokenUUID = `${data.chain}_token:${tokenId}`;
+      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+      res.push({
+        amount: data.token_approve?.value!,
+        token,
+        token_id: tokenId,
+        type: 'approve',
+      });
+
+      return res;
+    }, [data, tokenDict]);
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (
@@ -216,23 +307,22 @@ export const HistoryItem = React.memo(
             cateDict={cateDict}
             isScam={isScam}
           /> */}
-            <View style={styles.leftContent}>
-              {formatType === HistoryItemCateType.UnKnown && projectObj ? (
-                <View style={styles.imageBox}>
-                  <AssetAvatar logo={projectObj?.logo_url} size={46} />
-                  {isLight ? (
-                    <RcIconInteraction style={styles.iconBR} />
-                  ) : (
-                    <RcIconInteractionDark style={styles.iconBR} />
-                  )}
-                </View>
-              ) : (
-                <HistoryItemIcon
+            <View
+              style={[
+                styles.leftContent,
+                {
+                  width: noNeedTokenChangeType ? '95%' : '55%',
+                },
+              ]}>
+              {
+                <HistoryItemTokenArea
                   type={formatType as HistoryItemCateType}
-                  token={formatToken}
-                  isNft={isNft}
+                  // token={formatToken}
+                  tokenChangeData={tokenChangeData}
+                  // isNft={isNft}
+                  tokenApproveData={tokenApproveData}
                 />
-              )}
+              }
               <View style={styles.textBox}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
@@ -243,18 +333,14 @@ export const HistoryItem = React.memo(
                   )}
                   <TxStatusItem status={data.tx?.status ?? 1} />
                 </View>
-                <Text style={styles.describeText} numberOfLines={1}>
-                  {formatDescribe}
-                </Text>
+                {/* <Text style={styles.describeText} numberOfLines={1}> */}
+                {formatDescribe}
+                {/* </Text> */}
               </View>
             </View>
             <TxChange
-              type={formatType as HistoryItemCateType}
-              isForMultipleAdderss={isForMultipleAdderss}
+              tokenChangeData={tokenChangeData}
               style={styles.txChange}
-              data={data}
-              tokenDict={tokenDict}
-              canClickToken
             />
           </View>
 
@@ -292,6 +378,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // borderWidth: 1,
   },
   titleBox: {
+    // overflow: 'visible',
     flexDirection: 'row',
     gap: 6,
   },
@@ -314,7 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    // width: '50%',
+    // width: '55%',
   },
   textBox: {
     flexDirection: 'column',
@@ -399,7 +486,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   txInterAddressExplain: { flexShrink: 1, width: '60%' },
   txInterAddressExplainApprove: { width: '100%' },
-  txChange: { flexShrink: 0, maxWidth: '70%' },
+  txChange: { flexShrink: 0, maxWidth: '50%', minWidth: 0 },
   divider: {
     height: 0.5,
     backgroundColor: colors2024['neutral-line'],
