@@ -72,7 +72,7 @@ export type RootStackParamsList = {
  */
 export type HomeNavigatorParamsList = {
   [RootNames.StackDapps]?: any;
-  // [RootNames.Home]?: {};
+  [RootNames.Home]?: {};
   /** @deprecated */
   [RootNames.Points]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
