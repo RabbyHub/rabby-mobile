@@ -24,14 +24,20 @@ const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
       </Text>
       <Card style={styles.holder}>
         <View style={styles.iconWrapper}>
+          <RcIconMan
+            style={styles.man}
+            width={34}
+            height={34}
+            bgColor={colors2024['brand-disable']}
+            iconColor={colors2024['neutral-bg-1']}
+          />
           <RcIconLockCC
             style={styles.lock}
-            color={colors2024['brand-default']}
+            color={colors2024['brand-disable']}
             surroundColor={colors2024['neutral-bg-1']}
             width={18}
             height={18}
           />
-          <RcIconMan style={styles.man} />
         </View>
         <View style={styles.loadings}>
           <View style={styles.loadingSection1} />
