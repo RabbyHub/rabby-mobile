@@ -8,8 +8,8 @@ import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
-const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
-const isSingleAddressAtom = atom<boolean>(false);
+export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
+export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
   const navigation = useNavigation<HomeProps['navigation']>();
   const { findAccount } = useWhiteListAddress(true);
@@ -18,11 +18,6 @@ export const useSendRoutes = () => {
 
   const navigateToSendPolyScreen = useCallback(
     (isForSingleAddress: boolean, p?: { [key: string]: any }) => {
-      console.log(
-        'CUSTOM_LOGGER:=>: navigateToSendPolyScreen',
-        isForSingleAddress,
-        p,
-      );
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {

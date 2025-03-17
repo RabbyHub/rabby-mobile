@@ -47,6 +47,7 @@ import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
+import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -378,6 +379,7 @@ export function useSendTokenForm(
 
   const { chainEnum, isNativeToken, currentToken, putChainToken, chainItem } =
     useSendTokenScreenChainToken();
+  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
 
   const { sendTokenScreenState: screenState, putScreenState } =
     useSendTokenScreenState();
@@ -946,6 +948,10 @@ export function useSendTokenForm(
         chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
         currentToken: token,
       });
+      setRouteParams({
+        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+        tokenId: token.id,
+      });
       putScreenState({
         estimatedGas: 0,
       });
@@ -964,12 +970,13 @@ export function useSendTokenForm(
     },
     [
       screenState.showGasReserved,
-      currentToken.chain,
       currentToken.id,
-      loadCurrentToken,
-      patchFormValues,
+      currentToken.chain,
       putChainToken,
+      setRouteParams,
       putScreenState,
+      patchFormValues,
+      loadCurrentToken,
     ],
   );
 
