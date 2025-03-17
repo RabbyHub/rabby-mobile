@@ -77,7 +77,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     }
     try {
       Keyboard.dismiss();
-      const { inWhitelist, account } = findAccount(address);
+      const { inWhitelist, account } = await findAccount(address);
       let cexDes = cexInfoStore[address];
       if (!cexDes) {
         const { desc } = await openapi.addrDesc(address);

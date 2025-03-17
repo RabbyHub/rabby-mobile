@@ -64,10 +64,10 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
       ).then(result => {
         const successRes = result
           .filter(item => item.status === 'fulfilled')
-          .reduce(
-            (pre, curr) => (pre[curr.value.address] = curr.value.balance),
-            {},
-          );
+          .reduce((pre, curr) => {
+            pre[curr.value.address] = curr.value.balance;
+            return pre;
+          }, {});
         setList(pre =>
           pre.map(item => ({
             ...item,
@@ -78,10 +78,22 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
     }
   }, [accounts, disableFetchBalance, isAddrOnWhitelist, whitelist]);
 
-  const findAccount = (address: string) => {
+  const findAccount = async (address: string) => {
     const targetAccounts = accounts.filter(item =>
       isSameAddress(item.address, address),
     );
+    let balance = 0;
+    if (!targetAccounts.length) {
+      const { total_usd_value } = await batchBalanceWithLocalCache({
+        address: address,
+        isCore: false,
+        included_token_uuids: [],
+        excluded_token_uuids: [],
+        excluded_protocol_ids: [],
+        excluded_chain_ids: [],
+      });
+      balance = total_usd_value || 0;
+    }
     return {
       inWhitelist: whitelist.some(item => isSameAddress(item, address)),
       account: targetAccounts.length
@@ -91,7 +103,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
             aliasName:
               contactService.getAliasByAddress(address)?.alias ||
               ellipsisAddress(address),
-            balance: 0,
+            balance,
             type: KEYRING_CLASS.WATCH,
             brandName: KEYRING_CLASS.WATCH,
           },

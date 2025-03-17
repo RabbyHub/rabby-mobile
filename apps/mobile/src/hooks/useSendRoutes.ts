@@ -30,7 +30,7 @@ export const useSendRoutes = () => {
           cexDes = desc.cex;
           setCexInfoStore(prev => ({ ...prev, [p?.toAddress]: cexDes }));
         }
-        const { inWhitelist, account } = findAccount(p.toAddress);
+        const { inWhitelist, account } = await findAccount(p.toAddress);
         if (inWhitelist) {
           navigation.push(RootNames.StackTransaction, {
             screen: isForSingleAddress ? RootNames.Send : RootNames.MultiSend,
