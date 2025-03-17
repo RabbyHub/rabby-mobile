@@ -100,7 +100,6 @@ export default function MixedFlatChainList({
     }
     return res;
   }, [cacheAssets, matteredChainBalancesAll, needAllAddresses]);
-  console.log('cacheAssetsMap', cacheAssetsMap[0]);
 
   const sections = React.useMemo(() => {
     return [
