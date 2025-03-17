@@ -290,6 +290,23 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     ),
   });
 
+  const foldNftList: ActionItem[] = useMemo(
+    () =>
+      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
+        type: 'fold_nft',
+        data: item,
+      })),
+    [nftList],
+  );
+  const unFoldNftList: ActionItem[] = useMemo(
+    () =>
+      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
+        type: 'unfold_nft',
+        data: item,
+      })),
+    [nftList],
+  );
+
   const dataList = useMemo(() => {
     const unFoldTokenList: ActionItem[] = sortTokens
       .filter(i => !i._isFold)
@@ -315,18 +332,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         type: 'unfold_defi',
         data: item,
       }));
-    const foldNftList: ActionItem[] = collectionNftList(
-      nftList.filter(i => i._isFold),
-    ).map(item => ({
-      type: 'fold_nft',
-      data: item,
-    }));
-    const unFoldNftList: ActionItem[] = collectionNftList(
-      nftList.filter(i => !i._isFold),
-    ).map(item => ({
-      type: 'unfold_nft',
-      data: item,
-    }));
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -429,13 +434,15 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     foldDefi,
     foldHideList,
     foldNft,
+    foldNftList,
     loadingNft,
     loadingPortfolio,
     loadingToken,
-    nftList,
+    nftList.length,
     portfolios,
     sortTokens,
     t,
+    unFoldNftList,
   ]);
 
   useLayoutEffect(() => {
@@ -854,7 +861,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'toggle_nft_fold':
         return (
           <TokenRowSectionHeader
-            str={'' + getAllNftCount(nftList.filter(i => i._isFold))}
+            str={'' + foldNftList.length}
             fold={foldNft}
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
@@ -936,7 +943,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'fold_nft':
         return (
           <TokenRowSectionHeader
-            str={'' + getAllNftCount(nftList.filter(i => i._isFold))}
+            str={'' + foldNftList.length}
             fold={foldNft}
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
