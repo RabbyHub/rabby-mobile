@@ -1,13 +1,8 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { colord } from 'colord';
 import React from 'react';
-import {
-  Touchable,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import Animated, {
   interpolate,
   runOnJS,

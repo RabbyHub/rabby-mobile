@@ -3,13 +3,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
 import { WalletIcon } from '../WalletIcon/WalletIcon';
 
 export interface Props {
   account: KeyringAccountWithAlias;
   iconSize?: number;
   iconBorderRadius?: number;
+  accoutnIconUri?: string;
   onChange: (aliasName: string) => void;
 }
 
@@ -17,6 +18,7 @@ export const AliasNameEditView: React.FC<Props> = ({
   account,
   iconSize = 100,
   iconBorderRadius = 24,
+  accoutnIconUri,
   onChange,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -31,12 +33,21 @@ export const AliasNameEditView: React.FC<Props> = ({
 
   return (
     <View style={styles.itemContainer}>
-      <WalletIcon
-        type={account.type}
-        width={iconSize}
-        height={iconSize}
-        borderRadius={iconBorderRadius}
-      />
+      {accoutnIconUri ? (
+        <Image
+          source={{ uri: accoutnIconUri }}
+          style={{ borderRadius: iconBorderRadius }}
+          width={iconSize}
+          height={iconSize}
+        />
+      ) : (
+        <WalletIcon
+          type={account.type}
+          width={iconSize}
+          height={iconSize}
+          borderRadius={iconBorderRadius}
+        />
+      )}
       <TextInput
         autoFocus
         style={styles.inputInner}

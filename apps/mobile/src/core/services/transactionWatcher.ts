@@ -242,7 +242,7 @@ export class TransactionWatcherService {
       if (
         isSameAddress(kAddress, address) &&
         kChain === chain &&
-        Number(kNonceStr) < nonce &&
+        Number(kNonceStr) <= nonce &&
         pendingTx[key]
       ) {
         delete pendingTx[key];

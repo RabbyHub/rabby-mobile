@@ -1667,6 +1667,9 @@
       "noQuotePlaceholder": "Không có báo giá",
       "paymentMethod": "Phương thức thanh toán",
       "youWillReceive": "Nhận"
+    },
+    "eip7702": {
+      "alert": "EIP-7702 chưa được hỗ trợ"
     }
   },
   "component": {

@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
+import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,8 +17,6 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
-import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
-import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
@@ -28,10 +26,7 @@ import { TransactionPendingDetail } from '@/screens/TransactionRecord/components
 import { ellipsisAddress } from '@/utils/address';
 import { naviPush } from '@/utils/navigation';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  ApproveTokenRequireData,
-  SendRequireData,
-} from '@rabby-wallet/rabby-action';
+import { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
@@ -40,10 +35,9 @@ import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { Button } from '@/components2024/Button';
 import { HistoryItemCateType } from '../type';
-import { StackActions } from '@react-navigation/native';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatIntlTimestamp } from '@/utils/time';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 interface Props {
   data: TransactionGroup;
@@ -54,7 +48,6 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
-  const navigation = useRabbyAppNavigation();
   const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
     const actionData = maxGasTx.action!.actionData.send!;
@@ -92,6 +85,7 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
   }, [list]);
 
   const { switchAccount } = useCurrentAccount();
+  const { navigateToSendPolyScreen } = useSendRoutes();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -239,17 +233,10 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
           <View style={{ flex: 1 }}>
             <Button
               onPress={() => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackTransaction, {
-                    screen: !isSingleAddress
-                      ? RootNames.MultiSend
-                      : RootNames.Send,
-                    params: {
-                      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                      tokenId: actionData.token?.id,
-                    },
-                  }),
-                );
+                navigateToSendPolyScreen(!!isSingleAddress, {
+                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                  tokenId: actionData.token?.id,
+                });
               }}
               title={t('page.transactions.detail.SendAgain')}
             />

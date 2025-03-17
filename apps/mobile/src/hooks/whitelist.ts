@@ -22,12 +22,16 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   }, [setWL]);
 
   const addWhitelist = React.useCallback(
-    async (address: string, options?: { hasValidated?: boolean }) => {
+    async (
+      address: string,
+      options?: { hasValidated?: boolean; onAdded?: () => void },
+    ) => {
       const { hasValidated = false } = options || {};
 
       const onFinished = async () => {
         await whitelistService.addWhitelist(address);
-        getWhitelist();
+        await getWhitelist();
+        options?.onAdded?.();
       };
 
       if (hasValidated) {
@@ -54,19 +58,11 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   );
 
   const removeWhitelist = React.useCallback(
-    async (addresses: string) => {
-      AuthenticationModal.show({
-        title: t('page.addressDetail.remove-from-whitelist'),
-        onFinished: async () => {
-          await whitelistService.removeWhitelist(addresses);
-          await getWhitelist();
-        },
-        validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-      });
+    async (address: string) => {
+      await whitelistService.removeWhitelist(address);
+      await getWhitelist();
     },
-    [getWhitelist, t],
+    [getWhitelist],
   );
 
   const toggleWhitelist = async (bool: boolean) => {

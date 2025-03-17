@@ -5,6 +5,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
+  Modal,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -27,7 +28,7 @@ import {
   makeTokenFromChain,
 } from '@/utils/chain';
 import { preferenceService } from '@/core/services';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Cex, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import {
   useCurrentAccount,
@@ -35,7 +36,6 @@ import {
 } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
-import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -46,9 +46,15 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { ChainInfo2024 } from './components/ChainInfo2024';
-import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
+import {
+  PropsForAccountSwitchScreen,
+  ScreenSceneAccountProvider,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
+import ToAddressControl2024 from './components/ToAddressControl2024';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { ChainInfo2024 } from './components/ChainInfo2024';
 
 function SendScreen({
   isForMultipleAdderss = false,
@@ -70,17 +76,19 @@ function SendScreen({
         chainEnum?: CHAINS_ENUM | undefined;
         tokenId?: TokenItem['id'];
         toAddress?: string;
+        addressBrandName?: string;
+        cexDes?: Cex;
       }
-    | { safeInfo: { nonce: number; chainId: number }; toAddress?: string }
+    | {
+        safeInfo: { nonce: number; chainId: number };
+        toAddress?: string;
+        addressBrandName?: string;
+        cexDes?: Cex;
+      }
     | undefined;
 
-  const {
-    chainItem,
-    currentToken,
-    setCurrentToken,
-    setChainEnum,
-    currentTokenPrice,
-  } = useSendTokenScreenChainToken();
+  const { chainItem, currentToken, setCurrentToken, setChainEnum } =
+    useSendTokenScreenChainToken();
 
   const {
     sendTokenScreenState: screenState,
@@ -95,9 +103,14 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
+    isShowDepositeModeModal,
+    setIsShowDepositeModeModal,
 
     chainEnum,
     handleChainChanged,
+    tmpToken,
+    setTmpToken,
+    checkCexSupport,
     loadCurrentToken,
     handleCurrentTokenChange,
 
@@ -108,7 +121,7 @@ function SendScreen({
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendTokenForm(navParams?.toAddress);
+  } = useSendTokenForm(navParams?.toAddress, isForMultipleAdderss);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances();
 
@@ -314,7 +327,6 @@ function SendScreen({
 
           chainItem,
           currentToken,
-          currentTokenPrice,
           currentTokenBalance: balanceNumText,
         },
         events: sendTokenEvents,
@@ -327,6 +339,7 @@ function SendScreen({
         callbacks: {
           handleCurrentTokenChange,
           handleFieldChange,
+          checkCexSupport,
           handleClickMaxButton,
           handleGasLevelChanged,
         },
@@ -345,8 +358,11 @@ function SendScreen({
               {/* FromToSection */}
               <View>
                 {/* To */}
-                <ToAddressControl />
-
+                <ToAddressControl2024
+                  address={navParams?.toAddress || ''}
+                  cexDes={navParams?.cexDes}
+                  brandName={navParams?.addressBrandName}
+                />
                 {/* ChainInfo */}
                 <View style={styles.chainSection}>
                   <Text style={styles.sectionTitle}>
@@ -358,30 +374,74 @@ function SendScreen({
                   />
                 </View>
                 {/* balance info */}
-                <BalanceSection />
+                <BalanceSection style={styles.balance} />
               </View>
             </KeyboardAwareScrollView>
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
+        <Modal
+          visible={isShowDepositeModeModal}
+          onRequestClose={() => {
+            setIsShowDepositeModeModal(false);
+          }}
+          transparent
+          animationType="fade">
+          <View style={styles.overlay}>
+            <View
+              style={styles.modalContent}
+              onStartShouldSetResponder={() => true}>
+              <Text style={styles.alertModalText}>
+                {t('page.sendToken.noSupprotTokenForDex')}
+              </Text>
+              <FooterButtonGroup
+                style={styles.btns}
+                confirmText={t('page.sendToken.noSupportBtns.confirm')}
+                cancelText={t('page.sendToken.noSupportBtns.cancel')}
+                onCancel={() => {
+                  setIsShowDepositeModeModal(false);
+                }}
+                onConfirm={() => {
+                  if (tmpToken) {
+                    handleCurrentTokenChange(tmpToken);
+                    setTmpToken(tmpToken);
+                    setIsShowDepositeModeModal(false);
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
       </NormalScreenContainer2024>
     </SendTokenInternalContextProvider>
   );
 }
 
-SendScreen.ForMultipleAddress = (
+const ForMultipleAddress = (
   props: Omit<
     React.ComponentProps<typeof SendScreen>,
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  return <SendScreen {...props} isForMultipleAdderss />;
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  return (
+    <ScreenSceneAccountProvider
+      value={{
+        forScene: 'MakeTransactionAbout',
+        ofScreen: 'MultiSend',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSend`,
+      }}>
+      <SendScreen {...props} isForMultipleAdderss />
+    </ScreenSceneAccountProvider>
+  );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     chainSection: {
-      marginBottom: 24,
+      marginTop: 8,
     },
     sendScreen: {
       flexDirection: 'column',
@@ -392,6 +452,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     mainContent: {
       paddingHorizontal: 24,
       paddingBottom: 200,
+    },
+    balance: {
+      marginTop: 24,
     },
     sectionTitle: {
       color: colors2024['neutral-title-1'],
@@ -416,7 +479,34 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     button: {
       backgroundColor: colors2024['blue-default'],
     },
+    overlay: {
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      height: '100%',
+      justifyContent: 'center',
+    },
+    modalContent: {
+      borderRadius: 20,
+      backgroundColor: colors2024['neutral-bg-1'],
+      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      marginHorizontal: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 30,
+    },
+    btns: {
+      padding: 0,
+      marginTop: 30,
+    },
+    alertModalText: {
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+      color: colors2024['neutral-title-1'],
+    },
   }),
 );
-
+SendScreen.ForMultipleAddress = ForMultipleAddress;
 export default SendScreen;

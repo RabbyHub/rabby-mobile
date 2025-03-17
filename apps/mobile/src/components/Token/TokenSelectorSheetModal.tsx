@@ -164,6 +164,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
     const isSwapTo = type === 'swapTo';
+    const isSend = type === 'send';
 
     useEffect(() => {
       toggleShowSheetModal(visible ? true : false);
@@ -274,7 +275,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [styles, t]);
 
     const displayList = useMemo(() => {
-      if (isBridgeTo) {
+      if (isBridgeTo || isSend) {
         return list || [];
       }
 
@@ -313,7 +314,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
 
       return [...varied.natural, ...varied.disabled];
-    }, [isBridgeTo, supportChains, list, chainServerId]);
+    }, [isBridgeTo, isSend, supportChains, list, chainServerId]);
 
     const isFromModalType = useMemo(
       () =>
@@ -568,14 +569,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   alignItems: 'center',
                 }}>
                 <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                  <Text
-                    style={[
-                      styles.tokenHeaderAmount,
-                      isExcludeBalanceShowTips && styles.textSecondary,
-                    ]}>
-                    {token._amount}
-                  </Text>
-                  <Text style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
+                  <Text style={[styles.tokenHeaderNetworth]}>
                     {isExcludeBalanceShowTips ? (
                       <TouchableOpacity
                         hitSlop={hitSlop}
@@ -588,6 +582,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     ) : (
                       token._netWorthStr
                     )}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tokenHeaderAmount,
+                      { marginTop: 4 },
+                      isExcludeBalanceShowTips && styles.textSecondary,
+                    ]}>
+                    {token._amount}
                   </Text>
                 </View>
                 {isSwapTo ? (
@@ -1104,10 +1106,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'right',
     },
     tokenHeaderAmount: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',
     },
@@ -1120,10 +1122,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 12,
     },
     tokenHeaderNetworth: {
-      color: colors2024['neutral-foot'],
-      fontSize: 14,
-      fontWeight: '400',
-      lineHeight: 18,
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',
     },
@@ -1163,8 +1165,8 @@ function LoadingItem() {
         </View>
       </View>
       <View style={[styles.tokenInfoCol, styles.tokenInfoColRight, { gap: 8 }]}>
-        <Skeleton width={34} height={18} />
         <Skeleton width={70} height={18} />
+        <Skeleton width={34} height={18} />
       </View>
     </View>
   );

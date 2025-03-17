@@ -45,9 +45,9 @@ import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { ApprovalAddressListScreen } from '@/screens/Address/ApprovalAddressListScreen';
 import { useAccounts } from '@/hooks/account';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { ReceiveAddressListScreen } from '../Address/ReceiveAddressListScreen';
 import { useTranslation } from 'react-i18next';
+import { filterMyAccounts } from '@/utils/account';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -80,10 +80,7 @@ export function AddressNavigator() {
     disableAutoFetch: true,
   });
   const mainAddressCount = React.useMemo(
-    () =>
-      [...accounts].filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ).length,
+    () => filterMyAccounts(accounts).length,
     [accounts],
   );
 

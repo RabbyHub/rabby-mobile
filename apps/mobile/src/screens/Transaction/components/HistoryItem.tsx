@@ -35,6 +35,7 @@ type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
+  onPresss?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export const HistoryItem = React.memo(
@@ -44,6 +45,7 @@ export const HistoryItem = React.memo(
     projectDict,
     tokenDict,
     style,
+    onPresss,
     isForMultipleAdderss,
   }: HistoryItemProps) => {
     const { t } = useTranslation();
@@ -175,6 +177,10 @@ export const HistoryItem = React.memo(
 
     const navigation = useRabbyAppNavigation();
     const hanldeNavigateDetail = useCallback(() => {
+      if (onPresss) {
+        onPresss(data);
+        return;
+      }
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
@@ -183,7 +189,7 @@ export const HistoryItem = React.memo(
           title: formatTitle,
         },
       });
-    }, [isForMultipleAdderss, navigation, data, formatTitle]);
+    }, [onPresss, navigation, isForMultipleAdderss, data, formatTitle]);
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (
