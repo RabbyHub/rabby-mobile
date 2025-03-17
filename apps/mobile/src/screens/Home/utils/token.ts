@@ -193,7 +193,7 @@ export function tagTokenItem<
   return {
     ...i,
     _isPined: isPin,
-    _isFold: isFold,
+    _isFold: isFold || isExcludeBalance,
     _isManualFold: isManualFold,
     _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,
