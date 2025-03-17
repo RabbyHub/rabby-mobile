@@ -30,6 +30,9 @@ export class WhitelistService {
       },
     );
     this.store = storage || this.store;
+    if (!this.store.enabled) {
+      this.store.enabled = true;
+    }
   }
 
   getWhitelist = () => {
@@ -41,7 +44,7 @@ export class WhitelistService {
   };
 
   disableWhiteList = () => {
-    this.store.enabled = true;
+    this.store.enabled = false;
   };
 
   setWhitelist = (addresses: string[]) => {
@@ -68,7 +71,7 @@ export class WhitelistService {
   };
 
   isWhitelistEnabled = () => {
-    return true;
+    return this.store.enabled;
   };
 
   isInWhiteList = (address: string) => {
