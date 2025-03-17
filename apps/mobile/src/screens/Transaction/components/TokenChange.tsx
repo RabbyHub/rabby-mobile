@@ -32,19 +32,25 @@ const TxChangeItem = ({
   item,
   isSend,
   amount,
+  needShowEllips,
 }: {
-  item: TokenItem | NFTItem;
+  item?: TokenItem | NFTItem;
   isSend?: boolean;
   amount: number;
+  needShowEllips?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const tokenId = item.id;
-  const isNft = item.id?.length === 32;
+  // const tokenId = item?.id;
+  const isNft = item?.id?.length === 32;
   const { t } = useTranslation();
+  const isMemo = useMemo(() => {
+    return !item?.is_core;
+  }, [item]);
 
   const tokenChangeStyle = StyleSheet.flatten([
     styles.text,
     isSend ? styles.textNegative : null,
+    isMemo ? styles.memoText : null,
   ]) as StyleProp<TextStyle>;
 
   return (
@@ -57,7 +63,8 @@ const TxChangeItem = ({
         {isNft ? amount : formatTokenAmount(amount)}{' '}
         {isNft
           ? t('page.singleHome.sectionHeader.Nft')
-          : ellipsisOverflowedText(getTokenSymbol(item as TokenItem), 6)}
+          : ellipsisOverflowedText(getTokenSymbol(item as TokenItem), 5)}
+        {needShowEllips ? '...' : ''}
       </Text>
     </View>
   );
@@ -103,10 +110,11 @@ export const TxChange = ({
                 key={filterRecieves[0].token_id}
                 item={filterRecieves[0].token}
                 amount={filterRecieves[0].amount}
+                needShowEllips={filterRecieves.length > 1}
               />
-              {filterRecieves.length > 1 && (
+              {/* {filterRecieves.length > 1 && (
                 <Text style={styles.text}>...</Text>
-              )}
+              )} */}
             </View>
             {filterSends.length === 0 && (
               <Text style={styles.usdText}>
@@ -123,8 +131,9 @@ export const TxChange = ({
                 key={filterSends[0].token_id}
                 item={filterSends[0].token}
                 amount={filterSends[0].amount}
+                needShowEllips={filterSends.length > 1}
               />
-              {filterSends.length > 1 && <Text style={styles.text}>...</Text>}
+              {/* {filterSends.length > 1 && <Text style={styles.text}>...</Text>} */}
             </View>
             {filterRecieves.length === 0 && (
               <Text style={styles.usdText}>{calcUsdValue(filterSends[0])}</Text>
@@ -165,8 +174,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderRadius: 2,
   },
   text: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
     color: colors2024['green-default'],
     minWidth: 0,
@@ -193,11 +202,18 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '700',
   },
   textNegative: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
+  },
+  memoText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   tokenLabel: {
     position: 'relative',

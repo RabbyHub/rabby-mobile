@@ -311,7 +311,7 @@ export const HistoryItem = React.memo(
               style={[
                 styles.leftContent,
                 {
-                  width: noNeedTokenChangeType ? '95%' : '55%',
+                  width: noNeedTokenChangeType ? '95%' : '50%',
                 },
               ]}>
               {
