@@ -12,7 +12,8 @@ import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
 import { useAppUnlocked, useTryUnlockAppWithBuiltinOnTop } from './useLock';
 import { useNavigationReady } from './navigation';
-import SplashScreen from 'react-native-splash-screen';
+// import SplashScreen from 'react-native-splash-screen';
+import BootSplash from 'react-native-bootsplash';
 import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
@@ -168,7 +169,8 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 const splashScreenVisibleRef = { current: true };
 const hideSplashScreen = (forceHide = false) => {
   if (splashScreenVisibleRef.current || forceHide) {
-    SplashScreen.hide();
+    // SplashScreen.hide();
+    BootSplash.hide();
     splashScreenVisibleRef.current = false;
   }
 };

@@ -6,18 +6,16 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
 
 import android.os.Bundle;
-import org.devio.rn.splashscreen.SplashScreen; // react-native-splash-screen
+import com.zoontek.rnbootsplash.RNBootSplash;
 
 public class MainActivity extends ReactActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    // SplashScreen.show(this);
-    // https://github.com/crazycodeboy/react-native-splash-screen/blob/b47197626804a742b8569cad50d5e0ed92fc765c/android/src/main/java/org/devio/rn/splashscreen/SplashScreen.java#L25
-    SplashScreen.show(this, R.style.SplashScreenTheme, true);
-
+    RNBootSplash.init(this, R.style.BootTheme);
     // super.onCreate(savedInstanceState);
     // fix: https://sentry.io/organizations/debank/issues/?groupStatsPeriod=24h&page=0&project=6312337&query=is%3Aunresolved&referrer=issue-list&statsPeriod=14d
     // https://github.com/software-mansion/react-native-screens#android
+    // super.onCreate(savedInstanceState); // super.onCreate(null) with react-native-screens
     super.onCreate(null);
   }
 

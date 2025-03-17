@@ -1,5 +1,8 @@
 <resources>
-    <style name="SplashScreenTheme" parent="SplashScreen_SplashTheme">
+    <!-- <style name="SplashScreenTheme" parent="SplashScreen_SplashTheme">
+        <item name="android:windowLightStatusBar">false</item>
+    </style> -->
+    <style name="BootTheme" parent="Theme.BootSplash">
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

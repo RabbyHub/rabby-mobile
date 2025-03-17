@@ -6,4 +6,5 @@
   <color name="primary_dark">#7084ff</color>
   <color name="launchscreen_bg">#ffffff</color>
   <color name="status_bar_color">#ffffff</color>
+  <color name="bootsplash_background">#f5fcff</color>
 </resources>
