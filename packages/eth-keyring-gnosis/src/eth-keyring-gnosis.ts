@@ -501,11 +501,12 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
       throw new Error('Can not find this address');
     }
     const checksumAddress = toChecksumAddress(address);
+    const bigVal = new BigNumber(transaction.value || 0);
     const tx = {
       data: transaction.data,
       from: address,
       to: this._normalize(transaction.to),
-      value: new BigNumber(transaction.value || 0).toFixed() || '0',
+      value: !bigVal.isNaN() && bigVal.toFixed() ? bigVal.toFixed() : '0',
       safeTxGas: transaction.safeTxGas,
       nonce: transaction.nonce ? Number(transaction.nonce) : undefined,
       baseGas: transaction.baseGas,

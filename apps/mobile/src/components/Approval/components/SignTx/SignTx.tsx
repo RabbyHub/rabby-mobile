@@ -10,7 +10,6 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
-import { SELF_HOST_SAFE_NETWORKS } from '@/constant';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_CLASS,
@@ -96,12 +95,12 @@ import { useFindChain } from '@/hooks/useFindChain';
 import { SignTestnetTx } from '../SignTestnetTx';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { CustomRPCErrorModal } from './CustomRPCErrorModal';
-import { SafeSelfHostModal } from './SafeSelfHostModal';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { EIP7702Warning } from '../EIP7702Warning';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -330,7 +329,10 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     isViewGnosisSafe,
     reqId,
     safeTxGas,
-  } = normalizeTxParams(params.data[0]);
+    authorizationList,
+  } = useMemo(() => {
+    return normalizeTxParams(params.data[0]);
+  }, [params.data]);
 
   const [pushInfo, setPushInfo] = useState<{
     type: TxPushType;
@@ -492,7 +494,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const [isShowCustomRPCErrorModal, setIsShowCustomRPCErrorModal] =
     useState(false);
-  const [isShowSafeSelfHostModal, setIsShowSafeSelfHostModal] = useState(false);
 
   const explainTx = async (address: string) => {
     let recommendNonce = '0x0';
@@ -1296,16 +1297,16 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     if (!isViewGnosisSafe) {
       await apisSafe.clearGnosisTransaction();
     }
-    if (SELF_HOST_SAFE_NETWORKS.includes(chainId.toString())) {
-      const hasConfirmed = preferenceService.hasConfirmSafeSelfHost(
-        chainId.toString(),
-      );
-      const sigs = await apisSafe.getGnosisTransactionSignatures();
-      const isNewTx = sigs.length <= 0;
-      if (isNewTx && !hasConfirmed) {
-        setIsShowSafeSelfHostModal(true);
-      }
-    }
+    // if (SELF_HOST_SAFE_NETWORKS.includes(chainId.toString())) {
+    //   const hasConfirmed = preferenceService.hasConfirmSafeSelfHost(
+    //     chainId.toString(),
+    //   );
+    //   const sigs = await apisSafe.getGnosisTransactionSignatures();
+    //   const isNewTx = sigs.length <= 0;
+    //   if (isNewTx && !hasConfirmed) {
+    //     setIsShowSafeSelfHostModal(true);
+    //   }
+    // }
   });
 
   const executeSecurityEngine = async () => {
@@ -1425,6 +1426,11 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { setRPCEnable } = useCustomRPC();
+
+  // is eip7702
+  if (authorizationList) {
+    return <EIP7702Warning />;
+  }
 
   return (
     <>
@@ -1655,13 +1661,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           setRPCEnable({ chain: chain.enum, enable: false });
           setIsShowCustomRPCErrorModal(false);
           init();
-        }}
-      />
-      <SafeSelfHostModal
-        visible={isShowSafeSelfHostModal}
-        onConfirm={() => {
-          preferenceService.setConfirmSafeSelfHost(chainId.toString());
-          setIsShowSafeSelfHostModal(false);
         }}
       />
     </>

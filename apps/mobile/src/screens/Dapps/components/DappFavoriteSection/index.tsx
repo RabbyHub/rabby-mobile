@@ -3,7 +3,7 @@ import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import { RootNames } from '@/constant/layout';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
-import { naviPush } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useMemo } from 'react';
@@ -24,9 +24,12 @@ export const DappFavoriteSection = ({
   const { styles } = useTheme2024({ getStyle });
 
   const handlePressAll = useMemoizedFn(() => {
-    naviPush(RootNames.StackDapps, {
+    navigate(RootNames.StackDapps, {
       screen: RootNames.FavoriteDapps,
     });
+    // naviPush(RootNames.StackDapps, {
+    //   screen: RootNames.FavoriteDapps,
+    // });
   });
 
   const list = useMemo(() => {

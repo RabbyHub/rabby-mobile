@@ -19,7 +19,7 @@ export const CurveLoader = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     paddingHorizontal: 20,
     height: 115,
@@ -27,7 +27,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     borderRadius: 8,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   text: {
     marginTop: 20,

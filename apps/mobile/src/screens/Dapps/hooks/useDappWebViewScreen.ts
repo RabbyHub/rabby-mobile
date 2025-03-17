@@ -3,7 +3,10 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  canoicalizeDappUrl,
+  safeGetOrigin,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import {
@@ -30,6 +33,11 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
+import {
+  CommonActions,
+  TabActions,
+  useNavigation,
+} from '@react-navigation/native';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -228,6 +236,14 @@ export function useDappWebViewScreen() {
 
         prev[itemIdx].lastOpenWebViewId = input.webviewId || null;
 
+        // save latest url
+        if (
+          prev[itemIdx].$openParams &&
+          safeGetOrigin(input.url || '') === dappOrigin
+        ) {
+          prev[itemIdx].$openParams.initialUrl = input.url;
+        }
+
         return [...prev];
       });
     },
@@ -252,6 +268,8 @@ export function useDappWebViewScreen() {
     },
     [openingActiveDappRef, setLastWebViewIdByDappOrigin],
   );
+
+  const navigation = useNavigation();
 
   const openUrlAsDapp = useCallback(
     (
@@ -374,13 +392,29 @@ export function useDappWebViewScreen() {
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
          **/
-        naviPush(RootNames.StackRoot, {
-          screen: RootNames.DappWebViewStubOnHome,
-          params: {
+        // naviPush(RootNames.StackRoot, {
+        //   screen: RootNames.DappWebViewStubOnHome,
+        //   params: {
+        //     dappsWebViewFromRoute,
+        //     // nextOpenDappInfo: dapps[item.origin],
+        //   },
+        // });
+        // navigate(RootNames.StackRoot, {
+        //   screen: RootNames.DappWebViewStubOnHome,
+        //   params: {
+        //     dappsWebViewFromRoute,
+        //     // nextOpenDappInfo: dapps[item.origin],
+        //   },
+        // });
+        navigation.dispatch(
+          TabActions.jumpTo(RootNames.DappWebViewStubOnHome, {
             dappsWebViewFromRoute,
-            // nextOpenDappInfo: dapps[item.origin],
-          },
-        });
+          }),
+        );
+        // navigation.dispatch(state => {
+        //   console.log('xxx-state', JSON.stringify(state));
+        //   return CommonActions.reset(state);
+        // });
         // try trigger notify again
         setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
       } else {
@@ -389,7 +423,14 @@ export function useDappWebViewScreen() {
 
       return true;
     },
-    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin, activate],
+    [
+      dapps,
+      setOpenedOriginsDapps,
+      activate,
+      addDapp,
+      setActiveDappOrigin,
+      navigation,
+    ],
   );
 
   const removeOpenedDapp = useCallback(

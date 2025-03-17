@@ -14,10 +14,11 @@ export interface DappInfo {
   isConnected?: boolean;
   isSigned?: boolean;
   chainId: CHAINS_ENUM;
-  lastPath?: string; // 待定
-  lastPathTimeAt?: number; //
   currentAccount?: Account | null;
   favoriteAt?: number | null;
+  url?: string;
+  latestUrl?: string;
+  latestOpenAt?: number;
 }
 
 export type DappStore = {

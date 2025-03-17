@@ -20,12 +20,10 @@ export const DataHeaderInfo = ({
   currentIsLoss,
   currentBalance,
   isOffline,
-  isPin,
   data,
   isLoading,
   isNoAssets,
 }: {
-  isPin?: boolean;
   currentPercentChange: string;
   currentIsLoss: boolean;
   currentBalance: string;
@@ -40,7 +38,7 @@ export const DataHeaderInfo = ({
 
   const usdValue = useDerivedValue(() => {
     return isLoading
-      ? '$0'
+      ? ' '
       : data?.[currentIndex?.value]?.value
       ? data?.[currentIndex.value].netWorth
       : currentBalance;
@@ -106,30 +104,21 @@ export const DataHeaderInfo = ({
                   style={styles.usdValue}
                   animatedProps={usdValueAnimatedProps}
                 />
-                {isPin && (
-                  <View style={styles.pinBadge}>
-                    <Text style={styles.pinText} numberOfLines={1}>
-                      {'Pin'}
-                    </Text>
-                  </View>
-                )}
+                <AnimateableText
+                  style={lossStyleProps}
+                  animatedProps={percentChangeAnimatedProps}
+                />
               </View>
-              <AnimateableText
+              {/* <AnimateableText
                 style={lossStyleProps}
                 animatedProps={percentChangeAnimatedProps}
-              />
+              /> */}
             </>
           ) : (
             <>
               <Skeleton
                 width={181}
                 height={42}
-                style={styles.skeleton}
-                LinearGradientComponent={LoadingLinear}
-              />
-              <Skeleton
-                width={71}
-                height={22}
                 style={styles.skeleton}
                 LinearGradientComponent={LoadingLinear}
               />
@@ -152,11 +141,11 @@ export const DataHeaderInfo = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     paddingHorizontal: 25,
     gap: 8,
-    height: 71,
+    height: 50,
   },
 
   balanceChangeWrapper: {
@@ -168,7 +157,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   pinBadge: {
     // paddingHorizontal: 6,
@@ -225,6 +214,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   skeleton: {
     borderRadius: 8,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

@@ -162,7 +162,11 @@ export const DeFiDetailScreen = () => {
     isSingleAddress,
     account: routeAccount,
   } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.DeFiDetail)?.params,
+    s =>
+      s.routes
+        .slice()
+        .reverse()
+        .find(r => r.name === RootNames.DeFiDetail)?.params,
   ) as {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];

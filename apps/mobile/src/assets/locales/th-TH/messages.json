@@ -1742,6 +1742,9 @@
       "paymentsOnly": "การชำระเงินสามารถทำได้เฉพาะใน {{currency}}",
       "toBuy": "ดําเนินการซื้อต่อ",
       "noQuotePlaceholder": "ไม่เสนอราคา"
+    },
+    "eip7702": {
+      "alert": "ยังไม่รองรับ EIP-7702"
     }
   },
   "native": {

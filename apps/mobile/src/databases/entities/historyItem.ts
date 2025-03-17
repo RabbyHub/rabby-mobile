@@ -8,6 +8,7 @@ import {
   ManyToMany,
   JoinTable,
   ManyToOne,
+  Brackets,
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
@@ -257,11 +258,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     cate_id?: string,
   ) {
     await prepareAppDataSource();
-
+    const currentTime = new Date().getTime();
+    const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
+    console.log('getAllHistoryItemSortedByTime exec');
     const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
       .orderBy('historyitem.time_at', 'DESC')
       .take(count || 10000); // limit
 
@@ -279,6 +283,56 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const res = await queryBuilder.getMany();
     return res;
   }
+
+  static async getTokenHistoryItemSortedByTime(
+    owner_addrs: string[],
+    tokenId: string,
+    chain: string,
+    count?: number,
+  ) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const currentTime = new Date().getTime();
+    const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
+    console.log('getTokenHistoryItemSortedByTime exec');
+
+    const queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.chain = :chain', { chain })
+      // .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
+      .andWhere(
+        new Brackets(qb => {
+          qb.where(
+            `EXISTS (
+              SELECT 1
+              FROM json_each(json_extract(historyitem.receives, '$')) AS json_each
+              WHERE json_each.value ->> 'token_id' = :tokenId
+            )`,
+          )
+            .orWhere(
+              `EXISTS (
+              SELECT 1
+              FROM json_each(json_extract(historyitem.sends, '$')) AS json_each
+              WHERE json_each.value ->> 'token_id' = :tokenId
+            )`,
+            )
+            .orWhere('historyitem.token_approve_id = :tokenId');
+        }),
+        { tokenId },
+      )
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(count || 10000); // limit
+
+    const res = await queryBuilder.getMany();
+    console.log(
+      'getTokenHistoryItemSortedByTime exec done',
+      new Date().getTime() - currentTime,
+    );
+    return res;
+  }
+
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

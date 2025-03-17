@@ -23,7 +23,14 @@ import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ImageBackground,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -39,7 +46,7 @@ import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { naviPush } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { HomePinBadge } from './components/PinBadge';
@@ -50,6 +57,13 @@ import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import LinearGradient from 'react-native-linear-gradient';
+import { IssuerAndListSite } from './components/IssuerAndListSite';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { unionBy } from 'lodash';
+import { HistoryList } from './components/HistoryList';
+import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
+import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -166,11 +180,6 @@ export const RightMore: React.FC<{
 
   return (
     <>
-      <HeaderRightHistory
-        isInTokenDetail={true}
-        tokenItem={token}
-        isMultiAddress={isMultiAddress}
-      />
       <DropDownMenuView
         menuConfig={{
           menuActions: menuActions,
@@ -181,6 +190,32 @@ export const RightMore: React.FC<{
         </CustomTouchableOpacity>
       </DropDownMenuView>
     </>
+  );
+};
+
+export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyle,
+  });
+  const { t } = useTranslation();
+  return isDanger ? (
+    <View style={styles.searchTokenDanger}>
+      <View style={styles.tokenRowContent}>
+        <RcIconDanger />
+        <Text style={styles.searchTokenDangerText}>
+          {t('page.search.tokenItem.verifyDangerTips')}
+        </Text>
+      </View>
+    </View>
+  ) : (
+    <View style={styles.searchTokenWarning}>
+      <View style={styles.tokenRowContent}>
+        <RcIconWarning />
+        <Text style={styles.searchTokenWarningText}>
+          {t('page.search.tokenItem.scamWarningTips')}
+        </Text>
+      </View>
+    </View>
   );
 };
 
@@ -196,11 +231,13 @@ export const TokenDetailScreen = () => {
     isSingleAddress,
   } = route.params || {};
 
-  const { styles } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
+  const { safeOffHeader, safeTop } = useSafeSizes();
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
+
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio || needUseCacheToken) {
       const iToken = cacheAssets.find(
@@ -220,7 +257,6 @@ export const TokenDetailScreen = () => {
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
-
     Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
@@ -304,7 +340,22 @@ export const TokenDetailScreen = () => {
       });
     },
     {
-      refreshDeps: [token, finalAccount],
+      refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
+    },
+  );
+
+  const { data: tokenEntity, loading: entityLoading } = useRequest(
+    async () => {
+      if (!token || !token._tokenId) {
+        return;
+      }
+
+      const res = await openapi.getTokenEntity(token._tokenId, token.chain);
+      console.log('tokenEntity', res, token._tokenId, token.chain);
+      return res;
+    },
+    {
+      refreshDeps: [token._tokenId, token.chain],
     },
   );
 
@@ -331,9 +382,13 @@ export const TokenDetailScreen = () => {
 
   const getHeaderTitle = useCallback(() => {
     return (
-      <TokenDetailHeaderArea key={currentAccount?.address} token={token} />
+      <TokenDetailHeaderArea
+        key={currentAccount?.address}
+        token={token}
+        refreshTags={refreshTag}
+      />
     );
-  }, [currentAccount?.address, token]);
+  }, [currentAccount?.address, token, refreshTag]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
@@ -463,88 +518,132 @@ export const TokenDetailScreen = () => {
   }
 
   return (
-    <NormalScreenContainer2024 type="bg1" style={styles.root}>
+    <NormalScreenContainer2024
+      type="bg1"
+      overwriteStyle={styles.rootScreenContainer}>
+      <ImageBackground
+        source={
+          isLight
+            ? require('@/assets2024/icons/home/ImgSingleBgUp.png')
+            : require('@/assets2024/icons/home/ImgSingleBgUpDark.png')
+        }
+        resizeMode="cover"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: safeOffHeader + 10,
+        }}
+      />
       <ScrollView>
-        <View style={{ position: 'relative' }}>
-          <HomePinBadge token={token} refreshTags={refreshTag} />
-          <Text style={styles.currentText}>Current price</Text>
-          <TokenPriceChart
-            token={tokenWithAmount || token}
-            isPin={token._isPined}
-          />
-          <TokenChainAndContract token={token} />
-          <View style={styles.divider} />
-          <TokenArea
-            tokenSupportSwap={tokenSupportSwap}
-            handleSwap={handleSwap}
-            amountList={tokenFromAddress}
-            token={tokenWithAmount || token}
-          />
+        <ImageBackground
+          source={
+            isLight
+              ? require('@/assets2024/icons/home/ImgSingleBgDown.png')
+              : require('@/assets2024/icons/home/ImgSingleBgDownDark.png')
+          }
+          resizeMode="cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: 250,
+          }}
+        />
+        <View style={styles.riskContainer}>
+          {token.is_verified === false && <RiskTokenTips isDanger={true} />}
+          {token.is_verified !== false && token.is_scam && (
+            <RiskTokenTips isDanger={false} />
+          )}
         </View>
-        {relateDefiList.length > 0 && !unHold && (
+        <View style={{ position: 'relative' }}>
+          {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
+          {/* <Text style={styles.currentText}>Current price</Text> */}
+          <TokenPriceChart token={tokenWithAmount || token} />
+          {/* <View style={styles.divider} /> */}
+        </View>
+        <TokenArea
+          isSingleAddress={isSingleAddress}
+          tokenUsdValue={tokenWithAmount?.price}
+          finalAccount={finalAccount}
+          tokenSupportSwap={tokenSupportSwap}
+          handleSwap={handleSwap}
+          amountList={tokenFromAddress}
+          token={token}
+        />
+        {relateDefiList.length > 0 && (
           <RelatedDeFi
             deFiList={relateDefiList}
             symbol={token.symbol}
             handleGoDeFi={handleOpenDefiDetail}
           />
         )}
-        <View style={{ height: isAndroid ? 90 + safeOffBottom : 126 }} />
-      </ScrollView>
-      <View
-        style={[
-          styles.buttonGroup,
-          isAndroid && { paddingBottom: 40 + safeOffBottom },
-        ]}>
-        <Button
-          title={t('page.tokenDetail.action.send')}
-          containerStyle={styles.btnContainer}
-          type="ghost"
-          disabled={unHold}
-          onPress={handleSend}
+        <IssuerAndListSite
+          tokenEntity={tokenEntity}
+          entityLoading={entityLoading}
         />
-        <View style={styles.btnGap} />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              containerStyle={styles.btnContainer}
-              type="ghost"
-              title={t('page.bridge.title')}
-              onPress={handleBridge}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
+        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
+        <HistoryList
+          accounts={accounts}
+          finalAccount={finalAccount}
+          isForMultipleAdderss={!isSingleAddress}
+          token={token}
+        />
+        <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
+      </ScrollView>
+      <LinearGradient
+        colors={
+          isLight
+            ? ['rgba(246, 247, 247, 1)', 'rgba(246, 247, 247, 0.3)']
+            : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.3)']
+        }
+        locations={[0.6393, 1]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 0, y: 0 }}
+        style={[
+          styles.floatBottom,
+          isAndroid && { height: 120 + safeOffBottom },
+        ]}>
+        <View
+          style={[
+            styles.buttonGroup,
+            isAndroid && { paddingBottom: 50 + safeOffBottom },
+          ]}>
+          <View style={styles.btnContainer}>
+            <Tip
+              placement="top"
+              content={
+                !tokenSupportSwap
+                  ? t('page.tokenDetail.notSupportedOnChain')
+                  : undefined
+              }>
+              <Button
+                title={t('page.swap.title')}
+                containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                onPress={() => handleSwap('Sell')}
+                disabled={!tokenSupportSwap}
+              />
+            </Tip>
+          </View>
         </View>
-        <View style={styles.btnGap} />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              title={t('page.swap.title')}
-              containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Sell')}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
-        </View>
-      </View>
+      </LinearGradient>
     </NormalScreenContainer2024>
   );
 };
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
-    root: {},
+    rootScreenContainer: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    },
 
+    riskContainer: {
+      paddingHorizontal: 20,
+      marginBottom: 12,
+    },
     currentText: {
       marginLeft: 26,
       color: colors2024['neutral-secondary'],
@@ -552,6 +651,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
+    },
+    floatBottom: {
+      width: '100%',
+      height: 120,
+      paddingTop: 20,
+      position: 'absolute',
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     divider: {
       marginTop: 28,
@@ -606,7 +714,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       paddingTop: 20,
       paddingHorizontal: 20,
-      paddingBottom: 56,
+      paddingBottom: 50,
     },
 
     btnContainer: {
@@ -622,6 +730,46 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     btnGap: {
       width: 10,
+    },
+    searchTokenDanger: {
+      flex: 1,
+      justifyContent: 'center',
+      flexDirection: 'row',
+      width: '100%',
+      padding: 8,
+      backgroundColor: colors2024['red-light-1'],
+      borderRadius: 8,
+      // marginTop: 12,
+    },
+    tokenRowContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    searchTokenWarning: {
+      flex: 1,
+      justifyContent: 'center',
+      flexDirection: 'row',
+      width: '100%',
+      padding: 8,
+      backgroundColor: colors2024['orange-light-1'],
+      borderRadius: 8,
+      // marginTop: 12,
+    },
+
+    searchTokenWarningText: {
+      color: colors2024['orange-default'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+    },
+    searchTokenDangerText: {
+      color: colors2024['red-default'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

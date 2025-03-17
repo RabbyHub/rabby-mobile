@@ -14,6 +14,7 @@ import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadSettingsScreen } from '@/perfs/preloads';
+import { DappsNavigator } from './DappsNavigator';
 
 // const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
@@ -54,8 +55,8 @@ export function HomeScreenNavigator() {
         }
         tabBar={() => null}>
         <HomeHiddenTabStack.Screen
-          name={RootNames.Home}
-          component={MultiAddressHome}
+          name={RootNames.StackDapps}
+          component={DappsNavigator}
           options={{
             headerShown: false,
           }}

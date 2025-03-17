@@ -31,10 +31,9 @@ const winInfo = Dimensions.get('window');
 
 interface Props {
   token: AbstractPortfolioToken;
-  isPin?: boolean;
 }
 export function TokenPriceChart(props: Props) {
-  const { token, isPin } = props;
+  const { token } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
@@ -127,7 +126,6 @@ export function TokenPriceChart(props: Props) {
                 ? realTimeData?.list
                 : timeMachMapping?.[e.key]?.list) || []
             }
-            isPin={isPin}
             activeKey={e.key}
             currentInfo={currentInfo}
             loading={isRealTimeKey(e.key) ? curveLoading : timeMachineLoading}
@@ -158,11 +156,9 @@ function Chart({
   currentInfo,
   isOffline,
   loading,
-  isPin,
   pathColor,
   xOffset,
 }: {
-  isPin?: boolean;
   isOffline: boolean;
   data: CurvePoint[];
   activeKey: TabKey;
@@ -182,7 +178,6 @@ function Chart({
   return (
     <LineChart.Provider data={data}>
       <DataHeaderInfo
-        isPin={isPin}
         key={activeKey}
         currentPercentChange={currentInfo.percent}
         currentIsLoss={currentInfo.isLoss}
@@ -248,14 +243,16 @@ function Chart({
 }
 
 const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
-  const colors = useThemeColors();
+  const { colors2024, isLight } = useTheme2024();
   const styles = useAnimatedStyle(() => ({
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     transform: [
       {
         translateX: xOffset.value,

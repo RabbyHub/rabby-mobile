@@ -36,6 +36,7 @@ const getAppConfig = function () {
   };
   config.resolver = {
     ...resolver,
+    enableGlobalPackages: true,
     extraNodeModules: require('node-libs-react-native'),
     assetExts: resolver.assetExts.filter(ext => ext !== 'svg'),
     sourceExts: [...resolver.sourceExts, 'svg'],

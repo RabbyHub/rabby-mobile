@@ -748,6 +748,13 @@ export const useTokenPair = (userAddress: string) => {
 
   /* slider end*/
 
+  useEffect(() => {
+    setPayAmount('');
+    setSlider(0);
+    setSwapUseSlider(false);
+    setIsDraggingSlider(false);
+  }, [userAddress]);
+
   return {
     bestQuoteDex,
     chain,

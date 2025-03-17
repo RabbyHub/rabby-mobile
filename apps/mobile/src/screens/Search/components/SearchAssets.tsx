@@ -1,4 +1,8 @@
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+/* eslint-disable react-native/no-inline-styles */
+import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
+import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
+import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
+import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
 import React, {
   useCallback,
   useEffect,
@@ -7,8 +11,19 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Dimensions, Keyboard, Text, View } from 'react-native';
-import { RefreshControl } from 'react-native-gesture-handler';
+import {
+  Animated,
+  Dimensions,
+  FlatList,
+  Keyboard,
+  Text,
+  View,
+} from 'react-native';
+import {
+  RefreshControl,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -42,132 +57,52 @@ import {
   DataProvider,
   LayoutProvider,
 } from 'recyclerlistview';
+import { useFindChain } from '@/hooks/useFindChain';
+import {
+  MODAL_ID,
+  MODAL_NAMES,
+} from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { CHAINS_ENUM } from '@debank/common';
+import { Image } from 'react-native';
+import { findChainByEnum } from '@/utils/chain';
+import { Skeleton } from '@rneui/themed';
+import { add0x, ellipsisAddress } from '@/utils/address';
+import { isAddress } from 'web3-utils';
+import { isValidHexAddress } from '@metamask/utils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
 interface Props {
-  filterText?: string;
+  resultTokens: AbstractPortfolioToken[];
+  loading: boolean;
+  searchState: string;
 }
 
-const ViewTypes = {
-  HEADER: 0,
-  BODY: 1,
-  OVERVIEW: 2,
-};
+export const SearchAssets: React.FC<Props> = ({
+  resultTokens,
+  loading,
+  searchState,
+}) => {
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-const getItemId = item => {
-  return `${item.type}/${item.data?.chain || ''}/${item.data?.symbol || ''}/${
-    item.data?._tokenId || ''
-  }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
-    item.data?.price || ''
-  }/${item.data?.time_at || ''}/${item.data?._isFold ? 'fold' : 'unfold'}/${
-    item.data?._isPined ? 'pin' : 'unpin'
-  }`;
-};
-
-export const SearchAssets: React.FC<Props> = ({ filterText }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const {
-    tokens,
-    portfolios,
-    nftList,
-    getCacheTop10Assets,
-    checkIsExpireAndUpdate,
-    refreshing,
-    isLoading,
-  } = useAssets(filterText);
-
-  const { resultTokens, searched, loading, handleSearch } =
-    useSearchTokens(filterText);
   const { t } = useTranslation();
-  const [firstRowType, setFirstRowType] = useState('');
-  const dataProvider = useMemo(
-    () =>
-      new DataProvider((r1, r2) => {
-        return getItemId(r1) !== getItemId(r2);
-      }),
-    [],
-  );
+  const [chainEnum, setChainEnum] = useState<CHAINS_ENUM | undefined>();
 
-  const [foldHideList, setFoldHideList] = useState(true);
-  const [listData, setListData] = useState(() =>
-    dataProvider.cloneWithRows([]),
-  );
+  const chainInfo = React.useMemo(() => {
+    return findChainByEnum(chainEnum);
+  }, [chainEnum]);
 
-  const dataList = useMemo(() => {
-    const unFoldList = tokens
-      .filter(i => filterText || !i._isFold)
-      .map(item => ({
-        type: 'unfold_token',
-        data: item,
-      }));
-    const foldList = tokens
-      .filter(i => i._isFold)
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
-    const itemData: Array<{
-      show: boolean;
-      data: ICombineItem[];
-    }> = [
-      {
-        show: !!unFoldList.length,
-        data: [
-          {
-            type: 'asset_header',
-          },
-          ...unFoldList,
-        ],
-      },
-      {
-        show: !!(filterText ? [] : foldList).length,
-        data: [
-          { type: 'toggle_token_fold' },
-          ...(foldHideList ? [] : foldList),
-        ],
-      },
-      {
-        show: !!portfolios.length,
-        data: [
-          { type: 'defi_header' },
-          ...portfolios.map(item => ({
-            type: 'defi',
-            data: item,
-          })),
-        ],
-      },
-      {
-        show: !!(filterText ? nftList : []).length,
-        data: [
-          { type: 'nft_header' },
-          ...nftList.map(item => ({
-            type: 'nft',
-            data: item,
-          })),
-        ],
-      },
-      {
-        show: true,
-        data: [
-          { type: 'search_token_header' },
-          ...resultTokens.map(item => ({
-            type: 'search-token',
-            data: item,
-          })),
-        ],
-      },
-    ];
-    return itemData
-      .filter(item => item.show)
-      .map(item => item.data)
-      .flat();
-  }, [filterText, foldHideList, nftList, portfolios, resultTokens, tokens]);
+  const modalRef = React.useRef<MODAL_ID>();
 
-  useEffect(() => {
-    setListData(dataProvider.cloneWithRows(dataList));
-  }, [dataList, dataProvider]);
+  const removeChainModal = React.useCallback(() => {
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+  }, []);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -180,241 +115,153 @@ export const SearchAssets: React.FC<Props> = ({ filterText }) => {
     [],
   );
 
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigate(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        cache: true,
-      });
-    },
-    [],
-  );
-
-  const handlePressNft = (item: NFTItem) => {
-    navigate(RootNames.NftDetail, { token: item });
-  };
-
-  const renderItem = (_type, _data) => {
-    const { type, data } = _data;
-    switch (type) {
-      case 'unfold_token':
-      case 'fold_token':
-        return (
-          <TokenRow
-            data={data}
-            onTokenPress={handleOpenTokenDetail}
-            filterText={filterText}
-            logoSize={46}
-            style={styles.renderItemWrapper}
-            chainLogoSize={18}
-            hideFoldTag
-            disableMenu
-          />
-        );
-      case 'nft':
-        return (
-          <NftRow
-            filterText={filterText}
-            item={data}
-            disableMenu
-            hideFoldTag
-            onPress={() => handlePressNft(data)}
-            logoSize={46}
-            chainLogoSize={18}
-          />
-        );
-      case 'defi':
-        return (
-          <DefiRow
-            data={data}
-            filterText={filterText}
-            disableMenu
-            hideFoldTag
-            onPress={() =>
-              handleOpenDefiDetail(data, [...(data._portfolios || [])])
-            }
-            logoSize={46}
-            chainLogoSize={18}
-          />
-        );
-      case 'search-token':
-        return (
+  const renderItem = useCallback(
+    ({ item }: { item: AbstractPortfolioToken }) => {
+      return (
+        item && (
           <ExternalTokenRow
-            data={data}
+            data={item}
             style={styles.renderItemWrapper}
-            filterText={filterText}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
           />
-        );
-      case 'asset_header':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.token')}
-          </Text>
-        );
-      case 'toggle_token_fold':
-        return (
-          <TokenRowSectionHeader
-            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'defi_header':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
-        );
-      case 'nft_header':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.NFT')}
-          </Text>
-        );
-      case 'search_token_header':
-        return resultTokens.length ? (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.searchWeb.title')}
-          </Text>
-        ) : null;
-      default:
-        return null;
-    }
-  };
+        )
+      );
+    },
+    [handleOpenTokenDetail, styles],
+  );
 
-  const renderStickHeader = (type: string) => {
-    switch (type) {
-      /** header */
-      case 'unfold_token':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.token')}
-          </Text>
-        );
-      case 'fold_token':
-        return (
-          <TokenRowSectionHeader
-            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'nft':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.NFT')}
-          </Text>
-        );
-      case 'defi':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
-        );
-      case 'search-token':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.searchWeb.title')}
-          </Text>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const layoutProvider = useMemo(() => {
-    return new LayoutProvider(
-      index => {
-        const item = listData.getDataForIndex(index);
-        if (
-          item?.type?.includes('_header') ||
-          item?.type?.includes('toggle_')
-        ) {
-          return ViewTypes.HEADER;
-        }
-        return ViewTypes.BODY;
+  const createChainModal = React.useCallback(() => {
+    console.log('createChainModal');
+    modalRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
+      value: chainEnum,
+      onClose: removeChainModal,
+      hideTestnetTab: true,
+      needAllAddresses: true,
+      titleText: t('page.swap.selectChainModalTitle'),
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
       },
-      (type, dim) => {
-        switch (type) {
-          case ViewTypes.HEADER:
-            dim.width = SCREEN_WIDTH;
-            dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
-            break;
-
-          case ViewTypes.BODY:
-            dim.width = SCREEN_WIDTH;
-            dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
-            break;
-          default:
-            dim.width = 0;
-            dim.height = 0;
-        }
+      onChange: (chain: CHAINS_ENUM) => {
+        removeChainModal();
+        setChainEnum?.(chain);
       },
-    );
-  }, [listData]);
-
-  useLayoutEffect(() => {
-    getCacheTop10Assets().then(() => {
-      checkIsExpireAndUpdate();
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [chainEnum, t, removeChainModal]);
 
-  if (isLoading && !listData.getSize()) {
-    return (
-      <View style={styles.bgContainer}>
-        <PositionLoader />
-      </View>
-    );
-  }
-  if (!listData.getSize()) {
-    return null;
-  }
+  const filterTokens = React.useMemo(() => {
+    if (!chainEnum) {
+      return resultTokens;
+    }
+    return resultTokens.filter(token => token.chain === chainInfo?.serverId);
+  }, [resultTokens, chainInfo, chainEnum]);
+
+  const ListEmptyComponent = useMemo(
+    () =>
+      !loading && (!resultTokens || !resultTokens?.length) ? (
+        <View style={styles.emptyView}>
+          {isLight ? (
+            <RcIconEmpty style={styles.image} />
+          ) : (
+            <RcIconEmptyDark style={styles.image} />
+          )}
+          <Text style={styles.emptyText}>
+            {t('page.search.searchWeb.noResults')}
+          </Text>
+        </View>
+      ) : loading ? (
+        <>
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <Skeleton style={styles.skeletonBlock} key={idx} />
+          ))}
+        </>
+      ) : null,
+    [
+      loading,
+      styles.image,
+      isLight,
+      resultTokens,
+      styles.emptyView,
+      styles.emptyText,
+      styles.skeletonBlock,
+      t,
+    ],
+  );
 
   return (
     <View style={styles.container}>
-      {firstRowType?.includes('_header') ||
-      firstRowType?.includes('toggle_') ? null : (
-        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
-          {renderStickHeader(firstRowType)}
-        </Animated.View>
-      )}
-      <RecyclerListView
+      <View style={[styles.bgContainer, styles.stickyHeader]}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+          {isValidHexAddress(add0x(searchState)) ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 6,
+                justifyContent: 'center',
+              }}>
+              <Text style={styles.sectionHeader}>
+                {t('page.search.searchWeb.searching')}
+              </Text>
+              <Text style={styles.sectionHeaderBlue}>{`"${ellipsisAddress(
+                searchState,
+              )}"`}</Text>
+            </View>
+          ) : (
+            <Text style={styles.sectionHeader}>{t('page.swap.token')}</Text>
+          )}
+          {chainInfo ? (
+            <View
+              style={styles.chainInfoContainer}
+              onStartShouldSetResponder={() => true}>
+              <View style={styles.chainInfo}>
+                <Image
+                  source={{
+                    uri: chainInfo.logo,
+                  }}
+                  style={styles.chainIcon}
+                />
+                <Text style={styles.chainName}>{chainInfo.name}</Text>
+              </View>
+              <TouchableWithoutFeedback
+                disallowInterruption={true}
+                style={styles.close}
+                onPress={() => {
+                  setChainEnum?.(undefined);
+                }}>
+                <RcIconClose width={12} height={12} />
+              </TouchableWithoutFeedback>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.selectChain}
+              onPress={() => {
+                createChainModal();
+                Keyboard.dismiss();
+              }}>
+              <Text style={styles.selectChainText}>
+                {t('page.search.sectionHeader.AllChains')}
+              </Text>
+              <RcIconRight
+                width={12}
+                height={12}
+                color={colors2024['neutral-foot']}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+      <FlatList
+        keyExtractor={(_, index) => index.toString()}
+        data={filterTokens}
+        ListEmptyComponent={ListEmptyComponent}
+        renderItem={({ item }) => renderItem({ item })}
         style={styles.list}
-        dataProvider={listData}
-        layoutProvider={layoutProvider}
-        rowRenderer={renderItem}
-        onVisibleIndicesChanged={indexes => {
-          if (listData.getDataForIndex(indexes[0])?.type) {
-            setFirstRowType(listData.getDataForIndex(indexes[0]).type);
-          }
-        }}
-        renderFooter={() => (
-          <SearchOnTheChain
-            filterText={filterText}
-            loading={loading}
-            searched={searched}
-            hasTokens={!!resultTokens.length}
-            handleSearch={() => handleSearch(filterText)}
-          />
-        )}
-        onScroll={() => {
-          Keyboard.dismiss();
-        }}
-        scrollViewProps={{
-          refreshControl: (
-            <RefreshControl
-              style={styles.bgContainer}
-              onRefresh={() => {
-                checkIsExpireAndUpdate(true);
-              }}
-              refreshing={refreshing}
-            />
-          ),
-        }}
       />
     </View>
   );
@@ -424,18 +271,80 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
   },
+  skeletonBlock: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+    width: '100%',
+    height: 74,
+    padding: 0,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  emptyView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginTop: -50,
+    // paddingTop: -250,
+  },
+  selectChain: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  selectChainText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: ctx.colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
   list: {
     flex: 1,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
+    marginTop: ASSETS_SECTION_HEADER,
+  },
+  close: {
+    paddingHorizontal: 4,
+    // paddingVertical: 6,
+  },
+  chainInfoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chainInfo: {
+    paddingLeft: 10,
+    // paddingVertical: 6,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  chainIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 1000,
+  },
+  chainName: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-body'],
   },
   stickyHeader: {
     position: 'absolute',
+    width: '100%',
     top: 0,
     left: 0,
-    right: 0,
+    // right: 0,
     height: ASSETS_SECTION_HEADER,
     zIndex: 1,
   },
@@ -462,18 +371,31 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   sectionHeader: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '500',
-    lineHeight: 22,
-    height: ASSETS_SECTION_HEADER,
+    lineHeight: 20,
+    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
+    // backgroundColor: ctx.isLight
+    //   ? ctx.colors2024['neutral-bg-0']
+    //   : ctx.colors2024['neutral-bg-1'],
+  },
+  sectionHeaderBlue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    // height: ASSETS_SECTION_HEADER,
+    color: ctx.colors2024['brand-default'],
+    // marginLeft: -24,
   },
   renderItemWrapper: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
+    // height: ASSETS_ITEM_HEIGHT_NEW,
     marginBottom: 8,
+  },
+  image: {
+    marginTop: 200,
+    // marginBottom: 16,
   },
   footer: {
     height: 200,
