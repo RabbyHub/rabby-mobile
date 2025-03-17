@@ -1,15 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { WhiteListItemSwitch } from './WhiteListItem';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { contactService } from '@/core/services';
+import { useWhiteListAddress } from '../hooks/useWhiteListAddress';
 
 export default function ToAddressControl2024({
   style,
@@ -24,29 +22,21 @@ export default function ToAddressControl2024({
   }
 >) {
   const { styles } = useTheme2024({ getStyle });
-  const { accounts } = useAccounts();
   const { isAddrOnWhitelist } = useWhitelist();
-  const account: KeyringAccountWithAlias | null = useMemo(() => {
-    if (!address) {
-      return null;
+  const { findAccount } = useWhiteListAddress(true);
+  const [currentAccount, setCurrentAccount] =
+    useState<KeyringAccountWithAlias>();
+
+  useEffect(() => {
+    if (address) {
+      findAccount(address, brandName).then(res => {
+        setCurrentAccount(res.account);
+      });
     }
-    const currentExistAccount = accounts.find(
-      item =>
-        isSameAddress(item.address, address) && item.brandName === brandName,
-    );
-    if (currentExistAccount) {
-      return currentExistAccount;
-    }
-    return {
-      address,
-      brandName: KEYRING_TYPE.WatchAddressKeyring,
-      aliasName: contactService.getAliasByAddress(address)?.alias,
-      type: KEYRING_TYPE.WatchAddressKeyring,
-    };
-  }, [accounts, address, brandName]);
+  }, [address, brandName, findAccount]);
   const { t } = useTranslation();
 
-  if (!account) {
+  if (!currentAccount) {
     return null;
   }
 
@@ -56,9 +46,9 @@ export default function ToAddressControl2024({
         <Text style={styles.sectionTitle}>{t('page.sendToken.To')}</Text>
       </View>
       <WhiteListItemSwitch
-        account={account}
+        account={currentAccount}
         cexDes={cexDes}
-        inWhiteList={isAddrOnWhitelist(account.address)}
+        inWhiteList={isAddrOnWhitelist(currentAccount.address)}
       />
     </View>
   );

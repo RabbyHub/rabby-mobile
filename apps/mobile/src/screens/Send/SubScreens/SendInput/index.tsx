@@ -79,7 +79,11 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     try {
       setLoading(true);
       Keyboard.dismiss();
-      const { inWhitelist, account } = await findAccount(address);
+      const { inWhitelist, account } = await findAccount(
+        address,
+        undefined,
+        true,
+      );
 
       if (isForWhitelist) {
         if (inWhitelist) {
