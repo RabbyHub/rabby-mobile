@@ -75,7 +75,7 @@ function SearchScreen(): JSX.Element {
         <NextSearchBar
           noCancel={true}
           style={styles.searchBar}
-          placeholder={t('page.search.header.placeHolder')}
+          placeholder={t('page.search.header.searchPlaceHolder')}
           value={searchState}
           onChangeText={v => {
             setSearchState(v);

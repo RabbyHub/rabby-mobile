@@ -1597,7 +1597,8 @@
         "AllChains": "All Chains"
       },
       "header": {
-        "placeHolder": "Search"
+        "placeHolder": "Search",
+        "searchPlaceHolder": "Search Token Name / Address"
       },
       "tokenItem": {
         "Issuedby": "Issued by",
