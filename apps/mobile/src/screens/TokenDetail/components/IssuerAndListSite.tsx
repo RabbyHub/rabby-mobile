@@ -70,7 +70,6 @@ export const IssuerAndListSite: React.FC<Props> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  console.log('tokenEntity', tokenEntity);
   const isBridgeDomain =
     tokenEntity?.bridge_ids && tokenEntity.bridge_ids.length > 0;
   const isVerified = tokenEntity?.is_domain_verified;
@@ -105,10 +104,10 @@ export const IssuerAndListSite: React.FC<Props> = ({
                         { justifyContent: 'center' },
                       ]}>
                       <View style={styles.horizontalLine} />
-                      <IconBridgeTo />
                       <Text style={styles.itemIssuerText}>
                         {t('page.tokenDetail.BridgeIssue')}
                       </Text>
+                      <IconBridgeTo />
                       <View style={styles.horizontalLine} />
                     </View>
                   ) : (
@@ -118,10 +117,10 @@ export const IssuerAndListSite: React.FC<Props> = ({
                         { justifyContent: 'center' },
                       ]}>
                       <View style={styles.horizontalLine} />
-                      <IconOrigin />
                       <Text style={styles.itemIssuerText}>
                         {t('page.tokenDetail.OriginIssue')}
                       </Text>
+                      <IconOrigin />
                       <View style={styles.horizontalLine} />
                     </View>
                   )}
@@ -348,7 +347,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   horizontalLine: {
-    // width: 1,
+    // width: 1,token
     flex: 1,
     height: 1,
     backgroundColor: colors2024['neutral-line'],

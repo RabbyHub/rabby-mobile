@@ -329,11 +329,11 @@ export const ExternalTokenRow = memo(
               {t('page.search.tokenItem.Issuedby')}
             </Text>
             <View style={styles.tokenRowContent}>
-              {isVerified &&
-                (isBridgeDomain ? <IconBridgeTo /> : <IconOrigin />)}
               <Text style={styles.searchTokenDomain}>
                 {data.identity?.domain_id}
               </Text>
+              {isVerified &&
+                (isBridgeDomain ? <IconBridgeTo /> : <IconOrigin />)}
             </View>
           </View>
         );

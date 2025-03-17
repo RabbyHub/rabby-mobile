@@ -134,10 +134,12 @@ export const TokenArea: React.FC<Props> = ({
           </View>
         </View>
       ) : (
-        <View style={styles.itemCard}>
+        <View style={styles.itemEmptyContainer}>
+          <View style={styles.horizontalLine} />
           <Text style={styles.noBalanceText}>
             {t('page.tokenDetail.noBalance')}
           </Text>
+          <View style={styles.horizontalLine} />
         </View>
       )}
     </View>
@@ -150,6 +152,13 @@ const getStyles = createGetStyles2024(ctx => ({
     // marginTop: 30,
     paddingHorizontal: 20,
     // marginBottom: 16,
+  },
+  horizontalLine: {
+    // width: 1,
+    flex: 1,
+    height: 1,
+    backgroundColor: ctx.colors2024['neutral-line'],
+    // marginHorizontal: 4,
   },
   imgIcon: {
     width: 160,
@@ -167,7 +176,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
-    width: '100%',
     textAlign: 'center',
   },
   header: {
@@ -224,7 +232,21 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-
+  itemEmptyContainer: {
+    marginTop: 12,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    // borderColor: ctx.colors2024['neutral-line'],
+    // borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    width: '100%',
+    gap: 8,
+    alignItems: 'center',
+  },
   tokenBox: {
     display: 'flex',
     flexDirection: 'column',
