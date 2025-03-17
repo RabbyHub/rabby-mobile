@@ -28,38 +28,51 @@ export const tagProfiles = (
   );
   const foldDefisSet = new Set(foldDefis);
   const unFoldDefisSet = new Set(unFoldDefis);
-  return profiles.map(i => {
-    const isExcludeBalance = (() => {
-      if (excludeDefiAndTokensSet.has(`${i.id}-defi`)) {
-        return true;
-      }
-      if (includeDefiAndTokensSet.has(`${i.id}-defi`)) {
+  return profiles
+    .map(i => {
+      const isExcludeBalance = (() => {
+        if (excludeDefiAndTokensSet.has(`${i.id}-defi`)) {
+          return true;
+        }
+        if (includeDefiAndTokensSet.has(`${i.id}-defi`)) {
+          return false;
+        }
         return false;
-      }
-      return false;
-    })();
+      })();
 
-    const isManualFold = foldDefisSet.has(i.id);
+      const isManualFold = foldDefisSet.has(i.id);
 
-    const isFold = (() => {
-      if (isManualFold) {
-        return true;
-      }
-      if (unFoldDefisSet.has(i.id)) {
+      const isFold = (() => {
+        if (isManualFold) {
+          return true;
+        }
+        if (unFoldDefisSet.has(i.id)) {
+          return false;
+        }
+        if ((i.netWorth || 0) < 1) {
+          return true;
+        }
         return false;
-      }
-      if ((i.netWorth || 0) < 1) {
-        return true;
-      }
-      return false;
-    })();
+      })();
 
-    i._isExcludeBalance = isExcludeBalance;
-    i._isFold = isFold || isExcludeBalance;
-    i._isManualFold = isManualFold;
+      i._isExcludeBalance = isExcludeBalance;
+      i._isFold = isFold || isExcludeBalance;
+      i._isManualFold = isManualFold;
 
-    return i;
-  });
+      return i;
+    })
+    .sort((a, b) => {
+      if (a._isExcludeBalance && b._isExcludeBalance) {
+        return (b.netWorth || 0) - (a.netWorth || 0);
+      }
+      if (a._isExcludeBalance && !b._isExcludeBalance) {
+        return (b.netWorth || 0) === 0 ? -1 : 1;
+      }
+      if (b._isExcludeBalance && !a._isExcludeBalance) {
+        return (a.netWorth || 0) === 0 ? 1 : -1;
+      }
+      return (b.netWorth || 0) - (a.netWorth || 0);
+    });
 };
 export const log = (...args: any) => {
   // console.log(...args);
@@ -67,8 +80,8 @@ export const log = (...args: any) => {
 
 export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   const [data, setData] = useSafeState<DisplayedProject[]>([]);
+  const [isLoading, setLoading] = useSafeState(true);
   const [hasValue, setHasValue] = useSafeState(false);
-  const [isLoading, setLoading] = useSafeState(false);
   const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
 
   useEffect(() => {
@@ -114,6 +127,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           );
           const tokenSetting = await preferenceService.getUserTokenSettings();
           setData(tagProfiles(realtimeData, tokenSetting));
+          setLoading(false);
           setHasValue(!!cachePortocols.length);
         }
       }

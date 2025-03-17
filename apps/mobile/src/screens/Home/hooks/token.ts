@@ -130,9 +130,6 @@ export const useTokens = (
       const cachedTokens = force
         ? []
         : await TokenItemEntity.batchQueryTokens(userAddr);
-      if (!cachedTokens.length || force) {
-        setLoading(true);
-      }
       const tokenSettings =
         (await preferenceService.getUserTokenSettings()) || {};
       if (
@@ -157,6 +154,7 @@ export const useTokens = (
           _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
           setMainnetTokens(filterDisplayToken(_tokens));
+          setLoading(false);
         }
       }
 
