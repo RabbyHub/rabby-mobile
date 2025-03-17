@@ -106,7 +106,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('boolean')
   low_credit_score: TokenItem['low_credit_score'] = false;
 
-  // value24hChange
   @Column('text', { default: '1' })
   value_24h_change: string = '1';
 

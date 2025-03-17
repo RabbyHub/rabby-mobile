@@ -124,8 +124,6 @@ export const batchQueryTokensWithLocalCache = async (
         }
       });
 
-      console.log('historyTokens', historyTokens);
-
       runOnJS(syncRemoteTokens)(user_id, writeTokens);
       return tokens;
     } else {
