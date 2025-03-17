@@ -299,7 +299,6 @@ function HistoryDetailScreen(): JSX.Element {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
-  console.log('accounts', accounts);
 
   const formatType: HistoryItemCateType = useMemo(() => {
     return getHistoryItemType(data);
