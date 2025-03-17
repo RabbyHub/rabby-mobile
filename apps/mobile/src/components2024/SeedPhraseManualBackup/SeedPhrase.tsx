@@ -2,12 +2,8 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  TouchableWithoutFeedback,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { BlurView } from '@react-native-community/blur';
 import { createGetStyles2024 } from '@/utils/styles';
 import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';

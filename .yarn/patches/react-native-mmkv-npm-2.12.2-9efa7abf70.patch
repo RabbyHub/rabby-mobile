@@ -1,5 +1,5 @@
 diff --git a/android/src/main/cpp/MmkvHostObject.cpp b/android/src/main/cpp/MmkvHostObject.cpp
-index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..ce8da605bb28830cfb50c099eaa4dd42bba2ae6a 100644
+index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..9ccc10fc28f5a4a0aebd9ded4c266592d000f781 100644
 --- a/android/src/main/cpp/MmkvHostObject.cpp
 +++ b/android/src/main/cpp/MmkvHostObject.cpp
 @@ -52,6 +52,7 @@ std::vector<jsi::PropNameID> MmkvHostObject::getPropertyNames(jsi::Runtime& rt)
@@ -10,6 +10,27 @@ index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..ce8da605bb28830cfb50c099eaa4dd42
    return result;
  }
  
+@@ -86,9 +87,9 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+           } else if (arguments[1].isObject()) {
+             // object
+             auto object = arguments[1].asObject(runtime);
+-            if (isTypedArray(runtime, object)) {
++            if (rnmmkv::isTypedArray(runtime, object)) {
+               // Uint8Array
+-              auto typedArray = getTypedArray(runtime, object);
++              auto typedArray = rnmmkv::getTypedArray(runtime, object);
+               auto bufferValue = typedArray.getBuffer(runtime);
+               mmkv::MMBuffer buffer(bufferValue.data(runtime), bufferValue.size(runtime),
+                                     mmkv::MMBufferCopyFlag::MMBufferNoCopy);
+@@ -191,7 +192,7 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+           bool hasValue = instance->getBytes(keyName, buffer);
+           if (hasValue) {
+             auto length = buffer.length();
+-            TypedArray<TypedArrayKind::Uint8Array> array(runtime, length);
++            rnmmkv::TypedArray<rnmmkv::TypedArrayKind::Uint8Array> array(runtime, length);
+             auto data = static_cast<const unsigned char*>(buffer.getPtr());
+             std::vector<unsigned char> vector(length);
+             vector.assign(data, data + length);
 @@ -286,5 +287,18 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
          });
    }
@@ -29,10 +50,92 @@ index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..ce8da605bb28830cfb50c099eaa4dd42
 +
    return jsi::Value::undefined();
  }
+diff --git a/android/src/main/cpp/cpp-adapter.cpp b/android/src/main/cpp/cpp-adapter.cpp
+index 976a2789bd3d1437d40ceec84a580afd1f52a97d..d4a728b0bbc8f0fd3f8878409b100d23aad1afbf 100644
+--- a/android/src/main/cpp/cpp-adapter.cpp
++++ b/android/src/main/cpp/cpp-adapter.cpp
+@@ -37,7 +37,7 @@ void install(jsi::Runtime& jsiRuntime) {
+ 
+   // Adds the PropNameIDCache object to the Runtime. If the Runtime gets destroyed, the Object gets
+   // destroyed and the cache gets invalidated.
+-  auto propNameIdCache = std::make_shared<InvalidateCacheOnDestroy>(jsiRuntime);
++  auto propNameIdCache = std::make_shared<rnmmkv::InvalidateCacheOnDestroy>(jsiRuntime);
+   jsiRuntime.global().setProperty(jsiRuntime, "mmkvArrayBufferPropNameIdCache",
+                                   jsi::Object::createFromHostObject(jsiRuntime, propNameIdCache));
+ }
+diff --git a/cpp/TypedArray.cpp b/cpp/TypedArray.cpp
+index 5ad11ee6909221b599ac42a4054588ea68126a1a..def1a450d94c8a90212c6b1e4b56d28ce941685b 100644
+--- a/cpp/TypedArray.cpp
++++ b/cpp/TypedArray.cpp
+@@ -15,6 +15,8 @@
+ #include <utility>
+ #include <vector>
+ 
++namespace rnmmkv {
++
+ template <TypedArrayKind T> using ContentType = typename typedArrayTypeMap<T>::type;
+ 
+ enum class Prop {
+@@ -320,3 +322,5 @@ template class TypedArray<TypedArrayKind::Uint16Array>;
+ template class TypedArray<TypedArrayKind::Uint32Array>;
+ template class TypedArray<TypedArrayKind::Float32Array>;
+ template class TypedArray<TypedArrayKind::Float64Array>;
++
++}
+\ No newline at end of file
+diff --git a/cpp/TypedArray.h b/cpp/TypedArray.h
+index c58140bc012f5ccef3ab9acc128d0ab0eed90635..02db7c168d54143750273194da5213137f412836 100644
+--- a/cpp/TypedArray.h
++++ b/cpp/TypedArray.h
+@@ -14,6 +14,8 @@
+ 
+ namespace jsi = facebook::jsi;
+ 
++namespace rnmmkv {
++  
+ enum class TypedArrayKind {
+   Int8Array,
+   Int16Array,
+@@ -110,7 +112,7 @@ TypedArrayBase getTypedArray(jsi::Runtime& runtime, const jsi::Object& jsObj);
+ 
+ std::vector<uint8_t> arrayBufferToVector(jsi::Runtime& runtime, jsi::Object& jsObj);
+ void arrayBufferUpdate(jsi::Runtime& runtime, jsi::ArrayBuffer& buffer, std::vector<uint8_t> data,
+-                       size_t offset);
++                      size_t offset);
+ 
+ template <TypedArrayKind T> class TypedArray : public TypedArrayBase {
+ public:
+@@ -151,3 +153,5 @@ template <TypedArrayKind T> TypedArray<T> TypedArrayBase::as(jsi::Runtime& runti
+   }
+   return std::move(*this).get<T>(runtime);
+ }
++
++}
 diff --git a/ios/MmkvHostObject.mm b/ios/MmkvHostObject.mm
-index 16045fd7d4b020e9fcb10d0550d5668501b385fb..580e95b35596a460b10ee9d3aad5dfa571a9949f 100644
+index 16045fd7d4b020e9fcb10d0550d5668501b385fb..fb80fb9790f40669b6f4ee0bc48ba8798d0317e8 100644
 --- a/ios/MmkvHostObject.mm
 +++ b/ios/MmkvHostObject.mm
+@@ -97,9 +97,9 @@
+           } else if (arguments[1].isObject()) {
+             // object
+             auto object = arguments[1].asObject(runtime);
+-            if (isTypedArray(runtime, object)) {
++            if (rnmmkv::isTypedArray(runtime, object)) {
+               // Uint8Array
+-              auto typedArray = getTypedArray(runtime, object);
++              auto typedArray = rnmmkv::getTypedArray(runtime, object);
+               auto bufferValue = typedArray.getBuffer(runtime);
+               auto data = [[NSData alloc] initWithBytes:bufferValue.data(runtime)
+                                                  length:bufferValue.length(runtime)];
+@@ -198,7 +198,7 @@
+           auto keyName = convertJSIStringToNSString(runtime, arguments[0].getString(runtime));
+           auto data = [instance getDataForKey:keyName];
+           if (data != nil) {
+-            TypedArray<TypedArrayKind::Uint8Array> array(runtime, data.length);
++            rnmmkv::TypedArray<rnmmkv::TypedArrayKind::Uint8Array> array(runtime, data.length);
+             auto charArray = static_cast<const unsigned char*>([data bytes]);
+             std::vector<unsigned char> vector(data.length);
+             vector.assign(charArray, charArray + data.length);
 @@ -291,5 +291,17 @@
          });
    }
@@ -51,6 +154,19 @@ index 16045fd7d4b020e9fcb10d0550d5668501b385fb..580e95b35596a460b10ee9d3aad5dfa5
 +
    return jsi::Value::undefined();
  }
+diff --git a/ios/MmkvModule.mm b/ios/MmkvModule.mm
+index 85f93830ebaebe7887f77fccc01bccc682413f25..b2974ac1b7df1ae2258b1fa2fcdea0333a3e0c95 100644
+--- a/ios/MmkvModule.mm
++++ b/ios/MmkvModule.mm
+@@ -90,7 +90,7 @@ + (NSString*)getPropertyAsStringOrNilFromObject:(jsi::Object&)object
+ 
+   // Adds the PropNameIDCache object to the Runtime. If the Runtime gets destroyed, the Object gets
+   // destroyed and the cache gets invalidated.
+-  auto propNameIdCache = std::make_shared<InvalidateCacheOnDestroy>(runtime);
++  auto propNameIdCache = std::make_shared<rnmmkv::InvalidateCacheOnDestroy>(runtime);
+   runtime.global().setProperty(runtime, "mmkvArrayBufferPropNameIdCache",
+                                jsi::Object::createFromHostObject(runtime, propNameIdCache));
+ 
 diff --git a/lib/module/MMKV.js b/lib/module/MMKV.js
 index c7b6cddc2287ea71841eac6fced4a0f02bc527e4..e6f28cedc4476859347b9b4df9c98ac72a026edf 100644
 --- a/lib/module/MMKV.js
