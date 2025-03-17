@@ -52,7 +52,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
       try {
         const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
         const tokenSetting = await preferenceService.getUserTokenSettings();
-        setIsLoading(false);
         setList(tagNfts(cacheNfts, tokenSetting));
         const nfts = await syncNFTs(addr, force);
         setList(tagNfts(nfts, tokenSetting));
