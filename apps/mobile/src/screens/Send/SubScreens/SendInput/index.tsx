@@ -23,6 +23,8 @@ import { openapi } from '@/core/request';
 import { useNavigationState } from '@react-navigation/native';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useAtom } from 'jotai';
+import { cexInfoAtoms } from '@/hooks/useCexAccounts';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -58,6 +60,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
+  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
 
   const { t } = useTranslation();
 
@@ -75,7 +78,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     try {
       Keyboard.dismiss();
       const { inWhitelist, account } = findAccount(address);
-      const { desc } = await openapi.addrDesc(address);
+      let cexDes = cexInfoStore[address];
+      if (!cexDes) {
+        const { desc } = await openapi.addrDesc(address);
+        cexDes = desc.cex;
+        setCexInfoStore(prev => ({ ...prev, [address]: cexDes }));
+      }
       if (isForWhitelist) {
         if (inWhitelist) {
           toast.show(t('page.whitelist.alreadyAdded'));
@@ -92,7 +100,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       if (inWhitelist) {
         navigateToSendScreen({
           toAddress: account.address,
-          cexDes: desc.cex,
+          cexDes: cexDes,
           addressBrandName: account.brandName,
         });
       } else {
