@@ -24,7 +24,7 @@ export class UpdateTokenItemAddValue24hChange1742201925843
     if (tableExists) {
       await queryRunner.query(`DELETE FROM '${tokenTableName}'`);
       await queryRunner.query(
-        `ALTER TABLE '${tokenTableName}' ADD COLUMN value_24h_change REAL DEFAULT '1'`,
+        `ALTER TABLE '${tokenTableName}' ADD COLUMN value_24h_change TEXT DEFAULT '1'`,
       );
     }
   }
