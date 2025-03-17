@@ -73,16 +73,30 @@ export const batchQueryTokensWithLocalCache = async (
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
     if (force || isExpired) {
-      const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
-      const historyTokens = await batchQueryHistoryTokens(
-        user_id,
-        dayjs().subtract(1, 'days').unix(),
-        isTestnet,
-      );
+      const [tokensResult, historyTokensResult, chainListResult] =
+        await Promise.allSettled([
+          batchQueryTokens(user_id, chainId, isTestnet),
+          batchQueryHistoryTokens(
+            user_id,
+            dayjs().subtract(1, 'days').unix(),
+            isTestnet,
+          ),
+          openapi.getChainList(),
+        ]);
+
+      const tokens =
+        tokensResult.status === 'fulfilled' ? tokensResult.value : [];
+      const historyTokens =
+        historyTokensResult.status === 'fulfilled'
+          ? historyTokensResult.value
+          : [];
+      const chainList =
+        chainListResult.status === 'fulfilled' ? chainListResult.value : [];
 
       const writeTokens = [...tokens] as (TokenItem & {
         value_24h_change?: string;
       })[];
+
       historyTokens?.forEach(e => {
         const idx = tokens.findIndex(
           t => isSameAddress(e.id, t.id) && e.chain === t.chain,
@@ -97,11 +111,20 @@ export const batchQueryTokensWithLocalCache = async (
             .div(token24hAgo)
             .toString();
         }
+      });
 
-        if (writeTokens[idx].value_24h_change === 'NaN') {
-          writeTokens[idx].value_24h_change = '0';
+      writeTokens.forEach((wt, idx) => {
+        if (wt.value_24h_change === undefined) {
+          const isSupportedHistory = !!chainList?.find(
+            chain => wt.chain === chain.id,
+          )?.is_support_history;
+          writeTokens[idx].value_24h_change = isSupportedHistory
+            ? '1'
+            : writeTokens[idx].price_24h_change + '';
         }
       });
+
+      console.log('historyTokens', historyTokens);
 
       runOnJS(syncRemoteTokens)(user_id, writeTokens);
       return tokens;
