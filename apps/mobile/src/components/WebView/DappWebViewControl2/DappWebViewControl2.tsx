@@ -24,10 +24,7 @@ import {
   BUILTIN_SPECIAL_URLS,
   useSetupWebview,
 } from '@/core/bridges/useBackgroundBridge';
-import {
-  canoicalizeDappUrl,
-  safeGetOrigin,
-} from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl2, BottomNavControlCbCtx } from './Widgets';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -41,8 +38,6 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useMemoizedFn } from 'ahooks';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components2024/Toast';
-import { dappService } from '@/core/services';
-import { createDappBySession } from '@/core/apis/dapp';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl2::error]', ...info);
@@ -225,27 +220,6 @@ const DappWebViewControl2 = React.forwardRef<
     }, []);
 
     const handlePressHeaderLeftClose = useCallback(() => {
-      if (latestUrl && safeGetOrigin(latestUrl) === safeGetOrigin(dappOrigin)) {
-        const dappInfo = dappService.getDapp(dappOrigin);
-        if (dappInfo) {
-          dappService.updateDapp({
-            ...dappInfo,
-            latestUrl,
-            latestOpenAt: Date.now(),
-          });
-        } else {
-          dappService.addDapp({
-            ...createDappBySession({
-              origin: dappOrigin,
-              name: '',
-              icon: '',
-            }),
-            latestUrl,
-            latestOpenAt: Date.now(),
-          });
-        }
-      }
-
       if (typeof onPressHeaderLeftClose === 'function') {
         return onPressHeaderLeftClose({
           defaultAction: handlePressCloseDefault,
