@@ -146,7 +146,11 @@
         "to": "Para",
         "amount": "Cantidad",
         "desc": "Puede retirar el saldo de su GasAccount a su billetera DeBank L2. Inicie sesión en su billetera DeBank L2 para transferir los fondos a una blockchain compatible según sea necesario."
-      }
+      },
+      "depositWithToken": "Depositar con Token",
+      "depositWithPayDesc": "30% de comisión, sin retiros",
+      "depositWithPay": "Comprar con",
+      "depositWithTokenDesc": "Sin comisión adicional, retiros instantáneos"
     },
     "NoLongerSupports": {
       "button": "Entendido",
@@ -572,7 +576,14 @@
       "typedDataMessage": "Firmar Datos Tipados",
       "maxPriorityFeeDisabledAlert": "Por favor, establezca el Gas Price primero.",
       "trustValueTitle": "Confía en el valor",
-      "hasInteraction": "Interactuó antes"
+      "hasInteraction": "Interactuó antes",
+      "safeTx": {
+        "selfHostConfirm": {
+          "button": "OK",
+          "title": "Cambiar al Servicio Seguro de Rabby",
+          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.<2>"
+        }
+      }
     },
     "activities": {
       "signedTx": {
@@ -811,7 +822,12 @@
       },
       "modalConfirmAddToContacts": {
         "title": "Añadir a contactos"
-      }
+      },
+      "noSupportBtns": {
+        "confirm": "Proceder",
+        "cancel": "Cancelar"
+      },
+      "noSupprotTokenForDex": "Este token puede no ser compatible con este exchange. Verifique antes de continuar para evitar pérdidas"
     },
     "gasTopUp": {
       "No_Tokens": "Sin tokens",
@@ -834,7 +850,8 @@
         "websites": "Sitios web",
         "history": "Historial",
         "gasAccount": "GasAccount",
-        "queue": "Cola"
+        "queue": "Cola",
+        "search": "Buscar Token"
       }
     },
     "dashboard": {
@@ -882,6 +899,10 @@
         "cancel": "Cancelar",
         "disableWhitelistTip": "Puedes enviar activos a cualquier dirección una vez desactivado",
         "enableWhitelistTip": "Una vez habilitado, solo puedes enviar activos a las direcciones de la lista blanca utilizando Rabby."
+      },
+      "offlineChain": {
+        "tips": "La {{chain}} Chain no se integrará el {{date}}. Tus activos no se verán afectados, pero no se incluirán en tu saldo total. Para acceder a ellos, puedes añadirla como una red personalizada en \"Configuración\".",
+        "chain": "{{chain}} pronto dejará de estar integrado."
       }
     },
     "manageAddress": {
@@ -1531,15 +1552,24 @@
       "searchWeb": {
         "title": "Todos los Resultados",
         "searchTips": "Buscar en la web",
-        "noResult": "Sin resultados para"
+        "noResult": "Sin resultados para",
+        "searching": "Resultados para",
+        "noResults": "Sin resultados"
       },
       "sectionHeader": {
         "Defi": "DeFi",
         "NFT": "NFT",
-        "token": "Tokens"
+        "token": "Tokens",
+        "AllChains": "Todas las Cadenas"
       },
       "header": {
-        "placeHolder": "Buscar"
+        "placeHolder": "Buscar",
+        "searchPlaceHolder": "Buscar Nombre del Token / Dirección"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "Este es un token de estafa",
+        "Issuedby": "Emitido por",
+        "scamWarningTips": "Este es un token de baja calidad y puede ser una estafa"
       }
     },
     "singleHome": {
@@ -1547,7 +1577,9 @@
         "Nft": "NFT",
         "Token": "Token",
         "Defi": "DeFi",
-        "NoData": "Sin {{name}}"
+        "NoData": "Sin {{name}}",
+        "totalChain_other": "Total {{count}} Chains",
+        "totalChain_one": "Total {{count}} Chain"
       },
       "emptyToken": {
         "receiveHeader": "Recibir Crypto",
@@ -1555,6 +1587,9 @@
         "receiveBody": "Transferir tokens desde otra dirección.",
         "buyHeader": "Comprar con Fiat",
         "buyBody": "Compra criptomonedas usando una tarjeta de débito o cuenta bancaria."
+      },
+      "nft": {
+        "floorPrice": "/Precio de suelo:"
       }
     },
     "customTestnet": {
@@ -1616,7 +1651,28 @@
         "unfold_success": "Desplegado con éxito",
         "fold_success": "Plegado con éxito",
         "pin_success": "Fijado con éxito"
-      }
+      },
+      "Info": "Info",
+      "SeeMore": "Ver más",
+      "Transaction": "Transacción",
+      "BridgeIssue": "Token puenteado por un tercero",
+      "TokenName": "Nombre del Token",
+      "ListedBy": "Listado por",
+      "OriginIssue": "Emitido nativamente en esta blockchain",
+      "Mybalance": "Mi Balance",
+      "fdv": "FDV",
+      "IssuerWebsite": "Sitio web del Emisor",
+      "NoListedSite": "No hay información de listado disponible",
+      "IssuedBy": "Emitido por",
+      "noTransactions": "Sin transacciones",
+      "NoSupportedExchanges": "No hay intercambios compatibles disponibles",
+      "SupportedExchanges": "Intercambios Soportados",
+      "BridgeProvider": "Proveedor de Bridge",
+      "Defi": "DeFi",
+      "NoIssuer": "No hay información del emisor disponible",
+      "fdvTitle": "¿Qué es FDV?",
+      "OriginalToken": "Token Original",
+      "fdvContent": "La capitalización de mercado si el suministro máximo estuviera en circulación. Valuación Totalmente Diluida (FDV) = Precio × Suministro Máximo. Si el Suministro Máximo es nulo, FDV = Precio × Suministro Total. Si ni el Suministro Máximo ni el Suministro Total están definidos o son infinitos, la FDV no se muestra."
     },
     "setting": {
       "feedback": "Comentarios",
@@ -1675,7 +1731,9 @@
         "inSufficientTip1": "Esta dirección no tiene suficientes tokens. Por favor, elige una dirección diferente.",
         "zeroInvalidAmount": "El importe no puede ser cero",
         "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento.",
-        "paymentAddress": "Dirección de pago"
+        "paymentAddress": "Dirección de pago",
+        "applePayDesc": "Incluye una tarifa de Apple Pay de ${{amount}}. No hay retiros",
+        "googlePayDesc": "Incluye una tarifa de Google Pay de ${{ amount }}. No hay retiros"
       },
       "paymentAddressPopup": {
         "confirm": "Confirmar",
@@ -1709,7 +1767,33 @@
       },
       "withdraw": "Retirar",
       "noBalance": "Sin saldo para retirar",
-      "gasExceed": "El saldo de GasAccount no puede exceder los $1000."
+      "gasExceed": "El saldo de GasAccount no puede exceder los $1000.",
+      "depositPayPopup": {
+        "titleAndroid": "Comprar con Google Pay",
+        "title": "Comprar con Apple Pay",
+        "depositCanceled": "Depósito Cancelado",
+        "balance": "Saldo actual de GasAccount:",
+        "depositFailed": "Depósito fallido"
+      },
+      "depositSelectPopup": {
+        "desc": "Paga Tarifas de Gas en Todas las Cadenas",
+        "buyWith": "Comprar con",
+        "title": "Depósito en GasAccount",
+        "buyWithDesc": "30% de comisión, sin retiradas",
+        "depositToken": "Depósito con Token",
+        "depositTokenDesc": "Sin tarifas adicionales, retiros instantáneos"
+      },
+      "gasAccountList": {
+        "address": "Dirección",
+        "gasAccountBalance": "GasAccount Balance",
+        "balance": "Saldo"
+      },
+      "depositSuccess": "Depósito exitoso",
+      "loginFailed": "Error de inicio de sesión",
+      "switchAccount": "Cambiar GasAccount",
+      "depositCanceled": "Depósito Cancelado",
+      "loginSuccess": "Inicio de sesión exitoso",
+      "withdrawDisabledIAP": "Los retiros están deshabilitados porque tu saldo incluye fondos fiduciarios, los cuales no pueden ser retirados. Contacta con soporte para retirar el saldo de tus tokens."
     },
     "settingModal": {
       "themeMode": {
@@ -1760,6 +1844,49 @@
     },
     "eip7702": {
       "alert": "EIP-7702 aún no es compatible"
+    },
+    "sendPoly": {
+      "modals": {
+        "header": "Agregar dirección a la lista blanca",
+        "recentAddress": "Direcciones Enviadas Recientemente",
+        "addAddress": "Nueva dirección",
+        "importedAddress": "Dirección Importada",
+        "content": "Selecciona cómo quieres añadir una dirección:"
+      },
+      "emptyWhitelistHeader": "Agregar dirección de la lista blanca",
+      "enterAddress": "Introduzca la dirección",
+      "sendToSafeAddress": "Enviar a direcciones seguras",
+      "sendToWatchAddress": "Enviar a direcciones solo de visualización",
+      "emptyWhitelistBtn": "Añadir ahora",
+      "sendToImportedAddress": "Enviar a Mis Direcciones Importadas",
+      "emptyWhitelistTip": "Aún no hay direcciones en la lista blanca,",
+      "emptyWhitelistContent": "Agrega direcciones de confianza a la lista blanca para transferencias rápidas: no se necesita confirmación la próxima vez",
+      "whitelistTitle": "Mis direcciones de lista blanca"
+    },
+    "confirmAddress": {
+      "risks": {
+        "dexNoDeposite": "La dirección del destinatario es una dirección no depositaria de un CEX. Por favor, asegúrate de que tu dirección de depósito sea correcta.",
+        "contractAddress": "La dirección del destinatario es una dirección de contrato, lo que podría causar la pérdida de fondos",
+        "noSend": "No has enviado fondos a esta dirección en los últimos 180 días. Por favor, confirma si deseas continuar.",
+        "scamAddress": "La dirección del destinatario es una dirección fraudulenta señalada por Rabby"
+      },
+      "tipForWhiteList": "Agrega a tu lista blanca para transferencias rápidas, no se necesita confirmación la próxima vez",
+      "brandNameTail": "Dirección",
+      "addToWhitelist": "Añadir a la lista blanca",
+      "dexNameTail": "Dirección de Depósito"
+    },
+    "selectAddress": {
+      "selectSafeAddress": "Seleccionar desde direcciones seguras",
+      "selectWatchAddress": "Seleccionar desde direcciones de solo observación"
+    },
+    "whitelist": {
+      "addToWhitelist": "Agregar a la lista blanca",
+      "cancel": "Cancelar",
+      "confirmPassword": "Ingrese la Contraseña para Confirmar",
+      "alreadyAdded": "Ya agregado a tu lista blanca",
+      "confirm": "Confirmar",
+      "addSuccessful": "Dirección añadida a la lista blanca",
+      "removeWhitelist": "Eliminar de Whitelist"
     }
   },
   "global": {

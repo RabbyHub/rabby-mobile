@@ -595,6 +595,13 @@
         "operation": "Hoạt động",
         "operationCantDecode": "Hoạt động không được giải mã",
         "receiver": "Địa chỉ người nhận"
+      },
+      "safeTx": {
+        "selfHostConfirm": {
+          "content": "Safe API không khả dụng. Chuyển sang dịch vụ Safe được triển khai bởi Rabby để giữ cho Safe của bạn hoạt động. <1></1><2>Tất cả người ký Safe phải sử dụng Rabby Wallet để ủy quyền giao dịch.<2>",
+          "button": "OK",
+          "title": "Chuyển sang Dịch vụ An toàn của Rabby"
+        }
       }
     },
     "sendNFT": {
@@ -658,7 +665,12 @@
           "fast": "Tức thì"
         },
         "popupDesc": "Chi phí gas sẽ được giữ lại từ số tiền chuyển dựa trên giá gas bạn đặt."
-      }
+      },
+      "noSupportBtns": {
+        "cancel": "Hủy",
+        "confirm": "Tiếp tục"
+      },
+      "noSupprotTokenForDex": "Token này có thể không được hỗ trợ bởi sàn giao dịch này. Kiểm tra trước khi tiếp tục để tránh mất mát."
     },
     "approvals": {
       "list": {
@@ -890,6 +902,10 @@
         "noTransactions": "Không có Giao dịch",
         "swap": "Swap",
         "notSelectedCustom": "Token chưa được Rabby niêm yết. Nó sẽ được thêm vào danh sách token nếu bạn bật lên."
+      },
+      "offlineChain": {
+        "chain": "{{chain}} sẽ sớm không được tích hợp.",
+        "tips": "{{chain}} Chain sẽ không được tích hợp vào ngày {{date}}. Tài sản của bạn sẽ không bị ảnh hưởng nhưng sẽ không được tính vào tổng số dư của bạn. Để truy cập chúng, bạn có thể thêm nó như một mạng tùy chỉnh trong “Cài đặt”."
       }
     },
     "nextComponent": {
@@ -1002,7 +1018,8 @@
         "queue": "Hàng chờ",
         "history": "Lịch sử",
         "receive": "Nhận",
-        "websites": "Websites"
+        "websites": "Websites",
+        "search": "Tìm kiếm Token"
       }
     },
     "securityEngine": {
@@ -1297,7 +1314,9 @@
         "Defi": "DeFi",
         "Nft": "NFT",
         "Token": "Token",
-        "NoData": "Không có {{name}}"
+        "NoData": "Không có {{name}}",
+        "totalChain_one": "Tổng {{count}} Chain",
+        "totalChain_other": "Tổng cộng {{count}} chuỗi"
       },
       "emptyToken": {
         "title": "Nạp tiền vào Ví của bạn",
@@ -1305,6 +1324,9 @@
         "receiveBody": "Chuyển token từ địa chỉ khác.",
         "buyHeader": "Mua bằng Fiat",
         "buyBody": "Mua tiền điện tử bằng cách sử dụng thẻ ghi nợ hoặc tài khoản ngân hàng."
+      },
+      "nft": {
+        "floorPrice": "/Giá sàn:"
       }
     },
     "approvalsAddressList": {
@@ -1327,15 +1349,24 @@
       "sectionHeader": {
         "Defi": "DeFi",
         "NFT": "NFT",
-        "token": "Tokens"
+        "token": "Tokens",
+        "AllChains": "Tất cả Chuỗi"
       },
       "searchWeb": {
         "searchTips": "Tìm kiếm trên web",
         "title": "Tất cả kết quả",
-        "noResult": "Không có kết quả nào cho"
+        "noResult": "Không có kết quả nào cho",
+        "noResults": "Không có kết quả",
+        "searching": "Kết quả cho"
       },
       "header": {
-        "placeHolder": "Tìm kiếm"
+        "placeHolder": "Tìm kiếm",
+        "searchPlaceHolder": "Tìm kiếm Tên Token / Địa chỉ"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "Đây là một token lừa đảo",
+        "scamWarningTips": "Đây là một token chất lượng thấp và có thể là một trò lừa đảo",
+        "Issuedby": "Được phát hành bởi"
       }
     },
     "sign": {
@@ -1380,7 +1411,9 @@
         "token": "Token",
         "followingTokenInSufficient": "Số dư token sau đây không đủ",
         "desc": "Gửi tiền vào Tài khoản DeBank L2 của Rabby mà không mất phí—rút bất kỳ lúc nào.",
-        "title": "Nạp tiền"
+        "title": "Nạp tiền",
+        "applePayDesc": "Bao gồm phí Apple Pay ${{amount}}. Không có rút tiền",
+        "googlePayDesc": "Bao gồm phí Google Pay ${{ amount }}. Không có quyền rút tiền"
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1414,7 +1447,33 @@
       },
       "withdraw": "Rút tiền",
       "noBalance": "Không có số dư để rút",
-      "gasExceed": "Số dư GasAccount không thể vượt quá $1000"
+      "gasExceed": "Số dư GasAccount không thể vượt quá $1000",
+      "depositPayPopup": {
+        "depositCanceled": "Đã hủy gửi tiền",
+        "depositFailed": "Nạp tiền thất bại",
+        "balance": "Số dư GasAccount Hiện Tại: ",
+        "title": "Mua với Apple Pay",
+        "titleAndroid": "Mua bằng Google Pay"
+      },
+      "depositSelectPopup": {
+        "title": "Nạp vào GasAccount",
+        "buyWith": "Mua với",
+        "depositToken": "Nạp bằng Token",
+        "buyWithDesc": "30% phí, không rút tiền",
+        "depositTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
+        "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi"
+      },
+      "gasAccountList": {
+        "balance": "Số dư",
+        "address": "Địa chỉ",
+        "gasAccountBalance": "Số dư GasAccount"
+      },
+      "depositSuccess": "Nạp tiền thành công",
+      "depositCanceled": "Gửi tiền đã hủy",
+      "switchAccount": "Chuyển đổi GasAccount",
+      "loginFailed": "Đăng nhập thất bại",
+      "loginSuccess": "Đăng nhập thành công",
+      "withdrawDisabledIAP": "Việc rút tiền bị vô hiệu hóa vì số dư của bạn bao gồm tiền fiat, không thể rút được. Liên hệ hỗ trợ để rút số dư token của bạn"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -1464,7 +1523,28 @@
         "includeBalance_success": "Đã bao gồm trong số dư",
         "unpin_success": "Bỏ ghim thành công",
         "unfold_success": "Mở ra thành công"
-      }
+      },
+      "BridgeIssue": "Token được bắc cầu bởi bên thứ ba",
+      "OriginalToken": "Token Gốc",
+      "TokenName": "Tên Token",
+      "fdv": "FDV",
+      "fdvTitle": "FDV là gì?",
+      "Info": "Thông tin",
+      "SupportedExchanges": "Hỗ trợ Sàn giao dịch",
+      "IssuedBy": "Được phát hành bởi",
+      "Transaction": "Giao dịch",
+      "Defi": "DeFi",
+      "BridgeProvider": "Nhà cung cấp Bridge",
+      "SeeMore": "Xem thêm",
+      "OriginIssue": "Được phát hành gốc trên blockchain này",
+      "ListedBy": "Được niêm yết bởi",
+      "Mybalance": "Số dư của tôi",
+      "IssuerWebsite": "Trang web của Issuer",
+      "NoListedSite": "Không có thông tin danh sách có sẵn",
+      "noTransactions": "Không có giao dịch nào",
+      "NoSupportedExchanges": "Không có sàn giao dịch được hỗ trợ nào khả dụng",
+      "NoIssuer": "Không có thông tin nhà phát hành có sẵn",
+      "fdvContent": "Vốn hóa thị trường nếu tổng cung tối đa đang lưu thông. Định giá suy giảm hoàn toàn (FDV) = Giá × Tổng cung tối đa. Nếu Tổng cung tối đa là null, FDV = Giá × Tổng cung. Nếu cả Tổng cung tối đa và Tổng cung đều không được xác định hoặc vô hạn, FDV sẽ không được hiển thị."
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -1670,6 +1750,49 @@
     },
     "eip7702": {
       "alert": "EIP-7702 chưa được hỗ trợ"
+    },
+    "sendPoly": {
+      "modals": {
+        "importedAddress": "Địa chỉ Nhập khẩu",
+        "content": "Chọn cách bạn muốn thêm địa chỉ:",
+        "recentAddress": "Địa chỉ Gửi Gần đây",
+        "addAddress": "Địa Chỉ Mới",
+        "header": "Thêm địa chỉ vào danh sách trắng"
+      },
+      "emptyWhitelistBtn": "Thêm ngay bây giờ",
+      "enterAddress": "Nhập Địa chỉ",
+      "whitelistTitle": "Danh sách địa chỉ trong whitelist của tôi",
+      "sendToImportedAddress": "Gửi đến Địa chỉ Nhập khẩu của Tôi",
+      "emptyWhitelistHeader": "Thêm địa chỉ Whitelist",
+      "sendToSafeAddress": "Gửi đến Địa chỉ An toàn",
+      "emptyWhitelistContent": "Thêm địa chỉ đáng tin cậy vào danh sách trắng để chuyển tiền nhanh chóng—không cần xác nhận lần tới",
+      "emptyWhitelistTip": "Chưa có địa chỉ nào được đưa vào danh sách trắng,",
+      "sendToWatchAddress": "Gửi tới địa chỉ Chỉ xem"
+    },
+    "confirmAddress": {
+      "risks": {
+        "dexNoDeposite": "Địa chỉ người nhận là một địa chỉ không phải là địa chỉ nạp tiền từ một CEX. Vui lòng đảm bảo địa chỉ nạp tiền của bạn là chính xác.",
+        "contractAddress": "Địa chỉ người nhận là một địa chỉ hợp đồng, có thể gây mất tiền",
+        "noSend": "Bạn chưa gửi tiền đến địa chỉ này trong vòng 180 ngày qua. Vui lòng xác nhận nếu bạn muốn tiếp tục.",
+        "scamAddress": "Địa chỉ người nhận là địa chỉ lừa đảo được Rabby đánh dấu"
+      },
+      "brandNameTail": "Địa chỉ",
+      "addToWhitelist": "Thêm vào danh sách trắng",
+      "dexNameTail": "Địa chỉ gửi tiền",
+      "tipForWhiteList": "Thêm vào danh sách trắng của bạn để chuyển nhanh, không cần xác nhận lần tới"
+    },
+    "selectAddress": {
+      "selectWatchAddress": "Chọn từ địa chỉ chỉ xem",
+      "selectSafeAddress": "Chọn từ địa chỉ Safe"
+    },
+    "whitelist": {
+      "confirm": "Xác nhận",
+      "cancel": "Hủy",
+      "addSuccessful": "Địa chỉ đã được thêm vào danh sách trắng",
+      "addToWhitelist": "Thêm vào danh sách trắng",
+      "alreadyAdded": "Đã được thêm vào danh sách trắng của bạn",
+      "removeWhitelist": "Xóa khỏi danh sách trắng",
+      "confirmPassword": "Nhập Mật khẩu để Xác nhận"
     }
   },
   "component": {
@@ -1790,7 +1913,11 @@
         "amount": "Số lượng",
         "title": "Rút tiền",
         "desc": "Bạn có thể rút số dư GasAccount của mình vào Ví DeBank L2. Đăng nhập vào Ví DeBank L2 của bạn để chuyển tiền đến blockchain được hỗ trợ theo nhu cầu."
-      }
+      },
+      "depositWithTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
+      "depositWithPay": "Mua với",
+      "depositWithToken": "Gửi với Token",
+      "depositWithPayDesc": "30% phí, không có withdrawals"
     },
     "NoLongerSupports": {
       "button": "Hiểu rồi",
