@@ -23,8 +23,6 @@ import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { Account } from '@/core/services/preference';
-import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
-import { RootNames } from '@/constant/layout';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 
 const BridgeToken = ({
@@ -147,7 +145,7 @@ const BridgeToken = ({
           style={styles.chainSelector}
           chainEnum={chain}
           onChange={onChangeChain}
-          excludeChains={excludeChains}
+          // excludeChains={excludeChains}
           supportChains={supportedChains}
         />
       </View>

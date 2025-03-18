@@ -23,6 +23,7 @@ import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
+import { useRecommendSwapToken } from './recommentToken';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
@@ -199,6 +200,7 @@ export const useTokenPair = (userAddress: string) => {
 
   const setReceiveToken = useCallback(
     (token: TokenItem | undefined) => {
+      console.log('setReceiveToken token', token);
       _setReceiveToken(token);
       if (token) {
         if (token?.low_credit_score) {
@@ -279,9 +281,13 @@ export const useTokenPair = (userAddress: string) => {
     setSlider(0);
   }, [setPayToken, receiveToken, setReceiveToken, payToken]);
 
-  if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
-    setReceiveToken(undefined);
-  }
+  useEffect(() => {
+    if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
+      setReceiveToken(undefined);
+    }
+    //  only once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const payTokenIsNativeToken = useMemo(() => {
     if (payToken) {
@@ -754,6 +760,14 @@ export const useTokenPair = (userAddress: string) => {
     setSwapUseSlider(false);
     setIsDraggingSlider(false);
   }, [userAddress]);
+
+  useRecommendSwapToken({
+    chain: chain,
+    fromToken: payToken,
+    toToken: receiveToken,
+    changeFromToken: setPayToken,
+    changeToToken: setReceiveToken,
+  });
 
   return {
     bestQuoteDex,
