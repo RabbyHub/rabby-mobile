@@ -4,21 +4,14 @@ import React from 'react';
 import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-  useNavigationState,
-} from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ProgressBar } from '@/components2024/progressBar';
 import LinearGradient from 'react-native-linear-gradient';
-import { navigate } from '@/utils/navigation';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
-import { keyringService } from '@/core/services';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -33,11 +26,11 @@ function MainListBlocks() {
         params: {
           noSetupPassword: true,
           useCurrentSeed: false,
-          title: '2. Name Your Address',
+          title: `2. ${t('screens.addressStackTitle.ConfrimAddress')}`,
         },
       }),
     );
-  }, [navigation]);
+  }, [navigation, t]);
 
   const handleCreateCurrentSeed = React.useCallback(() => {
     navigation.dispatch(

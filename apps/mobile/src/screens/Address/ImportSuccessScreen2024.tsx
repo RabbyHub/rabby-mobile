@@ -7,25 +7,22 @@ import {
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
-import React, { useCallback, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
+import { Skeleton } from '@rneui/themed';
 
 import {
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   ScrollView,
-  StyleProp,
-  StyleSheet,
-  TextInput,
-  TextStyle,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
 import { Card } from '@/components2024/Card';
-import { NextInput } from '@/components2024/Form/Input';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
@@ -50,6 +47,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiBalance } from '@/core/apis';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
+import { splitNumberByStep } from '@/utils/number';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -84,6 +82,10 @@ export const ImportSuccessScreen2024 = () => {
     alias?: string;
     keyringId?: number;
   };
+  const [loadingBalance, setLoadingBalance] = useState(true);
+  const [addressBalances, setAddressBalances] = useState<
+    Record<string, number>
+  >({});
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
@@ -160,18 +162,37 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
+    setLoadingBalance(true);
+    Promise.allSettled(
+      addresses.map(async address => {
+        const res = await apiBalance.getAddressBalance(address, {
+          force: true,
+        });
+        return {
+          address,
+          balance: res.total_usd_value || 0,
+        };
+      }),
+    )
+      .then(results => {
+        results.forEach(result => {
+          if (result.status === 'fulfilled') {
+            setAddressBalances(pre => {
+              return {
+                ...pre,
+                [result.value.address]: result.value.balance,
+              };
+            });
+          }
+        });
+      })
+      .finally(() => {
+        setLoadingBalance(false);
+      });
     if (
-      state.type === KEYRING_TYPE.WatchAddressKeyring ||
-      state.type === KEYRING_TYPE.GnosisKeyring
+      state.type !== KEYRING_TYPE.WatchAddressKeyring &&
+      state.type !== KEYRING_TYPE.GnosisKeyring
     ) {
-      Promise.all(
-        addresses.map(address =>
-          apiBalance.getAddressBalance(address, {
-            force: true,
-          }),
-        ),
-      );
-    } else {
       if (addresses.length > 10) {
         // just sync 10 addresses
         const top10Account = addresses.slice(0, 10);
@@ -210,17 +231,6 @@ export const ImportSuccessScreen2024 = () => {
       }
     }
   }, [isFocus, state, accounts, switchAccount, importAddresses]);
-
-  const WalletAddress = useCallback(
-    ({ address, style }: { address: string; style?: StyleProp<TextStyle> }) => {
-      return (
-        <Text style={StyleSheet.flatten([styles.addressText, style])}>
-          {ellipsisAddress(address)}
-        </Text>
-      );
-    },
-    [styles.addressText],
-  );
 
   const handleImportMore = () => {
     if (!state.isFirstImport) {
@@ -284,32 +294,9 @@ export const ImportSuccessScreen2024 = () => {
                 height={100}
                 style={styles.icon}
               />
-              <NextInput
-                containerStyle={styles.inputContainer}
-                inputStyle={styles.inputInner}
-                inputProps={{
-                  showSoftInputOnFocus: false,
-                  editable: !state?.isFirstCreate,
-                  value: importAddresses?.[0]?.aliasName || '',
-                  inputMode: 'text',
-                  returnKeyType: 'done',
-                  textAlign: 'center',
-                  placeholder: ellipsisAddress(
-                    importAddresses?.[0]?.address || '',
-                  ),
-                  blurOnSubmit: true,
-                  placeholderTextColor: colors2024['neutral-info'],
-                  onChangeText(text) {
-                    const newImportAddresses = [...importAddresses];
-                    newImportAddresses[0] = {
-                      address: importAddresses?.[0]?.address || '',
-                      aliasName: text,
-                    };
-                    setImportAddresses(newImportAddresses);
-                  },
-                }}
-              />
-              <WalletAddress address={importAddresses?.[0]?.address || ''} />
+              <Text style={styles.aliasAddress}>
+                {importAddresses?.[0]?.aliasName || ''}
+              </Text>
               {state?.supportChainList?.length ? (
                 <GnosisSupportChainList
                   data={state?.supportChainList}
@@ -325,27 +312,26 @@ export const ImportSuccessScreen2024 = () => {
                 onResponderRelease={() => Keyboard.dismiss()}
                 keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}>
-                {importAddresses.map((item, index) => (
+                {importAddresses.map(item => (
                   <Card key={item.address} style={styles.addressItem}>
-                    <WalletIcon type={state?.type} width={50} height={50} />
+                    <WalletIcon type={state?.type} width={46} height={46} />
                     <View>
-                      <TextInput
-                        style={styles.listInput}
-                        value={item.aliasName}
-                        onChange={nativeEvent => {
-                          const _aliasName = nativeEvent.nativeEvent.text;
-                          const newImportAddresses = [...importAddresses];
-                          newImportAddresses[index] = {
-                            address: item.address,
-                            aliasName: _aliasName,
-                          };
-                          setImportAddresses(newImportAddresses);
-                        }}
-                        placeholder={ellipsisAddress(item.address)}
-                        placeholderTextColor={colors2024['neutral-info']}
-                        blurOnSubmit
-                      />
-                      <WalletAddress address={item.address} />
+                      <Text style={styles.listInput}>{item.aliasName}</Text>
+                      {loadingBalance ? (
+                        <Skeleton
+                          circle
+                          width={102}
+                          height={20}
+                          animation="wave"
+                          LinearGradientComponent={LinearGradient}
+                        />
+                      ) : (
+                        <Text style={styles.balance}>
+                          {`$${splitNumberByStep(
+                            addressBalances[item.address]?.toFixed(2) || 0,
+                          )}`}
+                        </Text>
+                      )}
                     </View>
                   </Card>
                 ))}
@@ -435,6 +421,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
+    balance: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
     inputContainer: {
       width: '100%',
       height: 72,
@@ -443,7 +436,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderWidth: 0,
       backgroundColor: 'transparent',
     },
-    inputInner: {
+    aliasAddress: {
       width: '100%',
       marginTop: 15,
       textAlignVertical: 'center',
@@ -477,20 +470,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      gap: 11,
+      gap: 8,
       marginBottom: 12,
+      height: 78,
+      borderRadius: 20,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
       width: '100%',
     },
     listInput: {
       width: '100%',
       textAlignVertical: 'center',
       padding: 0,
-      fontSize: 18.8,
+      fontSize: 16,
       borderWidth: 0,
       backgroundColor: 'transparent',
-      lineHeight: 25,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       textAlign: 'left',
       marginBottom: 4,
