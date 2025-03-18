@@ -43,6 +43,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components2024/Toast';
 import { dappService } from '@/core/services';
 import { createDappBySession } from '@/core/apis/dapp';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl2::error]', ...info);
@@ -388,7 +389,7 @@ const DappWebViewControl2 = React.forwardRef<
             injectedJavaScript: PATCH_ANCHOR_TARGET,
           })}
           onNavigationStateChange={webviewActions.onNavigationStateChange}
-          webviewDebuggingEnabled={__DEV__}
+          webviewDebuggingEnabled={isNonPublicProductionEnv}
           onLoadStart={nativeEvent => {
             webviewProps?.onLoadStart?.(nativeEvent);
             onLoadStart(nativeEvent);
