@@ -440,6 +440,13 @@
         "listAsset": "資産をリストする",
         "title": "資産の順序",
         "receiveAsset": "資産を受け取る"
+      },
+      "safeTx": {
+        "selfHostConfirm": {
+          "title": "Rabby の Safe Service に切り替える",
+          "content": "Safe APIは利用できません。Rabbyによって展開されたSafeサービスに切り替えて、Safeを機能させ続けてください。<1></1><2>すべてのSafe署名者はトランザクションを承認するためにRabby Walletを使用する必要があります。<2>",
+          "button": "OK"
+        }
       }
     },
     "sendNFT": {
@@ -688,7 +695,12 @@
           "$unknown": "不明",
           "slow": "ノーマル"
         }
-      }
+      },
+      "noSupportBtns": {
+        "confirm": "進む",
+        "cancel": "キャンセル"
+      },
+      "noSupprotTokenForDex": "このトークンはこの取引所でサポートされていない可能性があります。損失を避けるために、事前に確認してください。"
     },
     "swap": {
       "hidden-no-quote-rates_other": "{{count}} のレートが利用できません。",
@@ -802,7 +814,8 @@
         "bridge": "Bridge",
         "queue": "Queue",
         "send": "送信",
-        "websites": "ウェブサイト"
+        "websites": "ウェブサイト",
+        "search": "Search Token"
       }
     },
     "nextComponent": {
@@ -955,6 +968,10 @@
         "selectedCustom": "TokenはRabbyにリストされていません。トークンリストにカスタムで追加しました。",
         "notSelectedCustom": "トークンはRabbyにリストされていません。スイッチをオンにすると、トークンリストに追加されます。",
         "send": "送信"
+      },
+      "offlineChain": {
+        "chain": "{{chain}}は間もなく統合されなくなります。",
+        "tips": "{{chain}}チェーンは{{date}}に統合されません。あなたの資産に影響はありませんが、総残高には含まれません。それらにアクセスするには、「設定」でカスタムネットワークとして追加する必要があります。"
       }
     },
     "securityEngine": {
@@ -1309,7 +1326,9 @@
         "invalidAmount": "500 未満でなければなりません",
         "zeroInvalidAmount": "金額はゼロにできません",
         "title": "預け入れ",
-        "desc": "追加料金なしでRabbyのDeBank L2アカウントに預け入れ—いつでも引き出し可能。"
+        "desc": "追加料金なしでRabbyのDeBank L2アカウントに預け入れ—いつでも引き出し可能。",
+        "applePayDesc": "${{amount}} Apple Pay手数料が含まれています。出金不可",
+        "googlePayDesc": "${{ amount }} の Google Pay 手数料が含まれています。引き出しはできません。"
       },
       "paymentAddressPopup": {
         "title": "支払いアドレスを選択",
@@ -1343,7 +1362,33 @@
       },
       "withdraw": "出金",
       "gasExceed": "GasAccountの残高は$1000を超えることはできません。",
-      "noBalance": "残高がないため、引き出せません。"
+      "noBalance": "残高がないため、引き出せません。",
+      "depositPayPopup": {
+        "titleAndroid": "Google Payで購入",
+        "title": "Apple Payで購入",
+        "balance": "現在のGasAccount残高：",
+        "depositFailed": "入金に失敗しました",
+        "depositCanceled": "入金がキャンセルされました。"
+      },
+      "depositSelectPopup": {
+        "buyWith": "購入方法",
+        "depositToken": "Token で入金",
+        "depositTokenDesc": "追加手数料なし、即時引き出し",
+        "buyWithDesc": "30％の手数料、出金不可",
+        "desc": "すべてのチェーンでGas手数料を支払う",
+        "title": "GasAccountに入金"
+      },
+      "gasAccountList": {
+        "gasAccountBalance": "GasAccount 残高",
+        "balance": "残高",
+        "address": "住所"
+      },
+      "switchAccount": "GasAccount を変更",
+      "depositSuccess": "入金が成功しました",
+      "depositCanceled": "入金がキャンセルされました",
+      "loginFailed": "ログインに失敗しました",
+      "loginSuccess": "ログイン成功",
+      "withdrawDisabledIAP": "引き出しは無効になっています。これは、残高に法定通貨が含まれており、これを引き出すことができないためです。トークン残高の引き出しについては、サポートにお問い合わせください。"
     },
     "customRpc": {
       "closed": "クローズド",
@@ -1371,7 +1416,9 @@
         "Nft": "NFT",
         "Defi": "DeFi",
         "Token": "トークン",
-        "NoData": "{{name}}がありません"
+        "NoData": "{{name}}がありません",
+        "totalChain_other": "合計 {{count}} Chains",
+        "totalChain_one": "合計 {{count}} チェーン"
       },
       "emptyToken": {
         "receiveHeader": "暗号を受け取る",
@@ -1379,6 +1426,9 @@
         "buyBody": "デビットカードまたは銀行口座を使用して暗号を購入します。",
         "receiveBody": "別のアドレスからトークンを転送します。",
         "title": "ウォレットに資金を入れる"
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "receiveAddressList": {
@@ -1477,7 +1527,28 @@
         "pin_success": "ピン留めが成功しました",
         "unfold_success": "正常に展開されました",
         "fold_success": "正常に折りたたみました。"
-      }
+      },
+      "SeeMore": "もっと見る",
+      "ListedBy": "掲載者",
+      "BridgeProvider": "ブリッジプロバイダー",
+      "IssuedBy": "発行者",
+      "Mybalance": "マイバランス",
+      "Defi": "DeFi",
+      "fdv": "FDV",
+      "NoIssuer": "発行者情報は利用できません。",
+      "Info": "情報",
+      "noTransactions": "取引なし",
+      "NoListedSite": "リスト情報は利用できません",
+      "OriginalToken": "Original Token",
+      "TokenName": "トークン名",
+      "SupportedExchanges": "対応している取引所",
+      "IssuerWebsite": "Issuer's Website",
+      "Transaction": "トランザクション",
+      "fdvTitle": "FDV とは何ですか?",
+      "BridgeIssue": "サードパーティによるブリッジトークン",
+      "OriginIssue": "このブロックチェーンでネイティブに発行されました",
+      "NoSupportedExchanges": "サポートされている取引所はありません。",
+      "fdvContent": "発行済みの最大供給量に基づく時価総額。完全希釈後の評価（FDV）＝価格 × 最大供給量。最大供給量が不明の場合、FDV ＝ 価格 × 総供給量。最大供給量と総供給量の両方が未定義または無限の場合、FDV は表示されません。"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -1558,17 +1629,26 @@
     },
     "search": {
       "header": {
-        "placeHolder": "検索"
+        "placeHolder": "検索",
+        "searchPlaceHolder": "トークン名 / アドレスを検索"
       },
       "sectionHeader": {
         "Defi": "DeFi",
         "NFT": "NFT",
-        "token": "トークン"
+        "token": "トークン",
+        "AllChains": "すべてのチェーン"
       },
       "searchWeb": {
         "searchTips": "ウェブを検索する",
         "title": "すべての結果",
-        "noResult": "「No Results for」の検索結果はありません。"
+        "noResult": "「No Results for」の検索結果はありません。",
+        "noResults": "検索結果なし",
+        "searching": "の結果"
+      },
+      "tokenItem": {
+        "Issuedby": "発行者",
+        "verifyDangerTips": "これは詐欺トークンです",
+        "scamWarningTips": "これは低品質のトークンであり、詐欺の可能性があります。"
       }
     },
     "createPassword": {
@@ -1667,6 +1747,49 @@
     },
     "eip7702": {
       "alert": "EIP-7702はまだサポートされていません"
+    },
+    "sendPoly": {
+      "modals": {
+        "importedAddress": "インポートされたアドレス",
+        "addAddress": "新しいアドレス",
+        "recentAddress": "最近の送信先住所",
+        "header": "アドレスをホワイトリストに追加",
+        "content": "アドレスの追加方法を選択してください。"
+      },
+      "enterAddress": "アドレスを入力",
+      "emptyWhitelistBtn": "今すぐ追加",
+      "emptyWhitelistHeader": "ホワイトリストアドレスを追加",
+      "sendToSafeAddress": "安全なアドレスに送信",
+      "sendToWatchAddress": "ウォッチオンリーアドレスに送信",
+      "emptyWhitelistContent": "信頼できるアドレスをホワイトリストに追加して高速転送を実現 - 次回からは確認が不要です",
+      "emptyWhitelistTip": "まだホワイトリストに登録されたアドレスはありません。",
+      "whitelistTitle": "私のホワイトリストアドレス",
+      "sendToImportedAddress": "インポートしたアドレスに送信"
+    },
+    "confirmAddress": {
+      "risks": {
+        "noSend": "過去180日間、このアドレスに資金を送っていません。続行するかどうかを確認してください。",
+        "scamAddress": "受信者のアドレスは、Rabby によってフラグが立てられた詐欺アドレスです。",
+        "contractAddress": "受取人のアドレスはコントラクトアドレスであり、資金損失の可能性があります。",
+        "dexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。"
+      },
+      "brandNameTail": "アドレス",
+      "dexNameTail": "入金アドレス",
+      "addToWhitelist": "ホワイトリストに追加",
+      "tipForWhiteList": "ホワイトリストに追加すると、次回は確認なしで高速転送が可能です。"
+    },
+    "selectAddress": {
+      "selectSafeAddress": "Safeアドレスから選択",
+      "selectWatchAddress": "ウォッチ専用アドレスから選択"
+    },
+    "whitelist": {
+      "addToWhitelist": "ホワイトリストに追加",
+      "addSuccessful": "アドレスがホワイトリストに追加されました",
+      "confirm": "確認",
+      "alreadyAdded": "すでにホワイトリストに追加されています。",
+      "removeWhitelist": "ホワイトリストから削除",
+      "cancel": "キャンセル",
+      "confirmPassword": "パスワードを入力して確認してください"
     }
   },
   "global": {
@@ -1834,7 +1957,11 @@
         "desc": "追加料金なしでRabbyのDeBank L2アカウントに入金し、いつでも引き出せます。",
         "selectToken": "トークンを選択して入金",
         "token": "トークン"
-      }
+      },
+      "depositWithPay": "で購入",
+      "depositWithPayDesc": "30% 手数料、引き出し不可",
+      "depositWithTokenDesc": "追加料金なし、即時引き出し",
+      "depositWithToken": "Tokenで入金"
     },
     "AuthenticationModals": {
       "biometrics": {
