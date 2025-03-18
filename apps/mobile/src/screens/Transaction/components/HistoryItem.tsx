@@ -33,6 +33,7 @@ import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { HistoryItemTokenArea } from './HistoryItemTokenArea';
+import { getTokenSymbol } from '@/utils/token';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -69,45 +70,25 @@ export const HistoryItem = React.memo(
       return getHistoryItemType(data);
     }, [data]);
 
-    const { formatToken, isNft } = useMemo(() => {
-      const cate = formatType;
-      const isDoubleToken =
-        cate === HistoryItemCateType.Swap ||
-        cate === HistoryItemCateType.Bridge;
-      if (isDoubleToken) {
-        const send = data.sends[0] || {};
-        const receive = data.receives[0] || {};
-        const sendToken =
-          tokenDict[send?.token_id] ||
-          tokenDict[fetchHistoryTokenUUId(send.token_id, data.chain)];
-        const receiveToken =
-          tokenDict[receive?.token_id] ||
-          tokenDict[fetchHistoryTokenUUId(receive.token_id, data.chain)];
+    const tokenApproveData = useMemo(() => {
+      const res: TokenChangeDataItem[] = [];
 
-        return {
-          formatToken: [sendToken, receiveToken],
-          isNft: false,
-        };
-      } else {
-        const isApprove =
-          cate === HistoryItemCateType.Approve ||
-          cate === HistoryItemCateType.Revoke;
-        const commonItem =
-          cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
-
-        const tokenId = isApprove
-          ? (data.token_approve?.token_id as string)
-          : commonItem?.token_id;
-        const tokenIsNft = tokenId?.length === 32;
-        const tokenUUID = `${data.chain}_token:${tokenId}`;
-        const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-
-        return {
-          formatToken: token,
-          isNft: tokenIsNft,
-        };
+      if (!data.token_approve?.token_id) {
+        return res;
       }
-    }, [data, tokenDict, formatType]);
+
+      const tokenId = data.token_approve?.token_id || '';
+      const tokenUUID = `${data.chain}_token:${tokenId}`;
+      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+      res.push({
+        amount: data.token_approve?.value!,
+        token,
+        token_id: tokenId,
+        type: 'approve',
+      });
+
+      return res;
+    }, [data, tokenDict]);
 
     const formatTitle = useMemo(() => {
       switch (formatType) {
@@ -122,9 +103,17 @@ export const HistoryItem = React.memo(
           return t('page.transactions.itemTitle.Bridge');
 
         case HistoryItemCateType.Approve:
-          return t('page.transactions.itemTitle.Approve');
+          return (
+            t('page.transactions.itemTitle.Approve') +
+            ' ' +
+            ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+          );
         case HistoryItemCateType.Revoke:
-          return t('page.transactions.itemTitle.Revoke');
+          return (
+            t('page.transactions.itemTitle.Revoke') +
+            ' ' +
+            ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+          );
         case HistoryItemCateType.Contract:
           return t('page.transactions.itemTitle.Contract');
         case HistoryItemCateType.Cancel:
@@ -138,19 +127,11 @@ export const HistoryItem = React.memo(
             ? ellipsisOverflowedText(data.tx?.name, 15)
             : t('page.transactions.itemTitle.Default');
       }
-    }, [formatType, data, t]);
-
-    const projectObj = useMemo(() => {
-      return data?.project_id ? projectDict[data.project_id] : undefined;
-    }, [data, projectDict]);
+    }, [formatType, data, t, tokenApproveData]);
 
     const formatDescribe = useMemo(() => {
       const FromText = t('page.swap.from') + ' ';
       const ToText = t('page.swap.to') + ' ';
-      const projectName = data?.project_id
-        ? projectDict[data?.project_id]?.name
-        : '';
-
       let address = '';
       switch (formatType) {
         case HistoryItemCateType.Send:
@@ -200,7 +181,7 @@ export const HistoryItem = React.memo(
           <Text style={styles.describeText}>{address}</Text>
         </View>
       );
-    }, [formatType, data, chainItem, projectDict, t, styles.describeText]);
+    }, [formatType, data, chainItem, t, styles.describeText]);
 
     const navigation = useRabbyAppNavigation();
     const hanldeNavigateDetail = useCallback(() => {
@@ -256,26 +237,6 @@ export const HistoryItem = React.memo(
       return res;
     }, [data, tokenDict]);
 
-    const tokenApproveData = useMemo(() => {
-      const res: TokenChangeDataItem[] = [];
-
-      if (!data.token_approve?.token_id) {
-        return res;
-      }
-
-      const tokenId = data.token_approve?.token_id || '';
-      const tokenUUID = `${data.chain}_token:${tokenId}`;
-      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-      res.push({
-        amount: data.token_approve?.value!,
-        token,
-        token_id: tokenId,
-        type: 'approve',
-      });
-
-      return res;
-    }, [data, tokenDict]);
-
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (
         <TouchableOpacity
@@ -295,18 +256,6 @@ export const HistoryItem = React.memo(
             isScam || isSmallUsdTx ? styles.cardGray : null,
           ]}>
           <View style={styles.cardBody}>
-            {/* <TxInterAddressExplain
-            style={[
-              styles.txInterAddressExplain,
-              data?.cate_id === 'approve' &&
-                styles.txInterAddressExplainApprove,
-            ]}
-            data={data}
-            projectDict={projectDict}
-            tokenDict={tokenDict}
-            cateDict={cateDict}
-            isScam={isScam}
-          /> */}
             <View
               style={[
                 styles.leftContent,
@@ -314,15 +263,13 @@ export const HistoryItem = React.memo(
                   width: noNeedTokenChangeType ? '95%' : '50%',
                 },
               ]}>
-              {
-                <HistoryItemTokenArea
-                  type={formatType as HistoryItemCateType}
-                  // token={formatToken}
-                  tokenChangeData={tokenChangeData}
-                  // isNft={isNft}
-                  tokenApproveData={tokenApproveData}
-                />
-              }
+              <HistoryItemTokenArea
+                type={formatType as HistoryItemCateType}
+                // token={formatToken}
+                tokenChangeData={tokenChangeData}
+                // isNft={isNft}
+                tokenApproveData={tokenApproveData}
+              />
               <View style={styles.textBox}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
@@ -333,9 +280,7 @@ export const HistoryItem = React.memo(
                   )}
                   <TxStatusItem status={data.tx?.status ?? 1} />
                 </View>
-                {/* <Text style={styles.describeText} numberOfLines={1}> */}
                 {formatDescribe}
-                {/* </Text> */}
               </View>
             </View>
             <TxChange
@@ -343,22 +288,6 @@ export const HistoryItem = React.memo(
               style={styles.txChange}
             />
           </View>
-
-          {/* {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
-          <>
-            <View style={styles.divider} />
-            <View style={styles.cardFooter}>
-              {data.tx && data.tx?.eth_gas_fee ? (
-                <Text style={styles.gas}>
-                  Gas: {numberWithCommasIsLtOne(data.tx?.eth_gas_fee, 2)}{' '}
-                  {chainItem?.nativeTokenSymbol} ($
-                  {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
-                </Text>
-              ) : null}
-              {isFailed ? <Text style={styles.failed}>Failed</Text> : null}
-            </View>
-          </>
-        ) : null} */}
         </View>
       </TouchableOpacity>
     );
@@ -408,11 +337,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   titleText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   describeText: {
     color: colors2024['neutral-secondary'],

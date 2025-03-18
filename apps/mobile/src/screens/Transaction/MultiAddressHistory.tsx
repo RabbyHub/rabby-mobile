@@ -152,20 +152,18 @@ function History({
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const [localHistoryList, _historyList, swapList, buyList] =
-        await Promise.all([
-          LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
-            addresses,
-            isFirst ? 20 : 10000,
-          ),
-          HistoryItemEntity.getAllHistoryItemSortedByTime(
-            addresses,
-            isFirst ? 50 : 10000,
-            isFirst, // first not show scam tx
-          ),
-          SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-          BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-        ]);
+      const [localHistoryList, _historyList, buyList] = await Promise.all([
+        LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
+          addresses,
+          isFirst ? 20 : 10000,
+        ),
+        HistoryItemEntity.getAllHistoryItemSortedByTime(
+          addresses,
+          isFirst ? 50 : 10000,
+          isFirst, // first not show scam tx
+        ),
+        BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
+      ]);
 
       const historyList: HistoryItemEntity[] = unionBy(
         localHistoryList.concat(_historyList),
@@ -187,7 +185,6 @@ function History({
           ...ensureHistoryListItemFromDb(item),
           isLocalBuy: !!localBuyItem,
           buyDetails: localBuyItem,
-          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
           isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
           tokenDict,
           projectDict,

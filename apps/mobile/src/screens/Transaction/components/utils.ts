@@ -24,32 +24,33 @@ export function getHistoryItemType(
   if (data.historyItemCateType) {
     return data.historyItemCateType;
   }
-  if (data.cate_id) {
-    switch (data.cate_id) {
-      case 'receive':
-        return HistoryItemCateType.Recieve;
-      case 'send':
-        return HistoryItemCateType.Send;
-      case 'cancel':
-        return HistoryItemCateType.Cancel;
-      case 'approve':
-        if (!data.token_approve?.value) {
-          return HistoryItemCateType.Revoke;
-        }
-
-        return HistoryItemCateType.Approve;
-      default:
-        return HistoryItemCateType.UnKnown;
+  if (data.cate_id === 'approve') {
+    if (!data.token_approve?.value) {
+      return HistoryItemCateType.Revoke;
+    } else {
+      return HistoryItemCateType.Approve;
     }
-  } else {
-    // todo revoke  bridge  contract
-    const isSwap = data.isLocalSwap; // need filter in swap history
-    if (isSwap) {
-      return HistoryItemCateType.Swap;
-    }
-
-    return HistoryItemCateType.UnKnown;
   }
+
+  if (data.cate_id === 'cancel') {
+    return HistoryItemCateType.Cancel;
+  }
+
+  const receives = data.receives;
+  const sends = data.sends;
+  if (receives?.length === 1 && sends?.length === 1) {
+    return HistoryItemCateType.Swap;
+  }
+
+  if (receives?.length === 1 && sends?.length === 0) {
+    return HistoryItemCateType.Recieve;
+  }
+
+  if (receives?.length === 0 && sends?.length === 1) {
+    return HistoryItemCateType.Send;
+  }
+
+  return HistoryItemCateType.UnKnown;
 }
 
 export function getApproveTokeName(data: HistoryDisplayItem): string {

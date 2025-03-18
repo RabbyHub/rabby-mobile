@@ -23,7 +23,7 @@ import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { SwapRequireData } from '@rabby-wallet/rabby-action';
+import { ReceiveTokenItem, SwapRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +47,11 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   const navigation = useRabbyAppNavigation();
   const { actionData, requireData, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
-    const actionData = maxGasTx.action!.actionData.swap!;
+    const actionData = (maxGasTx.action!.actionData.swap ||
+      maxGasTx.action!.actionData.wrapToken ||
+      maxGasTx.action!.actionData.crossToken ||
+      maxGasTx.action!.actionData.crossSwapToken ||
+      maxGasTx.action!.actionData.unWrapToken)!;
     const requireData = maxGasTx.action?.requiredData as SwapRequireData;
 
     const chain =
@@ -99,6 +103,9 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     });
   });
 
+  const recieveToken: ReceiveTokenItem =
+    actionData.minReceive || actionData.receiveToken;
+
   if (!chain) {
     return null;
   }
@@ -129,17 +136,20 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.toTokenBox]}
-          onPress={() => handleGotoDetail(actionData.minReceive)}>
+          onPress={() => handleGotoDetail(recieveToken)}>
           <AssetAvatar
-            logo={actionData.minReceive?.logo_url}
+            logo={recieveToken?.logo_url}
             size={42}
-            chain={actionData.minReceive?.chain}
+            chain={recieveToken?.chain}
             chainSize={16}
           />
           <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList]}>
-              {'+'} {formatTokenAmount(actionData.minReceive.amount)}{' '}
-              {getTokenSymbol(actionData.minReceive as TokenItem)}
+              {'+'}{' '}
+              {formatTokenAmount(
+                recieveToken.amount || recieveToken.min_amount,
+              )}{' '}
+              {getTokenSymbol(recieveToken as TokenItem)}
             </Text>
             <RcIconRightCC
               color={colors2024['green-default']}

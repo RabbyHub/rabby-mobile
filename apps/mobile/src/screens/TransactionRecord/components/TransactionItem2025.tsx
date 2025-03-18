@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
@@ -49,10 +50,14 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
-import { getAlianName } from '@/core/apis/contact';
+import { getAlianName, getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { ellipsisAddress } from '@/utils/address';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {
@@ -104,7 +109,9 @@ export const TransactionItem = ({
     if (
       data.maxGasTx.action?.actionData.wrapToken ||
       data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap
+      data.maxGasTx.action?.actionData.swap ||
+      data.maxGasTx.action?.actionData.crossToken ||
+      data.maxGasTx.action?.actionData.crossSwapToken
     ) {
       return HistoryItemCateType.Swap;
     }
@@ -130,65 +137,151 @@ export const TransactionItem = ({
       return HistoryItemCateType.Cancel;
     }
 
-    // if (data.txs?.[0]?.$ctx.ga.category === 'Bridge') {
-    //   return HistoryItemCateType.Bridge;
-    // }
+    const balance_change = data.maxGasTx?.explain?.balance_change;
+    const balance_change_version =
+      data.maxGasTx?.explain?.pre_exec_version || 'v0';
+    if (balance_change && balance_change_version !== 'v0') {
+      const {
+        receive_token_list,
+        receive_nft_list,
+        send_token_list,
+        send_nft_list,
+      } = balance_change;
+      const noNft =
+        receive_nft_list?.length === 0 && send_nft_list?.length === 0;
+      const noToken =
+        receive_token_list?.length === 0 && send_token_list?.length === 0;
+      const noSend =
+        send_token_list?.length === 0 && send_nft_list?.length === 0;
+      const noReceive =
+        receive_token_list?.length === 0 && receive_nft_list?.length === 0;
+      if (
+        receive_token_list?.length === 1 &&
+        send_token_list?.length === 1 &&
+        noNft
+      ) {
+        return HistoryItemCateType.Swap;
+      }
+      if (
+        (receive_token_list?.length === 1 || receive_nft_list?.length === 1) &&
+        noSend
+      ) {
+        return HistoryItemCateType.Recieve;
+      }
+      if (
+        (send_nft_list?.length === 1 || send_token_list?.length === 1) &&
+        noReceive
+      ) {
+        return HistoryItemCateType.Send;
+      }
+    }
 
     return HistoryItemCateType.UnKnown;
   }, [data]);
 
-  const { sendToken, receiveToken, isNft, approveToken } = useMemo(() => {
+  const { tokenChangeData, tokenApproveData } = useMemo(() => {
+    const resToken: TokenChangeDataItem[] = [];
+    const resApprove: TokenChangeDataItem[] = [];
+    const actionData = data.maxGasTx?.action?.actionData;
+    if (!actionData) {
+      return {
+        tokenChangeData: resToken,
+        tokenApproveData: resApprove,
+      };
+    }
+
     switch (formatType) {
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
-
-        return {
-          sendToken: acData?.token!,
-          isNft: false,
-        };
+        resToken.push({
+          token: acData?.token!,
+          amount: acData?.token?.amount!,
+          type: 'send',
+          price: acData?.token?.price,
+          token_id: acData?.token?.id!,
+        });
+        break;
       case HistoryItemCateType.Swap:
-        const actionData =
-          data.maxGasTx?.action?.actionData.swap ||
-          data.maxGasTx?.action?.actionData.unWrapToken ||
-          data.maxGasTx?.action?.actionData.wrapToken;
-        const send = actionData?.payToken!;
-        const receive = actionData?.receiveToken!;
-
-        return {
-          sendToken: send,
-          receiveToken: receive,
-          isNft: false,
-        };
+        const swapData = (actionData?.swap ||
+          actionData?.unWrapToken ||
+          actionData?.crossToken ||
+          actionData?.crossSwapToken ||
+          actionData?.wrapToken)!;
+        const send = swapData?.payToken!;
+        const receive =
+          'minReceive' in swapData
+            ? swapData.minReceive
+            : swapData?.receiveToken!;
+        resToken.push({
+          token: send!,
+          amount: send?.amount!,
+          type: 'send',
+          token_id: send?.id!,
+        });
+        resToken.push({
+          token: receive!,
+          amount: (receive?.amount || receive?.min_amount)!,
+          type: 'receive',
+          token_id: receive?.id!,
+        });
+        break;
+      case HistoryItemCateType.Approve:
       case HistoryItemCateType.Revoke: {
-        const reToken =
-          data.maxGasTx?.action?.actionData.revokeToken ||
-          data.maxGasTx?.action?.actionData.revokeNFT ||
+        const apData =
+          actionData?.revokeToken ||
+          actionData.approveToken ||
+          actionData.approveNFT ||
+          actionData?.revokeNFT ||
           // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
-          data.maxGasTx?.action?.actionData.revokePermit2;
-        const revokeToken = reToken?.token || reToken?.nft;
-
-        return {
-          approveToken: revokeToken!,
-          isNft: revokeToken?.id.length === 32,
-        };
-      }
-      case HistoryItemCateType.Approve: {
-        const apToken =
-          data.maxGasTx?.action?.actionData.approveToken ||
-          data.maxGasTx?.action?.actionData.approveNFT;
-
-        const approveTokenOrNft: TokenItem = apToken?.token || apToken?.nft;
-
-        return {
-          approveToken: approveTokenOrNft!,
-          isNft: approveTokenOrNft?.id.length === 32,
-        };
+          actionData?.revokePermit2;
+        const apToken: TokenItem = apData?.token || apData?.nft;
+        resApprove.push({
+          token: apToken!,
+          amount: apToken?.amount!,
+          type: 'approve',
+          token_id: apToken?.id!,
+        });
+        break;
       }
       default:
-        return {
-          isNft: false,
-        };
+        const balance_change = data.maxGasTx?.explain?.balance_change;
+        const balance_change_version =
+          data.maxGasTx?.explain?.pre_exec_version || 'v0';
+        if (balance_change && balance_change_version !== 'v0') {
+          const {
+            receive_token_list,
+            receive_nft_list,
+            send_token_list,
+            send_nft_list,
+          } = balance_change;
+          const reciceves = [...receive_token_list, ...receive_nft_list];
+          const sends = [...send_token_list, ...send_nft_list];
+          reciceves?.forEach(item => {
+            resToken.push({
+              token: item as TokenItem,
+              amount: item.amount,
+              type: 'receive',
+              token_id: item.id,
+              price: 'price' in item ? item.price : undefined,
+            });
+          });
+          sends?.forEach(item => {
+            resToken.push({
+              token: item as TokenItem,
+              amount: item.amount,
+              type: 'send',
+              token_id: item.id,
+              price: 'price' in item ? item.price : undefined,
+            });
+          });
+        }
+        break;
     }
+
+    return {
+      tokenChangeData: resToken,
+      tokenApproveData: resApprove,
+    };
   }, [data, formatType]);
 
   const formatTitle = useMemo(() => {
@@ -202,10 +295,17 @@ export const TransactionItem = ({
       //   return t('page.transactions.itemTitle.Bridge');
 
       case HistoryItemCateType.Approve:
-        return t('page.transactions.itemTitle.Approve');
-
+        return (
+          t('page.transactions.itemTitle.Approve') +
+          ' ' +
+          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+        );
       case HistoryItemCateType.Revoke:
-        return t('page.transactions.itemTitle.Revoke');
+        return (
+          t('page.transactions.itemTitle.Revoke') +
+          ' ' +
+          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+        );
       case HistoryItemCateType.Cancel:
         return t('page.transactions.itemTitle.Cancel');
       case HistoryItemCateType.UnKnown:
@@ -213,70 +313,45 @@ export const TransactionItem = ({
       default:
         return t('page.transactions.itemTitle.Default');
     }
-  }, [formatType, t]);
+  }, [formatType, t, tokenApproveData]);
 
   const formatDescribe = useMemo(() => {
-    const FromText = t('page.swap.from') + ' ';
     const ToText = t('page.swap.to') + ' ';
 
-    const requiredData = data.maxGasTx.action?.requiredData as SwapRequireData;
-    const projectName = requiredData.protocol?.name || '';
     const chain = findChain({ id: data.maxGasTx.chainId });
+    let address = '';
 
     switch (formatType) {
-      case HistoryItemCateType.Swap:
-        return chain?.name || t('page.transactions.detail.Unknown');
-
       case HistoryItemCateType.Send:
         const acData = data.txs?.[0]?.action?.actionData.send;
         const addr = acData?.to;
 
         if (!addr) {
-          return t('page.transactions.detail.Unknown');
+          address = t('page.transactions.detail.Unknown');
+        } else {
+          address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
         }
-
-        return ToText + (getAlianName(addr) || ellipsisOverflowedText(addr));
-      // case HistoryItemCateType.Recieve:
-      //   const isSend = formatType === HistoryItemCateType.Send;
-      //   const addr = isSend
-      //     ? data.sends[0].to_addr
-      //     : data.receives[0].from_addr;
-      //   return (
-      //     (isSend ? ToText : FromText) +
-      //     (getAliasName(addr) || ellipsisAddress(addr))
-      //   );
+        break;
+      case HistoryItemCateType.Cancel:
       case HistoryItemCateType.Revoke:
       case HistoryItemCateType.Approve:
-        const isApprove = formatType === HistoryItemCateType.Approve;
-        return projectName
-          ? isApprove
-            ? ToText + projectName
-            : FromText + projectName
-          : t('page.transactions.detail.Unknown');
-      // case HistoryItemCateType.Contract:
-      //   return FromText + chainItem?.name;
-      // case HistoryItemCateType.Cancel:
+      case HistoryItemCateType.Swap:
       default:
-        return t('page.transactions.detail.Unknown');
+        address = getAliasName(data.address) || ellipsisAddress(data.address);
+        break;
     }
-  }, [formatType, data, t]);
 
-  const formatSymbolName = useCallback(
-    token => {
-      const symbol = isNft ? '' : getTokenSymbol(token);
-
-      return isNft ? t('page.nft.title') : ellipsisOverflowedText(symbol, 6);
-    },
-    [isNft, t],
-  );
-
-  const sendsToken = useMemo(() => {
-    return [sendToken];
-  }, [sendToken]);
-
-  const recievesToken = useMemo(() => {
-    return [receiveToken];
-  }, [receiveToken]);
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <ChainIconImage
+          size={16}
+          chainEnum={chain?.enum}
+          isShowRPCStatus={true}
+        />
+        <Text style={styles.describeText}>{address}</Text>
+      </View>
+    );
+  }, [formatType, data, t, styles.describeText]);
 
   const navigation = useRabbyAppNavigation();
   const hanldeNavigateDetail = useCallback(() => {
@@ -291,36 +366,6 @@ export const TransactionItem = ({
     });
   }, [isForMultipleAdderss, navigation, canCancel, data, formatTitle]);
 
-  const approveTokenAmountStr = useMemo(() => {
-    const amount = approveToken?.amount;
-    if (!amount) {
-      return '';
-    } else {
-      if (isNft) {
-        return approveToken.amount;
-      } else {
-        return amount >= 1e9
-          ? t('page.transactions.detail.Unlimited')
-          : formatTokenAmount(amount);
-      }
-    }
-  }, [approveToken, isNft, t]);
-
-  const formatToken = useMemo(() => {
-    const tempArr = [sendToken!, receiveToken!, approveToken!].filter(
-      token => token,
-    );
-    if (tempArr.length === 0) {
-      return undefined;
-    }
-
-    if (tempArr.length === 1) {
-      return tempArr[0];
-    } else {
-      return tempArr;
-    }
-  }, [sendToken, receiveToken, approveToken]);
-
   useEffect(() => {
     if (!data.isPending) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
@@ -329,6 +374,16 @@ export const TransactionItem = ({
       isShowStatus && setShowSuccess(true);
     }
   }, [data]);
+
+  const noNeedTokenChangeType = useMemo(
+    () =>
+      [
+        HistoryItemCateType.Cancel,
+        HistoryItemCateType.Approve,
+        HistoryItemCateType.Revoke,
+      ].includes(formatType),
+    [formatType],
+  );
 
   return (
     <TouchableOpacity
@@ -339,11 +394,17 @@ export const TransactionItem = ({
           ? styles.cardGray
           : null,
       ]}>
-      <View style={styles.leftContent}>
-        <HistoryItemIcon
+      <View
+        style={[
+          styles.leftContent,
+          {
+            width: noNeedTokenChangeType ? '95%' : '50%',
+          },
+        ]}>
+        <HistoryItemTokenArea
           type={formatType as HistoryItemCateType}
-          token={formatToken}
-          isNft={isNft}
+          tokenChangeData={tokenChangeData}
+          tokenApproveData={tokenApproveData}
         />
         <View style={styles.textBox}>
           <View style={styles.titleBox}>
@@ -357,77 +418,10 @@ export const TransactionItem = ({
               status={1}
             />
           </View>
-          <Text style={styles.describeText} numberOfLines={1}>
-            {formatDescribe}
-          </Text>
+          {formatDescribe}
         </View>
       </View>
-
-      <View
-        style={[
-          styles.rightContent,
-          isCanceled || data.isPending || data.isFailed || data.isSubmitFailed
-            ? styles.cardGray
-            : null,
-        ]}>
-        {approveToken && (
-          <View style={styles.txChange}>
-            <Text
-              style={[styles.tokenText, styles.approveText]}
-              numberOfLines={1}>
-              {approveTokenAmountStr}
-            </Text>
-            <Text
-              style={[styles.tokenText, styles.approveText]}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {formatSymbolName(approveToken)}
-            </Text>
-          </View>
-        )}
-        {recievesToken.map(
-          (token, index) =>
-            token && (
-              <View key={index} style={styles.txChange}>
-                <Text style={[styles.tokenText]} numberOfLines={1}>
-                  {'+'}{' '}
-                  {isNft
-                    ? token.amount
-                    : formatTokenAmount(token.amount || token.min_amount)}
-                </Text>
-                <Text
-                  style={[styles.tokenText]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {formatSymbolName(token)}
-                </Text>
-              </View>
-            ),
-        )}
-        {sendsToken.map(
-          (token, index) =>
-            token && (
-              <View key={index} style={styles.txChange}>
-                <Text
-                  style={[
-                    styles.tokenText,
-                    styles.sendText,
-                    [...recievesToken, ...sendsToken].length === 1 &&
-                      styles.approveText,
-                  ]}
-                  numberOfLines={1}>
-                  {'-'} {isNft ? token.amount : formatTokenAmount(token.amount)}
-                </Text>
-                <Text
-                  style={[styles.tokenText, styles.sendText]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {formatSymbolName(token)}
-                </Text>
-              </View>
-            ),
-        )}
-      </View>
+      <TxChange tokenChangeData={tokenChangeData} style={styles.txChange} />
     </TouchableOpacity>
   );
 };
@@ -475,13 +469,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     flexDirection: 'row',
     gap: 6,
   },
-  txChange: { flexShrink: 0, flexDirection: 'row', gap: 4 },
+  txChange: { flexShrink: 0, maxWidth: '50%', minWidth: 0 },
   titleText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   describeText: {
     color: colors2024['neutral-secondary'],
