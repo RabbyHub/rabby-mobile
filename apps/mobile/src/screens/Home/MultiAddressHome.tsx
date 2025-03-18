@@ -17,13 +17,17 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import {
+  useGetBinaryMode,
+  useTheme2024,
+  useAppThemeConfig,
+} from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
@@ -83,6 +87,8 @@ import { FundYourWallet } from './FundYourWallet';
 import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useCexAccounts } from '@/hooks/useCexAccounts';
 
 const HeaderHeight = 24;
 
@@ -211,6 +217,7 @@ function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight, appThemeMode } = useTheme2024({
     getStyle,
   });
+  const appThemeConfig = useAppThemeConfig();
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const [historyCount, setHistoryCount] = useState<{
     success: number;
@@ -340,6 +347,7 @@ function MultiAddressHome(): JSX.Element {
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
+  useCexAccounts();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -475,7 +483,7 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-
+  const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressSearch = useCallback(() => {
     navigation.navigate(RootNames.StackHomeNonTab, {
       screen: RootNames.Search,
@@ -491,12 +499,7 @@ function MultiAddressHome(): JSX.Element {
       });
       switch (key) {
         case MultiHomeFeatTitle.Send:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSend,
-              params: {},
-            }),
-          );
+          navigateToSendPolyScreen(false);
           break;
         case MultiHomeFeatTitle.Receive:
           navigation.dispatch(
@@ -567,7 +570,12 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [handlePressSearch, navigation, toggleUseAllAccountsOnScene],
+    [
+      handlePressSearch,
+      navigateToSendPolyScreen,
+      navigation,
+      toggleUseAllAccountsOnScene,
+    ],
   );
 
   const handleClickPinAccount = useCallback(
@@ -590,6 +598,13 @@ function MultiAddressHome(): JSX.Element {
 
   const { bottom } = useSafeAreaInsets();
   const isDarkTheme = useGetBinaryMode() === 'dark';
+
+  useEffect(() => {
+    matomoRequestEvent({
+      category: 'ThemeMode',
+      action: `ThemeMode_${appThemeConfig}`,
+    });
+  }, [appThemeConfig]);
 
   return (
     <NormalScreenContainer2024
@@ -930,7 +945,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   badgeStyle: {
     // width: 20,
     // height: 20,
-    lineHeight: 20,
+    // lineHeight: 20,
   },
   headerText: {
     color: colors2024['neutral-title-1'],
@@ -1028,7 +1043,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colord(
       isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
     )
-      .alpha(0.89)
+      .alpha(IS_ANDROID ? 1 : 0.89)
       .toRgbString(),
   },
   pendingText: {

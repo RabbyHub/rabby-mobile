@@ -14,12 +14,18 @@ import {
   View,
 } from 'react-native';
 import { AliasNameEditView } from './AliasNameEditView';
-import { visibleAtom, accountAtom } from './useAliasNameEditModal';
+import {
+  visibleAtom,
+  accountAtom,
+  accountIconUriAtom,
+} from './useAliasNameEditModal';
 
 export const AliasNameEditModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
   const [visible, setVisible] = useAtom(visibleAtom);
   const [account] = useAtom(accountAtom);
+  const [iconUri] = useAtom(accountIconUriAtom);
+
   const [_, updateAliasName] = useAlias(account?.address || '');
   const [input, setInput] = React.useState(account?.aliasName || '');
   const [loading, setLoading] = React.useState(false);
@@ -56,6 +62,7 @@ export const AliasNameEditModal: React.FC = () => {
                 iconSize={66}
                 iconBorderRadius={16}
                 account={account}
+                accoutnIconUri={iconUri}
                 onChange={setInput}
               />
             )}

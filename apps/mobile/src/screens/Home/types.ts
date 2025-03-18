@@ -2,6 +2,7 @@ import {
   NFTItem,
   PortfolioItem,
   PortfolioItemToken,
+  CollectionList,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject } from './utils/project';
 // curve
@@ -97,7 +98,7 @@ export type CombineDefi = {
 
 export type CombineNft = {
   type: 'unfold_nft' | 'fold_nft';
-  data: NFTItem;
+  data: NFTItem | CollectionList;
 };
 
 export type ActionHeaderItem = {
@@ -109,8 +110,10 @@ export type ActionHeaderItem = {
     | 'toggle_defi_fold'
     | 'nft_header'
     | 'toggle_nft_fold'
-    | 'empty-token';
-  data?: null;
+    | 'empty-assets'
+    | 'empty-token'
+    | 'loading-skeleton';
+  data?: null | string;
 };
 
 export type ActionItem =

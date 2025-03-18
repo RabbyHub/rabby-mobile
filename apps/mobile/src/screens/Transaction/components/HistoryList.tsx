@@ -1,7 +1,7 @@
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { minBy, range } from 'lodash';
 import React from 'react';
-import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
@@ -65,7 +65,8 @@ export const HistoryList = ({
   }
 
   return (
-    <Animated.FlatList
+    <FlatList
+      removeClippedSubviews
       data={list}
       renderItem={renderItem}
       windowSize={5}

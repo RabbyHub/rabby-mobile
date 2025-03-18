@@ -1,7 +1,9 @@
 import { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
+import { createGetStyles2024 } from '@/utils/styles';
+import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
 
 export const PositionLoader = ({
   space,
@@ -41,6 +43,42 @@ export const PositionLoader = ({
     </>
   );
 };
+
+export const ItemLoader = memo(() => {
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={[styles.positionLoader]}>
+      <Skeleton style={styles.loading} width={40} height={40} circle />
+      <View style={styles.loaderList}>
+        <Skeleton style={styles.loading} height={20} circle />
+        <Skeleton style={styles.loading} width={144} height={18} circle />
+      </View>
+    </View>
+  );
+});
+
+const getStyle = createGetStyles2024(ctx => ({
+  positionLoader: {
+    height: ASSETS_ITEM_HEIGHT_NEW,
+    alignItems: 'center',
+    borderRadius: 16,
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 15,
+    gap: 12,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderTopColor: ctx.colors2024['neutral-line'],
+  },
+  loaderList: {
+    gap: 4,
+    flex: 1,
+  },
+  loading: {
+    backgroundColor: ctx.colors2024['neutral-bg-4'],
+  },
+}));
 
 export const NetWorthLoader = memo(() => {
   return (

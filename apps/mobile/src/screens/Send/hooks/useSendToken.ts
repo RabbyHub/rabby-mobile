@@ -27,25 +27,27 @@ import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
-import { formatPrice, formatSpeicalAmount } from '@/utils/number';
+import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
-  ARB_LIKE_L2_CHAINS,
   CAN_ESTIMATE_L1_FEE_CHAINS,
   CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS,
-  L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
-import { toast } from '@/components/Toast';
 import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
+import { naviReplace } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useNavigationState } from '@react-navigation/native';
+import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -80,6 +82,7 @@ const sendTokenScreenChainTokenAtom = atom({
 export function useSendTokenScreenChainToken() {
   const [chainToken, _setChainToken] = useAtom(sendTokenScreenChainTokenAtom);
   const { chainEnum, currentToken } = chainToken;
+  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
 
   const chainItem =
     useFindChain({
@@ -114,27 +117,28 @@ export function useSendTokenScreenChainToken() {
       isNativeToken,
     };
   }, [chainItem, currentToken?.id]);
-  const { putScreenState } = useSendTokenScreenState();
 
   const setChainEnum = useCallback(
     (chain: CHAINS_ENUM) => {
+      setRouteParams(pre => ({
+        ...pre,
+        chainEnum: chain,
+      }));
       putChainToken({ chainEnum: chain });
     },
-    [putChainToken],
+    [putChainToken, setRouteParams],
   );
 
   const setCurrentToken = useCallback(
     (token: TokenItem) => {
+      setRouteParams(pre => ({
+        ...pre,
+        tokenId: token.id,
+      }));
       putChainToken({ currentToken: token /* chainEnum: token.chain */ });
     },
-    [putChainToken],
+    [putChainToken, setRouteParams],
   );
-
-  const { currentTokenPrice } = useMemo(() => {
-    return {
-      currentTokenPrice: formatPrice(currentToken.price),
-    };
-  }, [currentToken]);
 
   return {
     putChainToken,
@@ -146,7 +150,6 @@ export function useSendTokenScreenChainToken() {
 
     currentToken,
     setCurrentToken,
-    currentTokenPrice,
   };
 }
 export type SendScreenState = {
@@ -372,21 +375,31 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 /**
  * @description only called once at top level
  */
-export function useSendTokenForm(toAddress?: string) {
+export function useSendTokenForm(
+  toAddress?: string,
+  isForMultipleAdderss = false,
+) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
   const { currentAccount } = useCurrentAccount();
+  const { switchAccountOnSelectedToken } =
+    useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
   const { chainEnum, isNativeToken, currentToken, putChainToken, chainItem } =
     useSendTokenScreenChainToken();
+  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
 
   const { sendTokenScreenState: screenState, putScreenState } =
     useSendTokenScreenState();
-
+  const multiNavParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.MultiSend)?.params,
+  );
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
+  const [isShowDepositeModeModal, setIsShowDepositeModeModal] = useState(false);
+  const [tmpToken, setTmpToken] = useState<TokenItem>();
 
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
@@ -916,13 +929,17 @@ export function useSendTokenForm(toAddress?: string) {
           tokenItem: result,
           currentAddress,
         });
+        setRouteParams(pre => ({
+          ...pre,
+          tokenId: id,
+        }));
         putChainToken({ currentToken: { ...result, tokenId: id } });
       }
       putScreenState({ isLoading: false });
 
       return result;
     },
-    [putChainToken, putScreenState, estimateGasOnChain],
+    [putScreenState, estimateGasOnChain, setRouteParams, putChainToken],
   );
 
   const handleCurrentTokenChange = useCallback(
@@ -944,6 +961,11 @@ export function useSendTokenForm(toAddress?: string) {
         chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
         currentToken: token,
       });
+      setRouteParams(pre => ({
+        ...pre,
+        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+        tokenId: token.id,
+      }));
       putScreenState({
         estimatedGas: 0,
       });
@@ -962,12 +984,62 @@ export function useSendTokenForm(toAddress?: string) {
     },
     [
       screenState.showGasReserved,
-      currentToken.chain,
       currentToken.id,
-      loadCurrentToken,
-      patchFormValues,
+      currentToken.chain,
       putChainToken,
+      setRouteParams,
       putScreenState,
+      patchFormValues,
+      loadCurrentToken,
+    ],
+  );
+
+  const checkCexSupport = useCallback(
+    async (token: TokenItem) => {
+      if (toAddress) {
+        const { desc } = await openapi.addrDesc(toAddress);
+        if (desc.cex?.id) {
+          const { support } = await openapi.depositCexSupport(
+            token.id,
+            token.chain,
+            desc.cex.id,
+          );
+          if (!support) {
+            setTmpToken(token);
+            setIsShowDepositeModeModal(true);
+            return;
+          }
+        }
+      }
+      if (!isForMultipleAdderss) {
+        handleCurrentTokenChange(token);
+      } else {
+        const { accountSwitchTo } = switchAccountOnSelectedToken({
+          token,
+          currentAccount,
+        });
+        if (!accountSwitchTo) {
+          handleCurrentTokenChange(token);
+        } else {
+          const currChainItem = findChainByServerID(token.chain);
+          naviReplace(RootNames.StackTransaction, {
+            screen: RootNames.MultiSend,
+            params: {
+              ...(multiNavParams || {}),
+              chainEnum: currChainItem?.enum,
+              tokenId: token.id,
+            },
+          });
+        }
+      }
+    },
+    [
+      currentAccount,
+      handleCurrentTokenChange,
+      isForMultipleAdderss,
+      multiNavParams,
+      switchAccountOnSelectedToken,
+      toAddress,
     ],
   );
 
@@ -1144,6 +1216,11 @@ export function useSendTokenForm(toAddress?: string) {
       const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
+      setRouteParams(pre => ({
+        ...pre,
+        chainEnum: val,
+        tokenId: chain.nativeTokenAddress,
+      }));
 
       putChainToken({
         chainEnum: val,
@@ -1191,10 +1268,11 @@ export function useSendTokenForm(toAddress?: string) {
     },
     [
       putScreenState,
+      setRouteParams,
       putChainToken,
-      loadCurrentToken,
       patchFormValues,
       handleFormValuesChange,
+      loadCurrentToken,
     ],
   );
 
@@ -1214,14 +1292,10 @@ export function useSendTokenForm(toAddress?: string) {
         isValidAddress(formValues.to) &&
         !screenState.balanceError &&
         new BigNumber(formValues.amount).gte(0) &&
-        !screenState.isLoading &&
-        (!whitelistEnabled ||
-          screenState.temporaryGrant ||
-          toAddressInWhitelist),
+        !screenState.isLoading,
     };
   }, [
     whitelist,
-    whitelistEnabled,
     isAddrOnContactBook,
     formValues.to,
     screenState,
@@ -1240,6 +1314,9 @@ export function useSendTokenForm(toAddress?: string) {
 
     currentToken,
     loadCurrentToken,
+    tmpToken,
+    setTmpToken,
+    checkCexSupport,
     handleCurrentTokenChange,
 
     handleGasLevelChanged,
@@ -1256,6 +1333,9 @@ export function useSendTokenForm(toAddress?: string) {
     whitelist,
     whitelistEnabled,
     computed,
+
+    isShowDepositeModeModal,
+    setIsShowDepositeModeModal,
   };
 }
 export function useSendTokenFormikContext() {
@@ -1275,7 +1355,6 @@ type InternalContext = {
     chainItem: Chain | null;
     currentToken: TokenItem | null;
     currentTokenBalance: string;
-    currentTokenPrice: string;
     whitelistEnabled: boolean;
     canSubmit: boolean;
     toAddressInWhitelist: boolean;
@@ -1291,6 +1370,7 @@ type InternalContext = {
   };
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
+    checkCexSupport: (token: TokenItem) => void;
     handleFieldChange: <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
@@ -1312,7 +1392,6 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     chainItem: null,
     currentToken: null,
     currentTokenBalance: '',
-    currentTokenPrice: '',
     whitelistEnabled: false,
     canSubmit: false,
     toAddressInWhitelist: false,
@@ -1328,6 +1407,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   },
   callbacks: {
     handleCurrentTokenChange: () => {},
+    checkCexSupport: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},

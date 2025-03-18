@@ -452,6 +452,13 @@
         "contractTrustValueTip": "信任值是指该合约所花费的总资产价值。信任值低可能表示风险或180天不活跃。",
         "title": "Token Approval",
         "flagByRabby": "由 Rabby 标记"
+      },
+      "safeTx": {
+        "selfHostConfirm": {
+          "content": "Safe API 无法使用。切换到由 Rabby 部署的 Safe 服务，以保持您的 Safe 功能正常。<1></1><2>所有 Safe 签署人必须使用 Rabby Wallet 来授权交易。</2>",
+          "button": "OK",
+          "title": "切换到 Rabby 的 Safe 服务"
+        }
       }
     },
     "activities": {
@@ -565,7 +572,12 @@
       "ContractAddress": "合约地址",
       "balanceError": {
         "insufficientBalance": "余额不足"
-      }
+      },
+      "noSupportBtns": {
+        "cancel": "取消",
+        "confirm": "继续"
+      },
+      "noSupprotTokenForDex": "该交易所可能不支持此代币。请在继续操作前检查以避免损失。"
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
@@ -693,7 +705,8 @@
         "swap": "交换",
         "gasAccount": "GasAccount",
         "dapps": "Dapps",
-        "approvals": "授权"
+        "approvals": "授权",
+        "search": "搜索 Token"
       }
     },
     "manageAddress": {
@@ -914,6 +927,10 @@
         "selectedCustom": "Token未被Rabby列出。您已通过自定义将其添加到代币列表。",
         "notSelectedCustom": "该 Token 未被 Rabby 列出。如果您打开开关，它将被添加到 token 列表中。",
         "notSupported": "该链上的代币不被支持"
+      },
+      "offlineChain": {
+        "chain": "{{chain}} 将很快不再被集成。",
+        "tips": "{{chain}} 链将在 {{date}} 不被集成。您的资产不会受到影响，但不会计入您的总余额。要访问它们，您可以在“设置”中将其添加为自定义网络。"
       }
     },
     "nextComponent": {
@@ -1406,7 +1423,9 @@
         "Nft": "NFT",
         "Defi": "DeFi",
         "Token": "Token",
-        "NoData": "没有 {{name}}"
+        "NoData": "没有 {{name}}",
+        "totalChain_one": "总计 {{count}} 条链",
+        "totalChain_other": "总共 {{count}} 条链"
       },
       "emptyToken": {
         "title": "为您的钱包注资",
@@ -1414,6 +1433,9 @@
         "buyHeader": "使用法币购买",
         "buyBody": "使用借记卡或银行账户购买加密货币。",
         "receiveHeader": "接收 Crypto"
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "miniSignFooterBar": {
@@ -1499,7 +1521,9 @@
         "paymentAddress": "支付地址",
         "selectToken": "选择 Token",
         "inSufficientTip1": "该地址的代币不足，请选择一个不同的地址。",
-        "followingTokenInSufficient": "以下代币余额不足"
+        "followingTokenInSufficient": "以下代币余额不足",
+        "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
+        "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现"
       },
       "paymentAddressPopup": {
         "title": "选择 Payment 地址",
@@ -1530,21 +1554,56 @@
       "withdrawConfirmModal": {
         "title": "已转入您的 DeBank L2 钱包",
         "button": "在 DeBank 上查看"
-      }
+      },
+      "depositPayPopup": {
+        "title": "使用 Apple Pay 购买",
+        "depositCanceled": "存款已取消",
+        "depositFailed": "存款失败",
+        "titleAndroid": "使用 Google Pay 购买",
+        "balance": "当前 GasAccount 余额："
+      },
+      "depositSelectPopup": {
+        "depositTokenDesc": "无额外费用，即时提款",
+        "buyWith": "使用购买",
+        "title": "存入GasAccount",
+        "buyWithDesc": "30% 手续费，不可提款",
+        "desc": "在所有链上支付 Gas 费用",
+        "depositToken": "使用 Token 存款"
+      },
+      "gasAccountList": {
+        "gasAccountBalance": "GasAccount 余额",
+        "address": "地址",
+        "balance": "余额"
+      },
+      "loginFailed": "登录失败",
+      "depositSuccess": "存款成功",
+      "depositCanceled": "存款已取消",
+      "switchAccount": "切换GasAccount",
+      "loginSuccess": "登录成功",
+      "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。"
     },
     "search": {
       "header": {
-        "placeHolder": "搜索"
+        "placeHolder": "搜索",
+        "searchPlaceHolder": "搜索代币名称 / 地址"
       },
       "searchWeb": {
         "title": "所有结果",
         "searchTips": "搜索网络",
-        "noResult": "未找到结果"
+        "noResult": "未找到结果",
+        "noResults": "没有结果",
+        "searching": "结果来自"
       },
       "sectionHeader": {
         "Defi": "DeFi",
         "token": "Tokens",
-        "NFT": "NFT"
+        "NFT": "NFT",
+        "AllChains": "所有链条"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "这是一个 scam token",
+        "Issuedby": "发行者：",
+        "scamWarningTips": "这是一种低质量的代币，可能是骗局。"
       }
     },
     "receiveAddressList": {
@@ -1577,7 +1636,28 @@
         "excludeBalance_success": "从余额中排除",
         "unfold_success": "展开成功",
         "unpin_success": "取消置顶成功"
-      }
+      },
+      "SeeMore": "查看更多",
+      "BridgeProvider": "Bridge Provider",
+      "Info": "信息",
+      "NoIssuer": "暂无发行人信息",
+      "Defi": "DeFi",
+      "IssuerWebsite": "发行方网站",
+      "Transaction": "交易",
+      "OriginIssue": "在此区块链上原生发行",
+      "ListedBy": "列出者",
+      "Mybalance": "我的余额",
+      "NoListedSite": "暂无上市信息",
+      "IssuedBy": "签发者",
+      "TokenName": "代币名称",
+      "fdv": "FDV",
+      "NoSupportedExchanges": "没有可用的受支持交易所",
+      "OriginalToken": "原生代币",
+      "SupportedExchanges": "支持的交易所",
+      "noTransactions": "没有交易",
+      "fdvTitle": "什么是 FDV？",
+      "BridgeIssue": "由第三方桥接的代币",
+      "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -1676,6 +1756,52 @@
       "title": "购买",
       "history": "Purchased History",
       "noQuote": "未找到报价：请尝试输入更高的数值。"
+    },
+    "eip7702": {
+      "alert": "EIP-7702尚未支持"
+    },
+    "sendPoly": {
+      "modals": {
+        "recentAddress": "最近发送地址",
+        "addAddress": "新地址",
+        "content": "选择您想要添加地址的方式：",
+        "header": "将地址添加到白名单中",
+        "importedAddress": "导入的地址"
+      },
+      "emptyWhitelistBtn": "立即添加",
+      "enterAddress": "输入地址",
+      "sendToSafeAddress": "发送至安全地址",
+      "emptyWhitelistHeader": "添加白名单地址",
+      "emptyWhitelistTip": "尚无白名单地址，",
+      "sendToImportedAddress": "发送到我的导入地址",
+      "sendToWatchAddress": "发送到仅观察地址",
+      "whitelistTitle": "我的白名单地址列表",
+      "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认"
+    },
+    "confirmAddress": {
+      "risks": {
+        "scamAddress": "接收地址是一个被 Rabby 标记的诈骗地址。",
+        "contractAddress": "收款地址是一个合约地址，可能导致资金损失",
+        "noSend": "过去180天内您未曾向此地址发送资金。请确认是否继续。",
+        "dexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。"
+      },
+      "brandNameTail": "地址",
+      "dexNameTail": "充值地址",
+      "addToWhitelist": "添加到白名单",
+      "tipForWhiteList": "将其添加到您的白名单中，以便快速转账，下次无需确认"
+    },
+    "selectAddress": {
+      "selectSafeAddress": "从 Safe 地址中选择",
+      "selectWatchAddress": "从仅观察地址中选择"
+    },
+    "whitelist": {
+      "cancel": "取消",
+      "confirm": "确认",
+      "addToWhitelist": "添加到白名单",
+      "confirmPassword": "请输入密码以确认",
+      "addSuccessful": "地址已添加到白名单",
+      "removeWhitelist": "从白名单中移除",
+      "alreadyAdded": "已添加到您的白名单"
     }
   },
   "component": {
@@ -1798,7 +1924,11 @@
         "amount": "金额",
         "desc": "您可以将您的GasAccount余额提取到您的DeBank L2钱包。登录您的DeBank L2钱包，根据需要将资金转移到支持的区块链。",
         "to": "至"
-      }
+      },
+      "depositWithTokenDesc": "无额外费用，立即提现",
+      "depositWithPay": "使用购买",
+      "depositWithPayDesc": "30% 费用，无提现",
+      "depositWithToken": "使用 Token 存款"
     },
     "ReserveGasPopup": {
       "title": "预留 Gas",

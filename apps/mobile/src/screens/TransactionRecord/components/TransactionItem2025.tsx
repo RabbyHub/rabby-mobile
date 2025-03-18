@@ -388,12 +388,7 @@ export const TransactionItem = ({
   return (
     <TouchableOpacity
       onPress={hanldeNavigateDetail}
-      style={[
-        styles.card,
-        data.isFailed || data.isSubmitFailed || data.isWithdrawed
-          ? styles.cardGray
-          : null,
-      ]}>
+      style={[styles.card, data.isFailed ? styles.cardGray : null]}>
       <View
         style={[
           styles.leftContent,

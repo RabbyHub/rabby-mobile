@@ -93,10 +93,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       excludeTokens = defaultExcludeTokens,
       type = 'send',
       placeholder,
-      hideChainIcon = true,
-      value,
-      loading = false,
-      tokenRender,
       useSwapTokenList = false,
       supportChains,
       searchPlaceholder,
@@ -379,7 +375,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     }, [accountInScreen]);
 
     const { t } = useTranslation();
-    const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+    const { styles } = useTheme2024({ getStyle });
     const [recentToTokens] = useSwapRecentToTokens();
 
     const recentDisplayToTokens = useMemo(() => {
@@ -537,7 +533,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       return (
         forScene === 'MakeTransactionAbout' &&
         ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-          (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
+          (RootNames.MultiSwap === ofScreen && type === 'swapFrom') ||
+          (RootNames.MultiSend === ofScreen && type === 'send'))
       );
     }, [forScene, ofScreen, currentAccount?.type, type]);
 
@@ -555,7 +552,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                     size={26}
                     chain={token.chain}
                     logo={token.logo_url}
-                    chainSize={0}
+                    chainSize={type === 'send' ? 12 : 0}
                   />
                   <Text numberOfLines={1} style={styles.tokenSymbol}>
                     {ellipsisOverflowedText(getTokenSymbol(token), 5)}
@@ -591,7 +588,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}
           supportChains={supportChains}
-          hideChainFilter={type === 'swapFrom' ? false : true}
+          hideChainFilter={
+            type === 'swapFrom' || type === 'send' ? false : true
+          }
         />
       </>
     );

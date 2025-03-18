@@ -208,7 +208,11 @@
         "title": "Abheben",
         "to": "Zu",
         "desc": "Sie können Ihr GasAccount-Guthaben auf Ihr DeBank L2 Wallet abheben. Melden Sie sich in Ihrem DeBank L2 Wallet an, um die Gelder bei Bedarf auf eine unterstützte Blockchain zu übertragen."
-      }
+      },
+      "depositWithToken": "Mit Token einzahlen",
+      "depositWithPayDesc": "30 % Gebühr, keine Abhebungen",
+      "depositWithTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
+      "depositWithPay": "Kaufen mit"
     }
   },
   "page": {
@@ -634,7 +638,14 @@
           "desc": "Transaktionen werden an den bezeichneten MEV-Knoten gesendet."
         }
       },
-      "l2GasEstimateTooltip": "Die Kostenschätzung für L2-Chain enthält nicht die L1-Gebühr. Die tatsächlichen Kosten werden höher sein als die aktuelle Schätzung."
+      "l2GasEstimateTooltip": "Die Kostenschätzung für L2-Chain enthält nicht die L1-Gebühr. Die tatsächlichen Kosten werden höher sein als die aktuelle Schätzung.",
+      "safeTx": {
+        "selfHostConfirm": {
+          "button": "OK",
+          "title": "Wechseln Sie zum Rabby Safe Service",
+          "content": "Safe API ist nicht verfügbar. Wechseln Sie zu dem von Rabby bereitgestellten Safe-Dienst, um Ihre Safe-Funktionen aufrechtzuerhalten. <1></1><2>Alle Safe-Unterzeichner müssen Rabby Wallet verwenden, um Transaktionen zu autorisieren.<2>"
+        }
+      }
     },
     "sendNFT": {
       "sendButton": "Senden"
@@ -732,7 +743,12 @@
       },
       "balanceError": {
         "insufficientBalance": "Unzureichendes Guthaben"
-      }
+      },
+      "noSupportBtns": {
+        "cancel": "Abbrechen",
+        "confirm": "Fortfahren"
+      },
+      "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden."
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -874,7 +890,8 @@
         "send": "Senden",
         "swap": "Tauschen",
         "gasAccount": "GasAccount",
-        "queue": "Warteschlange"
+        "queue": "Warteschlange",
+        "search": "Token suchen"
       }
     },
     "manageAddress": {
@@ -1101,6 +1118,10 @@
         "notSupported": "Das Token auf dieser Blockchain wird nicht unterstützt",
         "selectedCustom": "Token wird von Rabby nicht aufgeführt. Sie haben es manuell zur Token-Liste hinzugefügt.",
         "notSelectedCustom": "Token wird von Rabby nicht aufgeführt. Er wird zur Token-Liste hinzugefügt, wenn Sie ihn einschalten."
+      },
+      "offlineChain": {
+        "chain": "{{chain}} wird bald nicht mehr integriert.",
+        "tips": "{{chain}} Chain wird am {{date}} nicht integriert. Ihre Vermögenswerte werden nicht beeinträchtigt, aber nicht in Ihre Gesamtbilanz aufgenommen. Um auf sie zuzugreifen, können Sie es als benutzerdefiniertes Netzwerk unter \"Einstellungen\" hinzufügen."
       }
     },
     "signText": {
@@ -1552,7 +1573,9 @@
         "Nft": "NFT",
         "Token": "Token",
         "Defi": "DeFi",
-        "NoData": "Kein {{name}}"
+        "NoData": "Kein {{name}}",
+        "totalChain_one": "Insgesamt {{count}} Chain",
+        "totalChain_other": "Insgesamt {{count}} Chains"
       },
       "emptyToken": {
         "buyHeader": "Mit Fiat kaufen",
@@ -1560,6 +1583,9 @@
         "receiveBody": "Übertragen Sie Token von einer anderen Adresse.",
         "title": "Finanzieren Sie Ihr Wallet",
         "buyBody": "Kaufen Sie Krypto mit einer Debitkarte oder einem Bankkonto."
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "receiveAddressList": {
@@ -1608,7 +1634,9 @@
         "title": "Einzahlung",
         "inSufficientTip1": "Diese Adresse hat nicht genügend Tokens. Bitte wählen Sie eine andere Adresse.",
         "invalidAmount": "Muss unter 500 sein",
-        "desc": "Machen Sie eine Einzahlung auf Rabby's DeBank L2 Account ohne zusätzliche Gebühren – jederzeit abheben."
+        "desc": "Machen Sie eine Einzahlung auf Rabby's DeBank L2 Account ohne zusätzliche Gebühren – jederzeit abheben.",
+        "applePayDesc": "Beinhaltet eine ${{amount}} Apple Pay-Gebühr. Keine Abhebungen",
+        "googlePayDesc": "Beinhaltet eine ${{ amount }} Google Pay-Gebühr. Keine Abhebungen"
       },
       "paymentAddressPopup": {
         "title": "Zahlungsadresse auswählen",
@@ -1642,21 +1670,56 @@
       },
       "withdraw": "Abheben",
       "gasExceed": "GasAccount-Guthaben darf $1000 nicht überschreiten",
-      "noBalance": "Kein Kontostand zum Abheben"
+      "noBalance": "Kein Kontostand zum Abheben",
+      "depositPayPopup": {
+        "titleAndroid": "Mit Google Pay kaufen",
+        "balance": "Aktuelles GasAccount-Guthaben:",
+        "depositFailed": "Einzahlung fehlgeschlagen",
+        "depositCanceled": "Einzahlung abgebrochen",
+        "title": "Mit Apple Pay kaufen"
+      },
+      "depositSelectPopup": {
+        "depositToken": "Mit Token einzahlen",
+        "title": "Einzahlung auf GasAccount",
+        "buyWith": "Kaufen mit",
+        "desc": "Zahlen Sie Gasgebühren auf allen Chains",
+        "buyWithDesc": "30 % Gebühr, keine Abhebungen",
+        "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen"
+      },
+      "gasAccountList": {
+        "gasAccountBalance": "GasAccount-Guthaben",
+        "balance": "Kontostand",
+        "address": "Adresse"
+      },
+      "depositSuccess": "Einzahlung erfolgreich",
+      "loginFailed": "Anmeldung fehlgeschlagen",
+      "switchAccount": "Wechsel GasAccount",
+      "loginSuccess": "Anmeldung erfolgreich",
+      "depositCanceled": "Einzahlung Abgebrochen",
+      "withdrawDisabledIAP": "Abhebungen sind deaktiviert, da Ihr Guthaben Fiat-Funds enthält, die nicht abgehoben werden können. Kontaktieren Sie den Support, um Ihr Token-Guthaben abzuheben."
     },
     "search": {
       "sectionHeader": {
         "token": "Tokens",
         "NFT": "NFT",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "AllChains": "Alle Chains"
       },
       "header": {
-        "placeHolder": "Suche"
+        "placeHolder": "Suche",
+        "searchPlaceHolder": "Token Name / Address suchen"
       },
       "searchWeb": {
         "searchTips": "Im Web suchen",
         "noResult": "Keine Ergebnisse für",
-        "title": "Alle Ergebnisse"
+        "title": "Alle Ergebnisse",
+        "noResults": "Keine Ergebnisse",
+        "searching": "Ergebnisse für"
+      },
+      "tokenItem": {
+        "Issuedby": "Ausgestellt von",
+        "verifyDangerTips": "Dies ist ein Betrugstoken",
+        "scamWarningTips": "Dies ist ein minderwertiges Token und könnte ein Betrug sein。"
       }
     },
     "tokenDetail": {
@@ -1685,7 +1748,28 @@
         "unfold": "Entfalten",
         "Buy": "Kaufen",
         "all": "Alle"
-      }
+      },
+      "IssuedBy": "Ausgestellt von",
+      "fdv": "FDV",
+      "SupportedExchanges": "Unterstützte Börsen",
+      "TokenName": "Token Name",
+      "Info": "Info",
+      "noTransactions": "Keine Transaktionen",
+      "Transaction": "Transaktion",
+      "ListedBy": "Aufgelistet von",
+      "SeeMore": "Mehr anzeigen",
+      "NoSupportedExchanges": "Keine unterstützten Börsen verfügbar",
+      "fdvTitle": "Was ist FDV?",
+      "NoIssuer": "Keine Herausgeberinformationen verfügbar",
+      "BridgeProvider": "Bridge Provider",
+      "IssuerWebsite": "Website des Emittenten",
+      "BridgeIssue": "Von Dritten bereitgestellter Bridged-Token",
+      "Defi": "DeFi",
+      "OriginalToken": "Original Token",
+      "NoListedSite": "Keine Listing-Informationen verfügbar",
+      "Mybalance": "Mein Kontostand",
+      "OriginIssue": "Nativ auf dieser Blockchain ausgegeben",
+      "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt."
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -1797,6 +1881,52 @@
       "paymentProviderTips": "Dieser Anbieter unterstützt die folgenden Zahlungsmethoden:",
       "searchingQuote": "Suche nach Angeboten für Sie...",
       "noQuotePlaceholder": "Kein Angebot"
+    },
+    "eip7702": {
+      "alert": "EIP-7702 wird noch nicht unterstützt"
+    },
+    "sendPoly": {
+      "modals": {
+        "header": "Adresse zur Whitelist hinzufügen",
+        "addAddress": "Neue Adresse",
+        "recentAddress": "Letzte gesendete Adressen",
+        "content": "Wählen Sie aus, wie Sie eine Adresse hinzufügen möchten:",
+        "importedAddress": "Importierte Adresse"
+      },
+      "sendToImportedAddress": "An meine importierten Adressen senden",
+      "emptyWhitelistBtn": "Jetzt hinzufügen",
+      "sendToSafeAddress": "An sichere Adressen senden",
+      "sendToWatchAddress": "An Watch-only-Adressen senden",
+      "emptyWhitelistTip": "Noch keine Whitelist-Adressen vorhanden.",
+      "emptyWhitelistHeader": "Whitelist-Adresse hinzufügen",
+      "whitelistTitle": "Meine Whitelist-Adressen",
+      "enterAddress": "Adresse eingeben",
+      "emptyWhitelistContent": "Fügen Sie vertrauenswürdige Adressen zur Whitelist für schnelle Überweisungen hinzu – beim nächsten Mal ist keine Bestätigung erforderlich"
+    },
+    "confirmAddress": {
+      "risks": {
+        "scamAddress": "Die Empfängeradresse ist eine von Rabby markierte Betrugsadresse.",
+        "noSend": "Sie haben in den letzten 180 Tagen keine Gelder an diese Adresse gesendet. Bitte bestätigen Sie, ob Sie fortfahren möchten.",
+        "contractAddress": "Die Empfängeradresse ist eine Vertragsadresse, was möglicherweise zu einem Verlust von Geldern führen kann",
+        "dexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
+      },
+      "addToWhitelist": "Zur Whitelist hinzufügen",
+      "brandNameTail": "Adresse",
+      "dexNameTail": "Einzahlungsadresse",
+      "tipForWhiteList": "Fügen Sie Ihrer Whitelist für schnelle Überweisungen hinzu, keine Bestätigung beim nächsten Mal erforderlich"
+    },
+    "selectAddress": {
+      "selectSafeAddress": "Aus Safe-Adressen auswählen",
+      "selectWatchAddress": "Aus Watch-only-Adressen auswählen"
+    },
+    "whitelist": {
+      "addToWhitelist": "Zur Whitelist hinzufügen",
+      "removeWhitelist": "Von der Whitelist entfernen",
+      "cancel": "Abbrechen",
+      "confirm": "Bestätigen",
+      "alreadyAdded": "Bereits zur Whitelist hinzugefügt",
+      "addSuccessful": "Adresse zur Whitelist hinzugefügt",
+      "confirmPassword": "Geben Sie das Passwort ein, um zu bestätigen"
     }
   },
   "constant": {

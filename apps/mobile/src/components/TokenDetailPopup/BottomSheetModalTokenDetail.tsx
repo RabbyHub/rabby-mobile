@@ -52,7 +52,6 @@ import {
 import { NotFoundHolder } from '@/components/EmptyHolder/NotFound';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -67,13 +66,11 @@ import { preferenceService } from '@/core/services';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useManageTokenList } from '@/screens/Home/hooks/useManageToken';
 import { useManageTestnetTokenList } from '@/screens/Home/hooks/useManageTestnetToken';
-import { DisplayedToken } from '@/screens/Home/utils/project';
 import { CustomizedSwitch } from './CustomizedSwitch';
 import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-
-const isIOS = Platform.OS === 'ios';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 const PAGE_COUNT = 10;
 
@@ -746,6 +743,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, []);
 
     const navigation = useRabbyAppNavigation();
+    const { navigateToSendPolyScreen } = useSendRoutes();
     const { switchSceneCurrentAccount: _switchSceneCurrentAccount } =
       useSwitchSceneCurrentAccount();
 
@@ -786,12 +784,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
               'MakeTransactionAbout',
               nextTxRedirectAccount || null,
             );
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {
-                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                tokenId: token?._tokenId,
-              },
+            navigateToSendPolyScreen(true, {
+              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+              tokenId: token?._tokenId,
             });
             break;
           }
@@ -812,13 +807,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         }
       },
       [
-        navigation,
         onTriggerDismissFromInternal,
+        token?.chain,
+        token?._tokenId,
+        token?.symbol,
         switchSceneCurrentAccount,
         nextTxRedirectAccount,
-        token?._tokenId,
-        token?.chain,
-        token?.symbol,
+        navigation,
+        navigateToSendPolyScreen,
       ],
     );
 

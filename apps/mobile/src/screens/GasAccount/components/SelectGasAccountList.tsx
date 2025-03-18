@@ -7,10 +7,8 @@ import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { ReactNode, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   StyleProp,
   Text,
@@ -24,6 +22,7 @@ import { sortBy } from 'lodash';
 import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { filterMyAccounts } from '@/utils/account';
 
 export const SelectGasAccountList = ({
   onChange,
@@ -42,9 +41,7 @@ export const SelectGasAccountList = ({
   style?: StyleProp<ViewStyle>;
   isGasAccount?: boolean;
 }) => {
-  const { t } = useTranslation();
-
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
   });
 
@@ -52,11 +49,8 @@ export const SelectGasAccountList = ({
     disableAutoFetch: true,
   });
 
-  const filterAccounts = React.useMemo(
-    () =>
-      [...accounts].filter(
-        a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-      ),
+  const filterAccounts = useMemo(
+    () => [...filterMyAccounts(accounts)],
     [accounts],
   );
 

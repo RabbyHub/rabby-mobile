@@ -3,6 +3,7 @@ npm-debug.log
 yarn-error.log
 node_modules
 package-lock.json
+folder-alias.json
 
 # tarball from `yarn pack`
 *.tgz
@@ -11,7 +12,7 @@ package-lock.json
 .eslintcache
 
 .DS_STORE
-
+.idea
 # Build preview message
 preview-build-message.txt
 

@@ -64,7 +64,8 @@ import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { HistoryItemCateType } from './components/HistoryItemIcon';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 
-const PAGE_COUNT = 200;
+const _PAGE_COUNT = 200;
+const REALL_TIME_API_PAGE_COUNT = 20;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
   projectDict: TxHistoryResult['project_dict'];
@@ -129,6 +130,7 @@ function History({
   const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
+  const PAGE_COUNT = isInTokenDetail ? REALL_TIME_API_PAGE_COUNT : _PAGE_COUNT;
   const {
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
@@ -259,7 +261,6 @@ function History({
                 tokenItem._tokenId,
               )
             : await fetchData(addr, lastMap.current[addr] || 0);
-
           if (result.list.length < PAGE_COUNT) {
             hasMoreMap.current[addr] = false;
           } else {

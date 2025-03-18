@@ -397,7 +397,14 @@
         }
       },
       "trustValue": "Valeur de confiance",
-      "noDelegatedAddress": "Aucune adresse déléguée importée"
+      "noDelegatedAddress": "Aucune adresse déléguée importée",
+      "safeTx": {
+        "selfHostConfirm": {
+          "button": "OK",
+          "title": "Passer au service sécurisé de Rabby",
+          "content": "L'API Safe est indisponible. Passez au service Safe déployé par Rabby pour garder votre Safe fonctionnel. <1></1><2>Tous les signataires Safe doivent utiliser Rabby Wallet pour autoriser les transactions.<2>"
+        }
+      }
     },
     "activities": {
       "signedTx": {
@@ -675,7 +682,12 @@
       "addressNotInContract": "Pas sur la liste d'adresses. <1></1><2>Ajouter aux contacts</2>",
       "balanceWarn": {
         "gasFeeReservation": "Réservation de frais de Gas requise"
-      }
+      },
+      "noSupportBtns": {
+        "cancel": "Annuler",
+        "confirm": "Continuer"
+      },
+      "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte."
     },
     "gasTopUp": {
       "Value": "Valeur",
@@ -772,7 +784,8 @@
         "bridge": "Bridge",
         "history": "Historique",
         "more": "Plus",
-        "send": "Envoyer"
+        "send": "Envoyer",
+        "search": "Rechercher Token"
       }
     },
     "bridge": {
@@ -859,6 +872,10 @@
           "testnetTokens_zero": "{{count}} jeton de réseau personnalisé",
           "testnetTokens_other": "{{count}} jetons de réseau personnalisé"
         }
+      },
+      "offlineChain": {
+        "chain": "{{chain}} ne sera bientôt plus intégré.",
+        "tips": "La chaîne {{chain}} ne sera pas intégrée le {{date}}. Vos actifs ne seront pas affectés mais ne seront pas inclus dans votre solde total. Pour y accéder, vous pouvez l'ajouter en tant que réseau personnalisé dans les \"Paramètres\"."
       }
     },
     "nextComponent": {
@@ -1352,7 +1369,9 @@
         "Token": "Token",
         "Nft": "NFT",
         "Defi": "DeFi",
-        "NoData": "Aucun {{name}}"
+        "NoData": "Aucun {{name}}",
+        "totalChain_one": "Total {{count}} Chain",
+        "totalChain_other": "Total {{count}} Chains"
       },
       "emptyToken": {
         "buyHeader": "Acheter avec Fiat",
@@ -1360,21 +1379,33 @@
         "receiveBody": "Transférer des tokens depuis une autre adresse.",
         "buyBody": "Achetez des cryptomonnaies en utilisant une carte de débit ou un compte bancaire.",
         "title": "Alimentez votre portefeuille"
+      },
+      "nft": {
+        "floorPrice": "/Prix plancher:"
       }
     },
     "search": {
       "sectionHeader": {
         "NFT": "NFT",
         "Defi": "DeFi",
-        "token": "Tokens"
+        "token": "Tokens",
+        "AllChains": "Toutes les chaînes"
       },
       "searchWeb": {
         "searchTips": "Rechercher sur le web",
         "noResult": "Aucun résultat pour",
-        "title": "Tous les résultats"
+        "title": "Tous les résultats",
+        "searching": "Résultats pour",
+        "noResults": "Aucun Résultat"
       },
       "header": {
-        "placeHolder": "Recherche"
+        "placeHolder": "Recherche",
+        "searchPlaceHolder": "Rechercher le nom/la l’adresse du token"
+      },
+      "tokenItem": {
+        "Issuedby": "Émis par",
+        "verifyDangerTips": "C'est un jeton d'escroquerie",
+        "scamWarningTips": "Il s'agit d'un jeton de faible qualité et il peut s'agir d'une arnaque."
       }
     },
     "gasAccount": {
@@ -1412,7 +1443,9 @@
         "desc": "Effectuez un dépôt sur le compte DeBank L2 de Rabby sans frais supplémentaires - retirez à tout moment.",
         "amount": "Montant",
         "paymentAddress": "Adresse de paiement",
-        "invalidAmount": "Doit être inférieur à 500"
+        "invalidAmount": "Doit être inférieur à 500",
+        "googlePayDesc": "Inclut des frais Google Pay de ${{ amount }}. Aucun retrait",
+        "applePayDesc": "Comprend des frais Apple Pay de ${{amount}}. Aucun retrait"
       },
       "paymentAddressPopup": {
         "confirm": "Confirmer",
@@ -1446,7 +1479,33 @@
       },
       "withdraw": "Retirer",
       "gasExceed": "Le solde du GasAccount ne peut pas dépasser 1000 $.",
-      "noBalance": "Solde insuffisant pour le retrait"
+      "noBalance": "Solde insuffisant pour le retrait",
+      "depositPayPopup": {
+        "balance": "Solde actuel de GasAccount :",
+        "depositFailed": "Dépôt échoué",
+        "depositCanceled": "Dépôt annulé",
+        "titleAndroid": "Acheter avec Google Pay",
+        "title": "Acheter avec Apple Pay"
+      },
+      "depositSelectPopup": {
+        "depositTokenDesc": "Pas de frais supplémentaires, retraits instantanés",
+        "desc": "Payer les frais de Gas sur toutes les chaînes",
+        "buyWithDesc": "30 % de frais, pas de retraits",
+        "depositToken": "Dépôt avec Token",
+        "title": "Déposer sur GasAccount",
+        "buyWith": "Acheter avec"
+      },
+      "gasAccountList": {
+        "balance": "Solde",
+        "gasAccountBalance": "Solde GasAccount",
+        "address": "Adresse"
+      },
+      "depositCanceled": "Dépôt annulé",
+      "depositSuccess": "Dépôt réussi",
+      "switchAccount": "Changer GasAccount",
+      "loginFailed": "Échec de la connexion",
+      "loginSuccess": "Connexion réussie",
+      "withdrawDisabledIAP": "Les retraits sont désactivés car votre solde inclut des fonds en fiat, qui ne peuvent pas être retirés. Contactez le support pour retirer le solde de vos tokens."
     },
     "tokenDetail": {
       "relateDefi": "Lié au DeFi",
@@ -1474,7 +1533,28 @@
         "excludeBalance_success": "Exclu du solde",
         "pin_success": "Épinglé avec succès"
       },
-      "excludeBalanceTipsButton": "J'ai compris."
+      "excludeBalanceTipsButton": "J'ai compris.",
+      "ListedBy": "Listé par",
+      "BridgeIssue": "Jeton ponté par un tiers",
+      "SupportedExchanges": "Échanges Pris en Charge",
+      "Info": "Info",
+      "Transaction": "Transaction",
+      "TokenName": "Nom du Token",
+      "NoSupportedExchanges": "Aucun échange pris en charge disponible",
+      "IssuerWebsite": "Site Web de l'Emetteur",
+      "Mybalance": "Mon solde",
+      "Defi": "DeFi",
+      "NoListedSite": "Aucune information de cotation disponible",
+      "noTransactions": "Aucune transaction",
+      "fdv": "FDV",
+      "SeeMore": "Voir plus",
+      "OriginalToken": "Token original",
+      "IssuedBy": "Délivré par",
+      "fdvTitle": "Qu'est-ce que FDV ?",
+      "OriginIssue": "Émis nativement sur cette blockchain",
+      "NoIssuer": "Aucune information sur l'émetteur disponible",
+      "fdvContent": "La capitalisation boursière si le maximum de l'approvisionnement était en circulation. Évaluation entièrement diluée (FDV) = Prix × Approvisionnement maximum. Si l'approvisionnement maximum est nul, FDV = Prix × Approvisionnement total. Si ni l'approvisionnement maximum ni l'approvisionnement total ne sont définis ou infinis, la FDV n'est pas affichée.",
+      "BridgeProvider": "Fournisseur de Bridge"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -1621,6 +1701,52 @@
       "noQuote2": "Aucune citation trouvée.",
       "paymentProviderTips": "Ce fournisseur prend en charge les méthodes de paiement suivantes :",
       "noQuote": "Aucune cote trouvée : Essayez d'entrer une valeur plus élevée."
+    },
+    "eip7702": {
+      "alert": "EIP-7702 n'est pas encore pris en charge"
+    },
+    "sendPoly": {
+      "modals": {
+        "importedAddress": "Adresse importée",
+        "recentAddress": "Adresses récentes envoyées",
+        "addAddress": "Nouvelle Adresse",
+        "content": "Sélectionnez comment vous souhaitez ajouter une adresse :",
+        "header": "Ajouter l'adresse à la liste blanche"
+      },
+      "whitelistTitle": "Mes adresses de liste blanche",
+      "enterAddress": "Saisir l'adresse",
+      "emptyWhitelistHeader": "Ajouter une adresse de la liste blanche",
+      "sendToImportedAddress": "Envoyer à mes adresses importées",
+      "emptyWhitelistBtn": "Ajouter maintenant",
+      "emptyWhitelistTip": "Aucune adresse autorisée pour le moment,",
+      "sendToWatchAddress": "Envoyer à des adresses en mode lecture seule",
+      "sendToSafeAddress": "Envoyer à des adresses sûres",
+      "emptyWhitelistContent": "Ajoutez des adresses de confiance à la liste blanche pour des transferts rapides—pas de confirmation nécessaire la prochaine fois."
+    },
+    "confirmAddress": {
+      "risks": {
+        "scamAddress": "L'adresse du destinataire est une adresse frauduleuse signalée par Rabby",
+        "contractAddress": "L'adresse du destinataire est une adresse de contrat, ce qui peut potentiellement entraîner une perte de fonds",
+        "dexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
+        "noSend": "Vous n'avez pas envoyé de fonds à cette adresse au cours des 180 derniers jours. Veuillez confirmer si vous souhaitez continuer."
+      },
+      "brandNameTail": "Adresse",
+      "dexNameTail": "Adresse de dépôt",
+      "tipForWhiteList": "Ajoutez à votre liste blanche pour des transferts rapides, aucune confirmation n'est nécessaire la prochaine fois.",
+      "addToWhitelist": "Ajouter à la liste blanche"
+    },
+    "selectAddress": {
+      "selectSafeAddress": "Sélectionner parmi les adresses Safe",
+      "selectWatchAddress": "Sélectionner parmi les adresses en mode Watch-only"
+    },
+    "whitelist": {
+      "addToWhitelist": "Ajouter à la liste blanche",
+      "confirm": "Confirmer",
+      "addSuccessful": "Adresse ajoutée à la liste blanche",
+      "confirmPassword": "Entrez le mot de passe pour confirmer",
+      "removeWhitelist": "Supprimer de la liste blanche",
+      "cancel": "Annuler",
+      "alreadyAdded": "Déjà ajouté à votre liste blanche"
     }
   },
   "native": {
@@ -1744,7 +1870,11 @@
         "amount": "Montant",
         "title": "Retirer",
         "desc": "Vous pouvez retirer le solde de votre GasAccount vers votre portefeuille DeBank L2. Connectez-vous à votre portefeuille DeBank L2 pour transférer les fonds vers une blockchain prise en charge selon vos besoins."
-      }
+      },
+      "depositWithPay": "Acheter avec",
+      "depositWithTokenDesc": "Pas de frais supplémentaires, retraits instantanés",
+      "depositWithToken": "Dépôt avec Token",
+      "depositWithPayDesc": "30 % de frais, pas de retraits"
     },
     "Contact": {
       "EditModal": {

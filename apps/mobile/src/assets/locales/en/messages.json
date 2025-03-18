@@ -607,7 +607,55 @@
       "balanceError": {
         "insufficientBalance": "Insufficient balance"
       },
-      "ContractAddress": "Contract Address"
+      "ContractAddress": "Contract Address",
+      "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
+      "noSupportBtns": {
+        "confirm": "Proceed",
+        "cancel": "Cancel"
+      }
+    },
+    "sendPoly": {
+      "enterAddress": "Enter Address",
+      "whitelistTitle": "My Whitelist Addresses",
+      "sendToImportedAddress": "Send to My Imported Addresses",
+      "sendToWatchAddress": "Send to Watch-only Addresses",
+      "sendToSafeAddress": "Send to Safe Addresses",
+      "emptyWhitelistHeader": "Add Whitelist Address",
+      "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
+      "emptyWhitelistTip": "No whitelisted addresses yet, ",
+      "emptyWhitelistBtn": "Add now",
+      "modals": {
+        "header": "Add Address to Whitelist",
+        "content": "Select how you want to add an address:",
+        "addAddress": "New Address",
+        "importedAddress": "Imported Address",
+        "recentAddress": "Recent Sent Addresses"
+      }
+    },
+    "confirmAddress": {
+      "addToWhitelist": "Add to whitelist",
+      "dexNameTail": "Deposit Address",
+      "brandNameTail": "Address",
+      "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
+      "risks": {
+        "noSend": "You haven't sent funds to this address in the past 180 days. Please confirm if you wish to proceed.",
+        "dexNoDeposite": "The recipient address is a non-deposit address from a CEX. Please ensure your deposit address is correct.",
+        "contractAddress": "The recipient address is a contract address, potentially causing funds loss",
+        "scamAddress": "The recipient address is a scam address flagged by Rabby"
+      }
+    },
+    "selectAddress": {
+      "selectWatchAddress": "Select from Watch-only addresses",
+      "selectSafeAddress": "Select from Safe addresses"
+    },
+    "whitelist": {
+      "addToWhitelist": "Add to Whitelist",
+      "removeWhitelist": "Remove from Whitelist",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "addSuccessful": "Address added to whitelist",
+      "alreadyAdded": "Already added to your whitelist",
+      "confirmPassword": "Enter the Password to Confirm"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"
@@ -1519,9 +1567,30 @@
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
+      "Mybalance": "My Balance",
+      "Info": "Info",
+      "TokenName": "Token Name",
       "notSupportedOnChain": "Not supported on this chain",
       "noBalance": "No Balance",
       "relateDefi": "Related DeFi",
+      "SeeMore": "See more",
+      "IssuedBy": "Issued by",
+      "BridgeIssue": "Bridged token by a third party",
+      "IssuerWebsite": "Issuer’s Website",
+      "BridgeProvider": "Bridge Provider",
+      "ListedBy": "Listed by",
+      "OriginalToken": "Original Token",
+      "SupportedExchanges": "Supported Exchanges",
+      "NoListedSite": "No listing information available",
+      "NoIssuer": "No issuer information available",
+      "NoSupportedExchanges": "No supported exchanges available",
+      "OriginIssue": "Natively issued on this blockchain",
+      "Defi": "DeFi",
+      "Transaction": "Transaction",
+      "noTransactions": "No transactions",
+      "fdv": "FDV",
+      "fdvTitle": "What's FDV?",
+      "fdvContent": "The market cap if the max supply was in circulation.Fully Diluted Valuation (FDV) = Price × Max Supply. If Max Supply is null, FDV = Price × Total Supply. If neither Max Supply nor Total Supply is defined or infinite, FDV is not displayed.",
       "action": {
         "send": "Send",
         "Buy": "Buy",
@@ -1558,7 +1627,9 @@
         "Defi": "DeFi",
         "Nft": "NFT",
         "Token": "Token",
-        "NoData": "No {{name}}"
+        "NoData": "No {{name}}",
+        "totalChain_one": "Total {{count}} Chain",
+        "totalChain_other": "Total {{count}} Chains"
       },
       "emptyToken": {
         "title": "Fund Your Wallet",
@@ -1566,20 +1637,32 @@
         "receiveBody": "Transfer tokens from another address.",
         "buyHeader": "Buy with Fiat",
         "buyBody": "Purchase crypto using a debit card or bank account."
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "search": {
       "sectionHeader": {
         "token": "Tokens",
         "Defi": "DeFi",
-        "NFT": "NFT"
+        "NFT": "NFT",
+        "AllChains": "All Chains"
       },
       "header": {
-        "placeHolder": "Search"
+        "placeHolder": "Search",
+        "searchPlaceHolder": "Search Token Name / Address"
+      },
+      "tokenItem": {
+        "Issuedby": "Issued by",
+        "verifyDangerTips": "This is a scam token",
+        "scamWarningTips": "This is a low-quality token and may be a scam"
       },
       "searchWeb": {
         "noResult": "No Results for",
+        "noResults": "No Results",
         "title": "All Results",
+        "searching": "Results for",
         "searchTips": "Search the web"
       }
     },
@@ -1651,6 +1734,9 @@
         "title": "Quotes For you",
         "best": "Best Quotes"
       }
+    },
+    "eip7702": {
+      "alert": "EIP-7702 is not supported yet"
     }
   },
   "component": {

@@ -37,19 +37,27 @@ const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 const useChainSeletorList = ({
   supportChains,
   netTabKey,
+  needAllAddresses,
 }: {
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
+  needAllAddresses?: boolean;
 }) => {
   const [search, setSearch] = useState('');
   const {
     testnetMatteredChainBalances,
     matteredChainBalances,
     fetchMatteredChainBalance,
+
+    matteredChainBalancesAll,
+    fetchAllAddressesChainBalance,
   } = useLoadMatteredChainBalances();
   useEffect(() => {
-    fetchMatteredChainBalance();
-  }, [fetchMatteredChainBalance]);
+    needAllAddresses
+      ? fetchAllAddressesChainBalance()
+      : fetchMatteredChainBalance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needAllAddresses, fetchMatteredChainBalance]);
 
   const { pinned, chainBalances } = useMemo(() => {
     return {
@@ -58,10 +66,18 @@ const useChainSeletorList = ({
       chainBalances:
         netTabKey === 'testnet'
           ? testnetMatteredChainBalances
+          : needAllAddresses
+          ? matteredChainBalancesAll
           : matteredChainBalances,
       isShowTestnet: false,
     };
-  }, [netTabKey, testnetMatteredChainBalances, matteredChainBalances]);
+  }, [
+    netTabKey,
+    testnetMatteredChainBalances,
+    matteredChainBalances,
+    matteredChainBalancesAll,
+    needAllAddresses,
+  ]);
 
   const { mainnetList, testnetList } = useChainList();
 
@@ -114,6 +130,7 @@ export type SelectSortedChainProps = {
   handleStyle?: ViewStyle;
   titleText?: string;
   excludeChains?: CHAINS_ENUM[];
+  needAllAddresses?: boolean;
   onClose?: () => void;
 };
 export default function SelectChainWithSummary({
@@ -126,6 +143,7 @@ export default function SelectChainWithSummary({
   onClose,
   excludeChains,
   titleText,
+  needAllAddresses,
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
@@ -144,6 +162,7 @@ export default function SelectChainWithSummary({
   } = useChainSeletorList({
     // set undefined to allow all main chains
     supportChains: supportChains,
+    needAllAddresses,
     netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
   });
 
@@ -251,6 +270,7 @@ export default function SelectChainWithSummary({
       ) : (
         <View style={[styles.chainListWrapper]}>
           <MixedFlatChainList
+            needAllAddresses={needAllAddresses}
             onScrollBeginDrag={() => {
               Keyboard.dismiss();
             }}

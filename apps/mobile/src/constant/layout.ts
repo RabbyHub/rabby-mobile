@@ -27,6 +27,7 @@ export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
 export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 404;
+export const ASSETS_EMPTY_ROW_HIGHT = 186;
 export const ASSETS_SEPARATOR_HEIGHT = 8;
 export const HEADER_TOP_AREA_HEIGHT = 185;
 
@@ -100,6 +101,16 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  SendTo: 'SendTo',
+  SendHistory: 'SendHistory',
+  SendInput: 'SendInput',
+  WhitelistInput: 'WhitelistInput',
+  SelectImportAddress: 'SelectImportAddress',
+  ImportAddress2Whitelist: 'ImportAddress2Whitelist',
+  SelectTypeAddress: 'SelectTypeAddress',
+  TypeAddress2Whitelist: 'TypeAddress2Whitelist',
+  ConfirmAddress: 'ConfirmAddress',
+  WhitelistConfirm: 'WhitelistConfirm',
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',
@@ -313,6 +324,7 @@ function makeScreenSpecConfig() {
       // ImportSuccess2024: blueLightConf,
       Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       SingleAddressHome: transparentDefault2024Conf,
+      TokenDetail: transparentDefault2024Conf,
       Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       Send: bg1Default2024Conf,

@@ -30,6 +30,9 @@ export class WhitelistService {
       },
     );
     this.store = storage || this.store;
+    if (!this.store.enabled) {
+      this.store.enabled = true;
+    }
   }
 
   getWhitelist = () => {

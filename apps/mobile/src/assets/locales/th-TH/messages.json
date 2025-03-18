@@ -148,7 +148,11 @@
         "to": "ถึง",
         "amount": "จำนวนเงิน",
         "desc": "คุณสามารถถอนยอดคงเหลือของ GasAccount ไปยัง DeBank L2 Wallet ของคุณได้ ล็อกอินเข้าสู่ DeBank L2 Wallet ของคุณเพื่อโอนเงินไปยังบล็อกเชนที่รองรับตามความต้องการ"
-      }
+      },
+      "depositWithToken": "ฝากด้วย Token",
+      "depositWithPay": "ซื้อด้วย",
+      "depositWithTokenDesc": "ไม่มีค่าธรรมเนียมเพิ่มเติม ถอนเงินได้ทันที",
+      "depositWithPayDesc": "ค่าธรรมเนียม 30% ไม่สามารถถอนได้"
     },
     "NoLongerSupports": {
       "button": "เข้าใจแล้ว",
@@ -340,7 +344,12 @@
           "custom": "ปรับแต่ง"
         },
         "popupDesc": "ค่าธรรมเนียม gas จะถูกหักออกจากจำนวนการโอนตามราคาค่า gas ที่คุณตั้งไว้"
-      }
+      },
+      "noSupportBtns": {
+        "cancel": "ยกเลิก",
+        "confirm": "ดำเนินการต่อ"
+      },
+      "noSupprotTokenForDex": "โทเค็นนี้อาจไม่ได้รับการสนับสนุนโดยการแลกเปลี่ยนนี้ โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย"
     },
     "importSuccess": {
       "importMore": "นำเข้าที่อยู่เพิ่มเติม",
@@ -683,6 +692,13 @@
           "4h": "4h",
           "24h": "24h"
         }
+      },
+      "safeTx": {
+        "selfHostConfirm": {
+          "button": "OK",
+          "title": "เปลี่ยนเป็นบริการ Safe ของ Rabby",
+          "content": "Safe API ไม่พร้อมใช้งาน สลับไปยังการใช้งาน Safe ที่ให้บริการโดย Rabby เพื่อให้ Safe ของคุณทำงานได้ <1></1><2>ผู้ลงนาม Safe ทุกคนจะต้องใช้ Rabby Wallet เพื่ออนุมัติธุรกรรม<2>"
+        }
       }
     },
     "signFooterBar": {
@@ -756,7 +772,8 @@
         "dapps": "Dapps",
         "websites": "Websites",
         "gasAccount": "GasAccount",
-        "queue": "คิว"
+        "queue": "คิว",
+        "search": "ค้นหา Token"
       }
     },
     "gasTopUp": {
@@ -906,6 +923,10 @@
         "disableWhitelist": "ปิดใช้งาน Whitelist",
         "disableWhitelistTip": "คุณสามารถส่งสินทรัพย์ไปยังที่อยู่ใดก็ได้เมื่อปิดการใช้งาน",
         "enableWhitelistTip": "เมื่อเปิดใช้งานแล้ว คุณจะสามารถส่งสินทรัพย์ไปยังที่อยู่ในรายการที่อนุญาตโดยใช้ Rabby เท่านั้น"
+      },
+      "offlineChain": {
+        "tips": "{{chain}} Chain จะไม่ถูกรวมเข้าในวันที่ {{date}} สินทรัพย์ของคุณจะไม่ได้รับผลกระทบ แต่จะไม่ถูกรวมอยู่ในยอดคงเหลือทั้งหมดของคุณ ในการเข้าถึงคุณอาจเพิ่มมันเป็นเครือข่ายที่กำหนดเองใน “การตั้งค่า”",
+        "chain": "{{chain}} จะไม่ถูกรวมในไม่ช้า"
       }
     },
     "manageAddress": {
@@ -1499,15 +1520,24 @@
       "searchWeb": {
         "title": "แสดงผลทั้งหมด",
         "noResult": "ไม่มีผลลัพธ์สำหรับ",
-        "searchTips": "ค้นหาเว็บ"
+        "searchTips": "ค้นหาเว็บ",
+        "searching": "ผลลัพธ์สำหรับ",
+        "noResults": "ไม่มีผลลัพธ์"
       },
       "sectionHeader": {
         "token": "โทเค็น",
         "NFT": "NFT",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "AllChains": "ทุกเชน"
       },
       "header": {
-        "placeHolder": "ค้นหา"
+        "placeHolder": "ค้นหา",
+        "searchPlaceHolder": "ค้นหาชื่อ Token / ที่อยู่"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "นี่คือโทเค็นหลอกลวง",
+        "Issuedby": "ออกโดย",
+        "scamWarningTips": "นี่คือโทเค็นคุณภาพต่ำและอาจเป็นการหลอกลวง"
       }
     },
     "receiveAddressList": {
@@ -1528,7 +1558,9 @@
         "Defi": "DeFi",
         "Token": "Token",
         "Nft": "NFT",
-        "NoData": "ไม่มี {{name}}"
+        "NoData": "ไม่มี {{name}}",
+        "totalChain_other": "รวมทั้งหมด {{count}} เชน",
+        "totalChain_one": "รวมทั้งหมด {{count}} Chain"
       },
       "emptyToken": {
         "buyHeader": "ซื้อด้วยเงินคำสั่ง",
@@ -1536,6 +1568,9 @@
         "title": "เติมเงินให้กระเป๋าของคุณ",
         "buyBody": "ซื้อคริปโตโดยใช้บัตรเดบิตหรือบัญชีธนาคาร",
         "receiveBody": "โอนโทเค็นจากที่อยู่อื่น"
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "gasAccount": {
@@ -1573,7 +1608,9 @@
         "paymentAddress": "ที่อยู่การชำระเงิน",
         "desc": "ทำการฝากเงินไปยังบัญชี DeBank L2 ของ Rabby ได้โดยไม่มีค่าใช้จ่ายเพิ่มเติม—ถอนเงินได้ทุกเวลา",
         "selectToken": "เลือกโทเค็น",
-        "followingTokenInSufficient": "ยอดคงเหลือโทเค็นต่อไปนี้ไม่เพียงพอ"
+        "followingTokenInSufficient": "ยอดคงเหลือโทเค็นต่อไปนี้ไม่เพียงพอ",
+        "googlePayDesc": "รวมค่าธรรมเนียม Google Pay ${{ amount }} ไม่สามารถถอนเงินได้",
+        "applePayDesc": "รวมค่าธรรมเนียม Apple Pay ${{amount}} ไม่มีการถอนไม่ได้"
       },
       "paymentAddressPopup": {
         "title": "เลือกที่อยู่การชำระเงิน",
@@ -1607,7 +1644,33 @@
       },
       "noBalance": "ไม่มียอดคงเหลือให้ถอน",
       "withdraw": "ถอนเงิน",
-      "gasExceed": "ยอดคงเหลือ GasAccount ไม่เกิน $1000"
+      "gasExceed": "ยอดคงเหลือ GasAccount ไม่เกิน $1000",
+      "depositPayPopup": {
+        "depositFailed": "การฝากล้มเหลว",
+        "depositCanceled": "เงินฝากถูกยกเลิก",
+        "balance": "ยอดคงเหลือ GasAccount ปัจจุบัน:",
+        "title": "ซื้อด้วย Apple Pay",
+        "titleAndroid": "ซื้อด้วย Google Pay"
+      },
+      "depositSelectPopup": {
+        "title": "ฝากไปยัง GasAccount",
+        "depositTokenDesc": "ไม่มีค่าธรรมเนียมพิเศษ ถอนได้ทันที",
+        "buyWithDesc": "ค่าธรรมเนียม 30% ไม่มีการถอน",
+        "depositToken": "ฝากด้วย Token",
+        "buyWith": "ซื้อด้วย",
+        "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน"
+      },
+      "gasAccountList": {
+        "address": "ที่อยู่",
+        "balance": "ยอดคงเหลือ",
+        "gasAccountBalance": "ยอดคงเหลือ GasAccount"
+      },
+      "loginFailed": "เข้าสู่ระบบล้มเหลว",
+      "switchAccount": "สวิตช์ GasAccount",
+      "depositCanceled": "การฝากถูกยกเลิก",
+      "depositSuccess": "ฝากเงินสำเร็จ",
+      "loginSuccess": "ล็อกอินสำเร็จ",
+      "withdrawDisabledIAP": "การถอนถูกปิดใช้งานเพราะยอดเงินของคุณมีเงินคำสั่งซึ่งไม่สามารถถอนได้ ติดต่อฝ่ายสนับสนุนเพื่อถอนยอดโทเค็นของคุณ"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",
@@ -1672,7 +1735,28 @@
         "includeBalance": "รวมในยอดเงินคงเหลือ",
         "Buy": "ซื้อ",
         "fold": "พับ"
-      }
+      },
+      "SeeMore": "ดูเพิ่มเติม",
+      "Transaction": "ธุรกรรม",
+      "ListedBy": "Listed by",
+      "IssuedBy": "ออกโดย",
+      "Defi": "DeFi",
+      "BridgeProvider": "ผู้ให้บริการ Bridge",
+      "noTransactions": "ไม่มีธุรกรรม",
+      "fdvTitle": "FDV คืออะไร?",
+      "SupportedExchanges": "รองรับการแลกเปลี่ยน",
+      "Info": "ข้อมูล",
+      "Mybalance": "ยอดเงินของฉัน",
+      "fdv": "FDV",
+      "NoIssuer": "ไม่มีข้อมูลผู้ออกบัตร",
+      "IssuerWebsite": "เว็บไซต์ของผู้ออกหลักทรัพย์",
+      "TokenName": "ชื่อโทเค็น",
+      "NoSupportedExchanges": "ไม่มีการแลกเปลี่ยนที่รองรับ",
+      "OriginIssue": "ออกโดยตรงบนบล็อกเชนนี้",
+      "BridgeIssue": "โทเค็นที่ถูกเชื่อมโยงโดยบุคคลที่สาม",
+      "NoListedSite": "ไม่มีข้อมูลการจดทะเบียน",
+      "fdvContent": "มูลค่าตลาดหากมีอุปทานสูงสุดหมุนเวียน มูลค่าปรับลดทั้งหมด (FDV) = ราคา × อุปทานสูงสุด หากอุปทานสูงสุดเป็นค่าว่าง FDV = ราคา × อุปทานรวม หากไม่ได้กำหนดอุปทานสูงสุดหรืออุปทานรวม หรือไม่สิ้นสุด จะไม่แสดง FDV",
+      "OriginalToken": "โทเค็นดั้งเดิม"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -1742,6 +1826,52 @@
       "paymentsOnly": "การชำระเงินสามารถทำได้เฉพาะใน {{currency}}",
       "toBuy": "ดําเนินการซื้อต่อ",
       "noQuotePlaceholder": "ไม่เสนอราคา"
+    },
+    "eip7702": {
+      "alert": "ยังไม่รองรับ EIP-7702"
+    },
+    "sendPoly": {
+      "modals": {
+        "recentAddress": "ที่อยู่ที่ส่งล่าสุด",
+        "addAddress": "ที่อยู่ใหม่",
+        "content": "เลือกวิธีที่คุณต้องการเพิ่มที่อยู่:",
+        "importedAddress": "ที่อยู่ที่นำเข้าแล้ว",
+        "header": "เพิ่มที่อยู่ไปยัง Whitelist"
+      },
+      "emptyWhitelistBtn": "เพิ่มเลย",
+      "sendToImportedAddress": "ส่งไปยังที่อยู่ที่นำเข้าของฉัน",
+      "sendToSafeAddress": "ส่งไปยังที่อยู่ที่ปลอดภัย",
+      "enterAddress": "ป้อนที่อยู่",
+      "sendToWatchAddress": "ส่งไปยังที่อยู่ Watch-only",
+      "whitelistTitle": "ที่อยู่ Whitelist ของฉัน",
+      "emptyWhitelistHeader": "เพิ่มที่อยู่ใน Whitelist",
+      "emptyWhitelistTip": "ยังไม่มีที่อยู่ที่ผ่านการอนุมัติ",
+      "emptyWhitelistContent": "เพิ่มที่อยู่ที่เชื่อถือได้ไปยังบัญชีขาวเพื่อการโอนที่รวดเร็ว — ไม่จำเป็นต้องยืนยันในครั้งถัดไป"
+    },
+    "confirmAddress": {
+      "risks": {
+        "scamAddress": "ที่อยู่ผู้รับเป็นที่อยู่หลอกลวงที่ถูก Rabby ทำเครื่องหมาย",
+        "dexNoDeposite": "ที่อยู่ผู้รับเป็นที่อยู่นอกเหนือจาก CEX กรุณาตรวจสอบให้แน่ใจว่าที่อยู่ฝากเงินของคุณถูกต้อง",
+        "contractAddress": "ที่อยู่ของผู้รับเป็นที่อยู่ของสัญญาซึ่งอาจทำให้สูญเสียเงินได้",
+        "noSend": "คุณไม่ได้ส่งเงินไปยังที่อยู่นี้ในช่วง 180 วันที่ผ่านมา กรุณายืนยันหากคุณต้องการดำเนินการต่อ"
+      },
+      "brandNameTail": "ที่อยู่",
+      "dexNameTail": "ที่อยู่ Deposit",
+      "addToWhitelist": "เพิ่มในบัญชีขาว",
+      "tipForWhiteList": "เพิ่มในรายการที่อนุญาตของคุณเพื่อการโอนไว ไม่ต้องยืนยันในครั้งถัดไป"
+    },
+    "selectAddress": {
+      "selectWatchAddress": "เลือกจากที่อยู่อย่างเดียวสำหรับการดู",
+      "selectSafeAddress": "เลือกจากที่อยู่ Safe"
+    },
+    "whitelist": {
+      "confirm": "ยืนยัน",
+      "cancel": "ยกเลิก",
+      "removeWhitelist": "ลบออกจาก Whitelist",
+      "confirmPassword": "กรอกรหัสผ่านเพื่อยืนยัน",
+      "addSuccessful": "เพิ่มที่อยู่ในรายการที่อนุญาต",
+      "alreadyAdded": "เพิ่มลงในรายชื่อที่อนุญาตของคุณแล้ว",
+      "addToWhitelist": "เพิ่มไปยัง Whitelist"
     }
   },
   "native": {

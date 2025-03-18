@@ -286,7 +286,12 @@
       "whitelistAlert__notWhitelisted": "해당 주소가 화이트리스트에 등록되지 않았습니다. 전송 권한을 임시로 부여하는 것에 동의합니다.",
       "balanceError": {
         "insufficientBalance": "잔액이 불충분합니다."
-      }
+      },
+      "noSupportBtns": {
+        "confirm": "진행하기",
+        "cancel": "취소"
+      },
+      "noSupprotTokenForDex": "이 토큰은 이 거래소에서 지원되지 않을 수 있습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오."
     },
     "signTx": {
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.  \n가스 한도가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
@@ -561,7 +566,14 @@
         "fromMyPrivateKey": "내 개인 키로부터",
         "cexAddress": "CEX 주소"
       },
-      "blocked": "차단됨"
+      "blocked": "차단됨",
+      "safeTx": {
+        "selfHostConfirm": {
+          "title": "Rabby의 안전 서비스로 전환하십시오.",
+          "button": "OK",
+          "content": "Safe API를 사용할 수 없습니다. Safe 기능을 유지하려면 Rabby가 배포한 Safe 서비스를 사용하세요. <1></1><2>모든 Safe 서명자는 거래를 승인하기 위해 Rabby Wallet을 사용해야 합니다.<2>"
+        }
+      }
     },
     "swap": {
       "no-transaction-records": "거래 기록 없음",
@@ -690,7 +702,8 @@
         "swap": "스왑",
         "history": "히스토리",
         "dapps": "Dapps",
-        "approvals": "승인"
+        "approvals": "승인",
+        "search": "토큰 검색"
       }
     },
     "bridge": {
@@ -790,6 +803,10 @@
         "search": "검색",
         "missingDataTooltip": "현재 {{text}}의 네트워크 문제로 인해 잔액이 업데이트되지 않을 수 있습니다.",
         "chainEnd": "체인"
+      },
+      "offlineChain": {
+        "chain": "{{chain}} 통합이 곧 중단될 예정입니다.",
+        "tips": "{{chain}} 체인은 {{date}}에 통합되지 않습니다. 귀하의 자산에는 영향을 미치지 않지만 총 잔액에는 포함되지 않습니다. 이에 액세스하려면 “설정”에서 사용자 정의 네트워크로 추가할 수 있습니다."
       }
     },
     "approvals": {
@@ -1220,7 +1237,9 @@
         "followingTokenInSufficient": "다음 토큰 잔액이 부족합니다",
         "inSufficientTip1": "이 주소에 토큰이 충분하지 않습니다. 다른 주소를 선택하세요.",
         "desc": "Rabby의 DeBank L2 계정에 추가 수수료 없이 입금하세요 - 언제든 출금 가능합니다.",
-        "amount": "금액"
+        "amount": "금액",
+        "applePayDesc": "${{amount}} Apple Pay 수수료가 포함됩니다. 출금 불가",
+        "googlePayDesc": "Google Pay 수수료 ${{ amount }}가 포함됩니다. 출금 불가"
       },
       "paymentAddressPopup": {
         "balance": "잔액",
@@ -1254,7 +1273,33 @@
       },
       "withdraw": "출금",
       "gasExceed": "GasAccount balance cannot exceed $1000",
-      "noBalance": "출금 가능한 잔액 없음"
+      "noBalance": "출금 가능한 잔액 없음",
+      "depositPayPopup": {
+        "depositFailed": "입금 실패",
+        "titleAndroid": "Google Pay로 구매하기",
+        "title": "Apple Pay로 구매하기",
+        "depositCanceled": "입금 취소됨",
+        "balance": "현재 GasAccount 잔액: "
+      },
+      "depositSelectPopup": {
+        "desc": "모든 체인의 가스 요금 지불",
+        "depositTokenDesc": "추가 요금 없음, 즉시 출금",
+        "depositToken": "토큰으로 입금하기",
+        "buyWithDesc": "30% 수수료, 출금 불가",
+        "title": "GasAccount에 입금하기",
+        "buyWith": "로 구매하기"
+      },
+      "gasAccountList": {
+        "address": "주소",
+        "balance": "잔액",
+        "gasAccountBalance": "GasAccount Balance"
+      },
+      "depositSuccess": "입금 성공",
+      "loginFailed": "로그인 실패",
+      "switchAccount": "GasAccount 전환",
+      "depositCanceled": "입금이 취소되었습니다",
+      "loginSuccess": "로그인 성공",
+      "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요."
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -1264,7 +1309,9 @@
         "Token": "토큰",
         "Nft": "NFT",
         "Defi": "DeFi",
-        "NoData": "{{name}} 없음"
+        "NoData": "{{name}} 없음",
+        "totalChain_other": "총 {{count}} Chains",
+        "totalChain_one": "총 {{count}} 체인"
       },
       "emptyToken": {
         "buyHeader": "법정 화폐로 구매하기",
@@ -1272,21 +1319,33 @@
         "receiveBody": "다른 주소에서 토큰 전송.",
         "title": "지갑 자금 조달",
         "receiveHeader": "암호화폐 받기"
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "search": {
       "header": {
-        "placeHolder": "검색"
+        "placeHolder": "검색",
+        "searchPlaceHolder": "토큰 이름 / 주소 검색"
       },
       "searchWeb": {
         "title": "모든 결과",
         "noResult": "결과 없음",
-        "searchTips": "웹 검색"
+        "searchTips": "웹 검색",
+        "searching": "결과:",
+        "noResults": "결과 없음"
       },
       "sectionHeader": {
         "Defi": "DeFi",
         "NFT": "NFT",
-        "token": "토큰"
+        "token": "토큰",
+        "AllChains": "모든 체인"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "이것은 사기 토큰입니다",
+        "Issuedby": "발행자",
+        "scamWarningTips": "이 토큰은 저품질이며 사기일 수 있습니다."
       }
     },
     "receiveAddressList": {
@@ -1542,7 +1601,28 @@
         "includeBalance": "잔액에 포함",
         "unfold": "펼치기",
         "excludeBalance": "잔액에서 제외"
-      }
+      },
+      "Mybalance": "내 잔액",
+      "NoIssuer": "발행자 정보 없음",
+      "Info": "정보",
+      "Transaction": "트랜잭션",
+      "noTransactions": "거래 없음",
+      "OriginIssue": "이 블록체인에 원주 발행됨",
+      "ListedBy": "상장자:",
+      "NoSupportedExchanges": "지원되는 거래소가 없습니다",
+      "fdvTitle": "FDV란 무엇인가요?",
+      "TokenName": "토큰 이름",
+      "fdv": "FDV",
+      "NoListedSite": "목록 정보 없음",
+      "BridgeProvider": "브리지 제공자",
+      "Defi": "DeFi",
+      "BridgeIssue": "서드 파티에 의해 브릿지된 토큰",
+      "IssuedBy": "발행자",
+      "IssuerWebsite": "발행자의 웹사이트",
+      "SupportedExchanges": "지원되는 거래소",
+      "SeeMore": "더 보기",
+      "OriginalToken": "오리지널 토큰",
+      "fdvContent": "최대 공급량이 유통 중일 경우의 시가 총액입니다. 완전히 희석된 평가(FDV) = 가격 × 최대 공급량. 최대 공급량이 null인 경우, FDV = 가격 × 총 공급량. 최대 공급량 또는 총 공급량이 정의되지 않거나 무한한 경우, FDV는 표시되지 않습니다."
     },
     "setting": {
       "screenTitle": "설정",
@@ -1612,6 +1692,52 @@
       "noQuotePlaceholder": "견적 없음",
       "paymentProviderTips": "이 제공자는 다음 결제 방법을 지원합니다:",
       "noQuote": "견적을 찾을 수 없음: 더 높은 값을 입력하세요."
+    },
+    "eip7702": {
+      "alert": "EIP-7702는 아직 지원되지 않았습니다"
+    },
+    "sendPoly": {
+      "modals": {
+        "header": "주소를 허용 목록에 추가",
+        "importedAddress": "가져온 주소",
+        "content": "주소를 추가하는 방법을 선택하세요:",
+        "recentAddress": "최근 발송된 주소",
+        "addAddress": "새 주소"
+      },
+      "enterAddress": "주소 입력",
+      "sendToWatchAddress": "관찰 전용 주소로 발송",
+      "emptyWhitelistBtn": "지금 추가",
+      "emptyWhitelistHeader": "화이트리스트 주소 추가",
+      "emptyWhitelistTip": "아직 화이트리스트에 등록된 주소가 없습니다.",
+      "whitelistTitle": "내 허용 목록 주소",
+      "emptyWhitelistContent": "안전한 주소를 화이트리스트에 추가하여 빠른 전송 - 다음번에는 확인이 필요하지 않습니다.",
+      "sendToImportedAddress": "내 가져온 주소로 보내기",
+      "sendToSafeAddress": "안전한 주소로 보내기"
+    },
+    "confirmAddress": {
+      "risks": {
+        "scamAddress": "수신자 주소는 Rabby에 의해 신고된 사기 주소입니다.",
+        "contractAddress": "수신자 주소가 계약 주소이므로 자금 손실이 발생할 수 있습니다.",
+        "dexNoDeposite": "수취인 주소는 CEX의 비입금 주소입니다. 입금 주소가 올바른지 확인하십시오.",
+        "noSend": "귀하는 지난 180일 동안 이 주소로 자금을 보낸 적이 없습니다. 계속 진행하시겠습니까?"
+      },
+      "dexNameTail": "입금 주소",
+      "brandNameTail": "주소",
+      "addToWhitelist": "화이트리스트에 추가",
+      "tipForWhiteList": "화이트리스트에 추가하여 빠른 전송을 위한 준비 완료, 다음번에는 확인이 필요 없습니다"
+    },
+    "selectAddress": {
+      "selectWatchAddress": "감시 전용 주소에서 선택",
+      "selectSafeAddress": "Safe 주소에서 선택하기"
+    },
+    "whitelist": {
+      "alreadyAdded": "이미 허용 목록에 추가되었습니다",
+      "confirm": "확인",
+      "confirmPassword": "비밀번호를 입력하여 확인하십시오.",
+      "addSuccessful": "화이트리스트에 주소가 추가되었습니다",
+      "addToWhitelist": "화이트리스트에 추가",
+      "removeWhitelist": "화이트리스트에서 제거",
+      "cancel": "취소"
     }
   },
   "global": {
@@ -1783,7 +1909,11 @@
         "title": "출금",
         "to": "에게",
         "desc": "GasAccount 잔액을 DeBank L2 Wallet으로 인출할 수 있습니다. 필요한 경우 자금을 지원되는 블록체인으로 전송하기 위해 DeBank L2 Wallet에 로그인하세요."
-      }
+      },
+      "depositWithPay": "구매하기",
+      "depositWithPayDesc": "30% 수수료, 출금 불가",
+      "depositWithTokenDesc": "추가 비용 없음, 즉시 출금",
+      "depositWithToken": "토큰으로 입금하기"
     },
     "NoLongerSupports": {
       "title": "모바일 지갑 주소는 더 이상 지원되지 않습니다.",

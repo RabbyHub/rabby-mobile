@@ -1,0 +1,260 @@
+import React, { useEffect, useState } from 'react';
+import { RcIconScannerCC } from '@/assets/icons/address';
+import { Text } from '@/components';
+import { RootNames } from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
+import { navigate } from '@/utils/navigation';
+import { isValidHexAddress } from '@metamask/utils';
+import {
+  Keyboard,
+  TouchableOpacity,
+  View,
+  TouchableWithoutFeedback,
+} from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
+import { NextInput } from '@/components2024/Form/Input';
+import PasteButton from '@/components2024/PasteButton';
+import { useTranslation } from 'react-i18next';
+import { useScanner } from '@/screens/Scanner/ScannerScreen';
+import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { openapi } from '@/core/request';
+import { useNavigationState } from '@react-navigation/native';
+import { toast } from '@/components2024/Toast';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useAtom } from 'jotai';
+import { cexInfoAtoms } from '@/hooks/useCexAccounts';
+
+enum INPUT_ERROR {
+  INVALID_ADDRESS = 'INVALID_ADDRESS',
+  ADDRESS_EXIST = 'ADDRESS_EXIST',
+  REQUIRED = 'REQUIRED',
+}
+
+const ERROR_MESSAGE = {
+  [INPUT_ERROR.INVALID_ADDRESS]:
+    "The address you're are trying to import is invalid",
+  [INPUT_ERROR.ADDRESS_EXIST]:
+    "The address you're are trying to import is duplicated",
+  [INPUT_ERROR.REQUIRED]: 'Please input address',
+};
+
+const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [input, setInput] = React.useState('');
+  const [error, setError] = React.useState<INPUT_ERROR>();
+  const scanner = useScanner();
+  const navigation = useRabbyAppNavigation();
+  const [loading, setLoading] = useState(false);
+  const navParams = useNavigationState(
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForWhitelist ? RootNames.WhitelistInput : RootNames.SendInput),
+      )?.params,
+  ) as {
+    autoScan?: boolean;
+  };
+
+  const { navigateToSendScreen } = useSendRoutes();
+
+  const { findAccount } = useWhiteListAddress(true);
+  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
+
+  const { t } = useTranslation();
+
+  const handleDone = async () => {
+    if (!input) {
+      setError(INPUT_ERROR.REQUIRED);
+      return;
+    }
+
+    let address = input;
+    if (!isValidHexAddress(address as any)) {
+      setError(INPUT_ERROR.INVALID_ADDRESS);
+      return;
+    }
+    try {
+      setLoading(true);
+      Keyboard.dismiss();
+      const { inWhitelist, account } = await findAccount(
+        address,
+        undefined,
+        true,
+      );
+
+      if (isForWhitelist) {
+        if (inWhitelist) {
+          toast.show(t('page.whitelist.alreadyAdded'));
+        } else {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.WhitelistConfirm,
+            params: {
+              account,
+            },
+          });
+        }
+        return;
+      }
+      if (inWhitelist) {
+        let cexDes = cexInfoStore[address];
+        if (!cexDes) {
+          const { desc } = await openapi.addrDesc(address);
+          cexDes = desc.cex;
+          setCexInfoStore(prev => ({ ...prev, [address]: cexDes }));
+        }
+        navigateToSendScreen({
+          toAddress: account.address,
+          cexDes: cexDes,
+          addressBrandName: account.brandName,
+        });
+      } else {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.ConfirmAddress,
+          params: {
+            account,
+          },
+        });
+      }
+    } catch (err: any) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = React.useCallback((text: string) => {
+    setError(undefined);
+    setInput(text);
+  }, []);
+
+  React.useEffect(() => {
+    if (scanner.text) {
+      setInput(scanner.text);
+      scanner.clear();
+    }
+  }, [scanner]);
+  useEffect(() => {
+    if (navParams?.autoScan) {
+      navigate(RootNames.Scanner);
+    }
+  }, [navParams?.autoScan]);
+
+  return (
+    <FooterButtonScreenContainer
+      as="View"
+      buttonProps={{
+        title: t('global.Confirm'),
+        onPress: handleDone,
+        loading: loading,
+        disabled: !input || !!error,
+      }}
+      style={styles.screen}
+      footerBottomOffset={56}
+      footerContainerStyle={{
+        paddingHorizontal: 20,
+      }}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <View style={styles.topContent}>
+            <View>
+              <NextInput.TextArea
+                style={styles.textContainer}
+                inputStyle={styles.textArea}
+                tipText={''}
+                hasError={!!error}
+                fieldErrorTextStyle={styles.error}
+                containerStyle={Object.assign(
+                  {},
+                  error
+                    ? {}
+                    : {
+                        borderColor: 'transparent',
+                      },
+                )}
+                inputProps={{
+                  placeholder: t('page.sendPoly.enterAddress'),
+                  value: input,
+                  blurOnSubmit: true,
+                  returnKeyType: 'done',
+                  onChangeText: handleSubmit,
+                }}
+                // eslint-disable-next-line react/no-unstable-nested-components
+                customIcon={ctx => (
+                  <TouchableOpacity
+                    style={ctx.wrapperStyle}
+                    onPress={() => {
+                      navigate(RootNames.Scanner);
+                    }}>
+                    <RcIconScannerCC
+                      style={ctx.iconStyle}
+                      color={colors2024['neutral-title-1']}
+                    />
+                  </TouchableOpacity>
+                )}
+              />
+              {error && (
+                <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
+              )}
+            </View>
+
+            <PasteButton
+              style={styles.pasteButton}
+              onPaste={text => {
+                handleSubmit(text);
+              }}
+            />
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </FooterButtonScreenContainer>
+  );
+};
+
+SendInputScreen.ForWhitelist = () => {
+  return <SendInputScreen isForWhitelist />;
+};
+
+export default SendInputScreen;
+
+const getStyles = createGetStyles2024(ctx => ({
+  screen: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  topContent: {
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  errorMessage: {
+    color: ctx.colors2024['red-default'],
+    fontSize: 13,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+
+  textContainer: {
+    marginTop: 20,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  textArea: {
+    marginTop: 14,
+    paddingHorizontal: 20,
+    backgroundColor: ctx.colors['neutral-card-1'],
+  },
+  error: {
+    textAlign: 'left',
+  },
+  pasteButton: {
+    marginTop: 58,
+  },
+}));

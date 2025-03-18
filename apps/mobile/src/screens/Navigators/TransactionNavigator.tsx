@@ -27,6 +27,13 @@ import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { BuyScreen } from '../Buy';
+import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
+import SendInputScreen from '../Send/SubScreens/SendInput';
+import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
+import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
+import ConfirmAddressScreen from '../Send/SubScreens/ConfirmSendAddress';
+import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
+import ConfirmWhitelistScreen from '../WhiteList/ConfirmWhiteAddress';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -47,6 +54,125 @@ export default function TransactionNavigator() {
         headerShadowVisible: false,
         headerShown: true,
       })}>
+      <TransactionStack.Screen
+        name={RootNames.SendTo}
+        component={SendPolyScreen}
+        options={mergeScreenOptions({
+          title: 'Send to',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.SendHistory}
+        component={SendHistoryScreen}
+        options={mergeScreenOptions({
+          title: 'Select Address to add',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.ConfirmAddress}
+        component={ConfirmAddressScreen}
+        options={mergeScreenOptions({
+          title: 'Confirm Recipient Address',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.WhitelistConfirm}
+        component={ConfirmWhitelistScreen}
+        options={mergeScreenOptions({
+          title: 'Confrim Address to Whitelist',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SendInput}
+        component={SendInputScreen}
+        options={mergeScreenOptions({
+          title: 'Send to',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.WhitelistInput}
+        component={SendInputScreen.ForWhitelist}
+        options={mergeScreenOptions({
+          title: 'Add New Address to Whitelist',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SelectImportAddress}
+        component={SelectMyAddressScreen}
+        options={mergeScreenOptions({
+          title: 'Select Imported Address',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.ImportAddress2Whitelist}
+        component={SelectMyAddressScreen.ForWhitelist}
+        options={mergeScreenOptions({
+          title: 'Select Imported Address',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SelectTypeAddress}
+        component={SelectWatchScreenScreen}
+        options={mergeScreenOptions({
+          title: '',
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.TypeAddress2Whitelist}
+        component={SelectWatchScreenScreen.ForWhitelist}
+        options={mergeScreenOptions({
+          title: '',
+        })}
+      />
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}

@@ -288,7 +288,12 @@
         }
       },
       "addressNotInContract": "未在地址列表中。<1></1><2>添加到聯絡人</2>",
-      "whitelistAlert__disabled": "白名單已禁用。您可以轉賬到任何地址。"
+      "whitelistAlert__disabled": "白名單已禁用。您可以轉賬到任何地址。",
+      "noSupportBtns": {
+        "confirm": "繼續",
+        "cancel": "取消"
+      },
+      "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。"
     },
     "sendTokenComponents": {
       "GasReserved": "預留 <1>0</1> {{ tokenName }} 用於 gas 費用"
@@ -620,6 +625,13 @@
         "descriptionTitle": "描述",
         "title": "提交委託地址修改",
         "safeWalletTitle": "Safe{Wallet}"
+      },
+      "safeTx": {
+        "selfHostConfirm": {
+          "button": "OK",
+          "title": "切換到 Rabby 的 Safe Service",
+          "content": "Safe API 無法使用。切換到由 Rabby 部署的 Safe 服務以保持您的 Safe 功能正常。<1></1><2>所有 Safe 簽署者必須使用 Rabby Wallet 授權交易。</2>"
+        }
       }
     },
     "signTypedData": {
@@ -755,7 +767,8 @@
         "receive": "接收",
         "swap": "交換",
         "history": "歷史",
-        "gasAccount": "GasAccount"
+        "gasAccount": "GasAccount",
+        "search": "搜尋 Token"
       }
     },
     "dashboard": {
@@ -803,6 +816,10 @@
         "selectedCustom": "Token未被Rabby列出。您已通過自定義將其添加到代幣列表。",
         "blockedTip": "被阻止的代幣將不會顯示在代幣列表中",
         "notSelectedCustom": "該 Token 未被 Rabby 列出。如果您打開開關，它將被添加到 token 列表中。"
+      },
+      "offlineChain": {
+        "chain": "{{chain}} 即將不再支援集成。",
+        "tips": "{{chain}} 鏈將不會在 {{date}} 合併。您的資產不會受到影響，但不會包含在您的總餘額中。要訪問它們，您可以在“設置”中將其添加為自訂網絡。"
       }
     },
     "bridge": {
@@ -1371,7 +1388,9 @@
         "Defi": "DeFi",
         "Nft": "NFT",
         "Token": "Token",
-        "NoData": "沒有 {{name}}"
+        "NoData": "沒有 {{name}}",
+        "totalChain_one": "總共 {{count}} 條鏈",
+        "totalChain_other": "總共 {{count}} 條鏈"
       },
       "emptyToken": {
         "receiveHeader": "接收 Crypto",
@@ -1379,6 +1398,9 @@
         "title": "為您的錢包充值",
         "receiveBody": "從另一個地址轉移 tokens。",
         "buyBody": "使用借記卡或銀行帳戶購買加密貨幣。"
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "rabbyPoints": {
@@ -1427,17 +1449,26 @@
     },
     "search": {
       "header": {
-        "placeHolder": "搜尋"
+        "placeHolder": "搜尋",
+        "searchPlaceHolder": "搜索代幣名稱 / 地址"
       },
       "sectionHeader": {
         "Defi": "DeFi",
         "token": "Tokens",
-        "NFT": "NFT"
+        "NFT": "NFT",
+        "AllChains": "所有鏈條"
       },
       "searchWeb": {
         "searchTips": "搜尋網路",
         "title": "所有結果",
-        "noResult": "未找到結果"
+        "noResult": "未找到結果",
+        "noResults": "無結果",
+        "searching": "結果"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "這是一個騙局代幣",
+        "Issuedby": "由...發行",
+        "scamWarningTips": "這是一個低質量的代幣，可能是騙局。"
       }
     },
     "customRpc": {
@@ -1496,7 +1527,9 @@
         "paymentAddress": "Payment Address（支付地址）",
         "selectToken": "選擇 Token",
         "inSufficientTip1": "此地址的代幣餘額不足，請選擇其他地址。",
-        "followingTokenInSufficient": "以下代幣餘額不足"
+        "followingTokenInSufficient": "以下代幣餘額不足",
+        "applePayDesc": "包含 ${{amount}} Apple Pay 費用。不提供提款。",
+        "googlePayDesc": "包含 ${{ amount }} Google Pay 手續費。不可提款。"
       },
       "paymentAddressPopup": {
         "title": "選擇 Payment 地址",
@@ -1527,7 +1560,33 @@
       "withdrawConfirmModal": {
         "title": "已轉移到你的 DeBank L2 Wallet",
         "button": "在 DeBank 上查看"
-      }
+      },
+      "depositPayPopup": {
+        "titleAndroid": "使用 Google Pay 購買",
+        "depositCanceled": "存款已取消",
+        "depositFailed": "存款失敗",
+        "balance": "當前 GasAccount 餘額：",
+        "title": "使用 Apple Pay 購買"
+      },
+      "depositSelectPopup": {
+        "desc": "支付所有鏈上的 Gas 費用",
+        "buyWith": "使用以下方式購買",
+        "depositToken": "使用 Token 存款",
+        "depositTokenDesc": "無額外費用，即時提現",
+        "title": "存入GasAccount",
+        "buyWithDesc": "30% 費用，不可提款"
+      },
+      "gasAccountList": {
+        "balance": "餘額",
+        "address": "地址",
+        "gasAccountBalance": "GasAccount 餘額"
+      },
+      "switchAccount": "切換 GasAccount",
+      "depositSuccess": "存款成功",
+      "depositCanceled": "存款已取消",
+      "loginFailed": "登入失敗",
+      "loginSuccess": "登入成功",
+      "withdrawDisabledIAP": "提款功能已停用，因為您的餘額包含無法提款的法幣資金。請聯繫客服以提取您的代幣餘額。"
     },
     "receiveAddressList": {
       "title": "選擇接收地址",
@@ -1559,7 +1618,28 @@
         "fold": "摺疊",
         "all": "全部"
       },
-      "excludeBalanceTips": "此資產已從您的總餘額中排除以確保準確性。您可以點擊查看詳情，並根據需要將其包含在內。"
+      "excludeBalanceTips": "此資產已從您的總餘額中排除以確保準確性。您可以點擊查看詳情，並根據需要將其包含在內。",
+      "SeeMore": "查看更多",
+      "NoIssuer": "無發行人信息可用",
+      "OriginIssue": "在此區塊鏈上原生發布",
+      "IssuerWebsite": "Issuer's Website ",
+      "Transaction": "交易",
+      "NoListedSite": "沒有可用的上市信息",
+      "BridgeIssue": "由第三方跨鏈的代幣",
+      "Info": "信息",
+      "ListedBy": "列出者",
+      "Mybalance": "我的餘額",
+      "OriginalToken": "原生Token",
+      "IssuedBy": "發行者",
+      "SupportedExchanges": "支持的交易所",
+      "TokenName": "Token Name",
+      "BridgeProvider": "橋接提供者",
+      "fdvTitle": "什麼是 FDV？",
+      "fdv": "FDV",
+      "noTransactions": "沒有交易",
+      "Defi": "DeFi",
+      "NoSupportedExchanges": "沒有可用的支援交易所",
+      "fdvContent": "市值如果最大供應量在流通中。完全稀釋估值（FDV） = 價格 × 最大供應量。如果最大供應量為空，FDV = 價格 × 總供應量。如果最大供應量和總供應量均未定義或無限，則不顯示FDV。"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -1724,6 +1804,52 @@
       "noQuote2": "未找到報價。",
       "paymentProviderTips": "此提供者支持以下支付方式：",
       "youWillReceive": "接收"
+    },
+    "eip7702": {
+      "alert": "EIP-7702尚未支持"
+    },
+    "sendPoly": {
+      "modals": {
+        "recentAddress": "最近發送地址",
+        "addAddress": "新增地址",
+        "content": "選擇您希望如何添加地址：",
+        "importedAddress": "已導入地址",
+        "header": "將地址添加到白名單中"
+      },
+      "sendToWatchAddress": "發送至僅觀察地址",
+      "enterAddress": "輸入地址",
+      "emptyWhitelistBtn": "立即添加",
+      "emptyWhitelistHeader": "新增白名單地址",
+      "whitelistTitle": "我的 Whitelist Addresses",
+      "sendToImportedAddress": "發送到我的導入地址",
+      "emptyWhitelistTip": "尚無白名單地址，",
+      "sendToSafeAddress": "發送到安全地址",
+      "emptyWhitelistContent": "將受信任的地址添加到白名單中以進行快速轉賬——下次無需確認"
+    },
+    "confirmAddress": {
+      "risks": {
+        "noSend": "您在過去 180 天內沒有向此地址發送資金。請確認您是否希望繼續。",
+        "scamAddress": "接收者地址是一個被 Rabby 標記為詐騙地址的地址",
+        "contractAddress": "收款地址是合約地址，可能導致資金損失",
+        "dexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
+      },
+      "dexNameTail": "存款地址",
+      "brandNameTail": "地址",
+      "addToWhitelist": "添加至白名單",
+      "tipForWhiteList": "將其添加到白名單中，以便快速轉賬，下次無需確認。"
+    },
+    "selectAddress": {
+      "selectWatchAddress": "從 Watch-only 地址中選擇",
+      "selectSafeAddress": "從 Safe 地址中選擇"
+    },
+    "whitelist": {
+      "removeWhitelist": "從白名單中移除",
+      "alreadyAdded": "已添加至您的白名單",
+      "addToWhitelist": "添加至白名單",
+      "confirm": "確認",
+      "addSuccessful": "地址已加入白名單",
+      "cancel": "取消",
+      "confirmPassword": "輸入密碼以確認"
     }
   },
   "component": {
@@ -1846,7 +1972,11 @@
         "title": "提取",
         "to": "至",
         "desc": "您可以將您的GasAccount餘額提取到您的DeBank L2錢包。登入您的DeBank L2錢包，根據需要將資金轉移到支持的區塊鏈。"
-      }
+      },
+      "depositWithToken": "使用 Token 存款",
+      "depositWithPay": "使用購買",
+      "depositWithTokenDesc": "無額外費用，快速提現",
+      "depositWithPayDesc": "30% 費用，無法提現"
     },
     "TokenSelector": {
       "hot": "熱門",

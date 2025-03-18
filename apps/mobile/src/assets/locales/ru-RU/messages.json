@@ -592,6 +592,13 @@
           "notSupportChain": "На этой цепи не поддерживается",
           "notSupported": "Не поддерживается"
         }
+      },
+      "safeTx": {
+        "selfHostConfirm": {
+          "button": "OK",
+          "title": "Переключитесь на сервис безопасного хранения Rabby",
+          "content": "API Safe недоступен. Переключитесь на службу Safe, развернутую Rabby, чтобы ваш Safe оставался функциональным. <1></1><2>Все подписанты Safe должны использовать Rabby Wallet для авторизации транзакций.<2>"
+        }
       }
     },
     "sendNFT": {
@@ -654,7 +661,12 @@
           "slow": "Обычный",
           "fast": "Мгновенный"
         }
-      }
+      },
+      "noSupportBtns": {
+        "confirm": "Продолжить",
+        "cancel": "Отменить"
+      },
+      "noSupprotTokenForDex": "Эта токен может не поддерживаться этой биржей. Проверьте перед продолжением, чтобы избежать потерь"
     },
     "receive": {
       "title": "Получить {{token}} на {{chain}}",
@@ -796,7 +808,8 @@
         "queue": "Очередь",
         "bridge": "Мост",
         "websites": "Веб-сайты",
-        "send": "Отправить"
+        "send": "Отправить",
+        "search": "Поиск токена"
       }
     },
     "dashboard": {
@@ -844,6 +857,10 @@
         "enableWhitelistTip": "После включения вы можете отправлять активы только на адреса из белого списка, используя Rabby.",
         "disableWhitelist": "Отключить Whitelist",
         "cancel": "Отмена"
+      },
+      "offlineChain": {
+        "chain": "{{chain}} скоро перестанет поддерживаться.",
+        "tips": "Сеть {{chain}} не будет интегрирована {{date}}. Ваши активы не будут затронуты, но не будут включены в ваш общий баланс. Чтобы получить к ним доступ, вы можете добавить её в качестве пользовательской сети в «Настройках»."
       }
     },
     "swap": {
@@ -1425,7 +1442,9 @@
         "Nft": "NFT",
         "Token": "Токен",
         "Defi": "DeFi",
-        "NoData": "Нет {{name}}"
+        "NoData": "Нет {{name}}",
+        "totalChain_other": "Всего {{count}} цепочек",
+        "totalChain_one": "Всего {{count}} цепей"
       },
       "emptyToken": {
         "buyHeader": "Купить за Fiat",
@@ -1433,6 +1452,9 @@
         "receiveBody": "Переведите токены с другого адреса.",
         "receiveHeader": "Получить Crypto",
         "buyBody": "Купите криптовалюту с помощью дебетовой карты или банковского счета."
+      },
+      "nft": {
+        "floorPrice": "/Floor Price:"
       }
     },
     "miniSignFooterBar": {
@@ -1489,15 +1511,24 @@
       "sectionHeader": {
         "token": "Токены",
         "NFT": "NFT",
-        "Defi": "DeFi"
+        "Defi": "DeFi",
+        "AllChains": "Все цепи"
       },
       "searchWeb": {
         "title": "Все результаты",
         "searchTips": "Искать в интернете",
-        "noResult": "Нет результатов для"
+        "noResult": "Нет результатов для",
+        "noResults": "Нет результатов",
+        "searching": "Результаты для"
       },
       "header": {
-        "placeHolder": "Поиск"
+        "placeHolder": "Поиск",
+        "searchPlaceHolder": "Поиск Названия Токена / Адреса"
+      },
+      "tokenItem": {
+        "verifyDangerTips": "Это мошеннический токен",
+        "Issuedby": "Выпущено",
+        "scamWarningTips": "Это токен низкого качества и может быть мошенничеством"
       }
     },
     "setting": {
@@ -1557,7 +1588,9 @@
         "title": "Депозит",
         "invalidAmount": "Должно быть менее 500",
         "desc": "Сделайте депозит на аккаунт Rabby's DeBank L2 без дополнительных комиссий — снимайте средства в любое время.",
-        "zeroInvalidAmount": "Сумма не может быть равна нулю"
+        "zeroInvalidAmount": "Сумма не может быть равна нулю",
+        "applePayDesc": "Включает комиссию Apple Pay в размере ${{amount}}. Без снятия средств",
+        "googlePayDesc": "Включает комиссию Google Pay ${{ amount }}. Вывод средств не предусмотрен."
       },
       "paymentAddressPopup": {
         "address": "Платёжный адрес",
@@ -1591,7 +1624,33 @@
       },
       "noBalance": "Нет баланса для вывода",
       "gasExceed": "Баланс GasAccount не может превышать $1000",
-      "withdraw": "Вывод средств"
+      "withdraw": "Вывод средств",
+      "depositPayPopup": {
+        "depositFailed": "Депозит не выполнен",
+        "depositCanceled": "Депозит отменен",
+        "title": "Купить с Apple Pay",
+        "titleAndroid": "Купить через Google Pay",
+        "balance": "Текущий баланс GasAccount: "
+      },
+      "depositSelectPopup": {
+        "title": "Депозит на GasAccount",
+        "buyWith": "Купить с помощью",
+        "desc": "Оплата Gas Fees на всех цепочках",
+        "depositToken": "Депозит с Token",
+        "buyWithDesc": "30% комиссия, без выводов",
+        "depositTokenDesc": "Без дополнительных комиссий, мгновенные выводы"
+      },
+      "gasAccountList": {
+        "gasAccountBalance": "Баланс GasAccount",
+        "balance": "Баланс",
+        "address": "Адрес"
+      },
+      "depositSuccess": "Депозит успешный",
+      "loginFailed": "Ошибка входа",
+      "depositCanceled": "Депозит отменен",
+      "loginSuccess": "Вход выполнен успешно",
+      "switchAccount": "Переключить GasAccount",
+      "withdrawDisabledIAP": "Выводы отключены, потому что ваш баланс включает фиатные средства, которые не могут быть выведены. Свяжитесь с поддержкой для вывода баланса ваших токенов."
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",
@@ -1619,7 +1678,28 @@
         "unfold": "Развернуть",
         "excludeBalance": "Исключить из баланса",
         "unpin": "Открепить"
-      }
+      },
+      "Info": "Инфо",
+      "IssuerWebsite": "Веб-сайт издателя",
+      "NoIssuer": "Нет информации об эмитенте",
+      "SeeMore": "Посмотреть больше",
+      "Defi": "DeFi",
+      "NoSupportedExchanges": "Нет поддерживаемых бирж",
+      "SupportedExchanges": "Поддерживаемые биржи",
+      "ListedBy": "Перечислено по",
+      "IssuedBy": "Выпущено",
+      "fdv": "FDV",
+      "BridgeIssue": "Токен, переведённый третьей стороной",
+      "Mybalance": "Мой баланс",
+      "OriginalToken": "Original Token",
+      "TokenName": "Имя токена",
+      "Transaction": "Транзакция",
+      "NoListedSite": "Нет информации о листинге",
+      "OriginIssue": "Первоначально выпущено на этом блокчейне",
+      "fdvTitle": "Что такое FDV?",
+      "BridgeProvider": "Поставщик Bridge",
+      "fdvContent": "Рыночная капитализация, если максимальное предложение было бы в обращении. Полностью Разводненная Оценка (FDV) = Цена × Максимальное Предложение. Если Максимальное Предложение равно null, FDV = Цена × Общее Предложение. Если ни Максимальное Предложение, ни Общее Предложение не определены или бесконечны, FDV не отображается.",
+      "noTransactions": "Нет транзакций"
     },
     "settingModal": {
       "themeMode": {
@@ -1667,6 +1747,52 @@
       "searchRegionPlaceholder": "Поиск региона",
       "paymentProviderTips": "Этот провайдер поддерживает следующие методы оплаты:",
       "noQuote": "Котировки не найдены: попробуйте ввести более высокое значение."
+    },
+    "eip7702": {
+      "alert": "EIP-7702 еще не поддерживается"
+    },
+    "sendPoly": {
+      "modals": {
+        "importedAddress": "Импортированный адрес",
+        "addAddress": "Новый адрес",
+        "header": "Добавить адрес в белый список",
+        "recentAddress": "Недавние отправленные адреса",
+        "content": "Выберите, как вы хотите добавить адрес:"
+      },
+      "emptyWhitelistBtn": "Добавить сейчас",
+      "sendToImportedAddress": "Отправить на мои импортированные адреса",
+      "enterAddress": "Введите адрес",
+      "sendToWatchAddress": "Отправить на адреса только для просмотра",
+      "emptyWhitelistHeader": "Добавить адрес в белый список",
+      "whitelistTitle": "Мои адреса в белом списке",
+      "emptyWhitelistContent": "Добавьте доверенные адреса в белый список для быстрых переводов — в следующий раз подтверждение не потребуется",
+      "emptyWhitelistTip": "Еще нет добавленных в белый список адресов,",
+      "sendToSafeAddress": "Отправить на безопасные адреса"
+    },
+    "confirmAddress": {
+      "risks": {
+        "scamAddress": "Адрес получателя является мошенническим адресом, отмеченным Rabby.",
+        "noSend": "Вы не отправляли средства на этот адрес в течение последних 180 дней. Пожалуйста, подтвердите, хотите ли вы продолжить.",
+        "contractAddress": "Адрес получателя является адресом контракта, что может привести к потере средств.",
+        "dexNoDeposite": "Адрес получателя является адресом без депозита с CEX. Пожалуйста, убедитесь, что ваш адрес для депозита правильный."
+      },
+      "dexNameTail": "Адрес депозита",
+      "brandNameTail": "Адрес",
+      "addToWhitelist": "Добавить в белый список",
+      "tipForWhiteList": "Добавьте в белый список для быстрых переводов, подтверждение не потребуется в следующий раз"
+    },
+    "selectAddress": {
+      "selectSafeAddress": "Выберите из адресов Safe",
+      "selectWatchAddress": "Выберите из адресов только для просмотра"
+    },
+    "whitelist": {
+      "confirmPassword": "Введите пароль для подтверждения",
+      "alreadyAdded": "Уже добавлено в ваш белый список",
+      "cancel": "Отмена",
+      "confirm": "Подтвердить",
+      "addSuccessful": "Адрес добавлен в белый список",
+      "removeWhitelist": "Удалить из белого списка",
+      "addToWhitelist": "Добавить в белый список"
     }
   },
   "component": {
@@ -1783,7 +1909,11 @@
         "to": "К ",
         "amount": "Сумма",
         "desc": "Вы можете вывести баланс вашего GasAccount на ваш DeBank L2 Wallet. Войдите в ваш DeBank L2 Wallet, чтобы перевести средства на поддерживаемую блокчейн-платформу по мере необходимости."
-      }
+      },
+      "depositWithPayDesc": "30% комиссия, без выводов",
+      "depositWithToken": "Депозит с Token",
+      "depositWithTokenDesc": "Без дополнительных комиссий, мгновенные снятия средств",
+      "depositWithPay": "Купить с"
     },
     "NFTDetailModal": {
       "FieldLabel": {

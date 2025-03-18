@@ -145,26 +145,6 @@ export function tagTokenItem<
     x => x.chainId === i.chain && x.tokenId === i._tokenId,
   );
   const isPin = pinIndex !== -1;
-  const [isFold, isMiniFold] = (() => {
-    if (
-      foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
-      return [true, false];
-    }
-    if (
-      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
-      return [false, false];
-    }
-    if (!i.is_core) {
-      return [true, false];
-    }
-    if ((i._usdValue || 0) < 1) {
-      return [true, true];
-    }
-    return [false, false];
-  })();
-
   const isExcludeBalance = (() => {
     if (
       excludeDefiAndTokens.some(
@@ -185,6 +165,25 @@ export function tagTokenItem<
     }
     return false;
   })();
+  const [isFold, isMiniFold] = (() => {
+    if (
+      foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
+    ) {
+      return [true, false];
+    }
+    if (
+      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
+    ) {
+      return [false, false];
+    }
+    if (!i.is_core) {
+      return [true, false];
+    }
+    if ((i._usdValue || 0) < 1 || isExcludeBalance) {
+      return [true, true];
+    }
+    return [false, false];
+  })();
 
   const isManualFold = foldTokens.some(
     x => x.chainId === i.chain && x.tokenId === i._tokenId,
@@ -193,7 +192,7 @@ export function tagTokenItem<
   return {
     ...i,
     _isPined: isPin,
-    _isFold: isFold,
+    _isFold: isPin ? false : isFold || isExcludeBalance,
     _isManualFold: isManualFold,
     _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,

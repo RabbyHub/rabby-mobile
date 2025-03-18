@@ -9,7 +9,12 @@ import {
 } from 'react-native';
 
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
+RcIconDanger;
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
+import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
+import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
+import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
+import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -33,6 +38,37 @@ import {
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { ellipsisAddress } from '@/utils/address';
+import { getTokenSymbol } from '@/utils/token';
+import { TokenidentityDetail } from '@rabby-wallet/rabby-api/dist/types';
+import { formatUsdValue } from '@/utils/number';
+import { RiskTokenTips } from '@/screens/TokenDetail';
+import BigNumber from 'bignumber.js';
+
+export const formatUsdValueKMB = (value: string | number): string => {
+  const bnValue = new BigNumber(value);
+
+  if (bnValue.lt(0)) {
+    return '-';
+  }
+
+  if (bnValue.lt(0.01) && !bnValue.eq(0)) {
+    return '-';
+  }
+  const numValue = bnValue.toNumber();
+  let formattedValue: string;
+
+  if (numValue >= 1e9) {
+    formattedValue = `${(numValue / 1e9).toFixed(2)}B`;
+  } else if (numValue >= 1e6) {
+    formattedValue = `${(numValue / 1e6).toFixed(2)}M`;
+  } else if (numValue >= 1e3) {
+    formattedValue = `${(numValue / 1e3).toFixed(2)}K`;
+  } else {
+    formattedValue = numValue.toFixed(2);
+  }
+
+  return `$${formattedValue}`;
+};
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -219,6 +255,10 @@ export const TokenRow = memo(
   },
 );
 
+interface TokenRowDataType extends AbstractPortfolioToken {
+  identity?: TokenidentityDetail;
+}
+
 export const ExternalTokenRow = memo(
   ({
     data,
@@ -226,36 +266,89 @@ export const ExternalTokenRow = memo(
     logoSize = 40,
     chainLogoSize = 16,
     logoStyle,
-    filterText,
     onTokenPress,
   }: {
-    data: AbstractPortfolioToken;
+    data: TokenRowDataType;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
-    filterText?: string;
-    onTokenPress?(token: AbstractPortfolioToken): void;
+    onTokenPress?(token: TokenRowDataType): void;
   }) => {
-    const { styles } = useTheme2024({ getStyle: getStyles });
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
 
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
       [logoStyle, styles.tokenRowLogo],
     );
 
+    const siteList = useMemo(() => {
+      return [
+        ...(data?.identity?.listed_sites || []),
+        ...(data?.identity?.cex_list || []),
+      ];
+    }, [data]);
+
+    const isGasToken = useMemo(() => data.id === data.chain, [data]);
+
     const onPressToken = useCallback(() => {
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
+
+    const percentColor = useMemo(() => {
+      if (
+        !data?.price_24h_change ||
+        Math.abs(data.price_24h_change) < 0.00001
+      ) {
+        return colors2024['neutral-secondary'];
+      }
+      if (data.price_24h_change > 0) {
+        return colors2024['green-default'];
+      }
+      return colors2024['red-default'];
+    }, [colors2024, data.price_24h_change]);
+
+    const ExtraContent = useMemo(() => {
+      if (data.is_verified === false) {
+        return <RiskTokenTips isDanger={true} />;
+      }
+
+      if (data.is_scam) {
+        return <RiskTokenTips isDanger={false} />;
+      }
+
+      if (data.identity?.domain_id) {
+        const isBridgeDomain = data.identity.bridge_ids?.length > 0;
+        const isVerified = data.identity.is_domain_verified;
+
+        return (
+          <View style={styles.searchTokenExtraInfo}>
+            <Text style={styles.searchTokenIssuedby}>
+              {t('page.search.tokenItem.Issuedby')}
+            </Text>
+            <View style={styles.tokenRowContent}>
+              <Text style={styles.searchTokenDomain}>
+                {data.identity?.domain_id}
+              </Text>
+              {isVerified &&
+                (isBridgeDomain ? <IconBridgeTo /> : <IconOrigin />)}
+            </View>
+          </View>
+        );
+      }
+
+      return null;
+    }, [data.identity, styles, t, data.is_verified, data.is_scam]);
 
     return (
       <TouchableOpacity
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
         delayLongPress={200}
         onPress={onPressToken}>
-        <View style={styles.tokenRowTokenWrap}>
-          <View>
+        <View style={styles.serachTokenRowTokenWrap}>
+          <View style={styles.serachTokenContent}>
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
@@ -263,28 +356,69 @@ export const ExternalTokenRow = memo(
               size={logoSize}
               chainSize={chainLogoSize}
             />
-          </View>
-          <View style={styles.tokenRowTokenInner}>
-            <View style={styles.tokenHeader}>
-              <HighlightText
-                style={styles.tokenSymbol}
-                highlightStyle={styles.highlightText}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                searchWords={[filterText || '']}
-                textToHighlight={data.symbol}
-              />
-            </View>
+            <View style={styles.searchTokenRowTokenInner}>
+              <View style={[styles.colContent, styles.leftColContent]}>
+                <View style={styles.tokenHeader}>
+                  <Text
+                    style={styles.tokenSymbol}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {getTokenSymbol(data)}
+                  </Text>
+                  {siteList.length > 0 && (
+                    <>
+                      <View style={styles.verticalLine} />
+                      <View style={styles.siteList}>
+                        {siteList.map(
+                          (item, idx) =>
+                            item.logo_url && (
+                              <AssetAvatar
+                                key={idx}
+                                logo={item.logo_url}
+                                size={12}
+                              />
+                            ),
+                        )}
+                      </View>
+                    </>
+                  )}
+                </View>
 
-            <HighlightText
-              style={styles.amountStr}
-              highlightStyle={styles.highlightText}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              searchWords={[filterText || '']}
-              textToHighlight={ellipsisAddress(data.id)}
-            />
+                {isGasToken ? (
+                  <View style={styles.gasBadgeTextRoot}>
+                    <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
+                  </View>
+                ) : (
+                  <Text
+                    style={styles.searchSubText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {`FDV ${
+                      data.identity?.fdv
+                        ? formatUsdValueKMB(data.identity?.fdv || 0)
+                        : '-'
+                    }`}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.colContent}>
+                <Text style={styles.tokenRowAmount}>
+                  {formatUsdValue(data.price || 0)}
+                </Text>
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(data.price_24h_change || 0)}
+                </Text>
+              </View>
+            </View>
           </View>
+
+          {ExtraContent}
         </View>
       </TouchableOpacity>
     );
@@ -344,7 +478,7 @@ export const TokenRowSectionHeader = memo(
 
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
+    // height: ASSETS_ITEM_HEIGHT_NEW,
     width: '100%',
     flexGrow: 1,
     flexDirection: 'row',
@@ -366,6 +500,24 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     height: ASSETS_SECTION_HEADER,
   },
+  serachTokenContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  serachTokenRowTokenWrap: {
+    flexShrink: 1,
+    // flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
+    // paddingLeft: 12,
+    // paddingRight: 16,
+    // height: '100%',
+    width: '100%',
+  },
   tokenRowTokenWrap: {
     flexShrink: 1,
     flexDirection: 'row',
@@ -380,6 +532,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 4,
+    // overflow: 'hidden',
   },
   tokenSymbol: {
     color: ctx.colors2024['neutral-title-1'],
@@ -401,6 +554,65 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 1,
     justifyContent: 'center',
     gap: 0,
+  },
+  searchTokenExtraInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    width: '100%',
+    padding: 8,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-2']
+      : ctx.colors2024['neutral-bg-1'],
+    borderRadius: 8,
+    // marginTop: 12,
+  },
+  searchTokenRowTokenInner: {
+    // flexShrink: 1,
+    flex: 1,
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    width: '100%',
+    // gap: 8,
+  },
+  colContent: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: 0,
+  },
+  leftColContent: {
+    maxWidth: '70%',
+    overflow: 'hidden',
+  },
+  verticalLine: {
+    width: 1,
+    height: 12,
+    backgroundColor: ctx.colors2024['brand-light-2'],
+    marginHorizontal: 4,
+  },
+  siteList: {
+    gap: 4,
+    flexDirection: 'row',
+  },
+  gasBadgeText: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: ctx.colors2024['brand-default'],
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  gasBadgeTextRoot: {
+    // flexShrink: 1,
+    width: 70,
+    marginTop: 2,
+    borderRadius: 6,
+    backgroundColor: ctx.colors2024['brand-light-1'],
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    flexWrap: 'nowrap',
   },
   tokenRowTokenInnerSmallToken: {
     flexDirection: 'row',
@@ -429,6 +641,13 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
   },
+  searchSubText: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
   tokenRowUsdValueWrap: {
     flexShrink: 0,
     justifyContent: 'flex-end',
@@ -442,6 +661,59 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  searchTokenIssuedby: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+  },
+  searchTokenDomain: {
+    color: ctx.colors2024['neutral-body'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+  },
+  searchTokenWarningText: {
+    color: ctx.colors2024['orange-default'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
+  searchTokenDangerText: {
+    color: ctx.colors2024['red-default'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  searchTokenDanger: {
+    flex: 1,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    padding: 8,
+    backgroundColor: ctx.colors2024['red-light-1'],
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  searchTokenWarning: {
+    flex: 1,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    padding: 8,
+    backgroundColor: ctx.colors2024['orange-light-1'],
+    borderRadius: 8,
+    marginTop: 12,
   },
   highlightText: {
     color: ctx.colors2024['brand-default'],
