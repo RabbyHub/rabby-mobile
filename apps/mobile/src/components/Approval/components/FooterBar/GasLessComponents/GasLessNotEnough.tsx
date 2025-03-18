@@ -69,33 +69,20 @@ export const GasLessNotEnough: React.FC<{
           </TouchableOpacity>
         ) : null}
       </View>
-      {Platform.OS === 'ios' ? (
-        <GasAccountDepositTipPopup
-          gasAccountAddress={gasAccountAddress}
-          visible={tipPopupVisible}
-          onClose={() => setTipPopupVisible(false)}
-          onDeposit={() => {
-            setTipPopupVisible(false);
-            onDeposit?.();
-          }}
-          onGotoGasAccount={() => {
-            setTipPopupVisible(false);
-            onGotoGasAccount?.();
-          }}
-          minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
-        />
-      ) : (
-        <GasAccountDepositWithTokenAlertModal
-          visible={tipPopupVisible}
-          onCancel={() => {
-            setTipPopupVisible(false);
-          }}
-          onConfirm={() => {
-            setTipPopupVisible(false);
-            onGotoGasAccount?.();
-          }}
-        />
-      )}
+      <GasAccountDepositTipPopup
+        gasAccountAddress={gasAccountAddress}
+        visible={tipPopupVisible}
+        onClose={() => setTipPopupVisible(false)}
+        onDeposit={() => {
+          setTipPopupVisible(false);
+          onDeposit?.();
+        }}
+        onGotoGasAccount={() => {
+          setTipPopupVisible(false);
+          onGotoGasAccount?.();
+        }}
+        minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+      />
     </>
   );
 };
