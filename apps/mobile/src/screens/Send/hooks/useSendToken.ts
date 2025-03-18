@@ -82,6 +82,7 @@ const sendTokenScreenChainTokenAtom = atom({
 export function useSendTokenScreenChainToken() {
   const [chainToken, _setChainToken] = useAtom(sendTokenScreenChainTokenAtom);
   const { chainEnum, currentToken } = chainToken;
+  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
 
   const chainItem =
     useFindChain({
@@ -119,16 +120,24 @@ export function useSendTokenScreenChainToken() {
 
   const setChainEnum = useCallback(
     (chain: CHAINS_ENUM) => {
+      setRouteParams(pre => ({
+        ...pre,
+        chainEnum: chain,
+      }));
       putChainToken({ chainEnum: chain });
     },
-    [putChainToken],
+    [putChainToken, setRouteParams],
   );
 
   const setCurrentToken = useCallback(
     (token: TokenItem) => {
+      setRouteParams(pre => ({
+        ...pre,
+        tokenId: token.id,
+      }));
       putChainToken({ currentToken: token /* chainEnum: token.chain */ });
     },
-    [putChainToken],
+    [putChainToken, setRouteParams],
   );
 
   return {
@@ -920,13 +929,17 @@ export function useSendTokenForm(
           tokenItem: result,
           currentAddress,
         });
+        setRouteParams(pre => ({
+          ...pre,
+          tokenId: id,
+        }));
         putChainToken({ currentToken: { ...result, tokenId: id } });
       }
       putScreenState({ isLoading: false });
 
       return result;
     },
-    [putChainToken, putScreenState, estimateGasOnChain],
+    [putScreenState, estimateGasOnChain, setRouteParams, putChainToken],
   );
 
   const handleCurrentTokenChange = useCallback(
@@ -948,10 +961,11 @@ export function useSendTokenForm(
         chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
         currentToken: token,
       });
-      setRouteParams({
+      setRouteParams(pre => ({
+        ...pre,
         chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
         tokenId: token.id,
-      });
+      }));
       putScreenState({
         estimatedGas: 0,
       });
@@ -1202,6 +1216,11 @@ export function useSendTokenForm(
       const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
+      setRouteParams(pre => ({
+        ...pre,
+        chainEnum: val,
+        tokenId: chain.nativeTokenAddress,
+      }));
 
       putChainToken({
         chainEnum: val,
@@ -1249,10 +1268,11 @@ export function useSendTokenForm(
     },
     [
       putScreenState,
+      setRouteParams,
       putChainToken,
-      loadCurrentToken,
       patchFormValues,
       handleFormValuesChange,
+      loadCurrentToken,
     ],
   );
 
