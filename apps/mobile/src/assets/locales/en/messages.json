@@ -1779,6 +1779,7 @@
       "depositWithPay": "Buy with"
     },
     "accountSwitcher": {
+      "all": "All",
       "screenHeaderSubTitle_one": "1 address",
       "screenHeaderSubTitle_other": "{{count}} addresses"
     },

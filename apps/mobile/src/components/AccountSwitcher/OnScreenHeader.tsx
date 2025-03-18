@@ -98,6 +98,7 @@ export function ScreenHeaderAccountSwitcher({
           )
         ) : (
           <Text style={styles.address}>
+            {t('component.accountSwitcher.all')}{' '}
             {t('component.accountSwitcher.screenHeaderSubTitle', {
               count: myAddresses.length,
             })}
