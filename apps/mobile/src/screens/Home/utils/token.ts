@@ -97,19 +97,42 @@ export const batchQueryTokensWithLocalCache = async (
         value_24h_change?: string;
       })[];
 
-      historyTokens?.forEach(e => {
+      historyTokens?.forEach(historyToken => {
         const idx = tokens.findIndex(
-          t => isSameAddress(e.id, t.id) && e.chain === t.chain,
+          t =>
+            isSameAddress(historyToken.id, t.id) &&
+            historyToken.chain === t.chain,
         );
         if (idx > -1) {
-          const token24hAgo = new BigNumber(e.amount).times(e.price || 1);
+          const token24hAgo = new BigNumber(historyToken.amount).times(
+            historyToken.price,
+          );
           writeTokens[idx].value_24h_change = new BigNumber(
             writeTokens[idx].amount,
           )
-            .times(writeTokens[idx].price || 1)
+            .times(writeTokens[idx].price)
             .minus(token24hAgo)
             .div(token24hAgo)
             .toString();
+
+          if (historyToken.price === 0 && writeTokens[idx].price === 0) {
+            const token24hAgoAmount = new BigNumber(historyToken.amount);
+
+            writeTokens[idx].value_24h_change = new BigNumber(
+              writeTokens[idx].amount,
+            )
+              .minus(token24hAgoAmount)
+              .div(token24hAgoAmount)
+              .toString();
+          }
+
+          if (writeTokens[idx].price === 0 && historyToken.price !== 0) {
+            writeTokens[idx].value_24h_change = '-1';
+          }
+
+          if (writeTokens[idx].amount === 0) {
+            writeTokens[idx].value_24h_change = '-1';
+          }
         }
       });
 
