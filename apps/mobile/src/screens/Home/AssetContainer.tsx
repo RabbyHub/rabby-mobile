@@ -14,11 +14,7 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
-import {
-  getTotalFoldToken,
-  getAllDefiCount,
-  getAllNftCount,
-} from './utils/converAssets';
+import { getTotalFoldToken, getAllDefiCount } from './utils/converAssets';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
@@ -31,6 +27,7 @@ import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
+  DEFI_ITEM_HEIGHT,
   HEADER_TOP_AREA_HEIGHT,
   RootNames,
   TOKEN_EMPTY_ROW_HIGHT,
@@ -83,6 +80,8 @@ import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { openapi } from '@/core/request';
 import { ItemLoader } from './components/Skeleton';
+import { chunk } from 'lodash';
+import { getItemId } from './utils/listRenderId';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -101,6 +100,7 @@ const ViewTypes = {
   OVERVIEW: 2,
   EMPTY_TOKEN: 3,
   EMPTY_ASSETS: 4,
+  DEFI: 5,
 };
 
 const NOT_BORN_DATA = [
@@ -118,16 +118,6 @@ interface Props {
   onRefresh(): void;
 }
 const FOOTER_HEIGHT = 56;
-
-const getItemId = item => {
-  return `${item.type}/${item.data?.chain || ''}/${item.data?.symbol || ''}/${
-    item.data?._tokenId || ''
-  }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
-    item.data?.price || ''
-  }/${item.data?.time_at || ''}/${item.data?._isFold ? 'fold' : 'unfold'}/${
-    item.data?._isPined ? 'pin' : 'unpin'
-  }`;
-};
 
 export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -208,6 +198,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         if (item.type === 'empty-assets') {
           return ViewTypes.EMPTY_ASSETS;
         }
+        if (item.type === 'fold_defi' || item.type === 'unfold_defi') {
+          return ViewTypes.DEFI;
+        }
         if (
           item?.type?.includes('_header') ||
           item?.type?.includes('toggle_')
@@ -233,6 +226,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           case ViewTypes.EMPTY_ASSETS:
             dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
+            break;
+          case ViewTypes.DEFI:
+            dim.width = SCREEN_WIDTH;
+            dim.height = DEFI_ITEM_HEIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           default:
             dim.width = SCREEN_WIDTH;
@@ -330,28 +327,26 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       ...foldAndIncludeBalanceTokenList,
       ...foldAndExcludeBalanceTokenList,
     ];
-    const foldAndIncludeBalanceDefiList: ActionItem[] = portfolios
-      .filter(i => i._isFold && !i._isExcludeBalance && i.netWorth > 0)
-      .map(item => ({
-        type: 'fold_defi',
-        data: item,
-      }));
-    const foldAndExcludeBalanceDefiList: ActionItem[] = portfolios
-      .filter(i => i._isFold && (i._isExcludeBalance || i.netWorth === 0))
-      .map(item => ({
-        type: 'fold_defi',
-        data: item,
-      }));
-    const foldDefiList: ActionItem[] = [
-      ...foldAndIncludeBalanceDefiList,
-      ...foldAndExcludeBalanceDefiList,
-    ];
-    const unFoldDefiList: ActionItem[] = portfolios
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_defi',
-        data: item,
-      }));
+    const foldAndIncludeBalanceDefiList = portfolios.filter(
+      i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
+    );
+    const foldAndExcludeBalanceDefiList = portfolios.filter(
+      i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
+    );
+    const foldDefiList: ActionItem[] = chunk(
+      [...foldAndIncludeBalanceDefiList, ...foldAndExcludeBalanceDefiList],
+      2,
+    ).map(item => ({
+      type: 'fold_defi',
+      data: item,
+    }));
+    const unFoldDefiList: ActionItem[] = chunk(
+      portfolios.filter(i => !i._isFold),
+      2,
+    ).map(item => ({
+      type: 'unfold_defi',
+      data: item,
+    }));
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -799,19 +794,36 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'unfold_defi':
       case 'fold_defi':
         return (
-          <DefiRow
-            data={data}
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              isDarkTheme && styles.bg2,
-            ])}
-            menuActions={getDefiOrNftMenuAction('defi', data)}
-            logoSize={46}
-            chainLogoSize={18}
-            onPress={() =>
-              handleOpenDefiDetail(data, [...(data._portfolios || [])])
-            }
-          />
+          <View style={styles.defiGroups}>
+            <DefiRow
+              data={data[0]}
+              style={StyleSheet.flatten([
+                styles.renderDefiItemWrapper,
+                isDarkTheme && styles.bg2,
+              ])}
+              menuActions={getDefiOrNftMenuAction('defi', data[0])}
+              logoSize={40}
+              onPress={() =>
+                handleOpenDefiDetail(data[0], [...(data[0]._portfolios || [])])
+              }
+            />
+            {data[1] && (
+              <DefiRow
+                data={data[1]}
+                style={StyleSheet.flatten([
+                  styles.renderDefiItemWrapper,
+                  isDarkTheme && styles.bg2,
+                ])}
+                menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                logoSize={40}
+                onPress={() =>
+                  handleOpenDefiDetail(data[1], [
+                    ...(data[1]._portfolios || []),
+                  ])
+                }
+              />
+            )}
+          </View>
         );
       case 'unfold_nft':
       case 'fold_nft':
@@ -1067,6 +1079,18 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 16,
     height: ASSETS_ITEM_HEIGHT_NEW,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
+  defiGroups: {
+    flexDirection: 'row',
+    height: DEFI_ITEM_HEIGHT,
+    gap: 12,
+  },
+  renderDefiItemWrapper: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    height: DEFI_ITEM_HEIGHT,
     paddingLeft: 12,
     paddingRight: 16,
   },

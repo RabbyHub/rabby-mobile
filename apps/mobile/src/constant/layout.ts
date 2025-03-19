@@ -25,6 +25,7 @@ export const ScreenLayouts = {
 };
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
+export const DEFI_ITEM_HEIGHT = 120;
 export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 404;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;

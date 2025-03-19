@@ -93,7 +93,7 @@ export type CombineToken = {
 
 export type CombineDefi = {
   type: 'unfold_defi' | 'fold_defi';
-  data: DisplayedProject;
+  data: DisplayedProject[];
 };
 
 export type CombineNft = {
