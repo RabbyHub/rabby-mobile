@@ -105,10 +105,10 @@ export type ActionHeaderItem = {
   type:
     | 'overview'
     | 'asset_header'
-    | 'toggle_token_fold'
     | 'defi_header'
-    | 'toggle_defi_fold'
     | 'nft_header'
+    | 'toggle_token_fold'
+    | 'toggle_defi_fold'
     | 'toggle_nft_fold'
     | 'empty-assets'
     | 'empty-token'
