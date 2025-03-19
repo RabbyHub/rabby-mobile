@@ -1,25 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useMemo } from 'react';
-import RcIconSend from '@/assets2024/icons/history/IconSend.svg';
-import RcIconSendDark from '@/assets2024/icons/history/IconSendDark.svg';
 import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
-// import RcIconContract from '@/assets/icons/history/contract.svg';
-import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
 import RcIconYes from '@/assets2024/icons/history/IconTxYes.svg';
 import RcIconNo from '@/assets2024/icons/history/IconTxNo.svg';
-import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
-import RcIconCancelDark from '@/assets2024/icons/history/IconCancelDark.svg';
-import FastImage from 'react-native-fast-image';
-import {
-  Image,
-  ImageStyle,
-  StyleProp,
-  StyleSheet,
-  ViewStyle,
-  View,
-} from 'react-native';
+import { View } from 'react-native';
 import { AssetAvatar } from '@/components';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
@@ -49,7 +34,7 @@ export const HistoryItemTokenArea = ({
   // if (iconUri) {
 
   const len = useMemo(() => tokenChangeData.length, [tokenChangeData]);
-  if (tokenApproveData.length) {
+  if (len === 0 && tokenApproveData.length) {
     // just for approve
     const singeToken = tokenApproveData[0].token;
     const singleSize = 46;
@@ -176,68 +161,6 @@ export const HistoryItemTokenArea = ({
         return <RcIconYes style={[styles.image]} />;
       }
   }
-
-  // switch (type) {
-  //   case HistoryItemCateType.Send:
-  //   case HistoryItemCateType.Approve:
-  //   case HistoryItemCateType.Revoke:
-  //   case HistoryItemCateType.Recieve:
-  //     const singeToken = token as TokenItem;
-  //     const singleSize = isInDetail ? 58 : 46;
-  //     return (
-  //       <View style={[styles.imageBox, isInDetail && styles.imageBoxInDetail]}>
-  //         {isNft ? (
-  //           <Media
-  //             failedPlaceholder={
-  //               <IconDefaultNFT width={singleSize} height={singleSize} />
-  //             }
-  //             type="image_url"
-  //             src={
-  //               singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-  //             }
-  //             thumbnail={
-  //               singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-  //             }
-  //             mediaStyle={isInDetail ? styles.mediaInDetail : styles.media}
-  //             style={isInDetail ? styles.mediaInDetail : styles.media}
-  //             playIconSize={14}
-  //           />
-  //         ) : (
-  //           <AssetAvatar logo={singeToken?.logo_url} size={singleSize} />
-  //         )}
-  //         {RcSingleTokenBrIcon[type]}
-  //       </View>
-  //     );
-
-  //   case HistoryItemCateType.Bridge:
-  //   case HistoryItemCateType.Swap:
-  //     const doubleToken = token as TokenItem[];
-  //     return (
-  //       <View style={[styles.imageBox]}>
-  //         <View style={[styles.fromTokenBox]}>
-  //           <AssetAvatar logo={doubleToken?.[0]?.logo_url} size={30} />
-  //         </View>
-  //         <View style={[styles.toTokenBox]}>
-  //           <AssetAvatar
-  //             logo={doubleToken?.[1]?.logo_url}
-  //             size={32}
-  //             logoStyle={styles.swapLogo}
-  //           />
-  //         </View>
-  //         <RcIconSwitch style={[styles.iconTR]} />
-  //       </View>
-  //     );
-  //   case HistoryItemCateType.Contract:
-  //     return <RcIconContract style={[styles.image, style]} />;
-  //   case HistoryItemCateType.Cancel:
-  //     return isLight ? (
-  //       <RcIconCancel style={[styles.image, style]} />
-  //     ) : (
-  //       <RcIconCancelDark style={[styles.image, style]} />
-  //     );
-  // default:
-  //   return <RcIconDefault style={[styles.image, style]} />;
-  // return <RcIconDefault style={[styles.image, style]} />;
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({

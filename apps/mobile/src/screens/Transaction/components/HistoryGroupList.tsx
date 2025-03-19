@@ -1,5 +1,11 @@
 import { minBy, range } from 'lodash';
-import React, { useMemo } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import { FlatList, Platform, View, Text } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import dayjs from 'dayjs';
@@ -144,140 +150,156 @@ const AddressInfo = ({ account }: { account?: KeyringAccountWithAlias }) => {
   return null;
 };
 
-export const HistoryList = ({
-  loading,
-  ensureCurrentNoDbData,
-  historySuccessList,
-  loadingMore,
-  loadMore,
-  refreshLoading,
-  resetTopMenu,
-  list,
-  localTxList,
-  onRefresh,
-  isForMultipleAdderss = true,
-  onPresssItem,
-}: {
-  ensureCurrentNoDbData?: boolean;
-  resetTopMenu?: () => void;
-  historySuccessList?: string[];
-  localTxList?: TransactionGroup[];
-  list?: (HistoryDisplayItem | TransactionGroup)[];
-  loading?: boolean;
-  loadingMore?: boolean;
-  refreshLoading?: boolean;
-  isForMultipleAdderss?: boolean;
-  onPresssItem?: (data: HistoryDisplayItem) => void;
-  loadMore?: () => void;
-  onRefresh?: () => void;
-}) => {
-  const markedList = useMemo(() => {
-    return markFirstItems(list || []);
-  }, [list]);
-  const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
+export const HistoryList = forwardRef(
+  (
+    {
+      loading,
+      ensureCurrentNoDbData,
+      historySuccessList,
+      loadingMore,
+      loadMore,
+      refreshLoading,
+      resetTopMenu,
+      list,
+      localTxList,
+      onRefresh,
+      isForMultipleAdderss = true,
+      onPresssItem,
+    }: {
+      ensureCurrentNoDbData?: boolean;
+      resetTopMenu?: () => void;
+      historySuccessList?: string[];
+      localTxList?: TransactionGroup[];
+      list?: (HistoryDisplayItem | TransactionGroup)[];
+      loading?: boolean;
+      loadingMore?: boolean;
+      refreshLoading?: boolean;
+      isForMultipleAdderss?: boolean;
+      onPresssItem?: (data: HistoryDisplayItem) => void;
+      loadMore?: () => void;
+      onRefresh?: () => void;
+    },
+    ref,
+  ) => {
+    const flatListRef = useRef<FlatList>(null);
 
-  const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
-    if ('projectDict' in item.data) {
-      return (
-        <>
-          {item.isDateStart ? (
-            <Text
-              style={[
-                styles.date,
-                !isForMultipleAdderss && styles.marginBottom,
-              ]}>
-              {formatTimestamp(item.time, t)}
-            </Text>
-          ) : null}
-          <HistoryItem
-            data={item.data}
-            isForMultipleAdderss={isForMultipleAdderss}
-            projectDict={item.data.projectDict}
-            cateDict={item.data.cateDict}
-            tokenDict={item.data.tokenDict || {}}
-            onPresss={onPresssItem}
-          />
-        </>
-      );
-    } else {
-      const canCancel =
-        minBy(
-          localTxList?.filter(
-            i =>
-              i.chainId === (item.data as TransactionGroup).chainId &&
-              i.isPending,
-          ) || [],
-          i => i.nonce,
-        )?.nonce === item.data.nonce;
+    const scrollToTop = useCallback(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, []);
 
-      return (
-        <>
-          {/* {item.isFirst ? (
+    useImperativeHandle(ref, () => ({
+      scrollToTop,
+    }));
+
+    const markedList = useMemo(() => {
+      return markFirstItems(list || []);
+    }, [list]);
+    const { styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
+    const { bottom } = useSafeAreaInsets();
+
+    const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
+      if ('projectDict' in item.data) {
+        return (
+          <>
+            {item.isDateStart ? (
+              <Text
+                style={[
+                  styles.date,
+                  !isForMultipleAdderss && styles.marginBottom,
+                ]}>
+                {formatTimestamp(item.time, t)}
+              </Text>
+            ) : null}
+            <HistoryItem
+              data={item.data}
+              isForMultipleAdderss={isForMultipleAdderss}
+              projectDict={item.data.projectDict}
+              cateDict={item.data.cateDict}
+              tokenDict={item.data.tokenDict || {}}
+              onPresss={onPresssItem}
+            />
+          </>
+        );
+      } else {
+        const canCancel =
+          minBy(
+            localTxList?.filter(
+              i =>
+                i.chainId === (item.data as TransactionGroup).chainId &&
+                i.isPending,
+            ) || [],
+            i => i.nonce,
+          )?.nonce === item.data.nonce;
+
+        return (
+          <>
+            {/* {item.isFirst ? (
             <Text style={[styles.date]}>{t('page.bridge.Pending')}</Text>
           ) : null} */}
-          {item.isDateStart ? (
-            <Text
-              style={[
-                styles.date,
-                !isForMultipleAdderss && styles.marginBottom,
-              ]}>
-              {formatTimestamp(item.time, t)}
-            </Text>
-          ) : null}
-          <TransactionItem
-            isForMultipleAdderss={isForMultipleAdderss}
-            historySuccessList={historySuccessList}
-            data={item.data}
-            canCancel={canCancel}
-            onRefresh={onRefresh}
-          />
-        </>
+            {item.isDateStart ? (
+              <Text
+                style={[
+                  styles.date,
+                  !isForMultipleAdderss && styles.marginBottom,
+                ]}>
+                {formatTimestamp(item.time, t)}
+              </Text>
+            ) : null}
+            <TransactionItem
+              isForMultipleAdderss={isForMultipleAdderss}
+              historySuccessList={historySuccessList}
+              data={item.data}
+              canCancel={canCancel}
+              onRefresh={onRefresh}
+            />
+          </>
+        );
+      }
+    };
+
+    if (loading) {
+      return (
+        <View style={styles.skeletonContainer}>
+          {range(0, 8).map(i => {
+            return <SkeletonCard key={i} />;
+          })}
+        </View>
       );
     }
-  };
 
-  if (loading) {
     return (
-      <View style={styles.skeletonContainer}>
-        {range(0, 8).map(i => {
-          return <SkeletonCard key={i} />;
-        })}
-      </View>
+      <FlatList
+        ref={flatListRef}
+        removeClippedSubviews
+        data={markedList}
+        renderItem={renderItem}
+        windowSize={5}
+        ListEmptyComponent={
+          loading ? null : ensureCurrentNoDbData ? <Empty /> : null
+        }
+        onTouchStart={() => resetTopMenu && resetTopMenu()}
+        style={styles.container}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.8}
+        ListFooterComponent={
+          loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
+        }
+        refreshControl={
+          onRefresh && (
+            <RefreshControl
+              {...(isIOS && {
+                progressViewOffset: -12,
+              })}
+              refreshing={refreshLoading || false}
+              onRefresh={onRefresh}
+            />
+          )
+        }
+      />
     );
-  }
-
-  return (
-    <FlatList
-      removeClippedSubviews
-      data={markedList}
-      renderItem={renderItem}
-      windowSize={5}
-      ListEmptyComponent={
-        loading ? null : ensureCurrentNoDbData ? <Empty /> : null
-      }
-      onTouchStart={() => resetTopMenu && resetTopMenu()}
-      style={styles.container}
-      onEndReached={loadMore}
-      onEndReachedThreshold={0.8}
-      ListFooterComponent={
-        loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
-      }
-      refreshControl={
-        onRefresh && (
-          <RefreshControl
-            {...(isIOS && {
-              progressViewOffset: -12,
-            })}
-            refreshing={refreshLoading || false}
-            onRefresh={onRefresh}
-          />
-        )
-      }
-    />
-  );
-};
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

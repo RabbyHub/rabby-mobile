@@ -103,7 +103,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     });
   });
 
-  const recieveToken: ReceiveTokenItem =
+  const receiveToken: ReceiveTokenItem =
     actionData.minReceive || actionData.receiveToken;
 
   if (!chain) {
@@ -136,20 +136,20 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.toTokenBox]}
-          onPress={() => handleGotoDetail(recieveToken)}>
+          onPress={() => handleGotoDetail(receiveToken)}>
           <AssetAvatar
-            logo={recieveToken?.logo_url}
+            logo={receiveToken?.logo_url}
             size={42}
-            chain={recieveToken?.chain}
+            chain={receiveToken?.chain}
             chainSize={16}
           />
           <View style={[styles.rowBox]}>
             <Text style={[styles.tokenAmountTextList]}>
               {'+'}{' '}
               {formatTokenAmount(
-                recieveToken.amount || recieveToken.min_amount,
+                receiveToken.amount || receiveToken.min_amount,
               )}{' '}
-              {getTokenSymbol(recieveToken as TokenItem)}
+              {getTokenSymbol(receiveToken as TokenItem)}
             </Text>
             <RcIconRightCC
               color={colors2024['green-default']}

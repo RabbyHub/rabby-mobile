@@ -1,7 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { findChainByServerID, getChain } from '@/utils/chain';
-import { numberWithCommasIsLtOne } from '@/utils/number';
-import { sinceTime } from '@/utils/time';
+import { getChain } from '@/utils/chain';
 import { TokenItem, TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import {
@@ -11,23 +9,17 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import RcIconInteraction from '@/assets2024/icons/history/IconInteraction.svg';
-import RcIconInteractionDark from '@/assets2024/icons/history/IconInteractionDark.svg';
 import { TxChange } from './TokenChange';
-import { TxId } from './TxId';
-import { TxInterAddressExplain } from './TxInterAddressExplain';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryItemIcon } from './HistoryItemIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
+import { getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
-import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemCateType } from './type';
@@ -39,7 +31,7 @@ type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
-  onPresss?: (data: HistoryDisplayItem) => void;
+  onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export type TokenChangeDataItem = {
@@ -53,11 +45,9 @@ export type TokenChangeDataItem = {
 export const HistoryItem = React.memo(
   ({
     data,
-    cateDict,
-    projectDict,
     tokenDict,
     style,
-    onPresss,
+    onPress,
     isForMultipleAdderss,
   }: HistoryItemProps) => {
     const { t } = useTranslation();
@@ -164,12 +154,17 @@ export const HistoryItem = React.memo(
           // });
           break;
         case HistoryItemCateType.Cancel:
+          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          break;
         case HistoryItemCateType.Contract:
         case HistoryItemCateType.Revoke:
         case HistoryItemCateType.Approve:
         case HistoryItemCateType.Swap:
         default:
-          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          const project = data.project_id
+            ? data.projectDict[data.project_id]
+            : null;
+          address = project?.name || ellipsisAddress(data.tx?.to_addr || '');
           break;
       }
 
@@ -186,9 +181,9 @@ export const HistoryItem = React.memo(
     }, [formatType, data, chainItem, t, styles.describeText]);
 
     const navigation = useRabbyAppNavigation();
-    const hanldeNavigateDetail = useCallback(() => {
-      if (onPresss) {
-        onPresss(data);
+    const handleNavigateDetail = useCallback(() => {
+      if (onPress) {
+        onPress(data);
         return;
       }
       navigation.push(RootNames.StackTransaction, {
@@ -199,7 +194,7 @@ export const HistoryItem = React.memo(
           title: formatTitle,
         },
       });
-    }, [onPresss, navigation, isForMultipleAdderss, data, formatTitle]);
+    }, [onPress, navigation, isForMultipleAdderss, data, formatTitle]);
 
     const noNeedTokenChangeType = useMemo(
       () =>
@@ -239,14 +234,13 @@ export const HistoryItem = React.memo(
           type: 'send',
         });
       });
-
       return res;
     }, [data, tokenDict]);
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (
         <TouchableOpacity
-          onPress={hanldeNavigateDetail}
+          onPress={handleNavigateDetail}
           style={{ marginBottom: 8 }}>
           <BuyHistoryItem data={data.buyDetails} />
         </TouchableOpacity>
@@ -254,7 +248,7 @@ export const HistoryItem = React.memo(
     }
 
     return (
-      <TouchableOpacity onPress={hanldeNavigateDetail}>
+      <TouchableOpacity onPress={handleNavigateDetail}>
         <View
           style={[
             styles.card,
@@ -271,9 +265,7 @@ export const HistoryItem = React.memo(
               ]}>
               <HistoryItemTokenArea
                 type={formatType as HistoryItemCateType}
-                // token={formatToken}
                 tokenChangeData={tokenChangeData}
-                // isNft={isNft}
                 tokenApproveData={tokenApproveData}
               />
               <View style={styles.textBox}>

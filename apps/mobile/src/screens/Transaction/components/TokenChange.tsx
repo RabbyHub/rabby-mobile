@@ -1,31 +1,12 @@
-import { IconDefaultNFT } from '@/assets/icons/nft';
-import { Media } from '@/components/Media';
-import {
-  NFTItem,
-  TokenItem,
-  TxDisplayItem,
-  TxHistoryItem,
-} from '@rabby-wallet/rabby-api/dist/types';
-import {
-  Image,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextStyle,
-  View,
-} from 'react-native';
-import RcIconUnknown from '@/assets/icons/token/default.svg';
+import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import TokenLabel from './TokenLabel';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { getTokenSymbol } from '@/utils/token';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HistoryItemCateType } from './type';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { fetchHistoryTokenUUId } from './utils';
 import { TokenChangeDataItem } from './HistoryItem';
 
 const TxChangeItem = ({
@@ -64,7 +45,9 @@ const TxChangeItem = ({
         {isNft
           ? t('page.singleHome.sectionHeader.Nft')
           : ellipsisOverflowedText(getTokenSymbol(item as TokenItem), 5)}
-        {needShowEllips ? '...' : ''}
+        {needShowEllips && getTokenSymbol(item as TokenItem).length <= 5
+          ? '...'
+          : ''}
       </Text>
     </View>
   );

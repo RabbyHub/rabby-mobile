@@ -10,8 +10,7 @@ import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { findChain, findChainByServerID, getChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
@@ -146,13 +145,14 @@ function History({
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict, historyEnsureNoData } = useHistoryTokenDict();
 
+  const historyListRef = useRef<{ scrollToTop: () => void }>(null);
+
   const batchFetchDataV2 = async () => {
     // fetch data from local database
 
     const addresses = isSceneUsingAllAccounts
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
-    console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
       const [localHistoryList, _historyList, buyList] = await Promise.all([
         LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
@@ -450,6 +450,7 @@ function History({
         cancel();
         refresh();
       }
+      historyListRef.current?.scrollToTop();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
@@ -617,17 +618,8 @@ function History({
     ],
   );
 
-  // if (!loading && !groups?.length && !allTxHistory.length) {
-  //   return <Empty />;
-  // }
-
   return (
-    <View
-      // onPress={() => {
-      //   setIsShowMenu(false);
-      // }}
-      // eslint-disable-next-line react-native/no-inline-styles
-      style={{ paddingTop: 0, position: 'relative' }}>
+    <View style={{ paddingTop: 0, position: 'relative' }}>
       <>
         {isShowMenu && (
           <View style={styles.menuContainer}>
@@ -639,38 +631,10 @@ function History({
                 <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
               </View>
             </View>
-            {/* <View style={styles.menuItem}>
-              <Text style={styles.menuItemText}>
-                {t('page.transactions.ViewSmallItems')}
-              </Text>
-              <View style={styles.valueView}>
-                <AppSwitch2024
-                  value={isShowSmall}
-                  onValueChange={setIsShowSmall}
-                />
-              </View>
-            </View> */}
           </View>
         )}
-        {/* {isTestnet || isInTokenDetail ? null : (
-        <TouchableOpacity
-          onPress={() => {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.HistoryFilterScam,
-              params: {
-                addresses: isSceneUsingAllAccounts
-                  ? unionAccounts
-                  : [finalSceneCurrentAccount],
-                isForMultipleAdderss,
-              },
-            });
-          }}
-          style={styles.link}>
-          <Text style={styles.linkText}>Hide scam transactions</Text>
-          <RcIconRight />
-        </TouchableOpacity>
-      )} */}
         <HistoryList
+          ref={historyListRef}
           resetTopMenu={resetTopMenu}
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
