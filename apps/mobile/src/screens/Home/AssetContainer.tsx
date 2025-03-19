@@ -734,9 +734,14 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const [extendedState, setExtendedState] = useState<{
     selectedChain?: ChainListItem;
+    isLight: boolean;
   }>({
     selectedChain: undefined,
+    isLight: isLight,
   });
+  useEffect(() => {
+    setExtendedState(prev => ({ ...prev, isLight }));
+  }, [isLight]);
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
