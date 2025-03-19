@@ -1,17 +1,11 @@
 import React, { memo, useMemo } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-  Dimensions,
-} from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
-import { DEFI_ITEM_HEIGHT } from '@/constant/layout';
+import { DEFI_CARD_WIDTH, DEFI_ITEM_HEIGHT } from '@/constant/layout';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
@@ -64,7 +58,6 @@ const getTopFiveTokens = (data: CombineDefiItem) => {
     .slice(0, 5);
 };
 
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 interface DefiRowProps {
   data: CombineDefiItem;
   style?: ViewStyle;
@@ -214,7 +207,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     height: DEFI_ITEM_HEIGHT,
-    width: (SCREEN_WIDTH - 12) / 2,
+    width: DEFI_CARD_WIDTH,
     alignItems: 'flex-start',
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']

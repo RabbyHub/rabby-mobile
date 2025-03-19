@@ -79,7 +79,7 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { openapi } from '@/core/request';
-import { ItemLoader } from './components/Skeleton';
+import { DefiItemLoader, ItemLoader } from './components/Skeleton';
 import { chunk } from 'lodash';
 import { getItemId } from './utils/listRenderId';
 
@@ -198,7 +198,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         if (item.type === 'empty-assets') {
           return ViewTypes.EMPTY_ASSETS;
         }
-        if (item.type === 'fold_defi' || item.type === 'unfold_defi') {
+        if (
+          item.type === 'fold_defi' ||
+          item.type === 'unfold_defi' ||
+          item.type === 'loading-defi-skeleton'
+        ) {
           return ViewTypes.DEFI;
         }
         if (
@@ -400,8 +404,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       },
       {
         show: !!loadingPortfolio && !portfolios.length,
-        data: Array.from({ length: 5 }, () => ({
-          type: 'loading-skeleton',
+        data: Array.from({ length: 2 }, () => ({
+          type: 'loading-defi-skeleton',
         })),
       },
       {
@@ -916,6 +920,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         );
       case 'loading-skeleton':
         return <ItemLoader />;
+      case 'loading-defi-skeleton':
+        return <DefiItemLoader />;
       case 'empty-assets':
         return <EmptyAssets desc={data} />;
       default:

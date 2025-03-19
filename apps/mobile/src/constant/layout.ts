@@ -6,6 +6,7 @@ import {
   ThemeColors2024,
 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Dimensions } from 'react-native';
 
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
@@ -23,6 +24,8 @@ export const ScreenLayouts = {
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
+const SCREEN_WIDTH = Dimensions.get('window').width - 32;
+export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
 export const DEFI_ITEM_HEIGHT = 120;

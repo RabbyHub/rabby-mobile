@@ -63,7 +63,7 @@ const getCollectionTags = (type: string, item: CollectionList) => {
 export const getItemId = (item: ActionItem) => {
   if (!item.data || typeof item.data === 'string') {
     // header item
-    return `${item.type}/${item.data}`;
+    return `render_header-${item.type}/${item.data}`;
   }
   if (item.type === 'unfold_token' || item.type === 'fold_token') {
     return getSingleTokenTags(item.type, item.data).join('/');
