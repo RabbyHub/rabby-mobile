@@ -3,61 +3,20 @@ import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
 import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
 import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FlatList, Keyboard, Text, View } from 'react-native';
 import {
-  Animated,
-  Dimensions,
-  FlatList,
-  Keyboard,
-  Text,
-  View,
-} from 'react-native';
-import {
-  RefreshControl,
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_SECTION_HEADER,
-  ASSETS_SEPARATOR_HEIGHT,
-  RootNames,
-} from '@/constant/layout';
+import { ASSETS_SECTION_HEADER, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  DefiRow,
-  NftRow,
-  TokenRow,
-  TokenRowSectionHeader,
-} from '@/screens/Home/components/AssetRenderItems';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '@/screens/Home/types';
-import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAssets } from '../useAssets';
-import { PositionLoader } from './Skeleton';
-import SearchOnTheChain from './SearchOnTheChain';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
-import { useSearchTokens } from '../useSearch';
-import { ICombineItem } from '@/screens/Home/hooks/store';
-import {
-  RecyclerListView,
-  DataProvider,
-  LayoutProvider,
-} from 'recyclerlistview';
-import { useFindChain } from '@/hooks/useFindChain';
 import {
   MODAL_ID,
   MODAL_NAMES,
@@ -71,10 +30,7 @@ import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
 import { Skeleton } from '@rneui/themed';
 import { add0x, ellipsisAddress } from '@/utils/address';
-import { isAddress } from 'web3-utils';
 import { isValidHexAddress } from '@metamask/utils';
-
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -132,7 +88,6 @@ export const SearchAssets: React.FC<Props> = ({
   );
 
   const createChainModal = React.useCallback(() => {
-    console.log('createChainModal');
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: chainEnum,

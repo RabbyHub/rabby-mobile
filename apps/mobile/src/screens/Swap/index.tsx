@@ -69,6 +69,7 @@ import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
 import { TransactionNavigatorParamList } from '@/navigation-type';
+import { TokenInfoPopup } from './components/TokenInfoPopup';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -791,6 +792,8 @@ const Swap = ({
         visible={lowCreditVisible}
         onCancel={() => setLowCreditVisible(false)}
       />
+
+      <TokenInfoPopup />
     </NormalScreenContainer2024>
   );
 };

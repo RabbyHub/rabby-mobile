@@ -11,6 +11,7 @@ import {
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
+import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 
 export const Bridge = ({
   isForMultipleAdderss,
@@ -24,6 +25,7 @@ export const Bridge = ({
           <BridgeContent isForMultipleAdderss={isForMultipleAdderss} />
         </QuoteVisibleProvider>
       </RefreshIdProvider>
+      <TokenInfoPopup />
     </SettingVisibleProvider>
   );
 };
