@@ -10,7 +10,7 @@ import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
 import { swapService } from '@/core/services';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
@@ -23,7 +23,6 @@ import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
-import { useRecommendSwapToken } from './recommentToken';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
@@ -760,14 +759,6 @@ export const useTokenPair = (userAddress: string) => {
     setSwapUseSlider(false);
     setIsDraggingSlider(false);
   }, [userAddress]);
-
-  useRecommendSwapToken({
-    chain: chain,
-    fromToken: payToken,
-    toToken: receiveToken,
-    changeFromToken: setPayToken,
-    changeToToken: setReceiveToken,
-  });
 
   return {
     bestQuoteDex,
