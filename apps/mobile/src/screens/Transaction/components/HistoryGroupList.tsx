@@ -159,7 +159,6 @@ export const HistoryList = forwardRef(
       loadingMore,
       loadMore,
       refreshLoading,
-      resetTopMenu,
       list,
       localTxList,
       onRefresh,
@@ -167,7 +166,6 @@ export const HistoryList = forwardRef(
       onPresssItem,
     }: {
       ensureCurrentNoDbData?: boolean;
-      resetTopMenu?: () => void;
       historySuccessList?: string[];
       localTxList?: TransactionGroup[];
       list?: (HistoryDisplayItem | TransactionGroup)[];
@@ -234,9 +232,6 @@ export const HistoryList = forwardRef(
 
         return (
           <>
-            {/* {item.isFirst ? (
-            <Text style={[styles.date]}>{t('page.bridge.Pending')}</Text>
-          ) : null} */}
             {item.isDateStart ? (
               <Text
                 style={[
@@ -278,7 +273,6 @@ export const HistoryList = forwardRef(
         ListEmptyComponent={
           loading ? null : ensureCurrentNoDbData ? <Empty /> : null
         }
-        onTouchStart={() => resetTopMenu && resetTopMenu()}
         style={styles.container}
         onEndReached={loadMore}
         onEndReachedThreshold={0.8}

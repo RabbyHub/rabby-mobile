@@ -47,7 +47,6 @@ import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
-import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -125,8 +124,6 @@ function History({
   const [currentPage, setCurrentPage] = useState(0);
   const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [isShowAll, setIsShowAll] = useState(false);
-  // const [isShowSmall, setIsShowSmall] = useState(false);
-  const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const PAGE_COUNT = isInTokenDetail ? REALL_TIME_API_PAGE_COUNT : _PAGE_COUNT;
@@ -544,9 +541,11 @@ function History({
     };
   });
 
-  const getHeaderRight = useMemoizedFn(() => {
-    return <HistoryFilterMenu setIsShowMenu={setIsShowMenu} />;
-  });
+  const getHeaderRight = useCallback(() => {
+    return (
+      <HistoryFilterMenu isShowAll={isShowAll} setIsShowAll={setIsShowAll} />
+    );
+  }, [isShowAll, setIsShowAll]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -570,10 +569,6 @@ function History({
       />
     );
   }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
-
-  const resetTopMenu = useCallback(() => {
-    setIsShowMenu(false);
-  }, [setIsShowMenu]);
 
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
@@ -621,21 +616,8 @@ function History({
   return (
     <View style={{ paddingTop: 0, position: 'relative' }}>
       <>
-        {isShowMenu && (
-          <View style={styles.menuContainer}>
-            <View style={styles.menuItem}>
-              <Text style={styles.menuItemText}>
-                {t('page.transactions.ShowHiddenItems')}
-              </Text>
-              <View style={styles.valueView}>
-                <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
-              </View>
-            </View>
-          </View>
-        )}
         <HistoryList
           ref={historyListRef}
-          resetTopMenu={resetTopMenu}
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
@@ -663,9 +645,6 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   useLastUsedAccountInScreen();
 
   const { styles } = useTheme2024({ getStyle });
-  // const { isSceneUsingAllAccounts } = useSceneAccountInfo({
-  //   forScene: 'MultiHistory',
-  // });
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>

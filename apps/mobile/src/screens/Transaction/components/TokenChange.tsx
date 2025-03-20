@@ -172,18 +172,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   tokenChangeDelta: {
     justifyContent: 'flex-end',
   },
-  approveText: {
-    color: colors['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
   textNegative: {
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 20,
     fontWeight: '700',
   },
   memoText: {
