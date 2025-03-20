@@ -18,6 +18,10 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
+      __DANGEROUS_NO_VERIFY_SSL:
+        required: false
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -126,6 +130,7 @@ jobs:
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
+          DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
           CONFIGURATION: release
           TYPE: adhoc
           BUILD_ENV: alpha
