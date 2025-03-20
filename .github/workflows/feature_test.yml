@@ -21,6 +21,10 @@ on:
       __DANGEROUS_NO_VERIFY_SSL:
         required: false
         type: boolean
+        default: true
+      GHA_MOCK_BUILD_FAILED:
+        required: false
+        type: boolean
         default: false
 
 defaults:
@@ -131,6 +135,7 @@ jobs:
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
+          GHA_MOCK_BUILD_FAILED: ${{ inputs.GHA_MOCK_BUILD_FAILED }}
           CONFIGURATION: release
           TYPE: adhoc
           BUILD_ENV: alpha

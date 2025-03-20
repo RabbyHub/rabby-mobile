@@ -61,10 +61,18 @@ build_adhoc() {
   bundle exec fastlane ios adhoc;
 }
 
+[ $GHA_MOCK_BUILD_FAILED == "true" ] && SKIP_BUILD=true
+
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
   build_adhoc;
   echo "[deploy-ios-adhoc] finish build."
+fi
+
+if [[ ! -f $ouput_dir/RabbyMobile.ipa || $GHA_MOCK_BUILD_FAILED == "true" ]]; then
+  echo "[deploy-ios-adhoc] ⚠️ build failed! No $ouput_dir/RabbyMobile.ipa found";
+  node $script_dir/notify-lark.js "FAILED" ios
+  exit 1;
 fi
 
 file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')
