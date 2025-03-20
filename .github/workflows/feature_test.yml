@@ -21,7 +21,7 @@ on:
       __DANGEROUS_NO_VERIFY_SSL:
         required: false
         type: boolean
-        default: true
+        default: false
       GHA_MOCK_BUILD_FAILED:
         required: false
         type: boolean
