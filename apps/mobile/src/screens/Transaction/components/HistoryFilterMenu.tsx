@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
 import { useTheme2024 } from '@/hooks/theme';
+import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
 import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
@@ -19,11 +22,20 @@ interface Props {
 
 export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const switchShowAll = () => {
+    setIsShowAll(prev => {
+      if (prev) {
+        toast.success(t('page.transactions.NotShowAllTransactionsToast'));
+      } else {
+        toast.success(t('page.transactions.ShowAllTransactionsToast'));
+      }
+      return !prev;
+    });
+  };
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        hitSlop={historyHitSlop}
-        onPress={() => setIsShowAll(prev => !prev)}>
+      <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}>
         {isShowAll ? (
           <RcIconEyeCC
             color={colors2024['neutral-foot']}
