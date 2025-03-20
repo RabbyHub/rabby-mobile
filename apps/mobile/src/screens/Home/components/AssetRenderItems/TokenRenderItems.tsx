@@ -14,7 +14,6 @@ import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
-import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -37,12 +36,12 @@ import {
 } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
-import { ellipsisAddress } from '@/utils/address';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenidentityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatUsdValue } from '@/utils/number';
 import { RiskTokenTips } from '@/screens/TokenDetail';
 import BigNumber from 'bignumber.js';
+import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
 
 export const formatUsdValueKMB = (value: string | number): string => {
   const bnValue = new BigNumber(value);
@@ -193,7 +192,6 @@ export const TokenRow = memo(
                 searchWords={[filterText || '']}
                 textToHighlight={data.symbol}
               />
-              {data._isPined && <TextBadge />}
               {!hideFoldTag && data._isManualFold && (
                 <TextBadge type="folded" />
               )}
@@ -236,6 +234,11 @@ export const TokenRow = memo(
             </Text>
           ) : null}
         </View>
+        {data._isPined && (
+          <View style={[styles.pinBadge]}>
+            <RcIconPin color={colors2024['brand-default']} />
+          </View>
+        )}
       </TouchableOpacity>
     );
     if (disableMenu) {
@@ -635,11 +638,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   amountStr: {
     marginTop: 2,
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
+    fontWeight: '500',
   },
   searchSubText: {
     color: ctx.colors2024['neutral-secondary'],
@@ -760,5 +763,15 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
+  },
+  pinBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    backgroundColor: ctx.colors2024['brand-light-1'],
+    borderBottomLeftRadius: 12,
+    borderTopRightRadius: 16,
   },
 }));
