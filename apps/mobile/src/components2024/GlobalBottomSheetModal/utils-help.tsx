@@ -58,7 +58,7 @@ export function makeBottomSheetProps({
     ]),
     handleIndicatorStyle: StyleSheet.flatten([
       {
-        backgroundColor: '#D1D4DB',
+        backgroundColor: colors['neutral-line'],
         height: 6,
         width: 50,
       },
