@@ -196,7 +196,7 @@ const HistoryScreen = () => {
       <AccountSwitcherModal
         forScene="History"
         inScreen
-        panelLinearGradientProps={{ type: 'bg1' }}
+        // panelLinearGradientProps={{ type: 'bg1' }}
       />
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <NetSwitchTabs

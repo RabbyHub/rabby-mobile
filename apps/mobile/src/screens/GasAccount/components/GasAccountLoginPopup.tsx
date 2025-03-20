@@ -6,9 +6,9 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
@@ -31,8 +31,10 @@ const GasAccountLoginContent: React.FC<{
   const [loading, setLoading] = useState(false);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const [selectedAccount, setSelectAccount] = useState(currentAccount);
 
   const confirmAddress = useMemoizedFn(async (account: Account | null) => {
+    setSelectAccount(account);
     if (loading) {
       return;
     }
@@ -58,26 +60,29 @@ const GasAccountLoginContent: React.FC<{
     setLoading(false);
   });
 
+  useEffect(() => {
+    setSelectAccount(currentAccount);
+  }, [currentAccount]);
+
   if (currentAccount) {
     return (
       <LinearGradient
         colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
         locations={[0.0745, 0.2242]}
         start={{ x: 0, y: 0 }}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', paddingBottom: 44 }}
         end={{ x: 0, y: 1 }}>
         <View style={styles.loginConfirmContainer}>
-          <BottomSheetHandlableView>
-            <View style={styles.handleView}>
-              <Text style={styles.confirmTitle}>
-                {t('component.gasAccount.loginConfirmModal.title')}
-              </Text>
-            </View>
-          </BottomSheetHandlableView>
+          <View style={styles.handleView}>
+            <Text style={styles.confirmTitle}>
+              {t('component.gasAccount.loginConfirmModal.title')}
+            </Text>
+          </View>
 
           <SelectGasAccountList
             isGasAccount
             style={styles.list}
+            value={selectedAccount || undefined}
             listHeader={
               <View style={styles.listHeader}>
                 <Text style={styles.listLabel}>
@@ -115,30 +120,42 @@ export const GasAccountLoginPopup: React.FC<{
   }, [visible]);
 
   const { height } = useWindowDimensions();
+  const maxHeight = useMemo(() => {
+    return height - 200;
+  }, [height]);
 
   return (
     <AppBottomSheetModal
-      enableContentPanningGesture={false} // has scorll list
-      snapPoints={[Math.min(height - 200, 652)]}
+      // enableContentPanningGesture={false} // has scorll list
+      // snapPoints={[Math.min(height - 200, 652)]}
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
         linearGradientType: 'linear',
         colors: colors2024,
-      })}>
-      <BottomSheetView style={styles.popup}>
+      })}
+      enableDynamicSizing
+      maxDynamicContentSize={maxHeight}
+      handleStyle={styles.handleStyle}>
+      <BottomSheetScrollView style={styles.popup}>
         <GasAccountLoginContent onLogin={onLogin} />
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   popup: {
-    justifyContent: 'flex-end',
+    // justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
     // paddingVertical: 10,
+    minHeight: 364,
+  },
+  handleStyle: {
+    backgroundColor: 'transparent',
+    paddingTop: 10,
+    height: 36,
   },
   handleView: {
     justifyContent: 'center',
@@ -155,7 +172,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '800',
     color: colors['neutral-title1'],
-    paddingTop: 16,
     paddingBottom: 0,
   },
   list: {

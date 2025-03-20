@@ -14,7 +14,7 @@ import { AssetAvatar } from '../AssetAvatar';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
-  useAllItemH: 70,
+  useAllItemH: 78,
   itemH: 78,
   itemGap: 12,
   get myAddressesAreaVisiableH() {
@@ -76,11 +76,6 @@ export function AddressItemInPanel({
                 <View style={styles.centerInfo}>
                   <View style={styles.nameAndAdderss}>
                     <WalletName style={styles.addressAliasName} />
-                    {isPinned && (
-                      <View style={styles.pinnedWrapper}>
-                        <Text style={styles.pinText}>Pin</Text>
-                      </View>
-                    )}
                   </View>
                   <View style={styles.bottomArea}>
                     <WalletBalance
@@ -147,7 +142,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       height: 52,
       width: '100%',
     },
-    walletIcon: { marginRight: 12, width: 46, height: 46 },
+    walletIcon: { marginRight: 8, width: 46, height: 46 },
     centerInfo: {
       flexDirection: 'column',
       flexShrink: 1,
@@ -164,8 +159,10 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       flexShrink: 1,
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
+      lineHeight: 20,
       fontStyle: 'normal',
-      fontWeight: '700',
+      fontWeight: '500',
+      color: ctx.colors2024['neutral-foot'],
     },
     bottomArea: {
       flexDirection: 'row',
@@ -183,14 +180,15 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressUsdValue: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
+      fontSize: 16,
       fontStyle: 'normal',
-      fontWeight: '500',
-      lineHeight: 18,
-      color: ctx.colors2024['neutral-secondary'],
+      fontWeight: '700',
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-title-1'],
     },
     addressUsdValueCurrent: {
-      color: ctx.colors2024['brand-default'],
+      // color: ctx.colors2024['brand-default'],
+      color: ctx.colors2024['neutral-title-1'],
       fontWeight: '700',
     },
     chainLogos: {

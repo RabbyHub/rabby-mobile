@@ -32,6 +32,7 @@ import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useAtom } from 'jotai';
 import { cexInfoAtoms } from '@/hooks/useCexAccounts';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -62,6 +63,8 @@ export const WhiteListItem = ({
     [account.address, cexInfoStore],
   );
 
+  const editAliasName = useAliasNameEditModal();
+
   useLayoutEffect(() => {
     if (cexInfoStore[account.address]) {
       return;
@@ -75,23 +78,38 @@ export const WhiteListItem = ({
 
   const menuActions = React.useMemo(() => {
     return [
+      ...(inWhiteList
+        ? [
+            {
+              title: t('page.whitelist.removeWhitelist'),
+              icon: isDarkTheme
+                ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove_dark.png')
+                : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove.png'),
+              androidIconName: 'ic_rabby_menu_remove_whitelist',
+              key: 'remove',
+              action() {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+                removeWhitelist(account.address);
+              },
+            },
+          ]
+        : []),
       {
-        title: t('page.whitelist.removeWhitelist'),
+        title: t('page.addressDetail.addressListScreen.edit'),
         icon: isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove.png'),
-        androidIconName: 'ic_rabby_menu_remove_whitelist',
-        key: 'remove',
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+        androidIconName: 'ic_rabby_menu_edit',
+        key: 'edit',
         action() {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-          removeWhitelist(account.address);
+          editAliasName.show(account);
         },
       },
     ] as MenuAction[];
-  }, [account.address, isDarkTheme, removeWhitelist, t]);
+  }, [account, editAliasName, inWhiteList, isDarkTheme, removeWhitelist, t]);
 
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
@@ -215,7 +233,7 @@ export const WhiteListItem = ({
   return (
     <ContextMenuView
       menuConfig={{
-        menuTitle: account.aliasName,
+        menuTitle: account.address,
         menuActions: menuActions,
       }}
       preViewBorderRadius={20}
@@ -358,15 +376,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     transform: [{ translateX: 5 }, { translateY: 2 }],
   },
   itemInfo: {
-    gap: 6,
+    gap: 4,
     flexGrow: 1,
     flex: 1,
   },
   itemNameText: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   itemNameTextHasPinned: {
@@ -376,21 +394,21 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: -52,
   },
   itemBalanceText: {
-    fontSize: 17,
-    lineHeight: 22,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
   },
   itemName: {
-    gap: 8,
+    gap: 2,
     flexDirection: 'row',
     alignItems: 'center',
   },
   address: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '400',
-    color: colors2024['neutral-secondary'],
+    fontWeight: '500',
+    color: colors2024['neutral-info'],
     fontFamily: 'SF Pro Rounded',
   },
   arrow: {

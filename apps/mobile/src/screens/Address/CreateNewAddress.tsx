@@ -244,7 +244,7 @@ function MainListBlocks() {
           </>
         ) : (
           <>
-            <NextInput
+            {/* <NextInput
               containerStyle={styles.inputContainer}
               // clearable={false}
               inputStyle={styles.inputInner}
@@ -261,7 +261,7 @@ function MainListBlocks() {
                   setAddressAlias(text);
                 },
               }}
-            />
+            /> */}
             <WalletAddress style={styles.walletAddress} />
           </>
         )}
@@ -337,7 +337,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'transparent',
   },
   walletAddress: {
-    marginTop: -18,
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginTop: 10,
   },
   inputInner: {
     // width: '100%',

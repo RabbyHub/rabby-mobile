@@ -50,6 +50,10 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiBalance } from '@/core/apis';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
+import { splitNumberByStep } from '@/utils/number';
+import { useRequest } from 'ahooks';
+import { getAccountBalance } from '@/components/HDSetting/util';
+import { keyBy } from 'lodash';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -211,6 +215,27 @@ export const ImportSuccessScreen2024 = () => {
     }
   }, [isFocus, state, accounts, switchAccount, importAddresses]);
 
+  const { data: balancesDict } = useRequest(
+    async () => {
+      if (!importAddresses?.length) {
+        return;
+      }
+      const res = await Promise.all(
+        importAddresses.map(async item => {
+          const balance = await getAccountBalance(item.address);
+          return {
+            address: item.address,
+            balance,
+          };
+        }),
+      );
+      return keyBy(res, 'address');
+    },
+    {
+      refreshDeps: [importAddresses],
+    },
+  );
+
   const WalletAddress = useCallback(
     ({ address, style }: { address: string; style?: StyleProp<TextStyle> }) => {
       return (
@@ -327,9 +352,15 @@ export const ImportSuccessScreen2024 = () => {
                 showsHorizontalScrollIndicator={false}>
                 {importAddresses.map((item, index) => (
                   <Card key={item.address} style={styles.addressItem}>
-                    <WalletIcon type={state?.type} width={50} height={50} />
+                    <WalletIcon
+                      type={state?.type}
+                      width={46}
+                      height={46}
+                      borderRadius={12}
+                    />
                     <View>
-                      <TextInput
+                      <Text style={styles.alias}>{item.aliasName}</Text>
+                      {/* <TextInput
                         style={styles.listInput}
                         value={item.aliasName}
                         onChange={nativeEvent => {
@@ -344,8 +375,15 @@ export const ImportSuccessScreen2024 = () => {
                         placeholder={ellipsisAddress(item.address)}
                         placeholderTextColor={colors2024['neutral-info']}
                         blurOnSubmit
-                      />
-                      <WalletAddress address={item.address} />
+                      /> */}
+                      {/* <WalletAddress address={item.address} /> */}
+                      <Text style={styles.balanceText}>
+                        $
+                        {splitNumberByStep(
+                          balancesDict?.[item.address]?.balance?.toFixed(2) ||
+                            0,
+                        )}
+                      </Text>
                     </View>
                   </Card>
                 ))}
@@ -477,9 +515,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      gap: 11,
+      gap: 8,
       marginBottom: 12,
       width: '100%',
+      padding: 16,
+      borderRadius: 20,
     },
     listInput: {
       width: '100%',
@@ -494,6 +534,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       textAlign: 'left',
       marginBottom: 4,
+    },
+    alias: {
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 20,
+      textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-foot'],
+      marginBottom: 4,
+    },
+    balanceText: {
+      fontWeight: '700',
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
     },
     fire: {
       width: 134,

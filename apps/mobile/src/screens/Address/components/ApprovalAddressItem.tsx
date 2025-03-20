@@ -50,14 +50,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemNameText: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
   },
   approvalCount: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
   },
   itemNameTextHasPinned: {
     paddingRight: 52,
@@ -144,7 +145,12 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         <InnerAddressItem style={styles.rootItem} account={account}>
           {({ WalletIcon, WalletName }) => (
             <View style={styles.item}>
-              <WalletIcon style={styles.walletIcon} width={46} height={46} />
+              <WalletIcon
+                style={styles.walletIcon}
+                width={46}
+                height={46}
+                borderRadius={12}
+              />
               <View style={styles.itemInfo}>
                 <View style={styles.itemName}>
                   <WalletName style={styles.itemNameText} />

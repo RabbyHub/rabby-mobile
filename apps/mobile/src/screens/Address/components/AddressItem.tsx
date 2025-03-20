@@ -1,26 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import {
-  KeyringAccountWithAlias,
-  useCurrentAccount,
-  usePinAddresses,
-} from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
+import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  ContextMenuView,
-  MenuAction,
-} from '@/components2024/ContextMenuView/ContextMenuView';
-import { useDeleteAccountModal } from '../useDeleteAccountModal';
-import { AddressItemInner2024 } from './AddressItemInner2024';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
-import { useAddressDetailModal } from '../useAddressDetailModal';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import React, { useCallback } from 'react';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
+import { AddressItemContextMenu } from './AddressItemContextMenu';
+import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
-import { useTranslation } from 'react-i18next';
 
 const { isSameAddress } = addressUtils;
 
@@ -44,9 +33,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   const { account, lastSelectedAccount, onSelect } = props;
   const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
-  const removeAccount = useDeleteAccountModal();
-  const editAliasName = useAliasNameEditModal();
-  const showAddressDetail = useAddressDetailModal();
   const [isPressing, setIsPressing] = React.useState(false);
 
   const onDetail = useCallback(() => {
@@ -61,94 +47,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
   }, [account, onSelect, switchAccount]);
 
-  const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
-    disableAutoFetch: true,
-  });
-  const pinned = useMemo(
-    () =>
-      pinAddresses.some(
-        e =>
-          addressUtils.isSameAddress(e.address, account.address) &&
-          e.brandName === account.brandName,
-      ),
-    [pinAddresses, account],
-  );
-
-  const handlePinned = useCallback(() => {
-    togglePinAddressAsync({
-      address: account.address,
-      brandName: account.brandName,
-      nextPinned: !pinned,
-    });
-  }, [togglePinAddressAsync, account.address, account.brandName, pinned]);
-
-  const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const menuActions = React.useMemo(() => {
-    return [
-      {
-        title: pinned
-          ? t('page.addressDetail.addressListScreen.unpin')
-          : t('page.addressDetail.addressListScreen.pin'),
-        icon: pinned
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-        androidIconName: pinned ? 'ic_rabby_menu_un_pin' : 'ic_rabby_menu_pin',
-        key: 'pin',
-        action() {
-          handlePinned();
-        },
-      },
-      {
-        title: t('page.addressDetail.addressListScreen.edit'),
-        icon: isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
-        androidIconName: 'ic_rabby_menu_edit',
-        key: 'edit',
-        action() {
-          editAliasName.show(account);
-        },
-      },
-      {
-        title: t('page.addressDetail.addressListScreen.detail'),
-        icon: isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
-        key: 'detail',
-        androidIconName: 'ic_rabby_menu_more',
-        action() {
-          showAddressDetail({ account });
-        },
-      },
-      {
-        title: t('page.addressDetail.addressListScreen.delete'),
-        icon: isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
-        key: 'delete',
-        androidIconName: 'ic_rabby_menu_delete',
-        destructive: true,
-        action() {
-          removeAccount({ account });
-        },
-      },
-    ] as MenuAction[];
-  }, [
-    t,
-    isDarkTheme,
-    editAliasName,
-    account,
-    showAddressDetail,
-    removeAccount,
-    pinned,
-    handlePinned,
-  ]);
-
   const isCurrentAccount = React.useMemo(() => {
     return (
       lastSelectedAccount &&
@@ -158,13 +56,9 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   }, [lastSelectedAccount, account]);
 
   return (
-    <ContextMenuView
-      menuConfig={{
-        menuTitle: account.aliasName,
-        menuActions: menuActions,
-      }}
-      preViewBorderRadius={20}
-      triggerProps={{ action: 'longPress' }}>
+    <AddressItemContextMenu
+      account={account}
+      actions={['pin', 'edit', 'delete']}>
       <AddressItemShadowView>
         <TouchableOpacity
           activeOpacity={1}
@@ -188,6 +82,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           />
         </TouchableOpacity>
       </AddressItemShadowView>
-    </ContextMenuView>
+    </AddressItemContextMenu>
   );
 };

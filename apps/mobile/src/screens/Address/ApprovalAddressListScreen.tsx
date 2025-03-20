@@ -20,6 +20,7 @@ import {
   useApprovalsCount,
   useApprovalAlertCounts,
 } from '@/screens/Home/hooks/approvals';
+import { AddressItemContextMenu } from './components/AddressItemContextMenu';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -112,12 +113,14 @@ export function ApprovalAddressListScreen(): JSX.Element {
             style={
               index < displayAccounts.length - 1 ? styles.itemGap : undefined
             }>
-            <AddressItemEntry
-              account={item}
-              alertCount={alertInfo.address2count?.[item.address]}
-              approvalCount={address2Count?.[item.address]}
-              onSelect={() => handleSelect(item)}
-            />
+            <AddressItemContextMenu account={item} actions={['edit']}>
+              <AddressItemEntry
+                account={item}
+                alertCount={alertInfo.address2count?.[item.address]}
+                approvalCount={address2Count?.[item.address]}
+                onSelect={() => handleSelect(item)}
+              />
+            </AddressItemContextMenu>
           </View>
         )}
         ListEmptyComponent={AddressEmptyContainer}

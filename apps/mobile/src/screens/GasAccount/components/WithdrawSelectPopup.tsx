@@ -8,10 +8,16 @@ import {
   BottomSheetModalProps,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Pressable,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcHelpCC from '@/assets2024/icons/common/help.svg';
 import {
@@ -235,14 +241,18 @@ export const DestinationChain = ({
   );
 };
 
-const RecipientAddressInner = ({
+const RecipientAddressInnerPopup = ({
   address,
   onChange,
   list,
+  visible,
+  onClose,
 }: {
   address: string;
   onChange: (address: WithdrawListAddressItem) => void;
   list: WithdrawListAddressItem[];
+  visible?: boolean;
+  onClose?(): void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -290,20 +300,26 @@ const RecipientAddressInner = ({
       }
       return (
         <TouchableOpacity
-          style={[styles.innerRow]}
+          style={[styles.innerRow, isSelected && styles.innerRowSelected]}
           onPress={() => {
             setSelectedAddress(item.recharge_addr);
           }}>
           <AddressItem account={account}>
             {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
               <View style={styles.innerWalletRow}>
-                <WalletIcon style={styles.innerWallet} />
+                <WalletIcon
+                  style={styles.innerWallet}
+                  width={46}
+                  height={46}
+                  borderRadius={12}
+                />
                 <View style={{ gap: 4 }}>
                   <View style={styles.walletNameContainer}>
                     <WalletName style={styles.innerName} />
                     {isSelected ? <RcIconCheck height={20} /> : null}
                   </View>
-                  <WalletAddress style={styles.innerAddr} />
+                  {/* <WalletAddress style={styles.innerAddr} /> */}
+                  <WalletBalance style={styles.innerBalance} />
                 </View>
               </View>
             )}
@@ -316,9 +332,10 @@ const RecipientAddressInner = ({
       accounts,
       address,
       selectedAddress,
-      styles.innerAddr,
+      styles.innerBalance,
       styles.innerName,
       styles.innerRow,
+      styles.innerRowSelected,
       styles.innerWallet,
       styles.innerWalletRow,
       styles.limit,
@@ -332,58 +349,88 @@ const RecipientAddressInner = ({
     );
   }, [onChange, list, selectedAddress]);
 
+  const modalRef = useRef<AppBottomSheetModal>(null);
+
+  useEffect(() => {
+    if (!visible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [visible]);
+
+  const { height } = useWindowDimensions();
+  const maxHeight = useMemo(() => {
+    return height - 200;
+  }, [height]);
+
   return (
-    <LinearGradient
-      colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-      locations={[0.0745, 0.2242]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={{ flex: 1, paddingHorizontal: 20, position: 'relative' }}>
-      <Text style={styles.title}>
-        {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
-      </Text>
-      <View style={styles.headerRow}>
-        <Text style={[styles.text, styles.label]}>
-          {t('page.gasAccount.withdrawPopup.recipientAddress')}
-        </Text>
-        <View style={styles.help}>
-          <Text style={[styles.text, styles.label]}>
-            {t('page.gasAccount.withdrawPopup.withdrawalLimit')}
+    <AppBottomSheetModal
+      // enableContentPanningGesture={false} // has scorll list
+      // snapPoints={[Math.min(height - 200, 652)]}
+      onDismiss={onClose}
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
+      enableDynamicSizing
+      maxDynamicContentSize={maxHeight}
+      handleStyle={styles.handleStyle}>
+      <BottomSheetScrollView style={{ minHeight: 364 }}>
+        <LinearGradient
+          colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+          locations={[0.0745, 0.2242]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={{ flex: 1, paddingHorizontal: 20, position: 'relative' }}>
+          <Text style={[styles.title, { marginTop: 0, marginBottom: 28 }]}>
+            {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
           </Text>
-          <Pressable onPress={tips}>
-            <RcHelpCC
-              width={20}
-              height={20}
-              color={colors2024['neutral-info']}
+          <View style={styles.headerRow}>
+            <Text style={styles.helpText}>
+              {t('page.gasAccount.withdrawPopup.recipientAddress')}
+            </Text>
+            <View style={styles.help}>
+              <Text style={styles.helpText}>
+                {t('page.gasAccount.withdrawPopup.withdrawalLimit')}
+              </Text>
+              <Pressable onPress={tips}>
+                <RcHelpCC
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-info']}
+                />
+              </Pressable>
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            {list?.map(item => (
+              <AddrItem item={item} key={item.recharge_addr} />
+            ))}
+            <View style={{ height: 130 }} />
+          </View>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
+                : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
+            }
+            locations={[0.6393, 1]}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 0, y: 0 }}
+            style={styles.floatBottom}>
+            <Button
+              title={t('global.confirm')}
+              onPress={e => {
+                e.stopPropagation();
+                confirm();
+              }}
             />
-          </Pressable>
-        </View>
-      </View>
-      <BottomSheetScrollView style={{ flex: 1 }}>
-        {list?.map(item => (
-          <AddrItem item={item} key={item.recharge_addr} />
-        ))}
-        <View style={{ height: 130 }} />
+          </LinearGradient>
+        </LinearGradient>
       </BottomSheetScrollView>
-      <LinearGradient
-        colors={
-          isLight
-            ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-            : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-        }
-        locations={[0.6393, 1]}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 0, y: 0 }}
-        style={styles.floatBottom}>
-        <Button
-          title={t('global.confirm')}
-          onPress={e => {
-            e.stopPropagation();
-            confirm();
-          }}
-        />
-      </LinearGradient>
-    </LinearGradient>
+    </AppBottomSheetModal>
   );
 };
 
@@ -472,7 +519,7 @@ export const RecipientAddress = ({
         }
       />
       {list && address && (
-        <BottomSheetWrapper
+        <RecipientAddressInnerPopup
           visible={visible}
           onClose={() => {
             setVisible(false);
@@ -480,13 +527,11 @@ export const RecipientAddress = ({
           {...makeBottomSheetProps({
             linearGradientType: 'linear',
             colors: colors2024,
-          })}>
-          <RecipientAddressInner
-            address={address}
-            onChange={handleSelect}
-            list={list}
-          />
-        </BottomSheetWrapper>
+          })}
+          address={address}
+          onChange={handleSelect}
+          list={list}
+        />
       )}
     </>
   );
@@ -498,6 +543,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignContent: 'stretch',
     paddingHorizontal: 16,
     position: 'relative',
+  },
+  handleStyle: {
+    backgroundColor: 'transparent',
+    paddingTop: 10,
+    height: 36,
   },
   title: {
     marginVertical: 20,
@@ -526,14 +576,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingHorizontal: 10,
+    marginBottom: 6,
+    paddingHorizontal: 6,
   },
 
   help: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+  },
+  helpText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
   },
 
   label: {
@@ -618,6 +676,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     marginVertical: 6,
   },
+  innerRowSelected: {
+    borderColor: colors2024['brand-light-2'],
+    backgroundColor: colors2024['brand-light-1'],
+  },
 
   selected: {
     backgroundColor: colors2024['brand-light-2'],
@@ -640,9 +702,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   innerName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
   },
   innerAddr: {
     fontSize: 16,
@@ -650,9 +713,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
+  innerBalance: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
   limit: {
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 22,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],

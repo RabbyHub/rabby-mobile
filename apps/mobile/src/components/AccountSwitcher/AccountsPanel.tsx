@@ -78,6 +78,7 @@ export function AccountsPanelInModal({
   containerStyle,
   linearContainerProps,
   onSwitchSceneAccount,
+  scrollToBottom,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
   // isVisible?: boolean;
@@ -87,6 +88,7 @@ AccountSwitcherAopProps<{
     switchAction: () => Promise<void>;
     sceneAccount: Account;
   }) => void;
+  scrollToBottom(): void;
 }>) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -116,11 +118,6 @@ AccountSwitcherAopProps<{
 
   const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
     useSwitchSceneCurrentAccount();
-
-  const scrollViewRef = React.useRef<ScrollView>(null);
-  const scrollToBottom = useCallback(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, []);
 
   const [navsCollapsed, setNavsCollapsed] = React.useState({
     safe: !shouldSafeAddressesExpanded,
@@ -182,11 +179,15 @@ AccountSwitcherAopProps<{
       type="linear"
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{t('global.Addresses')}</Text>
+      </View>
       <View style={styles.scrollViewContainer}>
-        <BottomSheetScrollView
-          ref={scrollViewRef}
+        <View
+          // ref={scrollViewRef}
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContentContainer}>
+          // contentContainerStyle={styles.scrollViewContentContainer}
+        >
           <View style={styles.section}>
             <View style={[styles.addressListContainer, { marginTop: 0 }]}>
               {isSceneSupportAllAccounts && (
@@ -296,7 +297,7 @@ AccountSwitcherAopProps<{
               )}
             </View>
           )}
-        </BottomSheetScrollView>
+        </View>
       </View>
     </LinearGradientContainer>
   );
@@ -315,13 +316,26 @@ const getPanelStyle = createGetStyles2024(ctx => {
       minHeight: '50%',
       height: '100%',
       flexDirection: 'column',
+      paddingBottom: 44,
+    },
+    header: {
+      marginBottom: 24,
+    },
+    title: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '800',
+      lineHeight: 24,
+      color: ctx.colors2024['neutral-title-1'],
+      textAlign: 'center',
     },
     scrollViewContainer: {
       height: '100%',
       flexShrink: 1,
     },
     scrollView: {
-      padding: 16,
+      paddingHorizontal: 16,
+      paddingBottom: 16,
     },
     scrollViewContentContainer: {
       alignItems: 'flex-start',

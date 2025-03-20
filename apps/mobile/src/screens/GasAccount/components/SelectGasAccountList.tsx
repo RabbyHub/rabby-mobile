@@ -1,13 +1,16 @@
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
-import { useAccounts, usePinAddresses } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { filterMyAccounts } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
+import { sortBy } from 'lodash';
 import React, { ReactNode, useMemo } from 'react';
 import {
   StyleProp,
@@ -17,12 +20,6 @@ import {
   ViewStyle,
 } from 'react-native';
 import { GasAccountBalance } from './GasAccountBalance';
-import { openapi } from '@/core/request';
-import { sortBy } from 'lodash';
-import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
-import { TextBadge } from '@/screens/Address/components/PinBadge';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { filterMyAccounts } from '@/utils/account';
 
 export const SelectGasAccountList = ({
   onChange,
@@ -96,36 +93,25 @@ export const SelectGasAccountList = ({
     });
   }, [_list, gasAccountBalanceDict, isGasAccount]);
 
-  const { pinAddresses } = usePinAddresses({
-    disableAutoFetch: true,
-  });
-
   const renderItem = useMemoizedFn(({ item }: { item: Account }) => {
-    const isPinned = pinAddresses.some(
-      e =>
-        addressUtils.isSameAddress(e.address, item.address) &&
-        e.brandName === item.brandName,
-    );
+    const isSelected =
+      isSameAddress(selectedAccount?.address || '', item.address) &&
+      selectedAccount?.type === item.type;
     return (
       <TouchableOpacity
-        style={styles.accountItem}
+        style={[styles.accountItem, isSelected && styles.accountItemSelected]}
+        key={`${item.type}-${item.address}`}
         onPress={() => {
           onChange?.(item);
         }}>
         <AddressItem account={item} fetchAccount={false}>
           {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
             <View style={styles.itemInner}>
-              <WalletIcon style={styles.walletIcon} />
+              <WalletIcon width={46} height={46} borderRadius={12} />
               <View style={styles.itemContent}>
                 <View style={styles.walletNameContainer}>
-                  <WalletName />
-                  {!isGasAccount && isPinned ? <TextBadge /> : null}
-                  {isSameAddress(
-                    selectedAccount?.address || '',
-                    item.address,
-                  ) && selectedAccount?.type === item.type ? (
-                    <RcIconCheck height={20} />
-                  ) : null}
+                  <WalletName style={styles.walletName} />
+                  {isSelected ? <RcIconCheck height={20} /> : null}
                 </View>
 
                 {isGasAccount ? (
@@ -157,21 +143,24 @@ export const SelectGasAccountList = ({
       <View style={styles.containerHorizontal}>
         {title ? <Text style={styles.title}>{title}</Text> : null}
         {listHeader}
+        {list.map(item => {
+          return renderItem({ item });
+        })}
       </View>
-      <BottomSheetFlatList
+      {/* <BottomSheetFlatList
         style={{ flex: 1, width: '100%' }}
         contentContainerStyle={styles.containerHorizontal}
         data={list}
         keyExtractor={(item, index) => item.type + item.address + index}
         renderItem={renderItem}
         // extraData={tmpSelectAccount}
-      />
+      /> */}
       {listFooter}
     </View>
   );
 };
 
-const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
@@ -188,236 +177,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     marginBottom: 18,
     textAlign: 'center',
   },
-  description: {
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    color: colors2024['neutral-secondary'],
-    marginBottom: 10,
-  },
-  amountSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    height: 52,
-  },
-  amountButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    marginRight: 8,
-    height: 60,
-    borderRadius: 6,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  selectedAmountButton: {
-    backgroundColor: colors['blue-light1'],
-    borderColor: colors['blue-default'],
-  },
-  amountText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-
-  input: {
-    flex: 1,
-    height: 60,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 10,
-    color: colors2024['neutral-body'],
-  },
-  tokenLabel: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
-    marginTop: 24,
-    marginBottom: 8,
-    textAlign: 'left',
-    width: '100%',
-  },
-  tokenContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors['neutral-card2'],
-    borderRadius: 30,
-    width: '100%',
-    height: 62,
-    paddingHorizontal: 20,
-  },
-  flatList: {
-    flexShrink: 1,
-    paddingHorizontal: 20,
-  },
-  tokenListItem: {
-    paddingVertical: 14,
-    flex: 1,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  tokenContent: { flexDirection: 'row', alignItems: 'center' },
-  tokenSymbol: {
-    marginLeft: 12,
-    color: colors['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  tokenPlaceholder: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  confirmButton: {
-    width: '100%',
-    height: 52,
-    marginBottom: 35,
-  },
-  popup: {
-    margin: 0,
-    height: '100%',
-    paddingVertical: 10,
-  },
-  btnContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    justifyContent: 'flex-end',
-    flex: 1,
-  },
-
-  box: { flexDirection: 'row', alignItems: 'center' },
-  text: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-
-  errorTips: {
-    textAlign: 'left',
-    width: '100%',
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 13,
-    fontWeight: '400',
-    marginTop: 20,
-  },
-
-  header: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-  },
-
-  label: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    lineHeight: 22,
-  },
-
-  insufficientWrapper: {
-    position: 'relative',
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  insufficientDivider: {
-    position: 'absolute',
-    top: 18,
-    left: 0,
-    width: '100%',
-    height: 1,
-    backgroundColor: colors2024['red-light-2'],
-  },
-
-  insufficientTip: {
-    color: colors2024['red-default'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    lineHeight: 18,
-    backgroundColor: colors['neutral-bg-1'],
-    paddingHorizontal: 8,
-  },
-
-  tokenInsufficientWrapper: {
-    position: 'relative',
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 10,
-  },
-
-  tokenInsufficientDivider: {
-    position: 'absolute',
-    top: 9,
-    left: 0,
-    width: '100%',
-    height: 1,
-    backgroundColor: colors2024['neutral-line'],
-  },
-
-  tokenInsufficientTip: {
-    color: colors2024['neutral-info'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    lineHeight: 18,
-    backgroundColor: colors['neutral-bg-1'],
-    paddingHorizontal: 8,
-  },
-
-  searchInputContainer: {
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingHorizontal: 12,
-    borderColor: 'transparent',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  searchIconWrapperStyle: {
-    paddingLeft: 0,
-  },
-  inputStyle: {
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 22,
-    fontSize: 17,
-    color: colors2024['neutral-title-1'],
-  },
 
   accountItem: {
     flexDirection: 'row',
@@ -430,40 +189,9 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     marginBottom: 12,
   },
 
-  pinnedWrapper: {
-    flexShrink: 0,
-    marginLeft: 4,
-    borderRadius: 6,
-    width: 33,
-    height: 20,
-    flexWrap: 'nowrap',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  accountItemSelected: {
     backgroundColor: colors2024['brand-light-1'],
-  },
-  pinText: {
-    color: colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  walletName: {
-    color: colors2024['neutral-title-1'],
-
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-
-  walletIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
+    borderColor: colors2024['brand-light-2'],
   },
 
   itemInner: {
@@ -485,6 +213,14 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     gap: 8,
   },
 
+  walletName: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
+  },
+
   walletAddress: {
     fontSize: 16,
     fontWeight: '500',
@@ -495,9 +231,9 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
 
   walletBalance: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
   },
 }));

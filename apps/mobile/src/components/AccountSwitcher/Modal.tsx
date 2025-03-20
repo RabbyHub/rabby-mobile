@@ -1,10 +1,10 @@
-import { Keyboard, View } from 'react-native';
+import { Keyboard, ScrollView, useWindowDimensions, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { ModalLayouts } from '@/constant/layout';
 import { AccountsPanelInModal } from './AccountsPanel';
-import AutoLockView from '../AutoLockView';
+import AutoLockView, { useRefreshAutoLockPanResponder } from '../AutoLockView';
 import {
   useCallback,
   useEffect,
@@ -16,6 +16,8 @@ import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import React from 'react';
 
 export function AccountSwitcherModal({
   forScene,
@@ -51,34 +53,50 @@ export function AccountSwitcherModal({
     toggleShowSheetModal('selectAddress', isVisible || 'destroy');
   }, [isVisible, toggleShowSheetModal]);
 
-  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
+  const { height } = useWindowDimensions();
+  const maxHeight = useMemo(() => {
+    return height - 200;
+  }, [height]);
+
+  const snapPoints = useMemo(() => [Math.max(maxHeight, 400)], [maxHeight]);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      snapPoints={snapPoints}
+      // snapPoints={snapPoints}
       onDismiss={onCancel}
-      handleStyle={{
-        backgroundColor: colors2024['neutral-bg-1'],
-        paddingVertical: 18,
-      }}>
-      <AutoLockView style={[styles.container]}>
-        <View style={[styles.panelContainer]}>
-          <AccountsPanelInModal
-            linearContainerProps={panelLinearGradientProps}
-            forScene={forScene}
-          />
-        </View>
-      </AutoLockView>
+      handleStyle={styles.handleStyle}
+      enableDynamicSizing
+      maxDynamicContentSize={maxHeight}>
+      <BottomSheetScrollView ref={scrollViewRef}>
+        <AutoLockView style={[styles.container]}>
+          <View style={[styles.panelContainer]}>
+            <AccountsPanelInModal
+              linearContainerProps={panelLinearGradientProps}
+              forScene={forScene}
+              scrollToBottom={scrollToBottom}
+            />
+          </View>
+        </AutoLockView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 }
 
 const getModalStyle = createGetStyles2024(ctx => {
   return {
+    handleStyle: {
+      backgroundColor: 'transparent',
+      paddingTop: 10,
+      height: 36,
+    },
     container: {
       height: '100%',
-      paddingTop: 20,
+      minHeight: 364,
     },
     panelContainer: {
       position: 'relative',
@@ -121,8 +139,6 @@ export function AccountSwitcherModalInDappWebView({
     toggleSceneVisible('@ActiveDappWebViewModal', false);
   }, [toggleSceneVisible]);
 
-  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
-
   useEffect(() => {
     if (isVisible) {
       Keyboard.dismiss();
@@ -130,30 +146,43 @@ export function AccountSwitcherModalInDappWebView({
     toggleShowSheetModal('selectAddress', isVisible || 'destroy');
   }, [isVisible, toggleShowSheetModal]);
 
+  const { height } = useWindowDimensions();
+  const maxHeight = useMemo(() => {
+    return height - 200;
+  }, [height]);
+
+  const snapPoints = useMemo(() => [Math.max(maxHeight, 400)], [maxHeight]);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      snapPoints={snapPoints}
+      // snapPoints={snapPoints}
       onDismiss={onCancel}
-      handleStyle={{
-        backgroundColor: colors2024['neutral-bg-1'],
-        paddingVertical: 18,
-      }}>
-      <AutoLockView style={[styles.container]}>
-        <View style={[styles.panelContainer]}>
-          <AccountsPanelInModal
-            allowNullCurrentAccount
-            forScene={'@ActiveDappWebViewModal'}
-            onSwitchSceneAccount={async ctx => {
-              if (!activeDappId) {
-                return;
-              }
-              setDappCurrentAccount(activeDappId, ctx.sceneAccount);
-              await ctx.switchAction();
-            }}
-          />
-        </View>
-      </AutoLockView>
+      handleStyle={styles.handleStyle}
+      enableDynamicSizing
+      maxDynamicContentSize={maxHeight}>
+      <BottomSheetScrollView ref={scrollViewRef}>
+        <AutoLockView style={[styles.container]}>
+          <View style={[styles.panelContainer]}>
+            <AccountsPanelInModal
+              allowNullCurrentAccount
+              forScene={'@ActiveDappWebViewModal'}
+              onSwitchSceneAccount={async ctx => {
+                if (!activeDappId) {
+                  return;
+                }
+                setDappCurrentAccount(activeDappId, ctx.sceneAccount);
+                await ctx.switchAction();
+              }}
+              scrollToBottom={scrollToBottom}
+            />
+          </View>
+        </AutoLockView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 }
@@ -162,8 +191,7 @@ const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
   return {
     container: {
       height: '100%',
-      paddingHorizontal: 16,
-      paddingTop: 10,
+      minHeight: 364,
     },
     panelContainer: {
       position: 'relative',
@@ -178,6 +206,11 @@ const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
       right: 0,
       bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.60)',
+    },
+    handleStyle: {
+      backgroundColor: 'transparent',
+      paddingTop: 10,
+      height: 36,
     },
   };
 });
