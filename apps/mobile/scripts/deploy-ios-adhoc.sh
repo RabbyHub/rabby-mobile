@@ -61,10 +61,18 @@ build_adhoc() {
   bundle exec fastlane ios adhoc;
 }
 
+[ $GHA_MOCK_BUILD_FAILED == "true" ] && SKIP_BUILD=true
+
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
   build_adhoc;
   echo "[deploy-ios-adhoc] finish build."
+fi
+
+if [[ ! -f $ouput_dir/RabbyMobile.ipa || $GHA_MOCK_BUILD_FAILED == "true" ]]; then
+  echo "[deploy-ios-adhoc] ⚠️ build failed! No $ouput_dir/RabbyMobile.ipa found";
+  node $script_dir/notify-lark.js "FAILED" ios
+  exit 1;
 fi
 
 file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')
@@ -87,12 +95,13 @@ echo "[deploy-ios-adhoc] will be served at $deployment_cdn_baseurl"
 echo ""
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
+  [ "$DISABLE_AWS_CLI_HTTPS_VALIDATION" == "true" ] && NO_VERIFY_SSL_FLAG="--no-verify-ssl"
   echo "[deploy-ios-adhoc] start sync to $deployment_s3_dir..."
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream --exact-timestamps
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist --exact-timestamps
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png --exact-timestamps
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
+  aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
   node $script_dir/notify-lark.js "$manifest_plist_url" ios
 fi

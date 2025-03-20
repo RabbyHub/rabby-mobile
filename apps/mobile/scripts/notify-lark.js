@@ -41,10 +41,55 @@ async function sendMessage({
     .replace('android', 'Android')
     .replace('ios', 'iOS');
 
+  let body = {
+    timestamp: timeSec,
+    sign: Signature,
+    msg_type: 'post',
+  };
+  if (downloadURL === 'FAILED') {
+    body.content = {
+      post: {
+        zh_cn: {
+          title: `⚠️ [${platformName}] Rabby Mobile 打包失败! `,
+          content: [
+            [
+              {
+                tag: 'text',
+                text: `请开发者点击下方的 Actions Job 链接检查 🔽`,
+              },
+            ],
+            [{ tag: 'text', text: `---------` }],
+            [
+              { tag: 'text', text: `Actions Job: ` },
+              { tag: 'a', href: actionsJobUrl, text: actionsJobUrl },
+            ],
+            [
+              { tag: 'text', text: `Git Commit: ` },
+              { tag: 'a', href: gitCommitURL, text: gitCommitURL },
+            ],
+            gitRefURL && [
+              { tag: 'text', text: `Git Ref: ` },
+              { tag: 'text', text: gitRefURL },
+            ],
+            triggers.length && [
+              { tag: 'text', text: `Triggers: ` },
+              { tag: 'text', text: triggers.join(', ') },
+            ],
+          ].filter(Boolean),
+        },
+      },
+    };
+
+    const res = await Axios.post(chatURL, body, { headers });
+    console.log(res.data);
+
+    return;
+  }
+
   const qrcodeImgBuf = await generateQRCodeImageBuffer(downloadURL);
   const image_key = await uploadImageToLark(qrcodeImgBuf);
 
-  const body = {
+  body = {
     timestamp: timeSec,
     sign: Signature,
     // msg_type: 'text',

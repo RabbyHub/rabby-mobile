@@ -94,6 +94,8 @@ else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
   if [ $buildchannel == "selfhost-reg" ]; then
+    [ $GHA_MOCK_BUILD_FAILED == "true" ] && SKIP_BUILD=true
+
     # android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
     android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
 
@@ -117,6 +119,12 @@ fi
 # echo "android_export_target: $android_export_target"
 
 echo "[deploy-android] finish build."
+
+if [[ ! -f $android_export_target || $GHA_MOCK_BUILD_FAILED == "true" ]]; then
+  echo "[deploy-ios-adhoc] ⚠️ build failed! No $android_export_target found";
+  node $script_dir/notify-lark.js "FAILED" android
+  exit 1;
+fi
 
 cp $android_export_target $deployment_local_dir/$apk_name
 
