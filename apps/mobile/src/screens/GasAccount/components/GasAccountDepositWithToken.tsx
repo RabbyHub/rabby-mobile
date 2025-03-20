@@ -401,45 +401,7 @@ const SelectAccountPopup = ({
               {t('page.gasAccount.paymentAddressPopup.title')}
             </Text>
           </View>
-          <SelectGasAccountList
-            value={value}
-            onChange={onChange}
-            listHeader={
-              <View
-                style={{
-                  width: '100%',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingHorizontal: 6,
-                  marginBottom: 12,
-                }}>
-                <Text
-                  style={{
-                    color: colors2024['neutral-secondary'],
-                    fontFamily: 'SF Pro Rounded',
-                    fontSize: 17,
-                    fontWeight: '400',
-                    lineHeight: 22,
-                  }}>
-                  {t('page.gasAccount.paymentAddressPopup.address')}
-                </Text>
-                <View>
-                  <Text
-                    style={{
-                      color: colors2024['neutral-secondary'],
-                      fontFamily: 'SF Pro Rounded',
-                      fontSize: 17,
-                      fontWeight: '400',
-                      lineHeight: 22,
-                    }}>
-                    {t('page.gasAccount.paymentAddressPopup.balance')}
-                  </Text>
-                  {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
-                </View>
-              </View>
-            }
-          />
+          <SelectGasAccountList value={value} onChange={onChange} />
         </View>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
