@@ -60,7 +60,6 @@ export const TxChange = ({
   tokenChangeData: TokenChangeDataItem[];
 } & RNViewProps) => {
   const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
 
   const filterRecieves = useMemo(() => {
     return tokenChangeData.filter(item => item.type === 'receive');
@@ -95,9 +94,6 @@ export const TxChange = ({
                 amount={filterRecieves[0].amount}
                 needShowEllips={filterRecieves.length > 1}
               />
-              {/* {filterRecieves.length > 1 && (
-                <Text style={styles.text}>...</Text>
-              )} */}
             </View>
             {filterSends.length === 0 && (
               <Text style={styles.usdText}>
@@ -116,7 +112,6 @@ export const TxChange = ({
                 amount={filterSends[0].amount}
                 needShowEllips={filterSends.length > 1}
               />
-              {/* {filterSends.length > 1 && <Text style={styles.text}>...</Text>} */}
             </View>
             {filterRecieves.length === 0 && (
               <Text style={styles.usdText}>{calcUsdValue(filterSends[0])}</Text>
@@ -157,7 +152,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderRadius: 2,
   },
   text: {
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 22,
     fontWeight: '700',
     color: colors2024['green-default'],

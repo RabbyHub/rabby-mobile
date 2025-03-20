@@ -136,22 +136,9 @@ export const HistoryItem = React.memo(
             (isSend ? ToText : FromText) +
             (getAliasName(addr) || ellipsisAddress(addr));
           break;
-        // case HistoryItemCateType.Revoke:
-        // case HistoryItemCateType.Approve:
-        //   const isRevoke = formatType === HistoryItemCateType.Revoke;
-        //   return isRevoke
-        //     ? FromText + (projectName || t('page.transactions.detail.Unknown'))
-        //     : ToText + (projectName || t('page.transactions.detail.Unknown'));
-        // case HistoryItemCateType.Contract:
-        //   return FromText + chainItem?.name;
-        // case HistoryItemCateType.Cancel:
-        //   return t('page.transactions.detail.Unknown');
 
         case HistoryItemCateType.Buy:
           address = FromText + data.buyDetails?.service_provider?.name;
-          //  t('page.buy.from', {
-          //   dex: data.buyDetails?.service_provider?.name,
-          // });
           break;
         case HistoryItemCateType.Cancel:
           address = getAliasName(data.address) || ellipsisAddress(data.address);
@@ -305,7 +292,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // borderWidth: 1,
   },
   titleBox: {
-    // overflow: 'visible',
+    marginBottom: 3,
     flexDirection: 'row',
     gap: 6,
   },
@@ -337,7 +324,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 20,
     fontWeight: '500',
   },
