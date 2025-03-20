@@ -97,92 +97,103 @@ function AddressItemInSheetModal({
   };
 
   return (
-    <TouchableOpacity
-      style={StyleSheet.flatten([
-        styles.addressItemContainer,
-        style,
-        isCurrent && styles.addressItemContainerCurrent,
-        isPressing && styles.containerPressing,
-      ])}
-      activeOpacity={1}
-      onPressIn={() => setIsPressing(true)}
-      onPressOut={() => setIsPressing(false)}
-      delayLongPress={200}
-      onLongPress={() => {
-        trigger('impactLight', {
-          enableVibrateFallback: true,
-          ignoreAndroidSystemSettings: false,
-        });
-      }}
-      onPress={
-        defaultPressAction === 'copy' ? handleCopyAddress : onPressAccount
-      }>
-      <AddressItem {...addressItemProps}>
-        {({
-          WalletIcon,
-          WalletAddress,
-          WalletBalance,
-          WalletName,
-          walletName,
-        }) => {
-          const hasAlias = walletName !== ellipsisAddress(account.address);
-          return (
-            <View style={styles.addressItemInner}>
-              <WalletIcon style={styles.walletIcon} />
-              <View style={styles.centerInfo}>
-                <View style={styles.nameAndAddress}>
-                  <Text style={styles.addressAlias} numberOfLines={1}>
-                    {hasAlias ? (
-                      <>
-                        <WalletName style={styles.addressAlias} />
-                        <Text style={styles.addressTruncate}>
-                          ({ellipsisAddress(account.address)})
+    <AddressItemShadowView
+      style={isCurrent || isPressing ? styles.active : null}>
+      <TouchableOpacity
+        style={StyleSheet.flatten([
+          styles.addressItemContainer,
+          style,
+          isCurrent && styles.addressItemContainerCurrent,
+          isPressing && styles.containerPressing,
+        ])}
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        delayLongPress={200}
+        onLongPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}
+        onPress={() => {
+          triggerLight();
+          defaultPressAction === 'copy'
+            ? handleCopyAddress?.()
+            : onPressAccount?.();
+        }}>
+        <AddressItem {...addressItemProps}>
+          {({
+            WalletIcon,
+            WalletAddress,
+            WalletBalance,
+            WalletName,
+            walletName,
+          }) => {
+            const hasAlias =
+              walletName?.toLowerCase() !==
+              ellipsisAddress(account.address).toLowerCase();
+            return (
+              <View style={styles.addressItemInner}>
+                <WalletIcon style={styles.walletIcon} />
+                <View style={styles.centerInfo}>
+                  <View style={styles.nameAndAddress}>
+                    <Text style={styles.addressAlias} numberOfLines={1}>
+                      {hasAlias ? (
+                        <>
+                          <WalletName style={styles.addressAlias} />
+                          <Text style={styles.addressTruncate}>
+                            ({ellipsisAddress(account.address)})
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.addressAlias}>
+                          {ellipsisAddress(account.address)}
                         </Text>
-                      </>
-                    ) : (
-                      <Text style={styles.addressAlias}>
-                        {ellipsisAddress(account.address)}
-                      </Text>
-                    )}
-                  </Text>
+                      )}
+                    </Text>
+                  </View>
+                  <WalletBalance
+                    style={[
+                      styles.addressUsdValue,
+                      isCurrent && styles.addressUsdValueCurrent,
+                    ]}
+                  />
                 </View>
-                <WalletBalance
-                  style={[
-                    styles.addressUsdValue,
-                    isCurrent && styles.addressUsdValueCurrent,
-                  ]}
-                />
-              </View>
-              {showCopyAndQR && (
-                <View style={styles.rightArea}>
-                  <View style={styles.iconList}>
-                    {/* <TouchableOpacity
+                {showCopyAndQR && (
+                  <View style={styles.rightArea}>
+                    <View style={styles.iconList}>
+                      {/* <TouchableOpacity
                       onPress={handleCopyAddress}
                       style={styles.iconWrapper}>
                       <RcIconCopy style={styles.icon} />
                     </TouchableOpacity> */}
-                    <TouchableOpacity
-                      onPress={evt => {
-                        evt.stopPropagation();
-                        triggerLight();
-                        onPressAccount();
-                      }}
-                      style={styles.iconWrapper}>
-                      <RcIconQR style={styles.icon} />
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={evt => {
+                          evt.stopPropagation();
+                          triggerLight();
+                          onPressAccount();
+                        }}
+                        style={styles.iconWrapper}>
+                        <RcIconQR style={styles.icon} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              )}
-            </View>
-          );
-        }}
-      </AddressItem>
-    </TouchableOpacity>
+                )}
+              </View>
+            );
+          }}
+        </AddressItem>
+      </TouchableOpacity>
+    </AddressItemShadowView>
   );
 }
 
 const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
   return {
+    active: {
+      borderColor: ctx.colors2024['brand-light-2'],
+    },
     containerPressing: {
       borderColor: ctx.colors2024['brand-light-2'],
       backgroundColor: ctx.colors2024['brand-light-1'],
@@ -191,6 +202,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       borderRadius: 20,
       // backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 16,
+      paddingRight: 24,
       height: SIZES.itemH,
     },
     addressItemContainerCurrent: {
@@ -276,8 +288,8 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       gap: 12,
     },
     iconWrapper: {
-      width: 30,
-      height: 30,
+      width: 26,
+      height: 26,
       borderRadius: 100,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       display: 'flex',
@@ -285,8 +297,8 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
     },
     icon: {
-      width: 16,
-      height: 16,
+      width: 13,
+      height: 13,
     },
   };
 });
@@ -485,7 +497,7 @@ export function AccountsPanelInSheetModal({
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => {
                     const Content = (
-                      <AddressItemShadowView
+                      <View
                         key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                         style={[
                           { borderRadius: 20 },
@@ -505,7 +517,7 @@ export function AccountsPanelInSheetModal({
                               : {}
                           }
                         />
-                      </AddressItemShadowView>
+                      </View>
                     );
                     if (isReceive) {
                       return (

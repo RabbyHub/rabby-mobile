@@ -9,13 +9,12 @@ import { Card } from '@/components2024/Card';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { BadgeText } from '@/screens/Home/components/HomeTopArea';
 import { useTranslation } from 'react-i18next';
+import { AddressItemShadowView } from './AddressItemShadowView';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-3'],
   },
   rootPressing: {
@@ -29,6 +28,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     flexGrow: 1,
     padding: 16,
+    paddingRight: 24,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   rootItem: {
@@ -121,69 +121,68 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   const { t } = useTranslation();
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPressIn={() => setIsPressing(true)}
-      onPressOut={() => setIsPressing(false)}
-      style={StyleSheet.flatten([
-        styles.root,
-        isPressing && styles.rootPressing,
-      ])}
-      delayLongPress={200} // long press delay
-      onPress={onSelect}
-      onLongPress={() => {
-        trigger('impactLight', {
-          enableVibrateFallback: true,
-          ignoreAndroidSystemSettings: false,
-        });
-      }}>
-      <Card
-        style={StyleSheet.flatten([
-          styles.card,
-          isPressing && styles.cardPressing,
-        ])}>
-        <InnerAddressItem style={styles.rootItem} account={account}>
-          {({ WalletIcon, WalletName }) => (
-            <View style={styles.item}>
-              <WalletIcon
-                style={styles.walletIcon}
-                width={46}
-                height={46}
-                borderRadius={12}
-              />
-              <View style={styles.itemInfo}>
-                <View style={styles.itemName}>
-                  <WalletName style={styles.itemNameText} />
+    <AddressItemShadowView style={isPressing && styles.rootPressing}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([styles.root])}
+        delayLongPress={200} // long press delay
+        onPress={onSelect}
+        onLongPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}>
+        <Card
+          style={StyleSheet.flatten([
+            styles.card,
+            isPressing && styles.cardPressing,
+          ])}>
+          <InnerAddressItem style={styles.rootItem} account={account}>
+            {({ WalletIcon, WalletName }) => (
+              <View style={styles.item}>
+                <WalletIcon
+                  style={styles.walletIcon}
+                  width={46}
+                  height={46}
+                  borderRadius={12}
+                />
+                <View style={styles.itemInfo}>
+                  <View style={styles.itemName}>
+                    <WalletName style={styles.itemNameText} />
+                  </View>
+                  <Text style={styles.approvalCount}>
+                    {approvalCount || 0} {t('page.approvals.list.symbol')}
+                  </Text>
                 </View>
-                <Text style={styles.approvalCount}>
-                  {approvalCount || 0} {t('page.approvals.list.symbol')}
-                </Text>
               </View>
-            </View>
-          )}
-        </InnerAddressItem>
+            )}
+          </InnerAddressItem>
 
-        <View style={styles.right}>
-          {!!alertCount && alertCount > 0 && (
-            <BadgeText count={alertCount} style={styles.badgeStyle} />
-          )}
-          <View
-            style={StyleSheet.flatten([
-              styles.arrow,
-              isPressing && styles.arrowPressing,
-            ])}>
-            <ArrowRightCC
-              color={
-                isPressing
-                  ? colors2024['brand-default']
-                  : colors2024['neutral-body']
-              }
-              width={20}
-              height={20}
-            />
+          <View style={styles.right}>
+            {!!alertCount && alertCount > 0 && (
+              <BadgeText count={alertCount} style={styles.badgeStyle} />
+            )}
+            <View
+              style={StyleSheet.flatten([
+                styles.arrow,
+                isPressing && styles.arrowPressing,
+              ])}>
+              <ArrowRightCC
+                color={
+                  isPressing
+                    ? colors2024['brand-default']
+                    : colors2024['neutral-body']
+                }
+                width={26}
+                height={26}
+              />
+            </View>
           </View>
-        </View>
-      </Card>
-    </TouchableOpacity>
+        </Card>
+      </TouchableOpacity>
+    </AddressItemShadowView>
   );
 };

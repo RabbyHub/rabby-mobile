@@ -20,6 +20,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { GasAccountBalance } from './GasAccountBalance';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { trigger } from 'react-native-haptic-feedback';
 
 export const SelectGasAccountList = ({
   onChange,
@@ -98,43 +100,43 @@ export const SelectGasAccountList = ({
       isSameAddress(selectedAccount?.address || '', item.address) &&
       selectedAccount?.type === item.type;
     return (
-      <TouchableOpacity
+      <AddressItemShadowView
         style={[styles.accountItem, isSelected && styles.accountItemSelected]}
-        key={`${item.type}-${item.address}`}
-        onPress={() => {
-          onChange?.(item);
-        }}>
-        <AddressItem account={item} fetchAccount={false}>
-          {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
-            <View style={styles.itemInner}>
-              <WalletIcon width={46} height={46} borderRadius={12} />
-              <View style={styles.itemContent}>
-                <View style={styles.walletNameContainer}>
-                  <WalletName style={styles.walletName} />
-                  {isSelected ? <RcIconCheck height={20} /> : null}
-                </View>
+        key={`${item.type}-${item.address}`}>
+        <TouchableOpacity
+          onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+            onChange?.(item);
+          }}>
+          <AddressItem account={item} fetchAccount={false}>
+            {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+              <View style={styles.itemInner}>
+                <WalletIcon width={46} height={46} borderRadius={12} />
+                <View style={styles.itemContent}>
+                  <View style={styles.walletNameContainer}>
+                    <WalletName style={styles.walletName} />
+                    {isSelected ? <RcIconCheck height={20} /> : null}
+                  </View>
 
-                {isGasAccount ? (
                   <WalletBalance style={styles.walletBalance} />
-                ) : (
-                  <WalletAddress style={styles.walletAddress} />
-                )}
+                </View>
+                <View style={{ marginLeft: 'auto' }}>
+                  {isGasAccount ? (
+                    <GasAccountBalance
+                      account={
+                        gasAccountBalanceDict?.[item.address.toLowerCase()]
+                      }
+                    />
+                  ) : null}
+                </View>
               </View>
-              <View style={{ marginLeft: 'auto' }}>
-                {isGasAccount ? (
-                  <GasAccountBalance
-                    account={
-                      gasAccountBalanceDict?.[item.address.toLowerCase()]
-                    }
-                  />
-                ) : (
-                  <WalletBalance />
-                )}
-              </View>
-            </View>
-          )}
-        </AddressItem>
-      </TouchableOpacity>
+            )}
+          </AddressItem>
+        </TouchableOpacity>
+      </AddressItemShadowView>
     );
   });
 

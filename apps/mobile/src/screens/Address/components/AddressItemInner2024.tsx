@@ -23,6 +23,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 78,
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
+    paddingRight: 24,
     position: 'relative',
   },
   rootItem: {
@@ -139,8 +140,8 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
                 ? colors2024['brand-default']
                 : colors2024['neutral-body']
             }
-            width={20}
-            height={20}
+            width={26}
+            height={26}
           />
         </View>
       )}

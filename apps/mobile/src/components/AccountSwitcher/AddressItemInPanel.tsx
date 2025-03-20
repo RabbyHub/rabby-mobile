@@ -10,6 +10,7 @@ import { Account } from '@/core/services/preference';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { useTopTokensForAddress } from './hooks';
 import { AssetAvatar } from '../AssetAvatar';
+import { trigger } from 'react-native-haptic-feedback';
 
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
@@ -31,6 +32,7 @@ export function AddressItemInPanel({
   addressItemProps,
   isCurrent,
   isPinned,
+  isHideToken,
   onPressAddress: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
@@ -38,6 +40,7 @@ export function AddressItemInPanel({
   isPinned?: boolean;
   showCopyAndQR?: boolean;
   onPressAddress?: (account: Account) => void;
+  isHideToken?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
@@ -47,6 +50,10 @@ export function AddressItemInPanel({
 
   const { account } = addressItemProps;
   const onPressAddress = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
 
@@ -56,8 +63,12 @@ export function AddressItemInPanel({
 
   return (
     <AddressItemShadowView
-      disableShadow
-      style={[styles.addressItemView, style]}>
+      // disableShadow
+      style={[
+        styles.addressItemView,
+        style,
+        isCurrent || isPressing ? styles.active : null,
+      ]}>
       <TouchableOpacity
         style={StyleSheet.flatten([
           styles.addressItemContainer,
@@ -84,7 +95,7 @@ export function AddressItemInPanel({
                         isCurrent && styles.addressUsdValueCurrent,
                       ]}
                     />
-                    {!!tokens?.length && (
+                    {!isHideToken && !!tokens?.length && (
                       <>
                         <View style={styles.divider} />
                         <View style={styles.chainLogos}>
@@ -125,8 +136,10 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       borderRadius: AddressItemSizes.radiusValue,
       overflow: 'hidden',
     },
-    containerPressing: {
+    active: {
       borderColor: ctx.colors2024['brand-light-2'],
+    },
+    containerPressing: {
       backgroundColor: ctx.colors2024['brand-light-1'],
     },
     addressItemContainer: {

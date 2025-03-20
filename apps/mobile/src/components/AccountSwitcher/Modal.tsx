@@ -18,6 +18,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 
 export function AccountSwitcherModal({
   forScene,
@@ -68,6 +69,10 @@ export function AccountSwitcherModal({
     <AppBottomSheetModal
       ref={modalRef}
       // snapPoints={snapPoints}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
       onDismiss={onCancel}
       handleStyle={styles.handleStyle}
       enableDynamicSizing

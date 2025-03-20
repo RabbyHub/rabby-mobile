@@ -36,6 +36,8 @@ import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '@/components2024/Button';
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { trigger } from 'react-native-haptic-feedback';
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
@@ -299,33 +301,40 @@ const RecipientAddressInnerPopup = ({
         return null;
       }
       return (
-        <TouchableOpacity
-          style={[styles.innerRow, isSelected && styles.innerRowSelected]}
-          onPress={() => {
-            setSelectedAddress(item.recharge_addr);
-          }}>
-          <AddressItem account={account}>
-            {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
-              <View style={styles.innerWalletRow}>
-                <WalletIcon
-                  style={styles.innerWallet}
-                  width={46}
-                  height={46}
-                  borderRadius={12}
-                />
-                <View style={{ gap: 4 }}>
-                  <View style={styles.walletNameContainer}>
-                    <WalletName style={styles.innerName} />
-                    {isSelected ? <RcIconCheck height={20} /> : null}
+        <AddressItemShadowView
+          style={[styles.shadow, isSelected && styles.shadowSelected]}>
+          <TouchableOpacity
+            style={[styles.innerRow, isSelected && styles.innerRowSelected]}
+            onPress={() => {
+              setSelectedAddress(item.recharge_addr);
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
+            }}>
+            <AddressItem account={account}>
+              {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+                <View style={styles.innerWalletRow}>
+                  <WalletIcon
+                    style={styles.innerWallet}
+                    width={46}
+                    height={46}
+                    borderRadius={12}
+                  />
+                  <View style={{ gap: 4 }}>
+                    <View style={styles.walletNameContainer}>
+                      <WalletName style={styles.innerName} />
+                      {isSelected ? <RcIconCheck height={20} /> : null}
+                    </View>
+                    {/* <WalletAddress style={styles.innerAddr} /> */}
+                    <WalletBalance style={styles.innerBalance} />
                   </View>
-                  {/* <WalletAddress style={styles.innerAddr} /> */}
-                  <WalletBalance style={styles.innerBalance} />
                 </View>
-              </View>
-            )}
-          </AddressItem>
-          <Text style={styles.limit}>{`$${item.total_withdraw_limit}`}</Text>
-        </TouchableOpacity>
+              )}
+            </AddressItem>
+            <Text style={styles.limit}>{`$${item.total_withdraw_limit}`}</Text>
+          </TouchableOpacity>
+        </AddressItemShadowView>
       );
     },
     [
@@ -339,6 +348,8 @@ const RecipientAddressInnerPopup = ({
       styles.innerWallet,
       styles.innerWalletRow,
       styles.limit,
+      styles.shadow,
+      styles.shadowSelected,
       styles.walletNameContainer,
     ],
   );
@@ -371,12 +382,11 @@ const RecipientAddressInnerPopup = ({
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
+        linearGradientType: 'bg1',
         colors: colors2024,
       })}
       enableDynamicSizing
-      maxDynamicContentSize={maxHeight}
-      handleStyle={styles.handleStyle}>
+      maxDynamicContentSize={maxHeight}>
       <BottomSheetScrollView style={{ minHeight: 364 }}>
         <LinearGradient
           colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
@@ -545,7 +555,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   handleStyle: {
-    backgroundColor: 'transparent',
     paddingTop: 10,
     height: 36,
   },
@@ -664,17 +673,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
 
+  shadow: {
+    marginVertical: 6,
+  },
+  shadowSelected: {
+    borderColor: colors2024['brand-light-2'],
+  },
   innerRow: {
     // height: 96,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+    // borderWidth: 1,
+    // borderColor: colors2024['neutral-line'],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 6,
+    // marginVertical: 6,
   },
   innerRowSelected: {
     borderColor: colors2024['brand-light-2'],
@@ -725,7 +740,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 22,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
   },
   floatBottom: {
     height: 130,

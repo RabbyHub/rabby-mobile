@@ -51,7 +51,8 @@ export function makeBottomSheetProps({
     handleStyle: StyleSheet.flatten([
       {
         backgroundColor: handleBgColor,
-        paddingVertical: 18,
+        paddingTop: 10,
+        height: 36,
       },
       inputProps?.handleStyle,
     ]),

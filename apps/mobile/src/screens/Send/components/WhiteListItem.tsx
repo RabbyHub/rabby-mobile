@@ -33,6 +33,7 @@ import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useAtom } from 'jotai';
 import { cexInfoAtoms } from '@/hooks/useCexAccounts';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -123,109 +124,109 @@ export const WhiteListItem = ({
   const { navigateToSendScreen } = useSendRoutes();
 
   const children = (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPressIn={() => setIsPressing(true)}
-      onPressOut={() => setIsPressing(false)}
-      style={StyleSheet.flatten([
-        styles.root,
-        !disableMenu && isPressing && styles.rootPressing,
-      ])}
-      delayLongPress={200} // long press delay
-      onPress={() => {
-        trigger('impactLight', {
-          enableVibrateFallback: true,
-          ignoreAndroidSystemSettings: false,
-        });
-        if (isForWhitelist) {
+    <AddressItemShadowView
+      style={!disableMenu && isPressing && styles.rootPressing}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([styles.root])}
+        delayLongPress={200} // long press delay
+        onPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+          if (isForWhitelist) {
+            if (inWhiteList) {
+              toast.show(t('page.whitelist.alreadyAdded'));
+            } else {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.WhitelistConfirm,
+                params: {
+                  account,
+                },
+              });
+            }
+            return;
+          }
           if (inWhiteList) {
-            toast.show(t('page.whitelist.alreadyAdded'));
+            navigateToSendScreen({
+              toAddress: account.address,
+              cexDes: cexDesc,
+              addressBrandName: account.brandName,
+            });
           } else {
             navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.WhitelistConfirm,
+              screen: RootNames.ConfirmAddress,
               params: {
                 account,
               },
             });
           }
-          return;
-        }
-        if (inWhiteList) {
-          navigateToSendScreen({
-            toAddress: account.address,
-            cexDes: cexDesc,
-            addressBrandName: account.brandName,
+        }}
+        onLongPress={() => {
+          if (disableMenu) {
+            return;
+          }
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
           });
-        } else {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.ConfirmAddress,
-            params: {
-              account,
-            },
-          });
-        }
-      }}
-      onLongPress={() => {
-        if (disableMenu) {
-          return;
-        }
-        trigger('impactLight', {
-          enableVibrateFallback: true,
-          ignoreAndroidSystemSettings: false,
-        });
-      }}>
-      <Card
-        style={StyleSheet.flatten([
-          styles.card,
-          style,
-          !disableMenu && isPressing && styles.cardPressing,
-        ])}>
-        <InnerAddressItem style={styles.rootItem} account={account}>
-          {({ WalletIcon, WalletBalance }) => (
-            <View style={styles.item}>
-              <View style={styles.iconWrapper}>
-                {cexDesc?.logo_url ? (
-                  <Image
-                    source={{ uri: cexDesc?.logo_url }}
-                    style={styles.walletIcon}
-                    width={46}
-                    height={46}
-                  />
-                ) : (
-                  <WalletIcon
-                    style={styles.walletIcon}
-                    width={46}
-                    height={46}
-                  />
-                )}
-                {inWhiteList && (
-                  <RcIconLockCC
-                    style={styles.lockIcon}
-                    color={colors2024['brand-default']}
-                    surroundColor={colors2024['neutral-bg-1']}
-                    width={22}
-                    height={22}
-                  />
-                )}
-              </View>
-              <View style={styles.itemInfo}>
-                <View style={styles.itemName}>
-                  <Text style={styles.itemNameText} numberOfLines={1}>
-                    {formatName}
-                  </Text>
-                  {!hideTail && (
-                    <Text style={styles.address}>
-                      {`(${ellipsisAddress(account.address)})`}
-                    </Text>
+        }}>
+        <Card
+          style={StyleSheet.flatten([
+            styles.card,
+            style,
+            !disableMenu && isPressing && styles.cardPressing,
+          ])}>
+          <InnerAddressItem style={styles.rootItem} account={account}>
+            {({ WalletIcon, WalletBalance }) => (
+              <View style={styles.item}>
+                <View style={styles.iconWrapper}>
+                  {cexDesc?.logo_url ? (
+                    <Image
+                      source={{ uri: cexDesc?.logo_url }}
+                      style={styles.walletIcon}
+                      width={46}
+                      height={46}
+                    />
+                  ) : (
+                    <WalletIcon
+                      style={styles.walletIcon}
+                      width={46}
+                      height={46}
+                    />
+                  )}
+                  {inWhiteList && (
+                    <RcIconLockCC
+                      style={styles.lockIcon}
+                      color={colors2024['brand-default']}
+                      surroundColor={colors2024['neutral-bg-1']}
+                      width={22}
+                      height={22}
+                    />
                   )}
                 </View>
-                <WalletBalance style={styles.itemBalanceText} />
+                <View style={styles.itemInfo}>
+                  <View style={styles.itemName}>
+                    <Text style={styles.itemNameText} numberOfLines={1}>
+                      {formatName}
+                    </Text>
+                    {!hideTail && (
+                      <Text style={styles.address}>
+                        {`(${ellipsisAddress(account.address)})`}
+                      </Text>
+                    )}
+                  </View>
+                  <WalletBalance style={styles.itemBalanceText} />
+                </View>
               </View>
-            </View>
-          )}
-        </InnerAddressItem>
-      </Card>
-    </TouchableOpacity>
+            )}
+          </InnerAddressItem>
+        </Card>
+      </TouchableOpacity>
+    </AddressItemShadowView>
   );
   if (disableMenu) {
     return children;
@@ -260,81 +261,83 @@ export const WhiteListItemSwitch = ({
   }, [account.address, account.aliasName]);
 
   return (
-    <View style={styles.root}>
-      <Card style={StyleSheet.flatten([styles.card, style])}>
-        <InnerAddressItem style={styles.rootItem} account={account}>
-          {({ WalletIcon, WalletBalance }) => (
-            <View style={styles.item}>
-              <View style={styles.iconWrapper}>
-                {cexDes?.logo_url ? (
-                  <Image
-                    source={{ uri: cexDes?.logo_url }}
-                    style={styles.walletIcon}
-                    width={46}
-                    height={46}
-                  />
-                ) : (
-                  <WalletIcon
-                    style={styles.walletIcon}
-                    width={46}
-                    height={46}
-                  />
-                )}
-                {inWhiteList && (
-                  <RcIconLockCC
-                    style={styles.lockIcon}
-                    color={colors2024['brand-default']}
-                    surroundColor={colors2024['neutral-bg-1']}
-                    width={22}
-                    height={22}
-                  />
-                )}
-              </View>
-              <View style={styles.itemInfo}>
-                <View style={styles.itemName}>
-                  <Text style={styles.itemNameText} numberOfLines={1}>
-                    {formatName}
-                  </Text>
-                  {!hideTail && (
-                    <Text style={styles.address}>
-                      {`(${ellipsisAddress(account.address)})`}
-                    </Text>
+    <AddressItemShadowView>
+      <View style={styles.root}>
+        <Card style={StyleSheet.flatten([styles.card, style])}>
+          <InnerAddressItem style={styles.rootItem} account={account}>
+            {({ WalletIcon, WalletBalance }) => (
+              <View style={styles.item}>
+                <View style={styles.iconWrapper}>
+                  {cexDes?.logo_url ? (
+                    <Image
+                      source={{ uri: cexDes?.logo_url }}
+                      style={styles.walletIcon}
+                      width={46}
+                      height={46}
+                    />
+                  ) : (
+                    <WalletIcon
+                      style={styles.walletIcon}
+                      width={46}
+                      height={46}
+                    />
+                  )}
+                  {inWhiteList && (
+                    <RcIconLockCC
+                      style={styles.lockIcon}
+                      color={colors2024['brand-default']}
+                      surroundColor={colors2024['neutral-bg-1']}
+                      width={22}
+                      height={22}
+                    />
                   )}
                 </View>
-                <WalletBalance style={styles.itemBalanceText} />
+                <View style={styles.itemInfo}>
+                  <View style={styles.itemName}>
+                    <Text style={styles.itemNameText} numberOfLines={1}>
+                      {formatName}
+                    </Text>
+                    {!hideTail && (
+                      <Text style={styles.address}>
+                        {`(${ellipsisAddress(account.address)})`}
+                      </Text>
+                    )}
+                  </View>
+                  <WalletBalance style={styles.itemBalanceText} />
+                </View>
               </View>
-            </View>
-          )}
-        </InnerAddressItem>
-        <Pressable
-          style={styles.arrow}
-          hitSlop={10}
-          onPress={() => {
-            navigation.popToTop();
-            navigation.dispatch(
-              StackActions.push(RootNames.StackTransaction, {
-                screen: RootNames.SendTo,
-                params: {},
-              }),
-            );
-          }}>
-          <RcIconSwitchCC
-            fillColor={colors2024['neutral-bg-2']}
-            strokeColor={colors2024['neutral-body']}
-            width={24}
-            height={24}
-          />
-        </Pressable>
-      </Card>
-    </View>
+            )}
+          </InnerAddressItem>
+          <Pressable
+            style={styles.arrow}
+            hitSlop={10}
+            onPress={() => {
+              navigation.popToTop();
+              navigation.dispatch(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: RootNames.SendTo,
+                  params: {},
+                }),
+              );
+            }}>
+            <RcIconSwitchCC
+              fillColor={colors2024['neutral-bg-2']}
+              strokeColor={colors2024['neutral-body']}
+              width={24}
+              height={24}
+            />
+          </Pressable>
+        </Card>
+      </View>
+    </AddressItemShadowView>
   );
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    borderRadius: 20,
+    // borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: colors2024['neutral-bg-3'],
+    // backgroundColor: colors2024['neutral-bg-1'],
   },
   rootPressing: {
     borderColor: colors2024['brand-light-2'],
@@ -345,13 +348,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+    borderWidth: 0,
+    // borderColor: colors2024['neutral-line'],
     borderRadius: 20,
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
+    paddingRight: 24,
   },
   rootItem: {
     flexDirection: 'row',

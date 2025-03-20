@@ -107,6 +107,8 @@ AccountSwitcherAopProps<{
     shouldSafeAddressesExpanded,
     watchAddresses,
     shouldWatchAddressesExpanded,
+
+    isHideToken,
   } = useSceneAccountInfo({
     forScene,
   });
@@ -213,6 +215,7 @@ AccountSwitcherAopProps<{
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
                     isPinned={isPinnedAccount(account)}
+                    isHideToken={isHideToken}
                     onPressAddress={handlePressAccount}
                     style={[
                       styles.addressItem,
@@ -368,9 +371,9 @@ const getPanelStyle = createGetStyles2024(ctx => {
     addressItem: !IS_ANDROID
       ? {}
       : {
-          borderWidth: 1,
-          borderStyle: 'solid',
-          borderColor: ctx.colors2024['neutral-line'],
+          // borderWidth: 1,
+          // borderStyle: 'solid',
+          // borderColor: ctx.colors2024['neutral-line'],
         },
     addressItemTopGap: {
       marginTop: AddressItemSizes.itemGap,

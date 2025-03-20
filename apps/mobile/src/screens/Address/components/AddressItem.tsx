@@ -59,15 +59,12 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     <AddressItemContextMenu
       account={account}
       actions={['pin', 'edit', 'delete']}>
-      <AddressItemShadowView>
+      <AddressItemShadowView style={isPressing && styles.rootPressing}>
         <TouchableOpacity
           activeOpacity={1}
           onPressIn={() => setIsPressing(true)}
           onPressOut={() => setIsPressing(false)}
-          style={StyleSheet.flatten([
-            styles.root,
-            isPressing && styles.rootPressing,
-          ])}
+          style={StyleSheet.flatten([styles.root])}
           delayLongPress={200} // long press delay
           onPress={onDetail}
           onLongPress={() => {
