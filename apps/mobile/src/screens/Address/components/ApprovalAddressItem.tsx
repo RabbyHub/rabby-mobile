@@ -10,6 +10,7 @@ import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { BadgeText } from '@/screens/Home/components/HomeTopArea';
 import { useTranslation } from 'react-i18next';
 import { AddressItemShadowView } from './AddressItemShadowView';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -83,9 +84,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   arrow: {
-    width: 30,
-    height: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
+    width: 26,
+    height: 26,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
@@ -165,21 +165,19 @@ export const AddressItemEntry = (props: AddressItemProps) => {
             {!!alertCount && alertCount > 0 && (
               <BadgeText count={alertCount} style={styles.badgeStyle} />
             )}
-            <View
-              style={StyleSheet.flatten([
-                styles.arrow,
-                isPressing && styles.arrowPressing,
-              ])}>
-              <ArrowRightCC
-                color={
-                  isPressing
-                    ? colors2024['brand-default']
-                    : colors2024['neutral-body']
-                }
-                width={26}
-                height={26}
-              />
-            </View>
+            <ArrowCircleCC
+              style={styles.arrow}
+              color={
+                isPressing
+                  ? colors2024['brand-default']
+                  : colors2024['neutral-body']
+              }
+              backgroundColor={
+                isPressing
+                  ? colors2024['brand-light-1']
+                  : colors2024['neutral-bg-2']
+              }
+            />
           </View>
         </Card>
       </TouchableOpacity>

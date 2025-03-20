@@ -11,6 +11,7 @@ import { Card } from '@/components2024/Card';
 import { TextBadge } from './PinBadge';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
@@ -66,8 +67,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   arrow: {
-    width: 30,
-    height: 30,
+    width: 26,
+    height: 26,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 30,
     alignItems: 'center',
@@ -129,21 +130,19 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       </InnerAddressItem>
 
       {hiddenArrow ? null : (
-        <View
-          style={StyleSheet.flatten([
-            styles.arrow,
-            isPressing && styles.arrowPressing,
-          ])}>
-          <ArrowRightCC
-            color={
-              isPressing
-                ? colors2024['brand-default']
-                : colors2024['neutral-body']
-            }
-            width={26}
-            height={26}
-          />
-        </View>
+        <ArrowCircleCC
+          style={styles.arrow}
+          color={
+            isPressing
+              ? colors2024['brand-default']
+              : colors2024['neutral-body']
+          }
+          backgroundColor={
+            isPressing
+              ? colors2024['brand-light-1']
+              : colors2024['neutral-bg-2']
+          }
+        />
       )}
 
       {pinned ? <WalletPin /> : null}

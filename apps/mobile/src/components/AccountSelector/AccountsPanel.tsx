@@ -26,6 +26,7 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID } from '@/core/native/utils';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
+import { QrCircleCC } from '@/assets2024/icons/address';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;
@@ -175,7 +176,10 @@ function AddressItemInSheetModal({
                           onPressAccount();
                         }}
                         style={styles.iconWrapper}>
-                        <RcIconQR style={styles.icon} />
+                        <QrCircleCC
+                          color={colors2024['neutral-body']}
+                          backgroundColor={colors2024['neutral-bg-2']}
+                        />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -291,7 +295,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       width: 26,
       height: 26,
       borderRadius: 100,
-      backgroundColor: ctx.colors2024['neutral-bg-2'],
+      // backgroundColor: ctx.colors2024['neutral-bg-2'],
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
