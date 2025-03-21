@@ -63,7 +63,12 @@ export const syncTokens = async (
     force,
     onlySync,
   );
-  return tokenRes || [];
+  return (
+    tokenRes?.map(i => ({
+      ...i,
+      owner_addr: address,
+    })) || []
+  );
 };
 
 export const syncProtocols = async (

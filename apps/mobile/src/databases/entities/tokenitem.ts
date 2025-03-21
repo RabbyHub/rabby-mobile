@@ -257,6 +257,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           qb.orWhere('tokenitem.display_symbol LIKE :keyword', {
             keyword: `${keyword}%`,
           });
+          qb.orWhere('tokenitem.id LIKE :keyword', {
+            keyword: `${keyword}%`,
+          });
         }),
       );
     }

@@ -15,16 +15,13 @@ import { trigger } from 'react-native-haptic-feedback';
 import { omit, uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
-import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
-import { useCurrentAccount } from '@/hooks/account';
+import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import {
   abstractTokenToTokenItem,
   DisplayedToken,
   getTokenSymbol,
 } from '@/utils/token';
-import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
@@ -50,6 +47,7 @@ import { isWatchOrSafeAccount } from '@/utils/account';
 import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSelectTokens } from '../hooks/useSelectTokens';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -110,12 +108,24 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       account: accountInScreen,
       chainServerId: chainId,
     });
-    const queryConds = useDebounceValue(_queryConds, 250);
 
     const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
     const [updateNonce, setUpdateNonce] = useState(0);
-    const isSwapType = isSwapTokenType(type);
     const [_, setLongPressToken] = useLongPressTokenAtom();
+    const queryConds = useDebounceValue(_queryConds, 250);
+    // settimoutout ref
+    const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const currentAccount = queryConds.account;
+    const {
+      tokens,
+      getCacheTop10Tokens,
+      checkIsExpireAndUpdate,
+      loadToken,
+      isLoading: isLoadingAllTokens,
+    } = useSelectTokens({
+      currentAddress: currentAccount?.address.toLocaleLowerCase(),
+    });
 
     useImperativeHandle(ref, () => ({
       openTokenModal: conds => {
@@ -124,16 +134,30 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
     }));
 
-    const { currentAccount } = useCurrentAccount();
-
-    // when no any queryConds
-    const { tokens: _allTokens, isLoading: isLoadingAllTokens } = useTokens(
-      useSwapTokenList ? undefined : currentAccount?.address,
-      tokenSelectorVisible,
-      updateNonce,
-      queryConds.chainServerId,
-      true,
-    );
+    useEffect(() => {
+      if (timeRef.current) {
+        clearTimeout(timeRef.current);
+        timeRef.current = null;
+      }
+      if (!tokenSelectorVisible || useSwapTokenList) {
+        return;
+      }
+      getCacheTop10Tokens();
+      timeRef.current = setTimeout(() => {
+        if (currentAccount?.address) {
+          loadToken(currentAccount.address, false);
+        } else {
+          checkIsExpireAndUpdate();
+        }
+      }, 500);
+      return () => {
+        if (timeRef.current) {
+          clearTimeout(timeRef.current);
+          timeRef.current = null;
+        }
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tokenSelectorVisible, currentAccount?.address, useSwapTokenList]);
 
     const { value: swapTokenList, loading: swapTokenListLoading } =
       useAsync(async () => {
@@ -152,15 +176,10 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         tokenSelectorVisible,
       ]);
 
-    const useLocalDatabase = !queryConds.account;
-
     const {
-      isSearchingLocalTokens,
-      // sortedTokensWithOwner: searchedLocalTokensWithOwner,
       sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
-      // allLocalTokens: searchedLocalTokens,
       fetchAllLocalTokens,
-    } = useQueryLocalTokens();
+    } = useQueryLocalTokens(tokens);
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
@@ -174,67 +193,37 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       [searchedLocalDisplayTokensWithOwner],
     );
 
-    // const shouldUseRemote = useSwapTokenList || !useLocalDatabase;
     useEffect(() => {
-      if (!queryConds.account) {
+      if (tokenSelectorVisible && !useSwapTokenList) {
         fetchAllLocalTokens({
           keyword: queryConds.keyword,
           chain_server_id: queryConds.chainServerId,
         });
       }
-    }, [queryConds, fetchAllLocalTokens]);
+    }, [
+      queryConds,
+      fetchAllLocalTokens,
+      tokenSelectorVisible,
+      useSwapTokenList,
+    ]);
 
-    const allRemoteTokens = useSortToken(_allTokens);
-
-    const {
-      isLoading: isRemoteSearchLoading,
-      list: _remoteSearchedTokenByQuery,
-    } = useSearchToken(
-      {
-        address: currentAccount?.address || '',
-        keyword: queryConds.keyword,
-        chainServerId: queryConds.chainServerId,
-      },
-      {
-        withBalance: isSwapType ? false : true,
-      },
-    );
-
-    const remoteSearchedTokenByQuery = useMemo(
-      () => _remoteSearchedTokenByQuery.map(abstractTokenToTokenItem),
-      [_remoteSearchedTokenByQuery],
-    );
+    const allRemoteTokens = useSortToken(tokens);
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
       useMemo(() => {
-        const remoteVersion = {
-          isSearchLoading: isRemoteSearchLoading,
+        return {
+          isSearchLoading: isLoadingAllTokens,
           allTokens: allRemoteTokens,
           allTokenItems: useSwapTokenList
             ? swapTokenList || []
-            : allRemoteTokens.map(abstractTokenToTokenItem),
-          searchedTokenByQuery: remoteSearchedTokenByQuery,
-        };
-
-        if (useSwapTokenList || !useLocalDatabase) {
-          return remoteVersion;
-        }
-
-        return {
-          isSearchLoading: isSearchingLocalTokens,
-          allTokens: searchedLocalDisplayTokensWithOwner,
-          allTokenItems: searchedLocalTokensWithOwner,
+            : searchedLocalTokensWithOwner,
           searchedTokenByQuery: searchedLocalTokensWithOwner,
         };
       }, [
-        isRemoteSearchLoading,
+        isLoadingAllTokens,
         allRemoteTokens,
         useSwapTokenList,
         swapTokenList,
-        remoteSearchedTokenByQuery,
-        useLocalDatabase,
-        isSearchingLocalTokens,
-        searchedLocalDisplayTokensWithOwner,
         searchedLocalTokensWithOwner,
       ]);
 
@@ -338,9 +327,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const handleCurrentTokenChange = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
     >(
-      token => {
+      t => {
         onChange && onChange('');
-        onTokenChange(token);
+        onTokenChange(t);
         setTokenSelectorVisible(false);
       },
       [onChange, onTokenChange],
@@ -500,16 +489,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                 ...omit(e, ['isPined', 'pinIndex']),
                 group: 'recent',
               })),
-              TokenRender: ({ token }: { token: TokenItem }) => {
+              TokenRender: ({ token: _token }: { token: TokenItem }) => {
                 return (
                   <View style={styles.recentItemWrapper}>
                     <AssetAvatar
                       size={26}
-                      chain={token.chain}
-                      logo={token.logo_url}
+                      chain={_token.chain}
+                      logo={_token.logo_url}
                     />
                     <Text numberOfLines={1} style={styles.tokenSymbol}>
-                      {ellipsisOverflowedText(getTokenSymbol(token), 5)}
+                      {ellipsisOverflowedText(getTokenSymbol(_token), 5)}
                     </Text>
                   </View>
                 );
