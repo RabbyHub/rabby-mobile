@@ -1,10 +1,14 @@
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import {
+  StackActions,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import { atom, useAtom } from 'jotai';
 import { Code } from 'react-native-vision-camera';
 import { RootStackParamsList } from '@/navigation-type';
@@ -32,6 +36,9 @@ export const ScannerScreen = () => {
   const nav = useNavigation();
   const [decoder] = useState(new URDecoder());
   const [currentCount, setCurrentCount] = useState(0);
+  const [estimatedPercent, setEstimatedPercent] = useState(0);
+
+  const isSyncExtensionScanned = useRef(false);
 
   const handleCodeScanned = React.useCallback(
     (data: Code[]) => {
@@ -41,11 +48,19 @@ export const ScannerScreen = () => {
           try {
             decoder.receivePart(value);
             setCurrentCount(decoder.getProgress());
+            setEstimatedPercent(decoder.estimatedPercentComplete());
+
             if (decoder.isComplete()) {
+              isSyncExtensionScanned.current = true;
               const ur = decoder.resultUR();
               const a = ur.decodeCBOR();
               setText(a.toString());
-              nav.goBack();
+
+              nav.dispatch(
+                StackActions.replace(RootNames.StackAddress, {
+                  screen: RootNames.SyncExtensionPassword,
+                }),
+              );
             }
           } catch (error) {
             console.error('handleCodeScanned error', error);
@@ -59,6 +74,16 @@ export const ScannerScreen = () => {
     [decoder, nav, navState?.syncExtension, setText],
   );
 
+  useEffect(() => {
+    if (navState?.syncExtension) {
+      return () => {
+        if (!isSyncExtensionScanned) {
+          setText(undefined);
+        }
+      };
+    }
+  }, [navState, setText]);
+
   return (
     <View style={styles.main}>
       <View style={styles.wrapper}>
@@ -66,12 +91,23 @@ export const ScannerScreen = () => {
           containerStyle={styles.containerStyle}
           onCodeScanned={handleCodeScanned}
         />
-        <Text style={styles.tips}>Click “Rabby Mobile” on Rabby Extension</Text>
-        <Text style={styles.tips}>Scan the QR code to sync</Text>
-        {currentCount ? (
-          <Text style={styles.progress}>
-            {(currentCount * 100).toFixed(2)}%
-          </Text>
+        {navState?.syncExtension ? (
+          <>
+            <Text style={styles.tips}>
+              Click “Rabby Mobile” on Rabby Extension
+            </Text>
+            <Text style={styles.tips}>Scan the QR code to sync</Text>
+            {currentCount ? (
+              <>
+                <Text style={styles.progress}>
+                  {(currentCount * 100).toFixed(2)}%
+                </Text>
+                <Text style={styles.progress}>
+                  {(estimatedPercent * 100).toFixed(2)}%
+                </Text>
+              </>
+            ) : null}
+          </>
         ) : null}
       </View>
     </View>

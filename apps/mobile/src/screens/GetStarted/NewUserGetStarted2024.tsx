@@ -94,8 +94,8 @@ function GetStartedScreen2024(): JSX.Element {
       return;
     }
 
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.SyncExtensionPassword,
+    navigate(RootNames.Scanner, {
+      syncExtension: true,
     });
   }, [getStaretd.processedInit]);
 

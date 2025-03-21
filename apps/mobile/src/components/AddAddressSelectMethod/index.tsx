@@ -7,7 +7,7 @@ import IconImport from '@/assets2024/icons/common/IconImport.svg';
 import IconCreate from '@/assets2024/icons/common/IconCreate.svg';
 import IconSyncRabby from '@/assets2024/icons/common/iconSyncExtension.svg';
 
-import { navigate } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -95,7 +95,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               ignoreAndroidSystemSettings: false,
             });
 
-            navigateTo(RootNames.SyncExtensionPassword);
+            naviPush(RootNames.Scanner, { syncExtension: true });
             onDone();
           }}
           style={styles.importItem}

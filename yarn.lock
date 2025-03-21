@@ -29289,6 +29289,7 @@ __metadata:
     lint-staged: ^15.2.0
     lodash: ^4.17.21
     lottie-react-native: 7.1.0
+    lz-string: ^1.5.0
     markdown-it: ^14.0.0
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11

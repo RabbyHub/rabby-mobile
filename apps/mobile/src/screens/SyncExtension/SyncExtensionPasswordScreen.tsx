@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { Keyboard, Text, TouchableWithoutFeedback, View } from 'react-native';
@@ -21,11 +21,12 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { usePinAddresses } from '@/hooks/account';
 import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import useAsync from 'react-use/lib/useAsync';
+import LZString from 'lz-string';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const scanner = useScanner();
+  const { text, clear } = useScanner();
   const [password, setPassword] = useState('');
   const navigation = useRabbyAppNavigation();
   const [loading, setLoading] = useState(false);
@@ -43,10 +44,11 @@ export const SyncExtensionPasswordScreen = () => {
 
   const { togglePinAddressAsync } = usePinAddresses();
 
-  useLayoutEffect(() => {
-    navigation.push(RootNames.Scanner, { syncExtension: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => {
+    return () => {
+      clear();
+    };
+  }, [clear]);
 
   const setUpPassword = async () => {
     const result = await apisLock.resetPasswordOnUI(password);
@@ -122,18 +124,22 @@ export const SyncExtensionPasswordScreen = () => {
   };
 
   const handleConfirm = async () => {
-    if (!scanner.text) {
+    if (!text) {
+      clear();
+      navigation.replace(RootNames.Scanner, { syncExtension: true });
       return;
     }
     setLoading(true);
 
     try {
+      const extensionDataString = LZString.decompressFromUTF16(text);
+
       const {
         vault: encryptoVault,
         whitelist,
         highligtedAddresses,
         alianNames,
-      } = JSON.parse(scanner.text) as {
+      } = JSON.parse(extensionDataString) as {
         vault: Object;
         whitelist: string[];
         alianNames: { name: string; address: string }[];
@@ -168,7 +174,7 @@ export const SyncExtensionPasswordScreen = () => {
           highligtedAddresses,
         });
 
-        scanner.clear();
+        clear();
 
         navigation.replace(RootNames.StackAddress, {
           screen: RootNames.SyncExtensionImported,
