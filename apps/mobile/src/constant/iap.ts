@@ -1,4 +1,5 @@
 import { BigNumber } from 'bignumber.js';
+import { Platform } from 'react-native';
 
 export const gasAccountProducts = [
   {
@@ -41,11 +42,16 @@ export const gasAccountProducts = [
     total: '99.99',
     price: '69.99',
   },
-  {
-    id: '0009',
-    total: '719',
-    price: '503.3',
-  },
+  ...(Platform.select({
+    ios: [
+      {
+        id: '0009',
+        total: '719',
+        price: '503.3',
+      },
+    ],
+    android: [],
+  }) || []),
 ].map(item => {
   return {
     ...item,

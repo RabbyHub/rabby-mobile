@@ -25,21 +25,21 @@ export const useIAPListener = () => {
     if (receipt) {
       try {
         try {
-          if (Platform.OS === 'android') {
-            await openapi.confirmIapOrder({
-              // user_id: purchase.obfuscatedAccountIdAndroid || '',
-              transaction_id: purchase.transactionId || '',
-              product_id: purchase.productId,
-              device_type: 'android',
-            });
-          } else {
-            await openapi.confirmIapOrder({
-              // user_id: address,
-              transaction_id: purchase.transactionId || '',
-              product_id: purchase.productId,
-              device_type: 'ios',
-            });
-          }
+          await openapi.confirmIapOrder(
+            Platform.select({
+              ios: {
+                transaction_id: purchase.transactionId || '',
+                product_id: purchase.productId,
+                device_type: 'ios',
+              },
+              android: {
+                transaction_id: purchase.purchaseToken || '',
+                product_id: purchase.productId,
+                device_type: 'android',
+              },
+            })!,
+          );
+
           eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase });
         } catch (e) {
           eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });

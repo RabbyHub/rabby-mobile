@@ -5,7 +5,6 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
-import { gasAccountProducts } from '@/constant/iap';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { waitPurchaseUpdated } from '@/utils/iap';
@@ -19,6 +18,7 @@ import { Platform, Text, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
+import { gasAccountProducts } from '@/constant/iap';
 
 interface Props {
   visible?: boolean;
@@ -165,16 +165,11 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
                 ) : (
                   <RcIconApplePayCC />
                 )}
-                <Text style={styles.btnTitle}>${selectedProduct.total}</Text>
               </View>
               <Text style={styles.btnDesc}>
                 {Platform.OS === 'ios'
-                  ? t('page.gasAccount.depositPopup.applePayDesc', {
-                      amount: selectedProduct?.fee || 0,
-                    })
-                  : t('page.gasAccount.depositPopup.googlePayDesc', {
-                      amount: selectedProduct?.fee || 0,
-                    })}
+                  ? t('page.gasAccount.depositPopup.applePayFeeDesc')
+                  : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
               </Text>
             </View>
           }

@@ -1500,7 +1500,9 @@
         "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
         "followingTokenInSufficient": "The following token balance is insufficient",
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
-        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals"
+        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
+        "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
+        "applePayFeeDesc": "Includes a Apple Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
         "title": "Select Payment address",
