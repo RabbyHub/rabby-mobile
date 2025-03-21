@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
 import RcIconYes from '@/assets2024/icons/history/IconTxYes.svg';
 import RcIconNo from '@/assets2024/icons/history/IconTxNo.svg';
+import RcIconNoDark from '@/assets2024/icons/history/IconTxNoDark.svg';
 import { View, ViewStyle } from 'react-native';
 import { AssetAvatar } from '@/components';
 import { Media } from '@/components/Media';
@@ -74,12 +75,7 @@ export const HistoryItemTokenArea = ({
   tokenChangeData,
   tokenApproveData,
 }: ItemIconProps) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  tokenChangeData.forEach(item => {
-    if (item.token.content_type) {
-      console.log(item);
-    }
-  });
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   const len = useMemo(() => tokenChangeData.length, [tokenChangeData]);
   if (len === 0 && tokenApproveData.length) {
@@ -151,7 +147,11 @@ export const HistoryItemTokenArea = ({
     case LEN_ENUM.ZERO:
     default:
       if (type === HistoryItemCateType.Cancel) {
-        return <RcIconNo style={[styles.image]} />;
+        return isLight ? (
+          <RcIconNo style={[styles.image]} />
+        ) : (
+          <RcIconNoDark style={[styles.image]} />
+        );
       } else {
         return <RcIconYes style={[styles.image]} />;
       }
