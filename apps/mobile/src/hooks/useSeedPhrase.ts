@@ -1,12 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { hdKeyringService, keyringService } from '@/core/services';
+import { keyringService } from '@/core/services';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TypeKeyringGroup, useWalletTypeData } from './useWalletTypeData';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { useTranslation } from 'react-i18next';
 
 const useGetHdKeys = () => {
   return useAsync(async () => {
@@ -20,6 +21,7 @@ const useGetHdKeys = () => {
 export const useSeedPhrase = () => {
   const { accountGroup } = useWalletTypeData();
   const { value } = useGetHdKeys();
+  const { t } = useTranslation();
 
   const invokeEnterPassphrase = useEnterPassphraseModal('publickey');
 
@@ -60,13 +62,13 @@ export const useSeedPhrase = () => {
           params: {
             useCurrentSeed: true,
             mnemonics: data.mnemonic as string,
-            title: '3. Name Your Address',
+            title: `3. ${t('screens.addressStackTitle.ConfrimAddress')}`,
             accounts,
           },
         });
       }
     },
-    [],
+    [t],
   );
 
   const seedPhraseList = useMemo(() => {

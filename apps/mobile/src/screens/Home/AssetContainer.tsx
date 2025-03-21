@@ -14,11 +14,7 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
-import {
-  getTotalFoldToken,
-  getAllDefiCount,
-  getAllNftCount,
-} from './utils/converAssets';
+import { getTotalFoldToken, getAllDefiCount } from './utils/converAssets';
 import {
   AbstractPortfolio,
   AbstractPortfolioToken,
@@ -31,6 +27,7 @@ import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
+  DEFI_ITEM_HEIGHT,
   HEADER_TOP_AREA_HEIGHT,
   RootNames,
   TOKEN_EMPTY_ROW_HIGHT,
@@ -82,7 +79,9 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { openapi } from '@/core/request';
-import { ItemLoader } from './components/Skeleton';
+import { DefiItemLoader, ItemLoader } from './components/Skeleton';
+import { chunk } from 'lodash';
+import { getItemId } from './utils/listRenderId';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -101,6 +100,7 @@ const ViewTypes = {
   OVERVIEW: 2,
   EMPTY_TOKEN: 3,
   EMPTY_ASSETS: 4,
+  DEFI: 5,
 };
 
 const NOT_BORN_DATA = [
@@ -119,26 +119,35 @@ interface Props {
 }
 const FOOTER_HEIGHT = 56;
 
-const getItemId = item => {
-  return `${item.type}/${item.data?.chain || ''}/${item.data?.symbol || ''}/${
-    item.data?._tokenId || ''
-  }/${item.data?.id || ''}/${item.data?.price_24h_change || ''}/${
-    item.data?.price || ''
-  }/${item.data?.time_at || ''}/${item.data?._isFold ? 'fold' : 'unfold'}/${
-    item.data?._isPined ? 'pin' : 'unpin'
-  }`;
-};
-
 export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const [firstRowType, setFirstRowType] = useState('');
-
-  const { currentAccount, switchAccount } = useCurrentAccount();
   const navigation =
     useNavigation<NativeStackScreenProps<RootStackParamsList>['navigation']>();
+
+  const { currentAccount, switchAccount } = useCurrentAccount();
+
+  const [firstRowType, setFirstRowType] = useState('');
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [selectChainItem, setSelectChainItem] = useState<
+    ChainListItem | undefined
+  >();
+  const [foldHideList, setFoldHideList] = useState(true);
+  const [foldNft, setFoldNft] = useState(true);
+  const [foldDefi, setFoldDefi] = useState(true);
+  const [notBorn, setNotBorn] = useState(false);
+
+  const dataProvider = useMemo(
+    () =>
+      new DataProvider((r1, r2) => {
+        return getItemId(r1) !== getItemId(r2);
+      }),
+    [],
+  );
+  const [listData, setListData] = useState(() =>
+    dataProvider.cloneWithRows([]),
+  );
+
   const {
     tokens: _rawTokens,
     refreshPositions,
@@ -153,9 +162,6 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     reloadNftList,
     chainsInfo,
   } = useQueryProjects(currentAccount?.address);
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
   const { tokens, portfolios, nftList } = useMemo(() => {
     return {
       tokens: _rawTokens?.filter(item =>
@@ -175,25 +181,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       ),
     };
   }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
-
   const sortTokens = useSortToken(tokens);
+
   const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
     useTriggerTagAssets();
-  const [foldHideList, setFoldHideList] = useState(true);
-  const [foldNft, setFoldNft] = useState(true);
-  const [foldDefi, setFoldDefi] = useState(true);
-  const [notBorn, setNotBorn] = useState(false);
-  const dataProvider = useMemo(
-    () =>
-      new DataProvider((r1, r2) => {
-        return getItemId(r1) !== getItemId(r2);
-      }),
-    [],
-  );
-
-  const [listData, setListData] = useState(() =>
-    dataProvider.cloneWithRows([]),
-  );
 
   const layoutProvider = useMemo(() => {
     return new LayoutProvider(
@@ -207,6 +198,13 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         }
         if (item.type === 'empty-assets') {
           return ViewTypes.EMPTY_ASSETS;
+        }
+        if (
+          item.type === 'fold_defi' ||
+          item.type === 'unfold_defi' ||
+          item.type === 'loading-defi-skeleton'
+        ) {
+          return ViewTypes.DEFI;
         }
         if (
           item?.type?.includes('_header') ||
@@ -233,6 +231,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           case ViewTypes.EMPTY_ASSETS:
             dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
+            break;
+          case ViewTypes.DEFI:
+            dim.width = SCREEN_WIDTH;
+            dim.height = DEFI_ITEM_HEIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           default:
             dim.width = SCREEN_WIDTH;
@@ -330,28 +332,26 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       ...foldAndIncludeBalanceTokenList,
       ...foldAndExcludeBalanceTokenList,
     ];
-    const foldAndIncludeBalanceDefiList: ActionItem[] = portfolios
-      .filter(i => i._isFold && !i._isExcludeBalance && i.netWorth > 0)
-      .map(item => ({
-        type: 'fold_defi',
-        data: item,
-      }));
-    const foldAndExcludeBalanceDefiList: ActionItem[] = portfolios
-      .filter(i => i._isFold && (i._isExcludeBalance || i.netWorth === 0))
-      .map(item => ({
-        type: 'fold_defi',
-        data: item,
-      }));
-    const foldDefiList: ActionItem[] = [
-      ...foldAndIncludeBalanceDefiList,
-      ...foldAndExcludeBalanceDefiList,
-    ];
-    const unFoldDefiList: ActionItem[] = portfolios
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_defi',
-        data: item,
-      }));
+    const foldAndIncludeBalanceDefiList = portfolios.filter(
+      i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
+    );
+    const foldAndExcludeBalanceDefiList = portfolios.filter(
+      i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
+    );
+    const foldDefiList: ActionItem[] = chunk(
+      [...foldAndIncludeBalanceDefiList, ...foldAndExcludeBalanceDefiList],
+      2,
+    ).map(item => ({
+      type: 'fold_defi',
+      data: item,
+    }));
+    const unFoldDefiList: ActionItem[] = chunk(
+      portfolios.filter(i => !i._isFold),
+      2,
+    ).map(item => ({
+      type: 'unfold_defi',
+      data: item,
+    }));
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -405,8 +405,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       },
       {
         show: !!loadingPortfolio && !portfolios.length,
-        data: Array.from({ length: 5 }, () => ({
-          type: 'loading-skeleton',
+        data: Array.from({ length: 2 }, () => ({
+          type: 'loading-defi-skeleton',
         })),
       },
       {
@@ -564,12 +564,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             ? t('page.tokenDetail.action.unfold')
             : t('page.tokenDetail.action.fold'),
           icon: data._isFold
-            ? isDarkTheme
-              ? icons.unfoldDark
-              : icons.unfoldLight
-            : isDarkTheme
-            ? icons.foldDark
-            : icons.foldLight,
+            ? isLight
+              ? icons.unfoldLight
+              : icons.unfoldDark
+            : isLight
+            ? icons.foldLight
+            : icons.foldDark,
           androidIconName: data._isFold
             ? 'ic_rabby_menu_unfold'
             : 'ic_rabby_menu_fold',
@@ -596,12 +596,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             ? t('page.tokenDetail.action.unpin')
             : t('page.tokenDetail.action.pin'),
           icon: data._isPined
-            ? isDarkTheme
-              ? icons.unpinDark
-              : icons.unpinLight
-            : isDarkTheme
-            ? icons.pinDark
-            : icons.pinLight,
+            ? isLight
+              ? icons.unpinLight
+              : icons.unpinDark
+            : isLight
+            ? icons.pinLight
+            : icons.pinDark,
           androidIconName: data._isPined
             ? 'ic_rabby_menu_un_pin'
             : 'ic_rabby_menu_pin',
@@ -625,7 +625,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         },
       ];
     },
-    [isDarkTheme, singleTokenRefresh, t],
+    [isLight, singleTokenRefresh, t],
   );
   const getDefiOrNftMenuAction = useCallback(
     (
@@ -642,12 +642,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             ? t('page.tokenDetail.action.unfold')
             : t('page.tokenDetail.action.fold'),
           icon: isFold
-            ? isDarkTheme
-              ? icons.unfoldDark
-              : icons.unfoldLight
-            : isDarkTheme
-            ? icons.foldDark
-            : icons.foldLight,
+            ? isLight
+              ? icons.unfoldLight
+              : icons.unfoldDark
+            : isLight
+            ? icons.foldLight
+            : icons.foldDark,
           androidIconName: isFold
             ? 'ic_rabby_menu_unfold'
             : 'ic_rabby_menu_fold',
@@ -703,7 +703,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         },
       ];
     },
-    [isDarkTheme, singleDeFiRefresh, singleNFTRefresh, t],
+    [isLight, singleDeFiRefresh, singleNFTRefresh, t],
   );
 
   const handleOnReceive = async () => {
@@ -739,9 +739,14 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   const [extendedState, setExtendedState] = useState<{
     selectedChain?: ChainListItem;
+    isLight: boolean;
   }>({
     selectedChain: undefined,
+    isLight: isLight,
   });
+  useEffect(() => {
+    setExtendedState(prev => ({ ...prev, isLight }));
+  }, [isLight]);
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
@@ -788,7 +793,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             data={data}
             style={StyleSheet.flatten([
               styles.renderItemWrapper,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onTokenPress={handleOpenTokenDetail}
             menuActions={getTokenMenuActions(data)}
@@ -799,19 +804,36 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       case 'unfold_defi':
       case 'fold_defi':
         return (
-          <DefiRow
-            data={data}
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              isDarkTheme && styles.bg2,
-            ])}
-            menuActions={getDefiOrNftMenuAction('defi', data)}
-            logoSize={46}
-            chainLogoSize={18}
-            onPress={() =>
-              handleOpenDefiDetail(data, [...(data._portfolios || [])])
-            }
-          />
+          <View style={styles.defiGroups}>
+            <DefiRow
+              data={data[0]}
+              style={StyleSheet.flatten([
+                styles.renderDefiItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              menuActions={getDefiOrNftMenuAction('defi', data[0])}
+              logoSize={40}
+              onPress={() =>
+                handleOpenDefiDetail(data[0], [...(data[0]._portfolios || [])])
+              }
+            />
+            {data[1] && (
+              <DefiRow
+                data={data[1]}
+                style={StyleSheet.flatten([
+                  styles.renderDefiItemWrapper,
+                  !isLight && styles.bg2,
+                ])}
+                menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                logoSize={40}
+                onPress={() =>
+                  handleOpenDefiDetail(data[1], [
+                    ...(data[1]._portfolios || []),
+                  ])
+                }
+              />
+            )}
+          </View>
         );
       case 'unfold_nft':
       case 'fold_nft':
@@ -819,7 +841,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <NftRow
             style={StyleSheet.flatten([
               styles.renderItemWrapper,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             menuActions={getDefiOrNftMenuAction('nft', data)}
             logoSize={46}
@@ -848,7 +870,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
               styles.buttonHeader,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
@@ -867,7 +889,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
               styles.buttonHeader,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onPressFold={() => setFoldDefi(pre => !pre)}
           />
@@ -886,7 +908,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
               styles.buttonHeader,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onPressFold={() => setFoldNft(pre => !pre)}
           />
@@ -897,10 +919,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         return (
           <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
         );
-      case 'loading-skeleton':
-        return <ItemLoader />;
       case 'empty-assets':
         return <EmptyAssets desc={data} />;
+      case 'loading-skeleton':
+        return <ItemLoader />;
+      case 'loading-defi-skeleton':
+        return <DefiItemLoader />;
       default:
         return null;
     }
@@ -942,7 +966,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
               styles.buttonHeader,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
@@ -955,7 +979,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
               styles.buttonHeader,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onPressFold={() => setFoldDefi(pre => !pre)}
           />
@@ -968,7 +992,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             style={styles.sectionHeader}
             buttonStyle={StyleSheet.flatten([
               styles.buttonHeader,
-              isDarkTheme && styles.bg2,
+              !isLight && styles.bg2,
             ])}
             onPressFold={() => setFoldNft(pre => !pre)}
           />
@@ -1067,6 +1091,18 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 16,
     height: ASSETS_ITEM_HEIGHT_NEW,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
+  defiGroups: {
+    flexDirection: 'row',
+    height: DEFI_ITEM_HEIGHT,
+    gap: 12,
+  },
+  renderDefiItemWrapper: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    height: DEFI_ITEM_HEIGHT,
     paddingLeft: 12,
     paddingRight: 16,
   },

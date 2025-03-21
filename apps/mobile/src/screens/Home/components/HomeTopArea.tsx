@@ -598,11 +598,11 @@ const getStyles = createGetStyles2024(ctx => ({
     height: 24,
   },
   actionText: {
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-secondary'],
     textAlign: 'center',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
 

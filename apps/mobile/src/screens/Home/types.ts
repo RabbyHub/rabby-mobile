@@ -94,7 +94,7 @@ export type CombineToken = {
 
 export type CombineDefi = {
   type: 'unfold_defi' | 'fold_defi';
-  data: DisplayedProject;
+  data: DisplayedProject[];
 };
 
 export type CombineNft = {
@@ -106,14 +106,15 @@ export type ActionHeaderItem = {
   type:
     | 'overview'
     | 'asset_header'
-    | 'toggle_token_fold'
     | 'defi_header'
-    | 'toggle_defi_fold'
     | 'nft_header'
+    | 'toggle_token_fold'
+    | 'toggle_defi_fold'
     | 'toggle_nft_fold'
     | 'empty-assets'
     | 'empty-token'
-    | 'loading-skeleton';
+    | 'loading-skeleton'
+    | 'loading-defi-skeleton';
   data?: null | string;
 };
 

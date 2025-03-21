@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import {
   StyleSheet,
@@ -8,11 +8,8 @@ import {
   StyleProp,
   TextStyle,
   TouchableWithoutFeedback,
-  NativeSyntheticEvent,
-  TextInputSubmitEditingEventData,
   Keyboard,
 } from 'react-native';
-import { NextInput } from '@/components2024/Form/Input';
 import { default as RcSeedPhrase } from '@/assets/icons/nextComponent/IconSeedPhrase.svg';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -45,8 +42,7 @@ const PROGRESS_BAR_STEP = {
 function MainListBlocks() {
   const { t } = useTranslation();
   const [newAddress, setNewAddress] = useState('');
-  const [addressAlias, setAddressAlias] = useState('');
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -130,7 +126,7 @@ function MainListBlocks() {
     storeAddressList([
       {
         address: newAddress,
-        aliasName: addressAlias,
+        aliasName: '',
         index: value?.addressIndex,
       },
     ]);
@@ -156,21 +152,12 @@ function MainListBlocks() {
         },
       });
     }
-  }, [
-    newAddress,
-    addressAlias,
-    value,
-    navigation,
-    state,
-    storeSeedPharse,
-    storeAddressList,
-  ]);
+  }, [newAddress, value, navigation, state, storeSeedPharse, storeAddressList]);
 
   const handleDone = useCallback(async () => {
-    console.log('exe handleDone');
     contactService.setAlias({
       address: newAddress,
-      alias: addressAlias,
+      alias: '',
     });
     await activeAndPersistAccountsByMnemonics(
       state?.mnemonics || '',
@@ -188,19 +175,10 @@ function MainListBlocks() {
         mnemonics: state?.mnemonics,
         passphrase: '',
         isExistedKR: false,
-        alias: addressAlias || ellipsisAddress(newAddress),
+        alias: ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, state, value]);
-
-  const onSubmitEditing = React.useCallback(
-    (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
-      if (!e.nativeEvent.text) {
-        setAddressAlias(ellipsisAddress(newAddress));
-      }
-    },
-    [newAddress],
-  );
+  }, [newAddress, state, value]);
 
   const currentProgressCount = React.useMemo(() => {
     return state?.useCurrentSeed
@@ -225,45 +203,16 @@ function MainListBlocks() {
         </Text>
         <RcSeedPhrase style={styles.icon} />
         {loading ? (
-          <>
-            <Skeleton
-              circle
-              width={254}
-              height={48}
-              animation="wave"
-              LinearGradientComponent={LinearGradient}
-              style={[styles.item1]}
-            />
-            <Skeleton
-              circle
-              width={102}
-              height={20}
-              animation="wave"
-              LinearGradientComponent={LinearGradient}
-            />
-          </>
+          <Skeleton
+            circle
+            width={254}
+            height={42}
+            animation="wave"
+            LinearGradientComponent={LinearGradient}
+            style={[styles.item1]}
+          />
         ) : (
-          <>
-            <NextInput
-              containerStyle={styles.inputContainer}
-              // clearable={false}
-              inputStyle={styles.inputInner}
-              inputProps={{
-                value: addressAlias,
-                autoFocus: true,
-                inputMode: 'text',
-                returnKeyType: 'done',
-                // textAlign: 'center',
-                placeholder: ellipsisAddress(newAddress),
-                placeholderTextColor: colors2024['neutral-info'],
-                onSubmitEditing,
-                onChangeText(text) {
-                  setAddressAlias(text);
-                },
-              }}
-            />
-            <WalletAddress style={styles.walletAddress} />
-          </>
+          <WalletAddress style={styles.walletAddress} />
         )}
         <Button
           disabled={loading}
@@ -291,7 +240,7 @@ function CreateNewAddress(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   item1: {
-    marginTop: 12,
+    marginTop: 10,
   },
   icon: {
     marginTop: -12,
@@ -328,19 +277,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
-  inputContainer: {
-    width: '100%',
-    height: 72,
-    padding: 0,
-    margin: 0,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-  },
   walletAddress: {
-    marginTop: -18,
-  },
-  inputInner: {
-    // width: '100%',
+    marginTop: 10,
     fontSize: 36,
     lineHeight: 42,
     fontWeight: '700',
