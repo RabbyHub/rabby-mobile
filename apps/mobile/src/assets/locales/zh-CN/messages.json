@@ -100,13 +100,13 @@
         "Approve": "已批准",
         "Default": "交互",
         "Send": "已发送",
-        "Revoke": "撤销授权",
         "Swap": "已交换",
         "Bridge": "跨链",
         "Contract": "部署合约",
         "Recieve": "已收到",
         "Cancel": "取消等待中的交易",
-        "Buy": "已购买"
+        "Buy": "已购买",
+        "Revoke": "撤销{{token}}授权"
       },
       "detail": {
         "Cancel": "取消",
@@ -164,7 +164,9 @@
       "ShowHiddenItems": "显示隐藏交易",
       "ViewSmallItems": "查看交易 < $0.1",
       "Yesterday": "昨天",
-      "Today": "今天"
+      "Today": "今天",
+      "NotShowAllTransactionsToast": "隐藏交易已隐藏",
+      "ShowAllTransactionsToast": "隐藏交易已显示"
     },
     "getStart": {
       "alreadyHaveAddress": "我已经有一个地址",
@@ -1826,7 +1828,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_other": "{{count}} 个地址",
-      "screenHeaderSubTitle_one": "1 个地址"
+      "screenHeaderSubTitle_one": "1 个地址",
+      "all": "全部"
     },
     "signPermissionCheckModal": {
       "reconnect": "重新连接 Dapp",

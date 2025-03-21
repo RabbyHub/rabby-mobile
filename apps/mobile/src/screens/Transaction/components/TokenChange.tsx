@@ -25,8 +25,11 @@ const TxChangeItem = ({
   const isNft = item?.id?.length === 32;
   const { t } = useTranslation();
   const isMemo = useMemo(() => {
+    if (isNft) {
+      return !(item as NFTItem).collection?.is_core;
+    }
     return !item?.is_core;
-  }, [item]);
+  }, [item, isNft]);
 
   const tokenChangeStyle = StyleSheet.flatten([
     styles.text,

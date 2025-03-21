@@ -297,7 +297,7 @@ export const HistoryList = forwardRef(
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
   },
   skeletonContainer: {
     paddingHorizontal: 20,

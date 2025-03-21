@@ -93,13 +93,13 @@
         "Contract": "コントラクトをデプロイする",
         "Default": "インタラクション",
         "Recieve": "受け取った",
-        "Revoke": "承認を取り消しました",
         "Swap": "スワップ済み",
         "Bridge": "ブリッジ済み",
         "Cancel": "保留中止取引をキャンセル",
         "Send": "送信完了",
         "Approve": "承認済み",
-        "Buy": "購入済み"
+        "Buy": "購入済み",
+        "Revoke": "{{token}} の承認を取り消しました"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -157,7 +157,9 @@
       "Today": "今日",
       "Yesterday": "昨日",
       "ViewSmallItems": "$0.1 以下の取引を表示",
-      "ShowHiddenItems": "非表示のトランザクションを表示"
+      "ShowHiddenItems": "非表示のトランザクションを表示",
+      "ShowAllTransactionsToast": "表示された隠しトランザクション",
+      "NotShowAllTransactionsToast": "隠された取引が隠蔽されました"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "シードフレーズを入力してください"
@@ -1862,7 +1864,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} アドレス"
+      "screenHeaderSubTitle_other": "{{count}} アドレス",
+      "all": "すべて"
     },
     "AccountSelectDrawer": {
       "btn": {

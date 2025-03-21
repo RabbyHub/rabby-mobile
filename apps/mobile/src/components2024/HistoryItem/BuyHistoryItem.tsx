@@ -145,10 +145,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   rightBottomText: {
-    color: colors2024['neutral-title-1'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'right',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
   },
 }));

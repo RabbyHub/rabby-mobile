@@ -84,7 +84,8 @@
   "component": {
     "accountSwitcher": {
       "screenHeaderSubTitle_other": "{{count}} Adressen",
-      "screenHeaderSubTitle_one": "1 address"
+      "screenHeaderSubTitle_one": "1 address",
+      "all": "Alle"
     },
     "NFTDetailModal": {
       "FieldLabel": {
@@ -230,8 +231,8 @@
         "Bridge": "Überbrückt",
         "Swap": "Getauscht",
         "Cancel": "Anstehende Transaktion abbrechen",
-        "Revoke": "Widerrufene Genehmigung",
-        "Buy": "Gekauft"
+        "Buy": "Gekauft",
+        "Revoke": "Widerrufene {{token}} Genehmigung"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -289,7 +290,9 @@
       "Today": "Heute",
       "ViewSmallItems": "Transaktionen < $0.1 anzeigen",
       "ShowHiddenItems": "Verborgene Transaktionen anzeigen",
-      "Yesterday": "Gestern"
+      "Yesterday": "Gestern",
+      "NotShowAllTransactionsToast": "Versteckte Transaktionen verborgen",
+      "ShowAllTransactionsToast": "Verborgene Transaktionen angezeigt"
     },
     "getStart": {
       "goToHome": "Gehe zu Home",

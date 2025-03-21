@@ -101,11 +101,12 @@ export const HistoryItem = React.memo(
             ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
           );
         case HistoryItemCateType.Revoke:
-          return (
-            t('page.transactions.itemTitle.Revoke') +
-            ' ' +
-            ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
-          );
+          return t('page.transactions.itemTitle.Revoke', {
+            token: ellipsisOverflowedText(
+              getTokenSymbol(tokenApproveData[0].token),
+              6,
+            ),
+          });
         case HistoryItemCateType.Contract:
           return t('page.transactions.itemTitle.Contract');
         case HistoryItemCateType.Cancel:
@@ -194,34 +195,46 @@ export const HistoryItem = React.memo(
     );
 
     const tokenChangeData = useMemo(() => {
-      const res: TokenChangeDataItem[] = [];
-
-      data?.receives?.forEach(item => {
-        const tokenId = item?.token_id;
-        const tokenUUID = `${data.chain}_token:${tokenId}`;
-        const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-        res.push({
-          amount: item.amount,
-          token,
-          token_id: tokenId,
-          price: item.price as number,
-          type: 'receive',
+      const receives = data.receives
+        .map(item => {
+          const tokenId = item?.token_id;
+          const tokenUUID = `${data.chain}_token:${tokenId}`;
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          return {
+            amount: item.amount,
+            token,
+            token_id: tokenId,
+            price: item.price as number,
+            type: 'receive',
+          };
+        })
+        .sort((a, b) => {
+          if (a.token.is_core === b.token.is_core) {
+            return a.amount * a.price - b.amount * b.price;
+          }
+          return a.token.is_core ? -1 : 1;
         });
-      });
 
-      data.sends?.forEach(item => {
-        const tokenId = item?.token_id;
-        const tokenUUID = `${data.chain}_token:${tokenId}`;
-        const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-        res.push({
-          amount: item.amount,
-          token,
-          token_id: tokenId,
-          price: item.price as number,
-          type: 'send',
+      const sends = data.sends
+        .map(item => {
+          const tokenId = item?.token_id;
+          const tokenUUID = `${data.chain}_token:${tokenId}`;
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          return {
+            amount: item.amount,
+            token,
+            token_id: tokenId,
+            price: item.price as number,
+            type: 'send',
+          };
+        })
+        .sort((a, b) => {
+          if (a.token.is_core === b.token.is_core) {
+            return a.amount * a.price - b.amount * b.price;
+          }
+          return a.token.is_core ? 1 : -1;
         });
-      });
-      return res;
+      return [...receives, ...sends];
     }, [data, tokenDict]);
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {

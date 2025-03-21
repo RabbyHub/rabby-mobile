@@ -35,14 +35,14 @@
       "itemTitle": {
         "Send": "보내짐",
         "Bridge": "브릿지됨",
-        "Revoke": "철회된 승인",
         "Contract": "컨트랙트 배포",
         "Approve": "승인됨",
         "Swap": "교환됨",
         "Cancel": "보류 중인 거래 취소",
         "Default": "상호작용",
         "Recieve": "수신완료",
-        "Buy": "구매 완료"
+        "Buy": "구매 완료",
+        "Revoke": "{{token}} 승인 취소됨"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -100,7 +100,9 @@
       "Today": "오늘",
       "Yesterday": "어제",
       "ShowHiddenItems": "숨겨진 거래 표시",
-      "ViewSmallItems": "$0.1 미만의 거래 보기"
+      "ViewSmallItems": "$0.1 미만의 거래 보기",
+      "NotShowAllTransactionsToast": "숨겨진 거래 감춤",
+      "ShowAllTransactionsToast": "숨겨진 거래 표시됨"
     },
     "getStart": {
       "goToHome": "홈으로 이동",
@@ -1801,7 +1803,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} addresses"
+      "screenHeaderSubTitle_other": "{{count}} addresses",
+      "all": "모두"
     },
     "TokenSelector": {
       "recent": "최근",

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
 import RcIconYes from '@/assets2024/icons/history/IconTxYes.svg';
 import RcIconNo from '@/assets2024/icons/history/IconTxNo.svg';
-import { View } from 'react-native';
+import { View, ViewStyle } from 'react-native';
 import { AssetAvatar } from '@/components';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
@@ -25,71 +25,73 @@ const LEN_ENUM = {
   THREE: 3,
 };
 
+const Avatar = ({
+  item,
+  size,
+  logoStyle = {},
+}: {
+  item: TokenChangeDataItem;
+  size: number;
+  logoStyle?: ViewStyle;
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  const isNft = item?.token_id?.length === 32;
+  return (
+    <>
+      {isNft ? (
+        <Media
+          failedPlaceholder={<IconDefaultNFT width={size} height={size} />}
+          type="image_url"
+          src={item?.token.content?.endsWith('.svg') ? '' : item?.token.content}
+          thumbnail={
+            item?.token.content?.endsWith('.svg') ? '' : item?.token.content
+          }
+          mediaStyle={{
+            width: size,
+            height: size,
+          }}
+          style={{
+            ...styles.media,
+            width: size,
+            height: size,
+            ...logoStyle,
+          }}
+          // playIconSize={14}
+        />
+      ) : (
+        <AssetAvatar
+          logo={item?.token.logo_url}
+          size={size}
+          logoStyle={logoStyle}
+        />
+      )}
+    </>
+  );
+};
+
 export const HistoryItemTokenArea = ({
   type,
   tokenChangeData,
   tokenApproveData,
 }: ItemIconProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  // if (iconUri) {
+  tokenChangeData.forEach(item => {
+    if (item.token.content_type) {
+      console.log(item);
+    }
+  });
 
   const len = useMemo(() => tokenChangeData.length, [tokenChangeData]);
   if (len === 0 && tokenApproveData.length) {
     // just for approve
-    const singeToken = tokenApproveData[0].token;
-    const singleSize = 46;
-    const isNft = tokenApproveData[0]?.token_id?.length === 32;
-    return (
-      <View style={[styles.imageBox]}>
-        {isNft ? (
-          <Media
-            failedPlaceholder={
-              <IconDefaultNFT width={singleSize} height={singleSize} />
-            }
-            type="image_url"
-            src={
-              singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-            }
-            thumbnail={
-              singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-            }
-            mediaStyle={styles.media}
-            style={styles.media}
-            // playIconSize={14}
-          />
-        ) : (
-          <AssetAvatar logo={singeToken?.logo_url} size={singleSize} />
-        )}
-      </View>
-    );
+    return <Avatar item={tokenApproveData[0]} size={46} />;
   }
 
   switch (len) {
     case LEN_ENUM.ONE:
-      const singeToken = tokenChangeData[0].token;
-      const singleSize = 46;
-      const isNft = tokenChangeData[0]?.token_id?.length === 32;
       return (
         <View style={[styles.imageBox]}>
-          {isNft ? (
-            <Media
-              failedPlaceholder={
-                <IconDefaultNFT width={singleSize} height={singleSize} />
-              }
-              type="image_url"
-              src={
-                singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-              }
-              thumbnail={
-                singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-              }
-              mediaStyle={styles.media}
-              style={styles.media}
-              // playIconSize={14}
-            />
-          ) : (
-            <AssetAvatar logo={singeToken?.logo_url} size={singleSize} />
-          )}
+          <Avatar item={tokenChangeData[0]} size={46} />
         </View>
       );
     case LEN_ENUM.TWO:
@@ -99,14 +101,11 @@ export const HistoryItemTokenArea = ({
       return !isSwap ? (
         <View style={[styles.imageBox]}>
           <View style={[styles.oneTokenBox]}>
-            <AssetAvatar
-              logo={tokenChangeData?.[0]?.token?.logo_url}
-              size={30}
-            />
+            <Avatar item={tokenChangeData[0]} size={30} />
           </View>
           <View style={[styles.twoTokenBox]}>
-            <AssetAvatar
-              logo={tokenChangeData?.[1]?.token?.logo_url}
+            <Avatar
+              item={tokenChangeData[1]}
               size={34}
               logoStyle={styles.swapLogo}
             />
@@ -115,14 +114,10 @@ export const HistoryItemTokenArea = ({
       ) : (
         <View style={[styles.imageBox]}>
           <View style={[styles.fromTokenBox]}>
-            <AssetAvatar logo={sends?.[0]?.token?.logo_url} size={30} />
+            <Avatar item={sends[0]} size={30} />
           </View>
           <View style={[styles.toTokenBox]}>
-            <AssetAvatar
-              logo={receives?.[0]?.token?.logo_url}
-              size={32}
-              logoStyle={styles.swapLogo}
-            />
+            <Avatar item={receives[0]} size={32} logoStyle={styles.swapLogo} />
           </View>
           <RcIconSwitch style={[styles.iconTR]} />
         </View>
@@ -180,8 +175,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 8,
   },
   media: {
-    width: 46,
-    height: 46,
     borderRadius: 8,
   },
   fromTokenBox: {
