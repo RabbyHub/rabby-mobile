@@ -18,7 +18,7 @@ import { Platform, Text, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
-import { useIAPProducts } from '@/hooks/iap/useIAPProducts';
+import { gasAccountProducts } from '@/constant/iap';
 
 interface Props {
   visible?: boolean;
@@ -42,8 +42,6 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
     address: gasAccountAddress,
   });
 
-  const [gasAccountProducts] = useIAPProducts();
-
   const products = useMemo(() => {
     const res = gasAccountProducts
       .filter(item => +item.price > +minDepositPrice)
@@ -52,7 +50,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       return gasAccountProducts.slice(gasAccountProducts.length - 1);
     }
     return res;
-  }, [gasAccountProducts, minDepositPrice]);
+  }, [minDepositPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
   const {
@@ -167,16 +165,11 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
                 ) : (
                   <RcIconApplePayCC />
                 )}
-                <Text style={styles.btnTitle}>${selectedProduct.total}</Text>
               </View>
               <Text style={styles.btnDesc}>
                 {Platform.OS === 'ios'
-                  ? t('page.gasAccount.depositPopup.applePayDesc', {
-                      amount: selectedProduct?.fee || 0,
-                    })
-                  : t('page.gasAccount.depositPopup.googlePayDesc', {
-                      amount: selectedProduct?.fee || 0,
-                    })}
+                  ? t('page.gasAccount.depositPopup.applePayFeeDesc')
+                  : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
               </Text>
             </View>
           }
