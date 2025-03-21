@@ -541,6 +541,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const tokenPressRef = useRef<TouchableOpacity>(null);
     const handleLongPressToken = () => {
+      if (!token) {
+        return;
+      }
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,

@@ -15,7 +15,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const [longPressToken, setLongPressToken] = useLongPressTokenAtom();
 
   const handleClose = () => {
@@ -28,7 +28,11 @@ export const TokenInfoPopup = () => {
   };
 
   return (
-    <Modal transparent visible={longPressToken.visible} animationType="none">
+    <Modal
+      transparent
+      visible={longPressToken.visible}
+      animationType="none"
+      onDismiss={handleClose}>
       <View
         style={{
           width: windowWidth,
@@ -85,11 +89,18 @@ export const TokenInfoPopup = () => {
           />
         )}
         {IS_ANDROID ? (
-          <TouchableOpacity onPress={handleClose} style={styles.overlay} />
+          <TouchableOpacity
+            onPress={handleClose}
+            style={styles.overlay}
+            activeOpacity={1}
+          />
         ) : (
-          <TouchableOpacity onPress={handleClose} style={styles.blurView}>
+          <TouchableOpacity
+            onPress={handleClose}
+            style={styles.blurView}
+            activeOpacity={1}>
             <BlurView
-              blurType="light"
+              blurType={isLight ? 'dark' : 'light'}
               blurAmount={10}
               reducedTransparencyFallbackColor="white"
               style={styles.blurView}
