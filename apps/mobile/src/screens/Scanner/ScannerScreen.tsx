@@ -1,12 +1,15 @@
-import { createGetStyles } from '@/utils/styles';
-import React from 'react';
-import { Dimensions, View } from 'react-native';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React, { useState } from 'react';
+import { Dimensions, Text, View } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { atom, useAtom } from 'jotai';
 import { Code } from 'react-native-vision-camera';
+import { RootStackParamsList } from '@/navigation-type';
+import { RootNames } from '@/constant/layout';
+import { URDecoder } from '@ngraveio/bc-ur';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -22,14 +25,38 @@ export const useScanner = () => {
 
 export const ScannerScreen = () => {
   const [_, setText] = useAtom(textAtom);
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const navState = useNavigationState(
+    s => s.routes.find(e => e.name === RootNames.Scanner)?.params,
+  ) as RootStackParamsList['Scanner'] | undefined;
   const nav = useNavigation();
+  const [decoder] = useState(new URDecoder());
+  const [currentCount, setCurrentCount] = useState(0);
+
   const handleCodeScanned = React.useCallback(
     (data: Code[]) => {
-      setText(data[0].value!);
-      nav.goBack();
+      if (navState?.syncExtension) {
+        const value = data[0]?.value;
+        if (value && value.startsWith('ur:')) {
+          try {
+            decoder.receivePart(value);
+            setCurrentCount(decoder.getProgress());
+            if (decoder.isComplete()) {
+              const ur = decoder.resultUR();
+              const a = ur.decodeCBOR();
+              setText(a.toString());
+              nav.goBack();
+            }
+          } catch (error) {
+            console.error('handleCodeScanned error', error);
+          }
+        }
+      } else {
+        setText(data[0].value!);
+        nav.goBack();
+      }
     },
-    [nav, setText],
+    [decoder, nav, navState?.syncExtension, setText],
   );
 
   return (
@@ -39,15 +66,22 @@ export const ScannerScreen = () => {
           containerStyle={styles.containerStyle}
           onCodeScanned={handleCodeScanned}
         />
+        <Text style={styles.tips}>Click “Rabby Mobile” on Rabby Extension</Text>
+        <Text style={styles.tips}>Scan the QR code to sync</Text>
+        {currentCount ? (
+          <Text style={styles.progress}>
+            {(currentCount * 100).toFixed(2)}%
+          </Text>
+        ) : null}
       </View>
     </View>
   );
 };
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(ctx => ({
   main: {
     flex: 1,
-    backgroundColor: colors['neutral-black'],
+    backgroundColor: ctx.colors2024['neutral-black'],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -55,6 +89,26 @@ const getStyles = createGetStyles(colors => ({
   containerStyle: {
     width: CAMERA_WIDTH,
     height: CAMERA_WIDTH,
-    borderColor: colord(colors['neutral-line']).alpha(0.5).toHex(),
+    borderColor: colord(ctx.colors2024['neutral-line']).alpha(0.5).toHex(),
+    marginBottom: 40,
+  },
+  tips: {
+    color: '#F7FAFC',
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+    marginBottom: 5,
+  },
+  progress: {
+    color: '#F7FAFC',
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
   },
 }));

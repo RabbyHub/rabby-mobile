@@ -82,6 +82,23 @@ function GetStartedScreen2024(): JSX.Element {
     navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
   }, [getStaretd.processedInit]);
 
+  const handleGoToSyncExtension = useCallback(async () => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    if (!getStaretd.processedInit) return;
+    if (!keyringService.isUnlocked()) {
+      navigate(RootNames.Unlock);
+
+      return;
+    }
+
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.SyncExtensionPassword,
+    });
+  }, [getStaretd.processedInit]);
+
   const navigation = useRabbyAppNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
@@ -128,7 +145,7 @@ function GetStartedScreen2024(): JSX.Element {
             <Text style={styles.appName}>Rabby Wallet</Text>
 
             {isNonPublicProductionEnv && (
-              <View style={{ position: 'absolute', top: 2 }}>
+              <View style={{ position: 'absolute', top: 36 }}>
                 <TouchableText
                   style={[
                     styles.touchableText,
@@ -159,7 +176,7 @@ function GetStartedScreen2024(): JSX.Element {
             for Ethereum and all EVM chains
           </Text>
           {!getStaretd.localHasAccounts ? (
-            <>
+            <View style={{ gap: 16 }}>
               <Button
                 type="primary"
                 title={t('page.getStart.createNewAddress')}
@@ -168,15 +185,24 @@ function GetStartedScreen2024(): JSX.Element {
                 }
                 onPress={handleGoToCreate}
               />
+
+              <Button
+                disabled={
+                  !getStaretd.processedInit || getStaretd.localHasAccounts
+                }
+                type="ghost"
+                title={t('page.getStart.alreadyHaveAddress')}
+                onPress={handleGoToImport}
+              />
               <TouchableText
                 style={styles.touchableText}
                 disabled={
                   !getStaretd.processedInit || getStaretd.localHasAccounts
                 }
-                onPress={handleGoToImport}>
-                {t('page.getStart.alreadyHaveAddress')}
+                onPress={handleGoToSyncExtension}>
+                {t('page.getStart.sync')}
               </TouchableText>
-            </>
+            </View>
           ) : (
             <Button
               type="primary"
@@ -219,7 +245,6 @@ const getStyles = createGetStyles2024(ctx =>
       height: '100%',
       maxHeight: '100%',
       flexDirection: 'column',
-      justifyContent: 'space-between',
       paddingBottom: 84,
       // ...makeDebugBorder(),
     },
@@ -263,8 +288,8 @@ const getStyles = createGetStyles2024(ctx =>
       lineHeight: 24,
       textAlign: 'center',
       fontWeight: '500',
-      marginTop: 32,
-      marginBottom: 32,
+      marginTop: 10,
+      marginBottom: 64,
     },
     modalTitle: {
       color: ctx.colors['neutral-title-1'],
@@ -306,11 +331,20 @@ const getStyles = createGetStyles2024(ctx =>
     },
 
     touchableText: {
-      marginTop: 22,
-      fontSize: 17,
+      marginTop: 56,
+      fontSize: 16,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
       color: ctx.colors2024['brand-default'],
+      textAlign: 'center',
+
+      //       color: var(---brand-default, #7084FF);
+      // text-align: center;
+      // font-family: "SF Pro Rounded";
+      // font-size: 16px;
+      // font-style: normal;
+      // font-weight: 700;
+      // line-height: 16.397px; /* 102.479% */
     },
   }),
 );

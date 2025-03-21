@@ -7,7 +7,11 @@
 /* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
-import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  DisplayKeyring,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -1200,6 +1204,117 @@ export class KeyringService extends RNEventEmitter {
     return (this.store
       .getState()
       .unencryptedKeyringData?.map(item => item.type) ?? []) as string[];
+  }
+
+  /**
+   * Restore Keyring Helper
+   *
+   * Attempts to initialize a new keyring from the provided serialized payload.
+   * On success, returns the resulting keyring instance.
+   *
+   * @param serialized
+   * @param push
+   */
+  private async _restoreKeyringByKeyringSerializedData(
+    serialized: KeyringSerializedData,
+  ): Promise<any> {
+    const { type, data } = serialized;
+    const Keyring = this.getKeyringClassForType(type);
+    const keyring =
+      typeof this.onCreateKeyring === 'function'
+        ? this.onCreateKeyring(Keyring)
+        : new Keyring({});
+    await keyring.deserialize(data);
+
+    // getAccounts also validates the accounts for some keyrings
+    await keyring.getAccounts();
+
+    return keyring;
+  }
+
+  async syncExtensionData(vault: KeyringSerializedData[]) {
+    const NotSupportedKeyringTypes = [KEYRING_CLASS.WALLETCONNECT];
+
+    const newKeyrings: KeyringInstance[] = await Promise.all(
+      Array.from(vault as any).map(
+        this._restoreKeyringByKeyringSerializedData.bind(this) as any,
+      ),
+    );
+
+    const getKeyringTypeAccounts = async (type: string) => {
+      const keyrings = this.getKeyringsByType(type);
+      const _accounts = (
+        await Promise.all(
+          keyrings.map(async keyring =>
+            this.displayForKeyring(keyring)?.then(
+              displayKeyring => displayKeyring.accounts,
+            ),
+          ),
+        )
+      )?.flat();
+
+      return _accounts;
+    };
+
+    const allAccounts: Record<string, DisplayedKeyring['accounts']> = {};
+
+    const keyRingTypeArr: string[] = [];
+    newKeyrings.forEach(e => {
+      if (
+        !keyRingTypeArr.includes(e.type) &&
+        !NotSupportedKeyringTypes.includes(e.type as KEYRING_TYPE)
+      ) {
+        keyRingTypeArr.push(e.type);
+      }
+    });
+
+    await Promise.all(
+      keyRingTypeArr.map(e =>
+        getKeyringTypeAccounts(e).then(accounts => {
+          allAccounts[e] = accounts;
+        }),
+      ),
+    );
+    const addKeyrings: typeof newKeyrings = [];
+
+    const addedAccounts: DisplayedKeyring['accounts'] = [];
+
+    await Promise.all(
+      newKeyrings
+        .filter(e => !NotSupportedKeyringTypes.includes(e.type as KEYRING_TYPE))
+        .map(keyring =>
+          this.displayForKeyring(keyring).then(newDisplayKeyring => {
+            const newAccounts = newDisplayKeyring.accounts;
+
+            const exist = newAccounts?.some(newAccount =>
+              allAccounts?.[keyring.type]?.some(
+                existAddr =>
+                  newAccount?.address?.toLowerCase() ===
+                  existAddr?.address?.toLowerCase(),
+              ),
+            );
+
+            if (!exist && newAccounts.length) {
+              addKeyrings.push(keyring);
+              this.keyrings.push(keyring);
+              addedAccounts.push(
+                ...newAccounts.map(e => ({
+                  ...e,
+                  type: keyring.type as KEYRING_TYPE,
+                })),
+              );
+            }
+          }),
+        ),
+    );
+
+    if (addKeyrings.length) {
+      await this.persistAllKeyrings();
+      await this._updateMemStoreKeyrings();
+      this.fullUpdate();
+    }
+
+    return addedAccounts;
   }
 }
 /* eslint-enable jsdoc/check-tag-names */

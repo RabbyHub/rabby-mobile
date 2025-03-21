@@ -56,13 +56,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apocentre/alias-sampling@npm:^0.5.3":
-  version: 0.5.3
-  resolution: "@apocentre/alias-sampling@npm:0.5.3"
-  checksum: 0b339b25ab7a30f6332f322be5c796d2db582365f7531e22d579d16a8fc562cb0f4fba4b93e7afafe9b368a40b91660c6547e1650e72feebbc7615a1ef5accbe
-  languageName: node
-  linkType: hard
-
 "@babel/code-frame@npm:7.12.11":
   version: 7.12.11
   resolution: "@babel/code-frame@npm:7.12.11::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40babel%2Fcode-frame%2F-%2Fcode-frame-7.12.11.tgz"
@@ -6508,18 +6501,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ngraveio/bc-ur@npm:1.1.6":
-  version: 1.1.6
-  resolution: "@ngraveio/bc-ur@npm:1.1.6"
+"@ngraveio/bc-ur@npm:^1.1.13":
+  version: 1.1.13
+  resolution: "@ngraveio/bc-ur@npm:1.1.13"
   dependencies:
-    "@apocentre/alias-sampling": ^0.5.3
+    "@keystonehq/alias-sampling": ^0.1.1
     assert: ^2.0.0
     bignumber.js: ^9.0.1
     cbor-sync: ^1.0.4
     crc: ^3.8.0
     jsbi: ^3.1.5
     sha.js: ^2.4.11
-  checksum: 8081d0436a37ccc4612e0fdb8000b37d695ed14b82e909cb9f3931191b57dd9d33f67c4573911bc63e52267e7f8a3185979032ba16aa559183b5259071df3de8
+  checksum: 3f8e565c6a6dd7af7489a884f7d4d85d274ce7ce41f9fdb7e362b8a75ccbb2c934b369fd4ea58b2214d6039462ee0e933de61f372c04c551a47a75e1cad14cfd
   languageName: node
   linkType: hard
 
@@ -29205,7 +29198,7 @@ __metadata:
     "@ledgerhq/react-native-hw-transport-ble": 6.33.4
     "@metamask/abi-utils": 2.0.2
     "@metamask/eth-sig-util": 5.1.0
-    "@ngraveio/bc-ur": 1.1.6
+    "@ngraveio/bc-ur": ^1.1.13
     "@noble/hashes": ^1.4.0
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": 1.0.10

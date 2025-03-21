@@ -8,7 +8,11 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
-import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type {
+  DisplayedKeyring,
+  DisplayKeyring,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type {
@@ -19,6 +23,7 @@ import type {
 import type { DappInfo } from './core/services/dappService';
 import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
 import type { TransactionGroup } from './core/services/transactionHistory';
+import { Account } from './core/services/preference';
 // import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
 
 /**
@@ -51,7 +56,9 @@ export type RootStackParamsList = {
     cache: boolean;
     relateTokenId?: string;
   };
-  [RootNames.Scanner]?: {};
+  [RootNames.Scanner]?: {
+    syncExtension?: boolean;
+  };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.TokenDetail]: {
@@ -205,6 +212,13 @@ export type AddressNavigatorParamList = {
   [RootNames.WatchAddressList]?: {};
   [RootNames.SafeAddressList]?: {};
   [RootNames.ApprovalAddressList]?: {};
+  [RootNames.SyncExtensionPassword]?: {};
+  [RootNames.SyncExtensionImported]?: {
+    newAccounts: DisplayedKeyring['accounts'];
+  };
+  [RootNames.SyncExtensionAccountSuccess]?: {
+    newAccounts: Account[];
+  };
 };
 
 export type AccountNavigatorParamList = {
