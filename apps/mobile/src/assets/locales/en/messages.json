@@ -37,6 +37,8 @@
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",
       "ShowHiddenItems": "Show hidden transactions",
+      "ShowAllTransactionsToast": "Hidden transactions shown",
+      "NotShowAllTransactionsToast": "Hidden transactions concealed",
       "Today": "Today",
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
@@ -46,7 +48,7 @@
         "Recieve": "Received",
         "Bridge": "Bridged",
         "Approve": "Approved",
-        "Revoke": "Revoked Approval",
+        "Revoke": "Revoked {{token}} Approval",
         "Contract": "Deploy Contract",
         "Cancel": "Cancel Pending Transction",
         "Default": "Interaction",
@@ -1782,6 +1784,7 @@
       "depositWithPay": "Buy with"
     },
     "accountSwitcher": {
+      "all": "All",
       "screenHeaderSubTitle_one": "1 address",
       "screenHeaderSubTitle_other": "{{count}} addresses"
     },

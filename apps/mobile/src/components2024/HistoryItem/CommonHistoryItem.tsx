@@ -128,11 +128,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
   },
   titleText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   subTitleText: {
     color: colors2024['neutral-secondary'],
@@ -149,14 +149,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   payTokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 20,
     fontWeight: '700',
   },
   receiveTokenAmountText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 20,
     fontWeight: '700',
   },

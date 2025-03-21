@@ -39,7 +39,9 @@ export default function AllAddressIcon({
     getStyle: getAllAddressIconStyle,
   });
 
-  if (!imageSourceList.length) return null;
+  if (!imageSourceList.length) {
+    return null;
+  }
 
   return (
     <View style={[styles.container, { width: containerWidth, height: size }]}>
@@ -168,6 +170,7 @@ export function UseAllAccountsItemInPanel({
         </View>
         <View style={styles.centerInfo}>
           <Text style={styles.text}>
+            {'All '}
             {addressCount} {addressCount > 1 ? 'Addresses' : 'Address'}
           </Text>
         </View>

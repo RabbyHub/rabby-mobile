@@ -34,7 +34,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useSwapRecentToTokens } from '../hooks/recent';
 import { preferenceService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
-import { Account } from '@/core/services/preference';
+import { Account, IManageToken } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
   TokenItemMaybeWithOwner,
@@ -45,6 +45,7 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -98,6 +99,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     },
     ref,
   ) => {
+    const [fold, setFold] = useState(true);
+    const [pinedQueue, setPinedQueue] = useState<IManageToken[]>([]);
     const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
       account: accountInScreen,
@@ -209,7 +212,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           searchedTokenByQuery: remoteSearchedTokenByQuery,
         };
 
-        if (useSwapTokenList || !useLocalDatabase) return remoteVersion;
+        if (useSwapTokenList || !useLocalDatabase) {
+          return remoteVersion;
+        }
 
         return {
           isSearchLoading: isSearchingLocalTokens,
@@ -388,13 +393,24 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isExcludedTokens,
     ]);
 
-    const { value: pinedQueue } = useAsync(async () => {
-      if (currentAccount?.address) {
-        const data = await preferenceService.getUserTokenSettings();
-        return data?.pinedQueue || [];
-      }
-      return [];
-    });
+    // const { value: pinedQueue } = useAsync(async () => {
+    //   if (currentAccount?.address) {
+    //     const data = await preferenceService.getUserTokenSettings();
+    //     return data?.pinedQueue || [];
+    //   }
+    //   return [];
+    // });
+
+    useFocusEffect(
+      useCallback(() => {
+        (async () => {
+          if (currentAccount?.address) {
+            const data = await preferenceService.getUserTokenSettings();
+            setPinedQueue(data?.pinedQueue || []);
+          }
+        })();
+      }, [currentAccount?.address]),
+    );
 
     const swapToHeader = useMemo(() => {
       return (
@@ -510,8 +526,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
-      if (!currentAccount?.type || isWatchOrSafeAccount(currentAccount?.type))
+      if (!currentAccount?.type || isWatchOrSafeAccount(currentAccount?.type)) {
         return false;
+      }
 
       return (
         forScene === 'MakeTransactionAbout' &&

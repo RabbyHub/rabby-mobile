@@ -10,8 +10,7 @@ import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { findChain, findChainByServerID, getChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
@@ -48,7 +47,6 @@ import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
-import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -126,8 +124,6 @@ function History({
   const [currentPage, setCurrentPage] = useState(0);
   const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [isShowAll, setIsShowAll] = useState(false);
-  // const [isShowSmall, setIsShowSmall] = useState(false);
-  const [isShowMenu, setIsShowMenu] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
   const PAGE_COUNT = isInTokenDetail ? REALL_TIME_API_PAGE_COUNT : _PAGE_COUNT;
@@ -146,28 +142,27 @@ function History({
     useSyncHistoryDB(unionAccounts);
   const { projectDict, tokenDict, historyEnsureNoData } = useHistoryTokenDict();
 
+  const historyListRef = useRef<{ scrollToTop: () => void }>(null);
+
   const batchFetchDataV2 = async () => {
     // fetch data from local database
 
     const addresses = isSceneUsingAllAccounts
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
-    console.log('batchFetchDataV2 addresses', addresses);
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const [localHistoryList, _historyList, swapList, buyList] =
-        await Promise.all([
-          LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
-            addresses,
-            isFirst ? 20 : 10000,
-          ),
-          HistoryItemEntity.getAllHistoryItemSortedByTime(
-            addresses,
-            isFirst ? 50 : 10000,
-            isFirst, // first not show scam tx
-          ),
-          SwapItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-          BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-        ]);
+      const [localHistoryList, _historyList, buyList] = await Promise.all([
+        LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
+          addresses,
+          isFirst ? 20 : 10000,
+        ),
+        HistoryItemEntity.getAllHistoryItemSortedByTime(
+          addresses,
+          isFirst ? 50 : 10000,
+          isFirst, // first not show scam tx
+        ),
+        BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
+      ]);
 
       const historyList: HistoryItemEntity[] = unionBy(
         localHistoryList.concat(_historyList),
@@ -189,7 +184,6 @@ function History({
           ...ensureHistoryListItemFromDb(item),
           isLocalBuy: !!localBuyItem,
           buyDetails: localBuyItem,
-          isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
           isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
           tokenDict,
           projectDict,
@@ -453,6 +447,7 @@ function History({
         cancel();
         refresh();
       }
+      historyListRef.current?.scrollToTop();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
@@ -546,9 +541,11 @@ function History({
     };
   });
 
-  const getHeaderRight = useMemoizedFn(() => {
-    return <HistoryFilterMenu setIsShowMenu={setIsShowMenu} />;
-  });
+  const getHeaderRight = useCallback(() => {
+    return (
+      <HistoryFilterMenu isShowAll={isShowAll} setIsShowAll={setIsShowAll} />
+    );
+  }, [isShowAll, setIsShowAll]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -572,10 +569,6 @@ function History({
       />
     );
   }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
-
-  const resetTopMenu = useCallback(() => {
-    setIsShowMenu(false);
-  }, [setIsShowMenu]);
 
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
@@ -620,61 +613,11 @@ function History({
     ],
   );
 
-  // if (!loading && !groups?.length && !allTxHistory.length) {
-  //   return <Empty />;
-  // }
-
   return (
-    <View
-      // onPress={() => {
-      //   setIsShowMenu(false);
-      // }}
-      // eslint-disable-next-line react-native/no-inline-styles
-      style={{ paddingTop: 0, position: 'relative' }}>
+    <View style={{ paddingTop: 0, position: 'relative' }}>
       <>
-        {isShowMenu && (
-          <View style={styles.menuContainer}>
-            <View style={styles.menuItem}>
-              <Text style={styles.menuItemText}>
-                {t('page.transactions.ShowHiddenItems')}
-              </Text>
-              <View style={styles.valueView}>
-                <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
-              </View>
-            </View>
-            {/* <View style={styles.menuItem}>
-              <Text style={styles.menuItemText}>
-                {t('page.transactions.ViewSmallItems')}
-              </Text>
-              <View style={styles.valueView}>
-                <AppSwitch2024
-                  value={isShowSmall}
-                  onValueChange={setIsShowSmall}
-                />
-              </View>
-            </View> */}
-          </View>
-        )}
-        {/* {isTestnet || isInTokenDetail ? null : (
-        <TouchableOpacity
-          onPress={() => {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.HistoryFilterScam,
-              params: {
-                addresses: isSceneUsingAllAccounts
-                  ? unionAccounts
-                  : [finalSceneCurrentAccount],
-                isForMultipleAdderss,
-              },
-            });
-          }}
-          style={styles.link}>
-          <Text style={styles.linkText}>Hide scam transactions</Text>
-          <RcIconRight />
-        </TouchableOpacity>
-      )} */}
         <HistoryList
-          resetTopMenu={resetTopMenu}
+          ref={historyListRef}
           historySuccessList={historySuccessList}
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
@@ -702,9 +645,6 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
   useLastUsedAccountInScreen();
 
   const { styles } = useTheme2024({ getStyle });
-  // const { isSceneUsingAllAccounts } = useSceneAccountInfo({
-  //   forScene: 'MultiHistory',
-  // });
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>

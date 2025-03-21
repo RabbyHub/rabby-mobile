@@ -52,11 +52,11 @@
         "Approve": "Approuvé",
         "Default": "Interaction",
         "Bridge": "Relié",
-        "Revoke": "Approbation Révoquée",
         "Swap": "Échangé",
         "Cancel": "Annuler la transaction en attente",
         "Send": "Envoyé",
-        "Buy": "Acheté"
+        "Buy": "Acheté",
+        "Revoke": "Approbation de {{token}} révoquée"
       },
       "detail": {
         "Status": "Statut",
@@ -114,7 +114,8 @@
       "Today": "Aujourd'hui",
       "Yesterday": "Hier",
       "ShowHiddenItems": "Afficher les transactions masquées",
-      "ViewSmallItems": "Voir les transactions < $0,1"
+      "ViewSmallItems": "Voir les transactions < $0,1",
+      "ShowAllTransactionsToast": "Transactions cachées affichées"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -1804,7 +1805,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} adresses"
+      "screenHeaderSubTitle_other": "{{count}} adresses",
+      "all": "Tous"
     },
     "NFTDetailModal": {
       "FieldLabel": {

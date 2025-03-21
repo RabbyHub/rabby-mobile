@@ -100,9 +100,9 @@
         "Approve": "Одобрено",
         "Swap": "Обменянный",
         "Bridge": "Мостовой (Bridged)",
-        "Revoke": "Отозванное разрешение",
         "Contract": "Развернуть контракт",
-        "Buy": "Куплено"
+        "Buy": "Куплено",
+        "Revoke": "Отозвано разрешение {{token}}"
       },
       "detail": {
         "Date": "Дата",
@@ -160,7 +160,9 @@
       "Today": "Сегодня",
       "ShowHiddenItems": "Показать скрытые транзакции",
       "Yesterday": "Вчера",
-      "ViewSmallItems": "Просмотр транзакций < $0.1"
+      "ViewSmallItems": "Просмотр транзакций < $0.1",
+      "ShowAllTransactionsToast": "Скрытые транзакции показаны",
+      "NotShowAllTransactionsToast": "Скрытые транзакции скрыты"
     },
     "importSuccess": {
       "addressCount": "{{count}} Адресов",
@@ -1818,7 +1820,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} адресов"
+      "screenHeaderSubTitle_other": "{{count}} адресов",
+      "all": "Все"
     },
     "AuthenticationModal": {
       "passwordPlaceholder": "Введите пароль для подтверждения"

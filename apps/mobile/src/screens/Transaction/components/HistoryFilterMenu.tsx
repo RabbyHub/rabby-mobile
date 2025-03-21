@@ -1,18 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import RcIconFilterCC from '@/assets2024/icons/history/IconFilterCC.svg';
-import {
-  Image,
-  ImageStyle,
-  StyleProp,
-  StyleSheet,
-  ViewStyle,
-  Text,
-  View,
-  TouchableOpacity,
-} from 'react-native';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { useTheme2024 } from '@/hooks/theme';
+import { toast } from '@/components2024/Toast';
+import { createGetStyles2024 } from '@/utils/styles';
+import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
+import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
 
 const historyHitSlop = {
   top: 4,
@@ -22,31 +16,42 @@ const historyHitSlop = {
 };
 
 interface Props {
-  setIsShowMenu: (value: React.SetStateAction<boolean>) => void;
+  setIsShowAll: (value: React.SetStateAction<boolean>) => void;
+  isShowAll: boolean;
 }
 
-export const HistoryFilterMenu = ({ setIsShowMenu }: Props) => {
-  const { t } = useTranslation();
+export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
+  const { t } = useTranslation();
+  const switchShowAll = () => {
+    setIsShowAll(prev => {
+      if (prev) {
+        toast.success(t('page.transactions.NotShowAllTransactionsToast'));
+      } else {
+        toast.success(t('page.transactions.ShowAllTransactionsToast'));
+      }
+      return !prev;
+    });
+  };
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        hitSlop={historyHitSlop}
-        onPress={() => setIsShowMenu(prev => !prev)}>
-        <RcIconFilterCC
-          color={styles.filterIcon.color}
-          style={styles.filterIcon}
-        />
+      <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}>
+        {isShowAll ? (
+          <RcIconEyeCC
+            color={colors2024['neutral-foot']}
+            style={styles.filterIcon}
+            width={24}
+            height={24}
+          />
+        ) : (
+          <RcIconEyeCloseCC
+            color={colors2024['neutral-foot']}
+            style={styles.filterIcon}
+            width={24}
+            height={24}
+          />
+        )}
       </TouchableOpacity>
-      {/* {isShowMenu && (
-        <View style={styles.menuContainer}>
-          <Text style={styles.menuItemText}>{'View hidden items'}</Text>
-          <View style={styles.valueView}>
-            <AppSwitch2024 value={isShowAll} onValueChange={setIsShowAll} />
-          </View>
-        </View>
-      )} */}
     </View>
   );
 };
