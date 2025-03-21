@@ -38,7 +38,10 @@ export function getHistoryItemType(
 
   const receives = data.receives;
   const sends = data.sends;
-  if (receives?.length === 1 && sends?.length === 1) {
+  if (
+    receives?.filter(item => !isNFTTokenId(item.token_id)).length === 1 &&
+    sends?.filter(item => !isNFTTokenId(item.token_id)).length === 1
+  ) {
     return HistoryItemCateType.Swap;
   }
 
@@ -235,4 +238,8 @@ export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
   } catch (e) {
     console.log('loadTxSaveFromLocalStore error', e);
   }
+};
+
+export const isNFTTokenId = (tokenId: string) => {
+  return tokenId.length === 32;
 };

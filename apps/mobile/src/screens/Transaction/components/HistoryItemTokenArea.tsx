@@ -12,6 +12,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { HistoryItemCateType } from './type';
 import { TokenChangeDataItem } from './HistoryItem';
+import { isNFTTokenId } from './utils';
 
 interface ItemIconProps {
   type?: HistoryItemCateType | undefined;
@@ -95,7 +96,9 @@ export const HistoryItemTokenArea = ({
     case LEN_ENUM.TWO:
       const receives = tokenChangeData.filter(item => item.type === 'receive');
       const sends = tokenChangeData.filter(item => item.type === 'send');
-      const isSwap = receives.length === 1 && sends.length === 1;
+      const isSwap =
+        receives.filter(item => !isNFTTokenId(item.token_id)).length === 1 &&
+        sends.filter(item => !isNFTTokenId(item.token_id)).length === 1;
       return !isSwap ? (
         <View style={[styles.imageBox]}>
           <View style={[styles.oneTokenBox]}>
