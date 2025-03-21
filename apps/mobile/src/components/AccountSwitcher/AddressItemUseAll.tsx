@@ -75,7 +75,10 @@ export default function AllAddressIcon({
             key={k}
             style={[
               styles.iconWrapper,
-              { left: (ImagesList.length - index - 1) * imageGap },
+              {
+                left: (ImagesList.length - index - 1) * imageGap,
+                zIndex: 100 - index,
+              },
             ]}>
             {imageNode}
           </View>
@@ -154,12 +157,13 @@ export function UseAllAccountsItemInPanel({
       onPressOut={() => setIsPressing(false)}
       onPress={onPressAddress}>
       <View style={styles.itemInner}>
-        <View style={[styles.leftArea, { marginLeft: -0, marginRight: 12 }]}>
+        <View style={[styles.leftArea, { marginLeft: -0, marginRight: 8 }]}>
           <AllAddressIcon
             imageSourceList={imageSourceList}
-            size={26}
-            containerWidth={40}
+            size={24}
+            containerWidth={50}
             imageRadius={8}
+            imageGap={14}
           />
         </View>
         <View style={styles.centerInfo}>
@@ -189,10 +193,10 @@ const getUseAllAccountsItemInPanelStyle = createGetStyles2024(ctx => {
       borderStyle: 'solid',
       borderColor: ctx.colors2024['neutral-line'],
       backgroundColor: ctx.colors2024['neutral-bg-3'],
-      paddingHorizontal: 24,
+      paddingHorizontal: 16,
       paddingVertical: 0,
       position: 'relative',
-      height: 70,
+      height: 78,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',

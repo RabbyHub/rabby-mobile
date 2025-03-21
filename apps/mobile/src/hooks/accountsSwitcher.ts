@@ -429,6 +429,12 @@ export function useSceneAccountInfo(options: {
     [pinAddressesDict],
   );
 
+  const isHideToken = useMemo(() => {
+    return ['History', 'MultiHistory', '@ActiveDappWebViewModal'].includes(
+      forScene,
+    );
+  }, [forScene]);
+
   const sceneAccountInfo = sceneAccounts[forScene];
   const computeFinalSceneAccount = useCallback(
     (account?: Account | null) => {
@@ -483,6 +489,7 @@ export function useSceneAccountInfo(options: {
           .join('-'),
     isPinnedAccount,
     computeFinalSceneAccount,
+    isHideToken,
   };
 }
 

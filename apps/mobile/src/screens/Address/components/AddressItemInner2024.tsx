@@ -2,12 +2,16 @@ import React, { useMemo } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
-import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
+import {
+  AddressItem as InnerAddressItem,
+  WalletPin,
+} from '@/components2024/AddressItem/AddressItem';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { TextBadge } from './PinBadge';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   card: {
@@ -20,6 +24,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 78,
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
+    paddingRight: 24,
+    position: 'relative',
   },
   rootItem: {
     flexDirection: 'row',
@@ -29,7 +35,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   item: {
     flexDirection: 'row',
-    gap: 11,
+    gap: 8,
     alignItems: 'center',
   },
   itemInfo: {
@@ -40,7 +46,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemNameText: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
   },
   itemNameTextHasPinned: {
     paddingRight: 52,
@@ -51,8 +58,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemBalanceText: {
     fontSize: 16,
     lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
   },
   itemName: {
     gap: 8,
@@ -60,12 +67,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   arrow: {
-    width: 30,
-    height: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
+    width: 26,
+    height: 26,
     borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
@@ -111,18 +115,10 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       <InnerAddressItem style={styles.rootItem} account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View style={styles.item}>
-            <WalletIcon style={styles.walletIcon} width={46} height={46} />
+            <WalletIcon width={46} height={46} borderRadius={12} />
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
-                <WalletName
-                  style={StyleSheet.flatten([
-                    styles.itemNameText,
-                    pinned && styles.itemNameTextHasPinned,
-                  ])}
-                />
-                <View style={styles.itemNamePinned}>
-                  {pinned && <TextBadge />}
-                </View>
+                <WalletName style={StyleSheet.flatten([styles.itemNameText])} />
               </View>
               <WalletBalance style={styles.itemBalanceText} />
             </View>
@@ -131,22 +127,22 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       </InnerAddressItem>
 
       {hiddenArrow ? null : (
-        <View
-          style={StyleSheet.flatten([
-            styles.arrow,
-            isPressing && styles.arrowPressing,
-          ])}>
-          <ArrowRightCC
-            color={
-              isPressing
-                ? colors2024['brand-default']
-                : colors2024['neutral-body']
-            }
-            width={20}
-            height={20}
-          />
-        </View>
+        <ArrowCircleCC
+          style={styles.arrow}
+          color={
+            isPressing
+              ? colors2024['brand-default']
+              : colors2024['neutral-body']
+          }
+          backgroundColor={
+            isPressing
+              ? colors2024['brand-light-1']
+              : colors2024['neutral-bg-2']
+          }
+        />
       )}
+
+      {pinned ? <WalletPin /> : null}
     </Card>
   );
 };

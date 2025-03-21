@@ -174,7 +174,7 @@ const themeColorsNext2024 = {
     'neutral-bg-2': 'rgba(35, 36, 40, 1)',
     'neutral-bg-3': 'rgba(28, 28, 29, 1)',
     'neutral-bg-4': 'rgba(56, 59, 65, 1)',
-    'neutral-line': 'rgba(69, 72, 79, 1)',
+    'neutral-line': 'rgba(47, 49, 53, 1)',
     'neutral-title-1': 'rgba(247, 250, 252, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-title-2': 'rgba(255, 255, 255, 1)',

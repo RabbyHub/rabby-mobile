@@ -1926,7 +1926,8 @@
       "option_Light": "Light",
       "option_Dark": "Dark"
     },
-    "unlimited": "unlimited"
+    "unlimited": "unlimited",
+    "Addresses": "Addresses"
   },
   "background": {
     "error": {

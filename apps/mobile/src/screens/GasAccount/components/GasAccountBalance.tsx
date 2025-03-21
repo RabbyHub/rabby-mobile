@@ -36,7 +36,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       text: 17,
       lineHeight: 22,
       fontWeight: '700',
-      color: colors2024['neutral-title-1'],
+      color: colors2024['neutral-body'],
     },
   };
 });

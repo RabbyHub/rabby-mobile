@@ -50,7 +50,7 @@ export const ScreenWithAccountSwitcherLayouts = {
    */
   screenHeaderHeight: 56,
 
-  modalBottomSpace: 133,
+  modalBottomSpace: 200,
 };
 
 export const ScreenColors = {

@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Button } from '@/components2024/Button';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import LinearGradient from 'react-native-linear-gradient';
 
 export const GasAccountCurrentAddress = ({
   style,
@@ -54,7 +55,10 @@ export const GasAccountCurrentAddress = ({
                 style={[
                   styles.addressText,
                   {
-                    color: colors2024['neutral-secondary'],
+                    color: colors2024['neutral-title-1'],
+                    fontSize: 16,
+                    lineHeight: 20,
+                    fontWeight: '700',
                   },
                 ]}
               />
@@ -67,7 +71,7 @@ export const GasAccountCurrentAddress = ({
 };
 
 const GasAccountLogoutContent = ({ onClose }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const { logout } = useGasAccountMethods();
@@ -95,36 +99,43 @@ const GasAccountLogoutContent = ({ onClose }) => {
   const { bottom } = useSafeAreaInsets();
 
   return (
-    <View style={styles.logoutContainer}>
-      <Text style={styles.logoutTitle}>
-        {t('page.gasAccount.logoutConfirmModal.title')}
-      </Text>
-      {/* <GasAccountCurrentAddress /> */}
-      <Text style={styles.logoutDesc}>
-        {t('page.gasAccount.logoutConfirmModal.desc')}
-      </Text>
+    <LinearGradient
+      colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+      locations={[0.0745, 0.2242]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{ flex: 1, position: 'relative' }}>
+      <View style={styles.logoutContainer}>
+        <Text style={styles.logoutTitle}>
+          {t('page.gasAccount.logoutConfirmModal.title')}
+        </Text>
+        {/* <GasAccountCurrentAddress /> */}
+        <Text style={styles.logoutDesc}>
+          {t('page.gasAccount.logoutConfirmModal.desc')}
+        </Text>
 
-      <GasAccountCurrentAddress />
+        <GasAccountCurrentAddress />
 
-      <View
-        style={[styles.buttonContainer, { marginBottom: bottom || 0 + 35 }]}>
-        <Button
-          type="ghost"
-          title={t('global.Cancel')}
-          onPress={onClose}
-          containerStyle={{ flex: 1 }}
-          titleStyle={styles.btnText}
-        />
-        <Button
-          type="primary"
-          loading={loading}
-          containerStyle={{ flex: 1 }}
-          title={t('page.gasAccount.logoutConfirmModal.logout')}
-          onPress={handleLogout}
-          titleStyle={styles.btnText}
-        />
+        <View
+          style={[styles.buttonContainer, { marginBottom: bottom || 0 + 35 }]}>
+          <Button
+            type="ghost"
+            title={t('global.Cancel')}
+            onPress={onClose}
+            containerStyle={{ flex: 1 }}
+            titleStyle={styles.btnText}
+          />
+          <Button
+            type="primary"
+            loading={loading}
+            containerStyle={{ flex: 1 }}
+            title={t('page.gasAccount.logoutConfirmModal.logout')}
+            onPress={handleLogout}
+            titleStyle={styles.btnText}
+          />
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -166,20 +177,20 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 
   currentAddressContainer: {
-    borderRadius: 30,
+    borderRadius: 20,
     flexDirection: 'row',
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    height: 96,
+    padding: 16,
+    height: 78,
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
   },
 
   addressText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '500',
-    lineHeight: 22,
+    lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
 
@@ -210,7 +221,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     alignItems: 'center',
     width: '100%',
     height: '100%',
-    backgroundColor: colors['neutral-bg1'],
+    // backgroundColor: colors['neutral-bg1'],
   },
 
   logoutTitle: {

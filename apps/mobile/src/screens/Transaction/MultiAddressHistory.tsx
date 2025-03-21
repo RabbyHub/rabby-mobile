@@ -712,7 +712,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
         <AccountSwitcherModal
           forScene="MultiHistory"
           inScreen
-          panelLinearGradientProps={{ type: 'tx-page' }}
+          // panelLinearGradientProps={{ type: 'tx-page' }}
         />
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
