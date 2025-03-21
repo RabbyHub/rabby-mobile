@@ -1,7 +1,6 @@
-import { findChainByServerID, getChain } from '@/utils/chain';
-import { numberWithCommasIsLtOne } from '@/utils/number';
-import { sinceTime } from '@/utils/time';
-import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
+/* eslint-disable react-native/no-inline-styles */
+import { getChain } from '@/utils/chain';
+import { TokenItem, TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import {
   StyleProp,
@@ -10,42 +9,45 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import RcIconInteraction from '@/assets2024/icons/history/IconInteraction.svg';
-import RcIconInteractionDark from '@/assets2024/icons/history/IconInteractionDark.svg';
 import { TxChange } from './TokenChange';
-import { TxId } from './TxId';
-import { TxInterAddressExplain } from './TxInterAddressExplain';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryItemIcon } from './HistoryItemIcon';
 import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { fetchHistoryTokenUUId, getHistoryItemType } from './utils';
+import { getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
-import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemCateType } from './type';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { HistoryItemTokenArea } from './HistoryItemTokenArea';
+import { getTokenSymbol } from '@/utils/token';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
-  onPresss?: (data: HistoryDisplayItem) => void;
+  onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
+
+export type TokenChangeDataItem = {
+  amount: number;
+  token: TokenItem;
+  token_id: string;
+  price?: number;
+  type: 'send' | 'receive' | 'approve';
+};
 
 export const HistoryItem = React.memo(
   ({
     data,
-    cateDict,
-    projectDict,
     tokenDict,
     style,
-    onPresss,
+    onPress,
     isForMultipleAdderss,
   }: HistoryItemProps) => {
     const { t } = useTranslation();
@@ -60,45 +62,25 @@ export const HistoryItem = React.memo(
       return getHistoryItemType(data);
     }, [data]);
 
-    const { formatToken, isNft } = useMemo(() => {
-      const cate = formatType;
-      const isDoubleToken =
-        cate === HistoryItemCateType.Swap ||
-        cate === HistoryItemCateType.Bridge;
-      if (isDoubleToken) {
-        const send = data.sends[0] || {};
-        const receive = data.receives[0] || {};
-        const sendToken =
-          tokenDict[send?.token_id] ||
-          tokenDict[fetchHistoryTokenUUId(send.token_id, data.chain)];
-        const receiveToken =
-          tokenDict[receive?.token_id] ||
-          tokenDict[fetchHistoryTokenUUId(receive.token_id, data.chain)];
+    const tokenApproveData = useMemo(() => {
+      const res: TokenChangeDataItem[] = [];
 
-        return {
-          formatToken: [sendToken, receiveToken],
-          isNft: false,
-        };
-      } else {
-        const isApprove =
-          cate === HistoryItemCateType.Approve ||
-          cate === HistoryItemCateType.Revoke;
-        const commonItem =
-          cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
-
-        const tokenId = isApprove
-          ? (data.token_approve?.token_id as string)
-          : commonItem?.token_id;
-        const tokenIsNft = tokenId?.length === 32;
-        const tokenUUID = `${data.chain}_token:${tokenId}`;
-        const token = tokenDict[tokenId] || tokenDict[tokenUUID];
-
-        return {
-          formatToken: token,
-          isNft: tokenIsNft,
-        };
+      if (!data.token_approve?.token_id) {
+        return res;
       }
-    }, [data, tokenDict, formatType]);
+
+      const tokenId = data.token_approve?.token_id || '';
+      const tokenUUID = `${data.chain}_token:${tokenId}`;
+      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+      res.push({
+        amount: data.token_approve?.value!,
+        token,
+        token_id: tokenId,
+        type: 'approve',
+      });
+
+      return res;
+    }, [data, tokenDict]);
 
     const formatTitle = useMemo(() => {
       switch (formatType) {
@@ -113,9 +95,18 @@ export const HistoryItem = React.memo(
           return t('page.transactions.itemTitle.Bridge');
 
         case HistoryItemCateType.Approve:
-          return t('page.transactions.itemTitle.Approve');
+          return (
+            t('page.transactions.itemTitle.Approve') +
+            ' ' +
+            ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+          );
         case HistoryItemCateType.Revoke:
-          return t('page.transactions.itemTitle.Revoke');
+          return t('page.transactions.itemTitle.Revoke', {
+            token: ellipsisOverflowedText(
+              getTokenSymbol(tokenApproveData[0].token),
+              6,
+            ),
+          });
         case HistoryItemCateType.Contract:
           return t('page.transactions.itemTitle.Contract');
         case HistoryItemCateType.Cancel:
@@ -129,56 +120,58 @@ export const HistoryItem = React.memo(
             ? ellipsisOverflowedText(data.tx?.name, 15)
             : t('page.transactions.itemTitle.Default');
       }
-    }, [formatType, data, t]);
-
-    const projectObj = useMemo(() => {
-      return data?.project_id ? projectDict[data.project_id] : undefined;
-    }, [data, projectDict]);
+    }, [formatType, data, t, tokenApproveData]);
 
     const formatDescribe = useMemo(() => {
       const FromText = t('page.swap.from') + ' ';
       const ToText = t('page.swap.to') + ' ';
-      const projectName = data?.project_id
-        ? projectDict[data?.project_id]?.name
-        : '';
+      let address = '';
       switch (formatType) {
-        case HistoryItemCateType.Swap:
-          return chainItem?.name || t('page.transactions.detail.Unknown');
-
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
           const isSend = formatType === HistoryItemCateType.Send;
           const addr = isSend
             ? data.sends[0].to_addr
             : data.receives[0].from_addr;
-          return (
+          address =
             (isSend ? ToText : FromText) +
-            (getAliasName(addr) || ellipsisAddress(addr))
-          );
-        case HistoryItemCateType.Revoke:
-        case HistoryItemCateType.Approve:
-          const isRevoke = formatType === HistoryItemCateType.Revoke;
-          return isRevoke
-            ? FromText + (projectName || t('page.transactions.detail.Unknown'))
-            : ToText + (projectName || t('page.transactions.detail.Unknown'));
-        case HistoryItemCateType.Contract:
-          return FromText + chainItem?.name;
-        case HistoryItemCateType.Cancel:
-          return t('page.transactions.detail.Unknown');
+            (getAliasName(addr) || ellipsisAddress(addr));
+          break;
 
         case HistoryItemCateType.Buy:
-          return t('page.buy.from', {
-            dex: data.buyDetails?.service_provider?.name,
-          });
+          address = FromText + data.buyDetails?.service_provider?.name;
+          break;
+        case HistoryItemCateType.Cancel:
+          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          break;
+        case HistoryItemCateType.Contract:
+        case HistoryItemCateType.Revoke:
+        case HistoryItemCateType.Approve:
+        case HistoryItemCateType.Swap:
         default:
-          return projectName || t('page.transactions.detail.Unknown');
+          const project = data.project_id
+            ? data.projectDict[data.project_id]
+            : null;
+          address = project?.name || ellipsisAddress(data.tx?.to_addr || '');
+          break;
       }
-    }, [formatType, data, chainItem, projectDict, t]);
+
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <ChainIconImage
+            size={16}
+            chainEnum={chainItem?.enum}
+            isShowRPCStatus={true}
+          />
+          <Text style={styles.describeText}>{address}</Text>
+        </View>
+      );
+    }, [formatType, data, chainItem, t, styles.describeText]);
 
     const navigation = useRabbyAppNavigation();
-    const hanldeNavigateDetail = useCallback(() => {
-      if (onPresss) {
-        onPresss(data);
+    const handleNavigateDetail = useCallback(() => {
+      if (onPress) {
+        onPress(data);
         return;
       }
       navigation.push(RootNames.StackTransaction, {
@@ -189,12 +182,65 @@ export const HistoryItem = React.memo(
           title: formatTitle,
         },
       });
-    }, [onPresss, navigation, isForMultipleAdderss, data, formatTitle]);
+    }, [onPress, navigation, isForMultipleAdderss, data, formatTitle]);
+
+    const noNeedTokenChangeType = useMemo(
+      () =>
+        [
+          HistoryItemCateType.Cancel,
+          HistoryItemCateType.Approve,
+          HistoryItemCateType.Revoke,
+        ].includes(formatType),
+      [formatType],
+    );
+
+    const tokenChangeData = useMemo(() => {
+      const receives = data.receives
+        .map(item => {
+          const tokenId = item?.token_id;
+          const tokenUUID = `${data.chain}_token:${tokenId}`;
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          return {
+            amount: item.amount,
+            token,
+            token_id: tokenId,
+            price: item.price as number,
+            type: 'receive',
+          };
+        })
+        .sort((a, b) => {
+          if (a.token.is_core === b.token.is_core) {
+            return a.amount * a.price - b.amount * b.price;
+          }
+          return a.token.is_core ? -1 : 1;
+        });
+
+      const sends = data.sends
+        .map(item => {
+          const tokenId = item?.token_id;
+          const tokenUUID = `${data.chain}_token:${tokenId}`;
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          return {
+            amount: item.amount,
+            token,
+            token_id: tokenId,
+            price: item.price as number,
+            type: 'send',
+          };
+        })
+        .sort((a, b) => {
+          if (a.token.is_core === b.token.is_core) {
+            return a.amount * a.price - b.amount * b.price;
+          }
+          return a.token.is_core ? 1 : -1;
+        });
+      return [...receives, ...sends];
+    }, [data, tokenDict]);
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (
         <TouchableOpacity
-          onPress={hanldeNavigateDetail}
+          onPress={handleNavigateDetail}
           style={{ marginBottom: 8 }}>
           <BuyHistoryItem data={data.buyDetails} />
         </TouchableOpacity>
@@ -202,7 +248,7 @@ export const HistoryItem = React.memo(
     }
 
     return (
-      <TouchableOpacity onPress={hanldeNavigateDetail}>
+      <TouchableOpacity onPress={handleNavigateDetail}>
         <View
           style={[
             styles.card,
@@ -210,35 +256,18 @@ export const HistoryItem = React.memo(
             isScam || isSmallUsdTx ? styles.cardGray : null,
           ]}>
           <View style={styles.cardBody}>
-            {/* <TxInterAddressExplain
-            style={[
-              styles.txInterAddressExplain,
-              data?.cate_id === 'approve' &&
-                styles.txInterAddressExplainApprove,
-            ]}
-            data={data}
-            projectDict={projectDict}
-            tokenDict={tokenDict}
-            cateDict={cateDict}
-            isScam={isScam}
-          /> */}
-            <View style={styles.leftContent}>
-              {formatType === HistoryItemCateType.UnKnown && projectObj ? (
-                <View style={styles.imageBox}>
-                  <AssetAvatar logo={projectObj?.logo_url} size={46} />
-                  {isLight ? (
-                    <RcIconInteraction style={styles.iconBR} />
-                  ) : (
-                    <RcIconInteractionDark style={styles.iconBR} />
-                  )}
-                </View>
-              ) : (
-                <HistoryItemIcon
-                  type={formatType as HistoryItemCateType}
-                  token={formatToken}
-                  isNft={isNft}
-                />
-              )}
+            <View
+              style={[
+                styles.leftContent,
+                {
+                  width: noNeedTokenChangeType ? '95%' : '50%',
+                },
+              ]}>
+              <HistoryItemTokenArea
+                type={formatType as HistoryItemCateType}
+                tokenChangeData={tokenChangeData}
+                tokenApproveData={tokenApproveData}
+              />
               <View style={styles.textBox}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
@@ -249,36 +278,14 @@ export const HistoryItem = React.memo(
                   )}
                   <TxStatusItem status={data.tx?.status ?? 1} />
                 </View>
-                <Text style={styles.describeText} numberOfLines={1}>
-                  {formatDescribe}
-                </Text>
+                {formatDescribe}
               </View>
             </View>
             <TxChange
-              type={formatType as HistoryItemCateType}
-              isForMultipleAdderss={isForMultipleAdderss}
+              tokenChangeData={tokenChangeData}
               style={styles.txChange}
-              data={data}
-              tokenDict={tokenDict}
-              canClickToken
             />
           </View>
-
-          {/* {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
-          <>
-            <View style={styles.divider} />
-            <View style={styles.cardFooter}>
-              {data.tx && data.tx?.eth_gas_fee ? (
-                <Text style={styles.gas}>
-                  Gas: {numberWithCommasIsLtOne(data.tx?.eth_gas_fee, 2)}{' '}
-                  {chainItem?.nativeTokenSymbol} ($
-                  {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
-                </Text>
-              ) : null}
-              {isFailed ? <Text style={styles.failed}>Failed</Text> : null}
-            </View>
-          </>
-        ) : null} */}
         </View>
       </TouchableOpacity>
     );
@@ -298,6 +305,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // borderWidth: 1,
   },
   titleBox: {
+    marginBottom: 3,
     flexDirection: 'row',
     gap: 6,
   },
@@ -320,18 +328,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    // width: '50%',
+    // width: '55%',
   },
   textBox: {
     flexDirection: 'column',
     justifyContent: 'center',
   },
   titleText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   describeText: {
     color: colors2024['neutral-secondary'],
@@ -405,7 +413,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   txInterAddressExplain: { flexShrink: 1, width: '60%' },
   txInterAddressExplainApprove: { width: '100%' },
-  txChange: { flexShrink: 0, maxWidth: '70%' },
+  txChange: { flexShrink: 0, maxWidth: '50%', minWidth: 0 },
   divider: {
     height: 0.5,
     backgroundColor: colors2024['neutral-line'],

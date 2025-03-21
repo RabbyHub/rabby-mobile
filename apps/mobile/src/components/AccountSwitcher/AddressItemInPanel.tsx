@@ -10,11 +10,12 @@ import { Account } from '@/core/services/preference';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { useTopTokensForAddress } from './hooks';
 import { AssetAvatar } from '../AssetAvatar';
+import { trigger } from 'react-native-haptic-feedback';
 
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
-  useAllItemH: 70,
+  useAllItemH: 78,
   itemH: 78,
   itemGap: 12,
   get myAddressesAreaVisiableH() {
@@ -31,6 +32,7 @@ export function AddressItemInPanel({
   addressItemProps,
   isCurrent,
   isPinned,
+  isHideToken,
   onPressAddress: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
@@ -38,6 +40,7 @@ export function AddressItemInPanel({
   isPinned?: boolean;
   showCopyAndQR?: boolean;
   onPressAddress?: (account: Account) => void;
+  isHideToken?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
@@ -47,6 +50,10 @@ export function AddressItemInPanel({
 
   const { account } = addressItemProps;
   const onPressAddress = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
 
@@ -56,8 +63,12 @@ export function AddressItemInPanel({
 
   return (
     <AddressItemShadowView
-      disableShadow
-      style={[styles.addressItemView, style]}>
+      // disableShadow
+      style={[
+        styles.addressItemView,
+        style,
+        isCurrent || isPressing ? styles.active : null,
+      ]}>
       <TouchableOpacity
         style={StyleSheet.flatten([
           styles.addressItemContainer,
@@ -76,11 +87,6 @@ export function AddressItemInPanel({
                 <View style={styles.centerInfo}>
                   <View style={styles.nameAndAdderss}>
                     <WalletName style={styles.addressAliasName} />
-                    {isPinned && (
-                      <View style={styles.pinnedWrapper}>
-                        <Text style={styles.pinText}>Pin</Text>
-                      </View>
-                    )}
                   </View>
                   <View style={styles.bottomArea}>
                     <WalletBalance
@@ -89,7 +95,7 @@ export function AddressItemInPanel({
                         isCurrent && styles.addressUsdValueCurrent,
                       ]}
                     />
-                    {!!tokens?.length && (
+                    {!isHideToken && !!tokens?.length && (
                       <>
                         <View style={styles.divider} />
                         <View style={styles.chainLogos}>
@@ -130,8 +136,10 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       borderRadius: AddressItemSizes.radiusValue,
       overflow: 'hidden',
     },
-    containerPressing: {
+    active: {
       borderColor: ctx.colors2024['brand-light-2'],
+    },
+    containerPressing: {
       backgroundColor: ctx.colors2024['brand-light-1'],
     },
     addressItemContainer: {
@@ -147,7 +155,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       height: 52,
       width: '100%',
     },
-    walletIcon: { marginRight: 12, width: 46, height: 46 },
+    walletIcon: { marginRight: 8, width: 46, height: 46 },
     centerInfo: {
       flexDirection: 'column',
       flexShrink: 1,
@@ -164,8 +172,10 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       flexShrink: 1,
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
+      lineHeight: 20,
       fontStyle: 'normal',
-      fontWeight: '700',
+      fontWeight: '500',
+      color: ctx.colors2024['neutral-foot'],
     },
     bottomArea: {
       flexDirection: 'row',
@@ -183,14 +193,15 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressUsdValue: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
+      fontSize: 16,
       fontStyle: 'normal',
-      fontWeight: '500',
-      lineHeight: 18,
-      color: ctx.colors2024['neutral-secondary'],
+      fontWeight: '700',
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-title-1'],
     },
     addressUsdValueCurrent: {
-      color: ctx.colors2024['brand-default'],
+      // color: ctx.colors2024['brand-default'],
+      color: ctx.colors2024['neutral-title-1'],
       fontWeight: '700',
     },
     chainLogos: {

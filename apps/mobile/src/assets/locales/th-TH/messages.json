@@ -71,7 +71,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} addresses"
+      "screenHeaderSubTitle_other": "{{count}} addresses",
+      "all": "ทั้งหมด"
     },
     "ReserveGasPopup": {
       "fast": "รวดเร็ว",
@@ -177,11 +178,11 @@
         "Recieve": "ได้รับ",
         "Send": "ส่งแล้ว",
         "Default": "การโต้ตอบ",
-        "Revoke": "เพิกถอนการอนุมัติ",
         "Swap": "สลับแล้ว",
         "Cancel": "ยกเลิกธุรกรรมที่ค้างอยู่",
         "Approve": "อนุมัติแล้ว",
-        "Buy": "ซื้อแล้ว"
+        "Buy": "ซื้อแล้ว",
+        "Revoke": "เพิกถอนการอนุมัติ {{token}}"
       },
       "detail": {
         "NoApproveNeed": "ไม่จำเป็นต้องเพิกถอน: ไม่มีค่าเผื่อที่เหลืออยู่",
@@ -239,7 +240,9 @@
       "Today": "วันนี้",
       "ViewSmallItems": "ดูธุรกรรม < $0.1",
       "ShowHiddenItems": "แสดงธุรกรรมที่ซ่อนอยู่",
-      "Yesterday": "เมื่อวานนี้"
+      "Yesterday": "เมื่อวานนี้",
+      "ShowAllTransactionsToast": "การแสดงธุรกรรมที่ซ่อนอยู่",
+      "NotShowAllTransactionsToast": "การทำธุรกรรมที่ซ่อนอยู่ถูกปิดบัง"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "กรอกวลีเมล็ดพันธุ์ของคุณ"

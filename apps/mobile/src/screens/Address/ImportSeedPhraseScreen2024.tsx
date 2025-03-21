@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import { apiMnemonic } from '@/core/apis';
@@ -35,6 +35,8 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { useMemoizedFn } from 'ahooks';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -129,6 +131,39 @@ export const ImportSeedPhraseScreen2024 = () => {
     const splitMnemonics = trimMnemonics.split(/\s+|,|\n/).filter(Boolean);
     return splitMnemonics.join(' ');
   }, [mnemonics]);
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+
+  const handleImportMore = useMemoizedFn(
+    (params: {
+      type: KEYRING_TYPE;
+      mnemonics?: string;
+      passphrase?: string;
+      keyringId?: number;
+      account?: KeyringAccountWithAlias;
+      brand: string;
+    }) => {
+      Keyboard.dismiss();
+      if (modalRef.current) {
+        return;
+      }
+
+      modalRef.current = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
+        params,
+        bottomSheetModalProps: {
+          onDismiss: () => {
+            modalRef.current = undefined;
+          },
+        },
+        onCancel: () => {
+          if (modalRef.current) {
+            removeGlobalBottomSheetModal2024(modalRef.current);
+          }
+        },
+      });
+    },
+  );
 
   const importSeedPhrase = React.useCallback(() => {
     return apiMnemonic
@@ -175,15 +210,12 @@ export const ImportSeedPhraseScreen2024 = () => {
         } catch (error) {
           console.log('error', error);
         }
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportMoreAddress,
-          params: {
-            type: KEYRING_TYPE.HdKeyring,
-            mnemonics: formatMnemonics,
-            passphrase: '',
-            keyringId: keyringId || undefined,
-            isExistedKR,
-          },
+        handleImportMore({
+          type: KEYRING_TYPE.HdKeyring,
+          brand: KEYRING_CLASS.MNEMONIC,
+          mnemonics: formatMnemonics,
+          passphrase: '',
+          keyringId: keyringId || undefined,
         });
       })
       .catch(err => {
@@ -220,7 +252,7 @@ export const ImportSeedPhraseScreen2024 = () => {
         importToastHiddenRef.current?.();
         setImporting(false);
       });
-  }, [duplicateAddressModal, formatMnemonics]);
+  }, [duplicateAddressModal, formatMnemonics, handleImportMore]);
 
   const verfiyMnemonics = React.useCallback(() => {
     try {

@@ -159,12 +159,12 @@
         "Cancel": "取消待處理的交易",
         "Swap": "已交換",
         "Bridge": "已橋接",
-        "Revoke": "撤銷批准",
         "Recieve": "收到",
         "Send": "已發送",
         "Approve": "已批准",
         "Default": "互動",
-        "Buy": "已購買"
+        "Buy": "已購買",
+        "Revoke": "撤銷 {{token}} 授權"
       },
       "detail": {
         "Unknown": "未知",
@@ -222,7 +222,9 @@
       "Today": "今天",
       "ViewSmallItems": "查看小於 $0.1 的交易",
       "ShowHiddenItems": "顯示隱藏的交易",
-      "Yesterday": "昨天"
+      "Yesterday": "昨天",
+      "ShowAllTransactionsToast": "隱藏交易已顯示",
+      "NotShowAllTransactionsToast": "隱藏交易已隱藏"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "輸入您的助記詞"
@@ -1874,7 +1876,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_other": "{{count}} 個地址",
-      "screenHeaderSubTitle_one": "1 個地址"
+      "screenHeaderSubTitle_one": "1 個地址",
+      "all": "所有"
     },
     "NFTNumberInput": {
       "erc1155Tips": "你的餘額是 {{amount}}",

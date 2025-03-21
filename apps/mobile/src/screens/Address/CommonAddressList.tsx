@@ -74,7 +74,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
   footer: {
-    backgroundColor: colors2024['neutral-bg-4'],
+    backgroundColor: colors2024['neutral-bg-2'],
     padding: 16,
     borderRadius: 20,
   },

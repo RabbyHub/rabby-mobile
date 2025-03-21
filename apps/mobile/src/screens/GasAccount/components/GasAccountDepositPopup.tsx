@@ -2,7 +2,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GasAccountDepositSelect } from './GasAccountDepositSelect';
 import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
@@ -47,11 +47,12 @@ export const GasAccountDepositPopup: React.FC<{
       return [355];
     } else if (step === 'token') {
       // return [Math.min(height - 200, 652)];
-      return ['90%'];
+      return [height - 200];
+      // return ['90%'];
     } else {
       return [355];
     }
-  }, [step]);
+  }, [height, step]);
 
   return (
     <AppBottomSheetModal
@@ -69,7 +70,7 @@ export const GasAccountDepositPopup: React.FC<{
         linearGradientType: 'linear',
         colors: colors2024,
       })}>
-      <BottomSheetView style={styles.popup}>
+      <BottomSheetScrollView style={styles.popup}>
         {step === 'pay' ? (
           <GasAccountDepositWithPay
             visible={props.visible}
@@ -81,7 +82,7 @@ export const GasAccountDepositPopup: React.FC<{
         ) : (
           <GasAccountDepositSelect onSelect={setStep} />
         )}
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 };

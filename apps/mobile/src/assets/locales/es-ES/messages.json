@@ -101,7 +101,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_other": "{{count}} direcciones",
-      "screenHeaderSubTitle_one": "1 address"
+      "screenHeaderSubTitle_one": "1 address",
+      "all": "Todo"
     },
     "TokenSelector": {
       "recent": "Reciente",
@@ -189,14 +190,14 @@
       "itemTitle": {
         "Approve": "Aprobado",
         "Default": "Interacción",
-        "Revoke": "Aprobación revocada",
         "Cancel": "Cancelar transacción pendiente",
         "Send": "Enviado",
         "Recieve": "Recibido",
         "Swap": "Cambiado",
         "Contract": "Desplegar Contrato",
         "Bridge": "Puenteado",
-        "Buy": "Comprado"
+        "Buy": "Comprado",
+        "Revoke": "Revocación de la aprobación de {{token}}"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -254,7 +255,9 @@
       "Yesterday": "Ayer",
       "Today": "Hoy",
       "ShowHiddenItems": "Mostrar transacciones ocultas",
-      "ViewSmallItems": "Ver transacciones < $0.1"
+      "ViewSmallItems": "Ver transacciones < $0.1",
+      "ShowAllTransactionsToast": "Transacciones ocultas mostradas",
+      "NotShowAllTransactionsToast": "Transacciones ocultas ocultadas"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Introduce tu frase semilla"

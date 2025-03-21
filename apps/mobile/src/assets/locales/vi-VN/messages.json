@@ -91,13 +91,13 @@
         "Approve": "Phê duyệt",
         "Contract": "Triển khai Contract",
         "Send": "Đã gửi",
-        "Revoke": "Phê duyệt đã bị thu hồi",
         "Recieve": "Đã nhận",
         "Swap": "Đã hoán đổi",
         "Cancel": "Hủy giao dịch đang chờ xử lý",
         "Default": "Tương tác",
         "Bridge": "Đã bridge",
-        "Buy": "Đã mua"
+        "Buy": "Đã mua",
+        "Revoke": "Thu hồi chấp thuận {{token}}"
       },
       "detail": {
         "From": "Từ",
@@ -155,7 +155,9 @@
       "Today": "Hôm nay",
       "ViewSmallItems": "Xem giao dịch < $0.1",
       "ShowHiddenItems": "Hiển thị giao dịch ẩn",
-      "Yesterday": "Hôm qua"
+      "Yesterday": "Hôm qua",
+      "ShowAllTransactionsToast": "Các giao dịch ẩn được hiển thị",
+      "NotShowAllTransactionsToast": "Giao dịch ẩn được che giấu"
     },
     "getStart": {
       "alreadyHaveAddress": "Tôi đã có một địa chỉ",
@@ -1851,7 +1853,8 @@
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_other": "{{count}} địa chỉ",
-      "screenHeaderSubTitle_one": "1 address"
+      "screenHeaderSubTitle_one": "1 address",
+      "all": "Tất cả"
     },
     "AuthenticationModal": {
       "passwordPlaceholder": "Nhập mật khẩu để xác nhận"

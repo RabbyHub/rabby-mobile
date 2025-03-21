@@ -51,13 +51,14 @@ export function makeBottomSheetProps({
     handleStyle: StyleSheet.flatten([
       {
         backgroundColor: handleBgColor,
-        paddingVertical: 18,
+        paddingTop: 10,
+        height: 36,
       },
       inputProps?.handleStyle,
     ]),
     handleIndicatorStyle: StyleSheet.flatten([
       {
-        backgroundColor: '#D1D4DB',
+        backgroundColor: colors['neutral-line'],
         height: 6,
         width: 50,
       },

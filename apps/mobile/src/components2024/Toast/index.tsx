@@ -201,7 +201,6 @@ const styles = StyleSheet.create({
   content: {
     color: ThemeColors2024.light['neutral-title-2'],
     fontSize: 15,
-    lineHeight: 18,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },

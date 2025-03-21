@@ -106,6 +106,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('boolean')
   low_credit_score: TokenItem['low_credit_score'] = false;
 
+  @Column('text', { default: '1' })
+  value_24h_change: string = '1';
+
   makeDbId(): string {
     return (this._db_id = `${[
       this.owner_addr,
@@ -117,7 +120,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .join('-')}`);
   }
 
-  static fillEntity(e: TokenItemEntity, owner_addr: string, input: TokenItem) {
+  static fillEntity(
+    e: TokenItemEntity,
+    owner_addr: string,
+    input: TokenItem & { value_24h_change?: string },
+  ) {
     e.owner_addr = owner_addr;
 
     // content_type, content, inner_id, amount, chain, decimals, display_symbol, id, is_core, is_verified, is_wallet, is_scam, is_infinity, is_suspicious, logo_url, name, optimized_symbol, price, symbol, time_at, usd_value, raw_amount, raw_amount_hex_str, price_24h_change, low_credit_score
@@ -147,6 +154,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.raw_amount_hex_str = input.raw_amount_hex_str ?? '';
     e.price_24h_change = input.price_24h_change ?? 0;
     e.low_credit_score = input.low_credit_score ?? false;
+    e.value_24h_change = input.value_24h_change ?? '1';
 
     e.makeDbId();
   }

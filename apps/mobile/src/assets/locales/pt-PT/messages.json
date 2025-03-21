@@ -44,7 +44,8 @@
   "component": {
     "accountSwitcher": {
       "screenHeaderSubTitle_other": "{{count}} endereços",
-      "screenHeaderSubTitle_one": "1 address"
+      "screenHeaderSubTitle_one": "1 address",
+      "all": "Todos"
     },
     "NFTNumberInput": {
       "erc1155Tips": "O seu saldo é {{amount}}",
@@ -227,7 +228,6 @@
         "unknown": "Interação de Contrato"
       },
       "itemTitle": {
-        "Revoke": "Aprovação Revogada",
         "Swap": "Trocado",
         "Approve": "Aprovado",
         "Default": "Interação",
@@ -236,7 +236,8 @@
         "Recieve": "Recebido",
         "Cancel": "Cancelar Transação Pendente",
         "Bridge": "Bridgeado",
-        "Buy": "Adquirido"
+        "Buy": "Adquirido",
+        "Revoke": "Revogação de Aprovação de {{token}}"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -294,7 +295,9 @@
       "ShowHiddenItems": "Mostrar transações ocultas",
       "Yesterday": "Ontem",
       "ViewSmallItems": "Ver transações < $0,1",
-      "Today": "Hoje"
+      "Today": "Hoje",
+      "NotShowAllTransactionsToast": "Transações ocultas escondidas",
+      "ShowAllTransactionsToast": "Transações ocultas mostradas"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Insira a sua seed phrase"

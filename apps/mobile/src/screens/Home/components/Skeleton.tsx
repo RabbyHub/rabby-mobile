@@ -3,7 +3,11 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
+import {
+  ASSETS_ITEM_HEIGHT_NEW,
+  DEFI_CARD_WIDTH,
+  DEFI_ITEM_HEIGHT,
+} from '@/constant/layout';
 
 export const PositionLoader = ({
   space,
@@ -57,6 +61,23 @@ export const ItemLoader = memo(() => {
   );
 });
 
+export const DefiItemLoader = memo(() => {
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <View style={[styles.defiLoaderGroup]}>
+      {Array.from({ length: 2 }).map((_, i) => (
+        <View key={i} style={styles.defiLoader}>
+          <Skeleton style={styles.defiLogo} width={40} height={40} />
+          <View style={styles.defiLoaderList}>
+            <Skeleton style={styles.loading} width={120} height={20} circle />
+            <Skeleton style={styles.loading} width={71} height={18} circle />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+});
+
 const getStyle = createGetStyles2024(ctx => ({
   positionLoader: {
     height: ASSETS_ITEM_HEIGHT_NEW,
@@ -77,6 +98,31 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   loading: {
     backgroundColor: ctx.colors2024['neutral-bg-4'],
+  },
+  defiLoaderGroup: {
+    height: DEFI_ITEM_HEIGHT,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  defiLoader: {
+    width: DEFI_CARD_WIDTH,
+    height: DEFI_ITEM_HEIGHT,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    paddingLeft: 12,
+    paddingRight: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  defiLogo: {
+    backgroundColor: ctx.colors2024['neutral-bg-4'],
+    borderRadius: 12,
+  },
+  defiLoaderList: {
+    flexDirection: 'column',
+    gap: 4,
   },
 }));
 

@@ -30,14 +30,14 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       {children}
-      <LinearGradient
+      {/* <LinearGradient
         pointerEvents="none"
         colors={[
           colord(colors2024['neutral-bg-3']).alpha(0.3).toHex(),
           colors2024['neutral-bg-1'],
         ]}
         style={styles.footerShadow}
-      />
+      /> */}
     </NormalScreenContainer2024>
   );
 };

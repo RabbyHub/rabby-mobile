@@ -14,6 +14,7 @@ import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
+import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
 
 const { isSameAddress } = addressUtils;
 
@@ -22,6 +23,7 @@ interface ChildrenProps {
   WalletName: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletAddress: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
+  WalletPin: typeof WalletPin;
   walletName?: string;
 }
 
@@ -38,6 +40,15 @@ type AddressItemProps =
       fetchAccount?: boolean;
       style?: StyleProp<ViewStyle>;
     };
+
+export const WalletPin = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  return (
+    <View style={[styles.walletPin, style]}>
+      <RcIconPin color={colors2024['brand-default']} />
+    </View>
+  );
+};
 
 export const AddressItem = (props: AddressItemProps) => {
   const { styles } = useTheme2024({ getStyle });
@@ -116,6 +127,7 @@ export const AddressItem = (props: AddressItemProps) => {
           WalletAddress,
           WalletBalance,
           walletName,
+          WalletPin,
         })
       ) : (
         <View style={styles.root}>
@@ -178,5 +190,14 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+  },
+  walletPin: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    backgroundColor: colors2024['brand-light-1'],
+    borderBottomLeftRadius: 12,
   },
 }));

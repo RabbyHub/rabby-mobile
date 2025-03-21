@@ -18,6 +18,7 @@ interface ItemIconProps {
   chainId: string;
   address: string;
   amount: number;
+  singlePrice?: number;
   style?: StyleProp<TextStyle>;
 }
 
@@ -27,27 +28,26 @@ export const HistoryItemTokenPrice = ({
   address,
   amount,
   style,
+  singlePrice,
 }: ItemIconProps) => {
-  const { data: tokenWithPrice } = useRequest(
-    async () => {
-      if (!address || !tokenId || !chainId) {
-        return null;
-      }
+  // const { data: tokenWithPrice } = useRequest(
+  //   async () => {
+  //     if (!address || !tokenId || !chainId) {
+  //       return null;
+  //     }
 
-      const res = await openapi.getToken(address, chainId, tokenId);
-      return res;
-    },
-    {
-      refreshDeps: [tokenId, chainId, amount, address],
-    },
-  );
+  //     const res = await openapi.getToken(address, chainId, tokenId);
+  //     return res;
+  //   },
+  //   {
+  //     refreshDeps: [tokenId, chainId, amount, address],
+  //   },
+  // );
 
   return (
     <View>
-      {tokenWithPrice?.price && (
-        <Text style={style}>{`≈${formatUsdValue(
-          tokenWithPrice?.price * amount,
-        )}`}</Text>
+      {singlePrice && (
+        <Text style={style}>{`≈${formatUsdValue(singlePrice * amount)}`}</Text>
       )}
     </View>
   );

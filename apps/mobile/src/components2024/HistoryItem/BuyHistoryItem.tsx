@@ -3,8 +3,6 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommonHistoryItem } from './CommonHistoryItem';
 import { getTokenAmountText } from './getTokenAmountText';
-import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
-import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 
 import { Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -13,9 +11,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { openapi } from '@/core/request';
 import { usePendingBuyItemData } from '@/screens/Buy/hooks/history';
-import { makeThemeIcon } from '@/hooks/makeThemeIcon';
-
-const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface Props {
   data: Awaited<ReturnType<typeof openapi.getBuyHistory>>['histories'][number];
@@ -49,7 +44,6 @@ export const BuyHistoryItem: React.FC<Props> = ({ data: _data }) => {
     <CommonHistoryItem
       icon={
         <View style={styles.iconContainer}>
-          <BuyWalletIcon style={styles.walletIcon} />
           <AssetAvatar logo={data.receive_token.logo_url} size={46} />
         </View>
       }
@@ -145,10 +139,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   rightBottomText: {
-    color: colors2024['neutral-title-1'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'right',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
   },
 }));

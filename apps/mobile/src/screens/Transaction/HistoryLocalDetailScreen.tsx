@@ -322,6 +322,16 @@ function HistoryLocalDetailScreen(): JSX.Element {
     });
   });
 
+  const needUseSwap = useMemo(() => {
+    return Boolean(
+      data.maxGasTx.action?.actionData?.swap ||
+        data.maxGasTx.action?.actionData?.wrapToken ||
+        data.maxGasTx.action?.actionData?.crossToken ||
+        data.maxGasTx.action?.actionData?.crossSwapToken ||
+        data.maxGasTx.action?.actionData?.unWrapToken,
+    );
+  }, [data]);
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
@@ -353,7 +363,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
         <CancelTx data={data} isSingleAddress={!isForMultipleAdderss} />
       ) : data.maxGasTx.action?.actionData?.deployContract ? (
         <DeployContact data={data} isSingleAddress={!isForMultipleAdderss} />
-      ) : data.maxGasTx.action?.actionData?.swap ? (
+      ) : needUseSwap ? (
         <Swap data={data} isSingleAddress={!isForMultipleAdderss} />
       ) : data.maxGasTx.action?.actionData?.send ? (
         <Send data={data} isSingleAddress={!isForMultipleAdderss} />

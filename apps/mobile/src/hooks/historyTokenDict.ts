@@ -14,7 +14,7 @@ const storeProjectBase = atomByMMKV<TxAllHistoryResult['project_dict']>(
 );
 
 const historyTimetBase = atomByMMKV<Record<string, number>>(
-  '@HistoryTimeDict',
+  '@HistoryTimeDictV2',
   {} as Record<string, number>,
 );
 

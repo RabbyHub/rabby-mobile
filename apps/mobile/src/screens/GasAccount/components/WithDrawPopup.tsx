@@ -21,6 +21,7 @@ import {
   RechargeChainItem,
   WithdrawListAddressItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import LinearGradient from 'react-native-linear-gradient';
 
 const WithDrawInitContent = ({
   balance,
@@ -34,7 +35,7 @@ const WithDrawInitContent = ({
   const { t } = useTranslation();
   const { sig, accountId } = useGasAccountSign();
   const [loading, setLoading] = useState(false);
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
 
@@ -140,78 +141,87 @@ const WithDrawInitContent = ({
   }, [t, chain, balance]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.paddingContainer}>
-        <Text style={styles.title}>
-          {t('page.gasAccount.withdrawPopup.title')}
-        </Text>
+    <LinearGradient
+      colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+      locations={[0.0745, 0.2242]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{ flex: 1, position: 'relative' }}>
+      <View style={styles.container}>
+        <View style={styles.paddingContainer}>
+          <Text style={styles.title}>
+            {t('page.gasAccount.withdrawPopup.title')}
+          </Text>
 
-        <Text style={[styles.label, { marginTop: 0 }]}>
-          {t('page.gasAccount.withdrawPopup.recipientAddress')}
-        </Text>
+          <Text style={[styles.label, { marginTop: 0 }]}>
+            {t('page.gasAccount.withdrawPopup.recipientAddress')}
+          </Text>
 
-        <View style={styles.labelContent}>
-          <RecipientAddress
-            address={selectAddressChainList?.recharge_addr}
-            onChange={changeSelectedWithdraw}
-            list={withdrawList}
-            loading={withdrawLoading}
-          />
+          <View style={styles.labelContent}>
+            <RecipientAddress
+              address={selectAddressChainList?.recharge_addr}
+              onChange={changeSelectedWithdraw}
+              list={withdrawList}
+              loading={withdrawLoading}
+            />
+          </View>
+
+          <Text style={styles.label}>
+            {t('page.gasAccount.withdrawPopup.destinationChain')}
+          </Text>
+
+          <View style={[styles.labelContent]}>
+            <DestinationChain
+              chain={chain}
+              onSelect={setChain}
+              list={selectAddressChainList?.recharge_chain_list}
+            />
+          </View>
         </View>
+        <View style={styles.btnContainer}>
+          {!!withdrawBtnDisabledTips && (
+            <View
+              style={[
+                styles.receiveTipsRow,
+                {
+                  marginBottom: 18,
+                },
+              ]}>
+              <Text style={[styles.receiveTips, styles.errorTips]}>
+                {withdrawBtnDisabledTips}
+              </Text>
+            </View>
+          )}
 
-        <Text style={styles.label}>
-          {t('page.gasAccount.withdrawPopup.destinationChain')}
-        </Text>
-
-        <View style={[styles.labelContent]}>
-          <DestinationChain
-            chain={chain}
-            onSelect={setChain}
-            list={selectAddressChainList?.recharge_chain_list}
+          {!withdrawBtnDisabledTips && !!BalanceSuffix && (
+            <View
+              style={[
+                styles.receiveTipsRow,
+                {
+                  marginBottom: 22,
+                },
+              ]}>
+              <Text style={styles.receiveTips}>
+                {t('page.gasAccount.withdrawPopup.deductGasFees')}{' '}
+                {` ~$${chain?.withdraw_fee.toFixed(2)}`}
+              </Text>
+            </View>
+          )}
+          <Button
+            type="primary"
+            containerStyle={styles.confirmButton}
+            onPress={withdraw}
+            loading={loading}
+            disabled={
+              !!withdrawBtnDisabledTips || !chain || !selectAddressChainList
+            }
+            title={`${t(
+              'page.gasAccount.withdrawPopup.title',
+            )} ${BalanceSuffix}`}
           />
         </View>
       </View>
-      <View style={styles.btnContainer}>
-        {!!withdrawBtnDisabledTips && (
-          <View
-            style={[
-              styles.receiveTipsRow,
-              {
-                marginBottom: 18,
-              },
-            ]}>
-            <Text style={[styles.receiveTips, styles.errorTips]}>
-              {withdrawBtnDisabledTips}
-            </Text>
-          </View>
-        )}
-
-        {!withdrawBtnDisabledTips && !!BalanceSuffix && (
-          <View
-            style={[
-              styles.receiveTipsRow,
-              {
-                marginBottom: 22,
-              },
-            ]}>
-            <Text style={styles.receiveTips}>
-              {t('page.gasAccount.withdrawPopup.deductGasFees')}{' '}
-              {` ~$${chain?.withdraw_fee.toFixed(2)}`}
-            </Text>
-          </View>
-        )}
-        <Button
-          type="primary"
-          containerStyle={styles.confirmButton}
-          onPress={withdraw}
-          loading={loading}
-          disabled={
-            !!withdrawBtnDisabledTips || !chain || !selectAddressChainList
-          }
-          title={`${t('page.gasAccount.withdrawPopup.title')} ${BalanceSuffix}`}
-        />
-      </View>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -249,7 +259,7 @@ export const WithDrawPopup = props => {
         onDismiss={props.onCancel || props.onClose}
         ref={modalRef}
         {...makeBottomSheetProps({
-          linearGradientType: 'linear',
+          linearGradientType: 'bg1',
           colors: colors2024,
         })}>
         <BottomSheetView style={styles.popup}>
@@ -268,7 +278,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
-    backgroundColor: colors['neutral-bg-1'],
+    // backgroundColor: colors['neutral-bg-1'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -276,7 +286,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   paddingContainer: {
     width: '100%',
     flex: 1,
-    backgroundColor: colors['neutral-bg-1'],
+    // backgroundColor: colors['neutral-bg-1'],
     alignItems: 'center',
     paddingHorizontal: 20,
   },

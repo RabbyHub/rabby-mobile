@@ -1,12 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 
-import { AbstractProject } from '../../types';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
+import { DEFI_CARD_WIDTH, DEFI_ITEM_HEIGHT } from '@/constant/layout';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
@@ -30,32 +29,59 @@ const hitSlop = {
   left: 10,
   right: 10,
 };
+const getTopFiveTokens = (data: CombineDefiItem) => {
+  const tokens: Record<
+    string,
+    {
+      id: string;
+      usdValue: number;
+      symbol: string;
+      logoUrl: string;
+    }
+  > = {};
+  data._portfolios.forEach(portfolio => {
+    portfolio._tokenList.forEach(token => {
+      if (tokens[token.id]) {
+        tokens[token.id].usdValue += token._usdValue || 0;
+      } else {
+        tokens[token.id] = {
+          id: token.id,
+          usdValue: token._usdValue || 0,
+          symbol: token.symbol,
+          logoUrl: token.logo_url,
+        };
+      }
+    });
+  });
+  return Object.values(tokens)
+    .sort((a, b) => b.usdValue - a.usdValue)
+    .slice(0, 5);
+};
 
+interface DefiRowProps {
+  data: CombineDefiItem;
+  style?: ViewStyle;
+  logoSize?: number;
+  filterText?: string;
+  menuActions?: MenuAction[];
+  disableMenu?: boolean;
+  hideFoldTag?: boolean;
+  onPress?: () => void;
+}
 export const DefiRow = memo(
   ({
     data,
     filterText,
     style,
     logoSize = 40,
-    chainLogoSize = 16,
     menuActions,
     hideFoldTag,
     disableMenu,
     onPress,
-  }: {
-    data: CombineDefiItem;
-    style?: ViewStyle;
-    logoSize?: number;
-    chainLogoSize?: number;
-    filterText?: string;
-    menuActions?: MenuAction[];
-    disableMenu?: boolean;
-    hideFoldTag?: boolean;
-    onPress?: () => void;
-  }) => {
+  }: DefiRowProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
-
+    const topFiveTokens = useMemo(() => getTopFiveTokens(data), [data]);
     const { t } = useTranslation();
 
     const handleShowExcludeTips = () => {
@@ -99,12 +125,20 @@ export const DefiRow = memo(
         }}
         style={[styles.projectHeader, style]}>
         <View style={styles.projectHeaderName}>
-          <AssetAvatar
-            logo={data?.logo}
-            size={logoSize}
-            chain={data?.chain}
-            chainSize={chainLogoSize}
-          />
+          <View style={styles.logoHeader}>
+            <AssetAvatar
+              logo={data?.logo}
+              size={logoSize}
+              logoStyle={{ borderRadius: 12 }}
+            />
+            <View style={styles.topFiveTokens}>
+              {topFiveTokens.map(token => (
+                <View key={token.id}>
+                  <AssetAvatar logo={token.logoUrl} size={14} />
+                </View>
+              ))}
+            </View>
+          </View>
           <View
             style={[
               styles.projectNameBox,
@@ -167,52 +201,54 @@ export const DefiRow = memo(
     );
   },
 );
+
 const getStyles = createGetStyles2024(ctx => ({
   projectHeader: {
-    paddingHorizontal: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    height: ASSETS_ITEM_HEIGHT_NEW,
-    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    height: DEFI_ITEM_HEIGHT,
+    width: DEFI_CARD_WIDTH,
+    alignItems: 'flex-start',
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
     paddingLeft: 12,
     paddingRight: 16,
+    paddingVertical: 14,
   },
   projectHeaderName: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   projectName: {
-    marginLeft: 8,
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
+    flex: 1,
     fontFamily: 'SF Pro Rounded',
-    marginRight: 8,
   },
   projectNameBox: {
-    flex: 1,
+    marginTop: 10,
     flexDirection: 'row',
+    width: '100%',
+    gap: 4,
   },
   highlightText: {
     color: ctx.colors2024['brand-default'],
   },
   projectHeaderUsd: {
-    justifyContent: 'center',
-    flexShrink: 1,
-    alignItems: 'flex-end',
-    height: 68,
-    gap: 4,
+    gap: 2,
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   projectHeaderNetWorth: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontSize: 16,
-    fontWeight: '700',
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
   },
@@ -246,5 +282,15 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
+  },
+  logoHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+  },
+  topFiveTokens: {
+    flexDirection: 'row',
+    gap: 2,
   },
 }));

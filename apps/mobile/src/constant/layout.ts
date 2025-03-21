@@ -6,6 +6,7 @@ import {
   ThemeColors2024,
 } from './theme';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Dimensions } from 'react-native';
 
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
@@ -23,8 +24,11 @@ export const ScreenLayouts = {
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
+const SCREEN_WIDTH = Dimensions.get('window').width - 32;
+export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
+export const DEFI_ITEM_HEIGHT = 120;
 export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 404;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;
@@ -50,7 +54,7 @@ export const ScreenWithAccountSwitcherLayouts = {
    */
   screenHeaderHeight: 56,
 
-  modalBottomSpace: 133,
+  modalBottomSpace: 200,
 };
 
 export const ScreenColors = {

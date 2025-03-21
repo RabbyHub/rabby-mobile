@@ -409,7 +409,6 @@ export const useSyncHistoryDB = (
               try {
                 await Promise.all([
                   syncUserAllHistory(address, 0, 0, isUserRealTiemApi),
-                  syncSwapHistory(address),
                   syncBuyHistory(address),
                 ]);
               } catch (error) {
@@ -440,7 +439,6 @@ export const useSyncHistoryDB = (
     updateHistoryTimeSingleAddress(address);
     Promise.all([
       syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi),
-      syncSwapHistory(address.toLowerCase()),
       syncBuyHistory(address.toLowerCase()),
     ]);
   });

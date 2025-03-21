@@ -24,7 +24,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import {
   BottomSheetModalProps,
+  BottomSheetScrollView,
   BottomSheetSectionList,
+  BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -40,7 +42,14 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useAsync from 'react-use/lib/useAsync';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
@@ -338,10 +347,14 @@ const TokenSelector = ({
   );
 };
 
-const SelectAccount = ({
+const SelectAccountPopup = ({
+  visible,
   onChange,
   value,
+  onClose,
 }: {
+  visible?: boolean;
+  onClose?(): void;
   onChange: (account: Account) => void;
   value: Account;
 }) => {
@@ -351,61 +364,47 @@ const SelectAccount = ({
     getStyle: getStyles,
   });
 
-  const { account } = useGasAccountSign();
+  const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
+  useEffect(() => {
+    if (!visible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [visible]);
+
+  const { height } = useWindowDimensions();
+  const maxHeight = useMemo(() => {
+    return height - 200;
+  }, [height]);
 
   // const list = useSortAddressList(filterAccounts);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.containerHorizontal}>
-        <Text style={styles.title}>
-          {t('page.gasAccount.paymentAddressPopup.title')}
-        </Text>
-      </View>
-      <SelectGasAccountList
-        value={value}
-        onChange={onChange}
-        listHeader={
-          <View
-            style={{
-              width: '100%',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingHorizontal: 6,
-              marginBottom: 12,
-            }}>
-            <Text
-              style={{
-                color: colors2024['neutral-secondary'],
-                fontFamily: 'SF Pro Rounded',
-                fontSize: 17,
-                fontWeight: '400',
-                lineHeight: 22,
-              }}>
-              {t('page.gasAccount.paymentAddressPopup.address')}
+    <AppBottomSheetModal
+      // enableContentPanningGesture={false} // has scorll list
+      // snapPoints={[Math.min(height - 200, 652)]}
+      onDismiss={onClose}
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
+      enableDynamicSizing
+      maxDynamicContentSize={maxHeight}
+      handleStyle={styles.handleStyle}>
+      <BottomSheetScrollView style={[styles.popup, { paddingTop: 0 }]}>
+        <View style={styles.container}>
+          <View style={styles.containerHorizontal}>
+            <Text style={styles.title}>
+              {t('page.gasAccount.paymentAddressPopup.title')}
             </Text>
-            <View>
-              <Text
-                style={{
-                  color: colors2024['neutral-secondary'],
-                  fontFamily: 'SF Pro Rounded',
-                  fontSize: 17,
-                  fontWeight: '400',
-                  lineHeight: 22,
-                }}>
-                {t('page.gasAccount.paymentAddressPopup.balance')}
-              </Text>
-              {/* <RcIconHelpCC color={colors2024['neutral-secondary']} /> */}
-            </View>
           </View>
-        }
-      />
-    </View>
+          <SelectGasAccountList value={value} onChange={onChange} />
+        </View>
+      </BottomSheetScrollView>
+    </AppBottomSheetModal>
   );
 };
 
@@ -545,12 +544,13 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   const [aliasName] = useAlias(depositAccount.address);
 
   return (
-    <KeyboardAwareScrollView
-      enableOnAndroid
-      scrollEnabled={false}
-      keyboardOpeningTime={0}
-      // style={styles.container}
-      contentContainerStyle={styles.container}>
+    // <KeyboardAwareScrollView
+    //   enableOnAndroid
+    //   scrollEnabled={false}
+    //   keyboardOpeningTime={0}
+    //   // style={styles.container}
+    //   contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.title')}
@@ -575,7 +575,7 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
             </CustomTouchableOpacity>
           ))}
 
-          <TextInput
+          <BottomSheetTextInput
             placeholder="$1-500"
             placeholderTextColor={
               selectedAmount === CUSTOM_AMOUNT
@@ -692,12 +692,14 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
         />
       </BottomSheetWrapper>
 
-      <BottomSheetWrapper
+      <SelectAccountPopup
         visible={accountListVisible}
-        onClose={() => setAccountListVisible(false)}>
-        <SelectAccount onChange={onChangeAccount} value={depositAccount} />
-      </BottomSheetWrapper>
-    </KeyboardAwareScrollView>
+        onClose={() => setAccountListVisible(false)}
+        onChange={onChangeAccount}
+        value={depositAccount}
+      />
+      {/* </KeyboardAwareScrollView> */}
+    </View>
   );
 };
 
@@ -705,6 +707,12 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
+    paddingBottom: 44,
+  },
+  handleStyle: {
+    backgroundColor: 'transparent',
+    paddingTop: 10,
+    height: 36,
   },
   containerHorizontal: {
     paddingHorizontal: 20,

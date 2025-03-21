@@ -180,6 +180,9 @@ export const HistoryTokenList = ({
       const singleAmount = isApprove
         ? approve?.value
         : receives?.[0]?.amount || sends?.[0]?.amount;
+      const singlePrice = (
+        isApprove ? approve?.price : receives?.[0]?.price || sends?.[0]?.price
+      ) as number;
       const appvoveAmmountStr = singleAmount
         ? singleAmount < 1e9
           ? formatTokenAmount(singleAmount || 0)
@@ -216,10 +219,12 @@ export const HistoryTokenList = ({
                         16,
                       )}
                 </Text>
+                {}
                 {Boolean(!tokenIsNft && singleAmount && singleAmount < 1e9) && (
                   <HistoryItemTokenPrice
                     tokenId={tokenId}
                     chainId={chain}
+                    price={singlePrice}
                     address={currentAccount?.address!}
                     amount={singleAmount!}
                     style={styles.tokenPriceText}

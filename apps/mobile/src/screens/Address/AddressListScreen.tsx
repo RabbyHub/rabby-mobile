@@ -217,6 +217,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 2,
   },
   footerGap: {
-    height: 150,
+    height: 70,
   },
 }));

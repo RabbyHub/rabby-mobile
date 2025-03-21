@@ -10,7 +10,8 @@
       "ImportMethods": "Select Import Method",
       "ImportSafeAddress2024": "Add Safe Address",
       "CreateSelectMethod": "1. Select Creation Method",
-      "CreateNewAddress": "1. Name Your Address",
+      "CreateNewAddress": "1. Confirm Your Address",
+      "ConfrimAddress": "Confirm Your Address",
       "CreateSelectOnCurrentSeed": "2. Add Address",
       "SetPassword2024": "2. Set password",
       "CreateChooseBackup": "3. Choose a backup method",
@@ -36,6 +37,8 @@
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",
       "ShowHiddenItems": "Show hidden transactions",
+      "ShowAllTransactionsToast": "Hidden transactions shown",
+      "NotShowAllTransactionsToast": "Hidden transactions concealed",
       "Today": "Today",
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
@@ -45,7 +48,7 @@
         "Recieve": "Received",
         "Bridge": "Bridged",
         "Approve": "Approved",
-        "Revoke": "Revoked Approval",
+        "Revoke": "Revoked {{token}} Approval",
         "Contract": "Deploy Contract",
         "Cancel": "Cancel Pending Transction",
         "Default": "Interaction",
@@ -1500,7 +1503,9 @@
         "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
         "followingTokenInSufficient": "The following token balance is insufficient",
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
-        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals"
+        "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
+        "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
+        "applePayFeeDesc": "Includes a Apple Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
         "title": "Select Payment address",
@@ -1779,6 +1784,7 @@
       "depositWithPay": "Buy with"
     },
     "accountSwitcher": {
+      "all": "All",
       "screenHeaderSubTitle_one": "1 address",
       "screenHeaderSubTitle_other": "{{count}} addresses"
     },
@@ -1926,7 +1932,8 @@
       "option_Light": "Light",
       "option_Dark": "Dark"
     },
-    "unlimited": "unlimited"
+    "unlimited": "unlimited",
+    "Addresses": "Addresses"
   },
   "background": {
     "error": {
