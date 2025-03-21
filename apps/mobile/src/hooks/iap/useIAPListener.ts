@@ -17,8 +17,12 @@ import {
   purchaseErrorListener,
   purchaseUpdatedListener,
 } from 'react-native-iap';
+import { useIAPProducts } from './useIAPProducts';
+import { keyBy } from 'lodash';
+import BigNumber from 'bignumber.js';
 
 export const useIAPListener = () => {
+  const [, setProducts] = useIAPProducts();
   const handlePurchase = useMemoizedFn(async (purchase: Purchase) => {
     devLog('purchaseUpdatedListener -> 1', purchase);
     const receipt = purchase.transactionReceipt;
@@ -63,9 +67,29 @@ export const useIAPListener = () => {
     const init = async () => {
       try {
         await initConnection();
-        getProducts({
+
+        const res = await getProducts({
           skus: gasAccountProducts.map(item => item.id),
         });
+        if (res.length) {
+          setProducts(prev => {
+            const dict = keyBy(res, 'productId');
+            return prev
+              .map(item => {
+                if (!dict[item.id]) {
+                  return null;
+                }
+                return {
+                  ...item,
+                  total: new BigNumber(dict[item.id].price).toFixed(2),
+                  fee: new BigNumber(dict[item.id].price)
+                    .minus(item.price)
+                    .toFixed(2),
+                };
+              })
+              .filter(item => !!item);
+          });
+        }
 
         devLog('init IAP listener');
         if (Platform.OS === 'android') {
@@ -94,5 +118,5 @@ export const useIAPListener = () => {
       purchaseErrorSubscription?.remove();
       purchaseErrorSubscription = null;
     };
-  }, [handlePurchase]);
+  }, [handlePurchase, setProducts]);
 };
