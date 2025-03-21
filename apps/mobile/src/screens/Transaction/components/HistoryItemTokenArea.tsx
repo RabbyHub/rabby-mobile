@@ -43,9 +43,11 @@ const Avatar = ({
         <Media
           failedPlaceholder={<IconDefaultNFT width={size} height={size} />}
           type="image_url"
-          src={item?.token.content?.endsWith('.svg') ? '' : item?.token.content}
+          src={
+            item?.token?.content?.endsWith('.svg') ? '' : item?.token?.content
+          }
           thumbnail={
-            item?.token.content?.endsWith('.svg') ? '' : item?.token.content
+            item?.token?.content?.endsWith('.svg') ? '' : item?.token?.content
           }
           mediaStyle={{
             width: size,
@@ -118,34 +120,7 @@ export const HistoryItemTokenArea = ({
           <RcIconSwitch style={[styles.iconTR]} />
         </View>
       );
-    case LEN_ENUM.THREE:
-      return (
-        <View style={[styles.imageBox]}>
-          <View style={{ left: 2, top: 12, position: 'absolute' }}>
-            <AssetAvatar
-              logo={tokenChangeData?.[0]?.token?.logo_url}
-              size={22}
-            />
-          </View>
-          <View style={{ left: 12, top: 10, position: 'absolute' }}>
-            <AssetAvatar
-              logo={tokenChangeData?.[1]?.token?.logo_url}
-              size={26}
-              logoStyle={styles.swapLogo}
-            />
-          </View>
-          <View style={{ left: 22, top: 10, position: 'absolute' }}>
-            <AssetAvatar
-              logo={tokenChangeData?.[2]?.token?.logo_url}
-              size={26}
-              logoStyle={styles.swapLogo}
-            />
-          </View>
-        </View>
-      );
-
     case LEN_ENUM.ZERO:
-    default:
       if (type === HistoryItemCateType.Cancel) {
         return isLight ? (
           <RcIconNo style={[styles.image]} />
@@ -155,6 +130,29 @@ export const HistoryItemTokenArea = ({
       } else {
         return <RcIconYes style={[styles.image]} />;
       }
+    case LEN_ENUM.THREE:
+    default:
+      return (
+        <View style={[styles.imageBox]}>
+          <View style={{ left: 2, top: 12, position: 'absolute' }}>
+            <Avatar item={tokenChangeData[0]} size={22} />
+          </View>
+          <View style={{ left: 12, top: 10, position: 'absolute' }}>
+            <Avatar
+              item={tokenChangeData[1]}
+              size={26}
+              logoStyle={styles.swapLogo}
+            />
+          </View>
+          <View style={{ left: 22, top: 10, position: 'absolute' }}>
+            <Avatar
+              item={tokenChangeData[2]}
+              size={26}
+              logoStyle={styles.swapLogo}
+            />
+          </View>
+        </View>
+      );
   }
 };
 

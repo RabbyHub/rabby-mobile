@@ -64,7 +64,7 @@ export const TxChange = ({
 } & RNViewProps) => {
   const { styles } = useTheme2024({ getStyle });
 
-  const filterRecieves = useMemo(() => {
+  const filterReceives = useMemo(() => {
     return tokenChangeData.filter(item => item.type === 'receive');
   }, [tokenChangeData]);
 
@@ -88,19 +88,19 @@ export const TxChange = ({
   return (
     <View style={[styles.container, style]}>
       <>
-        {filterRecieves.length > 0 && (
+        {filterReceives.length > 0 && (
           <>
             <View style={styles.rowBox}>
               <TxChangeItem
-                key={filterRecieves[0].token_id}
-                item={filterRecieves[0].token}
-                amount={filterRecieves[0].amount}
-                needShowEllips={filterRecieves.length > 1}
+                key={filterReceives[0].token_id}
+                item={filterReceives[0].token}
+                amount={filterReceives[0].amount}
+                needShowEllips={filterReceives.length > 1}
               />
             </View>
             {filterSends.length === 0 && (
               <Text style={styles.usdText}>
-                {calcUsdValue(filterRecieves[0])}
+                {calcUsdValue(filterReceives[0])}
               </Text>
             )}
           </>
@@ -116,7 +116,7 @@ export const TxChange = ({
                 needShowEllips={filterSends.length > 1}
               />
             </View>
-            {filterRecieves.length === 0 && (
+            {filterReceives.length === 0 && (
               <Text style={styles.usdText}>{calcUsdValue(filterSends[0])}</Text>
             )}
           </>
