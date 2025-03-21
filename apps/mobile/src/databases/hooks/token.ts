@@ -3,10 +3,7 @@ import { atom, useAtom } from 'jotai';
 import { useCallback, useMemo } from 'react';
 import * as Sentry from '@sentry/react-native';
 
-import {
-  DisplayedTokenWithOwner,
-  tokenItem2AbstractTokenWithOwner,
-} from '@/utils/token';
+import { tokenItem2AbstractTokenWithOwner } from '@/utils/token';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   contactService,
@@ -20,7 +17,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { filterMyAccounts, isWatchOrSafeAccount } from '@/utils/account';
-import { TaggedPortfolioToken, tagTokenItem } from '@/screens/Home/utils/token';
+import { tagTokenItem } from '@/screens/Home/utils/token';
 import groupBy from 'lodash/groupBy';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
@@ -179,49 +176,30 @@ export function useQueryLocalTokens(tokens: TokenItem[]) {
     ],
   );
 
-  const {
-    tokenItems: sortedTokensWithOwner,
-    displayTokens: sortedDisplayTokensWithOwner,
-  } = useMemo(() => {
+  const sortedDisplayTokensWithOwner = useMemo(() => {
     const { accounts, addressIndexedTokens } = accountTokenMap;
 
-    const result = accounts.reduce(
-      (accu, account) => {
-        const tokens = addressIndexedTokens[account.address] || [];
+    const tokenItems = accounts
+      .reduce((pre, curr) => {
+        const _tokens = addressIndexedTokens[curr.address] || [];
 
-        accu.tokenItems = accu.tokenItems.concat(
-          tokens.map(x => ({ ...x, ownerAccount: account })),
-        );
-        // accu.displayTokens = accu.displayTokens.concat(
-        //   tokens.map(token => tokenItem2AbstractTokenWithOwner(token, account)),
-        // );
-        return accu;
-      },
-      {
-        tokenItems: [] as TokenItemMaybeWithOwner[],
-        displayTokens: [] as TaggedPortfolioToken<DisplayedTokenWithOwner>[],
-      },
-    );
+        pre = pre.concat(_tokens.map(x => ({ ...x, ownerAccount: curr })));
+        return pre;
+      }, [] as TokenItemMaybeWithOwner[])
+      .sort((a, b) => {
+        const aUsdValue = a.price * a.amount;
+        const bUsdValue = b.price * b.amount;
 
-    // sort all tokens by usd_value = item.price * item.amount descending, for same usd_value, sort by account order
-    result.tokenItems.sort((a, b) => {
-      const aUsdValue = a.price * a.amount;
-      const bUsdValue = b.price * b.amount;
+        return bUsdValue - aUsdValue;
+      });
 
-      return bUsdValue - aUsdValue;
-    });
-
-    result.displayTokens = result.tokenItems.map(token => {
+    return tokenItems.map(token => {
       const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
-
       return tagTokenItem(data, accountTokenMap.userTokenSettings);
     });
-
-    return result;
   }, [accountTokenMap]);
 
   return {
-    sortedTokensWithOwner,
     sortedDisplayTokensWithOwner,
     fetchAllLocalTokens,
   };
