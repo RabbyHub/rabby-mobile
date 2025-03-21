@@ -29,8 +29,10 @@ export const useTokenAssetsMap = () => {
 
 export const useSelectTokens = ({
   currentAddress,
+  visible,
 }: {
   currentAddress?: string;
+  visible?: boolean;
 }) => {
   const [isLoading, setLoading] = useSafeState(false);
   const { accounts } = useMyAccounts({
@@ -97,6 +99,7 @@ export const useSelectTokens = ({
       setIsFirstFetch(false);
     }
   };
+
   const getCacheTop10Tokens = async () => {
     const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
     const addresses = [

@@ -134,6 +134,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
     }));
 
+    // fetch tokens
     useEffect(() => {
       if (timeRef.current) {
         clearTimeout(timeRef.current);
@@ -145,7 +146,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       getCacheTop10Tokens();
       timeRef.current = setTimeout(() => {
         if (currentAccount?.address) {
-          loadToken(currentAccount.address, false);
+          loadToken(currentAccount.address, true);
         } else {
           checkIsExpireAndUpdate();
         }
@@ -159,6 +160,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tokenSelectorVisible, currentAccount?.address, useSwapTokenList]);
 
+    // swap token list
     const { value: swapTokenList, loading: swapTokenListLoading } =
       useAsync(async () => {
         if (!currentAccount || !useSwapTokenList || !tokenSelectorVisible) {
@@ -176,6 +178,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         tokenSelectorVisible,
       ]);
 
+    // query local tokens
     const {
       sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
       fetchAllLocalTokens,
