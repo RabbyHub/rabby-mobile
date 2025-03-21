@@ -75,6 +75,7 @@ export type AbstractPortfolioToken = PortfolioItemToken & {
   _isExcludeBalance?: boolean;
   _pinIndex?: number;
   _unHold?: boolean;
+  value_24h_change?: string;
 };
 
 export type PortfolioProject = {

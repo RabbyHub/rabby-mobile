@@ -10,7 +10,7 @@ import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
 import { swapService } from '@/core/services';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
@@ -199,6 +199,7 @@ export const useTokenPair = (userAddress: string) => {
 
   const setReceiveToken = useCallback(
     (token: TokenItem | undefined) => {
+      console.log('setReceiveToken token', token);
       _setReceiveToken(token);
       if (token) {
         if (token?.low_credit_score) {
@@ -279,9 +280,13 @@ export const useTokenPair = (userAddress: string) => {
     setSlider(0);
   }, [setPayToken, receiveToken, setReceiveToken, payToken]);
 
-  if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
-    setReceiveToken(undefined);
-  }
+  useEffect(() => {
+    if (payToken && receiveToken && payToken?.id === receiveToken?.id) {
+      setReceiveToken(undefined);
+    }
+    //  only once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const payTokenIsNativeToken = useMemo(() => {
     if (payToken) {
