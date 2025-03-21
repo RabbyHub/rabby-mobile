@@ -88,7 +88,6 @@ export const SearchAssets: React.FC<Props> = ({
   );
 
   const createChainModal = React.useCallback(() => {
-    console.log('createChainModal');
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: chainEnum,

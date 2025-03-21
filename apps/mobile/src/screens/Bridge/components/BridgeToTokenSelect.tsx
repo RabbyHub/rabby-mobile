@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import { uniqBy } from 'lodash';
@@ -18,6 +18,9 @@ import { useBridgeSupportedChains } from '../hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { useMemoizedFn, useUnmount } from 'ahooks';
+import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
+import { trigger } from 'react-native-haptic-feedback';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -110,10 +113,60 @@ const BridgeToTokenSelect = ({
 
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const [_, setLongPressToken] = useLongPressTokenAtom();
+
+  const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
+    if (!tokenItem || !tokenItem.id) {
+      return;
+    }
+    const res = await openapi.getTokenEntity(tokenItem.id, tokenItem.chain);
+    setLongPressToken(prev => ({
+      ...prev,
+      tokenEntity: {
+        ...tokenItem,
+        identity: res,
+      },
+    }));
+  });
+
+  const tokenPressRef = useRef<TouchableOpacity>(null);
+  const handleLongPressToken = () => {
+    if (!token) {
+      return;
+    }
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    handleTokenChange(token);
+    tokenPressRef.current?.measureInWindow((x, y) => {
+      tokenPressRef.current?.measure((_, __, ___, height) => {
+        setLongPressToken(prev => ({
+          ...prev,
+          visible: true,
+          tokenItem: token || null,
+          position: { x, y, height },
+        }));
+      });
+    });
+  };
+
+  useUnmount(() => {
+    setLongPressToken({
+      visible: false,
+      tokenItem: null,
+      position: { x: 0, y: 0, height: 0 },
+      tokenEntity: null,
+    });
+  });
 
   return (
     <>
-      <TouchableOpacity onPress={handleSelectToken} style={styles.wrapper}>
+      <TouchableOpacity
+        onPress={handleSelectToken}
+        style={styles.wrapper}
+        onLongPress={handleLongPressToken}
+        ref={tokenPressRef}>
         {token ? (
           <>
             <View style={styles.token}>

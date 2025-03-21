@@ -48,8 +48,6 @@ function SearchScreen(): JSX.Element {
 
   const { resultTokens, searched, loading, handleSearch } =
     useSearchTokens(searchState);
-  console.log('resultTokens', JSON.stringify(resultTokens[0]));
-  console.log('searched', searched);
 
   return (
     <NormalScreenContainer2024

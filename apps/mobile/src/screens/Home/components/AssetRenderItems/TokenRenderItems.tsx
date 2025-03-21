@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
@@ -262,6 +262,23 @@ interface TokenRowDataType extends AbstractPortfolioToken {
   identity?: TokenidentityDetail;
 }
 
+const Container = ({
+  touchable,
+  children,
+  ...props
+}: {
+  touchable: boolean;
+  children: ReactNode;
+  style?: ViewStyle;
+  delayLongPress?: number;
+  onPress(): void;
+}) => {
+  if (touchable) {
+    return <TouchableOpacity {...props}>{children}</TouchableOpacity>;
+  }
+  return <View {...props}>{children}</View>;
+};
+
 export const ExternalTokenRow = memo(
   ({
     data,
@@ -270,6 +287,7 @@ export const ExternalTokenRow = memo(
     chainLogoSize = 16,
     logoStyle,
     onTokenPress,
+    touchable = true,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -278,6 +296,7 @@ export const ExternalTokenRow = memo(
     logoSize?: number;
     chainLogoSize?: number;
     onTokenPress?(token: TokenRowDataType): void;
+    touchable?: boolean;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
@@ -346,8 +365,9 @@ export const ExternalTokenRow = memo(
     }, [data.identity, styles, t, data.is_verified, data.is_scam]);
 
     return (
-      <TouchableOpacity
+      <Container
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        touchable={touchable}
         delayLongPress={200}
         onPress={onPressToken}>
         <View style={styles.serachTokenRowTokenWrap}>
@@ -423,7 +443,7 @@ export const ExternalTokenRow = memo(
 
           {ExtraContent}
         </View>
-      </TouchableOpacity>
+      </Container>
     );
   },
 );
