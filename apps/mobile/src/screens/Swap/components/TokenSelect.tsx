@@ -48,7 +48,7 @@ import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { useLongPressTokenAtom } from '../hooks';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useUnmount } from 'ahooks';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -560,6 +560,15 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         });
       });
     };
+
+    useUnmount(() => {
+      setLongPressToken({
+        visible: false,
+        tokenItem: null,
+        position: { x: 0, y: 0, height: 0 },
+        tokenEntity: null,
+      });
+    });
 
     return (
       <>

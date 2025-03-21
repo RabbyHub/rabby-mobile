@@ -18,7 +18,7 @@ import { useBridgeSupportedChains } from '../hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
 import { trigger } from 'react-native-haptic-feedback';
 
@@ -150,6 +150,15 @@ const BridgeToTokenSelect = ({
       });
     });
   };
+
+  useUnmount(() => {
+    setLongPressToken({
+      visible: false,
+      tokenItem: null,
+      position: { x: 0, y: 0, height: 0 },
+      tokenEntity: null,
+    });
+  });
 
   return (
     <>
