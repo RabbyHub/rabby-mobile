@@ -55,6 +55,7 @@ import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { ChainInfo2024 } from './components/ChainInfo2024';
+import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 
 function SendScreen({
   isForMultipleAdderss = false,
@@ -412,6 +413,7 @@ function SendScreen({
             </View>
           </View>
         </Modal>
+        <TokenInfoPopup />
       </NormalScreenContainer2024>
     </SendTokenInternalContextProvider>
   );
