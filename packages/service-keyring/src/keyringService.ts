@@ -1235,6 +1235,20 @@ export class KeyringService extends RNEventEmitter {
   async syncExtensionData(vault: KeyringSerializedData[]) {
     const NotSupportedKeyringTypes = [KEYRING_CLASS.WALLETCONNECT];
 
+    // restore mnemonic keyring
+    vault = vault.map(item => {
+      if (item.type === KEYRING_TYPE.HdKeyring) {
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            accounts: Object.keys(item.data.accountDetails),
+          },
+        };
+      }
+      return item;
+    });
+
     const newKeyrings: KeyringInstance[] = await Promise.all(
       Array.from(vault as any).map(
         this._restoreKeyringByKeyringSerializedData.bind(this) as any,
