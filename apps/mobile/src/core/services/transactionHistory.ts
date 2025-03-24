@@ -492,7 +492,7 @@ export class TransactionHistoryService {
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
-        // loadTxSaveFromLocalStore(newTx); // send type tx save local db
+        loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
       }
     });
