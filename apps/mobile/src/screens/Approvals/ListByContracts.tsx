@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Dimensions,
   ActivityIndicator,
   RefreshControl,
   Platform,
@@ -12,7 +11,7 @@ import {
   NotMatchedHolder,
   getScrollableSectionHeight,
 } from './components/Layout';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import {
   type ContractApprovalItem,
@@ -24,8 +23,7 @@ import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
-import { ApprovalsLayouts } from './layout';
-import { IS_IOS } from '@/core/native/utils';
+import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -59,7 +57,7 @@ export default function ListByContracts() {
             {
               paddingHorizontal:
                 ApprovalsLayouts.innerContainerHorizontalOffset -
-                (IS_IOS ? 2 : 0),
+                IOS_SWIPABLE_LEFT_OFFSET,
             },
           ]}>
           <ApprovalContractRow contract={item} />
