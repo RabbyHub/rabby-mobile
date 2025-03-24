@@ -2,7 +2,7 @@ import { contactService } from '@/core/services';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
-import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
+import { findAccountByPriority } from '@/utils/account';
 import { ellipsisAddress } from '@/utils/address';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';

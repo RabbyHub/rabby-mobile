@@ -27,8 +27,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { formatUsdValueKMB } from '@/screens/Home/components/AssetRenderItems';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 interface Props {
   token: AbstractPortfolioToken;
   tokenEntity?: TokenEntityDetail;

@@ -60,21 +60,6 @@ import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryIt
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
 
-export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
-  const priority = {
-    [KEYRING_TYPE.HdKeyring]: 1,
-    [KEYRING_TYPE.SimpleKeyring]: 2,
-    [KEYRING_TYPE.LedgerKeyring]: 3,
-    [KEYRING_TYPE.OneKeyKeyring]: 4,
-    [KEYRING_TYPE.KeystoneKeyring]: 5,
-    [KEYRING_TYPE.GnosisKeyring]: 6,
-  };
-
-  return accounts.sort((item1, item2) => {
-    return (priority[item1.type] || 100) - (priority[item2.type] || 100);
-  })[0];
-}
-
 export const TransactionItem = ({
   historySuccessList,
   data,

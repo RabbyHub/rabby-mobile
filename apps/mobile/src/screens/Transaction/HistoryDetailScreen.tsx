@@ -57,21 +57,7 @@ import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { usePendingBuyItemData } from '../Buy/hooks/history';
 import { HistoryItemCateType } from './components/type';
-
-const findAccountByPriority = (accounts: KeyringAccountWithAlias[]) => {
-  const priority = {
-    [KEYRING_TYPE.HdKeyring]: 1,
-    [KEYRING_TYPE.SimpleKeyring]: 2,
-    [KEYRING_TYPE.LedgerKeyring]: 3,
-    [KEYRING_TYPE.OneKeyKeyring]: 4,
-    [KEYRING_TYPE.KeystoneKeyring]: 5,
-    [KEYRING_TYPE.GnosisKeyring]: 6,
-  };
-
-  return accounts.sort((item1, item2) => {
-    return (priority[item1.type] || 100) - (priority[item2.type] || 100);
-  })[0];
-};
+import { findAccountByPriority } from '@/utils/account';
 
 export const TxStatusItem = ({
   status,
