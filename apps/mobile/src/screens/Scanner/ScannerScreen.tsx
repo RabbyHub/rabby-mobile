@@ -14,6 +14,7 @@ import { Code } from 'react-native-vision-camera';
 import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { URDecoder } from '@ngraveio/bc-ur';
+import { strFromU8, gunzipSync } from 'fflate';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -53,8 +54,8 @@ export const ScannerScreen = () => {
             if (decoder.isComplete()) {
               isSyncExtensionScanned.current = true;
               const ur = decoder.resultUR();
-              const a = ur.decodeCBOR();
-              setText(a.toString());
+              const result = strFromU8(gunzipSync(Uint8Array.from(ur.cbor)));
+              setText(result);
 
               nav.dispatch(
                 StackActions.replace(RootNames.StackAddress, {

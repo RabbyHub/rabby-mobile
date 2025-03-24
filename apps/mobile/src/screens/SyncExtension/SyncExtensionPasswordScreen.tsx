@@ -21,7 +21,6 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { usePinAddresses } from '@/hooks/account';
 import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import useAsync from 'react-use/lib/useAsync';
-import LZString from 'lz-string';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
@@ -48,7 +47,8 @@ export const SyncExtensionPasswordScreen = () => {
     return () => {
       clear();
     };
-  }, [clear]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setUpPassword = async () => {
     const result = await apisLock.resetPasswordOnUI(password);
@@ -132,14 +132,12 @@ export const SyncExtensionPasswordScreen = () => {
     setLoading(true);
 
     try {
-      const extensionDataString = LZString.decompressFromUTF16(text);
-
       const {
         vault: encryptoVault,
         whitelist,
         highligtedAddresses,
         alianNames,
-      } = JSON.parse(extensionDataString) as {
+      } = JSON.parse(text) as {
         vault: Object;
         whitelist: string[];
         alianNames: { name: string; address: string }[];
@@ -183,7 +181,7 @@ export const SyncExtensionPasswordScreen = () => {
           },
         });
       } else {
-        toast.info('Not found more new addresses');
+        // toast.info('Not found more new addresses');
         throw Error('not found more new Addresses');
       }
     } catch (error) {

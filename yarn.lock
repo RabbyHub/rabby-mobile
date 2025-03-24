@@ -19043,6 +19043,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fflate@npm:^0.8.2":
+  version: 0.8.2
+  resolution: "fflate@npm:0.8.2"
+  checksum: 29470337b85d3831826758e78f370e15cda3169c5cd4477c9b5eea2402261a74b2975bae816afabe1c15d21d98591e0d30a574f7103aa117bff60756fa3035d4
+  languageName: node
+  linkType: hard
+
 "file-entry-cache@npm:^6.0.1":
   version: 6.0.1
   resolution: "file-entry-cache@npm:6.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ffile-entry-cache%2F-%2Ffile-entry-cache-6.0.1.tgz"
@@ -29276,6 +29283,7 @@ __metadata:
     eth-json-rpc-middleware: ^9.0.1
     eth-rpc-errors: ^4.0.3
     ethers: 5.4.2
+    fflate: ^0.8.2
     formik: ^2.4.5
     highlight-words-core: 1.2.3
     i18next: ^23.7.14
@@ -29289,7 +29297,6 @@ __metadata:
     lint-staged: ^15.2.0
     lodash: ^4.17.21
     lottie-react-native: 7.1.0
-    lz-string: ^1.5.0
     markdown-it: ^14.0.0
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11
