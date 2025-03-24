@@ -224,7 +224,7 @@ export const HistoryTokenList = ({
                   <HistoryItemTokenPrice
                     tokenId={tokenId}
                     chainId={chain}
-                    price={singlePrice}
+                    singlePrice={singlePrice}
                     address={currentAccount?.address!}
                     amount={singleAmount!}
                     style={styles.tokenPriceText}

@@ -41,6 +41,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
   ParsedTransactionActionData,
+  SendRequireData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
@@ -190,99 +191,107 @@ export const TransactionItem = ({
       };
     }
 
-    switch (formatType) {
-      case HistoryItemCateType.Send:
-        const acData = data.txs?.[0]?.action?.actionData.send;
-        resToken.push({
-          token: acData?.token!,
-          amount: acData?.token?.amount!,
-          type: 'send',
-          price: acData?.token?.price,
-          token_id: acData?.token?.id!,
+    if (data.maxGasTx.action?.actionData.send) {
+      const acData = actionData.send;
+      resToken.push({
+        token: acData?.token!,
+        amount: acData?.token?.amount!,
+        type: 'send',
+        price: acData?.token?.price,
+        token_id: acData?.token?.id!,
+      });
+    } else if (
+      data.maxGasTx.action?.actionData.wrapToken ||
+      data.maxGasTx.action?.actionData.unWrapToken ||
+      data.maxGasTx.action?.actionData.swap ||
+      data.maxGasTx.action?.actionData.crossToken ||
+      data.maxGasTx.action?.actionData.crossSwapToken
+    ) {
+      const swapData = (actionData?.swap ||
+        actionData?.unWrapToken ||
+        actionData?.crossToken ||
+        actionData?.crossSwapToken ||
+        actionData?.wrapToken)!;
+      const send = swapData?.payToken!;
+      const receive =
+        'minReceive' in swapData
+          ? swapData.minReceive
+          : swapData?.receiveToken!;
+      resToken.push({
+        token: send!,
+        amount: send?.amount!,
+        type: 'send',
+        token_id: send?.id!,
+      });
+      resToken.push({
+        token: receive!,
+        amount: (receive?.amount || receive?.min_amount)!,
+        type: 'receive',
+        token_id: receive?.id!,
+      });
+    } else if (
+      data.maxGasTx.action?.actionData.approveToken ||
+      data.maxGasTx.action?.actionData.approveNFT ||
+      data.maxGasTx.action?.actionData.approveNFTCollection ||
+      data.maxGasTx.action?.actionData.revokeToken ||
+      data.maxGasTx.action?.actionData.revokeNFT ||
+      data.maxGasTx.action?.actionData.revokeNFTCollection ||
+      data.maxGasTx.action?.actionData.revokePermit2
+    ) {
+      const apData =
+        actionData?.revokeToken ||
+        actionData.approveToken ||
+        actionData.approveNFT ||
+        actionData?.revokeNFT ||
+        // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
+        actionData?.revokePermit2;
+      const apToken: TokenItem = apData?.token || apData?.nft;
+      resApprove.push({
+        token: apToken!,
+        amount: apToken?.amount!,
+        type: 'approve',
+        token_id: apToken?.id!,
+      });
+    } else {
+      // default get token change list
+      const balance_change = data.maxGasTx?.explain?.balance_change;
+      const balance_change_version =
+        data.maxGasTx?.explain?.pre_exec_version || 'v0';
+      if (balance_change && balance_change_version !== 'v0') {
+        const {
+          receive_token_list,
+          receive_nft_list,
+          send_token_list,
+          send_nft_list,
+        } = balance_change;
+        const reciceves = [...receive_token_list, ...receive_nft_list];
+        const sends = [...send_token_list, ...send_nft_list];
+        reciceves?.forEach(item => {
+          resToken.push({
+            token: item as TokenItem,
+            amount: item.amount,
+            type: 'receive',
+            token_id: item.id,
+            price: 'price' in item ? item.price : undefined,
+          });
         });
-        break;
-      case HistoryItemCateType.Swap:
-        const swapData = (actionData?.swap ||
-          actionData?.unWrapToken ||
-          actionData?.crossToken ||
-          actionData?.crossSwapToken ||
-          actionData?.wrapToken)!;
-        const send = swapData?.payToken!;
-        const receive =
-          'minReceive' in swapData
-            ? swapData.minReceive
-            : swapData?.receiveToken!;
-        resToken.push({
-          token: send!,
-          amount: send?.amount!,
-          type: 'send',
-          token_id: send?.id!,
+        sends?.forEach(item => {
+          resToken.push({
+            token: item as TokenItem,
+            amount: item.amount,
+            type: 'send',
+            token_id: item.id,
+            price: 'price' in item ? item.price : undefined,
+          });
         });
-        resToken.push({
-          token: receive!,
-          amount: (receive?.amount || receive?.min_amount)!,
-          type: 'receive',
-          token_id: receive?.id!,
-        });
-        break;
-      case HistoryItemCateType.Approve:
-      case HistoryItemCateType.Revoke: {
-        const apData =
-          actionData?.revokeToken ||
-          actionData.approveToken ||
-          actionData.approveNFT ||
-          actionData?.revokeNFT ||
-          // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
-          actionData?.revokePermit2;
-        const apToken: TokenItem = apData?.token || apData?.nft;
-        resApprove.push({
-          token: apToken!,
-          amount: apToken?.amount!,
-          type: 'approve',
-          token_id: apToken?.id!,
-        });
-        break;
       }
-      default:
-        const balance_change = data.maxGasTx?.explain?.balance_change;
-        const balance_change_version =
-          data.maxGasTx?.explain?.pre_exec_version || 'v0';
-        if (balance_change && balance_change_version !== 'v0') {
-          const {
-            receive_token_list,
-            receive_nft_list,
-            send_token_list,
-            send_nft_list,
-          } = balance_change;
-          const reciceves = [...receive_token_list, ...receive_nft_list];
-          const sends = [...send_token_list, ...send_nft_list];
-          reciceves?.forEach(item => {
-            resToken.push({
-              token: item as TokenItem,
-              amount: item.amount,
-              type: 'receive',
-              token_id: item.id,
-              price: 'price' in item ? item.price : undefined,
-            });
-          });
-          sends?.forEach(item => {
-            resToken.push({
-              token: item as TokenItem,
-              amount: item.amount,
-              type: 'send',
-              token_id: item.id,
-              price: 'price' in item ? item.price : undefined,
-            });
-          });
-        }
-        break;
     }
 
     return {
       tokenChangeData: resToken,
       tokenApproveData: resApprove,
     };
-  }, [data, formatType]);
+  }, [data]);
 
   const formatTitle = useMemo(() => {
     switch (formatType) {
@@ -323,14 +332,22 @@ export const TransactionItem = ({
 
     switch (formatType) {
       case HistoryItemCateType.Send:
-        const acData = data.txs?.[0]?.action?.actionData.send;
-        const addr = acData?.to;
+        const acData = data.maxGasTx?.action?.actionData.send;
+        const sendRequireData = data.maxGasTx?.action
+          ?.requiredData as SendRequireData;
+        const addr = acData?.to || sendRequireData?.protocol?.name;
 
         if (!addr) {
           address = t('page.transactions.detail.Unknown');
         } else {
           address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
         }
+        break;
+      case HistoryItemCateType.Swap:
+        const requireData = data.maxGasTx.action
+          ?.requiredData as SwapRequireData;
+        address =
+          requireData?.protocol?.name || t('page.transactions.detail.Unknown');
         break;
       case HistoryItemCateType.Cancel:
       case HistoryItemCateType.Revoke:

@@ -36,7 +36,7 @@ type HistoryItemProps = {
 
 export type TokenChangeDataItem = {
   amount: number;
-  token: TokenItem;
+  token?: TokenItem;
   token_id: string;
   price?: number;
   type: 'send' | 'receive' | 'approve';
@@ -126,6 +126,9 @@ export const HistoryItem = React.memo(
       const FromText = t('page.swap.from') + ' ';
       const ToText = t('page.swap.to') + ' ';
       let address = '';
+      const project = data.project_id
+        ? data.projectDict[data.project_id]
+        : null;
       switch (formatType) {
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
@@ -133,9 +136,11 @@ export const HistoryItem = React.memo(
           const addr = isSend
             ? data.sends[0].to_addr
             : data.receives[0].from_addr;
-          address =
-            (isSend ? ToText : FromText) +
-            (getAliasName(addr) || ellipsisAddress(addr));
+
+          const name = project
+            ? project.name
+            : getAliasName(addr) || ellipsisAddress(addr);
+          address = (isSend ? ToText : FromText) + name;
           break;
 
         case HistoryItemCateType.Buy:
@@ -149,9 +154,6 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Approve:
         case HistoryItemCateType.Swap:
         default:
-          const project = data.project_id
-            ? data.projectDict[data.project_id]
-            : null;
           address = project?.name || ellipsisAddress(data.tx?.to_addr || '');
           break;
       }
@@ -205,7 +207,7 @@ export const HistoryItem = React.memo(
             token,
             token_id: tokenId,
             price: item.price as number,
-            type: 'receive',
+            type: 'receive' as TokenChangeDataItem['type'],
           };
         })
         .sort((a, b) => {
@@ -225,7 +227,7 @@ export const HistoryItem = React.memo(
             token,
             token_id: tokenId,
             price: item.price as number,
-            type: 'send',
+            type: 'send' as TokenChangeDataItem['type'],
           };
         })
         .sort((a, b) => {
