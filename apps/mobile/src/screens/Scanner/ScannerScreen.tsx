@@ -15,6 +15,7 @@ import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { strFromU8, gunzipSync } from 'fflate';
+import { useTranslation } from 'react-i18next';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -29,6 +30,7 @@ export const useScanner = () => {
 };
 
 export const ScannerScreen = () => {
+  const { t } = useTranslation();
   const [_, setText] = useAtom(textAtom);
   const { styles } = useTheme2024({ getStyle: getStyles });
   const navState = useNavigationState(
@@ -37,7 +39,6 @@ export const ScannerScreen = () => {
   const nav = useNavigation();
   const [decoder] = useState(new URDecoder());
   const [currentCount, setCurrentCount] = useState(0);
-  const [estimatedPercent, setEstimatedPercent] = useState(0);
 
   const isSyncExtensionScanned = useRef(false);
 
@@ -49,7 +50,6 @@ export const ScannerScreen = () => {
           try {
             decoder.receivePart(value);
             setCurrentCount(decoder.getProgress());
-            setEstimatedPercent(decoder.estimatedPercentComplete());
 
             if (decoder.isComplete()) {
               isSyncExtensionScanned.current = true;
@@ -91,23 +91,23 @@ export const ScannerScreen = () => {
         <QRCodeScanner
           containerStyle={styles.containerStyle}
           onCodeScanned={handleCodeScanned}
+          size={CAMERA_WIDTH}
+          showScanLine={navState?.syncExtension && currentCount > 0}
         />
         {navState?.syncExtension ? (
           <>
-            <Text style={styles.tips}>
-              Click “Rabby Mobile” on Rabby Extension
+            <Text style={currentCount > 0 ? styles.progress : styles.tips}>
+              {currentCount > 0
+                ? t('page.syncExtension.syncingProgress', {
+                    percent: (currentCount * 100).toFixed(2) + '%',
+                  })
+                : t('page.syncExtension.scanTips1')}
             </Text>
-            <Text style={styles.tips}>Scan the QR code to sync</Text>
-            {currentCount ? (
-              <>
-                <Text style={styles.progress}>
-                  {(currentCount * 100).toFixed(2)}%
-                </Text>
-                <Text style={styles.progress}>
-                  {(estimatedPercent * 100).toFixed(2)}%
-                </Text>
-              </>
-            ) : null}
+            <Text style={styles.tips}>
+              {currentCount > 0
+                ? t('page.syncExtension.syncingTips')
+                : t('page.syncExtension.scanTips2')}
+            </Text>
           </>
         ) : null}
       </View>
@@ -129,6 +129,18 @@ const getStyles = createGetStyles2024(ctx => ({
     borderColor: colord(ctx.colors2024['neutral-line']).alpha(0.5).toHex(),
     marginBottom: 40,
   },
+
+  progress: {
+    color: '#F7FAFC',
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 22,
+    marginBottom: 18,
+  },
+
   tips: {
     color: '#F7FAFC',
     textAlign: 'center',
@@ -138,14 +150,5 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '400',
     lineHeight: 18,
     marginBottom: 5,
-  },
-  progress: {
-    color: '#F7FAFC',
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    lineHeight: 18,
   },
 }));

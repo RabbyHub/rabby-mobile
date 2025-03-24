@@ -1751,7 +1751,11 @@
       "verifyTips": "Your data is encrypted offline. Enter your Rabby Extension password to decrypt and verify.",
       "imported": "Addresses already in Rabby Mobile won’t be imported again. Address notes and whitelists will sync automatically.",
       "importedTips": "If the APP already has a duplicate address, it will not be imported.Address notes and whitelists will sync as well.",
-      "importedSuccessfully": "Imported Successfully!"
+      "importedSuccessfully": "Imported Successfully!",
+      "scanTips1": "Click “Rabby Mobile” on Rabby Extension",
+      "scanTips2": "Scan the code and start syncing",
+      "syncingProgress": "Scanning ({{ percent }})",
+      "syncingTips": "Keep the camera steady until the scan is complete"
     }
   },
   "component": {
