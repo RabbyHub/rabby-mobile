@@ -1997,6 +1997,13 @@
       "button": {
         "cancel": "Cancel"
       }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Blocked Transaction",
+        "content": "This transaction interacts with an address that is on the OFAC sanctions list.",
+        "button": "I Know"
+      }
     }
   }
 }

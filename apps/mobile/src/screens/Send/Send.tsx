@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -56,7 +56,8 @@ import ToAddressControl2024 from './components/ToAddressControl2024';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { ChainInfo2024 } from './components/ChainInfo2024';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
-
+import { openapi } from '@/core/request';
+import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -64,6 +65,8 @@ function SendScreen({
   const navigation = useNavigation();
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
+    useState(false);
 
   const navParams = useNavigationState(
     s =>
@@ -245,11 +248,25 @@ function SendScreen({
     putScreenState({ inited: true });
   };
 
+  const checkIsAddressBlocked = async (to?: string) => {
+    if (!to) return;
+    try {
+      const { is_blocked } = await openapi.isBlockedAddress(to);
+      if (is_blocked) {
+        apiPageStateCache.clearPageStateCache();
+        setIsShowBlockedTransactionDialog(true);
+      }
+    } catch (e) {
+      // NOTHING
+    }
+  };
+
   const { currentAccount } = useCurrentAccount();
 
   useEffect(() => {
     if (screenState.inited) {
       initByCache();
+      checkIsAddressBlocked(navParams?.toAddress);
     } else {
       init();
 
@@ -414,6 +431,16 @@ function SendScreen({
           </View>
         </Modal>
         <TokenInfoPopup />
+        <BlockedAddressDialog
+          visible={isShowBlockedTransactionDialog}
+          onConfirm={() => {
+            navigation.dispatch(
+              StackActions.replace(RootNames.StackRoot, {
+                screen: RootNames.Home,
+              }),
+            );
+          }}
+        />
       </NormalScreenContainer2024>
     </SendTokenInternalContextProvider>
   );
