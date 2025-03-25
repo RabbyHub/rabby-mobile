@@ -90,7 +90,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               )}
             </View>
             <View style={styles.itemInfo}>
-              {(cexDesc?.id ||
+              {((cexDesc?.is_deposit && cexDesc?.id) ||
                 account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
                 <View style={styles.itemName}>
                   <Text
