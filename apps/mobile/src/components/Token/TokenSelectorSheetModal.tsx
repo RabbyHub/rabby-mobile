@@ -605,6 +605,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         token: ensureAbstractPortfolioToken(token.$origin),
                         needUseCacheToken: true,
                         isSingleAddress,
+                        isSwapToTokenDetail: true,
                       });
                     }}>
                     <RcIconTipCC

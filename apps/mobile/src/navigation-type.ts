@@ -70,6 +70,7 @@ export type RootStackParamsList = {
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias;
     unHold?: boolean;
+    isSwapToTokenDetail?: boolean;
   };
 };
 
@@ -281,6 +282,7 @@ export type TransactionNavigatorParamList = {
     type?: 'Buy' | 'Sell';
     swapAgain?: boolean;
     swapTokenId?: TokenItem['id'][];
+    isSwapToTokenDetail?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]?: {};

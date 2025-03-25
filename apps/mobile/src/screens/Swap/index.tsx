@@ -4,7 +4,11 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
-import { DEX_WITH_WRAP, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import {
+  DEX_WITH_WRAP,
+  getChainDefaultToken,
+  SWAP_SUPPORT_CHAINS,
+} from '@/constant/swap';
 import { swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -214,6 +218,35 @@ const Swap = ({
         navState?.swapTokenId?.[0]!,
         navState?.swapTokenId?.[1]!,
       );
+      return;
+    }
+
+    if (
+      navState?.tokenId &&
+      navState.isSwapToTokenDetail &&
+      chainItem?.enum === chain
+    ) {
+      if (
+        (payToken && payToken.chain !== chainItem.serverId) ||
+        (receiveToken && receiveToken.chain !== chainItem.serverId)
+      ) {
+        switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
+          payTokenId: navState?.tokenId,
+          changeTo: isBuy,
+        });
+        return;
+      }
+      if (isBuy) {
+        setReceiveToken({
+          ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+          id: navState?.tokenId,
+        });
+      } else {
+        setPayToken({
+          ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+          id: navState?.tokenId,
+        });
+      }
       return;
     }
 
