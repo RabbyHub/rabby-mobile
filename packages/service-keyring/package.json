@@ -38,6 +38,7 @@
     "@rabby-wallet/keyring-utils": "workspace:^",
     "@rabby-wallet/service-address": "workspace:^",
     "@types/readable-stream": "^4.0.10",
+    "deepmerge-ts": "7.1.5",
     "ethereumjs-util": "^7.1.5",
     "loglevel": "^1.8.1",
     "react-native-quick-bip39": "0.0.9"

@@ -108,7 +108,7 @@
     "eth-json-rpc-middleware": "^9.0.1",
     "eth-rpc-errors": "^4.0.3",
     "ethers": "5.4.2",
-    "fflate": "^0.8.2",
+    "fflate": "0.8.2",
     "formik": "^2.4.5",
     "highlight-words-core": "1.2.3",
     "i18next": "^23.7.14",

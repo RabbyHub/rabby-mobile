@@ -7594,6 +7594,7 @@ __metadata:
     "@types/readable-stream": ^4.0.10
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
+    deepmerge-ts: 7.1.5
     ethereumjs-util: ^7.1.5
     ethereumjs-wallet: ^1.0.2
     jest: ^27.5.1
@@ -16072,6 +16073,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deepmerge-ts@npm:7.1.5":
+  version: 7.1.5
+  resolution: "deepmerge-ts@npm:7.1.5"
+  checksum: 9a05828a026f43c30aab71a3e8a023f96bdd19fd5ef9cb4ce0c0ade3b28784da34e82b7ca04051fbb58f6e003c1672808391c89a362e0636c6541ae081c116b6
+  languageName: node
+  linkType: hard
+
 "deepmerge@npm:^2.1.1":
   version: 2.2.1
   resolution: "deepmerge@npm:2.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fdeepmerge%2F-%2Fdeepmerge-2.2.1.tgz"
@@ -19043,7 +19051,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.2":
+"fflate@npm:0.8.2":
   version: 0.8.2
   resolution: "fflate@npm:0.8.2"
   checksum: 29470337b85d3831826758e78f370e15cda3169c5cd4477c9b5eea2402261a74b2975bae816afabe1c15d21d98591e0d30a574f7103aa117bff60756fa3035d4
@@ -29283,7 +29291,7 @@ __metadata:
     eth-json-rpc-middleware: ^9.0.1
     eth-rpc-errors: ^4.0.3
     ethers: 5.4.2
-    fflate: ^0.8.2
+    fflate: 0.8.2
     formik: ^2.4.5
     highlight-words-core: 1.2.3
     i18next: ^23.7.14

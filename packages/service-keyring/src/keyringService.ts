@@ -21,6 +21,7 @@ import type {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import type { ContactBookService } from '@rabby-wallet/service-address';
+import { deepmerge, deepmergeCustom } from 'deepmerge-ts';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
 import * as bip39 from 'react-native-quick-bip39';
@@ -1289,9 +1290,21 @@ export class KeyringService extends RNEventEmitter {
         }),
       ),
     );
-    const addKeyrings: typeof newKeyrings = [];
 
     const addedAccounts: DisplayedKeyring['accounts'] = [];
+
+    let oldKeyringSerializedData: KeyringSerializedData[] = [];
+    if (this.#password !== undefined) {
+      const encryptedVault = this.store.getState().vault;
+      if (!encryptedVault) {
+        throw new Error('Cannot unlock without a previous vault');
+      }
+
+      oldKeyringSerializedData = await this.encryptor.decrypt(
+        this.#password!,
+        encryptedVault,
+      );
+    }
 
     await Promise.all(
       newKeyrings
@@ -1300,36 +1313,125 @@ export class KeyringService extends RNEventEmitter {
           this.displayForKeyring(keyring).then(newDisplayKeyring => {
             const newAccounts = newDisplayKeyring.accounts;
 
-            const exist = newAccounts?.some(newAccount =>
-              allAccounts?.[keyring.type]?.some(
+            newAccounts?.forEach(newAccount => {
+              const newAccountExist = allAccounts?.[keyring.type]?.some(
                 existAddr =>
                   newAccount?.address?.toLowerCase() ===
                   existAddr?.address?.toLowerCase(),
-              ),
-            );
-
-            if (!exist && newAccounts.length) {
-              addKeyrings.push(keyring);
-              this.keyrings.push(keyring);
-              addedAccounts.push(
-                ...newAccounts.map(e => ({
-                  ...e,
-                  type: keyring.type as KEYRING_TYPE,
-                })),
               );
-            }
+
+              if (!newAccountExist && newAccounts.length) {
+                addedAccounts.push({
+                  ...newAccount,
+                  type: keyring.type as KEYRING_TYPE,
+                });
+              }
+            });
           }),
         ),
     );
 
-    if (addKeyrings.length) {
-      await this.persistAllKeyrings();
-      await this._updateMemStoreKeyrings();
-      this.fullUpdate();
-    }
+    const mergeKeyringSerializedData = mergeVault(
+      oldKeyringSerializedData,
+      vault,
+    );
+
+    await this.clearKeyrings();
+    await Promise.all(
+      Array.from(mergeKeyringSerializedData).map(
+        this._restoreKeyring.bind(this) as any,
+      ),
+    );
+    await this.persistAllKeyrings();
+
+    await this._updateMemStoreKeyrings();
 
     return addedAccounts;
   }
+}
+
+const isUniqKeyringType = (keyringtype: KEYRING_TYPE) =>
+  [KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC].includes(keyringtype);
+
+/**
+ *
+ * @param origin
+ * @param merge
+ */
+function mergeVault(
+  origin: KeyringSerializedData[],
+  merge: KeyringSerializedData[],
+) {
+  const newData = [...origin];
+  const customDeepmerge = deepmergeCustom({
+    mergeArrays: (values, utils) => {
+      const isStringOrNumberArray = values.every(
+        arr =>
+          Array.isArray(arr) &&
+          arr.every(
+            item => typeof item === 'string' || typeof item === 'number',
+          ),
+      );
+
+      if (isStringOrNumberArray) {
+        const flatArray = values.flat();
+        return Array.from(new Set(flatArray));
+      }
+
+      return utils.defaultMergeFunctions.mergeArrays(values);
+    },
+  });
+  merge.forEach(item => {
+    const isUniq = isUniqKeyringType(item.type);
+    if (isUniq) {
+      if (item.type === KEYRING_TYPE.SimpleKeyring) {
+        const exist = newData.some(e => {
+          if (e.type === item.type) {
+            return e.data[0] === item.data[0];
+          }
+          return false;
+        });
+        if (!exist) {
+          newData.push(item);
+        }
+      }
+      if (item.type === KEYRING_TYPE.HdKeyring) {
+        const isSameHdKeyring = (
+          hd1: KeyringSerializedData,
+          hd2: KeyringSerializedData,
+        ) => {
+          if (
+            hd1.type === KEYRING_TYPE.HdKeyring &&
+            hd2.type === KEYRING_TYPE.HdKeyring
+          ) {
+            return Object.keys(hd2)
+              .filter(
+                key =>
+                  !['accountDetails', 'accounts', 'activeIndexes'].includes(
+                    key,
+                  ),
+              )
+              .every(key => hd1.data[key] === hd2.data[key]);
+          }
+          return false;
+        };
+        const targetIdx = newData.findIndex(old => isSameHdKeyring(old, item));
+        if (targetIdx > -1 && newData[targetIdx]) {
+          newData[targetIdx] = customDeepmerge(newData[targetIdx], item);
+        } else {
+          newData.push(item);
+        }
+      }
+    } else {
+      const targetIdx = newData.findIndex(old => old.type === item.type);
+      if (targetIdx > -1) {
+        newData[targetIdx] = deepmerge(newData[targetIdx], item);
+      } else {
+        newData.push(item);
+      }
+    }
+  });
+  return newData;
 }
 /* eslint-enable jsdoc/check-tag-names */
 /* eslint-enable jsdoc/check-types */
