@@ -123,7 +123,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.receives = JSON.stringify(input.receives);
     e.sends = JSON.stringify(input.sends);
     e.chain = input.chain ?? 'eth';
-    e.status = input.tx?.status ?? 0;
+    e.status = input.tx?.status ?? 1;
     e.time_at = input.time_at ?? 0;
     e.cate_id = input.cate_id ?? '';
     e.tx_name = input.tx?.name ?? '';

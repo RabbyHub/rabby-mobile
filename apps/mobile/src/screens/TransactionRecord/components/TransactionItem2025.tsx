@@ -41,6 +41,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
   ParsedTransactionActionData,
+  SendRequireData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
@@ -58,21 +59,7 @@ import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryIte
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
-
-export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
-  const priority = {
-    [KEYRING_TYPE.HdKeyring]: 1,
-    [KEYRING_TYPE.SimpleKeyring]: 2,
-    [KEYRING_TYPE.LedgerKeyring]: 3,
-    [KEYRING_TYPE.OneKeyKeyring]: 4,
-    [KEYRING_TYPE.KeystoneKeyring]: 5,
-    [KEYRING_TYPE.GnosisKeyring]: 6,
-  };
-
-  return accounts.sort((item1, item2) => {
-    return (priority[item1.type] || 100) - (priority[item2.type] || 100);
-  })[0];
-}
+import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 
 export const TransactionItem = ({
   historySuccessList,
@@ -103,6 +90,14 @@ export const TransactionItem = ({
 
   const formatType: HistoryItemCateType = useMemo(() => {
     if (data.maxGasTx.action?.actionData.send) {
+      if (
+        Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
+          data.maxGasTx.action?.actionData.send.to.toLowerCase() || '',
+        )
+      ) {
+        return HistoryItemCateType.GAS_DEPOSIT;
+      }
+
       return HistoryItemCateType.Send;
     }
 
@@ -190,102 +185,112 @@ export const TransactionItem = ({
       };
     }
 
-    switch (formatType) {
-      case HistoryItemCateType.Send:
-        const acData = data.txs?.[0]?.action?.actionData.send;
-        resToken.push({
-          token: acData?.token!,
-          amount: acData?.token?.amount!,
-          type: 'send',
-          price: acData?.token?.price,
-          token_id: acData?.token?.id!,
+    if (data.maxGasTx.action?.actionData.send) {
+      const acData = actionData.send;
+      resToken.push({
+        token: acData?.token!,
+        amount: acData?.token?.amount!,
+        type: 'send',
+        price: acData?.token?.price,
+        token_id: acData?.token?.id!,
+      });
+    } else if (
+      data.maxGasTx.action?.actionData.wrapToken ||
+      data.maxGasTx.action?.actionData.unWrapToken ||
+      data.maxGasTx.action?.actionData.swap ||
+      data.maxGasTx.action?.actionData.crossToken ||
+      data.maxGasTx.action?.actionData.crossSwapToken
+    ) {
+      const swapData = (actionData?.swap ||
+        actionData?.unWrapToken ||
+        actionData?.crossToken ||
+        actionData?.crossSwapToken ||
+        actionData?.wrapToken)!;
+      const send = swapData?.payToken!;
+      const receive =
+        'minReceive' in swapData
+          ? swapData.minReceive
+          : swapData?.receiveToken!;
+      resToken.push({
+        token: send!,
+        amount: send?.amount!,
+        type: 'send',
+        token_id: send?.id!,
+      });
+      resToken.push({
+        token: receive!,
+        amount: (receive?.amount || receive?.min_amount)!,
+        type: 'receive',
+        token_id: receive?.id!,
+      });
+    } else if (
+      data.maxGasTx.action?.actionData.approveToken ||
+      data.maxGasTx.action?.actionData.approveNFT ||
+      data.maxGasTx.action?.actionData.approveNFTCollection ||
+      data.maxGasTx.action?.actionData.revokeToken ||
+      data.maxGasTx.action?.actionData.revokeNFT ||
+      data.maxGasTx.action?.actionData.revokeNFTCollection ||
+      data.maxGasTx.action?.actionData.revokePermit2
+    ) {
+      const apData =
+        actionData?.revokeToken ||
+        actionData.approveToken ||
+        actionData.approveNFT ||
+        actionData?.revokeNFT ||
+        // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
+        actionData?.revokePermit2;
+      const apToken: TokenItem = apData?.token || apData?.nft;
+      resApprove.push({
+        token: apToken!,
+        amount: apToken?.amount!,
+        type: 'approve',
+        token_id: apToken?.id!,
+      });
+    } else {
+      // default get token change list
+      const balance_change = data.maxGasTx?.explain?.balance_change;
+      const balance_change_version =
+        data.maxGasTx?.explain?.pre_exec_version || 'v0';
+      if (balance_change && balance_change_version !== 'v0') {
+        const {
+          receive_token_list,
+          receive_nft_list,
+          send_token_list,
+          send_nft_list,
+        } = balance_change;
+        const reciceves = [...receive_token_list, ...receive_nft_list];
+        const sends = [...send_token_list, ...send_nft_list];
+        reciceves?.forEach(item => {
+          resToken.push({
+            token: item as TokenItem,
+            amount: item.amount,
+            type: 'receive',
+            token_id: item.id,
+            price: 'price' in item ? item.price : undefined,
+          });
         });
-        break;
-      case HistoryItemCateType.Swap:
-        const swapData = (actionData?.swap ||
-          actionData?.unWrapToken ||
-          actionData?.crossToken ||
-          actionData?.crossSwapToken ||
-          actionData?.wrapToken)!;
-        const send = swapData?.payToken!;
-        const receive =
-          'minReceive' in swapData
-            ? swapData.minReceive
-            : swapData?.receiveToken!;
-        resToken.push({
-          token: send!,
-          amount: send?.amount!,
-          type: 'send',
-          token_id: send?.id!,
+        sends?.forEach(item => {
+          resToken.push({
+            token: item as TokenItem,
+            amount: item.amount,
+            type: 'send',
+            token_id: item.id,
+            price: 'price' in item ? item.price : undefined,
+          });
         });
-        resToken.push({
-          token: receive!,
-          amount: (receive?.amount || receive?.min_amount)!,
-          type: 'receive',
-          token_id: receive?.id!,
-        });
-        break;
-      case HistoryItemCateType.Approve:
-      case HistoryItemCateType.Revoke: {
-        const apData =
-          actionData?.revokeToken ||
-          actionData.approveToken ||
-          actionData.approveNFT ||
-          actionData?.revokeNFT ||
-          // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
-          actionData?.revokePermit2;
-        const apToken: TokenItem = apData?.token || apData?.nft;
-        resApprove.push({
-          token: apToken!,
-          amount: apToken?.amount!,
-          type: 'approve',
-          token_id: apToken?.id!,
-        });
-        break;
       }
-      default:
-        const balance_change = data.maxGasTx?.explain?.balance_change;
-        const balance_change_version =
-          data.maxGasTx?.explain?.pre_exec_version || 'v0';
-        if (balance_change && balance_change_version !== 'v0') {
-          const {
-            receive_token_list,
-            receive_nft_list,
-            send_token_list,
-            send_nft_list,
-          } = balance_change;
-          const reciceves = [...receive_token_list, ...receive_nft_list];
-          const sends = [...send_token_list, ...send_nft_list];
-          reciceves?.forEach(item => {
-            resToken.push({
-              token: item as TokenItem,
-              amount: item.amount,
-              type: 'receive',
-              token_id: item.id,
-              price: 'price' in item ? item.price : undefined,
-            });
-          });
-          sends?.forEach(item => {
-            resToken.push({
-              token: item as TokenItem,
-              amount: item.amount,
-              type: 'send',
-              token_id: item.id,
-              price: 'price' in item ? item.price : undefined,
-            });
-          });
-        }
-        break;
     }
 
     return {
       tokenChangeData: resToken,
       tokenApproveData: resApprove,
     };
-  }, [data, formatType]);
+  }, [data]);
 
   const formatTitle = useMemo(() => {
     switch (formatType) {
+      case HistoryItemCateType.GAS_DEPOSIT:
+        return t('page.transactions.itemTitle.DepositedGas');
       case HistoryItemCateType.Swap:
         return t('page.transactions.itemTitle.Swap');
 
@@ -322,15 +327,26 @@ export const TransactionItem = ({
     let address = '';
 
     switch (formatType) {
+      case HistoryItemCateType.GAS_DEPOSIT:
+        address = ToText + t('page.home.services.gasAccount');
+        break;
       case HistoryItemCateType.Send:
-        const acData = data.txs?.[0]?.action?.actionData.send;
-        const addr = acData?.to;
+        const acData = data.maxGasTx?.action?.actionData.send;
+        const sendRequireData = data.maxGasTx?.action
+          ?.requiredData as SendRequireData;
+        const addr = acData?.to || sendRequireData?.protocol?.name;
 
         if (!addr) {
           address = t('page.transactions.detail.Unknown');
         } else {
           address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
         }
+        break;
+      case HistoryItemCateType.Swap:
+        const requireData = data.maxGasTx.action
+          ?.requiredData as SwapRequireData;
+        address =
+          requireData?.protocol?.name || t('page.transactions.detail.Unknown');
         break;
       case HistoryItemCateType.Cancel:
       case HistoryItemCateType.Revoke:
@@ -427,11 +443,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 16,
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    marginBottom: 12,
+    marginBottom: 8,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
   },

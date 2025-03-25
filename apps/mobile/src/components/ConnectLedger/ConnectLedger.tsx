@@ -6,7 +6,7 @@ import { navigate } from '@/utils/navigation';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Device } from 'react-native-ble-plx';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
@@ -17,6 +17,15 @@ import { OpenEthAppScreen } from './OpenEthAppScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
 import AutoLockView from '../AutoLockView';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { Keyboard } from 'react-native';
+import { useMemoizedFn } from 'ahooks';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
@@ -34,6 +43,8 @@ export const ConnectLedger: React.FC<{
   const openEthAppExpiredTimerRef = React.useRef<any>(null);
   let toastHiddenRef = React.useRef<() => void>(() => {});
   let loopCountRef = React.useRef(0);
+
+  const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
@@ -118,16 +129,20 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       } else {
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportMoreAddress,
-          params: {
-            type: KEYRING_TYPE.LedgerKeyring,
-          },
+        // navigate(RootNames.StackAddress, {
+        //   screen: RootNames.ImportMoreAddress,
+        //   params: {
+        //     type: KEYRING_TYPE.LedgerKeyring,
+        //   },
+        // });
+        showImportMorePopup({
+          type: KEYRING_TYPE.LedgerKeyring,
+          brand: KEYRING_CLASS.HARDWARE.LEDGER,
         });
         onDone?.();
       }
     },
-    [onDone, setIsLoaded, setSetting, t],
+    [onDone, setIsLoaded, setSetting, showImportMorePopup, t],
   );
 
   const handleSelectDevice = React.useCallback(

@@ -163,6 +163,7 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
         amount: amount.toNumber(),
         to_addr: actionData?.send?.to || '',
         token_id: actionData?.send?.token.id || '',
+        price: actionData?.send?.token.price || undefined,
       },
     ]);
     e.chain =

@@ -64,7 +64,7 @@ const Avatar = ({
         />
       ) : (
         <AssetAvatar
-          logo={item?.token.logo_url}
+          logo={item?.token?.logo_url}
           size={size}
           logoStyle={logoStyle}
         />

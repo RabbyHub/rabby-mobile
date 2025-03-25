@@ -101,6 +101,7 @@ import { getTimeSpan } from '@/utils/time';
 import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
+import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -377,6 +378,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
   const { executeEngine } = useSecurityEngine();
   const [engineResults, setEngineResults] = useState<Result[]>([]);
+  const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
+    useState(false);
   const securityLevel = useMemo(() => {
     const enableResults = engineResults.filter(result => {
       return result.enable && !currentTx.processedRules.includes(result.id);
@@ -1167,8 +1170,27 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     apiApprovalSecurityEngine.closeRuleDrawer();
   };
 
+  const checkIsBlockedTransaction = async () => {
+    let isBlockedTo = false;
+    let isBlockedFrom = false;
+    try {
+      if (tx.to) {
+        const { is_blocked } = await openapi.isBlockedAddress(tx.to);
+        isBlockedTo = is_blocked;
+      }
+      const { is_blocked } = await openapi.isBlockedAddress(tx.from);
+      isBlockedFrom = is_blocked;
+      if (isBlockedTo || isBlockedFrom) {
+        setIsShowBlockedTransactionDialog(true);
+      }
+    } catch (e) {
+      // NOTHING
+    }
+  };
+
   const init = async () => {
     apiApprovalSecurityEngine.resetCurrentTx();
+    checkIsBlockedTransaction();
     try {
       const currentAccount =
         isGnosis && account
@@ -1339,6 +1361,16 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           result.level === Level.FORBIDDEN) &&
         !processedRules.includes(result.id),
     );
+
+    const trueDanger = needProcess.some(
+      item =>
+        ['1016', '1019', '1020', '1021'].includes(item.id) &&
+        item.level === Level.DANGER,
+    );
+    if (trueDanger) {
+      return true;
+    }
+
     // if (hasForbidden) return true;
     if (needProcess.length > 0) {
       return !hasSafe;
@@ -1661,6 +1693,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           setRPCEnable({ chain: chain.enum, enable: false });
           setIsShowCustomRPCErrorModal(false);
           init();
+        }}
+      />
+      <BlockedAddressDialog
+        visible={isShowBlockedTransactionDialog}
+        onConfirm={() => {
+          setIsShowBlockedTransactionDialog(false);
+          rejectApproval();
         }}
       />
     </>

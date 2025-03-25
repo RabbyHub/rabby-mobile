@@ -44,6 +44,9 @@
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
+        "ReceivedGas": "Received Gas",
+        "WithdrawnGas": "Withdrawn Gas",
+        "DepositedGas": "Deposited Gas",
         "Swap": "Swapped",
         "Send": "Sent",
         "Recieve": "Received",
@@ -1182,7 +1185,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "Unlock failed",
-        "usePassword": "Switched to use password to unlock."
+        "usePassword": "Switched to use password to unlock.",
+        "enableBiometricAlert": {
+          "title": "Enable {{ bioType }}",
+          "content": "Do you want to enable {{ bioType }} to Unlock Rabby Wallet？",
+          "no": "Cancel",
+          "yes": "Yes"
+        }
       }
     },
     "addToken": {
@@ -1577,6 +1586,8 @@
       "Mybalance": "My Balance",
       "Info": "Info",
       "TokenName": "Token Name",
+      "Price": "Price",
+      "HoldingValue": "Holding Value",
       "notSupportedOnChain": "Not supported on this chain",
       "noBalance": "No Balance",
       "relateDefi": "Related DeFi",
@@ -2011,6 +2022,13 @@
     "dialog": {
       "button": {
         "cancel": "Cancel"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Blocked Transaction",
+        "content": "This transaction interacts with an address that is on the OFAC sanctions list.",
+        "button": "I Know"
       }
     }
   }

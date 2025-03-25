@@ -1,7 +1,7 @@
 import { Skeleton } from '@rneui/themed';
 import { memo } from 'react';
 import { View } from 'react-native';
-import { ApprovalsLayouts } from '../layout';
+import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from '../layout';
 import { getCardStyles } from './ApprovalCardContract';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -33,7 +33,9 @@ export const SkeletonListByContracts = memo(() => {
   return (
     <View
       style={{
-        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+        paddingHorizontal:
+          ApprovalsLayouts.innerContainerHorizontalOffset -
+          IOS_SWIPABLE_LEFT_OFFSET,
       }}>
       {Array(5)
         .fill(0)

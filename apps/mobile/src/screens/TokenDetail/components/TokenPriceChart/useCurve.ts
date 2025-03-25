@@ -4,6 +4,7 @@ import { formatPrice } from '@/utils/number';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { findLastIndex } from 'lodash';
+import { useMemo } from 'react';
 
 export type CurvePoint = {
   value: number;
@@ -19,12 +20,14 @@ export const use24hCurveData = ({
   tokenId,
   serverId,
   days,
+  amount,
 }: {
+  amount: number;
   tokenId: string;
   serverId: string;
   days: 1 | 7;
 }) => {
-  return useRequest(
+  const { data, loading } = useRequest(
     async () => {
       let _data = await openapi.getTokenPriceCurve({
         chain_id: serverId,
@@ -36,7 +39,7 @@ export const use24hCurveData = ({
           ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
           : dayjs().add(-7, 'days').add(1, 'hour').valueOf();
       const step = days === 1 ? 5 * 60 * 1000 : 60 * 60 * 1000;
-      const data = patchCurveData(
+      return patchCurveData(
         _data.map(item => {
           return {
             timestamp: dayjs.unix(item.time_at).valueOf(),
@@ -46,18 +49,51 @@ export const use24hCurveData = ({
         start,
         step,
       );
-
-      return formatTokenDateCurve([0, dayjs().unix()], data);
     },
     {
       refreshDeps: [tokenId, serverId, days],
     },
   );
+
+  const formatData = useMemo(() => {
+    return formatTokenDateCurve([0, dayjs().unix()], data || [], amount);
+  }, [data, amount]);
+
+  return { data: formatData, loading };
+  // return useRequest(
+  //   async () => {
+  //     let _data = await openapi.getTokenPriceCurve({
+  //       chain_id: serverId,
+  //       id: tokenId,
+  //       days,
+  //     });
+  //     const start =
+  //       days === 1
+  //         ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
+  //         : dayjs().add(-7, 'days').add(1, 'hour').valueOf();
+  //     const step = days === 1 ? 5 * 60 * 1000 : 60 * 60 * 1000;
+  //     const data = patchCurveData(
+  //       _data.map(item => {
+  //         return {
+  //           timestamp: dayjs.unix(item.time_at).valueOf(),
+  //           price: item.price,
+  //         };
+  //       }),
+  //       start,
+  //       step,
+  //     );
+
+  //     return formatTokenDateCurve([0, dayjs().unix()], data);
+  //   },
+  //   {
+  //     refreshDeps: [tokenId, serverId, days],
+  //   },
 };
 
 export const formatTokenDateCurve = (
   range: number[],
   data: { timestamp: number; price: number }[],
+  amount: number = 1,
 ) => {
   if (!data?.length) {
     return {
@@ -85,17 +121,17 @@ export const formatTokenDateCurve = (
   }
 
   const startData = {
-    value: list[0].price || 0,
+    value: list[0].price * amount || 0,
     timestamp: dayjs(list[0].timestamp).valueOf(),
   };
 
   const result =
     list.map(item => {
-      const change = item.price - startData.value;
+      const change = item.price * amount - startData.value;
 
       return {
-        value: item.price || 0,
-        netWorth: item.price ? '$' + formatPrice(item.price, 8) : '$0',
+        value: item.price * amount || 0,
+        netWorth: item.price ? '$' + formatPrice(item.price * amount, 8) : '$0',
         // change: numFormat(Math.abs(change), 0, '$'),
         change: '$' + formatPrice(Math.abs(change), 8),
         isLoss: change < 0,

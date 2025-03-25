@@ -7,6 +7,8 @@ const riskyTipArrowOffset = 14;
 const contractRowHeight = 122;
 const contractCardHeight = 133;
 
+export const IOS_SWIPABLE_LEFT_OFFSET = isAndroid ? 0 : 10;
+
 export const ApprovalsLayouts = {
   tabbarHeight: 40,
   contentInsetTopOffset: isAndroid ? 0 : 40 /* same with tabbarHeight */,
