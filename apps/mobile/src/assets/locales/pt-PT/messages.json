@@ -240,7 +240,10 @@
         "Cancel": "Cancelar Transação Pendente",
         "Bridge": "Bridgeado",
         "Buy": "Adquirido",
-        "Revoke": "Revogação de Aprovação de {{token}}"
+        "Revoke": "Revogação de Aprovação de {{token}}",
+        "ReceivedGas": "Recebido Gas",
+        "DepositedGas": "Gás depositado",
+        "WithdrawnGas": "Gás Retirado"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -1330,7 +1333,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "Desbloqueio falhou",
-        "usePassword": "Alterado para usar senha para desbloquear."
+        "usePassword": "Alterado para usar senha para desbloquear.",
+        "enableBiometricAlert": {
+          "yes": "Sim",
+          "no": "Cancelar",
+          "content": "Deseja ativar {{ bioType }} para desbloquear Rabby Wallet?",
+          "title": "Ativar {{ bioType }}"
+        }
       }
     },
     "switchChain": {
@@ -1686,7 +1695,9 @@
       "noTransactions": "Sem transações",
       "NoIssuer": "Não há informações do emissor disponíveis",
       "fdvContent": "A capitalização de mercado se o fornecimento máximo estivesse em circulação. Avaliação Totalmente Diluída (FDV) = Preço × Fornecimento Máximo. Se o Fornecimento Máximo for nulo, FDV = Preço × Fornecimento Total. Se nem o Fornecimento Máximo nem o Fornecimento Total estiverem definidos ou forem infinitos, a FDV não é exibida.",
-      "BridgeProvider": "Provedor de Bridge"
+      "BridgeProvider": "Provedor de Bridge",
+      "Price": "Preço",
+      "HoldingValue": "Valor Retido"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Cancelar"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Transação Bloqueada",
+        "content": "Esta transação interage com um endereço que está na lista de sanções do OFAC.",
+        "button": "Eu Sei"
       }
     }
   }

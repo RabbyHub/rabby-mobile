@@ -234,7 +234,10 @@
         "Swap": "Getauscht",
         "Cancel": "Anstehende Transaktion abbrechen",
         "Buy": "Gekauft",
-        "Revoke": "Widerrufene {{token}} Genehmigung"
+        "Revoke": "Widerrufene {{token}} Genehmigung",
+        "DepositedGas": "Eingezahltes Gas",
+        "WithdrawnGas": "Abgehobenes Gas",
+        "ReceivedGas": "Empfangene Gas"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -1155,7 +1158,13 @@
     "unlock": {
       "biometrics": {
         "usePassword": "Auf die Verwendung eines Passworts zum Entsperren umgestellt.",
-        "failedAndTipTitle": "Entsperren fehlgeschlagen"
+        "failedAndTipTitle": "Entsperren fehlgeschlagen",
+        "enableBiometricAlert": {
+          "title": "Aktivieren Sie {{ bioType }}",
+          "no": "Abbrechen",
+          "content": "Möchten Sie {{ bioType }} aktivieren, um Rabby Wallet zu entsperren?",
+          "yes": "Ja"
+        }
       },
       "password": {
         "required": "Geben Sie das Passwort ein, um zu entsperren",
@@ -1778,7 +1787,9 @@
       "NoListedSite": "Keine Listing-Informationen verfügbar",
       "Mybalance": "Mein Kontostand",
       "OriginIssue": "Nativ auf dieser Blockchain ausgegeben",
-      "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt."
+      "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt.",
+      "HoldingValue": "Wert halten",
+      "Price": "Preis"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Abbrechen"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Blockierte Transaktion",
+        "button": "Ich weiß",
+        "content": "Diese Transaktion interagiert mit einer Adresse, die auf der OFAC-Sanktionsliste steht."
       }
     }
   }

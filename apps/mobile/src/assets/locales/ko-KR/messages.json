@@ -43,7 +43,10 @@
         "Default": "상호작용",
         "Recieve": "수신완료",
         "Buy": "구매 완료",
-        "Revoke": "{{token}} 승인 취소됨"
+        "Revoke": "{{token}} 승인 취소됨",
+        "DepositedGas": "입금된 Gas",
+        "WithdrawnGas": "인출된 Gas",
+        "ReceivedGas": "받은 Gas"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -948,7 +951,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "잠금 해제 실패",
-        "usePassword": "비밀번호로 잠금 해제하도록 전환되었습니다."
+        "usePassword": "비밀번호로 잠금 해제하도록 전환되었습니다.",
+        "enableBiometricAlert": {
+          "yes": "예",
+          "no": "취소",
+          "title": "{{ bioType }} 활성화",
+          "content": "{{ bioType }}을(를) 사용하여 Rabby Wallet의 잠금을 해제하시겠습니까?"
+        }
       },
       "btn": {
         "switchtype_pwd": "비밀번호로 잠금 해제",
@@ -1629,7 +1638,9 @@
       "SupportedExchanges": "지원되는 거래소",
       "SeeMore": "더 보기",
       "OriginalToken": "오리지널 토큰",
-      "fdvContent": "최대 공급량이 유통 중일 경우의 시가 총액입니다. 완전히 희석된 평가(FDV) = 가격 × 최대 공급량. 최대 공급량이 null인 경우, FDV = 가격 × 총 공급량. 최대 공급량 또는 총 공급량이 정의되지 않거나 무한한 경우, FDV는 표시되지 않습니다."
+      "fdvContent": "최대 공급량이 유통 중일 경우의 시가 총액입니다. 완전히 희석된 평가(FDV) = 가격 × 최대 공급량. 최대 공급량이 null인 경우, FDV = 가격 × 총 공급량. 최대 공급량 또는 총 공급량이 정의되지 않거나 무한한 경우, FDV는 표시되지 않습니다.",
+      "Price": "가격",
+      "HoldingValue": "보유 가치"
     },
     "setting": {
       "screenTitle": "설정",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "취소"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "차단된 Transaction",
+        "button": "알겠습니다",
+        "content": "이 거래는 OFAC 제재 목록에 있는 주소와 상호 작용합니다."
       }
     }
   }

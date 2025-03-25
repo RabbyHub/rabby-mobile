@@ -101,7 +101,10 @@
         "Send": "送信完了",
         "Approve": "承認済み",
         "Buy": "購入済み",
-        "Revoke": "{{token}} の承認を取り消しました"
+        "Revoke": "{{token}} の承認を取り消しました",
+        "ReceivedGas": "受け取ったGas",
+        "DepositedGas": "預入したGas",
+        "WithdrawnGas": "Withdrawn Gas"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -999,7 +1002,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "ロック解除に失敗しました",
-        "usePassword": "パスワードを使用してアンロックに切り替えました。"
+        "usePassword": "パスワードを使用してアンロックに切り替えました。",
+        "enableBiometricAlert": {
+          "title": "{{ bioType }} を有効にする",
+          "no": "キャンセル",
+          "yes": "はい",
+          "content": "{{ bioType }}でRabby Walletをアンロックすることを許可しますか？"
+        }
       },
       "password": {
         "error": "パスワードが間違っています",
@@ -1555,7 +1564,9 @@
       "BridgeIssue": "サードパーティによるブリッジトークン",
       "OriginIssue": "このブロックチェーンでネイティブに発行されました",
       "NoSupportedExchanges": "サポートされている取引所はありません。",
-      "fdvContent": "発行済みの最大供給量に基づく時価総額。完全希釈後の評価（FDV）＝価格 × 最大供給量。最大供給量が不明の場合、FDV ＝ 価格 × 総供給量。最大供給量と総供給量の両方が未定義または無限の場合、FDV は表示されません。"
+      "fdvContent": "発行済みの最大供給量に基づく時価総額。完全希釈後の評価（FDV）＝価格 × 最大供給量。最大供給量が不明の場合、FDV ＝ 価格 × 総供給量。最大供給量と総供給量の両方が未定義または無限の場合、FDV は表示されません。",
+      "HoldingValue": "保有価値",
+      "Price": "価格"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "キャンセル"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "content": "このトランザクションは、OFAC制裁リストに載っているアドレスとやり取りしています。",
+        "title": "ブロックされたトランザクション",
+        "button": "知っている"
       }
     }
   }

@@ -167,7 +167,10 @@
         "Approve": "已批准",
         "Default": "互動",
         "Buy": "已購買",
-        "Revoke": "撤銷 {{token}} 授權"
+        "Revoke": "撤銷 {{token}} 授權",
+        "ReceivedGas": "Received Gas",
+        "DepositedGas": "已儲存的 Gas",
+        "WithdrawnGas": "Withdrawn Gas"
       },
       "detail": {
         "Unknown": "未知",
@@ -1012,7 +1015,13 @@
       },
       "biometrics": {
         "usePassword": "已切換為使用密碼解鎖。",
-        "failedAndTipTitle": "解鎖失敗"
+        "failedAndTipTitle": "解鎖失敗",
+        "enableBiometricAlert": {
+          "no": "取消",
+          "title": "啟用 {{ bioType }}",
+          "yes": "是的",
+          "content": "您是否想啟用 {{ bioType }} 解鎖 Rabby Wallet？"
+        }
       }
     },
     "backupSeedPhrase": {
@@ -1647,7 +1656,9 @@
       "noTransactions": "沒有交易",
       "Defi": "DeFi",
       "NoSupportedExchanges": "沒有可用的支援交易所",
-      "fdvContent": "市值如果最大供應量在流通中。完全稀釋估值（FDV） = 價格 × 最大供應量。如果最大供應量為空，FDV = 價格 × 總供應量。如果最大供應量和總供應量均未定義或無限，則不顯示FDV。"
+      "fdvContent": "市值如果最大供應量在流通中。完全稀釋估值（FDV） = 價格 × 最大供應量。如果最大供應量為空，FDV = 價格 × 總供應量。如果最大供應量和總供應量均未定義或無限，則不顯示FDV。",
+      "Price": "價格",
+      "HoldingValue": "持有價值"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "取消"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "button": "我知道",
+        "title": "已阻止的交易",
+        "content": "此交易與在 OFAC 制裁名單上的位址進行互動。"
       }
     }
   }

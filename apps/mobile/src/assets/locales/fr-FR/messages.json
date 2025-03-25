@@ -58,7 +58,10 @@
         "Cancel": "Annuler la transaction en attente",
         "Send": "Envoyé",
         "Buy": "Acheté",
-        "Revoke": "Approbation de {{token}} révoquée"
+        "Revoke": "Approbation de {{token}} révoquée",
+        "ReceivedGas": "Reçu Gas",
+        "DepositedGas": "Gaz déposé",
+        "WithdrawnGas": "Gas retiré"
       },
       "detail": {
         "Status": "Statut",
@@ -1046,7 +1049,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "Échec du déverrouillage",
-        "usePassword": "Passé à l'utilisation d'un mot de passe pour déverrouiller."
+        "usePassword": "Passé à l'utilisation d'un mot de passe pour déverrouiller.",
+        "enableBiometricAlert": {
+          "yes": "Oui",
+          "no": "Annuler",
+          "title": "Activer {{ bioType }}",
+          "content": "Voulez-vous activer {{ bioType }} pour déverrouiller le portefeuille Rabby ?"
+        }
       }
     },
     "ethSign": {
@@ -1561,7 +1570,9 @@
       "OriginIssue": "Émis nativement sur cette blockchain",
       "NoIssuer": "Aucune information sur l'émetteur disponible",
       "fdvContent": "La capitalisation boursière si le maximum de l'approvisionnement était en circulation. Évaluation entièrement diluée (FDV) = Prix × Approvisionnement maximum. Si l'approvisionnement maximum est nul, FDV = Prix × Approvisionnement total. Si ni l'approvisionnement maximum ni l'approvisionnement total ne sont définis ou infinis, la FDV n'est pas affichée.",
-      "BridgeProvider": "Fournisseur de Bridge"
+      "BridgeProvider": "Fournisseur de Bridge",
+      "Price": "Prix",
+      "HoldingValue": "Valeur détenue"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Annuler"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Transaction bloquée",
+        "content": "Cette transaction interagit avec une adresse qui figure sur la liste des sanctions de l'OFAC.",
+        "button": "Je sais"
       }
     }
   }

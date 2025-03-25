@@ -199,7 +199,10 @@
         "Contract": "Desplegar Contrato",
         "Bridge": "Puenteado",
         "Buy": "Comprado",
-        "Revoke": "Revocación de la aprobación de {{token}}"
+        "Revoke": "Revocación de la aprobación de {{token}}",
+        "WithdrawnGas": "Gas retirado",
+        "DepositedGas": "Gas depositado",
+        "ReceivedGas": "Recibido Gas"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -1309,7 +1312,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "Desbloqueo fallido",
-        "usePassword": "Cambiado a usar contraseña para desbloquear."
+        "usePassword": "Cambiado a usar contraseña para desbloquear.",
+        "enableBiometricAlert": {
+          "yes": "Sí",
+          "content": "¿Deseas habilitar {{ bioType }} para desbloquear Rabby Wallet?",
+          "title": "Habilitar {{ bioType }}",
+          "no": "Cancelar"
+        }
       }
     },
     "importSafe": {
@@ -1678,7 +1687,9 @@
       "NoIssuer": "No hay información del emisor disponible",
       "fdvTitle": "¿Qué es FDV?",
       "OriginalToken": "Token Original",
-      "fdvContent": "La capitalización de mercado si el suministro máximo estuviera en circulación. Valuación Totalmente Diluida (FDV) = Precio × Suministro Máximo. Si el Suministro Máximo es nulo, FDV = Precio × Suministro Total. Si ni el Suministro Máximo ni el Suministro Total están definidos o son infinitos, la FDV no se muestra."
+      "fdvContent": "La capitalización de mercado si el suministro máximo estuviera en circulación. Valuación Totalmente Diluida (FDV) = Precio × Suministro Máximo. Si el Suministro Máximo es nulo, FDV = Precio × Suministro Total. Si ni el Suministro Máximo ni el Suministro Total están definidos o son infinitos, la FDV no se muestra.",
+      "Price": "Precio",
+      "HoldingValue": "Valor de Holding"
     },
     "setting": {
       "feedback": "Comentarios",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Cancelar"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Transacción bloqueada",
+        "button": "Lo sé",
+        "content": "Esta transacción interactúa con una dirección que está en la lista de sanciones de la OFAC."
       }
     }
   }

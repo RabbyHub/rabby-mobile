@@ -108,7 +108,10 @@
         "Recieve": "已收到",
         "Cancel": "取消等待中的交易",
         "Buy": "已购买",
-        "Revoke": "撤销{{token}}授权"
+        "Revoke": "撤销{{token}}授权",
+        "WithdrawnGas": "已提取 Gas",
+        "ReceivedGas": "收到 Gas",
+        "DepositedGas": "存入 Gas"
       },
       "detail": {
         "Cancel": "取消",
@@ -1029,7 +1032,13 @@
       },
       "biometrics": {
         "usePassword": "已切换为使用密码解锁。",
-        "failedAndTipTitle": "解锁失败"
+        "failedAndTipTitle": "解锁失败",
+        "enableBiometricAlert": {
+          "yes": "是的",
+          "title": "启用 {{ bioType }}",
+          "no": "取消",
+          "content": "您是否想启用 {{ bioType }} 解锁 Rabby Wallet？"
+        }
       },
       "password": {
         "required": "输入密码解锁",
@@ -1665,7 +1674,9 @@
       "noTransactions": "没有交易",
       "fdvTitle": "什么是 FDV？",
       "BridgeIssue": "由第三方桥接的代币",
-      "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。"
+      "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。",
+      "HoldingValue": "持有价值",
+      "Price": "价格"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "取消"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "阻止的交易",
+        "button": "我知道",
+        "content": "此交易涉及的是在 OFAC 制裁名单上的一个地址。"
       }
     }
   }

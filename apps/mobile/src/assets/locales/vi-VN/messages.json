@@ -99,7 +99,10 @@
         "Default": "Tương tác",
         "Bridge": "Đã bridge",
         "Buy": "Đã mua",
-        "Revoke": "Thu hồi chấp thuận {{token}}"
+        "Revoke": "Thu hồi chấp thuận {{token}}",
+        "ReceivedGas": "Nhận Gas",
+        "WithdrawnGas": "Gas đã rút",
+        "DepositedGas": "Gas đã nạp"
       },
       "detail": {
         "From": "Từ",
@@ -990,7 +993,13 @@
     "unlock": {
       "biometrics": {
         "failedAndTipTitle": "Mở khóa không thành công",
-        "usePassword": "Đã chuyển sang sử dụng mật khẩu để mở khóa."
+        "usePassword": "Đã chuyển sang sử dụng mật khẩu để mở khóa.",
+        "enableBiometricAlert": {
+          "yes": "Có",
+          "title": "Bật {{ bioType }}",
+          "no": "Hủy",
+          "content": "Bạn có muốn bật {{ bioType }} để Mở khóa Ví Rabby không?"
+        }
       },
       "password": {
         "error": "Mật khẩu không chính xác",
@@ -1552,7 +1561,9 @@
       "noTransactions": "Không có giao dịch nào",
       "NoSupportedExchanges": "Không có sàn giao dịch được hỗ trợ nào khả dụng",
       "NoIssuer": "Không có thông tin nhà phát hành có sẵn",
-      "fdvContent": "Vốn hóa thị trường nếu tổng cung tối đa đang lưu thông. Định giá suy giảm hoàn toàn (FDV) = Giá × Tổng cung tối đa. Nếu Tổng cung tối đa là null, FDV = Giá × Tổng cung. Nếu cả Tổng cung tối đa và Tổng cung đều không được xác định hoặc vô hạn, FDV sẽ không được hiển thị."
+      "fdvContent": "Vốn hóa thị trường nếu tổng cung tối đa đang lưu thông. Định giá suy giảm hoàn toàn (FDV) = Giá × Tổng cung tối đa. Nếu Tổng cung tối đa là null, FDV = Giá × Tổng cung. Nếu cả Tổng cung tối đa và Tổng cung đều không được xác định hoặc vô hạn, FDV sẽ không được hiển thị.",
+      "HoldingValue": "Giữ giá trị",
+      "Price": "Giá"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -2012,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Hủy"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Giao dịch bị chặn",
+        "button": "Tôi biết",
+        "content": "Giao dịch này tương tác với một địa chỉ nằm trong danh sách trừng phạt của OFAC."
       }
     }
   }
