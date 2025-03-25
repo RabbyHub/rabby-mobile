@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { ScrollView, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,6 +12,10 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { useNavigationState } from '@react-navigation/native';
+import { useAccounts } from '@/hooks/account';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useSpecifyAccountsBalance } from './hooks/balance';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
@@ -24,6 +28,35 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
       s.routes.find(e => e.name === RootNames.SyncExtensionAccountSuccess)
         ?.params,
   ) as AddressNavigatorParamList['SyncExtensionAccountSuccess'];
+
+  const { accounts: acc } = useAccounts();
+
+  const list = useSortAddressList(acc);
+
+  const accounts = useMemo(
+    () =>
+      list.filter(account =>
+        navState?.newAccounts.some(
+          newAccount =>
+            isSameAddress(account.address, newAccount.address) &&
+            account.type === (newAccount.type || newAccount.brandName),
+        ),
+      ),
+    [list, navState?.newAccounts],
+  );
+
+  const { balanceAccounts, balanceLoading, fetchTotalBalance } =
+    useSpecifyAccountsBalance(accounts);
+
+  useEffect(() => {
+    if (accounts.length) {
+      fetchTotalBalance();
+    }
+  }, [accounts, fetchTotalBalance]);
+
+  const sortedList = useSortAddressList(
+    balanceAccounts?.length ? balanceAccounts : accounts,
+  );
 
   const handleConfirm = async () => {
     navigation.reset({
@@ -38,8 +71,6 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
       ],
     });
   };
-
-  console.log('navState?.newAccounts', navState);
 
   useEffect(() => {
     toast.success(t('page.syncExtension.importedSuccessfully'));
@@ -56,7 +87,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
       footerBottomOffset={56}
       footerContainerStyle={styles.ph}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {navState?.newAccounts?.map(e => (
+        {sortedList?.map(e => (
           <AddressItemInner2024
             style={styles.account}
             account={e}

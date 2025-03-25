@@ -682,7 +682,11 @@ const Swap = ({
             !!amountAvailable &&
             !!payToken &&
             !!receiveToken && (
-              <View style={{ marginTop: 24, marginHorizontal: -24 }}>
+              <View
+                style={{
+                  marginTop: 32,
+                  marginHorizontal: -24,
+                }}>
                 <BridgeShowMore
                   openFeePopup={openFeePopup}
                   open={showMoreOpen}

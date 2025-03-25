@@ -49,7 +49,6 @@ import { ReceiveAddressListScreen } from '../Address/ReceiveAddressListScreen';
 import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
-import { SyncExtensionAccountImportedScreen } from '../SyncExtension/SyncExtensionAccountImportedScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 
 const AddressStack =
@@ -477,14 +476,7 @@ export function AddressNavigator() {
           headerShown: true,
         })}
       />
-      <AddressStack.Screen
-        name={RootNames.SyncExtensionImported}
-        component={SyncExtensionAccountImportedScreen}
-        options={mergeScreenOptions({
-          headerShadowVisible: false,
-          headerShown: true,
-        })}
-      />
+
       <AddressStack.Screen
         name={RootNames.SyncExtensionAccountSuccess}
         component={SyncExtensionAccountSuccessfulScreen}

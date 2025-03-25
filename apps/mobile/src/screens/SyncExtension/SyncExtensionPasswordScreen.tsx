@@ -173,15 +173,21 @@ export const SyncExtensionPasswordScreen = () => {
         });
 
         clear();
-
-        navigation.replace(RootNames.StackAddress, {
-          screen: RootNames.SyncExtensionImported,
-          params: {
-            newAccounts,
-          },
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: RootNames.StackAddress,
+              params: {
+                screen: RootNames.SyncExtensionAccountSuccess,
+                params: {
+                  newAccounts: newAccounts,
+                },
+              },
+            },
+          ],
         });
       } else {
-        // toast.info('Not found more new addresses');
         throw Error('not found more new Addresses');
       }
     } catch (error) {

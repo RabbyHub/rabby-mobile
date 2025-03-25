@@ -214,9 +214,6 @@ export type AddressNavigatorParamList = {
   [RootNames.SafeAddressList]?: {};
   [RootNames.ApprovalAddressList]?: {};
   [RootNames.SyncExtensionPassword]?: {};
-  [RootNames.SyncExtensionImported]?: {
-    newAccounts: DisplayedKeyring['accounts'];
-  };
   [RootNames.SyncExtensionAccountSuccess]?: {
     newAccounts: Account[];
   };
