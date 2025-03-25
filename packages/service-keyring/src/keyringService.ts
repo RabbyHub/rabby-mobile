@@ -1354,8 +1354,8 @@ function mergeVault(
         const exist = newData.some(e => {
           if (e.type === item.type) {
             return (
-              !!e?.data?.[0] &&
-              !!item?.data?.[0] &&
+              Boolean(e?.data?.[0]) &&
+              Boolean(item?.data?.[0]) &&
               e.data?.[0] === item.data?.[0]
             );
           }
@@ -1374,7 +1374,7 @@ function mergeVault(
             hd1.type === KEYRING_TYPE.HdKeyring &&
             hd2.type === KEYRING_TYPE.HdKeyring
           ) {
-            return Object.keys(hd2)
+            return Object.keys(hd2.data)
               .filter(
                 key =>
                   !['accountDetails', 'accounts', 'activeIndexes'].includes(
