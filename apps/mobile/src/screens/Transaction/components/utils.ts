@@ -127,7 +127,7 @@ export const judgeIsSmallUsdTx = (
     token_id: string;
   }[];
   if (!receives || !receives.length) {
-    return false;
+    return true;
   }
   let allUsd = new BigNumber(0);
 
