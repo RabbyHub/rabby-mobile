@@ -1180,7 +1180,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "Unlock failed",
-        "usePassword": "Switched to use password to unlock."
+        "usePassword": "Switched to use password to unlock.",
+        "enableBiometricAlert": {
+          "title": "Enable {{ bioType }}",
+          "content": "Do you want to enable {{ bioType }} to Unlock Rabby Wallet？",
+          "no": "Cancel",
+          "yes": "Yes"
+        }
       }
     },
     "addToken": {
