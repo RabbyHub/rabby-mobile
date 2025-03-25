@@ -96,7 +96,7 @@ export const TxStatusItem = ({
           style={{
             transform: [{ rotate: spin }],
           }}>
-          <RcIconPending width={12} height={12} />
+          <RcIconPending width={18} height={18} />
         </Animated.View>
         {withText && (
           <Text

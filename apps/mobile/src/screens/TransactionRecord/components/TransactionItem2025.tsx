@@ -443,11 +443,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 16,
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    marginBottom: 12,
+    marginBottom: 8,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
   },
