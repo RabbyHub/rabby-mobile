@@ -15,6 +15,7 @@ import { useOneKeyImport } from '@/hooks/onekey/useOneKeyImport';
 import { ConnectDeviceScreen } from './ConnectDeviceScreen';
 import { eventBus, EVENTS } from '@/utils/events';
 import AutoLockView from '../AutoLockView';
+import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
@@ -27,6 +28,8 @@ export const ConnectOneKey: React.FC<{
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
   const { devices, startScan, error, cleanDevices } = useOneKeyImport();
+
+  const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
@@ -61,15 +64,19 @@ export const ConnectOneKey: React.FC<{
         startNumber: 1,
         hdPath: LedgerHDPathType.BIP44,
       });
-      navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportMoreAddress,
-        params: {
-          type: KEYRING_TYPE.OneKeyKeyring,
-        },
+      // navigate(RootNames.StackAddress, {
+      //   screen: RootNames.ImportMoreAddress,
+      //   params: {
+      //     type: KEYRING_TYPE.OneKeyKeyring,
+      //   },
+      // });
+      showImportMorePopup({
+        type: KEYRING_TYPE.OneKeyKeyring,
+        brand: KEYRING_CLASS.HARDWARE.ONEKEY,
       });
       onDone?.();
     }
-  }, [onDone, setSetting]);
+  }, [onDone, setSetting, showImportMorePopup]);
 
   const handleSelectDevice = React.useCallback(
     async ({ id }) => {
