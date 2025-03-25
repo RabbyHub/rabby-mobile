@@ -63,6 +63,9 @@ export const WhiteListItem = ({
     () => cexInfoStore[account.address],
     [account.address, cexInfoStore],
   );
+  const showCexInfo = useMemo(() => {
+    return cexDesc?.id && cexDesc.is_deposit;
+  }, [cexDesc?.id, cexDesc?.is_deposit]);
 
   const editAliasName = useAliasNameEditModal();
 
@@ -184,7 +187,7 @@ export const WhiteListItem = ({
             {({ WalletIcon, WalletBalance }) => (
               <View style={styles.item}>
                 <View style={styles.iconWrapper}>
-                  {cexDesc?.logo_url ? (
+                  {showCexInfo && cexDesc?.logo_url ? (
                     <Image
                       source={{ uri: cexDesc?.logo_url }}
                       style={styles.walletIcon}
@@ -268,7 +271,7 @@ export const WhiteListItemSwitch = ({
             {({ WalletIcon, WalletBalance }) => (
               <View style={styles.item}>
                 <View style={styles.iconWrapper}>
-                  {cexDes?.logo_url ? (
+                  {cexDes?.is_deposit && cexDes?.logo_url ? (
                     <Image
                       source={{ uri: cexDes?.logo_url }}
                       style={styles.walletIcon}
