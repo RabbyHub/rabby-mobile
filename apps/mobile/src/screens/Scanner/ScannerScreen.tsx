@@ -49,7 +49,7 @@ export const ScannerScreen = () => {
         if (value && value.startsWith('ur:')) {
           try {
             decoder.receivePart(value);
-            setCurrentCount(decoder.getProgress());
+            setCurrentCount(decoder.estimatedPercentComplete());
 
             if (decoder.isComplete()) {
               isSyncExtensionScanned.current = true;
