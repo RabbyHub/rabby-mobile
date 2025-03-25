@@ -7,6 +7,7 @@ import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components/Toast';
 import { Alert } from 'react-native';
 import { UnlockResultErrors } from '@/core/apis/lock';
+import { t } from 'i18next';
 
 export enum UNLOCK_STATE {
   IDLE = 0,
@@ -103,11 +104,15 @@ export function useTipedUserEnableBiometrics() {
 
       return new Promise<typeof result>((resolve, reject) => {
         Alert.alert(
-          `Enable ${computed.defaultTypeLabel}`,
-          `Enable ${computed.defaultTypeLabel} to Unlock Rabby Wallet`,
+          t('page.unlock.biometrics.enableBiometricAlert.title', {
+            bioType: computed.defaultTypeLabel,
+          }),
+          t('page.unlock.biometrics.enableBiometricAlert.content', {
+            bioType: computed.defaultTypeLabel,
+          }),
           [
             {
-              text: 'No',
+              text: t('page.unlock.biometrics.enableBiometricAlert.no'),
               style: 'cancel',
               onPress: () => {
                 setHasTipedUserEnableBiometrics(true);
@@ -115,7 +120,7 @@ export function useTipedUserEnableBiometrics() {
               },
             },
             {
-              text: 'Yes',
+              text: t('page.unlock.biometrics.enableBiometricAlert.yes'),
               onPress: async () => {
                 resolve(action());
               },
