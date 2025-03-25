@@ -53,8 +53,9 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   }, [account.address, whitelist]);
 
   const brandColors = useMemo(
-    () => getBrandColors(cexDesc?.id || account.type, isLight),
-    [account.type, cexDesc?.id, isLight],
+    () =>
+      getBrandColors(cexDesc?.is_deposit ? cexDesc?.id : account.type, isLight),
+    [account.type, cexDesc?.id, cexDesc?.is_deposit, isLight],
   );
   useEffect(() => {
     if (!visible) {
@@ -68,7 +69,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
         {({ WalletIcon }) => (
           <View style={styles.item}>
             <View style={styles.iconWrapper}>
-              {cexDesc?.logo_url ? (
+              {cexDesc?.is_deposit && cexDesc?.logo_url ? (
                 <Image
                   source={{ uri: cexDesc?.logo_url }}
                   style={styles.walletIcon}
@@ -89,7 +90,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               )}
             </View>
             <View style={styles.itemInfo}>
-              {(cexDesc?.id ||
+              {((cexDesc?.is_deposit && cexDesc?.id) ||
                 account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
                 <View style={styles.itemName}>
                   <Text
@@ -100,7 +101,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
                         backgroundColor: brandColors.brandBg,
                       },
                     ]}>
-                    {cexDesc?.name
+                    {cexDesc?.is_deposit && cexDesc?.name
                       ? `${cexDesc.name} ${t(
                           'page.confirmAddress.dexNameTail',
                         )}`
@@ -114,7 +115,10 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               <TouchableOpacity
                 style={styles.editAliasWrapper}
                 onPress={() => {
-                  editAliasName.show(account, cexDesc?.logo_url);
+                  editAliasName.show(
+                    account,
+                    cexDesc?.is_deposit ? cexDesc?.logo_url : '',
+                  );
                 }}>
                 <Text style={styles.itemNameText}>
                   {adderssAlias || ellipsisAddress(account.address)}

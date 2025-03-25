@@ -75,6 +75,7 @@ export const useRisks = (address: string) => {
           value: t('page.confirmAddress.risks.contractAddress'),
         });
       }
+      setRisks(currRisks);
       let hasSended = false;
       accounts.forEach(acc => {
         if (isSameAddress(acc.address, address)) {
