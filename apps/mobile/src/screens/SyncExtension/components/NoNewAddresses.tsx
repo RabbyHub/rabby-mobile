@@ -19,8 +19,7 @@ export const NoNewAddressesModal = (props: {
       animationType="fade"
       onRequestClose={onCancel}
       visible={visible}
-      // style={styles.modal}
-    >
+      statusBarTranslucent>
       <View style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.title}>{t('page.syncExtension.noNewAddr')}</Text>

@@ -204,86 +204,90 @@ export const SyncExtensionPasswordScreen = () => {
   };
 
   return (
-    <FooterButtonScreenContainer
-      as="View"
-      buttonProps={{
-        title: t('global.Confirm'),
-        onPress: handleConfirm,
-        loading: loading,
-      }}
-      style={styles.screen}
-      footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 20,
-      }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <SyncExtensionHeader type="verify" newUser={shouldSetupPassword} />
-          <NextInput.Password
-            // initialPasswordVisible
-            as={'TextInput'}
-            fieldName="Enter the Password to Confirm"
-            containerStyle={Object.assign(
-              {},
-              error
-                ? {}
-                : {
-                    borderColor: 'transparent',
-                  },
-            )}
-            iconColor={colors2024['neutral-title-1']}
-            inputProps={{
-              value: password,
-              secureTextEntry: true,
-              inputMode: 'text',
-              returnKeyType: 'done',
-              placeholderTextColor: colors2024['neutral-foot'],
-              onChangeText: v => {
-                setPassword(v);
-                setError('');
-              },
-            }}
-            style={[
-              styles.passwordStyle,
-              !error && { borderColor: 'transparent' },
-            ]}
-            fieldNameStyle={styles.fieldName}
-            hasError={Boolean(error)}
-            fieldErrorContainerStyle={styles.fieldErrorContainerStyle}
-            tipText={error ?? null}
-          />
+    <>
+      <FooterButtonScreenContainer
+        as="View"
+        buttonProps={{
+          title: t('global.Confirm'),
+          onPress: handleConfirm,
+          loading: loading,
+        }}
+        style={styles.screen}
+        footerBottomOffset={56}
+        footerContainerStyle={{
+          paddingHorizontal: 20,
+        }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.container}>
+            <SyncExtensionHeader type="verify" newUser={shouldSetupPassword} />
+            <NextInput.Password
+              // initialPasswordVisible
+              as={'TextInput'}
+              fieldName="Enter the Password to Confirm"
+              containerStyle={Object.assign(
+                {},
+                error
+                  ? {}
+                  : {
+                      borderColor: 'transparent',
+                    },
+              )}
+              iconColor={colors2024['neutral-title-1']}
+              inputProps={{
+                value: password,
+                secureTextEntry: true,
+                inputMode: 'text',
+                returnKeyType: 'done',
+                placeholderTextColor: colors2024['neutral-foot'],
+                onChangeText: v => {
+                  setPassword(v);
+                  setError('');
+                },
+              }}
+              style={[
+                styles.passwordStyle,
+                !error && { borderColor: 'transparent' },
+              ]}
+              fieldNameStyle={styles.fieldName}
+              hasError={Boolean(error)}
+              fieldErrorContainerStyle={styles.fieldErrorContainerStyle}
+              tipText={error ?? null}
+            />
 
-          {shouldSetupPassword ? (
-            <View style={styles.switchContainer}>
-              <Text style={styles.labelText}>
-                {t('page.createPassword.enable', { bioType: defaultTypeLabel })}
-              </Text>
-              <View style={styles.valueView}>
-                <AppSwitch2024
-                  value={biometricsEnabled}
-                  onValueChange={async value => {
-                    if (!couldSetupBiometrics) {
-                      toast.show(
-                        t('page.createPassword.phoneNotSupport', {
-                          bioType: defaultTypeLabel,
-                        }),
-                      );
-                      return;
-                    }
-                    setBiometricsEnabled(value);
-                  }}
-                />
+            {shouldSetupPassword ? (
+              <View style={styles.switchContainer}>
+                <Text style={styles.labelText}>
+                  {t('page.createPassword.enable', {
+                    bioType: defaultTypeLabel,
+                  })}
+                </Text>
+                <View style={styles.valueView}>
+                  <AppSwitch2024
+                    value={biometricsEnabled}
+                    onValueChange={async value => {
+                      if (!couldSetupBiometrics) {
+                        toast.show(
+                          t('page.createPassword.phoneNotSupport', {
+                            bioType: defaultTypeLabel,
+                          }),
+                        );
+                        return;
+                      }
+                      setBiometricsEnabled(value);
+                    }}
+                  />
+                </View>
               </View>
-            </View>
-          ) : null}
-        </View>
-      </TouchableWithoutFeedback>
+            ) : null}
+          </View>
+        </TouchableWithoutFeedback>
+      </FooterButtonScreenContainer>
       <NoNewAddressesModal
         onCancel={() => setNoAddrVisible(false)}
         onConfirm={() => setNoAddrVisible(false)}
         visible={noAddrVisible}
       />
-    </FooterButtonScreenContainer>
+    </>
   );
 };
 
