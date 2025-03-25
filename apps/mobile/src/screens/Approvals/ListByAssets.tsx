@@ -24,7 +24,7 @@ import { SectionListProps } from 'react-native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import ApprovalAssetRow from './components/ApprovalAssetRow';
 import { ApprovalsLayouts } from './layout';
-import { IS_IOS } from '@/core/native/utils';
+import { IOS_SWIPABLE_LEFT_OFFSET } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -142,7 +142,7 @@ export default function ListByAssets() {
           {
             paddingHorizontal:
               ApprovalsLayouts.innerContainerHorizontalOffset -
-              (IS_IOS ? 2 : 0),
+              IOS_SWIPABLE_LEFT_OFFSET,
           },
         ]}
         contentContainerStyle={[

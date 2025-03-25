@@ -12,7 +12,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
-import { ApprovalsLayouts } from './layout';
+import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
 import {
@@ -135,7 +135,6 @@ const ApprovalScreenContainer = () => {
   if (!currentAccount?.address) {
     return null;
   }
-
   return (
     <Tabs.Container
       {...(IS_IOS && {
@@ -169,8 +168,6 @@ const ApprovalScreenContainer = () => {
     </Tabs.Container>
   );
 };
-
-const IOS_SWIPABLE_LEFT_OFFSET = !IS_IOS ? 0 : 2;
 
 export default function ApprovalsScreen() {
   const { styles } = useTheme2024({ getStyle });

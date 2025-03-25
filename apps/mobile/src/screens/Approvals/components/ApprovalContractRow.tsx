@@ -448,16 +448,6 @@ export const getCardStyles = createGetStyles2024(ctx => {
       justifyContent: 'center',
       paddingVertical: ApprovalsLayouts.contractCardPaddingVertical,
       width: '100%',
-      shadowColor: colors2024['neutral-black'],
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.06,
-      shadowRadius: 60,
-      // elevation: 4,
-      // box-shadow: 0px 4px 60px 0px rgba(0, 0, 0, 0.06);
-
       ...selectableStyles.container,
     },
     riskContainer: {

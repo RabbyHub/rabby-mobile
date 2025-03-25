@@ -72,7 +72,9 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
       setResult(
         [...hasUsdValue, ...hasAmount, ...list].sort((a, b) => {
           if (a._isPined && b._isPined) {
-            return a._pinIndex! - b._pinIndex!;
+            const aWorth = a.amount * a.price || 0;
+            const bWorth = b.amount * b.price || 0;
+            return bWorth - aWorth;
           }
           if (a._isPined) {
             return -1;

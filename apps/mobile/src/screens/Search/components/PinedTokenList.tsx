@@ -1,7 +1,6 @@
-import { memo, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { usePinTokens } from '../usePinTokens';
@@ -12,10 +11,14 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useFocusEffect } from '@react-navigation/native';
+import { trigger } from 'react-native-haptic-feedback';
+import { preferenceService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
 
 export const PinedTokenList = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const handleOpenTokenDetail = useCallback((token: AbstractPortfolioToken) => {
@@ -33,11 +36,6 @@ export const PinedTokenList = () => {
     }, []),
   );
 
-  // useEffect(() => {
-  //   handleFetchTokens();
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
-
   return pinTokens.length > 0 ? (
     <View style={styles.container}>
       <View style={styles.titleHeader}>
@@ -45,22 +43,58 @@ export const PinedTokenList = () => {
       </View>
       <View style={styles.section}>
         {pinTokens.map((token, index) => (
-          <TouchableOpacity
-            onPress={e =>
-              handleOpenTokenDetail(ensureAbstractPortfolioToken(token))
-            }
-            style={styles.itemContainer}
-            key={index}>
-            <AssetAvatar
-              logo={token?.logo_url}
-              chain={token?.chain}
-              chainSize={10}
-              size={24}
-            />
-            <Text style={styles.tokenText}>
-              {ellipsisOverflowedText(getTokenSymbol(token), 8)}
-            </Text>
-          </TouchableOpacity>
+          <ContextMenuView
+            menuConfig={{
+              menuActions: [
+                {
+                  title: 'UnPin',
+                  icon: isLight
+                    ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+                    : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
+                  androidIconName: 'ic_rabby_menu_un_pin',
+                  key: 'pin',
+                  action() {
+                    preferenceService.removePinedToken({
+                      tokenId: token.id,
+                      chainId: token.chain,
+                    });
+                    setTimeout(() => {
+                      handleFetchTokens();
+                      toast.success(
+                        t('page.tokenDetail.actionsTips.unpin_success'),
+                      );
+                    }, 0);
+                  },
+                },
+              ],
+            }}
+            key={`${token.chain}-${token.id}`}
+            preViewBorderRadius={10}
+            triggerProps={{ action: 'longPress' }}>
+            <TouchableOpacity
+              onPress={() => {
+                handleOpenTokenDetail(ensureAbstractPortfolioToken(token));
+              }}
+              delayLongPress={200} // long press delay
+              onLongPress={() => {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+              }}
+              style={styles.itemContainer}
+              key={index}>
+              <AssetAvatar
+                logo={token?.logo_url}
+                chain={token?.chain}
+                chainSize={10}
+                size={24}
+              />
+              <Text style={styles.tokenText}>
+                {ellipsisOverflowedText(getTokenSymbol(token), 8)}
+              </Text>
+            </TouchableOpacity>
+          </ContextMenuView>
         ))}
       </View>
     </View>
