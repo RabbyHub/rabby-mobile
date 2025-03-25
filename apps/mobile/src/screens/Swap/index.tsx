@@ -221,40 +221,59 @@ const Swap = ({
       return;
     }
 
-    if (
-      navState?.tokenId &&
-      navState.isSwapToTokenDetail &&
-      chainItem?.enum === chain
-    ) {
-      if (
-        (payToken && payToken.chain !== chainItem.serverId) ||
-        (receiveToken && receiveToken.chain !== chainItem.serverId)
-      ) {
-        switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
-          payTokenId: navState?.tokenId,
-          changeTo: isBuy,
-        });
-        return;
-      }
-      if (isBuy) {
-        setReceiveToken({
-          ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
-          id: navState?.tokenId,
-        });
-      } else {
-        setPayToken({
-          ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
-          id: navState?.tokenId,
-        });
-      }
-      return;
-    }
-
     switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
       payTokenId: navState?.tokenId,
       changeTo: isBuy,
     });
   });
+
+  useEffect(() => {
+    const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
+    const isBuy = navState?.type === 'Buy';
+
+    if (navState?.isSwapToTokenDetail) {
+      if (
+        navState?.tokenId &&
+        navState.isSwapToTokenDetail &&
+        chainItem?.enum === chain
+      ) {
+        if (
+          (payToken && payToken.chain !== chainItem.serverId) ||
+          (receiveToken && receiveToken.chain !== chainItem.serverId)
+        ) {
+          switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
+            payTokenId: navState?.tokenId,
+            changeTo: isBuy,
+          });
+          return;
+        }
+        if (isBuy) {
+          setReceiveToken({
+            ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+            id: navState?.tokenId,
+          });
+        } else {
+          setPayToken({
+            ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+            id: navState?.tokenId,
+          });
+        }
+        return;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // chain,
+    navState?.chainEnum,
+    navState?.isSwapToTokenDetail,
+    navState?.tokenId,
+    navState?.type,
+    // payToken,
+    // receiveToken,
+    // setPayToken,
+    // setReceiveToken,
+    // switchChain,
+  ]);
 
   const btnText = useMemo(() => {
     if (quoteLoading) {

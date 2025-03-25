@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useMemo, useEffect, useCallback, useState } from 'react';
+import React, {
+  useMemo,
+  useEffect,
+  useCallback,
+  useState,
+  useLayoutEffect,
+} from 'react';
 import {
   View,
   Text,
@@ -54,7 +60,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconTipCC from '@/assets2024/icons/common/tips-cc.svg';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { naviPush } from '@/utils/navigation';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import {
+  CompositeScreenProps,
+  useIsFocused,
+  useRoute,
+} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Account } from '@/core/services/preference';
@@ -63,6 +73,17 @@ import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { AccountInfoInTokenRow } from './AccountWidgets';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  AddressNavigatorParamList,
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
+
+type SwapRouteProps = CompositeScreenProps<
+  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -209,7 +230,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [isInputActive, setIsInputActive] = useState(false);
 
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
-    const route = useRoute();
+    const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
 
     const isSingleAddress = useMemo(
@@ -217,14 +238,20 @@ export const TokenSelectorSheetModal = React.forwardRef<
       [route.name],
     );
 
+    const isSwapRoute =
+      route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
+
+    if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
+      setSwapToTokenDetail(false);
+    }
+
     if (
       isSwapTo &&
-      swapToTokenDetail &&
-      visible &&
-      isFocused &&
-      ([RootNames.Swap, RootNames.MultiSwap] as string[]).includes(route.name)
+      isSwapRoute &&
+      route.params?.isSwapToTokenDetail &&
+      swapToTokenDetail
     ) {
-      setSwapToTokenDetail(false);
+      toggleShowSheetModal('destroy');
     }
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
