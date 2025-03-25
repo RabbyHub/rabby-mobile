@@ -218,13 +218,13 @@ export const SwapTxHistory = ({
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const { syncUserAllHistory } = useSyncHistoryDB();
+  const { syncSingleAddress } = useSyncHistoryDB();
   const { currentAccount } = useCurrentAccount();
   useEffect(() => {
     if (currentAccount?.address) {
-      syncUserAllHistory(currentAccount?.address);
+      syncSingleAddress(currentAccount?.address);
     }
-  }, [currentAccount?.address, syncUserAllHistory]);
+  }, [currentAccount?.address, syncSingleAddress]);
 
   return (
     <AppBottomSheetModal

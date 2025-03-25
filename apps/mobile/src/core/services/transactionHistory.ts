@@ -181,6 +181,14 @@ export class TransactionHistoryService {
     return this.store.failList.length;
   }
 
+  setNeedFetchTxHistory(address: string) {
+    if (!this.store.isNeedFetchTxHistory[address]) {
+      setTimeout(() => {
+        this.store.isNeedFetchTxHistory[address] = true;
+      }, 1000);
+    }
+  }
+
   getIsNeedFetchTxHistory(address: string) {
     const res = this.store.isNeedFetchTxHistory[address];
     res && (this.store.isNeedFetchTxHistory[address] = false);
@@ -493,7 +501,7 @@ export class TransactionHistoryService {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
-        this.store.isNeedFetchTxHistory[address.toLowerCase()] = true;
+        this.setNeedFetchTxHistory(address.toLowerCase());
       }
     });
 
