@@ -23,7 +23,8 @@
       "CreateSelectOnCurrentSeed": "2. Adresse hinzufügen",
       "ImportMoreAddress": "Weitere Adresse importieren",
       "SetPassword2024": "2. Passwort festlegen",
-      "ImportSuccess": "Erfolgreich hinzugefügt"
+      "ImportSuccess": "Erfolgreich hinzugefügt",
+      "ConfrimAddress": "Bestätigen Sie Ihre Adresse"
     }
   },
   "native": {
@@ -79,7 +80,8 @@
       "option_Light": "Licht"
     },
     "Unknown": "Unbekannt",
-    "unlimited": "unbegrenzt"
+    "unlimited": "unbegrenzt",
+    "Addresses": "Adressen"
   },
   "component": {
     "accountSwitcher": {
@@ -232,7 +234,10 @@
         "Swap": "Getauscht",
         "Cancel": "Anstehende Transaktion abbrechen",
         "Buy": "Gekauft",
-        "Revoke": "Widerrufene {{token}} Genehmigung"
+        "Revoke": "Widerrufene {{token}} Genehmigung",
+        "DepositedGas": "Eingezahltes Gas",
+        "WithdrawnGas": "Abgehobenes Gas",
+        "ReceivedGas": "Empfangene Gas"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -297,7 +302,8 @@
     "getStart": {
       "goToHome": "Gehe zu Home",
       "alreadyHaveAddress": "Ich habe bereits eine Adresse.",
-      "createNewAddress": "Neue Adresse erstellen"
+      "createNewAddress": "Neue Adresse erstellen",
+      "sync": "Scannen, um die Rabby Extension Adresse zu synchronisieren"
     },
     "importSuccess": {
       "addressCount": "{{count}} Adressen",
@@ -1027,7 +1033,8 @@
       "addAddress": {
         "importAddress": "Adresse importieren",
         "hardwareWallet": "Hardware Wallet",
-        "createAddress": "Adresse erstellen"
+        "createAddress": "Adresse erstellen",
+        "syncRabbyExtension": "Rabby-Erweiterung synchronisieren"
       },
       "createNewAddress": {
         "Continue": "Fortfahren",
@@ -1151,7 +1158,13 @@
     "unlock": {
       "biometrics": {
         "usePassword": "Auf die Verwendung eines Passworts zum Entsperren umgestellt.",
-        "failedAndTipTitle": "Entsperren fehlgeschlagen"
+        "failedAndTipTitle": "Entsperren fehlgeschlagen",
+        "enableBiometricAlert": {
+          "title": "Aktivieren Sie {{ bioType }}",
+          "no": "Abbrechen",
+          "content": "Möchten Sie {{ bioType }} aktivieren, um Rabby Wallet zu entsperren?",
+          "yes": "Ja"
+        }
       },
       "password": {
         "required": "Geben Sie das Passwort ein, um zu entsperren",
@@ -1639,7 +1652,9 @@
         "invalidAmount": "Muss unter 500 sein",
         "desc": "Machen Sie eine Einzahlung auf Rabby's DeBank L2 Account ohne zusätzliche Gebühren – jederzeit abheben.",
         "applePayDesc": "Beinhaltet eine ${{amount}} Apple Pay-Gebühr. Keine Abhebungen",
-        "googlePayDesc": "Beinhaltet eine ${{ amount }} Google Pay-Gebühr. Keine Abhebungen"
+        "googlePayDesc": "Beinhaltet eine ${{ amount }} Google Pay-Gebühr. Keine Abhebungen",
+        "googlePayFeeDesc": "Enthält eine Google Pay-Gebühr. Keine Abhebungen",
+        "applePayFeeDesc": "Enthält eine Apple Pay Gebühr. Keine Abhebungen"
       },
       "paymentAddressPopup": {
         "title": "Zahlungsadresse auswählen",
@@ -1772,7 +1787,9 @@
       "NoListedSite": "Keine Listing-Informationen verfügbar",
       "Mybalance": "Mein Kontostand",
       "OriginIssue": "Nativ auf dieser Blockchain ausgegeben",
-      "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt."
+      "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt.",
+      "HoldingValue": "Wert halten",
+      "Price": "Preis"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -1930,6 +1947,19 @@
       "alreadyAdded": "Bereits zur Whitelist hinzugefügt",
       "addSuccessful": "Adresse zur Whitelist hinzugefügt",
       "confirmPassword": "Geben Sie das Passwort ein, um zu bestätigen"
+    },
+    "syncExtension": {
+      "syncingProgress": "Scannen ({{ percent }})",
+      "importedSuccessfully": "Erfolgreich importiert!",
+      "scanTips1": "Klicken Sie auf „Rabby Mobile“ in der Rabby-Erweiterung",
+      "imported": "Adressen, die bereits in Rabby Mobile vorhanden sind, werden nicht erneut importiert. Adressnotizen und Whitelists werden automatisch synchronisiert.",
+      "verifyTips": "Ihre Daten werden offline verschlüsselt. Geben Sie Ihr Rabby Extension-Passwort ein, um zu entschlüsseln und zu verifizieren.",
+      "importedTips": "Wenn im APP bereits eine doppelte Adresse vorhanden ist, wird sie nicht importiert. Adressnotizen und Whitelists werden ebenfalls synchronisiert.",
+      "verifyWithPassword": "Überprüfen Sie mit Ihrem  \nRabby Extension-Password",
+      "newUserVerify": "Es wird auch als Standardpasswort für Ihr Rabby Mobile dienen.",
+      "noNewAddr": "Keine neuen Adressen zum Importieren gefunden",
+      "syncingTips": "Halten Sie die Kamera ruhig, bis der Scan abgeschlossen ist.",
+      "scanTips2": "Scannen Sie den Code und beginnen Sie mit der Synchronisierung"
     }
   },
   "constant": {
@@ -1993,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Abbrechen"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Blockierte Transaktion",
+        "button": "Ich weiß",
+        "content": "Diese Transaktion interagiert mit einer Adresse, die auf der OFAC-Sanktionsliste steht."
       }
     }
   }

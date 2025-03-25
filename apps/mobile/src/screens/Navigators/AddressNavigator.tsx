@@ -48,6 +48,8 @@ import { useAccounts } from '@/hooks/account';
 import { ReceiveAddressListScreen } from '../Address/ReceiveAddressListScreen';
 import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
+import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
+import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -464,6 +466,23 @@ export function AddressNavigator() {
           }),
           headerShadowVisible: false,
           headerShown: true,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.SyncExtensionPassword}
+        component={SyncExtensionPasswordScreen}
+        options={mergeScreenOptions({
+          headerShadowVisible: false,
+          headerShown: true,
+        })}
+      />
+
+      <AddressStack.Screen
+        name={RootNames.SyncExtensionAccountSuccess}
+        component={SyncExtensionAccountSuccessfulScreen}
+        options={mergeScreenOptions({
+          headerShadowVisible: false,
+          headerShown: false,
         })}
       />
     </AddressStack.Navigator>

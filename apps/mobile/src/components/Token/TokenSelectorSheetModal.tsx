@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useMemo, useEffect, useCallback, useState } from 'react';
+import React, {
+  useMemo,
+  useEffect,
+  useCallback,
+  useState,
+  useLayoutEffect,
+} from 'react';
 import {
   View,
   Text,
@@ -17,13 +23,12 @@ import {
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
-import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
 import { getTokenSymbol } from '@/utils/token';
@@ -39,7 +44,6 @@ import { Skeleton } from '@rneui/themed';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
@@ -54,15 +58,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconTipCC from '@/assets2024/icons/common/tips-cc.svg';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { naviPush } from '@/utils/navigation';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import {
+  CompositeScreenProps,
+  useIsFocused,
+  useRoute,
+} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Account } from '@/core/services/preference';
-import { ellipsisAddress } from '@/utils/address';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { AccountInfoInTokenRow } from './AccountWidgets';
 import { isWatchOrSafeAccount } from '@/utils/account';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
+
+type SwapRouteProps = CompositeScreenProps<
+  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -209,7 +225,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [isInputActive, setIsInputActive] = useState(false);
 
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
-    const route = useRoute();
+    const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
 
     const isSingleAddress = useMemo(
@@ -217,14 +233,22 @@ export const TokenSelectorSheetModal = React.forwardRef<
       [route.name],
     );
 
+    const isSwapRoute =
+      route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
+
+    if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
+      setSwapToTokenDetail(false);
+    }
+
     if (
       isSwapTo &&
+      isSwapRoute &&
+      route.params?.isSwapToTokenDetail &&
       swapToTokenDetail &&
       visible &&
-      isFocused &&
-      ([RootNames.Swap, RootNames.MultiSwap] as string[]).includes(route.name)
+      isFocused
     ) {
-      setSwapToTokenDetail(false);
+      toggleShowSheetModal('destroy');
     }
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
@@ -605,6 +629,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         token: ensureAbstractPortfolioToken(token.$origin),
                         needUseCacheToken: true,
                         isSingleAddress,
+                        isSwapToTokenDetail: true,
                       });
                     }}>
                     <RcIconTipCC

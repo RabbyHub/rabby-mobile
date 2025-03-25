@@ -5,7 +5,9 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import IconHardWare from '@/assets2024/icons/common/IconHardWare.png';
 import IconImport from '@/assets2024/icons/common/IconImport.svg';
 import IconCreate from '@/assets2024/icons/common/IconCreate.svg';
-import { navigate } from '@/utils/navigation';
+import IconSyncRabby from '@/assets2024/icons/common/iconSyncExtension.svg';
+
+import { naviPush } from '@/utils/navigation';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -84,6 +86,21 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
           style={styles.importItem}
           title={t('page.nextComponent.addAddress.hardwareWallet')}
           Icon={<Image source={IconHardWare} style={styles.icon} />}
+        />
+
+        <ListItem
+          onPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+
+            naviPush(RootNames.Scanner, { syncExtension: true });
+            onDone();
+          }}
+          style={styles.importItem}
+          title={t('page.nextComponent.addAddress.syncRabbyExtension')}
+          Icon={<IconSyncRabby style={styles.icon} />}
         />
       </View>
     </NormalScreenContainer>

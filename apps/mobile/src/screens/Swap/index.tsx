@@ -4,7 +4,11 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
-import { DEX_WITH_WRAP, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import {
+  DEX_WITH_WRAP,
+  getChainDefaultToken,
+  SWAP_SUPPORT_CHAINS,
+} from '@/constant/swap';
 import { swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -15,6 +19,7 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
+  CompositeScreenProps,
   StackActions,
   useIsFocused,
   useNavigation,
@@ -68,10 +73,19 @@ import { useSwapRecentToTokens } from './hooks/recent';
 import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
-import { TransactionNavigatorParamList } from '@/navigation-type';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { TokenInfoPopup } from './components/TokenInfoPopup';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 const isAndroid = Platform.OS === 'android';
+
+type SwapRouteProps = CompositeScreenProps<
+  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
 const Swap = ({
   isForMultipleAdderss = false,
@@ -222,6 +236,56 @@ const Swap = ({
       changeTo: isBuy,
     });
   });
+
+  const navigation = useNavigation<SwapRouteProps['navigation']>();
+
+  useEffect(() => {
+    const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
+    const isBuy = navState?.type === 'Buy';
+
+    if (navState?.isSwapToTokenDetail) {
+      if (
+        navState?.tokenId &&
+        navState.isSwapToTokenDetail &&
+        chainItem?.enum === chain
+      ) {
+        if (
+          (payToken && payToken.chain !== chainItem.serverId) ||
+          (receiveToken && receiveToken.chain !== chainItem.serverId)
+        ) {
+          switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
+            payTokenId: navState?.tokenId,
+            changeTo: isBuy,
+          });
+          return;
+        }
+        if (isBuy) {
+          setReceiveToken({
+            ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+            id: navState?.tokenId,
+          });
+        } else {
+          setPayToken({
+            ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+            id: navState?.tokenId,
+          });
+        }
+
+        navigation.setParams({
+          ...navState,
+          isSwapToTokenDetail: false,
+        });
+
+        return;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    navState?.chainEnum,
+    navState?.isSwapToTokenDetail,
+    navState?.tokenId,
+    navState?.type,
+  ]);
 
   const btnText = useMemo(() => {
     if (quoteLoading) {
@@ -396,8 +460,6 @@ const Swap = ({
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
     [payToken],
   );
-
-  const navigation = useNavigation();
 
   const lowCreditInit = useRef(false);
 
@@ -649,7 +711,10 @@ const Swap = ({
             !!amountAvailable &&
             !!payToken &&
             !!receiveToken && (
-              <View style={{ marginTop: 16, marginHorizontal: -24 }}>
+              <View
+                style={{
+                  marginHorizontal: -24,
+                }}>
                 <BridgeShowMore
                   openFeePopup={openFeePopup}
                   open={showMoreOpen}

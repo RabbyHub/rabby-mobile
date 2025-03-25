@@ -23,7 +23,8 @@
       "RestoreFromCloud": "从 {{type}} 恢复",
       "CreateNewAddress": "1. 给你的地址命名",
       "ImportSafeAddress2024": "添加 Safe 地址",
-      "SafeAddressList": "安全地址"
+      "SafeAddressList": "安全地址",
+      "ConfrimAddress": "确认您的地址"
     }
   },
   "native": {
@@ -79,7 +80,8 @@
       "option_Dark": "深色"
     },
     "Unknown": "未知",
-    "unlimited": "unlimited"
+    "unlimited": "unlimited",
+    "Addresses": "Addresses"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -106,7 +108,10 @@
         "Recieve": "已收到",
         "Cancel": "取消等待中的交易",
         "Buy": "已购买",
-        "Revoke": "撤销{{token}}授权"
+        "Revoke": "撤销{{token}}授权",
+        "WithdrawnGas": "已提取 Gas",
+        "ReceivedGas": "收到 Gas",
+        "DepositedGas": "存入 Gas"
       },
       "detail": {
         "Cancel": "取消",
@@ -171,7 +176,8 @@
     "getStart": {
       "alreadyHaveAddress": "我已经有一个地址",
       "goToHome": "前往首页",
-      "createNewAddress": "创建新地址"
+      "createNewAddress": "创建新地址",
+      "sync": "扫描以同步 Rabby 扩展地址"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
@@ -993,7 +999,8 @@
       "addAddress": {
         "importAddress": "导入地址",
         "createAddress": "创建地址",
-        "hardwareWallet": "硬件钱包"
+        "hardwareWallet": "硬件钱包",
+        "syncRabbyExtension": "同步 Rabby 扩展程序"
       }
     },
     "signText": {
@@ -1025,7 +1032,13 @@
       },
       "biometrics": {
         "usePassword": "已切换为使用密码解锁。",
-        "failedAndTipTitle": "解锁失败"
+        "failedAndTipTitle": "解锁失败",
+        "enableBiometricAlert": {
+          "yes": "是的",
+          "title": "启用 {{ bioType }}",
+          "no": "取消",
+          "content": "您是否想启用 {{ bioType }} 解锁 Rabby Wallet？"
+        }
       },
       "password": {
         "required": "输入密码解锁",
@@ -1525,7 +1538,9 @@
         "inSufficientTip1": "该地址的代币不足，请选择一个不同的地址。",
         "followingTokenInSufficient": "以下代币余额不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
-        "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现"
+        "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
+        "applePayFeeDesc": "包含 Apple Pay 手续费。无法提现",
+        "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款"
       },
       "paymentAddressPopup": {
         "title": "选择 Payment 地址",
@@ -1659,7 +1674,9 @@
       "noTransactions": "没有交易",
       "fdvTitle": "什么是 FDV？",
       "BridgeIssue": "由第三方桥接的代币",
-      "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。"
+      "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。",
+      "HoldingValue": "持有价值",
+      "Price": "价格"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -1804,6 +1821,19 @@
       "addSuccessful": "地址已添加到白名单",
       "removeWhitelist": "从白名单中移除",
       "alreadyAdded": "已添加到您的白名单"
+    },
+    "syncExtension": {
+      "noNewAddr": "未找到可导入的新地址",
+      "scanTips2": "扫描二维码并开始同步",
+      "imported": "在 Rabby Mobile 中已有的地址将不会再次导入。地址备注和白名单会自动同步。",
+      "syncingProgress": "扫描中（{{ percent }}）",
+      "importedSuccessfully": "导入成功！",
+      "syncingTips": "请保持相机稳定，直至扫描完成",
+      "newUserVerify": "它也将作为您 Rabby Mobile 的默认密码。",
+      "verifyWithPassword": "使用您的 Rabby Extension 密码进行验证",
+      "scanTips1": "在 Rabby 插件上点击“Rabby Mobile”",
+      "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
+      "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
     }
   },
   "component": {
@@ -1993,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "取消"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "阻止的交易",
+        "button": "我知道",
+        "content": "此交易涉及的是在 OFAC 制裁名单上的一个地址。"
       }
     }
   }

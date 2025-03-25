@@ -182,6 +182,10 @@ export const RootNames = {
   DappWebViewStubOnHome: 'DappWebViewStubOnHome',
   TokenDetail: 'TokenDetail',
   ReceiveAddressList: 'ReceiveAddressList',
+
+  SyncExtensionPassword: 'SyncExtensionPassword',
+  SyncExtensionImported: 'SyncExtensionImported',
+  SyncExtensionAccountSuccess: 'SyncExtensionAccountSuccess',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

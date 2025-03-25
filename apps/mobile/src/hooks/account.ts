@@ -250,15 +250,17 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       address: Account['address'];
       nextPinned?: boolean;
     }) => {
+      const allPinAddresses = preferenceService.getPinAddresses();
+
       const {
-        nextPinned = !pinAddresses.some(
+        nextPinned = !allPinAddresses.some(
           highlighted =>
             isSameAddress(highlighted.address, payload.address) &&
             highlighted.brandName === payload.brandName,
         ),
       } = payload;
 
-      const addresses = [...pinAddresses];
+      const addresses = [...allPinAddresses];
       const newItem = {
         brandName: payload.brandName,
         address: payload.address,
@@ -279,7 +281,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       }
       setPinAddresses(addresses);
     },
-    [pinAddresses, setPinAddresses],
+    [setPinAddresses],
   );
 
   useEffect(() => {

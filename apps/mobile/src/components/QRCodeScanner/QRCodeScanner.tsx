@@ -1,6 +1,14 @@
 import { useThemeColors } from '@/hooks/theme';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  Linking,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import {
   CameraRuntimeError,
   Code,
@@ -12,10 +20,20 @@ import {
 import { Text } from '../Text';
 import { useAppState } from '@react-native-community/hooks';
 import { AppColorsVariants } from '@/constant/theme';
+import ScanLineImage from '@/assets2024/images/scan.png';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 interface CameraViewProps {
   onCodeScanned?: (code: Code[]) => void;
   containerStyle?: StyleProp<ViewStyle>;
+  size: number;
+  showScanLine?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -43,6 +61,8 @@ const getStyles = (colors: AppColorsVariants) =>
 export const CameraView = ({
   onCodeScanned,
   containerStyle,
+  size,
+  showScanLine,
 }: CameraViewProps) => {
   const colors = useThemeColors();
   const [initialized, setInitialized] = useState(false);
@@ -64,6 +84,43 @@ export const CameraView = ({
   const appState = useAppState();
 
   const isActive = appState === 'active';
+
+  const topValue = useSharedValue(-44);
+
+  const scanLineStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    width: size - 30,
+    height: 30,
+    left: 0,
+    top: 0,
+    opacity: interpolate(
+      topValue.value,
+      [-44, 0, size - 44, size],
+      [0, 1, 1, 0],
+    ),
+    transform: [
+      {
+        translateY: topValue.value,
+      },
+      {
+        translateX: 0,
+      },
+    ],
+    justifyContent: 'center',
+    alignItems: 'center',
+  }));
+
+  useEffect(() => {
+    if (showScanLine) {
+      topValue.value = withRepeat(
+        withTiming(size, {
+          duration: 2000,
+        }),
+        -1,
+        false,
+      );
+    }
+  }, [size, topValue, showScanLine]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -95,6 +152,17 @@ export const CameraView = ({
             codeScanner={codeScanner}
           />
         )}
+        {showScanLine ? (
+          <Animated.View style={scanLineStyle}>
+            <Image
+              source={ScanLineImage}
+              style={{
+                width: '100%',
+                height: 62,
+              }}
+            />
+          </Animated.View>
+        ) : null}
       </View>
     </View>
   );

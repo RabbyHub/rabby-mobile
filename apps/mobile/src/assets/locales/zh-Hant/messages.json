@@ -32,7 +32,8 @@
       "CreateSelectMethod": "1. 選擇創建方式",
       "VerifySeedPhrase": "驗證助記詞",
       "ImportSafeAddress2024": "添加 Safe 地址",
-      "WatchAddressList": "僅觀察地址"
+      "WatchAddressList": "僅觀察地址",
+      "ConfrimAddress": "確認您的地址"
     }
   },
   "native": {
@@ -88,7 +89,8 @@
       "option_Light": "輕量版"
     },
     "Unknown": "未知",
-    "unlimited": "unlimited"
+    "unlimited": "unlimited",
+    "Addresses": "地址"
   },
   "background": {
     "transactionWatcher": {
@@ -147,7 +149,8 @@
     "getStart": {
       "createNewAddress": "創建新地址",
       "goToHome": "前往首頁",
-      "alreadyHaveAddress": "我已經有一個地址"
+      "alreadyHaveAddress": "我已經有一個地址",
+      "sync": "掃描以同步 Rabby 擴展地址"
     },
     "transactions": {
       "explain": {
@@ -164,7 +167,10 @@
         "Approve": "已批准",
         "Default": "互動",
         "Buy": "已購買",
-        "Revoke": "撤銷 {{token}} 授權"
+        "Revoke": "撤銷 {{token}} 授權",
+        "ReceivedGas": "Received Gas",
+        "DepositedGas": "已儲存的 Gas",
+        "WithdrawnGas": "Withdrawn Gas"
       },
       "detail": {
         "Unknown": "未知",
@@ -1009,7 +1015,13 @@
       },
       "biometrics": {
         "usePassword": "已切換為使用密碼解鎖。",
-        "failedAndTipTitle": "解鎖失敗"
+        "failedAndTipTitle": "解鎖失敗",
+        "enableBiometricAlert": {
+          "no": "取消",
+          "title": "啟用 {{ bioType }}",
+          "yes": "是的",
+          "content": "您是否想啟用 {{ bioType }} 解鎖 Rabby Wallet？"
+        }
       }
     },
     "backupSeedPhrase": {
@@ -1062,7 +1074,8 @@
       "addAddress": {
         "createAddress": "創建地址",
         "importAddress": "導入地址",
-        "hardwareWallet": "硬體錢包"
+        "hardwareWallet": "硬體錢包",
+        "syncRabbyExtension": "同步 Rabby 擴展程序"
       },
       "importAddress": {
         "safeTitle": "匯入 Safe 地址",
@@ -1531,7 +1544,9 @@
         "inSufficientTip1": "此地址的代幣餘額不足，請選擇其他地址。",
         "followingTokenInSufficient": "以下代幣餘額不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 費用。不提供提款。",
-        "googlePayDesc": "包含 ${{ amount }} Google Pay 手續費。不可提款。"
+        "googlePayDesc": "包含 ${{ amount }} Google Pay 手續費。不可提款。",
+        "applePayFeeDesc": "包含Apple Pay手續費。不支持提現。",
+        "googlePayFeeDesc": "包含Google Pay手續費。不支持提款。"
       },
       "paymentAddressPopup": {
         "title": "選擇 Payment 地址",
@@ -1641,7 +1656,9 @@
       "noTransactions": "沒有交易",
       "Defi": "DeFi",
       "NoSupportedExchanges": "沒有可用的支援交易所",
-      "fdvContent": "市值如果最大供應量在流通中。完全稀釋估值（FDV） = 價格 × 最大供應量。如果最大供應量為空，FDV = 價格 × 總供應量。如果最大供應量和總供應量均未定義或無限，則不顯示FDV。"
+      "fdvContent": "市值如果最大供應量在流通中。完全稀釋估值（FDV） = 價格 × 最大供應量。如果最大供應量為空，FDV = 價格 × 總供應量。如果最大供應量和總供應量均未定義或無限，則不顯示FDV。",
+      "Price": "價格",
+      "HoldingValue": "持有價值"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -1852,6 +1869,19 @@
       "addSuccessful": "地址已加入白名單",
       "cancel": "取消",
       "confirmPassword": "輸入密碼以確認"
+    },
+    "syncExtension": {
+      "scanTips2": "掃描二維碼開始同步",
+      "syncingTips": "保持鏡頭穩定直到掃描完成",
+      "verifyWithPassword": "使用你的 Rabby 擴展密碼驗證",
+      "syncingProgress": "掃描中 ({{ percent }})",
+      "importedSuccessfully": "匯入成功！",
+      "newUserVerify": "它也將作為您 Rabby Mobile 的默認密碼。",
+      "imported": "Rabby Mobile 中已存在的地址將不會再次匯入。地址備註和白名單將自動同步。",
+      "noNewAddr": "未找到可匯入的新地址",
+      "importedTips": "如果應用程式已經存在重複地址，則不會導入。地址備註和白名單也將同步。",
+      "scanTips1": "點擊 Rabby Extension 上的 “Rabby Mobile”",
+      "verifyTips": "您的數據已離線加密。請輸入您的 Rabby 擴展密碼以解密和驗證。"
     }
   },
   "component": {
@@ -1993,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "取消"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "button": "我知道",
+        "title": "已阻止的交易",
+        "content": "此交易與在 OFAC 制裁名單上的位址進行互動。"
       }
     }
   }
