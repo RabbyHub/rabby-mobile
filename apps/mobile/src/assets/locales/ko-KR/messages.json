@@ -23,7 +23,8 @@
       "ImportSuccess": "성공적으로 추가되었습니다",
       "AddMnemonic": "현재 시드 프레이즈에서 추가하기",
       "ImportMnemonic": "시드 구문 가져오기",
-      "AddressDetail": "주소 세부정보"
+      "AddressDetail": "주소 세부정보",
+      "ConfrimAddress": "주소 확인"
     }
   },
   "page": {
@@ -107,7 +108,8 @@
     "getStart": {
       "goToHome": "홈으로 이동",
       "createNewAddress": "새 주소 만들기",
-      "alreadyHaveAddress": "저는 이미 주소가 있습니다."
+      "alreadyHaveAddress": "저는 이미 주소가 있습니다.",
+      "sync": "Rabby 확장 주소 동기화를 위한 스캔"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "니모닉 구문을 입력하세요."
@@ -875,7 +877,8 @@
       "addAddress": {
         "hardwareWallet": "하드웨어 월렛",
         "createAddress": "주소 생성",
-        "importAddress": "주소 가져오기"
+        "importAddress": "주소 가져오기",
+        "syncRabbyExtension": "Rabby Extension 동기화"
       },
       "multiAddressHome": {
         "pin": "핀",
@@ -1241,7 +1244,9 @@
         "desc": "Rabby의 DeBank L2 계정에 추가 수수료 없이 입금하세요 - 언제든 출금 가능합니다.",
         "amount": "금액",
         "applePayDesc": "${{amount}} Apple Pay 수수료가 포함됩니다. 출금 불가",
-        "googlePayDesc": "Google Pay 수수료 ${{ amount }}가 포함됩니다. 출금 불가"
+        "googlePayDesc": "Google Pay 수수료 ${{ amount }}가 포함됩니다. 출금 불가",
+        "applePayFeeDesc": "Apple Pay 수수료가 포함됩니다. 인출 불가",
+        "googlePayFeeDesc": "Google Pay 수수료가 포함됩니다. 인출 불가"
       },
       "paymentAddressPopup": {
         "balance": "잔액",
@@ -1740,6 +1745,19 @@
       "addToWhitelist": "화이트리스트에 추가",
       "removeWhitelist": "화이트리스트에서 제거",
       "cancel": "취소"
+    },
+    "syncExtension": {
+      "scanTips2": "코드를 스캔하고 동기화를 시작하세요",
+      "syncingProgress": "스캔 중 ({{ percent }})",
+      "verifyWithPassword": "Rabby 확장 비밀번호로 확인하세요",
+      "syncingTips": "카메라가 스캔 완료될 때까지 안정적으로 유지하세요.",
+      "noNewAddr": "새로 가져올 주소가 없습니다.",
+      "scanTips1": "Rabby Extension에서 \"Rabby Mobile\"을 클릭하세요.",
+      "importedSuccessfully": "불러오기에 성공했습니다!",
+      "newUserVerify": "그것은 또한 귀하의 Rabby Mobile의 기본 비밀번호로 사용됩니다.",
+      "verifyTips": "귀하의 데이터는 오프라인에서 암호화됩니다. 복호화 및 확인을 위해 Rabby Extension 비밀번호를 입력하세요.",
+      "importedTips": "앱에 중복 주소가 이미 있는 경우, 가져오지 않습니다. 주소 노트 및 허용 목록도 동기화됩니다.",
+      "imported": "Rabby Mobile에 이미 있는 주소는 다시 가져오지 않습니다. 주소 노트와 화이트리스트는 자동으로 동기화됩니다."
     }
   },
   "global": {
@@ -1780,7 +1798,8 @@
       "option_Dark": "다크"
     },
     "Unknown": "알 수 없음",
-    "unlimited": "무제한"
+    "unlimited": "무제한",
+    "Addresses": "주소"
   },
   "native": {
     "biometrics": {

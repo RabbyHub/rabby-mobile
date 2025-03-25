@@ -23,7 +23,8 @@
       "CreateMnemonicBackup": "Copia de seguridad de la frase semilla",
       "AddressDetail": "Detalle de la dirección",
       "ImportMoreAddress": "Importar más direcciones",
-      "WatchAddressList": "Dirección Solo Ver"
+      "WatchAddressList": "Dirección Solo Ver",
+      "ConfrimAddress": "Confirma tu dirección"
     }
   },
   "native": {
@@ -180,7 +181,8 @@
     "getStart": {
       "alreadyHaveAddress": "Ya tengo una dirección",
       "createNewAddress": "Crear nueva dirección",
-      "goToHome": "Ir a Home"
+      "goToHome": "Ir a Home",
+      "sync": "Escanea para sincronizar la dirección de la extensión Rabby"
     },
     "transactions": {
       "explain": {
@@ -986,7 +988,8 @@
       "addAddress": {
         "createAddress": "Crear dirección",
         "hardwareWallet": "Cartera de Hardware",
-        "importAddress": "Importar dirección"
+        "importAddress": "Importar dirección",
+        "syncRabbyExtension": "Sincronizar la extensión Rabby"
       },
       "createNewAddress": {
         "Continue": "Continuar",
@@ -1736,7 +1739,9 @@
         "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento.",
         "paymentAddress": "Dirección de pago",
         "applePayDesc": "Incluye una tarifa de Apple Pay de ${{amount}}. No hay retiros",
-        "googlePayDesc": "Incluye una tarifa de Google Pay de ${{ amount }}. No hay retiros"
+        "googlePayDesc": "Incluye una tarifa de Google Pay de ${{ amount }}. No hay retiros",
+        "googlePayFeeDesc": "Incluye una tarifa de Google Pay. Sin retiros",
+        "applePayFeeDesc": "Incluye una tarifa de Apple Pay. Sin retiradas"
       },
       "paymentAddressPopup": {
         "confirm": "Confirmar",
@@ -1890,6 +1895,19 @@
       "confirm": "Confirmar",
       "addSuccessful": "Dirección añadida a la lista blanca",
       "removeWhitelist": "Eliminar de Whitelist"
+    },
+    "syncExtension": {
+      "verifyWithPassword": "Verifique con su contraseña de la extensión Rabby",
+      "syncingProgress": "Escaneando ({{ percent }})",
+      "importedSuccessfully": "¡Importado con éxito!",
+      "syncingTips": "Mantén la cámara estable hasta que se complete el escaneo",
+      "noNewAddr": "No se encontraron nuevas direcciones para importar",
+      "scanTips2": "Escanea el código y comienza a sincronizar",
+      "newUserVerify": "También servirá como la contraseña predeterminada para tu Rabby Mobile",
+      "scanTips1": "Haz clic en “Rabby Mobile” en Rabby Extension",
+      "imported": "Las direcciones que ya están en Rabby Mobile no se importarán de nuevo. Las notas de dirección y las listas blancas se sincronizarán automáticamente.",
+      "importedTips": "Si la APP ya tiene una dirección duplicada, no se importará. Las notas de dirección y las listas blancas también se sincronizarán.",
+      "verifyTips": "Tus datos están cifrados sin conexión. Introduce tu contraseña de la extensión Rabby para descifrar y verificar."
     }
   },
   "global": {
@@ -1930,7 +1948,8 @@
       "option_Dark": "Oscuro"
     },
     "Unknown": "Desconocido",
-    "unlimited": "ilimitado"
+    "unlimited": "ilimitado",
+    "Addresses": "Direcciones"
   },
   "bluetooth": {
     "powered_off_alert": {

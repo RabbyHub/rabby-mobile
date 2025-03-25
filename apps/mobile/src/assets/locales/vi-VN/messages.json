@@ -23,7 +23,8 @@
       "ImportMnemonic": "Nhập Seed Phrase",
       "RestoreFromCloud": "Khôi phục từ {{type}}",
       "CreateMnemonicBackup": "Sao lưu cụm từ hạt giống",
-      "CreateNewAddress": "1. Đặt Tên Địa Chỉ Của Bạn"
+      "CreateNewAddress": "1. Đặt Tên Địa Chỉ Của Bạn",
+      "ConfrimAddress": "Xác nhận Địa chỉ của Bạn"
     }
   },
   "native": {
@@ -79,7 +80,8 @@
       "option_Dark": "Tối"
     },
     "Unknown": "Không xác định",
-    "unlimited": "không giới hạn"
+    "unlimited": "không giới hạn",
+    "Addresses": "Địa chỉ"
   },
   "page": {
     "transactions": {
@@ -162,7 +164,8 @@
     "getStart": {
       "alreadyHaveAddress": "Tôi đã có một địa chỉ",
       "goToHome": "Đi đến Trang chủ",
-      "createNewAddress": "Tạo Địa Chỉ Mới"
+      "createNewAddress": "Tạo Địa Chỉ Mới",
+      "sync": "Quét để đồng bộ hóa địa chỉ Rabby Extension"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Nhập cụm từ khôi phục của bạn"
@@ -927,7 +930,8 @@
       "addAddress": {
         "hardwareWallet": "Ví phần cứng",
         "createAddress": "Tạo Address",
-        "importAddress": "Nhập Địa chỉ"
+        "importAddress": "Nhập Địa chỉ",
+        "syncRabbyExtension": "Đồng bộ tiện ích mở rộng Rabby"
       },
       "importAddress": {
         "safe": "An toàn",
@@ -1415,7 +1419,9 @@
         "desc": "Gửi tiền vào Tài khoản DeBank L2 của Rabby mà không mất phí—rút bất kỳ lúc nào.",
         "title": "Nạp tiền",
         "applePayDesc": "Bao gồm phí Apple Pay ${{amount}}. Không có rút tiền",
-        "googlePayDesc": "Bao gồm phí Google Pay ${{ amount }}. Không có quyền rút tiền"
+        "googlePayDesc": "Bao gồm phí Google Pay ${{ amount }}. Không có quyền rút tiền",
+        "applePayFeeDesc": "Bao gồm phí Apple Pay. Không cho phép rút tiền",
+        "googlePayFeeDesc": "Bao gồm phí Google Pay. Không có rút tiền"
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1795,6 +1801,19 @@
       "alreadyAdded": "Đã được thêm vào danh sách trắng của bạn",
       "removeWhitelist": "Xóa khỏi danh sách trắng",
       "confirmPassword": "Nhập Mật khẩu để Xác nhận"
+    },
+    "syncExtension": {
+      "importedSuccessfully": "Đã nhập thành công!",
+      "syncingProgress": "Đang quét ({{ percent }})",
+      "noNewAddr": "Không tìm thấy địa chỉ mới để nhập",
+      "verifyTips": "Dữ liệu của bạn được mã hóa ngoại tuyến. Nhập mật khẩu Rabby Extension của bạn để giải mã và xác minh.",
+      "verifyWithPassword": "Xác minh bằng Mật khẩu Tiện ích mở rộng Rabby của bạn",
+      "newUserVerify": "Nó cũng sẽ là mật khẩu mặc định cho Rabby Mobile của bạn",
+      "imported": "Các địa chỉ đã có trong Rabby Mobile sẽ không được nhập lại. Ghi chú địa chỉ và danh sách trắng sẽ được đồng bộ hóa tự động.",
+      "scanTips2": "Quét mã và bắt đầu đồng bộ hóa",
+      "scanTips1": "Nhấp vào \"Rabby Mobile\" trên Rabby Extension",
+      "syncingTips": "Giữ máy ảnh ổn định cho đến khi quét xong",
+      "importedTips": "Nếu trong ứng dụng đã có địa chỉ trùng lặp, nó sẽ không được nhập. Ghi chú địa chỉ và danh sách trắng cũng sẽ được đồng bộ hóa."
     }
   },
   "component": {

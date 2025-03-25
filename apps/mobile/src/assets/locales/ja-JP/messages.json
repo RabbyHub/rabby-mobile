@@ -23,7 +23,8 @@
       "ImportMnemonic": "シードフレーズをインポート",
       "SafeAddressList": "セーフアドレス",
       "SetPassword2024": "2. パスワードを設定する",
-      "ImportSafeAddress2024": "セーフアドレスを追加"
+      "ImportSafeAddress2024": "セーフアドレスを追加",
+      "ConfrimAddress": "アドレスを確認"
     }
   },
   "constant": {
@@ -82,7 +83,8 @@
     "getStart": {
       "goToHome": "ホームに移動",
       "alreadyHaveAddress": "既にアドレスを持っています。",
-      "createNewAddress": "新しいアドレスを作成"
+      "createNewAddress": "新しいアドレスを作成",
+      "sync": "Rabby Extension Addressを同期するためにスキャンする"
     },
     "transactions": {
       "explain": {
@@ -837,7 +839,8 @@
       "addAddress": {
         "importAddress": "アドレスをインポート",
         "createAddress": "アドレスを作成",
-        "hardwareWallet": "ハードウェアウォレット"
+        "hardwareWallet": "ハードウェアウォレット",
+        "syncRabbyExtension": "Rabby Extension を同期"
       },
       "createNewAddress": {
         "WriteDownSeedPhrase": "シードフレーズを書き留める",
@@ -1330,7 +1333,9 @@
         "title": "預け入れ",
         "desc": "追加料金なしでRabbyのDeBank L2アカウントに預け入れ—いつでも引き出し可能。",
         "applePayDesc": "${{amount}} Apple Pay手数料が含まれています。出金不可",
-        "googlePayDesc": "${{ amount }} の Google Pay 手数料が含まれています。引き出しはできません。"
+        "googlePayDesc": "${{ amount }} の Google Pay 手数料が含まれています。引き出しはできません。",
+        "applePayFeeDesc": "Apple Pay 手数料が含まれています。出金不可",
+        "googlePayFeeDesc": "Google Pay手数料が含まれています。出金不可"
       },
       "paymentAddressPopup": {
         "title": "支払いアドレスを選択",
@@ -1792,6 +1797,19 @@
       "removeWhitelist": "ホワイトリストから削除",
       "cancel": "キャンセル",
       "confirmPassword": "パスワードを入力して確認してください"
+    },
+    "syncExtension": {
+      "noNewAddr": "新しいアドレスは見つかりませんでしたインポートするために",
+      "syncingTips": "スキャンが完了するまでカメラを安定させてください",
+      "verifyWithPassword": "Rabby Extension Passwordで確認してください",
+      "scanTips1": "Rabby Extensionで「Rabby Mobile」をクリック",
+      "scanTips2": "コードをスキャンして同期を開始してください。",
+      "newUserVerify": "それはまた、あなたのRabby Mobileのデフォルトパスワードとして機能します。",
+      "imported": "Rabby Mobile に既にあるアドレスは再度インポートされません。アドレスノートとホワイトリストは自動的に同期されます。",
+      "syncingProgress": "スキャン中 ({{ percent }})",
+      "importedSuccessfully": "インポートが成功しました！",
+      "verifyTips": "データはオフラインで暗号化されています。Rabby Extension のパスワードを入力して復号化と検証を行ってください。",
+      "importedTips": "アプリに既に重複するアドレスがある場合、インポートされません。アドレスのメモとホワイトリストも同期されます。"
     }
   },
   "global": {
@@ -1832,7 +1850,8 @@
       "option_Light": "ライト"
     },
     "Unknown": "不明",
-    "unlimited": "無制限"
+    "unlimited": "無制限",
+    "Addresses": "アドレス"
   },
   "bluetooth": {
     "powered_off_alert": {

@@ -23,7 +23,8 @@
       "RestoreFromCloud": "从 {{type}} 恢复",
       "CreateNewAddress": "1. 给你的地址命名",
       "ImportSafeAddress2024": "添加 Safe 地址",
-      "SafeAddressList": "安全地址"
+      "SafeAddressList": "安全地址",
+      "ConfrimAddress": "确认您的地址"
     }
   },
   "native": {
@@ -79,7 +80,8 @@
       "option_Dark": "深色"
     },
     "Unknown": "未知",
-    "unlimited": "unlimited"
+    "unlimited": "unlimited",
+    "Addresses": "Addresses"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -171,7 +173,8 @@
     "getStart": {
       "alreadyHaveAddress": "我已经有一个地址",
       "goToHome": "前往首页",
-      "createNewAddress": "创建新地址"
+      "createNewAddress": "创建新地址",
+      "sync": "扫描以同步 Rabby 扩展地址"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
@@ -993,7 +996,8 @@
       "addAddress": {
         "importAddress": "导入地址",
         "createAddress": "创建地址",
-        "hardwareWallet": "硬件钱包"
+        "hardwareWallet": "硬件钱包",
+        "syncRabbyExtension": "同步 Rabby 扩展程序"
       }
     },
     "signText": {
@@ -1525,7 +1529,9 @@
         "inSufficientTip1": "该地址的代币不足，请选择一个不同的地址。",
         "followingTokenInSufficient": "以下代币余额不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
-        "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现"
+        "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
+        "applePayFeeDesc": "包含 Apple Pay 手续费。无法提现",
+        "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款"
       },
       "paymentAddressPopup": {
         "title": "选择 Payment 地址",
@@ -1804,6 +1810,19 @@
       "addSuccessful": "地址已添加到白名单",
       "removeWhitelist": "从白名单中移除",
       "alreadyAdded": "已添加到您的白名单"
+    },
+    "syncExtension": {
+      "noNewAddr": "未找到可导入的新地址",
+      "scanTips2": "扫描二维码并开始同步",
+      "imported": "在 Rabby Mobile 中已有的地址将不会再次导入。地址备注和白名单会自动同步。",
+      "syncingProgress": "扫描中（{{ percent }}）",
+      "importedSuccessfully": "导入成功！",
+      "syncingTips": "请保持相机稳定，直至扫描完成",
+      "newUserVerify": "它也将作为您 Rabby Mobile 的默认密码。",
+      "verifyWithPassword": "使用您的 Rabby Extension 密码进行验证",
+      "scanTips1": "在 Rabby 插件上点击“Rabby Mobile”",
+      "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
+      "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
     }
   },
   "component": {

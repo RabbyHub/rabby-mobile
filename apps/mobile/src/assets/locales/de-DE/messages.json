@@ -23,7 +23,8 @@
       "CreateSelectOnCurrentSeed": "2. Adresse hinzufügen",
       "ImportMoreAddress": "Weitere Adresse importieren",
       "SetPassword2024": "2. Passwort festlegen",
-      "ImportSuccess": "Erfolgreich hinzugefügt"
+      "ImportSuccess": "Erfolgreich hinzugefügt",
+      "ConfrimAddress": "Bestätigen Sie Ihre Adresse"
     }
   },
   "native": {
@@ -79,7 +80,8 @@
       "option_Light": "Licht"
     },
     "Unknown": "Unbekannt",
-    "unlimited": "unbegrenzt"
+    "unlimited": "unbegrenzt",
+    "Addresses": "Adressen"
   },
   "component": {
     "accountSwitcher": {
@@ -297,7 +299,8 @@
     "getStart": {
       "goToHome": "Gehe zu Home",
       "alreadyHaveAddress": "Ich habe bereits eine Adresse.",
-      "createNewAddress": "Neue Adresse erstellen"
+      "createNewAddress": "Neue Adresse erstellen",
+      "sync": "Scannen, um die Rabby Extension Adresse zu synchronisieren"
     },
     "importSuccess": {
       "addressCount": "{{count}} Adressen",
@@ -1027,7 +1030,8 @@
       "addAddress": {
         "importAddress": "Adresse importieren",
         "hardwareWallet": "Hardware Wallet",
-        "createAddress": "Adresse erstellen"
+        "createAddress": "Adresse erstellen",
+        "syncRabbyExtension": "Rabby-Erweiterung synchronisieren"
       },
       "createNewAddress": {
         "Continue": "Fortfahren",
@@ -1639,7 +1643,9 @@
         "invalidAmount": "Muss unter 500 sein",
         "desc": "Machen Sie eine Einzahlung auf Rabby's DeBank L2 Account ohne zusätzliche Gebühren – jederzeit abheben.",
         "applePayDesc": "Beinhaltet eine ${{amount}} Apple Pay-Gebühr. Keine Abhebungen",
-        "googlePayDesc": "Beinhaltet eine ${{ amount }} Google Pay-Gebühr. Keine Abhebungen"
+        "googlePayDesc": "Beinhaltet eine ${{ amount }} Google Pay-Gebühr. Keine Abhebungen",
+        "googlePayFeeDesc": "Enthält eine Google Pay-Gebühr. Keine Abhebungen",
+        "applePayFeeDesc": "Enthält eine Apple Pay Gebühr. Keine Abhebungen"
       },
       "paymentAddressPopup": {
         "title": "Zahlungsadresse auswählen",
@@ -1930,6 +1936,19 @@
       "alreadyAdded": "Bereits zur Whitelist hinzugefügt",
       "addSuccessful": "Adresse zur Whitelist hinzugefügt",
       "confirmPassword": "Geben Sie das Passwort ein, um zu bestätigen"
+    },
+    "syncExtension": {
+      "syncingProgress": "Scannen ({{ percent }})",
+      "importedSuccessfully": "Erfolgreich importiert!",
+      "scanTips1": "Klicken Sie auf „Rabby Mobile“ in der Rabby-Erweiterung",
+      "imported": "Adressen, die bereits in Rabby Mobile vorhanden sind, werden nicht erneut importiert. Adressnotizen und Whitelists werden automatisch synchronisiert.",
+      "verifyTips": "Ihre Daten werden offline verschlüsselt. Geben Sie Ihr Rabby Extension-Passwort ein, um zu entschlüsseln und zu verifizieren.",
+      "importedTips": "Wenn im APP bereits eine doppelte Adresse vorhanden ist, wird sie nicht importiert. Adressnotizen und Whitelists werden ebenfalls synchronisiert.",
+      "verifyWithPassword": "Überprüfen Sie mit Ihrem  \nRabby Extension-Password",
+      "newUserVerify": "Es wird auch als Standardpasswort für Ihr Rabby Mobile dienen.",
+      "noNewAddr": "Keine neuen Adressen zum Importieren gefunden",
+      "syncingTips": "Halten Sie die Kamera ruhig, bis der Scan abgeschlossen ist.",
+      "scanTips2": "Scannen Sie den Code und beginnen Sie mit der Synchronisierung"
     }
   },
   "constant": {

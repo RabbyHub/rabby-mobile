@@ -23,7 +23,8 @@
       "AddressDetail": "Детали адреса",
       "WatchAddressList": "Наблюдаемое-Only Адрес",
       "CreateSelectOnCurrentSeed": "2. Добавить адрес",
-      "BackupSeedPhrase": "Резервная копия Seed Phrase"
+      "BackupSeedPhrase": "Резервная копия Seed Phrase",
+      "ConfrimAddress": "Подтвердите ваш адрес"
     }
   },
   "native": {
@@ -79,13 +80,15 @@
       "option_Light": "Лёгкий"
     },
     "Unknown": "Неизвестный",
-    "unlimited": "неограниченный"
+    "unlimited": "неограниченный",
+    "Addresses": "Адреса"
   },
   "page": {
     "getStart": {
       "createNewAddress": "Создать новый адрес",
       "goToHome": "Перейти на главную",
-      "alreadyHaveAddress": "У меня уже есть адрес"
+      "alreadyHaveAddress": "У меня уже есть адрес",
+      "sync": "Отсканируйте для синхронизации адреса расширения Rabby"
     },
     "transactions": {
       "explain": {
@@ -984,7 +987,8 @@
       "addAddress": {
         "hardwareWallet": "Аппаратный кошелек",
         "createAddress": "Создать адрес",
-        "importAddress": "Импортировать адрес"
+        "importAddress": "Импортировать адрес",
+        "syncRabbyExtension": "Синхронизировать Rabby Extension"
       }
     },
     "newAddress": {
@@ -1592,7 +1596,9 @@
         "desc": "Сделайте депозит на аккаунт Rabby's DeBank L2 без дополнительных комиссий — снимайте средства в любое время.",
         "zeroInvalidAmount": "Сумма не может быть равна нулю",
         "applePayDesc": "Включает комиссию Apple Pay в размере ${{amount}}. Без снятия средств",
-        "googlePayDesc": "Включает комиссию Google Pay ${{ amount }}. Вывод средств не предусмотрен."
+        "googlePayDesc": "Включает комиссию Google Pay ${{ amount }}. Вывод средств не предусмотрен.",
+        "applePayFeeDesc": "Включает комиссию Apple Pay. Без снятий.",
+        "googlePayFeeDesc": "Включает комиссию Google Pay. Без выводов"
       },
       "paymentAddressPopup": {
         "address": "Платёжный адрес",
@@ -1795,6 +1801,19 @@
       "addSuccessful": "Адрес добавлен в белый список",
       "removeWhitelist": "Удалить из белого списка",
       "addToWhitelist": "Добавить в белый список"
+    },
+    "syncExtension": {
+      "importedTips": "Если в приложении уже есть дублирующий адрес, он не будет импортирован. Примечания к адресам и белые списки также будут синхронизированы.",
+      "imported": "Адреса, уже находящиеся в Rabby Mobile, не будут импортированы снова. Примечания к адресам и белые списки будут синхронизированы автоматически.",
+      "importedSuccessfully": "Импортировано успешно!",
+      "syncingProgress": "Сканирование ({{ percent }})",
+      "noNewAddr": "Не найдено новых адресов для импорта",
+      "scanTips1": "Нажмите «Rabby Mobile» в расширении Rabby",
+      "syncingTips": "Держите камеру неподвижно до завершения сканирования",
+      "scanTips2": "Отсканируйте код и начните синхронизацию",
+      "verifyWithPassword": "Проверьте с помощью вашего Rabby Extension Password",
+      "verifyTips": "Ваши данные зашифрованы офлайн. Введите пароль Rabby Extension, чтобы расшифровать и проверить.",
+      "newUserVerify": "Он также будет служить паролем по умолчанию для вашего Rabby Mobile."
     }
   },
   "component": {

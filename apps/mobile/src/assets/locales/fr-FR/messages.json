@@ -23,7 +23,8 @@
       "RestoreFromCloud": "Restaurer à partir de {{type}}",
       "CreateChooseBackup": "3. Choisissez une méthode de sauvegarde",
       "AddMnemonic": "Ajouter depuis la phrase mnémonique actuelle",
-      "ImportSuccess": "Ajouté avec succès"
+      "ImportSuccess": "Ajouté avec succès",
+      "ConfrimAddress": "Confirmez votre adresse"
     }
   },
   "constant": {
@@ -39,7 +40,8 @@
     "getStart": {
       "goToHome": "Accéder à l'accueil",
       "alreadyHaveAddress": "J'ai déjà une adresse",
-      "createNewAddress": "Créer une nouvelle adresse"
+      "createNewAddress": "Créer une nouvelle adresse",
+      "sync": "Scannez pour synchroniser l'adresse de l'extension Rabby"
     },
     "transactions": {
       "explain": {
@@ -115,7 +117,8 @@
       "Yesterday": "Hier",
       "ShowHiddenItems": "Afficher les transactions masquées",
       "ViewSmallItems": "Voir les transactions < $0,1",
-      "ShowAllTransactionsToast": "Transactions cachées affichées"
+      "ShowAllTransactionsToast": "Transactions cachées affichées",
+      "NotShowAllTransactionsToast": "Transactions cachées dissimulées"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -896,7 +899,8 @@
       "addAddress": {
         "createAddress": "Créer une adresse",
         "hardwareWallet": "Portefeuille matériel",
-        "importAddress": "Importer une adresse"
+        "importAddress": "Importer une adresse",
+        "syncRabbyExtension": "Synchroniser l'extension Rabby"
       },
       "createNewAddress": {
         "verificationFailed": "Échec de la vérification",
@@ -1446,7 +1450,9 @@
         "paymentAddress": "Adresse de paiement",
         "invalidAmount": "Doit être inférieur à 500",
         "googlePayDesc": "Inclut des frais Google Pay de ${{ amount }}. Aucun retrait",
-        "applePayDesc": "Comprend des frais Apple Pay de ${{amount}}. Aucun retrait"
+        "applePayDesc": "Comprend des frais Apple Pay de ${{amount}}. Aucun retrait",
+        "applePayFeeDesc": "Inclut des frais pour Apple Pay. Pas de retraits",
+        "googlePayFeeDesc": "Comprend des frais Google Pay. Aucun retrait."
       },
       "paymentAddressPopup": {
         "confirm": "Confirmer",
@@ -1748,6 +1754,19 @@
       "removeWhitelist": "Supprimer de la liste blanche",
       "cancel": "Annuler",
       "alreadyAdded": "Déjà ajouté à votre liste blanche"
+    },
+    "syncExtension": {
+      "syncingProgress": "Analyse ({{ percent }})",
+      "noNewAddr": "Aucune nouvelle adresse trouvée à importer",
+      "scanTips2": "Scannez le code et commencez à synchroniser",
+      "syncingTips": "Maintenez l'appareil photo stable jusqu'à la fin de la numérisation",
+      "importedSuccessfully": "Importé avec succès !",
+      "verifyWithPassword": "Vérifiez avec votre mot de passe Rabby Extension",
+      "newUserVerify": "Il servira également de mot de passe par défaut pour votre Rabby Mobile",
+      "scanTips1": "Cliquez sur \"Rabby Mobile\" sur l'extension Rabby",
+      "verifyTips": "Vos données sont chiffrées hors ligne. Entrez votre mot de passe de l'extension Rabby pour déchiffrer et vérifier.",
+      "imported": "Les adresses déjà présentes dans Rabby Mobile ne seront pas importées à nouveau. Les notes d'adresse et les listes blanches se synchroniseront automatiquement.",
+      "importedTips": "Si l'application a déjà une adresse en double, elle ne sera pas importée. Les notes d'adresse et les listes blanches se synchroniseront également."
     }
   },
   "native": {
@@ -1958,7 +1977,8 @@
       "option_Dark": "Sombre"
     },
     "Unknown": "Inconnu",
-    "unlimited": "illimité"
+    "unlimited": "illimité",
+    "Addresses": "Adresses"
   },
   "background": {
     "transactionWatcher": {
