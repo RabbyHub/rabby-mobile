@@ -5,14 +5,11 @@ import { keyringService } from '../services/shared';
 import { bindOneKeyEvents } from '@/utils/onekey';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { DEVICE } from '@onekeyfe/hd-core';
-import { atom, useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import React from 'react';
 
-export const oneKeyDevices = atom<SearchDevice[]>([]);
-
 export const useGlobalInitOneKey = () => {
-  const [, setDevices] = useAtom(oneKeyDevices);
+  const [, setDevices] = React.useState<SearchDevice[]>([]);
 
   React.useEffect(() => {
     HardwareBleSdk.on(DEVICE.CONNECT, payload => {

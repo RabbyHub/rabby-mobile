@@ -1,13 +1,11 @@
-import { useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import { apiOneKey } from '@/core/apis';
 import React from 'react';
-import { oneKeyDevices } from '@/core/apis/onekey';
 import { checkAndRequestAndroidBluetooth } from '@/utils/bluetoothPermissions';
 import { Platform } from 'react-native';
 
 export function useOneKeyImport() {
-  const [devices, setDevices] = useAtom(oneKeyDevices);
+  const [devices, setDevices] = React.useState<SearchDevice[]>([]);
   const [error, setError] = React.useState<string | number | undefined>();
 
   const startScan = React.useCallback(async () => {
