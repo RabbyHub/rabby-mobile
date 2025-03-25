@@ -20,6 +20,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import useDebounce from 'react-use/lib/useDebounce';
+import { formatTokenAmount } from '@/utils/number';
 
 const RABBY_FEE = '0.25%';
 
@@ -161,11 +162,13 @@ const BridgeShowMore = ({
               {lossImpactOpen && (
                 <View style={styles.impactTooltip}>
                   <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-payment')} {amount}
+                    {t('page.bridge.est-payment')}{' '}
+                    {formatTokenAmount(amount || '0')}
                     {getTokenSymbol(fromToken)} ≈ {data.fromUsd}
                   </Text>
                   <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-receiving')} {toAmount}
+                    {t('page.bridge.est-receiving')}{' '}
+                    {formatTokenAmount(toAmount || '0')}
                     {getTokenSymbol(toToken)} ≈ {data.toUsd}
                   </Text>
                   <Text style={styles.impactTooltipText}>
@@ -338,7 +341,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     opacity: 0.5,
   },
   impactTooltip: {
-    alignItems: 'flex-end',
+    // alignItems: 'flex-end',
     flexDirection: 'column',
     gap: 4,
     marginTop: 8,

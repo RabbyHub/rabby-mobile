@@ -105,7 +105,7 @@ export const ScannerScreen = () => {
             <Text style={currentCount > 0 ? styles.progress : styles.tips}>
               {currentCount > 0
                 ? t('page.syncExtension.syncingProgress', {
-                    percent: (currentCount * 100).toFixed(2) + '%',
+                    percent: (currentCount * 100).toFixed(0) + '%',
                   })
                 : t('page.syncExtension.scanTips1')}
             </Text>
