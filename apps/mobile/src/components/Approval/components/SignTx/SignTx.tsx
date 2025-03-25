@@ -1339,6 +1339,16 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           result.level === Level.FORBIDDEN) &&
         !processedRules.includes(result.id),
     );
+
+    const trueDanger = needProcess.some(
+      item =>
+        ['1016', '1019', '1020', '1021'].includes(item.id) &&
+        item.level === Level.DANGER,
+    );
+    if (trueDanger) {
+      return true;
+    }
+
     // if (hasForbidden) return true;
     if (needProcess.length > 0) {
       return !hasSafe;
