@@ -1234,10 +1234,8 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async syncExtensionData(vault: KeyringSerializedData[]) {
-    const NotSupportedKeyringTypes = [KEYRING_CLASS.WALLETCONNECT];
-
     // restore mnemonic keyring
-    vault = vault.map(item => {
+    const newVault = vault.map(item => {
       if (item.type === KEYRING_TYPE.HdKeyring) {
         return {
           ...item,
@@ -1250,50 +1248,8 @@ export class KeyringService extends RNEventEmitter {
       return item;
     });
 
-    const newKeyrings: KeyringInstance[] = await Promise.all(
-      Array.from(vault as any).map(
-        this._restoreKeyringByKeyringSerializedData.bind(this) as any,
-      ),
-    );
-
-    const getKeyringTypeAccounts = async (type: string) => {
-      const keyrings = this.getKeyringsByType(type);
-      const _accounts = (
-        await Promise.all(
-          keyrings.map(async keyring =>
-            this.displayForKeyring(keyring)?.then(
-              displayKeyring => displayKeyring.accounts,
-            ),
-          ),
-        )
-      )?.flat();
-
-      return _accounts;
-    };
-
-    const allAccounts: Record<string, DisplayedKeyring['accounts']> = {};
-
-    const keyRingTypeArr: string[] = [];
-    newKeyrings.forEach(e => {
-      if (
-        !keyRingTypeArr.includes(e.type) &&
-        !NotSupportedKeyringTypes.includes(e.type as KEYRING_TYPE)
-      ) {
-        keyRingTypeArr.push(e.type);
-      }
-    });
-
-    await Promise.all(
-      keyRingTypeArr.map(e =>
-        getKeyringTypeAccounts(e).then(accounts => {
-          allAccounts[e] = accounts;
-        }),
-      ),
-    );
-
-    const addedAccounts: DisplayedKeyring['accounts'] = [];
-
     let oldKeyringSerializedData: KeyringSerializedData[] = [];
+
     if (this.#password !== undefined) {
       const encryptedVault = this.store.getState().vault;
       if (!encryptedVault) {
@@ -1306,37 +1262,47 @@ export class KeyringService extends RNEventEmitter {
       );
     }
 
-    await Promise.all(
-      newKeyrings
-        .filter(e => !NotSupportedKeyringTypes.includes(e.type as KEYRING_TYPE))
-        .map(keyring =>
-          this.displayForKeyring(keyring).then(newDisplayKeyring => {
-            const newAccounts = newDisplayKeyring.accounts;
+    const allAccounts = await this.getAllVisibleAccountsArray();
 
-            newAccounts?.forEach(newAccount => {
-              const newAccountExist = allAccounts?.[keyring.type]?.some(
-                existAddr =>
-                  newAccount?.address?.toLowerCase() ===
-                  existAddr?.address?.toLowerCase(),
-              );
+    const addedAccounts: DisplayedKeyring['accounts'] = [];
 
-              if (!newAccountExist && newAccounts.length) {
-                addedAccounts.push({
-                  ...newAccount,
-                  type: keyring.type as KEYRING_TYPE,
-                });
-              }
-            });
-          }),
-        ),
+    const newKeyrings: KeyringInstance[] = await Promise.all(
+      Array.from(newVault as any).map(
+        this._restoreKeyringByKeyringSerializedData.bind(this) as any,
+      ),
     );
 
-    const mergeKeyringSerializedData = mergeVault(
-      oldKeyringSerializedData,
-      vault,
+    await Promise.all(
+      newKeyrings.map(keyring =>
+        this.displayForKeyring(keyring).then(newDisplayKeyring => {
+          const newAccounts = newDisplayKeyring.accounts;
+
+          newAccounts?.forEach(newAccount => {
+            const newAccountExist = allAccounts?.some(
+              existAddr =>
+                newAccount?.address?.toLowerCase() ===
+                  existAddr?.address?.toLowerCase() &&
+                keyring.type === (existAddr.type || existAddr.brandName),
+            );
+
+            if (!newAccountExist && newAccounts.length) {
+              addedAccounts.push({
+                ...newAccount,
+                type: keyring.type as KEYRING_TYPE,
+              });
+            }
+          });
+        }),
+      ),
     );
 
     await this.clearKeyrings();
+
+    const mergeKeyringSerializedData = mergeVault(
+      oldKeyringSerializedData,
+      newVault,
+    );
+
     await Promise.all(
       Array.from(mergeKeyringSerializedData).map(
         this._restoreKeyring.bind(this) as any,

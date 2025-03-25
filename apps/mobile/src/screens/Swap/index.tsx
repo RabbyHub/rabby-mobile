@@ -713,7 +713,6 @@ const Swap = ({
             !!receiveToken && (
               <View
                 style={{
-                  marginTop: 32,
                   marginHorizontal: -24,
                 }}>
                 <BridgeShowMore

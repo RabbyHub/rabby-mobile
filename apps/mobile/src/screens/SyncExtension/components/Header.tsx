@@ -36,7 +36,7 @@ export const SyncExtensionHeader = ({
   return (
     <View>
       <IconPhone style={styles.logoBox} />
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title]}>{title}</Text>
       <Text style={styles.tips}>{tips}</Text>
     </View>
   );

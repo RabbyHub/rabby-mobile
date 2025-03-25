@@ -323,7 +323,7 @@ export const RecommendFromToken = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: { marginHorizontal: 24 },
+  container: { marginHorizontal: 24, marginTop: 32 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

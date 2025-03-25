@@ -1747,7 +1747,7 @@
     },
     "syncExtension": {
       "newUserVerify": "It will also serve as the default password for your Rabby Mobile",
-      "verifyWithPassword": "Verify with your Rabby Extension Password",
+      "verifyWithPassword": "Verify with your \nRabby Extension Password",
       "verifyTips": "Your data is encrypted offline. Enter your Rabby Extension password to decrypt and verify.",
       "imported": "Addresses already in Rabby Mobile won’t be imported again. Address notes and whitelists will sync automatically.",
       "importedTips": "If the APP already has a duplicate address, it will not be imported.Address notes and whitelists will sync as well.",
