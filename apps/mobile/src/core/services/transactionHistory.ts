@@ -185,7 +185,7 @@ export class TransactionHistoryService {
     if (!this.store.isNeedFetchTxHistory[address]) {
       setTimeout(() => {
         this.store.isNeedFetchTxHistory[address] = true;
-      }, 1000);
+      }, 5000);
     }
   }
 

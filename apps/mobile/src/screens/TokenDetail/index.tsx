@@ -336,7 +336,7 @@ export const TokenDetailScreen = () => {
         ...abstractTokenToTokenItem(token),
         usd_value: res?.usd_value,
         price: res?.price,
-        amount: res?.amount,
+        // amount: res?.amount,
       });
     },
     {

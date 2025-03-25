@@ -88,13 +88,13 @@ export const formatTokenDateCurve = (
   }
 
   const startData = {
-    value: list[0].price || 0,
+    value: list[0].price * amount || 0,
     timestamp: dayjs(list[0].timestamp).valueOf(),
   };
 
   const result =
     list.map(item => {
-      const change = item.price - startData.value;
+      const change = item.price * amount - startData.value;
 
       return {
         value: item.price * amount || 0,
