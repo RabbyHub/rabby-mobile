@@ -231,6 +231,7 @@ export const SyncExtensionPasswordScreen = () => {
                     borderColor: 'transparent',
                   },
             )}
+            iconColor={colors2024['neutral-title-1']}
             inputProps={{
               value: password,
               secureTextEntry: true,
