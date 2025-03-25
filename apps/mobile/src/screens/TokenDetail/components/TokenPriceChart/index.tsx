@@ -35,13 +35,15 @@ const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
 const winInfo = Dimensions.get('window');
 
 interface Props {
+  originToken: AbstractPortfolioToken | CombineTokensItem;
   token: AbstractPortfolioToken | CombineTokensItem;
   finalAccount?: KeyringAccountWithAlias;
   amountList: TokenFromAddressItem[];
   isSingleAddress?: boolean;
 }
 export function TokenPriceChart(props: Props) {
-  const { token, isSingleAddress, amountList, finalAccount } = props;
+  const { token, originToken, isSingleAddress, amountList, finalAccount } =
+    props;
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -53,19 +55,19 @@ export function TokenPriceChart(props: Props) {
     // amountList.map((item, index) => {
     //   sum = sum + item.amount;
     // });
-    if ('totalAmount' in token && !isSingleAddress) {
-      return token.totalAmount as unknown as number;
+    if ('totalAmount' in originToken && !isSingleAddress) {
+      return originToken.totalAmount as unknown as number;
     } else {
       const currentAddress = finalAccount?.address;
-      if ('fromAddress' in token && currentAddress) {
-        const tokenAmount = token.fromAddress.find(
+      if ('fromAddress' in originToken && currentAddress) {
+        const tokenAmount = originToken.fromAddress.find(
           item => item.address === currentAddress,
         );
-        return tokenAmount?.amount ?? token.amount;
+        return tokenAmount?.amount ?? originToken.amount;
       }
-      return token.amount;
+      return originToken.amount;
     }
-  }, [token, isSingleAddress, finalAccount]);
+  }, [originToken, isSingleAddress, finalAccount]);
 
   const amount = useMemo(
     () => (priceType === 'holding' ? amountSum : 1),

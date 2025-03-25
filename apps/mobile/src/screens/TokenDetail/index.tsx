@@ -563,6 +563,7 @@ export const TokenDetailScreen = () => {
           {/* <Text style={styles.currentText}>Current price</Text> */}
           <TokenPriceChart
             token={tokenWithAmount || token}
+            originToken={token}
             finalAccount={finalAccount}
             amountList={tokenFromAddress}
             isSingleAddress={isSingleAddress}
