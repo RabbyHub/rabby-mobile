@@ -1184,7 +1184,7 @@
         "enableBiometricAlert": {
           "title": "Enable {{ bioType }}",
           "content": "Do you want to enable {{ bioType }} to Unlock Rabby Wallet？",
-          "no": "No",
+          "no": "Cancel",
           "yes": "Yes"
         }
       }
