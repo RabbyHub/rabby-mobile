@@ -21,7 +21,7 @@ import type {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import type { ContactBookService } from '@rabby-wallet/service-address';
-import { deepmerge, deepmergeCustom } from 'deepmerge-ts';
+import { deepmergeCustom } from 'deepmerge-ts';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
 import * as bip39 from 'react-native-quick-bip39';
@@ -1425,12 +1425,13 @@ function mergeVault(
     } else {
       const targetIdx = newData.findIndex(old => old.type === item.type);
       if (targetIdx > -1) {
-        newData[targetIdx] = deepmerge(newData[targetIdx], item);
+        newData[targetIdx] = customDeepmerge(newData[targetIdx], item);
       } else {
         newData.push(item);
       }
     }
   });
+
   return newData;
 }
 /* eslint-enable jsdoc/check-tag-names */

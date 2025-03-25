@@ -21,6 +21,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { usePinAddresses } from '@/hooks/account';
 import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import useAsync from 'react-use/lib/useAsync';
+import { NoNewAddressesModal } from './components/NoNewAddresses';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
@@ -43,9 +44,12 @@ export const SyncExtensionPasswordScreen = () => {
 
   const { togglePinAddressAsync } = usePinAddresses();
 
+  const [noAddrVisible, setNoAddrVisible] = useState(false);
+
   useEffect(() => {
     return () => {
       clear();
+      setNoAddrVisible(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -129,6 +133,7 @@ export const SyncExtensionPasswordScreen = () => {
       navigation.replace(RootNames.Scanner, { syncExtension: true });
       return;
     }
+
     setLoading(true);
 
     try {
@@ -188,7 +193,7 @@ export const SyncExtensionPasswordScreen = () => {
           ],
         });
       } else {
-        throw Error('not found more new Addresses');
+        setNoAddrVisible(true);
       }
     } catch (error) {
       setError(String(error));
@@ -272,6 +277,11 @@ export const SyncExtensionPasswordScreen = () => {
           ) : null}
         </View>
       </TouchableWithoutFeedback>
+      <NoNewAddressesModal
+        onCancel={() => setNoAddrVisible(false)}
+        onConfirm={() => setNoAddrVisible(false)}
+        visible={noAddrVisible}
+      />
     </FooterButtonScreenContainer>
   );
 };

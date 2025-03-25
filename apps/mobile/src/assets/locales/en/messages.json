@@ -1755,7 +1755,8 @@
       "scanTips1": "Click “Rabby Mobile” on Rabby Extension",
       "scanTips2": "Scan the code and start syncing",
       "syncingProgress": "Scanning ({{ percent }})",
-      "syncingTips": "Keep the camera steady until the scan is complete"
+      "syncingTips": "Keep the camera steady until the scan is complete",
+      "noNewAddr": "No new addresses found to import"
     }
   },
   "component": {
