@@ -19,6 +19,7 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
+  CompositeScreenProps,
   StackActions,
   useIsFocused,
   useNavigation,
@@ -72,10 +73,19 @@ import { useSwapRecentToTokens } from './hooks/recent';
 import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
-import { TransactionNavigatorParamList } from '@/navigation-type';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { TokenInfoPopup } from './components/TokenInfoPopup';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 const isAndroid = Platform.OS === 'android';
+
+type SwapRouteProps = CompositeScreenProps<
+  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
 const Swap = ({
   isForMultipleAdderss = false,
@@ -227,6 +237,8 @@ const Swap = ({
     });
   });
 
+  const navigation = useNavigation<SwapRouteProps['navigation']>();
+
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
@@ -258,21 +270,21 @@ const Swap = ({
             id: navState?.tokenId,
           });
         }
+
+        navigation.setParams({
+          ...navState,
+          isSwapToTokenDetail: false,
+        });
+
         return;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    // chain,
     navState?.chainEnum,
     navState?.isSwapToTokenDetail,
     navState?.tokenId,
     navState?.type,
-    // payToken,
-    // receiveToken,
-    // setPayToken,
-    // setReceiveToken,
-    // switchChain,
   ]);
 
   const btnText = useMemo(() => {
@@ -448,8 +460,6 @@ const Swap = ({
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
     [payToken],
   );
-
-  const navigation = useNavigation();
 
   const lowCreditInit = useRef(false);
 
