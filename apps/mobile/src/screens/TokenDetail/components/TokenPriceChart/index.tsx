@@ -5,7 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   SharedValue,
   useAnimatedStyle,
@@ -22,6 +22,11 @@ import {
   use24hCurveData,
   useDateCurveData,
 } from './useCurve';
+import { ThemeColors2024 } from '@/constant/theme';
+import { TokenFromAddressItem } from '../..';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { CombineTokensItem } from '@/screens/Home/hooks/store';
+import { useTranslation } from 'react-i18next';
 
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
@@ -30,18 +35,50 @@ const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
 const winInfo = Dimensions.get('window');
 
 interface Props {
-  token: AbstractPortfolioToken;
+  originToken: AbstractPortfolioToken | CombineTokensItem;
+  token: AbstractPortfolioToken | CombineTokensItem;
+  finalAccount?: KeyringAccountWithAlias;
+  amountList: TokenFromAddressItem[];
+  isSingleAddress?: boolean;
 }
 export function TokenPriceChart(props: Props) {
-  const { token } = props;
+  const { token, originToken, isSingleAddress, amountList, finalAccount } =
+    props;
   const { colors2024, styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
+  const [priceType, setPriceType] = useState<'price' | 'holding'>('price');
   const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
   const [ready, setReady] = useState(false);
+  const amountSum = useMemo(() => {
+    // let sum = 0;
+    // amountList.map((item, index) => {
+    //   sum = sum + item.amount;
+    // });
+    if ('totalAmount' in originToken && !isSingleAddress) {
+      return originToken.totalAmount as unknown as number;
+    } else {
+      const currentAddress = finalAccount?.address;
+      if ('fromAddress' in originToken && currentAddress) {
+        const tokenAmount = originToken.fromAddress.find(
+          item => item.address === currentAddress,
+        );
+        return tokenAmount?.amount ?? originToken.amount;
+      }
+      return originToken.amount;
+    }
+  }, [originToken, isSingleAddress, finalAccount]);
+
+  const amount = useMemo(
+    () => (priceType === 'holding' ? amountSum : 1),
+    [priceType, amountSum],
+  );
+
   const { data: realTimeData, loading: curveLoading } = use24hCurveData({
     tokenId: token._tokenId,
     serverId: token.chain,
     days: activeKey === '24h' ? 1 : 7,
+    amount,
   });
   const { data: dateCurveData, loading: timeMachineLoading } = useDateCurveData(
     {
@@ -58,11 +95,15 @@ export function TokenPriceChart(props: Props) {
     >;
     TIME_TAB_LIST.forEach(e => {
       if (!isRealTimeKey(e.key) && dateCurveData) {
-        result[e.key] = formatTokenDateCurve(e.value, dateCurveData as any);
+        result[e.key] = formatTokenDateCurve(
+          e.value,
+          dateCurveData as any,
+          amount,
+        );
       }
     });
     return result;
-  }, [dateCurveData]);
+  }, [dateCurveData, amount]);
 
   const data = useMemo(() => {
     if (isRealTimeKey(activeKey)) {
@@ -104,22 +145,67 @@ export function TokenPriceChart(props: Props) {
     : colors2024['red-default'];
 
   const currentInfo = useMemo(() => {
+    const price =
+      priceType === 'holding' ? token.price * amountSum : token.price;
     return {
       date: dayjs().format(DATE_FORMATTER),
-      balance: '$' + formatPrice(token.price || 0, 8),
+      balance: '$' + formatPrice(price || 0, 8),
       isLoss: !!data?.isLoss,
       percent: percent,
     };
-  }, [data?.isLoss, percent, token.price]);
+  }, [data?.isLoss, percent, token.price, amountSum, priceType]);
 
   const curve24hXOffset = useSharedValue(0);
   const timeMachineXOffset = useSharedValue(0);
 
   return (
     <View>
+      <View style={styles.flexWrap}>
+        {Boolean(amountList.length) && (
+          <View style={styles.priceTabWrapper}>
+            <TouchableOpacity
+              onPress={() => {
+                setPriceType('price');
+              }}>
+              <View
+                style={[
+                  styles.item,
+                  priceType === 'price' ? styles.itemActive : null,
+                ]}>
+                <Text
+                  style={[
+                    styles.itemText,
+                    priceType === 'price' ? styles.activeText : null,
+                  ]}>
+                  {t('page.tokenDetail.Price')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setPriceType('holding');
+              }}>
+              <View
+                style={[
+                  styles.item,
+                  priceType === 'holding' ? styles.itemActive : null,
+                ]}>
+                <Text
+                  style={[
+                    styles.itemText,
+                    priceType === 'holding' ? styles.activeText : null,
+                  ]}>
+                  {t('page.tokenDetail.HoldingValue')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
       {TIME_TAB_LIST.map(e => (
         <View key={e.key} style={activeKey !== e.key && styles.hidden}>
           <Chart
+            amount={priceType === 'holding' ? amountSum : 1}
             isOffline={false}
             data={
               (isRealTimeKey(e.key)
@@ -155,10 +241,12 @@ function Chart({
   activeKey,
   currentInfo,
   isOffline,
+  amount,
   loading,
   pathColor,
   xOffset,
 }: {
+  amount: number;
   isOffline: boolean;
   data: CurvePoint[];
   activeKey: TabKey;
@@ -269,7 +357,7 @@ const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
 
   return <Animated.View style={styles} />;
 };
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chart: {
     position: 'relative',
     marginHorizontal: 16,
@@ -303,5 +391,51 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   empty: {
     height: 115,
+  },
+  item: {
+    flexShrink: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    // borderRadius: 120,
+  },
+  flexWrap: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  itemText: {
+    flexShrink: 1,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  activeText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
+  },
+  itemActive: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-4'],
+    borderRadius: 120,
+  },
+  priceTabWrapper: {
+    flexShrink: 1,
+    // flexBasis: 0,
+    gap: 2,
+    // width: 'auto',
+    marginLeft: 20,
+    borderRadius: 120,
+    marginBottom: 8,
+    flexDirection: 'row',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    // justifyContent: 'space-between',
+    alignItems: 'center',
   },
 }));

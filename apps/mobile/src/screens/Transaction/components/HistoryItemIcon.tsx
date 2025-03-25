@@ -13,7 +13,6 @@ import RcIconContract from '@/assets2024/icons/history/IconContract.svg';
 import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
 import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
 import RcIconCancelDark from '@/assets2024/icons/history/IconCancelDark.svg';
-import FastImage from 'react-native-fast-image';
 import {
   Image,
   ImageStyle,
@@ -128,6 +127,9 @@ export const HistoryItemIcon = ({
 
   // if (iconUri) {
   switch (type) {
+    case HistoryItemCateType.GAS_WITHDRAW:
+    case HistoryItemCateType.GAS_RECEIVED:
+    case HistoryItemCateType.GAS_DEPOSIT:
     case HistoryItemCateType.Send:
     case HistoryItemCateType.Approve:
     case HistoryItemCateType.Revoke:

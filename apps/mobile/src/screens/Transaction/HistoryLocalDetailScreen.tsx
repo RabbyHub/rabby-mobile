@@ -51,7 +51,6 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { CANCEL_TX_TYPE, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '../TransactionRecord/components/TransactionItem2025';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { apiCustomTestnet, apiProvider } from '@/core/apis';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -75,6 +74,7 @@ import { Send } from './components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { findAccountByPriority } from '@/utils/account';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =

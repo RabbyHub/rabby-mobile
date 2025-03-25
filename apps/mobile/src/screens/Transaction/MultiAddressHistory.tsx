@@ -59,8 +59,8 @@ import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
-import { HistoryItemCateType } from './components/HistoryItemIcon';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
+import { HistoryItemCateType } from './components/type';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
@@ -151,11 +151,7 @@ function History({
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const [localHistoryList, _historyList, buyList] = await Promise.all([
-        LocalHistoryItemEntity.getAllHistoryItemSortedByTime(
-          addresses,
-          isFirst ? 20 : 10000,
-        ),
+      const [historyList, buyList] = await Promise.all([
         HistoryItemEntity.getAllHistoryItemSortedByTime(
           addresses,
           isFirst ? 50 : 10000,
@@ -164,10 +160,10 @@ function History({
         BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
       ]);
 
-      const historyList: HistoryItemEntity[] = unionBy(
-        localHistoryList.concat(_historyList),
-        item => item._db_id,
-      );
+      // const historyList: HistoryItemEntity[] = unionBy(
+      //   localHistoryList.concat(_historyList),
+      //   item => item._db_id,
+      // );
 
       if (isFirst) {
         setCurrentNoDbData(historyList.length === 0);
