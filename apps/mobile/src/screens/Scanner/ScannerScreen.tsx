@@ -42,6 +42,8 @@ export const ScannerScreen = () => {
 
   const isSyncExtensionScanned = useRef(false);
 
+  const count = useRef(0);
+
   const handleCodeScanned = React.useCallback(
     (data: Code[]) => {
       if (navState?.syncExtension) {
@@ -49,9 +51,13 @@ export const ScannerScreen = () => {
         if (value && value.startsWith('ur:')) {
           try {
             decoder.receivePart(value);
-            setCurrentCount(decoder.estimatedPercentComplete());
+            if (count.current % 3 === 0) {
+              setCurrentCount(decoder.estimatedPercentComplete());
+            }
+            count.current++;
 
             if (decoder.isComplete()) {
+              count.current = 0;
               isSyncExtensionScanned.current = true;
               const ur = decoder.resultUR();
               const result = strFromU8(gunzipSync(Uint8Array.from(ur.cbor)));
