@@ -35,9 +35,9 @@ import { RevokeNFTBtn } from './components/RevokeNFTBtn';
 import { formatIntlTimestamp } from '@/utils/time';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { formatAmount } from '@/utils/number';
 import { HistoryItemCateType } from '../type';
+import { findAccountByPriority } from '@/utils/account';
 
 interface Props {
   data: TransactionGroup;

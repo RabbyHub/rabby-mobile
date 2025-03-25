@@ -31,25 +31,18 @@ type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
-  onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export type TokenChangeDataItem = {
   amount: number;
-  token: TokenItem;
+  token?: TokenItem;
   token_id: string;
   price?: number;
   type: 'send' | 'receive' | 'approve';
 };
 
 export const HistoryItem = React.memo(
-  ({
-    data,
-    tokenDict,
-    style,
-    onPress,
-    isForMultipleAdderss,
-  }: HistoryItemProps) => {
+  ({ data, tokenDict, style, isForMultipleAdderss }: HistoryItemProps) => {
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
@@ -84,6 +77,14 @@ export const HistoryItem = React.memo(
 
     const formatTitle = useMemo(() => {
       switch (formatType) {
+        case HistoryItemCateType.GAS_DEPOSIT:
+          return t('page.transactions.itemTitle.DepositedGas');
+        case HistoryItemCateType.GAS_RECEIVED:
+          return t('page.transactions.itemTitle.ReceivedGas');
+
+        case HistoryItemCateType.GAS_WITHDRAW:
+          return t('page.transactions.itemTitle.WithdrawnGas');
+
         case HistoryItemCateType.Swap:
           return t('page.transactions.itemTitle.Swap');
 
@@ -126,16 +127,29 @@ export const HistoryItem = React.memo(
       const FromText = t('page.swap.from') + ' ';
       const ToText = t('page.swap.to') + ' ';
       let address = '';
+      const project = data.project_id
+        ? data.projectDict[data.project_id]
+        : null;
       switch (formatType) {
+        case HistoryItemCateType.GAS_RECEIVED:
+        case HistoryItemCateType.GAS_WITHDRAW:
+          address = FromText + t('page.home.services.gasAccount');
+          break;
+        case HistoryItemCateType.GAS_DEPOSIT:
+          address = ToText + t('page.home.services.gasAccount');
+          break;
+
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
           const isSend = formatType === HistoryItemCateType.Send;
           const addr = isSend
             ? data.sends[0].to_addr
             : data.receives[0].from_addr;
-          address =
-            (isSend ? ToText : FromText) +
-            (getAliasName(addr) || ellipsisAddress(addr));
+
+          const name = project
+            ? project.name
+            : getAliasName(addr) || ellipsisAddress(addr);
+          address = (isSend ? ToText : FromText) + name;
           break;
 
         case HistoryItemCateType.Buy:
@@ -149,9 +163,6 @@ export const HistoryItem = React.memo(
         case HistoryItemCateType.Approve:
         case HistoryItemCateType.Swap:
         default:
-          const project = data.project_id
-            ? data.projectDict[data.project_id]
-            : null;
           address = project?.name || ellipsisAddress(data.tx?.to_addr || '');
           break;
       }
@@ -170,10 +181,6 @@ export const HistoryItem = React.memo(
 
     const navigation = useRabbyAppNavigation();
     const handleNavigateDetail = useCallback(() => {
-      if (onPress) {
-        onPress(data);
-        return;
-      }
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
@@ -182,7 +189,7 @@ export const HistoryItem = React.memo(
           title: formatTitle,
         },
       });
-    }, [onPress, navigation, isForMultipleAdderss, data, formatTitle]);
+    }, [navigation, isForMultipleAdderss, data, formatTitle]);
 
     const noNeedTokenChangeType = useMemo(
       () =>
@@ -205,7 +212,7 @@ export const HistoryItem = React.memo(
             token,
             token_id: tokenId,
             price: item.price as number,
-            type: 'receive',
+            type: 'receive' as TokenChangeDataItem['type'],
           };
         })
         .sort((a, b) => {
@@ -225,7 +232,7 @@ export const HistoryItem = React.memo(
             token,
             token_id: tokenId,
             price: item.price as number,
-            type: 'send',
+            type: 'send' as TokenChangeDataItem['type'],
           };
         })
         .sort((a, b) => {

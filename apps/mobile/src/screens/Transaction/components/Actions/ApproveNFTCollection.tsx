@@ -37,7 +37,7 @@ import { RevokeNFTCollectionBtn } from './components/RevokeNFTCollectionBtn';
 import { formatIntlTimestamp } from '@/utils/time';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '@/screens/TransactionRecord/components/TransactionItem2025';
+import { findAccountByPriority } from '@/utils/account';
 import { formatAmount } from '@/utils/number';
 
 interface Props {

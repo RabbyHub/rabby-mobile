@@ -42,7 +42,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
-    taskFor: `token`,
+    taskFor: 'token',
     batchSize: 300,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
@@ -66,12 +66,14 @@ export async function syncRemoteHistory(
   try {
     console.debug('syncRemoteHistory history_list.length', history_list.length);
 
-    const historyItems = history_list.map(raw => {
-      const item = new HistoryItemEntity();
-      HistoryItemEntity.fillEntity(item, address, raw);
+    const historyItems = history_list
+      .filter(i => Boolean(i.tx))
+      .map(raw => {
+        const item = new HistoryItemEntity();
+        HistoryItemEntity.fillEntity(item, address, raw);
 
-      return item;
-    });
+        return item;
+      });
     await prepareAppDataSource();
     // // leave here for debug save
     // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
@@ -208,7 +210,7 @@ export async function syncRemotePortocols(
   await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
     owner_addr: address,
-    taskFor: `protocols`,
+    taskFor: 'protocols',
     batchSize: 200,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
@@ -313,7 +315,7 @@ export async function syncBalance(
   await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
-    taskFor: `balance`,
+    taskFor: 'balance',
     batchSize: 100,
     concurrency: 1,
   })
