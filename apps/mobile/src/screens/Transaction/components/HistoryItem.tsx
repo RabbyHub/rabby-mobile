@@ -31,7 +31,6 @@ type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
-  onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export type TokenChangeDataItem = {
@@ -43,13 +42,7 @@ export type TokenChangeDataItem = {
 };
 
 export const HistoryItem = React.memo(
-  ({
-    data,
-    tokenDict,
-    style,
-    onPress,
-    isForMultipleAdderss,
-  }: HistoryItemProps) => {
+  ({ data, tokenDict, style, isForMultipleAdderss }: HistoryItemProps) => {
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
@@ -188,10 +181,6 @@ export const HistoryItem = React.memo(
 
     const navigation = useRabbyAppNavigation();
     const handleNavigateDetail = useCallback(() => {
-      if (onPress) {
-        onPress(data);
-        return;
-      }
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
@@ -200,7 +189,7 @@ export const HistoryItem = React.memo(
           title: formatTitle,
         },
       });
-    }, [onPress, navigation, isForMultipleAdderss, data, formatTitle]);
+    }, [navigation, isForMultipleAdderss, data, formatTitle]);
 
     const noNeedTokenChangeType = useMemo(
       () =>

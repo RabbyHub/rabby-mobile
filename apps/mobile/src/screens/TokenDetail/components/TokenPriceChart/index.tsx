@@ -67,11 +67,16 @@ export function TokenPriceChart(props: Props) {
     }
   }, [token, isSingleAddress, finalAccount]);
 
+  const amount = useMemo(
+    () => (priceType === 'holding' ? amountSum : 1),
+    [priceType, amountSum],
+  );
+
   const { data: realTimeData, loading: curveLoading } = use24hCurveData({
     tokenId: token._tokenId,
     serverId: token.chain,
     days: activeKey === '24h' ? 1 : 7,
-    amount: priceType === 'holding' ? amountSum : 1,
+    amount,
   });
   const { data: dateCurveData, loading: timeMachineLoading } = useDateCurveData(
     {
@@ -88,7 +93,6 @@ export function TokenPriceChart(props: Props) {
     >;
     TIME_TAB_LIST.forEach(e => {
       if (!isRealTimeKey(e.key) && dateCurveData) {
-        const amount = priceType === 'holding' ? amountSum : 1;
         result[e.key] = formatTokenDateCurve(
           e.value,
           dateCurveData as any,
@@ -97,7 +101,7 @@ export function TokenPriceChart(props: Props) {
       }
     });
     return result;
-  }, [dateCurveData, amountSum, priceType]);
+  }, [dateCurveData, amount]);
 
   const data = useMemo(() => {
     if (isRealTimeKey(activeKey)) {
@@ -199,6 +203,7 @@ export function TokenPriceChart(props: Props) {
       {TIME_TAB_LIST.map(e => (
         <View key={e.key} style={activeKey !== e.key && styles.hidden}>
           <Chart
+            amount={priceType === 'holding' ? amountSum : 1}
             isOffline={false}
             data={
               (isRealTimeKey(e.key)
@@ -234,10 +239,12 @@ function Chart({
   activeKey,
   currentInfo,
   isOffline,
+  amount,
   loading,
   pathColor,
   xOffset,
 }: {
+  amount: number;
   isOffline: boolean;
   data: CurvePoint[];
   activeKey: TabKey;

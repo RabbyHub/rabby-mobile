@@ -1,4 +1,4 @@
-import { minBy, range } from 'lodash';
+import { minBy, range, unionBy } from 'lodash';
 import React, {
   useMemo,
   useRef,
@@ -54,15 +54,6 @@ function markFirstItems(
     if (i === 0) {
       newItem.isDateStart = true;
     } else {
-      if ('isPending' in prev && 'projectDict' in item) {
-        // remove same item from local tx and db history list
-        const curId = `${item.address.toLowerCase()}-${item.id}`;
-        const preId = `${prev.address.toLowerCase()}-${prev.maxGasTx.hash}`;
-        if (curId === preId) {
-          continue;
-        }
-      }
-
       // judgs is date start
       const curDate = dayjs(newItem.time);
       const prevTime =
@@ -76,56 +67,6 @@ function markFirstItems(
       }
     }
 
-    // if ('projectDict' in item) {
-    //   const prev = arr[i - 1];
-    //   if (i === 0) {
-    //     newItem.isDateStart = true;
-    //   } else if ('projectDict' in prev) {
-    //     const curDate = dayjs(item.time_at * 1000);
-    //     const prevDate = dayjs(prev.time_at * 1000);
-    //     if (!curDate.isSame(prevDate, 'date')) {
-    //       newItem.isDateStart = true;
-    //     }
-    //   } else if ('isPending' in prev) {
-    //     if (prev.isPending) {
-    //       // pending time is set current time
-    //       const curDate = dayjs(item.time_at * 1000);
-    //       const prevDate = dayjs(new Date().getTime());
-    //       if (!curDate.isSame(prevDate, 'date')) {
-    //         newItem.isDateStart = true;
-    //       }
-    //     } else {
-    //       const curDate = dayjs(item.time_at * 1000);
-    //       const prevDate = dayjs(prev.completedAt);
-    //       if (!curDate.isSame(prevDate, 'date')) {
-    //         newItem.isDateStart = true;
-    //       }
-    //     }
-    //   }
-    // }
-    // if ('isPending' in item) {
-    //   if (item.isPending) {
-    //     newItem.isDateStart = false;
-    //     i === 0 && (newItem.isFirst = true);
-    //   } else {
-    //     const prev = arr[i - 1];
-    //     if (i === 0) {
-    //       newItem.isDateStart = true;
-    //     } else if ('isPending' in prev && !prev.isPending) {
-    //       const curDate = dayjs(item.completedAt);
-    //       const prevDate = dayjs(prev.completedAt);
-    //       if (!curDate.isSame(prevDate, 'date')) {
-    //         newItem.isDateStart = true;
-    //       }
-    //     } else if ('projectDict' in prev) {
-    //       const curDate = dayjs(item.completedAt);
-    //       const prevDate = dayjs(prev.time_at * 1000);
-    //       if (!curDate.isSame(prevDate, 'date')) {
-    //         newItem.isDateStart = true;
-    //       }
-    //     }
-    //   }
-    // }
     newArr.push(newItem);
   }
 
@@ -163,7 +104,6 @@ export const HistoryList = forwardRef(
       localTxList,
       onRefresh,
       isForMultipleAdderss = true,
-      onPresssItem,
     }: {
       ensureCurrentNoDbData?: boolean;
       historySuccessList?: string[];
@@ -173,7 +113,6 @@ export const HistoryList = forwardRef(
       loadingMore?: boolean;
       refreshLoading?: boolean;
       isForMultipleAdderss?: boolean;
-      onPresssItem?: (data: HistoryDisplayItem) => void;
       loadMore?: () => void;
       onRefresh?: () => void;
     },
@@ -190,7 +129,15 @@ export const HistoryList = forwardRef(
     }));
 
     const markedList = useMemo(() => {
-      return markFirstItems(list || []);
+      return markFirstItems(
+        unionBy(list, item => {
+          if ('projectDict' in item) {
+            return `${item.address.toLowerCase()}-${item.id}`;
+          } else {
+            return `${item.address.toLowerCase()}-${item.maxGasTx.hash}`;
+          }
+        }) || [],
+      );
     }, [list]);
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
@@ -215,7 +162,6 @@ export const HistoryList = forwardRef(
               projectDict={item.data.projectDict}
               cateDict={item.data.cateDict}
               tokenDict={item.data.tokenDict || {}}
-              onPresss={onPresssItem}
             />
           </>
         );
