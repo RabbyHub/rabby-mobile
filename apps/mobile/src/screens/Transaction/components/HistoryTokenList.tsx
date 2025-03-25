@@ -166,6 +166,9 @@ export const HistoryTokenList = ({
   );
 
   switch (type) {
+    case HistoryItemCateType.GAS_WITHDRAW:
+    case HistoryItemCateType.GAS_DEPOSIT:
+    case HistoryItemCateType.GAS_RECEIVED:
     case HistoryItemCateType.Send:
     case HistoryItemCateType.Revoke:
     case HistoryItemCateType.Approve:

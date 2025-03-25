@@ -576,11 +576,16 @@ function HistoryDetailScreen(): JSX.Element {
           )}
           {(formatType === HistoryItemCateType.Send ||
             formatType === HistoryItemCateType.Buy ||
+            formatType === HistoryItemCateType.GAS_WITHDRAW ||
+            formatType === HistoryItemCateType.GAS_RECEIVED ||
+            formatType === HistoryItemCateType.GAS_DEPOSIT ||
             formatType === HistoryItemCateType.Recieve) &&
             Boolean(toAddr) && (
               <View style={styles.detailItem}>
                 <Text style={styles.itemTitleText}>
                   {formatType === HistoryItemCateType.Buy ||
+                  formatType === HistoryItemCateType.GAS_RECEIVED ||
+                  formatType === HistoryItemCateType.GAS_WITHDRAW ||
                   formatType === HistoryItemCateType.Recieve
                     ? t('page.transactions.detail.RecipientAddress')
                     : t('page.transactions.detail.To')}

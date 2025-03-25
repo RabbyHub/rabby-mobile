@@ -9,4 +9,7 @@ export enum HistoryItemCateType {
   UnKnown = 'interaction',
   Cancel = 'cancel',
   Buy = 'buy',
+  GAS_DEPOSIT = 'gas_deposit',
+  GAS_WITHDRAW = 'gas_withdraw',
+  GAS_RECEIVED = 'gas_received',
 }

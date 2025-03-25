@@ -59,6 +59,7 @@ import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryIte
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
+import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 
 export const TransactionItem = ({
   historySuccessList,
@@ -89,6 +90,14 @@ export const TransactionItem = ({
 
   const formatType: HistoryItemCateType = useMemo(() => {
     if (data.maxGasTx.action?.actionData.send) {
+      if (
+        Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
+          data.maxGasTx.action?.actionData.send.to.toLowerCase() || '',
+        )
+      ) {
+        return HistoryItemCateType.GAS_DEPOSIT;
+      }
+
       return HistoryItemCateType.Send;
     }
 
@@ -280,6 +289,8 @@ export const TransactionItem = ({
 
   const formatTitle = useMemo(() => {
     switch (formatType) {
+      case HistoryItemCateType.GAS_DEPOSIT:
+        return t('page.transactions.itemTitle.DepositedGas');
       case HistoryItemCateType.Swap:
         return t('page.transactions.itemTitle.Swap');
 
@@ -316,6 +327,9 @@ export const TransactionItem = ({
     let address = '';
 
     switch (formatType) {
+      case HistoryItemCateType.GAS_DEPOSIT:
+        address = ToText + t('page.home.services.gasAccount');
+        break;
       case HistoryItemCateType.Send:
         const acData = data.maxGasTx?.action?.actionData.send;
         const sendRequireData = data.maxGasTx?.action

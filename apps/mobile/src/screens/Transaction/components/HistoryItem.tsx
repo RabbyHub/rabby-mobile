@@ -84,6 +84,14 @@ export const HistoryItem = React.memo(
 
     const formatTitle = useMemo(() => {
       switch (formatType) {
+        case HistoryItemCateType.GAS_DEPOSIT:
+          return t('page.transactions.itemTitle.DepositedGas');
+        case HistoryItemCateType.GAS_RECEIVED:
+          return t('page.transactions.itemTitle.ReceivedGas');
+
+        case HistoryItemCateType.GAS_WITHDRAW:
+          return t('page.transactions.itemTitle.WithdrawnGas');
+
         case HistoryItemCateType.Swap:
           return t('page.transactions.itemTitle.Swap');
 
@@ -130,6 +138,14 @@ export const HistoryItem = React.memo(
         ? data.projectDict[data.project_id]
         : null;
       switch (formatType) {
+        case HistoryItemCateType.GAS_RECEIVED:
+        case HistoryItemCateType.GAS_WITHDRAW:
+          address = FromText + t('page.home.services.gasAccount');
+          break;
+        case HistoryItemCateType.GAS_DEPOSIT:
+          address = ToText + t('page.home.services.gasAccount');
+          break;
+
         case HistoryItemCateType.Send:
         case HistoryItemCateType.Recieve:
           const isSend = formatType === HistoryItemCateType.Send;

@@ -127,6 +127,9 @@ export const HistoryItemIcon = ({
 
   // if (iconUri) {
   switch (type) {
+    case HistoryItemCateType.GAS_WITHDRAW:
+    case HistoryItemCateType.GAS_RECEIVED:
+    case HistoryItemCateType.GAS_DEPOSIT:
     case HistoryItemCateType.Send:
     case HistoryItemCateType.Approve:
     case HistoryItemCateType.Revoke:

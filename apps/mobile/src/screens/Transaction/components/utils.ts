@@ -14,6 +14,11 @@ import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { appJsonStore } from '@/core/storage/mmkv';
 import { HistoryItemCateType } from './type';
+import {
+  GAS_ACCOUNT_RECEIVED_ADDRESS,
+  GAS_ACCOUNT_WITHDRAWED_ADDRESS,
+  L2_DEPOSIT_ADDRESS_MAP,
+} from '@/constant/gas-account';
 
 export function getHistoryItemType(
   data: HistoryDisplayItem,
@@ -46,10 +51,26 @@ export function getHistoryItemType(
   }
 
   if (receives?.length === 1 && sends?.length === 0) {
+    if (data.tx?.from_addr.toLowerCase() === GAS_ACCOUNT_WITHDRAWED_ADDRESS) {
+      return HistoryItemCateType.GAS_WITHDRAW;
+    }
+
+    if (data.tx?.from_addr.toLowerCase() === GAS_ACCOUNT_RECEIVED_ADDRESS) {
+      return HistoryItemCateType.GAS_RECEIVED;
+    }
+
     return HistoryItemCateType.Recieve;
   }
 
   if (receives?.length === 0 && sends?.length === 1) {
+    if (
+      Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
+        data.other_addr.toLowerCase() || '',
+      )
+    ) {
+      return HistoryItemCateType.GAS_DEPOSIT;
+    }
+
     return HistoryItemCateType.Send;
   }
 
