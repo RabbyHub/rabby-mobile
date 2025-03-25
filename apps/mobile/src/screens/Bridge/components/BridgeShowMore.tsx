@@ -119,6 +119,7 @@ const BridgeShowMore = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.dottedLine} />
         <TouchableOpacity
           onPress={() => setOpen(e => !e)}
           style={styles.headerTextWrapper}>
@@ -132,6 +133,7 @@ const BridgeShowMore = ({
             color={colors2024['neutral-secondary']}
           />
         </TouchableOpacity>
+        <View style={styles.dottedLine} />
       </View>
 
       <View style={[styles.body, !open && { height: 0 }]}>
