@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { apiBalance } from '@/core/apis';
 import { preferenceService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
@@ -56,6 +56,15 @@ export function useSpecifyAccountsBalance(accounts: Account[]) {
                 type,
                 brandName,
               });
+
+              setBalanceAccounts?.(preAccounts => {
+                return preAccounts.map(e => {
+                  if (isSameAddress(e.address, account)) {
+                    return { ...e, balance: resData.total_usd_value };
+                  }
+                  return e;
+                });
+              });
             }
           } catch (e) {
             console.log('fetchTotalBalance  error', e);
@@ -74,7 +83,6 @@ export function useSpecifyAccountsBalance(accounts: Account[]) {
         });
       }
       await waitQueueFinished(queue);
-      setBalanceAccounts(queueBalanceArr);
     } catch (e) {
       console.error('fetchTotalBalance  error', e);
     } finally {
