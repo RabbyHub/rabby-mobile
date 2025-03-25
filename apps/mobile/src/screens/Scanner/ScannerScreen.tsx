@@ -52,7 +52,7 @@ export const ScannerScreen = () => {
           try {
             decoder.receivePart(value);
             if (count.current % 3 === 0) {
-              setCurrentCount(decoder.estimatedPercentComplete());
+              setCurrentCount(decoder.getProgress());
             }
             count.current++;
 
