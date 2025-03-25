@@ -1353,7 +1353,11 @@ function mergeVault(
       if (item.type === KEYRING_TYPE.SimpleKeyring) {
         const exist = newData.some(e => {
           if (e.type === item.type) {
-            return e.data[0] === item.data[0];
+            return (
+              !!e?.data?.[0] &&
+              !!item?.data?.[0] &&
+              e.data?.[0] === item.data?.[0]
+            );
           }
           return false;
         });
@@ -1377,7 +1381,7 @@ function mergeVault(
                     key,
                   ),
               )
-              .every(key => hd1.data[key] === hd2.data[key]);
+              .every(key => hd1?.data?.[key] === hd2?.data?.[key]);
           }
           return false;
         };
