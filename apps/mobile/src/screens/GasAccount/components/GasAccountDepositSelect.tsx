@@ -73,7 +73,9 @@ export const GasAccountDepositSelect: React.FC<{
                 )}
               </View>
               <Text style={styles.btnDesc}>
-                {t('page.gasAccount.depositSelectPopup.buyWithDesc')}
+                {Platform.OS === 'ios'
+                  ? t('page.gasAccount.depositPopup.applePayFeeDesc')
+                  : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
               </Text>
             </View>
           }
