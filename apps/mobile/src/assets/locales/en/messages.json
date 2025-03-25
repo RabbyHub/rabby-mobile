@@ -1575,6 +1575,8 @@
       "Mybalance": "My Balance",
       "Info": "Info",
       "TokenName": "Token Name",
+      "Price": "Price",
+      "HoldingValue": "Holding Value",
       "notSupportedOnChain": "Not supported on this chain",
       "noBalance": "No Balance",
       "relateDefi": "Related DeFi",

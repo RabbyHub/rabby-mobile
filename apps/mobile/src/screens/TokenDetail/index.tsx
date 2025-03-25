@@ -561,7 +561,12 @@ export const TokenDetailScreen = () => {
         <View style={{ position: 'relative' }}>
           {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
           {/* <Text style={styles.currentText}>Current price</Text> */}
-          <TokenPriceChart token={tokenWithAmount || token} />
+          <TokenPriceChart
+            token={tokenWithAmount || token}
+            finalAccount={finalAccount}
+            amountList={tokenFromAddress}
+            isSingleAddress={isSingleAddress}
+          />
           {/* <View style={styles.divider} /> */}
         </View>
         <TokenArea

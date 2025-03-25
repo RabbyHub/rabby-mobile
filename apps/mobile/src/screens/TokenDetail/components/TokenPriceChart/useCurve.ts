@@ -19,10 +19,12 @@ export const use24hCurveData = ({
   tokenId,
   serverId,
   days,
+  amount = 1,
 }: {
   tokenId: string;
   serverId: string;
   days: 1 | 7;
+  amount: number;
 }) => {
   return useRequest(
     async () => {
@@ -47,10 +49,10 @@ export const use24hCurveData = ({
         step,
       );
 
-      return formatTokenDateCurve([0, dayjs().unix()], data);
+      return formatTokenDateCurve([0, dayjs().unix()], data, amount);
     },
     {
-      refreshDeps: [tokenId, serverId, days],
+      refreshDeps: [tokenId, serverId, days, amount],
     },
   );
 };
@@ -58,6 +60,7 @@ export const use24hCurveData = ({
 export const formatTokenDateCurve = (
   range: number[],
   data: { timestamp: number; price: number }[],
+  amount: number = 1,
 ) => {
   if (!data?.length) {
     return {
@@ -94,8 +97,8 @@ export const formatTokenDateCurve = (
       const change = item.price - startData.value;
 
       return {
-        value: item.price || 0,
-        netWorth: item.price ? '$' + formatPrice(item.price, 8) : '$0',
+        value: item.price * amount || 0,
+        netWorth: item.price ? '$' + formatPrice(item.price * amount, 8) : '$0',
         // change: numFormat(Math.abs(change), 0, '$'),
         change: '$' + formatPrice(Math.abs(change), 8),
         isLoss: change < 0,
