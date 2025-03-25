@@ -237,8 +237,11 @@ const getStyles = createGetStyles2024(ctx =>
     offsetArea: {
       flexShrink: 0,
       height:
-        Math.floor(Dimensions.get('screen').height - LOGO_SIZE.wrapperHeight) /
-        2,
+        Dimensions.get('screen').height > 700
+          ? Math.floor(
+              Dimensions.get('screen').height - LOGO_SIZE.wrapperHeight,
+            ) / 2
+          : 140,
     },
     contentArea: {
       flexShrink: 1,
