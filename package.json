@@ -36,7 +36,7 @@
     "start": "cd apps/mobile && yarn start",
     "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
     "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
-    "test:mergeVault": "yarn workspace @rabby-wallet/service-keyring  test:mergeVault ",
+    "test:mergeVault": "yarn workspace packages/service-keyring  test:mergeVault ",
     "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
     "update-readme-content": "ts-node scripts/update-readme-content.ts"
   },
