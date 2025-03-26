@@ -41,6 +41,7 @@ export const useSelectTokens = ({
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
+  const [userTokenSettings, setUserTokenSettings] = useState({});
 
   const loadToken = async (address: string, force?: boolean) => {
     if (!address) {
