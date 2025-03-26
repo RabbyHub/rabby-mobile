@@ -177,12 +177,13 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         useSwapTokenList,
         tokenSelectorVisible,
       ]);
+    const allRemoteTokens = useSortToken(tokens);
 
     // query local tokens
     const {
       sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
       fetchAllLocalTokens,
-    } = useQueryLocalTokens(tokens);
+    } = useQueryLocalTokens(allRemoteTokens);
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
@@ -209,8 +210,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       tokenSelectorVisible,
       useSwapTokenList,
     ]);
-
-    const allRemoteTokens = useSortToken(tokens);
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
       useMemo(() => {
