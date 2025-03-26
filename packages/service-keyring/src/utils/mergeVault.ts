@@ -1,3 +1,4 @@
+import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   KEYRING_CLASS,
   KEYRING_TYPE,
@@ -14,7 +15,7 @@ export const mergeVault = (
 ) => {
   const newData = [...origin];
   const customDeepmerge = deepmergeCustom({
-    mergeArrays: (values, utils) => {
+    mergeArrays: (values, utils, meta) => {
       const isStringOrNumberArray = values.every(
         arr =>
           Array.isArray(arr) &&
@@ -25,6 +26,23 @@ export const mergeVault = (
 
       if (isStringOrNumberArray) {
         const flatArray = values.flat();
+
+        if (meta?.key === 'accounts') {
+          const newArr: (string | number)[] = [];
+          flatArray.forEach(item => {
+            if (
+              typeof item === 'string' &&
+              newArr.some(
+                e =>
+                  typeof e === 'string' && addressUtils.isSameAddress(e, item),
+              )
+            ) {
+              return;
+            }
+            newArr.push(item);
+          });
+          return newArr;
+        }
         return Array.from(new Set(flatArray));
       }
 

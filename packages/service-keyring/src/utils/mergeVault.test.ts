@@ -68,6 +68,59 @@ describe('mergeVault', () => {
       },
     ]);
   });
+  it('should not merge HD keyring accounts with same address in different case', () => {
+    const origin = [
+      {
+        type: KEYRING_TYPE.HdKeyring,
+        data: {
+          mnemonic: 'test mnemonic',
+          accounts: ['0xABC123'],
+          accountDetails: {
+            '0xABC123': {
+              hdPath: "m/44'/60'/0'/0",
+              hdPathType: 'BIP44',
+              index: 0,
+            },
+          },
+        },
+      },
+    ];
+
+    const merge = [
+      {
+        type: KEYRING_TYPE.HdKeyring,
+        data: {
+          mnemonic: 'test mnemonic',
+          accounts: ['0xabc123'],
+          accountDetails: {
+            '0xABC123': {
+              hdPath: "m/44'/60'/0'/0",
+              hdPathType: 'BIP44',
+              index: 0,
+            },
+          },
+        },
+      },
+    ];
+
+    const result = mergeVault(origin, merge);
+    expect(result).toStrictEqual([
+      {
+        type: KEYRING_TYPE.HdKeyring,
+        data: {
+          mnemonic: 'test mnemonic',
+          accounts: ['0xABC123'],
+          accountDetails: {
+            '0xABC123': {
+              hdPath: "m/44'/60'/0'/0",
+              hdPathType: 'BIP44',
+              index: 0,
+            },
+          },
+        },
+      },
+    ]);
+  });
 
   it('should merge HD keyrings and combine accounts', () => {
     const origin = [
