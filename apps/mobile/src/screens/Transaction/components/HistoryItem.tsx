@@ -206,7 +206,7 @@ export const HistoryItem = React.memo(
         .map(item => {
           const tokenId = item?.token_id;
           const tokenUUID = `${data.chain}_token:${tokenId}`;
-          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID] || {};
           return {
             amount: item.amount,
             token,
@@ -216,17 +216,17 @@ export const HistoryItem = React.memo(
           };
         })
         .sort((a, b) => {
-          if (a.token.is_core === b.token.is_core) {
+          if (a.token?.is_core === b.token?.is_core) {
             return a.amount * a.price - b.amount * b.price;
           }
-          return a.token.is_core ? -1 : 1;
+          return a.token?.is_core ? -1 : 1;
         });
 
       const sends = data.sends
         .map(item => {
           const tokenId = item?.token_id;
           const tokenUUID = `${data.chain}_token:${tokenId}`;
-          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID] || {};
           return {
             amount: item.amount,
             token,
@@ -236,10 +236,10 @@ export const HistoryItem = React.memo(
           };
         })
         .sort((a, b) => {
-          if (a.token.is_core === b.token.is_core) {
+          if (a.token?.is_core === b.token?.is_core) {
             return a.amount * a.price - b.amount * b.price;
           }
-          return a.token.is_core ? 1 : -1;
+          return a.token?.is_core ? 1 : -1;
         });
       return [...receives, ...sends];
     }, [data, tokenDict]);
