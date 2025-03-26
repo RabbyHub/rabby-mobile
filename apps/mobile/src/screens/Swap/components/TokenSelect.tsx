@@ -119,12 +119,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const currentAccount = queryConds.account;
     const {
       tokens,
+      tokenWithOwner,
       getCacheTop10Tokens,
       checkIsExpireAndUpdate,
       loadToken,
       isLoading: isLoadingAllTokens,
     } = useSelectTokens({
       currentAddress: currentAccount?.address.toLocaleLowerCase(),
+      visible: tokenSelectorVisible,
+      keyword: queryConds.keyword,
+      chain_server_id: queryConds.chainServerId,
     });
 
     useImperativeHandle(ref, () => ({
@@ -143,7 +147,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       if (!tokenSelectorVisible || useSwapTokenList) {
         return;
       }
-      getCacheTop10Tokens();
+      if (!tokens.length) {
+        getCacheTop10Tokens();
+      }
       timeRef.current = setTimeout(() => {
         if (currentAccount?.address) {
           loadToken(currentAccount.address, true);
@@ -179,37 +185,17 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       ]);
     const allRemoteTokens = useSortToken(tokens);
 
-    // query local tokens
-    const {
-      sortedDisplayTokensWithOwner: searchedLocalDisplayTokensWithOwner,
-      fetchAllLocalTokens,
-    } = useQueryLocalTokens(allRemoteTokens);
-
     const searchedLocalTokensWithOwner = useMemo(
       () =>
-        searchedLocalDisplayTokensWithOwner.map(
+        tokenWithOwner.map(
           e =>
             ({
               ...abstractTokenToTokenItem(e),
               ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
             } as TokenItemMaybeWithOwner),
         ),
-      [searchedLocalDisplayTokensWithOwner],
+      [tokenWithOwner],
     );
-
-    useEffect(() => {
-      if (tokenSelectorVisible && !useSwapTokenList) {
-        fetchAllLocalTokens({
-          keyword: queryConds.keyword,
-          chain_server_id: queryConds.chainServerId,
-        });
-      }
-    }, [
-      queryConds,
-      fetchAllLocalTokens,
-      tokenSelectorVisible,
-      useSwapTokenList,
-    ]);
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
       useMemo(() => {
