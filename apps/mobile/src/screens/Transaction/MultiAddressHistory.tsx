@@ -471,10 +471,9 @@ function History({
   const thorttleBatchFetchData = debounce(batchFetchData, 1000);
 
   useAppOrmSyncEvents({
-    taskFor: ['all-history', 'swap-history'],
+    taskFor: ['all-history'],
     onRemoteDataUpserted: ctx => {
       switch (ctx.taskFor) {
-        case 'swap-history':
         case 'all-history':
           thorttleBatchFetchData();
           break;
@@ -594,6 +593,17 @@ function History({
     return isNodata;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyEnsureNoData, sceneCurrentAccountDepKey]);
+
+  useEffect(() => {
+    if (!isSceneUsingAllAccounts && dbData.length === 0) {
+      syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
+    }
+  }, [
+    dbData.length,
+    isSceneUsingAllAccounts,
+    finalSceneCurrentAccount?.address,
+    syncSingleAddress,
+  ]);
 
   const fetchFromDbLoading = useMemo(
     () =>

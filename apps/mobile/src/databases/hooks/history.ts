@@ -365,6 +365,8 @@ export const useSyncHistoryDB = (
       gap,
       'isExpire:',
       gap > expireTime,
+      'add:',
+      add.slice(-4),
     );
     return gap > expireTime;
   });
@@ -432,6 +434,47 @@ export const useSyncHistoryDB = (
     },
   );
 
+  const syncMultiAddressesHistory = useMemoizedFn(
+    async (addresses: string[]) => {
+      if (addresses.length === 0) {
+        console.debug('syncMultiAccountsHistory CUSTOM_LOGGER:=>: No account');
+        return;
+      }
+
+      console.log('syncMultiAccountsHistory CUSTOM_LOGGER:=>: Fetching action');
+      const queue = new PQueue({
+        interval: 2000,
+        intervalCap: 5,
+      });
+      for (const item of addresses) {
+        const address = item.toLowerCase();
+        const latestUpdateTime = updateHistoryTime[address] || 0;
+        const isUserRealTimeApi =
+          latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+        updateHistoryTimeSingleAddress(address);
+        queue.add(async () => {
+          try {
+            await Promise.all([
+              syncUserAllHistory(address, 0, 0, isUserRealTimeApi),
+              syncBuyHistory(address),
+            ]);
+          } catch (error) {
+            console.error(
+              `syncMultiAccountsHistory Error fetching data for ${address.slice(
+                -4,
+              )}:`,
+              error,
+            );
+          }
+          await new Promise(resolve => setTimeout(resolve, 0));
+        });
+      }
+      if (queue.size > 0) {
+        await waitQueueFinished(queue);
+      }
+    },
+  );
+
   const syncSingleAddress = useMemoizedFn(address => {
     const latestUpdateTime = updateHistoryTime[address] || 0;
     const isUserRealTiemApi =
@@ -448,5 +491,6 @@ export const useSyncHistoryDB = (
     syncTop10History,
     syncSingleAddress,
     syncUserAllHistory,
+    syncMultiAddressesHistory,
   };
 };
