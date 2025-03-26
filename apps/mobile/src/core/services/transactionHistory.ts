@@ -755,6 +755,36 @@ export class TransactionHistoryService {
       });
     });
   }
+
+  removeLocalPendingTx({
+    address,
+    chainId,
+    nonce,
+  }: {
+    address: string;
+    chainId?: number;
+    nonce?: number;
+  }) {
+    const groups = this.getTransactionGroups({
+      address,
+      chainId,
+      nonce,
+    }).filter(item => item.isPending);
+    if (!groups.length) {
+      return;
+    }
+    this.setStore(draft => {
+      return draft.filter(item => {
+        return !groups.find(txGroup => {
+          return (
+            isSameAddress(txGroup.address, item.address) &&
+            txGroup.nonce === item.nonce &&
+            txGroup.chainId === item.chainId
+          );
+        });
+      });
+    });
+  }
 }
 
 export class TransactionGroup {

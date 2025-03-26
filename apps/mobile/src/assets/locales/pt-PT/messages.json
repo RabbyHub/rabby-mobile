@@ -1727,7 +1727,7 @@
       "autoLockTime": "Tempo de bloqueio automático",
       "tou": "Term Of Use",
       "touchId": "Touch ID",
-      "clearPending": "Limpar Pendentes",
+      "clearPending": "",
       "modifyRPCURL": "Modificar URL RPC",
       "feedback": "Feedback",
       "followUs": "Siga-nos",

@@ -1735,7 +1735,7 @@
       "feedback": "反饋",
       "faceId": "Face ID",
       "addCustomNetwork": "新增自定義網路",
-      "clearPending": "清除待處理",
+      "clearPending": "",
       "touchId": "Touch ID",
       "autoLockTime": "自動鎖定時間",
       "themeMode": "主題模式",

@@ -61,6 +61,7 @@ import { useTranslation } from 'react-i18next';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { HistoryItemCateType } from './components/type';
+import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
@@ -612,6 +613,7 @@ function History({
   return (
     <View style={{ paddingTop: 0, position: 'relative' }}>
       <>
+        <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
         <HistoryList
           ref={historyListRef}
           historySuccessList={historySuccessList}

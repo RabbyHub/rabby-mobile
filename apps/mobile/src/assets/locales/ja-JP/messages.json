@@ -1691,7 +1691,7 @@
       "currentVersion": "現在のバージョン",
       "aboutUs": "私たちについて",
       "addCustomNetwork": "カスタムネットワークを追加",
-      "clearPending": "保留中止をクリア",
+      "clearPending": "",
       "autoLockTime": "自動ロック時間",
       "faceId": "Face ID",
       "themeMode": "テーマモード",

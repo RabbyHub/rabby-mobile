@@ -1,16 +1,15 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { Spin } from './Spin';
-import { useMemo } from 'react';
-import { sortBy } from 'lodash';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Tip } from '@/components';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { sortBy } from 'lodash';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Spin } from './Spin';
 
 export const TransactionPendingDetail = ({
   data,

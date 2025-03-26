@@ -1544,7 +1544,7 @@
       "aboutUs": "О нас",
       "addCustomNetwork": "Добавить пользовательскую сеть",
       "autoLockTime": "Автоматическое время блокировки",
-      "clearPending": "Очистить ожидающие",
+      "clearPending": "",
       "touchId": "Touch ID",
       "policy": "Политика конфиденциальности",
       "fingerPrint": "Отпечаток пальца",

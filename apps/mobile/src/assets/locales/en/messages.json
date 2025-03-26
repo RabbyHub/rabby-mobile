@@ -111,6 +111,10 @@
         "title": "Hide scam transactions",
         "loading": "Loading may take a moment, and data delays are possible",
         "btn": "Hide scam transactions"
+      },
+      "TransactionAlert": {
+        "clearPendingText": "{{chainName}} Transaction ({{nonces}}) has been pending for over 3 minutes. You can <5></5> <6>Clear Pending Locally</6> <7></7> and resubmit the transaction.",
+        "skipNonceText": "Nonce #{{nonce}} skipped on {{chainName}} chain. This  may cause pending transactions ahead. <5></5> <6>Submit a tx</6> <7></7> on chain to resolve"
       }
     },
     "signTx": {
@@ -547,11 +551,21 @@
             "onChainCancel": {
               "title": "On-chain Cancel",
               "desc": "New transaction to cancel, requires gas"
+            },
+            "removeLocalPendingTx": {
+              "title": "Clear Pending Locally",
+              "desc": "Remove the pending transaction from the interface"
             }
           }
         },
         "message": {
-          "cancelSuccess": "Canceled"
+          "cancelSuccess": "Canceled",
+          "deleteSuccess": "Deleted successfully"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "Clear Pending Locally",
+          "desc": "This will remove the pending transaction from your interface. You can then initiate a new transaction.",
+          "warning": "The removed transaction may still be confirmed on-chain unless it is replaced."
         }
       }
     },
@@ -1692,7 +1706,7 @@
       "addCustomNetwork": "Add Custom Network",
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
-      "clearPending": "Clear Pending",
+      "clearPending": "Clear Pending Locally",
       "aboutUs": "About Us",
       "currentVersion": "Current Version",
       "feedback": "Feedback",
@@ -1702,7 +1716,10 @@
       "clearPendingDesc1": "This will clear all your pending transactions. This can help you solve the problem that in some cases the state of the transaction in Rabby does not match the state on-chain.",
       "clearPendingDesc2": "This will not change the balances in your accounts or require you to re-enter your seed phrase. All your assets and accounts information will remain secure.",
       "appCache": "Clear App Cache",
-      "currentLanguage": "Current Language"
+      "currentLanguage": "Current Language",
+      "clearPendingWarning": "The removed transaction may still be confirmed on-chain unless it is replaced.",
+      "clearPendingResetDesc": "Also reset my local nonce data and signature record",
+      "clearPendingToast": "Pending transaction cleared"
     },
     "settingModal": {
       "themeMode": {

@@ -1485,7 +1485,7 @@
       "touchId": "Touch ID",
       "enableWhitelist": "Bật danh sách trắng để gửi tài sản",
       "followUs": "Theo dõi chúng tôi",
-      "clearPending": "Xóa đang chờ",
+      "clearPending": "",
       "faceId": "Face ID",
       "feedback": "Phản hồi",
       "screenTitle": "Cài đặt",

@@ -10,7 +10,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Tip } from '../Tip';
 import AutoLockView from '../AutoLockView';
-
+/**
+ * @deprecated
+ */
 export const CancelTxPopup = ({
   tx,
   onCancelTx,
