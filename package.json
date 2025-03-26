@@ -37,6 +37,7 @@
     "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
     "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
     "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
+    "test:mergeVault": "yarn workspace packages/service-keyring  test:mergeVault",
     "update-readme-content": "ts-node scripts/update-readme-content.ts"
   },
   "simple-git-hooks": {
