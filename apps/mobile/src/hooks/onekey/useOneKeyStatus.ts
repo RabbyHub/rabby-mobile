@@ -32,7 +32,6 @@ export const useOneKeyStatus = (address: string) => {
         name: MODAL_NAMES.CONNECT_ONEKEY,
         deviceId,
         onSelectDeviceId: async (connectDeviceId: string) => {
-          console.log('selected device', connectDeviceId);
           toastHiddenRef.current = toastIndicator('Connecting', {
             isTop: true,
           });
@@ -40,6 +39,7 @@ export const useOneKeyStatus = (address: string) => {
           try {
             await apiOneKey.setDeviceConnectId(connectDeviceId);
             await apiOneKey.unlockDevice();
+            await apiOneKey.fixConnectId(address, connectDeviceId);
             setStatus('CONNECTED');
             cb?.();
           } catch (e) {
@@ -54,7 +54,7 @@ export const useOneKeyStatus = (address: string) => {
         },
       });
     },
-    [deviceId, setStatus],
+    [address, deviceId, setStatus],
   );
 
   React.useEffect(() => {
