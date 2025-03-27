@@ -4,16 +4,12 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { apisKeychain, apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { usePasswordStatus } from '@/hooks/useLock';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '../GlobalBottomSheetModal';
 import {
   GlobalModalViewProps,
   MODAL_NAMES,
@@ -23,15 +19,18 @@ import { noop } from 'lodash';
 import { BiometricsIcon } from './BiometricsIcon';
 import TouchableView from '../Touchable/TouchableView';
 import { useBiometricsComputed } from '@/hooks/biometrics';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { Button } from '../Button';
+import { Button } from '@/components2024/Button';
 import { useRefState } from '@/hooks/common/useRefState';
-import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { NextInput } from '@/components2024/Form/Input';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -104,7 +103,9 @@ function FooterButtonGroup({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const { styles: footerStyles, colors } = useThemeStyles(getFooterStyle);
+  const { styles: footerStyles } = useTheme2024({
+    getStyle: getFooterStyle,
+  });
 
   const { showConfirm } = useMemo(() => {
     return {
@@ -120,8 +121,7 @@ function FooterButtonGroup({
       <Button
         title={t('global.Cancel')}
         containerStyle={footerStyles.btnContainer}
-        buttonStyle={footerStyles.cancelStyle}
-        titleStyle={footerStyles.cancelTitleStyle}
+        type="ghost"
         onPress={onCancel ?? noop}
       />
       {showConfirm && (
@@ -136,11 +136,8 @@ function FooterButtonGroup({
                 />
               )
             }
-            iconContainerStyle={footerStyles.confirmIconStyle}
             title={t('global.Confirm')}
             containerStyle={footerStyles.btnContainer}
-            buttonStyle={footerStyles.confirmStyle}
-            titleStyle={footerStyles.confirmTitleStyle}
             onPress={onConfirm}
             disabled={disabled}
           />
@@ -150,7 +147,7 @@ function FooterButtonGroup({
   );
 }
 
-const getFooterStyle = createGetStyles(colors => {
+const getFooterStyle = createGetStyles2024(() => {
   return {
     buttonGroup: {
       paddingHorizontal: 20,
@@ -158,10 +155,6 @@ const getFooterStyle = createGetStyles(colors => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      borderTopColor: colors['neutral-line'],
-      // borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopWidth: 0.5,
-      backgroundColor: colors['neutral-bg1'],
     },
 
     btnContainer: {
@@ -169,47 +162,8 @@ const getFooterStyle = createGetStyles(colors => {
       height: 50,
     },
 
-    cancelStyle: {
-      backgroundColor: colors['neutral-card-1'],
-      borderColor: colors['blue-default'],
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderRadius: 8,
-      height: '100%',
-      width: '100%',
-    },
-    cancelTitleStyle: {
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['blue-default'],
-      flex: 1,
-    },
     btnGap: {
       width: 13,
-    },
-    confirmIconStyle: {
-      marginLeft: 0,
-      marginRight: 6,
-      // ...makeDebugBorder(),
-    },
-    confirmStyle: {
-      backgroundColor: colors['blue-default'],
-      borderRadius: 8,
-      width: '100%',
-      height: '100%',
-      // ...makeDebugBorder(),
-      justifyContent: 'center',
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    confirmTitleStyle: {
-      // ...makeDebugBorder('yellow'),
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['neutral-title2'],
-      // flex: 1,
     },
   };
 });
@@ -218,7 +172,7 @@ const DFLT_VALIDATE = async (password: string) => {
   return apisLock.throwErrorIfInvalidPwd(password);
 };
 
-export const AuthenticationModal = ({
+export const AuthenticationModal2024 = ({
   title,
   onFinished,
   validationHandler = DFLT_VALIDATE,
@@ -236,7 +190,7 @@ export const AuthenticationModal = ({
   AuthenticationModalProps
 >) => {
   const { t } = useTranslation();
-  const { styles, colors } = useThemeStyles(getStyle);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
     footerButtonGroupMb: 12,
   });
@@ -315,23 +269,12 @@ export const AuthenticationModal = ({
     setError('');
   }, [password]);
 
-  // useMount(() => {
-  //   if (currentAuthType === 'biometrics' && !hasCheckFailed) {
-  //     setBioAuth(prev => ({
-  //       ...prev,
-  //       // stage: BioAuthStage['prepare'],
-  //       restCount: 0,
-  //     }));
-  //   }
-  // });
-
   const handleAuthWithBiometrics = React.useCallback(async () => {
     if (hasCheckFailed) return;
 
     if (bioAuthRef.current.stage === BioAuthStage['authenticating']) return;
 
     setBioAuth(prev => ({ ...prev, stage: BioAuthStage['authenticating'] }));
-
     try {
       if (!disableValidation) {
         await apisKeychain.requestGenericPassword({
@@ -444,22 +387,38 @@ export const AuthenticationModal = ({
           {!disableValidation && currentAuthType === 'password' && (
             <>
               <View style={styles.inputWrapper}>
-                <BottomSheetTextInput
-                  secureTextEntry
-                  returnKeyLabel={t('global.Confirm')}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholderTextColor={colors['neutral-foot']}
+                <NextInput.Password
+                  as={'BottomSheetTextInput'}
+                  fieldName={t('page.whitelist.confirmPassword')}
+                  containerStyle={Object.assign(
+                    {},
+                    error
+                      ? {}
+                      : {
+                          borderColor: 'transparent',
+                        },
+                  )}
+                  inputProps={{
+                    value: password,
+                    secureTextEntry: true,
+                    inputMode: 'text',
+                    returnKeyType: 'done',
+                    returnKeyLabel: t('global.Confirm'),
+                    placeholder:
+                      placeholder ??
+                      t('component.AuthenticationModal.passwordPlaceholder'),
+                    placeholderTextColor: colors2024['neutral-foot'],
+                    onChangeText: setPassword,
+                  }}
                   style={StyleSheet.flatten([
                     styles.input,
                     bioComputed.isBiometricsEnabled && styles.inputWithAddOn,
                     error ? styles.errorInput : {},
                     // makeDebugBorder('yellow')
                   ])}
-                  placeholder={
-                    placeholder ??
-                    t('component.AuthenticationModal.passwordPlaceholder')
-                  }
+                  hasError={Boolean(error)}
+                  fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
+                  tipText={error}
                 />
                 {__DEV__ && bioComputed.isBiometricsEnabled && (
                   <BioButton
@@ -468,32 +427,12 @@ export const AuthenticationModal = ({
                   />
                 )}
               </View>
-              <Text style={styles.errorText}>{error}</Text>
             </>
           )}
-          {/* {!disableValidation && currentAuthType === 'biometrics' && (
-            <View style={styles.bioIconWrapper}>
-              <BioButton
-                disabled={hasCheckFailed}
-                handlePress={handleSwitchToBioAndPrepare}
-                iconProps={{
-                  color:
-                    bioAuthRef.current.stage !== BioAuthStage['idle']
-                      ? 'blue-default'
-                      : 'neutral-body',
-                  style: {
-                    height: SIZES.bioAuthButtonSize,
-                    width: SIZES.bioAuthButtonSize,
-                  },
-                }}
-              />
-            </View>
-          )} */}
         </View>
       </View>
       <FooterButtonGroup
         authState={{ authType: currentAuthType }}
-        // bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,
           { marginBottom: safeSizes.footerButtonGroupMb },
@@ -506,7 +445,7 @@ export const AuthenticationModal = ({
   );
 };
 
-AuthenticationModal.show = async (
+AuthenticationModal2024.show = async (
   showConfig: AuthenticationModalProps & {
     closeDuration?: number;
   },
@@ -521,7 +460,7 @@ AuthenticationModal.show = async (
     disableValidation = false;
   }
 
-  const id = createGlobalBottomSheetModal({
+  const id = createGlobalBottomSheetModal2024({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
@@ -543,14 +482,21 @@ AuthenticationModal.show = async (
   });
 
   const hideModal = () => {
-    return removeGlobalBottomSheetModal(id, { duration: closeDuration });
+    return removeGlobalBottomSheetModal2024(id, { duration: closeDuration });
   };
   return { hideModal };
 };
 
-const getStyle = createGetStyles(colors => {
+const getStyle = createGetStyles2024(({ colors2024, colors }) => {
   return {
-    modalTitle: { marginBottom: 0, paddingTop: 12 },
+    modalTitle: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      paddingTop: 12,
+    },
     description: {
       color: colors['neutral-body'],
       fontSize: 14,
@@ -588,31 +534,11 @@ const getStyle = createGetStyles(colors => {
     },
     inputWrapper: {
       display: 'flex',
+      // flexDirection: 'column',
       flexDirection: 'row',
-      alignItems: 'center',
-      borderColor: colors['neutral-line'],
-      borderWidth: 0.5,
-      height: SIZES.inputHeight,
-      borderStyle: 'solid',
-      backgroundColor: colors['neutral-card-2'],
-      padding: 15,
-      borderRadius: 8,
-      width: '100%',
-      paddingVertical: 0,
-      paddingHorizontal: 0,
-      // ...makeDebugBorder(),
     },
     input: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['neutral-line'],
-      backgroundColor: 'transparent',
-      borderRadius: 8,
-      marginBottom: 0,
-      color: colors['neutral-title-1'],
-      height: '100%',
-      width: '100%',
-      paddingHorizontal: 12,
-      paddingVertical: 12,
+      borderRadius: 12,
     },
     inputWithAddOn: {
       flex: 1,
@@ -630,16 +556,8 @@ const getStyle = createGetStyles(colors => {
       fontSize: 14,
       minHeight: 20,
     },
-
-    bioIconWrapper: {
-      height: SIZES.bioAuthContainerHeight,
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-
     footerButtonGroup: {
+      paddingTop: 0,
       // ...makeDebugBorder('yellow'),
     },
   };
