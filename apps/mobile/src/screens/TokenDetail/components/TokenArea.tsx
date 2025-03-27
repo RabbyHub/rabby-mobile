@@ -7,35 +7,35 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { TokenFromAddressItem } from '..';
 import { formatAmount, formatNumber, formatUsdValue } from '@/utils/number';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { ellipsisAddress } from '@/utils/address';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 interface Props {
   token: AbstractPortfolioToken | CombineTokensItem;
   tokenUsdValue?: number;
   amountList: TokenFromAddressItem[];
-  tokenSupportSwap: boolean;
   isSingleAddress?: boolean;
   finalAccount?: KeyringAccountWithAlias;
-  handleSwap: (
-    type: 'Buy' | 'Sell',
-    address: string,
-    accountType: KEYRING_TYPE,
-  ) => void;
+  accounts: KeyringAccountWithAlias[];
+  switchAccount: (account: KeyringAccountWithAlias) => void;
 }
 
 export const TokenArea: React.FC<Props> = ({
   token,
   amountList,
-  handleSwap,
   isSingleAddress,
   finalAccount,
-  tokenSupportSwap,
+  accounts,
   tokenUsdValue,
+  switchAccount,
 }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
 
@@ -58,65 +58,75 @@ export const TokenArea: React.FC<Props> = ({
     }
   }, [token, isSingleAddress, finalAccount]);
 
+  const handleOnPress = useCallback(
+    (item: TokenFromAddressItem) => {
+      const account = accounts.find(a => a.address === item.address);
+      if (account) {
+        switchAccount(account);
+        navigate(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {
+            scrollToToken: token.id, // to do
+          },
+        });
+      }
+    },
+    [accounts, switchAccount, token.id],
+  );
+
   const renderItem = useCallback(
     ({ item, index }: { item: TokenFromAddressItem; index: number }) => {
       return (
-        <View style={styles.itemCard} key={index}>
+        <TouchableOpacity
+          style={styles.itemCard}
+          key={index}
+          onPress={e => handleOnPress(item)}>
           <View style={styles.tokenBox}>
-            <Text style={styles.tokenAmount} numberOfLines={1}>
-              {item.amountStr} {token.symbol}
-            </Text>
-            <View style={styles.accountBox}>
-              <View className="relative">
-                <WalletIcon
-                  type={item?.type as KEYRING_TYPE}
-                  width={styles.walletIcon.width}
-                  height={styles.walletIcon.height}
-                  style={styles.walletIcon}
-                />
+            <WalletIcon
+              type={item?.type as KEYRING_TYPE}
+              width={styles.walletIcon.width}
+              height={styles.walletIcon.height}
+              style={styles.walletIcon}
+            />
+            <View style={styles.content}>
+              <View style={styles.accountBox}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.titleText}>
+                  {item?.aliasName || ellipsisAddress(item.address)}
+                </Text>
               </View>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.titleText}>
-                {item?.aliasName}
+              <Text style={styles.tokenAmount} numberOfLines={1}>
+                {item.amountStr} {token.symbol}
               </Text>
             </View>
           </View>
           <View style={styles.actionBox}>
-            {tokenSupportSwap && (
-              <>
-                <TouchableOpacity
-                  onPress={() => handleSwap('Sell', item.address, item.type)}>
-                  <Text style={styles.actionText}>{t('page.swap.title')}</Text>
-                </TouchableOpacity>
-              </>
-            )}
+            <ArrowCircleCC
+              style={styles.arrow}
+              color={colors2024['neutral-body']}
+              backgroundColor={colors2024['neutral-bg-2']}
+            />
           </View>
-        </View>
+        </TouchableOpacity>
       );
     },
     [
-      tokenSupportSwap,
-      handleSwap,
+      handleOnPress,
       styles.accountBox,
       styles.actionBox,
-      styles.actionText,
       styles.itemCard,
       styles.titleText,
       styles.tokenAmount,
       styles.tokenBox,
       styles.walletIcon,
-      t,
       token.symbol,
+      styles.arrow,
+      colors2024,
+      styles.content,
     ],
   );
-
-  const ImageSrc = React.useMemo(() => {
-    return !isLight
-      ? require('@/assets2024/images/ImgNoBalanceDark.png')
-      : require('@/assets2024/images/ImgNoBalance.png');
-  }, [isLight]);
 
   return (
     <View style={styles.container}>
@@ -126,25 +136,7 @@ export const TokenArea: React.FC<Props> = ({
         </Text>
       </View>
       {amountList.length ? (
-        <View style={styles.itemCard}>
-          <AssetAvatar
-            logo={token?.logo_url}
-            // style={mediaStyle}
-            size={46}
-            chain={token?.chain}
-            chainSize={18}
-          />
-          <View style={styles.tokenBox}>
-            <Text style={styles.tokenAmount} numberOfLines={1}>
-              {formatAmount(amountSum)} {token.symbol}
-            </Text>
-            <Text style={styles.tokenUsd}>
-              {tokenUsdValue
-                ? `≈ ${formatUsdValue(tokenUsdValue * amountSum)}`
-                : ''}
-            </Text>
-          </View>
-        </View>
+        amountList.map((item, index) => renderItem({ item, index }))
       ) : (
         <View style={styles.itemEmptyContainer}>
           <View style={styles.horizontalLine} />
@@ -176,6 +168,11 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 160,
     height: 116,
   },
+  arrow: {
+    width: 26,
+    height: 26,
+    borderRadius: 30,
+  },
   empytContainer: {
     paddingVertical: 40,
     width: '100%',
@@ -198,6 +195,10 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 0,
     marginBottom: 4,
   },
+  content: {
+    // alignItems: 'center',
+    justifyContent: 'center',
+  },
   accountBox: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -206,18 +207,18 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   titleText: {
     flexShrink: 1,
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '500',
     flexWrap: 'nowrap',
   },
 
   walletIcon: {
-    width: 14,
-    height: 14,
-    borderRadius: 4,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
   },
 
   body: {},
@@ -261,10 +262,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   tokenBox: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     justifyContent: 'center',
-    // gap: 4,
-    flex: 1,
+    gap: 8,
   },
   actionBox: {
     display: 'flex',
@@ -291,8 +291,8 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenAmount: {
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
 }));
