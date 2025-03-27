@@ -17,6 +17,7 @@ import HardWareIcon from '@/assets2024/icons/common/IconHardWare.png';
 // TODO: replace to svg
 // import HardWareIcon from '@/assets2024/icons/common/IconHardWare.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
+import IconSyncRabby from '@/assets2024/icons/common/iconSyncExtension.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -136,6 +137,51 @@ function ImportMethods(): JSX.Element {
                 {t('page.nextComponent.importAddress.privateKey')}
               </Text>
             </Card>
+            {state?.isNotNewUserProc && (
+              <>
+                <Card
+                  hasArrow={state?.isNotNewUserProc}
+                  style={styles.importItem}
+                  onPress={() => {
+                    trigger('impactLight', {
+                      enableVibrateFallback: true,
+                      ignoreAndroidSystemSettings: false,
+                    });
+
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackAddress, {
+                        screen: RootNames.ImportHardwareAddress,
+                        params: {},
+                      }),
+                    );
+                  }}>
+                  <Image source={HardWareIcon} style={styles.icon} />
+                  <Text style={styles.importType}>
+                    {t('page.nextComponent.addAddress.hardwareWallet')}
+                  </Text>
+                </Card>
+                <Card
+                  hasArrow={state?.isNotNewUserProc}
+                  style={styles.importItem}
+                  onPress={() => {
+                    trigger('impactLight', {
+                      enableVibrateFallback: true,
+                      ignoreAndroidSystemSettings: false,
+                    });
+
+                    navigation.dispatch(
+                      StackActions.push(RootNames.Scanner, {
+                        syncExtension: true,
+                      }),
+                    );
+                  }}>
+                  <IconSyncRabby style={styles.icon} />
+                  <Text style={styles.importType}>
+                    {t('page.nextComponent.addAddress.syncRabbyExtension')}
+                  </Text>
+                </Card>
+              </>
+            )}
             {state?.isNotNewUserProc && (
               <>
                 <Text style={styles.titleText}>
