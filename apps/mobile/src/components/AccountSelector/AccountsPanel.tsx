@@ -99,14 +99,14 @@ function AddressItemInSheetModal({
 
   return (
     <AddressItemShadowView
-      style={isCurrent || isPressing ? styles.active : null}>
+      style={[
+        styles.addressItemContainer,
+        isCurrent || isPressing ? styles.active : null,
+        isCurrent && styles.addressItemContainerCurrent,
+        isPressing && styles.containerPressing,
+      ]}>
       <TouchableOpacity
-        style={StyleSheet.flatten([
-          styles.addressItemContainer,
-          style,
-          isCurrent && styles.addressItemContainerCurrent,
-          isPressing && styles.containerPressing,
-        ])}
+        style={StyleSheet.flatten([style])}
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
