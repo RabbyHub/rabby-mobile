@@ -277,7 +277,7 @@ export const ImportSeedPhraseScreen2024 = () => {
     }
 
     preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM,
+      REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
     );
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
