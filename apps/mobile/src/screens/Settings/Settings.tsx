@@ -75,7 +75,7 @@ import {
 } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
-import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
@@ -664,9 +664,10 @@ function DevSettingsBlocks() {
               label: 'Test Authentication Modal',
               icon: getBiometricsIcon(isFaceID),
               onPress: () => {
-                AuthenticationModal.show({
+                AuthenticationModal2024.show({
                   title: 'Test Authentication Modal',
                   authType: ['biometrics', 'password'],
+                  // authType: ['password'],
                   onFinished: ctx => {
                     toast.show(JSON.stringify(ctx, null, 2));
                   },

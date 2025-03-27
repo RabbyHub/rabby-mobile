@@ -192,7 +192,7 @@ export const AuthenticationModal2024 = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
-    footerButtonGroupMb: 12,
+    footerButtonGroupMb: 35,
   });
 
   const { isUseCustomPwd } = usePasswordStatus();
@@ -351,7 +351,7 @@ export const AuthenticationModal2024 = ({
 
   return (
     <AutoLockView>
-      <AppBottomSheetModalTitle style={styles.modalTitle} title={title} />
+      <Text style={styles.modalTitle}>{title}</Text>
 
       <View style={styles.main}>
         {description && (
@@ -398,15 +398,13 @@ export const AuthenticationModal2024 = ({
                           borderColor: 'transparent',
                         },
                   )}
+                  iconColor={colors2024['neutral-title-1']}
                   inputProps={{
                     value: password,
                     secureTextEntry: true,
                     inputMode: 'text',
                     returnKeyType: 'done',
                     returnKeyLabel: t('global.Confirm'),
-                    placeholder:
-                      placeholder ??
-                      t('component.AuthenticationModal.passwordPlaceholder'),
                     placeholderTextColor: colors2024['neutral-foot'],
                     onChangeText: setPassword,
                   }}
@@ -493,9 +491,11 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
       color: colors2024['neutral-title-1'],
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '700',
+      fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
       paddingTop: 12,
+      marginBottom: 16,
+      textAlign: 'center',
     },
     description: {
       color: colors['neutral-body'],
