@@ -210,3 +210,11 @@ export async function checkEthApp(cb: (result: boolean) => void) {
 export function getMaxAccountLimit() {
   return undefined;
 }
+
+export async function fixDeviceId(address: string, deviceId: string) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+
+  await keyring.fixDeviceId(address, deviceId);
+  await keyringService.persistAllKeyrings();
+  return;
+}

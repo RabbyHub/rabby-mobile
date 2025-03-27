@@ -38,6 +38,7 @@ export const useLedgerStatus = (address: string) => {
           }, 0);
           try {
             await TransportBLE.open(d.id);
+            apiLedger.fixDeviceId(address, d.id);
             setStatus('CONNECTED');
             cb?.();
           } catch (e) {
@@ -48,7 +49,7 @@ export const useLedgerStatus = (address: string) => {
         },
       });
     },
-    [deviceId, setStatus],
+    [address, deviceId, setStatus],
   );
 
   return {
