@@ -49,7 +49,7 @@ import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
@@ -89,6 +89,7 @@ import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useCexAccounts } from '@/hooks/useCexAccounts';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 const HeaderHeight = 24;
 
@@ -516,6 +517,10 @@ function MultiAddressHome(): JSX.Element {
               screen: RootNames.MultiSwap,
               params: {},
             }),
+          );
+
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
           );
           break;
         case MultiHomeFeatTitle.Bridge:

@@ -12,6 +12,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ActionsContainer, Props } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { useSubmitAction } from './useSubmitAction';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 extend([mixPlugin]);
 
@@ -25,13 +27,23 @@ export const SubmitActions: React.FC<Props> = ({
   gasLessThemeColor,
   isGasNotEnough,
   isMiniSignTx,
+  chain,
+  isSwap,
 }) => {
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(false);
 
   const handleClickSign = React.useCallback(() => {
     setIsSign(true);
-  }, []);
+
+    isSwap &&
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
+        {
+          chain: chain?.serverId as string,
+        },
+      );
+  }, [chain, isSwap]);
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);

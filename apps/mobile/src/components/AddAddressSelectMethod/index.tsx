@@ -14,7 +14,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: ReturnType<
@@ -97,6 +98,10 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
 
             naviPush(RootNames.Scanner, { syncExtension: true });
             onDone();
+
+            preferenceService.setReportActionTs(
+              REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
+            );
           }}
           style={styles.importItem}
           title={t('page.nextComponent.addAddress.syncRabbyExtension')}

@@ -8,6 +8,8 @@ import { BackupUnlockScreen } from '../SeedPhraseBackupToCloud/BackupUnlockScree
 import { BackupRestoreScreen } from './BackupRestoreScreen2024';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { RootNames } from '@/constant/layout';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -61,6 +63,9 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
           );
           return;
         }
+        preferenceService.setReportActionTs(
+          REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM,
+        );
         await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
       } catch (e) {
         console.log('backup error', e);

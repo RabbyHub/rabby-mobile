@@ -20,6 +20,8 @@ import { apiKeystone } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { trigger } from 'react-native-haptic-feedback';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -65,6 +67,9 @@ export function ImportHardwareAddressScreen(): JSX.Element {
       action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
       label: KEYRING_CLASS.HARDWARE.LEDGER,
     });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT,
+    );
   }, []);
 
   const goImport = useImportKeystone();

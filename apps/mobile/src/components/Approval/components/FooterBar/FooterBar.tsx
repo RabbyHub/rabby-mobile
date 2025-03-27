@@ -25,6 +25,7 @@ import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
+  isSwap?: boolean;
   chain?: Chain;
   gnosisAccount?: Account;
   securityLevel?: Level;
