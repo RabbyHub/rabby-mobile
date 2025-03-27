@@ -131,8 +131,6 @@ const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
 function SettingsBlocks() {
   const colors = useThemeColors();
 
-  const { currentAccount } = useCurrentAccount();
-
   const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
 
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();

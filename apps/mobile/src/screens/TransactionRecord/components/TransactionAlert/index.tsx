@@ -1,37 +1,36 @@
 import { RcIconWarningCC } from '@/assets2024/icons/common';
-import { Chain } from '@/constant/chains';
+import { toast } from '@/components2024/Toast';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { apiCustomTestnet, apiProvider } from '@/core/apis';
+import { sendRequest } from '@/core/apis/sendRequest';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { TransactionGroup } from '@/core/services/transactionHistory';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { useFindChain } from '@/hooks/useFindChain';
+import { findAccountByPriority } from '@/utils/account';
+import { findChain } from '@/utils/chain';
+import { intToHex } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useInterval, useMemoizedFn, useRequest, useSetState } from 'ahooks';
 import dayjs from 'dayjs';
 import { flatten, flattenDeep, groupBy, maxBy, sortBy, uniqBy } from 'lodash';
-import { useMemo, useState } from 'react';
-import { Trans } from 'react-i18next';
+import { useMemo, useState, useTransition } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { CancelTxConfirmPopup } from '../CancelTxConfirmPopup';
-import { toast } from '@/components2024/Toast';
-import { apisTransactionHistory } from '@/core/apis/transactionHistory';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '@/utils/account';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
-import { findChain } from '@/utils/chain';
-import { apiCustomTestnet, apiProvider } from '@/core/apis';
-import { sendRequest } from '@/core/apis/sendRequest';
-import { intToHex } from '@/utils/number';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const ClearPendingAlertDetail = ({
   data,
   onClearPending,
 }: {
   data: TransactionGroup[];
-  onClearPending?: (chainId: number) => void;
+  onClearPending?: (data: TransactionGroup[]) => void;
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const chainId = data?.[0]?.chainId;
@@ -64,7 +63,7 @@ const ClearPendingAlertDetail = ({
           <Text
             style={styles.linkText}
             onPress={() => {
-              onClearPending?.(chainId);
+              onClearPending?.(data);
             }}>
             Clear Pending Locally
           </Text>{' '}
@@ -129,46 +128,32 @@ export const TransactionAlert = ({
 }: {
   pendingTxs?: TransactionGroup[];
 }) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
-  const activeAccounts = useMemo(() => {
-    if (!pendingTxs?.length) {
-      return [];
-    }
-    return uniqBy(
-      accounts.filter(item =>
-        pendingTxs.find(txGroup =>
-          isSameAddress(txGroup.address, item.address),
-        ),
-      ),
-      item => item.address,
-    );
-  }, [accounts, pendingTxs]);
 
   const { data } = useRequest(
     async () => {
       const res = await Promise.all(
-        activeAccounts.map(account =>
-          apisTransactionHistory.getSkipedTxs(account.address),
+        uniqBy(pendingTxs, item => item.address).map(item =>
+          apisTransactionHistory.getSkipedTxs(item.address),
         ),
       );
       return flattenDeep(res.map(item => Object.values(item)));
     },
     {
-      refreshDeps: [activeAccounts, pendingTxs],
-      onError: console.error,
-      onSuccess: console.log,
+      refreshDeps: [pendingTxs?.length],
     },
   );
 
   const [confirmState, setConfirmState] = useSetState<{
     visible?: boolean;
-    chainId?: number | null;
+    groups: TransactionGroup[];
   }>({
     visible: false,
-    chainId: null,
+    groups: [],
   });
 
   const handleOnChainCancel = useMemoizedFn(
@@ -239,18 +224,15 @@ export const TransactionAlert = ({
     },
   );
 
-  const handleClearPending = useMemoizedFn(async (chainId: number) => {
-    // clearAddressPendingTransactions(account!.address, chain.id);
-    await Promise.all(
-      activeAccounts.map(account => {
-        return apisTransactionHistory.removeLocalPendingTx({
-          address: account.address,
-          chainId,
-        });
-      }),
-    );
-    toast.success('Clear pending transactions success');
-    // onClearPending?.();
+  const handleClearPending = useMemoizedFn((groups: TransactionGroup[]) => {
+    uniqBy(groups, item => `${item.address}-${item.chainId}`).forEach(item => {
+      apisTransactionHistory.removeLocalPendingTx({
+        address: item.address,
+        chainId: item.chainId,
+      });
+    });
+    toast.success(t('page.transactions.TransactionAlert.clearPendingSuccess'));
+
     resetNavigationTo(navigation, 'Home');
   });
 
@@ -261,18 +243,34 @@ export const TransactionAlert = ({
   }, 1000 * 60);
 
   const needClearPendingTxs = useMemo(() => {
-    return Object.entries(groupBy(pendingTxs, item => item.chainId))
-      .map(([key, value]) => {
+    const list = Object.entries(
+      groupBy(pendingTxs, item => `${item.address}-${item.chainId}`),
+    )
+      .map(([key, txGroups]) => {
+        const [address, chainId] = key.split('-');
         return {
-          chain: key,
-          data: sortBy(value, item => +item.nonce),
-          needClear: value.some(item => {
+          address,
+          chain: chainId,
+          data: sortBy(txGroups, item => +item.nonce),
+          needClear: txGroups.some(item => {
             return dayjs(item.createdAt).isBefore(now.subtract(3, 'minute'));
           }),
         };
       })
       .filter(item => item.needClear);
+
+    return Object.values(groupBy(list, item => item.chain)).map(item => {
+      const txGroups = flatten(item.map(i => i.data));
+      return {
+        ...item[0],
+        data: txGroups,
+      };
+    });
   }, [pendingTxs, now]);
+
+  if (!data?.length && !needClearPendingTxs?.length) {
+    return null;
+  }
 
   return (
     <View style={styles.list}>
@@ -286,38 +284,37 @@ export const TransactionAlert = ({
         );
       })}
 
-      {!data?.length &&
-        needClearPendingTxs?.map(item => {
-          return (
-            <ClearPendingAlertDetail
-              key={item.chain}
-              data={item.data}
-              onClearPending={chainId => {
-                setConfirmState({
-                  chainId,
-                  visible: true,
-                });
-              }}
-            />
-          );
-        })}
+      {needClearPendingTxs?.map(item => {
+        return (
+          <ClearPendingAlertDetail
+            key={item.chain}
+            data={item.data}
+            onClearPending={groups => {
+              setConfirmState({
+                groups,
+                visible: true,
+              });
+            }}
+          />
+        );
+      })}
 
       <CancelTxConfirmPopup
         visible={confirmState.visible}
         onClose={() => {
           setConfirmState({
             visible: false,
-            chainId: null,
+            groups: [],
           });
         }}
         onConfirm={() => {
-          if (!confirmState.chainId) {
+          if (!confirmState.groups?.length) {
             return;
           }
-          handleClearPending(confirmState.chainId);
+          handleClearPending(confirmState.groups);
           setConfirmState({
             visible: false,
-            chainId: null,
+            groups: [],
           });
         }}
       />

@@ -272,11 +272,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
         address: maxGasTx.rawTx.from,
       });
       toast.success(t('page.activities.signedTx.message.deleteSuccess'));
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        resetNavigationTo(navigation, 'Home');
-      }
+      resetNavigationTo(navigation, 'Home');
     } catch (e) {
       toast.error((e as any).message);
     }

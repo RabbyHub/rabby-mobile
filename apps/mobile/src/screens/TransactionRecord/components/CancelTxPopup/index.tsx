@@ -57,15 +57,15 @@ export const CancelTxPopup = ({
         ),
         value: CANCEL_TX_TYPE.ON_CHAIN_CANCEL,
       },
-      {
-        title: t(
-          'page.activities.signedTx.CancelTxPopup.options.removeLocalPendingTx.title',
-        ),
-        desc: t(
-          'page.activities.signedTx.CancelTxPopup.options.removeLocalPendingTx.desc',
-        ),
-        value: CANCEL_TX_TYPE.REMOVE_LOCAL_PENDING_TX,
-      },
+      // {
+      //   title: t(
+      //     'page.activities.signedTx.CancelTxPopup.options.removeLocalPendingTx.title',
+      //   ),
+      //   desc: t(
+      //     'page.activities.signedTx.CancelTxPopup.options.removeLocalPendingTx.desc',
+      //   ),
+      //   value: CANCEL_TX_TYPE.REMOVE_LOCAL_PENDING_TX,
+      // },
     ],
     [t, tx?.hash, tx?.pushType],
   );
