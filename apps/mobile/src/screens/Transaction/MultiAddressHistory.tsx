@@ -169,6 +169,11 @@ function History({
         setCurrentNoDbData(historyList.length === 0);
       }
 
+      !isFirst &&
+        historyList.length === 0 &&
+        !isSceneUsingAllAccounts &&
+        syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
+
       const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(item => {
         const localBuyItem = buyList.find(
@@ -593,17 +598,6 @@ function History({
     return isNodata;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyEnsureNoData, sceneCurrentAccountDepKey]);
-
-  useEffect(() => {
-    if (!isSceneUsingAllAccounts && dbData.length === 0) {
-      syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
-    }
-  }, [
-    dbData.length,
-    isSceneUsingAllAccounts,
-    finalSceneCurrentAccount?.address,
-    syncSingleAddress,
-  ]);
 
   const fetchFromDbLoading = useMemo(
     () =>
