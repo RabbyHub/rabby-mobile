@@ -138,17 +138,20 @@ export const batchQueryTokensWithLocalCache = async (
 
       writeTokens.forEach((wt, idx) => {
         if (wt.value_24h_change === undefined) {
-          const isSupportedHistory = !!chainList?.find(
-            chain => wt.chain === chain.id,
-          )?.is_support_history;
+          // only this token has history data
+          const isSupportedHistory =
+            !!chainList?.find(chain => wt.chain === chain.id)
+              ?.is_support_history &&
+            wt.is_core &&
+            !wt.is_scam;
           writeTokens[idx].value_24h_change = isSupportedHistory
             ? '1'
-            : writeTokens[idx].price_24h_change + '';
+            : (writeTokens[idx].price_24h_change || '0') + '';
         }
       });
 
       runOnJS(syncRemoteTokens)(user_id, writeTokens);
-      return tokens;
+      return writeTokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
     }
@@ -286,7 +289,9 @@ export const tagTokenList = (
 export const ensureAbstractPortfolioToken = (
   token: TokenItem | AbstractPortfolioToken,
 ): AbstractPortfolioToken => {
-  if (token instanceof DisplayedToken) return token as AbstractPortfolioToken;
+  if (token instanceof DisplayedToken) {
+    return token as AbstractPortfolioToken;
+  }
 
   return new DisplayedToken(token) as AbstractPortfolioToken;
 };

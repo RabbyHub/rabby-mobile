@@ -25,7 +25,7 @@ import {
   TipTermOfUseModalInner,
   TipPrivacyPolicyInner,
 } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
-import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { SettingHDKeyring } from '@/components/HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
@@ -130,7 +130,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
   [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
-  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
+  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal2024,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
   [MODAL_NAMES.DESCRIPTION]: Descriptions,
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,

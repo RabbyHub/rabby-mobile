@@ -1,3 +1,4 @@
+import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apisLock } from '@/core/apis';
 import { whitelistService } from '@/core/services';
@@ -37,7 +38,7 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
       if (hasValidated) {
         onFinished();
       } else {
-        AuthenticationModal.show({
+        AuthenticationModal2024.show({
           title: t('page.addressDetail.add-to-whitelist'),
           onFinished,
           validationHandler(password) {

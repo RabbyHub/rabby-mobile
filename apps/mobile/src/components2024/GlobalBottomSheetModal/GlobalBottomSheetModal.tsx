@@ -202,7 +202,10 @@ export const GlobalBottomSheetModal2024 = () => {
             children={
               <BottomSheetView
                 // eslint-disable-next-line react-native/no-inline-styles
-                style={{ flex: 1 }}
+                // TODO: need check
+                style={
+                  bottomSheetModalProps?.enableDynamicSizing ? {} : { flex: 1 }
+                }
                 {...panResponder.panHandlers}>
                 <ModalView {...modalViewProps} />
               </BottomSheetView>
