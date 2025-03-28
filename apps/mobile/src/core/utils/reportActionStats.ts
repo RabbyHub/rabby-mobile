@@ -43,13 +43,13 @@ export const reportActionStats = async (
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS:
           reportFunc('CreateNewAddr_to_SetPassword', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE:
           reportFunc('ImportSeedPhrase_to_SetPassword', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
 
@@ -57,19 +57,19 @@ export const reportActionStats = async (
         case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM:
           reportFunc('ConfirmSeedPhrase_to_SetPassword', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM:
           reportFunc('iCloudPasswordConfirm_to_SetPassword', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM:
           reportFunc('CofirmPrivateKey_to_SetPassword', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
       }
@@ -78,7 +78,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE) {
         reportFunc('SetPassword_to_iCloudBackup', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -86,7 +86,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE) {
         reportFunc('SetPassword_to_ManualBackup', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -95,13 +95,13 @@ export const reportActionStats = async (
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP:
           reportFunc('iCloudBackup_to_CreateNewAddrDone', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP:
           reportFunc('ManualBackup_to_CreateNewAddrDone', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
 
@@ -122,19 +122,19 @@ export const reportActionStats = async (
             case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM:
               reportFunc('SetPassword_to_SeedPhraseDone', {
                 value: timeGap,
-                DeviceType: IS_IOS ? 'iOS' : 'Android',
+                deviceType: IS_IOS ? 'iOS' : 'Android',
               });
               break;
             case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM:
               reportFunc('SetPassword_to_iCloudSeedPhraseDone', {
                 value: timeGap,
-                DeviceType: IS_IOS ? 'iOS' : 'Android',
+                deviceType: IS_IOS ? 'iOS' : 'Android',
               });
               break;
             case REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM:
               reportFunc('SetPassword_to_PrivateKeyDone', {
                 value: timeGap,
-                DeviceType: IS_IOS ? 'iOS' : 'Android',
+                deviceType: IS_IOS ? 'iOS' : 'Android',
               });
               break;
           }
@@ -142,7 +142,7 @@ export const reportActionStats = async (
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT:
           reportFunc('ImportLedger_to_LedgerDone', {
             value: timeGap,
-            DeviceType: IS_IOS ? 'iOS' : 'Android',
+            deviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
       }
@@ -151,7 +151,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS) {
         reportFunc('ImportAddr_to_ImportSeedPhrase', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -159,7 +159,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS) {
         reportFunc('ImportAddr_to_ImportPrivateKey', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -167,7 +167,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS) {
         reportFunc('ImportAddr_to_ImportHardware', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -175,7 +175,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE) {
         reportFunc('ImportSeedPhrase_to_ConfirmSeedPhrase', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -183,7 +183,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE) {
         reportFunc('ImportSeedPhrase_to_iCloudPasswordConfirm', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -191,7 +191,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY) {
         reportFunc('ImportPrivateKey_to_CofirmPrivateKey', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -199,7 +199,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE) {
         reportFunc('ImportHardware_to_ImportLedger', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -211,7 +211,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION) {
         reportFunc('SyncExtension_to_ScanFinish', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -222,7 +222,7 @@ export const reportActionStats = async (
       ) {
         reportFunc('ScanFinish_to_ConfirmExtensionPassword', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -230,7 +230,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_CONFIRM) {
         reportFunc('ConfirmExtensionPassword_to_SyncExtensionDone', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
         });
       }
       break;
@@ -242,7 +242,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE) {
         reportFunc('SwapEnter_to_SwapCreate', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
         });
       }
@@ -251,7 +251,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN) {
         reportFunc('SwapCreate_to_SwapSign', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
         });
       }
@@ -260,7 +260,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN) {
         reportFunc('SwapSign_to_SwapConfirm', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
         });
       }
@@ -269,7 +269,7 @@ export const reportActionStats = async (
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM) {
         reportFunc('SwapConfirm_to_SwapFinish', {
           value: timeGap,
-          DeviceType: IS_IOS ? 'iOS' : 'Android',
+          deviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
         });
       }

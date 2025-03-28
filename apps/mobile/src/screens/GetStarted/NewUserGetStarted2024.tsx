@@ -112,6 +112,9 @@ function GetStartedScreen2024(): JSX.Element {
     navigate(RootNames.Scanner, {
       syncExtension: true,
     });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
+    );
   }, [getStaretd.processedInit]);
 
   const navigation = useRabbyAppNavigation();
