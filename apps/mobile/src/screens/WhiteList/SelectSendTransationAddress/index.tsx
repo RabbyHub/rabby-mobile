@@ -27,11 +27,12 @@ function SendHistoryScreen() {
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
+  const [firstFetchDone, setFirstFetchDone] = useState(false);
   const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
 
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
-  const { tokenDict, historyEnsureNoData } = useHistoryTokenDict();
+  const { tokenDict, historyLoading } = useHistoryTokenDict();
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
 
@@ -48,6 +49,7 @@ function SendHistoryScreen() {
         );
 
       if (isFirst) {
+        setFirstFetchDone(true);
         setCurrentNoDbData(historyList.length === 0);
       }
 
@@ -105,22 +107,24 @@ function SendHistoryScreen() {
     return orderBy(dbData || [], ['time_at', 'cate_id'], ['desc', 'asc']);
   }, [dbData]);
 
-  const ensureCurrentNoDbData = useMemo(() => {
+  const ensureCurrentIsLoading = useMemo(() => {
     const addresses = unionAccounts.map(account =>
       account.address.toLowerCase(),
     );
-    const isNodata = addresses.every(address => {
-      return historyEnsureNoData[address];
+    const isLoading = addresses.every(address => {
+      return historyLoading[address];
     });
-    return isNodata;
+    return isLoading;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyEnsureNoData]);
+  }, [historyLoading]);
   const { findAccount } = useWhiteListAddress(true);
 
   const fetchFromDbLoading = useMemo(
-    () => currentNoDbData && !allTxHistory.length && !ensureCurrentNoDbData,
-    [currentNoDbData, allTxHistory.length, ensureCurrentNoDbData],
+    () =>
+      Boolean(firstFetchDone && !allTxHistory.length && ensureCurrentIsLoading),
+    [firstFetchDone, allTxHistory.length, ensureCurrentIsLoading],
   );
+
   const handlePressItem = async (item: HistoryDisplayItem) => {
     const toAddress = item.sends[0]?.to_addr;
     if (toAddress) {
@@ -143,7 +147,7 @@ function SendHistoryScreen() {
       <HistoryList
         list={allTxHistory}
         loading={fetchFromDbLoading}
-        ensureCurrentNoDbData={ensureCurrentNoDbData}
+        firstFetchDone={firstFetchDone}
         refreshLoading={false}
         isForMultipleAdderss
         onRefresh={refresh}
