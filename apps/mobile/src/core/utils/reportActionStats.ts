@@ -2,6 +2,16 @@ import { stats } from '@/utils/stats';
 import { IS_IOS } from '../native/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from '../services/type';
 
+const reportFunc = async (
+  type: Parameters<typeof stats.report>[0],
+  params: Parameters<typeof stats.report>[1],
+) => {
+  stats.report('processDuration', {
+    type: type,
+    ...params,
+  });
+};
+
 export const reportActionStats = async (
   preferenceService: any,
   currentKey: REPORT_TIMEOUT_ACTION_KEY,
@@ -31,13 +41,13 @@ export const reportActionStats = async (
     case REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE:
       switch (beforeKey) {
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS:
-          stats.report('CreateNewAddr_to_SetPassword', {
+          reportFunc('CreateNewAddr_to_SetPassword', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE:
-          stats.report('ImportSeedPhrase_to_SetPassword', {
+          reportFunc('ImportSeedPhrase_to_SetPassword', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
@@ -45,19 +55,19 @@ export const reportActionStats = async (
 
         // have address program
         case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM:
-          stats.report('ConfirmSeedPhrase_to_SetPassword', {
+          reportFunc('ConfirmSeedPhrase_to_SetPassword', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM:
-          stats.report('iCloudPasswordConfirm_to_SetPassword', {
+          reportFunc('iCloudPasswordConfirm_to_SetPassword', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM:
-          stats.report('CofirmPrivateKey_to_SetPassword', {
+          reportFunc('CofirmPrivateKey_to_SetPassword', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
@@ -66,7 +76,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE) {
-        stats.report('SetPassword_to_iCloudBackup', {
+        reportFunc('SetPassword_to_iCloudBackup', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -74,7 +84,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE) {
-        stats.report('SetPassword_to_ManualBackup', {
+        reportFunc('SetPassword_to_ManualBackup', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -83,13 +93,13 @@ export const reportActionStats = async (
     case REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE:
       switch (beforeKey) {
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP:
-          stats.report('iCloudBackup_to_CreateNewAddrDone', {
+          reportFunc('iCloudBackup_to_CreateNewAddrDone', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
           break;
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP:
-          stats.report('ManualBackup_to_CreateNewAddrDone', {
+          reportFunc('ManualBackup_to_CreateNewAddrDone', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
@@ -110,19 +120,19 @@ export const reportActionStats = async (
           const recentlyKey = includeKey[index];
           switch (recentlyKey) {
             case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM:
-              stats.report('SetPassword_to_SeedPhraseDone', {
+              reportFunc('SetPassword_to_SeedPhraseDone', {
                 value: timeGap,
                 DeviceType: IS_IOS ? 'iOS' : 'Android',
               });
               break;
             case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM:
-              stats.report('SetPassword_to_iCloudSeedPhraseDone', {
+              reportFunc('SetPassword_to_iCloudSeedPhraseDone', {
                 value: timeGap,
                 DeviceType: IS_IOS ? 'iOS' : 'Android',
               });
               break;
             case REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM:
-              stats.report('SetPassword_to_PrivateKeyDone', {
+              reportFunc('SetPassword_to_PrivateKeyDone', {
                 value: timeGap,
                 DeviceType: IS_IOS ? 'iOS' : 'Android',
               });
@@ -130,7 +140,7 @@ export const reportActionStats = async (
           }
           break;
         case REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT:
-          stats.report('ImportLedger_to_LedgerDone', {
+          reportFunc('ImportLedger_to_LedgerDone', {
             value: timeGap,
             DeviceType: IS_IOS ? 'iOS' : 'Android',
           });
@@ -139,7 +149,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS) {
-        stats.report('ImportAddr_to_ImportSeedPhrase', {
+        reportFunc('ImportAddr_to_ImportSeedPhrase', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -147,7 +157,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS) {
-        stats.report('ImportAddr_to_ImportPrivateKey', {
+        reportFunc('ImportAddr_to_ImportPrivateKey', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -155,7 +165,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS) {
-        stats.report('ImportAddr_to_ImportHardware', {
+        reportFunc('ImportAddr_to_ImportHardware', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -163,7 +173,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE) {
-        stats.report('ImportSeedPhrase_to_ConfirmSeedPhrase', {
+        reportFunc('ImportSeedPhrase_to_ConfirmSeedPhrase', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -171,7 +181,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE) {
-        stats.report('ImportSeedPhrase_to_iCloudPasswordConfirm', {
+        reportFunc('ImportSeedPhrase_to_iCloudPasswordConfirm', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -179,7 +189,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY) {
-        stats.report('ImportPrivateKey_to_CofirmPrivateKey', {
+        reportFunc('ImportPrivateKey_to_CofirmPrivateKey', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -187,7 +197,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE) {
-        stats.report('ImportHardware_to_ImportLedger', {
+        reportFunc('ImportHardware_to_ImportLedger', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -199,7 +209,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_SHOW_PASSWORD:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION) {
-        stats.report('SyncExtension_to_ScanFinish', {
+        reportFunc('SyncExtension_to_ScanFinish', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -210,7 +220,7 @@ export const reportActionStats = async (
         beforeKey ===
         REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_SHOW_PASSWORD
       ) {
-        stats.report('ScanFinish_to_ConfirmExtensionPassword', {
+        reportFunc('ScanFinish_to_ConfirmExtensionPassword', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -218,7 +228,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_CONFIRM) {
-        stats.report('ConfirmExtensionPassword_to_SyncExtensionDone', {
+        reportFunc('ConfirmExtensionPassword_to_SyncExtensionDone', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
         });
@@ -230,7 +240,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE) {
-        stats.report('SwapEnter_to_SwapCreate', {
+        reportFunc('SwapEnter_to_SwapCreate', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
@@ -239,7 +249,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN) {
-        stats.report('SwapCreate_to_SwapSign', {
+        reportFunc('SwapCreate_to_SwapSign', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
@@ -248,7 +258,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN) {
-        stats.report('SwapSign_to_SwapConfirm', {
+        reportFunc('SwapSign_to_SwapConfirm', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
@@ -257,7 +267,7 @@ export const reportActionStats = async (
       break;
     case REPORT_TIMEOUT_ACTION_KEY.SWAP_ACTION_HAVE_DONE:
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM) {
-        stats.report('SwapConfirm_to_SwapFinish', {
+        reportFunc('SwapConfirm_to_SwapFinish', {
           value: timeGap,
           DeviceType: IS_IOS ? 'iOS' : 'Android',
           ...extra,
