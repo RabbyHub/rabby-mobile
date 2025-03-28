@@ -100,6 +100,8 @@ const ViewTypes = {
   OVERVIEW: 2,
   EMPTY_TOKEN: 3,
   EMPTY_ASSETS: 4,
+  EMPTY_NFT: 6,
+  EMPTY_DEFI: 7,
   DEFI: 5,
 };
 
@@ -199,6 +201,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         if (item.type === 'empty-assets') {
           return ViewTypes.EMPTY_ASSETS;
         }
+        if (item.type === 'empty-defi') {
+          return ViewTypes.EMPTY_DEFI;
+        }
+        if (item.type === 'empty-nft') {
+          return ViewTypes.EMPTY_NFT;
+        }
         if (
           item.type === 'fold_defi' ||
           item.type === 'unfold_defi' ||
@@ -229,6 +237,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             dim.height = TOKEN_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.EMPTY_ASSETS:
+          case ViewTypes.EMPTY_DEFI:
+          case ViewTypes.EMPTY_NFT:
             dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
@@ -413,7 +423,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         show: !loadingPortfolio && portfolios.length === 0,
         data: [
           {
-            type: 'empty-assets',
+            type: 'empty-defi',
             data: t('page.singleHome.sectionHeader.NoData', {
               name: t('page.singleHome.sectionHeader.Defi'),
             }),
@@ -435,10 +445,10 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         })),
       },
       {
-        show: !loadingNft && nftList.length === 0,
+        show: !loadingNft && nftList.length + foldNftList.length === 0,
         data: [
           {
-            type: 'empty-assets',
+            type: 'empty-nft',
             data: t('page.singleHome.sectionHeader.NoData', {
               name: t('page.singleHome.sectionHeader.Nft'),
             }),
@@ -920,7 +930,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
         );
       case 'empty-assets':
-        return <EmptyAssets desc={data} />;
+      case 'empty-defi':
+      case 'empty-nft':
+        return <EmptyAssets desc={data} type={type} />;
       case 'loading-skeleton':
         return <ItemLoader />;
       case 'loading-defi-skeleton':

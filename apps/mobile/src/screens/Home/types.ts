@@ -113,6 +113,8 @@ export type ActionHeaderItem = {
     | 'toggle_nft_fold'
     | 'empty-assets'
     | 'empty-token'
+    | 'empty-nft'
+    | 'empty-defi'
     | 'loading-skeleton'
     | 'loading-defi-skeleton';
   data?: null | string;
