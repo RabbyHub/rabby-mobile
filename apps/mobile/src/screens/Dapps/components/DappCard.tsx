@@ -268,7 +268,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappIcon: {
     width: 46,
     height: 46,
-    borderRadius: 8,
+    borderRadius: 12,
     borderCurve: 'continuous',
   },
   dappIconCircle: {

@@ -161,7 +161,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   input: {
     flex: 1,
     fontFamily: 'SF Pro Rounded',
-    height: 52,
+    height: 46,
     fontSize: 17,
     // lineHeight: 22,
     fontWeight: '700',

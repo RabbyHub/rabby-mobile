@@ -222,6 +222,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+    height: 52,
   },
   searchBar: {
     flex: 1,
