@@ -103,6 +103,7 @@ const getStyle = createGetStyles2024(ctx => ({
     width: '100%',
     borderRadius: 24,
     display: 'flex',
+    justifyContent: 'flex-start',
     flexDirection: 'row',
     gap: 12,
   },
