@@ -96,7 +96,7 @@ export const DappSearchSection: React.FC<Props> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginTop: 12,
+    marginTop: 16,
     flex: 1,
     // paddingBottom: ScreenLayouts.bottomBarHeight + 12,
     // paddingTop: 24,

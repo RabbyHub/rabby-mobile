@@ -37,10 +37,7 @@ export const DappFavoriteSection = ({
     <View style={[styles.container, style]}>
       <View style={styles.header}>
         <View style={styles.titleWarper}>
-          <RcIconStarFull />
-          <Text style={styles.title}>
-            Favorites {data?.length ? `(${data.length})` : ''}
-          </Text>
+          <Text style={styles.title}>Favorites</Text>
         </View>
         {data?.length ? (
           <TouchableOpacity hitSlop={8} onPress={handlePressAll}>
@@ -70,14 +67,14 @@ export const DappFavoriteSection = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginBottom: 24,
+    marginBottom: 30,
     paddingHorizontal: 4,
   },
   header: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   titleWarper: {
     display: 'flex',
@@ -110,9 +107,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: -16,
   },
   item: {
     width: '25%',
-    marginBottom: 20,
+    marginBottom: 16,
   },
 }));

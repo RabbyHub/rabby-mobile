@@ -1,5 +1,5 @@
-import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-search-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-search-empty-dark.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';

@@ -21,17 +21,17 @@ export const DappFavoriteSectionEmpty = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 30,
+    borderRadius: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
     borderWidth: 1,
-    paddingVertical: 25,
+    paddingVertical: 22,
 
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
   },
   emptyText: {
     fontSize: 16,

@@ -58,13 +58,13 @@ export const DappFavoriteItem = ({
                 />
               )
             ) : null}
-            {!data?.isConnected ? (
+            {/* {!data?.isConnected ? (
               <RcIconDisconnect
                 width={styles.chainIcon.width}
                 height={styles.chainIcon.height}
                 style={styles.chainIcon}
               />
-            ) : null}
+            ) : null} */}
           </>
         </View>
         <Text style={styles.dappName} numberOfLines={1}>
@@ -81,11 +81,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
 
   dappName: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
@@ -97,9 +97,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   dappIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 1000,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
   chainIcon: {
     width: 20,

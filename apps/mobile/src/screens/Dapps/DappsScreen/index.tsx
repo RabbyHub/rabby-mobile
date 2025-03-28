@@ -212,16 +212,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 16,
   },
 
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 5,
+    paddingLeft: 20,
+    paddingRight: 24,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
+    gap: 16,
   },
   searchBar: {
     flex: 1,

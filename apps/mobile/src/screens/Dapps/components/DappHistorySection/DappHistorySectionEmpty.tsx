@@ -1,5 +1,5 @@
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-search-empty-dark.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -18,17 +18,17 @@ export const DappHistorySectionEmpty = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 30,
+    borderRadius: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
     borderWidth: 1,
-    paddingVertical: 56,
+    paddingVertical: 22,
 
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 21,
+    gap: 6,
   },
   emptyText: {
     fontSize: 16,
