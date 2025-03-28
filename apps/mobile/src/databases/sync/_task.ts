@@ -34,17 +34,6 @@ export function abortAllSyncTasks() {
   });
 }
 
-const setHistoryLoadingDone = (address: string) => {
-  const resObj = appJsonStore.getItem('@historyLoadingDict', {});
-  console.log('historyLoadingDict', resObj);
-  if (resObj[address]) {
-    appJsonStore.setItem('@historyLoadingDict', {
-      ...resObj,
-      [address]: false,
-    });
-  }
-};
-
 export async function batchSaveWithPQueueAndTransaction<
   T extends EntityAddressAssetBase,
 >(
@@ -73,8 +62,9 @@ export async function batchSaveWithPQueueAndTransaction<
 
   const taskKey = makeTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
-  if (syncAbortControllers[taskKey] && !noNeedAbort)
+  if (syncAbortControllers[taskKey] && !noNeedAbort) {
     syncAbortControllers[taskKey].abort();
+  }
   syncAbortControllers[taskKey] = curAbortController;
 
   const currentSignal = curAbortController.signal;
@@ -139,7 +129,9 @@ export async function batchSaveWithPQueueAndTransaction<
         };
 
         const makeEmit = (success: boolean) => {
-          if (currentSignal.aborted) return;
+          if (currentSignal.aborted) {
+            return;
+          }
 
           // leave here for debug
           if (eventPayload.taskFor === 'all-history') {
