@@ -27,6 +27,7 @@
     "publish:preview": "yarn npm publish --tag preview",
     "test": "jest --reporters=jest-silent-reporter",
     "test:clean": "jest --clearCache",
+    "test:mergeVault": "jest --watch --findRelatedTests src/utils/mergeVault.ts",
     "test:verbose": "jest --verbose",
     "test:watch": "jest --watch",
     "tool:decrypt": "yarn ../../ build:deps && node ./scripts/decyrptKeyringState.js"
