@@ -27,12 +27,13 @@ import {
   parseAction,
 } from '@rabby-wallet/rabby-action';
 import { ALIAS_ADDRESS } from '@/constant/gas';
-import { calcGasLimit, getPendingTxs } from '@/core/apis/transactions';
+import { calcGasLimit } from '@/core/apis/transactions';
 import { stats } from './stats';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 
 // fail code
 export enum FailedCode {
@@ -182,7 +183,7 @@ export const sendTransaction = async ({
     origin: INTERNAL_REQUEST_ORIGIN,
     address: address,
     updateNonce: true,
-    pending_tx_list: await getPendingTxs({
+    pending_tx_list: await apisTransactionHistory.getPendingTxs({
       recommendNonce,
       address,
     }),

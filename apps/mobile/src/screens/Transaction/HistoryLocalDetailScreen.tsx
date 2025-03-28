@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { unionBy, orderBy, isUndefined, maxBy } from 'lodash';
 import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
@@ -75,6 +81,8 @@ import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
+import { CancelTxPopup } from '../TransactionRecord/components/CancelTxPopup';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -98,6 +106,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
+  const [isShowCancelTxPopup, setIsShowCancelTxPopup] = useState(false);
 
   const fetchRefreshData = useCallback(() => {
     if (!isPending) {
@@ -236,6 +245,42 @@ function HistoryLocalDetailScreen(): JSX.Element {
     resetNavigationTo(navigation, 'Home');
   };
 
+  /**
+   * @deprecated
+   */
+  const handleRemoveLocalPendingTx = useMemoizedFn(async () => {
+    const keyringType = data.keyringType;
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    if (!account) {
+      throw Error('No account find');
+    }
+
+    const maxGasTx = data.maxGasTx;
+    try {
+      apisTransactionHistory.removeLocalPendingTx({
+        chainId: maxGasTx.rawTx.chainId,
+        nonce: +maxGasTx.rawTx.nonce,
+        address: maxGasTx.rawTx.from,
+      });
+      toast.success(t('page.activities.signedTx.message.deleteSuccess'));
+      resetNavigationTo(navigation, 'Home');
+    } catch (e) {
+      toast.error((e as any).message);
+    }
+  });
+
   const handleTxSpeedUp = useMemoizedFn(async () => {
     if (!canCancel) {
       return;
@@ -306,20 +351,20 @@ function HistoryLocalDetailScreen(): JSX.Element {
     resetNavigationTo(navigation, 'Home');
   });
 
-  const handleTxCancel = useMemoizedFn(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.CANCEL_TX_POPUP,
-      tx: data.maxGasTx,
-      onCancelTx: (mode: CANCEL_TX_TYPE) => {
-        if (mode === CANCEL_TX_TYPE.QUICK_CANCEL) {
-          handleQuickCancel();
-        }
-        if (mode === CANCEL_TX_TYPE.ON_CHAIN_CANCEL) {
-          handleOnChainCancel();
-        }
-        removeGlobalBottomSheetModal2024(id);
-      },
-    });
+  const handleTxCancelPress = useMemoizedFn(() => {
+    setIsShowCancelTxPopup(true);
+  });
+  const handleTxCancel = useMemoizedFn((mode: CANCEL_TX_TYPE) => {
+    if (mode === CANCEL_TX_TYPE.QUICK_CANCEL) {
+      handleQuickCancel();
+    }
+    if (mode === CANCEL_TX_TYPE.ON_CHAIN_CANCEL) {
+      handleOnChainCancel();
+    }
+    if (mode === CANCEL_TX_TYPE.REMOVE_LOCAL_PENDING_TX) {
+      handleRemoveLocalPendingTx();
+    }
+    setIsShowCancelTxPopup(false);
   });
 
   const needUseSwap = useMemo(() => {
@@ -371,24 +416,34 @@ function HistoryLocalDetailScreen(): JSX.Element {
         <UnknownAction data={data} isSingleAddress={!isForMultipleAdderss} />
       )}
       {isPending ? (
-        <View style={styles.buttonContainer}>
-          <View style={{ flex: 1 }}>
-            <Button
-              titleStyle={[styles.ghostTitle]}
-              buttonStyle={[styles.ghostButton]}
-              onPress={handleTxCancel}
-              title={t('page.transactions.detail.Cancel')}
-            />
+        <>
+          <View style={styles.buttonContainer}>
+            <View style={{ flex: 1 }}>
+              <Button
+                titleStyle={[styles.ghostTitle]}
+                buttonStyle={[styles.ghostButton]}
+                onPress={handleTxCancelPress}
+                title={t('page.transactions.detail.Cancel')}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                titleStyle={[styles.primaryTitle]}
+                buttonStyle={[styles.primaryButton]}
+                onPress={handleTxSpeedUp}
+                title={t('page.transactions.detail.SpeedUp')}
+              />
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Button
-              titleStyle={[styles.primaryTitle]}
-              buttonStyle={[styles.primaryButton]}
-              onPress={handleTxSpeedUp}
-              title={t('page.transactions.detail.SpeedUp')}
-            />
-          </View>
-        </View>
+          <CancelTxPopup
+            tx={data.maxGasTx}
+            visible={isShowCancelTxPopup}
+            onCancelTx={handleTxCancel}
+            onClose={() => {
+              setIsShowCancelTxPopup(false);
+            }}
+          />
+        </>
       ) : null}
     </NormalScreenContainer2024>
   );

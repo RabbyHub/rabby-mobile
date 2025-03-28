@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Platform, ScrollView, Text, View } from 'react-native';
 
 import {
@@ -119,6 +119,7 @@ import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
+import { ClearPendingPopup } from './components/ClearPendingPopup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -130,9 +131,7 @@ const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
 function SettingsBlocks() {
   const colors = useThemeColors();
 
-  const { currentAccount } = useCurrentAccount();
-
-  const clearPendingRef = useRef<BottomSheetModal>(null);
+  const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
 
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
   // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
@@ -277,7 +276,7 @@ function SettingsBlocks() {
             label: t('page.setting.clearPending'),
             icon: RcClearPending,
             onPress: () => {
-              clearPendingRef.current?.present();
+              setIsShowClearPendingPopup(true);
             },
           },
         ],
@@ -443,30 +442,14 @@ function SettingsBlocks() {
         );
       })}
 
-      <ConfirmBottomSheetModal
-        ref={clearPendingRef}
-        height={422}
-        title={t('page.setting.clearPending')}
+      <ClearPendingPopup
+        visible={isShowClearPendingPopup}
+        onClose={() => {
+          setIsShowClearPendingPopup(false);
+        }}
         onConfirm={() => {
-          if (currentAccount?.address) {
-            clearPendingTxs(currentAccount.address);
-          }
-          toast.success('Pending transaction cleared');
+          setIsShowClearPendingPopup(false);
         }}
-        descStyle={{
-          textAlign: 'left',
-          fontSize: 16,
-          lineHeight: 22,
-          fontWeight: Platform.OS === 'ios' ? '500' : '400',
-        }}
-        desc={
-          <Text>
-            {t('page.setting.clearPendingDesc1')}
-            {'\n'}
-            {'\n'}
-            {t('page.setting.clearPendingDesc2')}
-          </Text>
-        }
       />
 
       <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />

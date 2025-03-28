@@ -267,10 +267,17 @@ export class TransactionHistoryService {
     );
 
     const firstSigningTx = this._signingTxList.find(item => {
-      return item.rawTx.chainId === chainId && !item.isSubmitted;
+      return (
+        item.rawTx.chainId === chainId &&
+        !item.isSubmitted &&
+        isSameAddress(item.rawTx.from, address)
+      );
     });
     const processingTx = this._signingTxList.find(
-      item => item.rawTx.chainId === chainId && item.isSubmitted,
+      item =>
+        item.rawTx.chainId === chainId &&
+        item.isSubmitted &&
+        isSameAddress(item.rawTx.from, address),
     );
 
     if (!maxNonceTx) {
@@ -666,7 +673,6 @@ export class TransactionHistoryService {
     const chain = findChain({
       id: chainId,
     })!;
-    console.log('reloadTxRequest', target);
     if (!target) {
       return;
     }
@@ -676,7 +682,6 @@ export class TransactionHistoryService {
         tx && tx.reqId && !tx.hash && !tx.isSubmitFailed && !tx.isWithdrawed,
     ) as (TransactionHistoryItem & { reqId: string })[];
 
-    console.log('reloadTxRequest', unbroadcastedTxs);
     if (unbroadcastedTxs.length) {
       const service = chain?.isTestnet ? testOpenapi : openapi;
       await service
@@ -752,6 +757,36 @@ export class TransactionHistoryService {
     this.setStore(draft => {
       return draft.filter(item => {
         return isSameAddress(address, item.address) && !item.isPending;
+      });
+    });
+  }
+
+  removeLocalPendingTx({
+    address,
+    chainId,
+    nonce,
+  }: {
+    address: string;
+    chainId?: number;
+    nonce?: number;
+  }) {
+    const groups = this.getTransactionGroups({
+      address,
+      chainId,
+      nonce,
+    }).filter(item => item.isPending);
+    if (!groups.length) {
+      return;
+    }
+    this.setStore(draft => {
+      return draft.filter(item => {
+        return !groups.find(txGroup => {
+          return (
+            isSameAddress(txGroup.address, item.address) &&
+            txGroup.nonce === item.nonce &&
+            txGroup.chainId === item.chainId
+          );
+        });
       });
     });
   }

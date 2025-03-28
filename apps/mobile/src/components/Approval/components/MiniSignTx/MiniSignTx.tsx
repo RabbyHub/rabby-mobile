@@ -56,7 +56,7 @@ import { MiniFooterBar } from './MiniFooterBar';
 import { MiniWaiting } from './MiniWaiting';
 import { getStyles } from './style';
 import { useBatchSignTxTask } from './useBatchSignTxTask';
-import { calcGasLimit, getPendingTxs } from '@/core/apis/transactions';
+import { calcGasLimit } from '@/core/apis/transactions';
 import {
   ActionRequireData,
   ParsedActionData,
@@ -65,6 +65,7 @@ import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -800,7 +801,7 @@ const MiniSignTx = ({
           address: currentAccount?.address,
           updateNonce: true,
           pending_tx_list: [
-            ...(await getPendingTxs({
+            ...(await apisTransactionHistory.getPendingTxs({
               recommendNonce,
               address: currentAccount?.address,
             })),
