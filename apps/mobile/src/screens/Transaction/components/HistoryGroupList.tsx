@@ -95,7 +95,7 @@ export const HistoryList = forwardRef(
   (
     {
       loading,
-      ensureCurrentNoDbData,
+      firstFetchDone,
       historySuccessList,
       loadingMore,
       loadMore,
@@ -105,7 +105,7 @@ export const HistoryList = forwardRef(
       onRefresh,
       isForMultipleAdderss = true,
     }: {
-      ensureCurrentNoDbData?: boolean;
+      firstFetchDone?: boolean;
       historySuccessList?: string[];
       localTxList?: TransactionGroup[];
       list?: (HistoryDisplayItem | TransactionGroup)[];
@@ -216,9 +216,7 @@ export const HistoryList = forwardRef(
         data={markedList}
         renderItem={renderItem}
         windowSize={5}
-        ListEmptyComponent={
-          loading ? null : ensureCurrentNoDbData ? <Empty /> : null
-        }
+        ListEmptyComponent={loading ? null : firstFetchDone ? <Empty /> : null}
         style={styles.container}
         onEndReached={loadMore}
         onEndReachedThreshold={0.8}

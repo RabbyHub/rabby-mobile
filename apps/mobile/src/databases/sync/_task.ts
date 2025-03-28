@@ -4,6 +4,7 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
+import { appJsonStore } from '@/core/storage/mmkv';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -33,6 +34,17 @@ export function abortAllSyncTasks() {
   });
 }
 
+const setHistoryLoadingDone = (address: string) => {
+  const resObj = appJsonStore.getItem('@historyLoadingDict', {});
+  console.log('historyLoadingDict', resObj);
+  if (resObj[address]) {
+    appJsonStore.setItem('@historyLoadingDict', {
+      ...resObj,
+      [address]: false,
+    });
+  }
+};
+
 export async function batchSaveWithPQueueAndTransaction<
   T extends EntityAddressAssetBase,
 >(
@@ -46,6 +58,7 @@ export async function batchSaveWithPQueueAndTransaction<
     printLog?: boolean;
     // signal?: AbortSignal;
   },
+  setHistoryLoading?: any,
 ) {
   const {
     batchSize = 50,
@@ -130,6 +143,10 @@ export async function batchSaveWithPQueueAndTransaction<
 
           // leave here for debug
           if (eventPayload.taskFor === 'all-history') {
+            setHistoryLoading?.(prev => ({
+              ...prev,
+              [eventPayload.owner_addr]: false,
+            }));
             printLog &&
               console.debug(
                 `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
