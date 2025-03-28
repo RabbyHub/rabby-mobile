@@ -198,6 +198,7 @@ function History({
       });
 
       setDbData(list);
+      setFirstFetchDone(true);
       return list;
     };
     if (!dbData.length) {
@@ -445,6 +446,7 @@ function History({
   useEffect(() => {
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
+        setFirstFetchDone(false);
         batchFetchDataV2();
         runFetchLocalTx();
       } else {
