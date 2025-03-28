@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
 import ImgLock from '@/assets/icons/swap/lock.svg';
-import ImgVerified from '@/assets/icons/swap/verified.svg';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
@@ -101,12 +100,10 @@ export const DexQuoteItem = (
       let receivedTokenUsd: string | null = null;
       let diffUsd: React.ReactNode = null;
 
-      const actualReceiveAmount = inSufficient
-        ? new BigNumber(quote?.toTokenAmount || 0)
-            .div(10 ** (quote?.toTokenDecimals || receiveToken.decimals))
-            .toString()
-        : preExecResult?.swapPreExecTx.balance_change.receive_token_list[0]
-            ?.amount;
+      const actualReceiveAmount = new BigNumber(quote?.toTokenAmount || 0)
+        .div(10 ** (quote?.toTokenDecimals || receiveToken.decimals))
+        .toString();
+
       if (actualReceiveAmount || dexId === 'WrapToken') {
         const receiveAmount =
           actualReceiveAmount || (dexId === 'WrapToken' ? payAmount : 0);
@@ -185,18 +182,6 @@ export const DexQuoteItem = (
         disable = true;
       }
 
-      if (quote?.toTokenAmount) {
-        if (!preExecResult && !inSufficient) {
-          receiveOrErrorContent = (
-            <Text style={styles.failedTipText}>
-              {t('page.swap.fail-to-simulate-transaction')}
-            </Text>
-          );
-          bestQuotePercent = null;
-          disable = true;
-        }
-      }
-
       if (!isSdkDataPass && !!preExecResult) {
         disable = true;
         receiveOrErrorContent = (
@@ -214,7 +199,6 @@ export const DexQuoteItem = (
         diffUsd,
       ];
     }, [
-      inSufficient,
       quote?.toTokenAmount,
       quote?.toTokenDecimals,
       receiveToken.decimals,
@@ -237,9 +221,8 @@ export const DexQuoteItem = (
 
   const gasFeeTooHight = useMemo(() => {
     return (
-      new BigNumber(preExecResult?.swapPreExecTx?.gas?.gas_used || 0).gte(
-        GAS_USE_AMOUNT_LIMIT,
-      ) && chain === CHAINS_ENUM.ETH
+      new BigNumber(preExecResult?.gasUsed || 0).gte(GAS_USE_AMOUNT_LIMIT) &&
+      chain === CHAINS_ENUM.ETH
     );
   }, [preExecResult, chain]);
 
@@ -283,17 +266,6 @@ export const DexQuoteItem = (
     [t, showTips],
   );
 
-  const CheckIcon = useCallback(() => {
-    if (disabled || loading || !quote?.tx || !preExecResult?.swapPreExecTx) {
-      return null;
-    }
-    return (
-      <TouchableOpacity onPress={() => handleTips('verified')}>
-        <ImgVerified width={16} height={16} />
-      </TouchableOpacity>
-    );
-  }, [disabled, loading, quote?.tx, preExecResult?.swapPreExecTx, handleTips]);
-
   const handleClick = useCallback(() => {
     if (gasFeeTooHight) {
       handleTips('gasFeeTooHight');
@@ -318,8 +290,9 @@ export const DexQuoteItem = (
       halfBetterRate: halfBetterRateString,
       quoteWarning: undefined,
       actualReceiveAmount:
-        preExecResult?.swapPreExecTx.balance_change.receive_token_list[0]
-          ?.amount || '',
+        new BigNumber(quote?.toTokenAmount || 0)
+          .div(10 ** (quote?.toTokenDecimals || receiveToken.decimals))
+          .toString() || '',
       gasUsd: preExecResult?.gasUsd,
       preExecResult: preExecResult,
     });
@@ -333,6 +306,7 @@ export const DexQuoteItem = (
     dexId,
     quote,
     preExecResult,
+    receiveToken.decimals,
     openSwapQuote,
     handleTips,
   ]);
@@ -438,7 +412,6 @@ export const DexQuoteItem = (
           ]}>
           {!disabled && <AssetAvatar size={20} logo={receiveToken.logo_url} />}
           {receiveOrErrorContent}
-          <CheckIcon />
         </View>
       </View>
 

@@ -15,14 +15,7 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
 import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
@@ -31,7 +24,6 @@ import {
   DexQuoteItem as DexQuoteItemOld,
   QuoteItemProps as QuoteItemPropsOld,
 } from './QuoteItem';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
@@ -82,9 +74,12 @@ export const Quotes = ({
             return new BigNumber(Number.MIN_SAFE_INTEGER);
           }
           const receiveTokenAmount =
-            quote?.preExecResult.swapPreExecTx.balance_change.receive_token_list.find(
-              item => isSameAddress(item.id, other.receiveToken.id),
-            )?.amount || 0;
+            new BigNumber(quote?.data?.toTokenAmount || 0)
+              .div(
+                10 **
+                  (quote?.data?.toTokenDecimals || other.receiveToken.decimals),
+              )
+              .toString() || 0;
           if (sortIncludeGasFee) {
             return new BigNumber(receiveTokenAmount)
               .times(price)
@@ -105,11 +100,13 @@ export const Quotes = ({
 
   const [bestQuoteAmount, bestQuoteGasUsd] = useMemo(() => {
     const bestQuote = sortedList?.[0];
-    const receiveTokenAmount = bestQuote?.preExecResult
-      ? bestQuote.preExecResult.swapPreExecTx.balance_change.receive_token_list.find(
-          item => isSameAddress(item.id, other.receiveToken.id),
-        )?.amount || 0
-      : 0;
+    const receiveTokenAmount =
+      new BigNumber(bestQuote?.data?.toTokenAmount || 0)
+        .div(
+          10 **
+            (bestQuote?.data?.toTokenDecimals || other.receiveToken.decimals),
+        )
+        .toString() || '0';
 
     return [
       inSufficient
@@ -141,8 +138,12 @@ export const Quotes = ({
             name={dex?.name}
             isBestQuote
             bestQuoteAmount={`${
-              dex?.preExecResult?.swapPreExecTx.balance_change
-                .receive_token_list[0]?.amount || '0'
+              new BigNumber(dex?.data?.toTokenAmount || 0)
+                .div(
+                  10 **
+                    (dex?.data?.toTokenDecimals || other.receiveToken.decimals),
+                )
+                .toString() || '0'
             }`}
             bestQuoteGasUsd={bestQuoteGasUsd}
             isLoading={dex.loading}
