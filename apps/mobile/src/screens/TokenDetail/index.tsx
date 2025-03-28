@@ -229,6 +229,7 @@ export const TokenDetailScreen = () => {
     needUseCacheToken,
     unHold: _unHold,
     isSingleAddress,
+    isSwapToTokenDetail,
   } = route.params || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -492,6 +493,8 @@ export const TokenDetailScreen = () => {
         serverId: token.chain,
       });
 
+      console.log('isSwapToTokenDetail', isSwapToTokenDetail);
+
       const toAccount =
         address && accountType
           ? accounts.find(
@@ -499,13 +502,14 @@ export const TokenDetailScreen = () => {
             ) || finalAccount
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-      navigation.push(RootNames.StackTransaction, {
+      navigation.navigate(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?._tokenId,
-          type,
+          type: isSwapToTokenDetail ? 'Buy' : type,
           address,
+          isSwapToTokenDetail: isSwapToTokenDetail,
         },
       });
     },

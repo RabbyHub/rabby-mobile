@@ -23,7 +23,8 @@
       "ImportWatchAddress2024": "เพิ่มที่อยู่แบบรับชมเท่านั้น",
       "WatchAddressList": "ที่อยู่ Watch-Only",
       "CreateChooseBackup": "3. เลือกวิธีการสำรองข้อมูล",
-      "CreateSelectMethod": "1. เลือกวิธีการสร้าง"
+      "CreateSelectMethod": "1. เลือกวิธีการสร้าง",
+      "ConfrimAddress": "ยืนยันที่อยู่ของคุณ"
     }
   },
   "component": {
@@ -165,7 +166,8 @@
     "getStart": {
       "goToHome": "ไปที่หน้าแรก",
       "createNewAddress": "สร้างที่อยู่ใหม่",
-      "alreadyHaveAddress": "ฉันมีที่อยู่แล้ว"
+      "alreadyHaveAddress": "ฉันมีที่อยู่แล้ว",
+      "sync": "สแกนเพื่อซิงค์ที่อยู่ของ Rabby Extension"
     },
     "transactions": {
       "explain": {
@@ -182,7 +184,10 @@
         "Cancel": "ยกเลิกธุรกรรมที่ค้างอยู่",
         "Approve": "อนุมัติแล้ว",
         "Buy": "ซื้อแล้ว",
-        "Revoke": "เพิกถอนการอนุมัติ {{token}}"
+        "Revoke": "เพิกถอนการอนุมัติ {{token}}",
+        "DepositedGas": "Deposited Gas",
+        "WithdrawnGas": "ถอน Gas",
+        "ReceivedGas": "ได้รับ Gas"
       },
       "detail": {
         "NoApproveNeed": "ไม่จำเป็นต้องเพิกถอน: ไม่มีค่าเผื่อที่เหลืออยู่",
@@ -1010,7 +1015,8 @@
       "addAddress": {
         "createAddress": "สร้างที่อยู่",
         "hardwareWallet": "ฮาร์ดแวร์วอลเล็ต",
-        "importAddress": "นำเข้าที่อยู่"
+        "importAddress": "นำเข้าที่อยู่",
+        "syncRabbyExtension": "ซิงค์ Rabby Extension"
       },
       "multiAddressHome": {
         "services": "บริการ",
@@ -1192,7 +1198,13 @@
       },
       "biometrics": {
         "usePassword": "เปลี่ยนมาใช้รหัสผ่านเพื่อปลดล็อก",
-        "failedAndTipTitle": "ปลดล็อกไม่สำเร็จ"
+        "failedAndTipTitle": "ปลดล็อกไม่สำเร็จ",
+        "enableBiometricAlert": {
+          "yes": "ใช่",
+          "title": "เปิดใช้งาน {{ bioType }}",
+          "no": "ยกเลิก",
+          "content": "คุณต้องการเปิดใช้งาน {{ bioType }} เพื่อปลดล็อก Rabby Wallet หรือไม่?"
+        }
       }
     },
     "newAddress": {
@@ -1613,7 +1625,9 @@
         "selectToken": "เลือกโทเค็น",
         "followingTokenInSufficient": "ยอดคงเหลือโทเค็นต่อไปนี้ไม่เพียงพอ",
         "googlePayDesc": "รวมค่าธรรมเนียม Google Pay ${{ amount }} ไม่สามารถถอนเงินได้",
-        "applePayDesc": "รวมค่าธรรมเนียม Apple Pay ${{amount}} ไม่มีการถอนไม่ได้"
+        "applePayDesc": "รวมค่าธรรมเนียม Apple Pay ${{amount}} ไม่มีการถอนไม่ได้",
+        "googlePayFeeDesc": "รวมค่าธรรมเนียม Google Pay ไม่มีการถอน",
+        "applePayFeeDesc": "รวมค่าธรรมเนียม Apple Pay ไม่มีการถอนออก"
       },
       "paymentAddressPopup": {
         "title": "เลือกที่อยู่การชำระเงิน",
@@ -1759,7 +1773,9 @@
       "BridgeIssue": "โทเค็นที่ถูกเชื่อมโยงโดยบุคคลที่สาม",
       "NoListedSite": "ไม่มีข้อมูลการจดทะเบียน",
       "fdvContent": "มูลค่าตลาดหากมีอุปทานสูงสุดหมุนเวียน มูลค่าปรับลดทั้งหมด (FDV) = ราคา × อุปทานสูงสุด หากอุปทานสูงสุดเป็นค่าว่าง FDV = ราคา × อุปทานรวม หากไม่ได้กำหนดอุปทานสูงสุดหรืออุปทานรวม หรือไม่สิ้นสุด จะไม่แสดง FDV",
-      "OriginalToken": "โทเค็นดั้งเดิม"
+      "OriginalToken": "โทเค็นดั้งเดิม",
+      "Price": "ราคา",
+      "HoldingValue": "มูลค่ารวม"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -1875,6 +1891,19 @@
       "addSuccessful": "เพิ่มที่อยู่ในรายการที่อนุญาต",
       "alreadyAdded": "เพิ่มลงในรายชื่อที่อนุญาตของคุณแล้ว",
       "addToWhitelist": "เพิ่มไปยัง Whitelist"
+    },
+    "syncExtension": {
+      "syncingTips": "ถือกล้องให้นิ่งจนกว่าการสแกนจะเสร็จสิ้น",
+      "importedSuccessfully": "นำเข้าเรียบร้อยแล้ว!",
+      "newUserVerify": "มันยังใช้เป็นรหัสผ่านเริ่มต้นสำหรับ Rabby Mobile ของคุณ",
+      "syncingProgress": "กำลังสแกน ({{ percent }})",
+      "scanTips1": "คลิก “Rabby Mobile” บน Rabby Extension",
+      "verifyWithPassword": "ยืนยันด้วยรหัสผ่าน Rabby Extension ของคุณ",
+      "noNewAddr": "ไม่พบที่อยู่ใหม่สำหรับนำเข้า",
+      "scanTips2": "สแกนโค้ดและเริ่มการซิงค์",
+      "verifyTips": "ข้อมูลของคุณถูกเข้ารหัสแบบออฟไลน์ กรุณากรอกรหัสผ่าน Rabby Extension ของคุณเพื่อถอดรหัสและตรวจสอบ",
+      "imported": "ที่อยู่ใน Rabby Mobile อยู่แล้วจะไม่ถูกนำเข้าอีกครั้ง หมายเหตุที่อยู่และรายการที่อนุญาตจะซิงค์โดยอัตโนมัติ",
+      "importedTips": "หากแอปมีที่อยู่ซ้ำอยู่แล้ว จะไม่ถูกนำเข้า หมายเหตุที่อยู่และบัญชีขาวจะซิงค์ด้วย"
     }
   },
   "native": {
@@ -1930,7 +1959,8 @@
       "option_Light": "เบา"
     },
     "Unknown": "ไม่ทราบ",
-    "unlimited": "ไม่จำกัด"
+    "unlimited": "ไม่จำกัด",
+    "Addresses": "ที่อยู่"
   },
   "background": {
     "transactionWatcher": {
@@ -1993,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "ยกเลิก"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "button": "ฉันรู้แล้ว",
+        "title": "ธุรกรรมที่ถูกบล็อก",
+        "content": "ธุรกรรมนี้โต้ตอบกับที่อยู่ที่อยู่ในรายการคว่ำบาตรของ OFAC"
       }
     }
   }

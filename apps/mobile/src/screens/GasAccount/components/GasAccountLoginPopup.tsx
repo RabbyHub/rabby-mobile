@@ -2,7 +2,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Account } from '@/core/services/preference';
-import { useCurrentAccount } from '@/hooks/account';
+import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,6 +17,8 @@ import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
 import { useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { toast } from '@/components2024/Toast';
+import { filterMyAccounts } from '@/utils/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const GasAccountLoginContent: React.FC<{
   onLogin?(): void;
@@ -26,12 +28,28 @@ const GasAccountLoginContent: React.FC<{
   const { login, logout } = useGasAccountMethods();
   const { currentAccount } = useCurrentAccount();
   const { value: gasAccountInfo } = useGasAccountInfo();
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+  const filterAccounts = useMemo(
+    () => [...filterMyAccounts(accounts)],
+    [accounts],
+  );
   const { sig } = useGasAccountSign();
 
   const [loading, setLoading] = useState(false);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const [selectedAccount, setSelectAccount] = useState(currentAccount);
+  const currentLoginAccount = useMemo(
+    () =>
+      gasAccountInfo?.account?.id
+        ? filterAccounts.find(item =>
+            isSameAddress(gasAccountInfo.account.id, item.address),
+          )
+        : null,
+    [filterAccounts, gasAccountInfo?.account?.id],
+  );
+  const [selectedAccount, setSelectAccount] = useState(currentLoginAccount);
 
   const confirmAddress = useMemoizedFn(async (account: Account | null) => {
     setSelectAccount(account);
@@ -61,8 +79,8 @@ const GasAccountLoginContent: React.FC<{
   });
 
   useEffect(() => {
-    setSelectAccount(currentAccount);
-  }, [currentAccount]);
+    setSelectAccount(currentLoginAccount);
+  }, [currentLoginAccount]);
 
   if (currentAccount) {
     return (

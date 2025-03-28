@@ -103,6 +103,7 @@ export const HistoryList = forwardRef(
       list,
       localTxList,
       onRefresh,
+      onPresssItem,
       isForMultipleAdderss = true,
     }: {
       ensureCurrentNoDbData?: boolean;
@@ -113,6 +114,7 @@ export const HistoryList = forwardRef(
       loadingMore?: boolean;
       refreshLoading?: boolean;
       isForMultipleAdderss?: boolean;
+      onPresssItem?: (data: HistoryDisplayItem) => void;
       loadMore?: () => void;
       onRefresh?: () => void;
     },
@@ -162,6 +164,7 @@ export const HistoryList = forwardRef(
               projectDict={item.data.projectDict}
               cateDict={item.data.cateDict}
               tokenDict={item.data.tokenDict || {}}
+              onPress={onPresssItem}
             />
           </>
         );

@@ -23,7 +23,8 @@
       "ImportSuccess": "Adicionado com sucesso",
       "ImportWatchAddress2024": "Adicionar Endereço Apenas para Visualização",
       "BackupSeedPhrase": "Frase de Recuperação de Backup",
-      "ImportHardwareAddress": "Ligar Carteiras de Hardware"
+      "ImportHardwareAddress": "Ligar Carteiras de Hardware",
+      "ConfrimAddress": "Confirme o Seu Endereço"
     }
   },
   "native": {
@@ -214,13 +215,15 @@
       "option_System": "Sistema"
     },
     "Unknown": "Desconhecido",
-    "unlimited": "ilimitado"
+    "unlimited": "ilimitado",
+    "Addresses": "Endereços"
   },
   "page": {
     "getStart": {
       "goToHome": "Ir para Home",
       "alreadyHaveAddress": "Já tenho um endereço",
-      "createNewAddress": "Criar Novo Endereço"
+      "createNewAddress": "Criar Novo Endereço",
+      "sync": "Digitalize para sincronizar o endereço da extensão Rabby"
     },
     "transactions": {
       "explain": {
@@ -237,7 +240,10 @@
         "Cancel": "Cancelar Transação Pendente",
         "Bridge": "Bridgeado",
         "Buy": "Adquirido",
-        "Revoke": "Revogação de Aprovação de {{token}}"
+        "Revoke": "Revogação de Aprovação de {{token}}",
+        "ReceivedGas": "Recebido Gas",
+        "DepositedGas": "Gás depositado",
+        "WithdrawnGas": "Gás Retirado"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -1065,7 +1071,8 @@
       "addAddress": {
         "hardwareWallet": "Carteira de Hardware",
         "createAddress": "Criar Endereço",
-        "importAddress": "Importar Endereço"
+        "importAddress": "Importar Endereço",
+        "syncRabbyExtension": "Sincronizar Rabby Extension"
       },
       "multiAddressHome": {
         "pin": "Pin",
@@ -1326,7 +1333,13 @@
       },
       "biometrics": {
         "failedAndTipTitle": "Desbloqueio falhou",
-        "usePassword": "Alterado para usar senha para desbloquear."
+        "usePassword": "Alterado para usar senha para desbloquear.",
+        "enableBiometricAlert": {
+          "yes": "Sim",
+          "no": "Cancelar",
+          "content": "Deseja ativar {{ bioType }} para desbloquear Rabby Wallet?",
+          "title": "Ativar {{ bioType }}"
+        }
       }
     },
     "switchChain": {
@@ -1682,7 +1695,9 @@
       "noTransactions": "Sem transações",
       "NoIssuer": "Não há informações do emissor disponíveis",
       "fdvContent": "A capitalização de mercado se o fornecimento máximo estivesse em circulação. Avaliação Totalmente Diluída (FDV) = Preço × Fornecimento Máximo. Se o Fornecimento Máximo for nulo, FDV = Preço × Fornecimento Total. Se nem o Fornecimento Máximo nem o Fornecimento Total estiverem definidos ou forem infinitos, a FDV não é exibida.",
-      "BridgeProvider": "Provedor de Bridge"
+      "BridgeProvider": "Provedor de Bridge",
+      "Price": "Preço",
+      "HoldingValue": "Valor Retido"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
@@ -1776,7 +1791,9 @@
         "desc": "Faça um depósito na conta DeBank L2 do Rabby sem taxas adicionais — retire a qualquer momento.",
         "paymentAddress": "Endereço de Pagamento",
         "googlePayDesc": "Inclui uma taxa de ${{ amount }} Google Pay. Sem levantamentos",
-        "applePayDesc": "Inclui uma taxa de ${{amount}} para Apple Pay. Sem levantamentos"
+        "applePayDesc": "Inclui uma taxa de ${{amount}} para Apple Pay. Sem levantamentos",
+        "googlePayFeeDesc": "Inclui uma taxa do Google Pay. Sem levantamentos",
+        "applePayFeeDesc": "Inclui uma taxa do Apple Pay. Sem levantamentos"
       },
       "paymentAddressPopup": {
         "address": "Endereço de pagamento",
@@ -1930,6 +1947,19 @@
       "removeWhitelist": "Remover da Whitelist",
       "alreadyAdded": "Já adicionado à sua lista de permissões",
       "confirmPassword": "Introduza a Palavra-passe para Confirmar"
+    },
+    "syncExtension": {
+      "syncingProgress": "A digitalização ({{ percent }})",
+      "scanTips2": "Digitalize o código e comece a sincronizar",
+      "newUserVerify": "Também servirá como a palavra-passe padrão para o seu Rabby Mobile",
+      "noNewAddr": "Nenhum novo endereço encontrado para importar",
+      "scanTips1": "Clique em “Rabby Mobile” na extensão Rabby",
+      "syncingTips": "Mantenha a câmara imóvel até que a digitalização esteja concluída",
+      "imported": "Os endereços já presentes no Rabby Mobile não serão importados novamente. As notas e listas brancas dos endereços serão sincronizadas automaticamente.",
+      "importedSuccessfully": "Importado com sucesso!",
+      "verifyWithPassword": "Verifique com a sua Palavra-passe da Extensão Rabby",
+      "verifyTips": "Os seus dados são encriptados offline. Insira a senha da sua extensão Rabby para desencriptar e verificar.",
+      "importedTips": "Se a APP já tiver um endereço duplicado, não será importado. As notas de endereço e listas brancas também serão sincronizadas."
     }
   },
   "constant": {
@@ -1993,6 +2023,13 @@
     "dialog": {
       "button": {
         "cancel": "Cancelar"
+      }
+    },
+    "dialogs": {
+      "blockedTransaction": {
+        "title": "Transação Bloqueada",
+        "content": "Esta transação interage com um endereço que está na lista de sanções do OFAC.",
+        "button": "Eu Sei"
       }
     }
   }

@@ -795,6 +795,17 @@ class OneKeyKeyring extends EventEmitter {
     }
     return undefined;
   }
+
+  fixConnectId(address: string, connectId: string) {
+    const checksummedAddress = ethUtil.toChecksumAddress(address);
+    const detail = this.accountDetails[checksummedAddress];
+    if (!detail.connectId) {
+      this.accountDetails[checksummedAddress] = {
+        ...detail,
+        connectId,
+      };
+    }
+  }
 }
 
 export default OneKeyKeyring;

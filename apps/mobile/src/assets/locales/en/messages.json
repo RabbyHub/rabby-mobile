@@ -31,7 +31,8 @@
     "getStart": {
       "createNewAddress": "Create New Address",
       "alreadyHaveAddress": "I already have an address",
-      "goToHome": "Go to Home"
+      "goToHome": "Go to Home",
+      "sync": "Scan to Sync Rabby Extension Address"
     },
     "transactions": {
       "title": "Transactions",
@@ -962,7 +963,8 @@
       "addAddress": {
         "createAddress": "Create Address",
         "importAddress": "Import Address",
-        "hardwareWallet": "Hardware Wallet"
+        "hardwareWallet": "Hardware Wallet",
+        "syncRabbyExtension": "Sync Rabby Extension"
       },
       "multiAddressHome": {
         "pin": "Pin",
@@ -1529,7 +1531,7 @@
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
         "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
         "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
-        "applePayFeeDesc": "Includes a Apple Pay fee. No withdrawals"
+        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
         "title": "Select Payment address",
@@ -1771,6 +1773,19 @@
     },
     "eip7702": {
       "alert": "EIP-7702 is not supported yet"
+    },
+    "syncExtension": {
+      "newUserVerify": "It will also serve as the default password for your Rabby Mobile",
+      "verifyWithPassword": "Verify with your \nRabby Extension Password",
+      "verifyTips": "Your data is encrypted offline. Enter your Rabby Extension password to decrypt and verify.",
+      "imported": "Addresses already in Rabby Mobile won’t be imported again. Address notes and whitelists will sync automatically.",
+      "importedTips": "If the APP already has a duplicate address, it will not be imported.Address notes and whitelists will sync as well.",
+      "importedSuccessfully": "Imported Successfully!",
+      "scanTips1": "Click “Rabby Mobile” on Rabby Extension",
+      "scanTips2": "Scan the code and start syncing",
+      "syncingProgress": "Scanning ({{ percent }})",
+      "syncingTips": "Keep the camera steady until the scan is complete",
+      "noNewAddr": "No new addresses found to import"
     }
   },
   "component": {

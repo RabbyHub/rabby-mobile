@@ -865,6 +865,17 @@ class LedgerKeyring {
       version,
     };
   };
+
+  fixDeviceId(address: string, deviceId: string) {
+    const checksummedAddress = ethUtil.toChecksumAddress(address);
+    const detail = this.accountDetails[checksummedAddress];
+    if (!detail.deviceId) {
+      this.accountDetails[checksummedAddress] = {
+        ...detail,
+        deviceId,
+      };
+    }
+  }
 }
 
 export default LedgerKeyring;

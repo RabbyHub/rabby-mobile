@@ -54,7 +54,16 @@ export async function getAddresses(start: number, end: number) {
 export async function unlockDevice() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
-  return keyring.unlock();
+  await keyring.unlock();
+}
+
+export async function fixConnectId(address: string, connectId: string) {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+
+  await keyring.fixConnectId(address, connectId);
+  await keyringService.persistAllKeyrings();
+
+  return;
 }
 
 export async function searchDevices() {
