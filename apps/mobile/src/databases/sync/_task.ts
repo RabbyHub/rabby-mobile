@@ -4,6 +4,7 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
+import { appJsonStore } from '@/core/storage/mmkv';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -46,6 +47,7 @@ export async function batchSaveWithPQueueAndTransaction<
     printLog?: boolean;
     // signal?: AbortSignal;
   },
+  setHistoryLoading?: any,
 ) {
   const {
     batchSize = 50,
@@ -60,8 +62,9 @@ export async function batchSaveWithPQueueAndTransaction<
 
   const taskKey = makeTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
-  if (syncAbortControllers[taskKey] && !noNeedAbort)
+  if (syncAbortControllers[taskKey] && !noNeedAbort) {
     syncAbortControllers[taskKey].abort();
+  }
   syncAbortControllers[taskKey] = curAbortController;
 
   const currentSignal = curAbortController.signal;
@@ -126,10 +129,16 @@ export async function batchSaveWithPQueueAndTransaction<
         };
 
         const makeEmit = (success: boolean) => {
-          if (currentSignal.aborted) return;
+          if (currentSignal.aborted) {
+            return;
+          }
 
           // leave here for debug
           if (eventPayload.taskFor === 'all-history') {
+            setHistoryLoading?.(prev => ({
+              ...prev,
+              [eventPayload.owner_addr]: false,
+            }));
             printLog &&
               console.debug(
                 `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,

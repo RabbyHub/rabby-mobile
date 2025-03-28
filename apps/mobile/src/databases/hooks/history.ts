@@ -70,6 +70,7 @@ export const useSyncHistoryDB = (
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
     setHistoryEnsureNoData,
+    setHistoryLoading,
   } = useHistoryTokenDict();
 
   const syncSwapHistory = useMemoizedFn(
@@ -160,7 +161,11 @@ export const useSyncHistoryDB = (
               res.history_list.length,
             );
             // if (res.history_list.length) {
-            runOnJS(syncRemoteHistory)(address, res.history_list);
+            runOnJS(syncRemoteHistory)(
+              address,
+              res.history_list,
+              setHistoryLoading,
+            );
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
             // }
@@ -182,7 +187,11 @@ export const useSyncHistoryDB = (
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(address, res.history_list);
+            runOnJS(syncRemoteHistory)(
+              address,
+              res.history_list,
+              setHistoryLoading,
+            );
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
@@ -193,6 +202,9 @@ export const useSyncHistoryDB = (
             ...prev,
             [address]: !res.history_list.length,
           }));
+        !start_time &&
+          !res.history_list.length &&
+          setHistoryLoading(prev => ({ ...prev, [address]: false }));
       } catch (error) {
         console.error('synHistoryInRealTimeApi Error fetching data:', error);
       }
@@ -255,6 +267,7 @@ export const useSyncHistoryDB = (
       forceUseRealTime?: boolean,
     ) => {
       try {
+        setHistoryLoading(prev => ({ ...prev, [address]: true }));
         const latestTime =
           latest_time || (await HistoryItemEntity.getLatestTime(address));
         const isExpiredTimeAgo =
@@ -300,7 +313,11 @@ export const useSyncHistoryDB = (
               res.history_list.length,
             );
             if (res.history_list.length) {
-              runOnJS(syncRemoteHistory)(address, res.history_list);
+              runOnJS(syncRemoteHistory)(
+                address,
+                res.history_list,
+                setHistoryLoading,
+              );
               setProjectDict(prev => ({ ...prev, ...res.project_dict }));
               setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
             }
@@ -322,7 +339,11 @@ export const useSyncHistoryDB = (
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(address, res.history_list);
+            runOnJS(syncRemoteHistory)(
+              address,
+              res.history_list,
+              setHistoryLoading,
+            );
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
             syncUserAllHistory(
@@ -338,6 +359,9 @@ export const useSyncHistoryDB = (
             ...prev,
             [address]: !res.history_list.length,
           }));
+        !start_time &&
+          !res.history_list.length &&
+          setHistoryLoading(prev => ({ ...prev, [address]: false }));
       } catch (error) {
         console.error('syncUserAllHistory Error fetching data:', error);
       }
@@ -365,6 +389,8 @@ export const useSyncHistoryDB = (
       gap,
       'isExpire:',
       gap > expireTime,
+      'add:',
+      add.slice(-4),
     );
     return gap > expireTime;
   });
@@ -432,6 +458,47 @@ export const useSyncHistoryDB = (
     },
   );
 
+  const syncMultiAddressesHistory = useMemoizedFn(
+    async (addresses: string[]) => {
+      if (addresses.length === 0) {
+        console.debug('syncMultiAccountsHistory CUSTOM_LOGGER:=>: No account');
+        return;
+      }
+
+      console.log('syncMultiAccountsHistory CUSTOM_LOGGER:=>: Fetching action');
+      const queue = new PQueue({
+        interval: 2000,
+        intervalCap: 5,
+      });
+      for (const item of addresses) {
+        const address = item.toLowerCase();
+        const latestUpdateTime = updateHistoryTime[address] || 0;
+        const isUserRealTimeApi =
+          latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+        updateHistoryTimeSingleAddress(address);
+        queue.add(async () => {
+          try {
+            await Promise.all([
+              syncUserAllHistory(address, 0, 0, isUserRealTimeApi),
+              syncBuyHistory(address),
+            ]);
+          } catch (error) {
+            console.error(
+              `syncMultiAccountsHistory Error fetching data for ${address.slice(
+                -4,
+              )}:`,
+              error,
+            );
+          }
+          await new Promise(resolve => setTimeout(resolve, 0));
+        });
+      }
+      if (queue.size > 0) {
+        await waitQueueFinished(queue);
+      }
+    },
+  );
+
   const syncSingleAddress = useMemoizedFn(address => {
     const latestUpdateTime = updateHistoryTime[address] || 0;
     const isUserRealTiemApi =
@@ -448,5 +515,6 @@ export const useSyncHistoryDB = (
     syncTop10History,
     syncSingleAddress,
     syncUserAllHistory,
+    syncMultiAddressesHistory,
   };
 };

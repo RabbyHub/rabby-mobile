@@ -22,6 +22,10 @@ const historyEnsureNoDataBase = atomByMMKV<Record<string, boolean>>(
   '@historyEnsureNoDataDict',
   {} as Record<string, boolean>,
 );
+const historyLoadingDict = atomByMMKV<Record<string, boolean>>(
+  '@historyLoadingDict',
+  {} as Record<string, boolean>,
+);
 
 export function useHistoryTokenDict() {
   const [tokenDict, setTokenDict] = useAtom(storeTokenBase);
@@ -30,6 +34,7 @@ export function useHistoryTokenDict() {
   const [historyEnsureNoData, setHistoryEnsureNoData] = useAtom(
     historyEnsureNoDataBase,
   );
+  const [historyLoading, setHistoryLoading] = useAtom(historyLoadingDict);
 
   const updateHistoryTimeSingleAddress = (add: string) => {
     setUpdateHistoryTime(prev => ({
@@ -52,5 +57,7 @@ export function useHistoryTokenDict() {
     updateHistoryTimeSingleAddress,
     historyEnsureNoData,
     setHistoryEnsureNoData,
+    historyLoading,
+    setHistoryLoading,
   };
 }

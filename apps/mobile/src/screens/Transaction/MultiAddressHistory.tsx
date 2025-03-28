@@ -135,13 +135,15 @@ function History({
   } = useSceneAccountInfo({
     forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
   });
+  const [firstFetchDone, setFirstFetchDone] = useState(false);
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     transactionHistoryService.getSucceedList(),
   );
 
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(unionAccounts);
-  const { projectDict, tokenDict, historyEnsureNoData } = useHistoryTokenDict();
+  const { projectDict, tokenDict, historyLoading, historyEnsureNoData } =
+    useHistoryTokenDict();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
@@ -168,7 +170,13 @@ function History({
 
       if (isFirst) {
         setCurrentNoDbData(historyList.length === 0);
+        setFirstFetchDone(true);
       }
+
+      !isFirst &&
+        historyList.length === 0 &&
+        !isSceneUsingAllAccounts &&
+        syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
 
       const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(item => {
@@ -191,6 +199,7 @@ function History({
       });
 
       setDbData(list);
+      setFirstFetchDone(true);
       return list;
     };
     if (!dbData.length) {
@@ -438,6 +447,7 @@ function History({
   useEffect(() => {
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
+        setFirstFetchDone(false);
         batchFetchDataV2();
         runFetchLocalTx();
       } else {
@@ -472,10 +482,9 @@ function History({
   const thorttleBatchFetchData = debounce(batchFetchData, 1000);
 
   useAppOrmSyncEvents({
-    taskFor: ['all-history', 'swap-history'],
+    taskFor: ['all-history'],
     onRemoteDataUpserted: ctx => {
       switch (ctx.taskFor) {
-        case 'swap-history':
         case 'all-history':
           thorttleBatchFetchData();
           break;
@@ -581,7 +590,7 @@ function History({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
-  const ensureCurrentNoDbData = useMemo(() => {
+  const ensureCurrentIsLoading = useMemo(() => {
     if (isNeedFetchFromApi) {
       return false;
     }
@@ -589,24 +598,26 @@ function History({
     const addresses = isSceneUsingAllAccounts
       ? unionAccounts.map(account => account.address.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
-    const isNodata = addresses.every(address => {
-      return historyEnsureNoData[address];
+    const isLoading = addresses.some(address => {
+      return historyLoading[address];
     });
-    return isNodata;
+    return isLoading;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyEnsureNoData, sceneCurrentAccountDepKey]);
+  }, [historyLoading, sceneCurrentAccountDepKey]);
 
   const fetchFromDbLoading = useMemo(
     () =>
-      currentNoDbData &&
-      !allTxHistory.length &&
-      !groups?.length &&
-      !ensureCurrentNoDbData,
+      Boolean(
+        firstFetchDone &&
+          !allTxHistory.length &&
+          !groups?.length &&
+          ensureCurrentIsLoading,
+      ),
     [
-      currentNoDbData,
+      firstFetchDone,
       allTxHistory.length,
       groups?.length,
-      ensureCurrentNoDbData,
+      ensureCurrentIsLoading,
     ],
   );
 
@@ -620,7 +631,7 @@ function History({
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
           loading={isNeedFetchFromApi ? loading : fetchFromDbLoading}
-          ensureCurrentNoDbData={ensureCurrentNoDbData}
+          firstFetchDone={firstFetchDone}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAdderss={isForMultipleAdderss}
