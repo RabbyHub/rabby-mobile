@@ -14,6 +14,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RelatedDeFiType } from '..';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
 
 interface Props {
   deFiList: RelatedDeFiType[];
@@ -149,22 +150,29 @@ export const RelatedDeFi: React.FC<Props> = ({
             <View style={styles.defiItemContent}>
               <AssetAvatar
                 logo={item?.logo}
-                size={28}
+                size={46}
                 chain={item?.chain}
-                chainSize={12}
+                chainSize={16}
               />
-              <Text
-                style={styles.defiItemText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {/* {token?.name} */}
-                {ellipsisOverflowedText(item?.name, 10)}
-              </Text>
+              <View style={styles.content}>
+                <Text
+                  style={styles.defiItemText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {/* {token?.name} */}
+                  {ellipsisOverflowedText(item?.name, 20)}
+                </Text>
+                <Text style={styles.defiItemAmoutText}>{`${formatTokenAmount(
+                  item?.amount,
+                )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+              </View>
             </View>
             <View style={styles.defiItemContent}>
-              <Text style={styles.defiItemText}>{`${formatTokenAmount(
-                item?.amount,
-              )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+              <ArrowCircleCC
+                style={styles.arrow}
+                color={colors2024['neutral-body']}
+                backgroundColor={colors2024['neutral-bg-2']}
+              />
             </View>
           </View>
         </TouchableOpacity>
@@ -175,6 +183,10 @@ export const RelatedDeFi: React.FC<Props> = ({
       styles.defiItem,
       styles.defiItemContent,
       styles.defiItemText,
+      styles.arrow,
+      styles.content,
+      styles.defiItemAmoutText,
+      colors2024,
       symbol,
     ],
   );
@@ -287,7 +299,12 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     // marginBottom: 16,
     // paddingHorizontal: 20,
-    gap: 6,
+    gap: 8,
+  },
+  arrow: {
+    width: 26,
+    height: 26,
+    borderRadius: 30,
   },
   popupRelateTitle: {
     color: ctx.colors2024['neutral-title-1'],
@@ -326,13 +343,25 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     marginLeft: 4,
   },
-  defiItemText: {
-    color: ctx.colors2024['neutral-body'],
+  content: {
+    // alignItems: 'center',
+    justifyContent: 'center',
+  },
+  defiItemAmoutText: {
+    color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    marginLeft: 6,
+  },
+  defiItemText: {
+    flexShrink: 1,
+    color: ctx.colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexWrap: 'nowrap',
   },
   arrowStyle: {
     marginTop: 0,
