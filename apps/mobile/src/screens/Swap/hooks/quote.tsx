@@ -31,7 +31,7 @@ import {
 } from '@rabby-wallet/rabby-swap/dist/quote';
 import BigNumber from 'bignumber.js';
 import pRetry from 'p-retry';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
@@ -67,6 +67,7 @@ export const useQuoteMethods = () => {
     },
     [walletOpenapi],
   );
+  const nativeTokenPriceRef = useRef<Promise<TokenItem>>();
 
   const getSwapList = React.useCallback(
     async (addr: string, start = 0, limit = 5) => {
@@ -180,33 +181,40 @@ export const useQuoteMethods = () => {
         from: userAddress,
         chainId: chainInfo.id,
       });
-      const lastTimeGas: ChainGas | null =
-        await preferenceService.getLastTimeGasSelection(chainInfo.id);
-      const gasMarket = await apiProvider.gasMarketV2({
-        chainId: chainInfo.serverId,
-      });
+      const getGasPrice = async () => {
+        const lastTimeGas: ChainGas | null =
+          await preferenceService.getLastTimeGasSelection(chainInfo.id);
+        const gasMarket = await apiProvider.gasMarketV2({
+          chainId: chainInfo.serverId,
+        });
 
-      let gasPrice = 0;
-      if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
-        // use cached gasPrice if exist
-        gasPrice = lastTimeGas.gasPrice;
-      } else if (
-        lastTimeGas?.lastTimeSelect &&
-        lastTimeGas?.lastTimeSelect === 'gasLevel'
-      ) {
-        const target = gasMarket.find(
-          item => item.level === lastTimeGas?.gasLevel,
-        )!;
-        if (target) {
-          gasPrice = target.price;
+        let gasPrice = 0;
+        if (
+          lastTimeGas?.lastTimeSelect === 'gasPrice' &&
+          lastTimeGas.gasPrice
+        ) {
+          // use cached gasPrice if exist
+          gasPrice = lastTimeGas.gasPrice;
+        } else if (
+          lastTimeGas?.lastTimeSelect &&
+          lastTimeGas?.lastTimeSelect === 'gasLevel'
+        ) {
+          const target = gasMarket.find(
+            item => item.level === lastTimeGas?.gasLevel,
+          )!;
+          if (target) {
+            gasPrice = target.price;
+          } else {
+            gasPrice =
+              gasMarket.find(item => item.level === 'normal')?.price || 0;
+          }
         } else {
+          // no cache, use the fast level in gasMarket
           gasPrice =
             gasMarket.find(item => item.level === 'normal')?.price || 0;
         }
-      } else {
-        // no cache, use the fast level in gasMarket
-        gasPrice = gasMarket.find(item => item.level === 'normal')?.price || 0;
-      }
+        return gasPrice;
+      };
 
       let nextNonce = nonce;
       const pendingTx: Tx[] = [];
@@ -224,11 +232,9 @@ export const useQuoteMethods = () => {
           ...tokenApproveParams,
           nonce: nextNonce,
           value: '0x',
-          gasPrice: `0x${new BigNumber(gasPrice).toString(16)}`,
-          gas: '0x0',
         };
 
-        const tokenApprovePreExecTx = await walletOpenapi.preExecTx({
+        const tokenApproveGas = await walletOpenapi.estimateGasUsd({
           tx: tokenApproveTx,
           origin: INTERNAL_REQUEST_ORIGIN,
           address: userAddress,
@@ -236,22 +242,14 @@ export const useQuoteMethods = () => {
           pending_tx_list: pendingTx,
         });
 
-        if (!tokenApprovePreExecTx?.pre_exec?.success) {
-          throw new Error('pre_exec_tx error');
-        }
+        const txGasUsed =
+          tokenApproveGas.gas_used || tokenApproveGas.safe_gas_used || 0;
 
-        gasUsed +=
-          tokenApprovePreExecTx.gas.gas_limit ||
-          tokenApprovePreExecTx.gas.gas_used;
+        gasUsed += txGasUsed;
 
         pendingTx.push({
           ...tokenApproveTx,
-          gas: `0x${new BigNumber(
-            tokenApprovePreExecTx.gas.gas_limit ||
-              tokenApprovePreExecTx.gas.gas_used,
-          )
-            .times(4)
-            .toString(16)}`,
+          gas: `0x${new BigNumber(txGasUsed).times(4).toString(16)}`,
         });
         nextNonce = `0x${new BigNumber(nextNonce).plus(1).toString(16)}`;
       };
@@ -276,38 +274,40 @@ export const useQuoteMethods = () => {
         );
       }
 
-      const swapPreExecTx = await walletOpenapi.preExecTx({
-        tx: {
-          ...quote.tx,
-          nonce: nextNonce,
-          chainId: chainInfo.id,
-          value: `0x${new BigNumber(quote.tx.value).toString(16)}`,
-          gasPrice: `0x${new BigNumber(gasPrice).toString(16)}`,
-          gas: '0x0',
-        } as Tx,
-        origin: INTERNAL_REQUEST_ORIGIN,
-        address: userAddress,
-        updateNonce: true,
-        pending_tx_list: pendingTx,
-      });
+      const [swapTxGas, gasPrice] = await Promise.all([
+        walletOpenapi.estimateGasUsd({
+          tx: {
+            ...quote.tx,
+            nonce: nextNonce,
+            chainId: chainInfo.id,
+            value: `0x${new BigNumber(quote.tx.value).toString(16)}`,
+          } as Tx,
+          origin: INTERNAL_REQUEST_ORIGIN,
+          address: userAddress,
+          updateNonce: true,
+          pending_tx_list: pendingTx,
+        }),
+        getGasPrice(),
+      ]);
 
-      if (!swapPreExecTx?.pre_exec?.success) {
-        throw new Error('pre_exec_tx error');
-      }
+      const txGasUsed = swapTxGas.gas_used || swapTxGas.safe_gas_used || 0;
 
-      gasUsed += swapPreExecTx.gas.gas_limit || swapPreExecTx.gas.gas_used;
+      gasUsed += txGasUsed;
+
+      const nativeToken = await nativeTokenPriceRef.current!;
 
       const gasUsdValue = new BigNumber(gasUsed)
         .times(gasPrice)
-        .div(10 ** swapPreExecTx.native_token.decimals)
-        .times(swapPreExecTx.native_token.price)
+        .div(10 ** nativeToken.decimals)
+        .times(nativeToken.price)
         .toString(10);
 
       return {
         shouldApproveToken: !tokenApproved,
         shouldTwoStepApprove,
-        swapPreExecTx,
+        swapPreExecTx: swapTxGas,
         gasPrice,
+        gasUsed,
         gasUsdValue,
         gasUsd: formatUsdValue(gasUsdValue),
       };
@@ -474,6 +474,18 @@ export const useQuoteMethods = () => {
         onFinishedQuote: () => void;
       },
     ) => {
+      const chainObj = findChainByEnum(params.chain)!;
+
+      nativeTokenPriceRef.current = pRetry(
+        () =>
+          walletOpenapi.getToken(
+            params.userAddress,
+            chainObj.serverId,
+            chainObj.nativeTokenAddress,
+          ),
+        { retries: 1 },
+      );
+
       if (
         isSwapWrapToken(
           params.payToken.id,
@@ -495,7 +507,7 @@ export const useQuoteMethods = () => {
         ).map(dexId => getDexQuote({ ...params, dexId })),
       ]);
     },
-    [getDexQuote, swapViewList, supportedDEXList],
+    [walletOpenapi, getDexQuote, swapViewList, supportedDEXList],
   );
 
   return {
@@ -581,7 +593,8 @@ export const halfBetterRate = (
 export type QuotePreExecResultInfo = {
   shouldApproveToken: boolean;
   shouldTwoStepApprove: boolean;
-  swapPreExecTx: ExplainTxResponse;
+  // swapPreExecTx: ExplainTxResponse;
+  gasUsed: number;
   gasPrice: number;
   gasUsd: string;
   gasUsdValue: string;
