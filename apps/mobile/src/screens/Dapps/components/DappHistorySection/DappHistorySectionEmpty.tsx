@@ -10,7 +10,11 @@ export const DappHistorySectionEmpty = () => {
 
   return (
     <View style={styles.empty}>
-      {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
+      {isLight ? (
+        <RcIconEmpty style={styles.emptyIcon} />
+      ) : (
+        <RcIconEmptyDark style={styles.emptyIcon} />
+      )}
       <Text style={styles.emptyText}>No history in the past 30 days</Text>
     </View>
   );
@@ -18,17 +22,23 @@ export const DappHistorySectionEmpty = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 30,
+    borderRadius: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
     borderWidth: 1,
-    paddingVertical: 56,
+    paddingVertical: 20,
 
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 21,
+    gap: 6,
+
+    marginHorizontal: 4,
+  },
+  emptyIcon: {
+    width: 163,
+    height: 126,
   },
   emptyText: {
     fontSize: 16,

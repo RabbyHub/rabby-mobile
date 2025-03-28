@@ -7,7 +7,13 @@ import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useMemo } from 'react';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  StyleProp,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappFavoriteItem } from './DappFavoriteItem';
 import { DappFavoriteSectionEmpty } from './DappFavoriteSectionEmpty';
@@ -33,14 +39,18 @@ export const DappFavoriteSection = ({
     return (data || []).slice(0, 8);
   }, [data]);
 
+  const { width } = useWindowDimensions();
+  const gapStyle = useMemo(() => {
+    return {
+      columnGap: Math.floor((width - 48 - 56 * 4) / 3),
+    };
+  }, [width]);
+
   return (
     <View style={[styles.container, style]}>
       <View style={styles.header}>
         <View style={styles.titleWarper}>
-          <RcIconStarFull />
-          <Text style={styles.title}>
-            Favorites {data?.length ? `(${data.length})` : ''}
-          </Text>
+          <Text style={styles.title}>Favorites</Text>
         </View>
         {data?.length ? (
           <TouchableOpacity hitSlop={8} onPress={handlePressAll}>
@@ -52,7 +62,7 @@ export const DappFavoriteSection = ({
         ) : null}
       </View>
       {list?.length ? (
-        <View style={styles.list}>
+        <View style={[styles.list, gapStyle]}>
           {list.map(item => {
             return (
               <View key={item.origin} style={styles.item}>
@@ -70,14 +80,14 @@ export const DappFavoriteSection = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginBottom: 24,
+    marginBottom: 30,
     paddingHorizontal: 4,
   },
   header: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   titleWarper: {
     display: 'flex',
@@ -110,9 +120,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
+    rowGap: 16,
   },
   item: {
-    width: '25%',
-    marginBottom: 20,
+    // width: '25%',
+    width: 56,
   },
 }));

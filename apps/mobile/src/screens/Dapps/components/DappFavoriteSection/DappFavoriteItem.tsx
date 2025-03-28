@@ -4,8 +4,15 @@ import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
-import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
+import React, { useMemo } from 'react';
+import {
+  Image,
+  StyleProp,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappIcon } from '../DappIcon';
 
@@ -21,6 +28,10 @@ export const DappFavoriteItem = ({
   const { styles } = useTheme2024({ getStyle });
 
   const chain = findChain({ enum: data.chainId });
+  const { width } = useWindowDimensions();
+  const maxWidth = useMemo(() => {
+    return Math.round((width - 48) / 4) - 2;
+  }, [width]);
 
   return (
     <TouchableOpacity
@@ -58,16 +69,16 @@ export const DappFavoriteItem = ({
                 />
               )
             ) : null}
-            {!data?.isConnected ? (
+            {/* {!data?.isConnected ? (
               <RcIconDisconnect
                 width={styles.chainIcon.width}
                 height={styles.chainIcon.height}
                 style={styles.chainIcon}
               />
-            ) : null}
+            ) : null} */}
           </>
         </View>
-        <Text style={styles.dappName} numberOfLines={1}>
+        <Text style={[styles.dappName, { maxWidth }]} numberOfLines={1}>
           {data?.info?.name}
         </Text>
       </View>
@@ -81,25 +92,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
 
   dappName: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
     flexShrink: 1,
     textAlign: 'center',
+    width: 80,
   },
   dappIconWarper: {
     position: 'relative',
   },
   dappIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 1000,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
   chainIcon: {
     width: 20,

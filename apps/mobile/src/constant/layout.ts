@@ -37,9 +37,10 @@ export const HEADER_TOP_AREA_HEIGHT = 185;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
-  headerAreaHeight: 56,
+  headerAreaHeight: 52,
 
-  dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
+  // dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
+  dappWebViewControlHeaderHeight: 52,
   dappWebViewControlNavHeight: 68,
 };
 
