@@ -245,6 +245,9 @@ function HistoryLocalDetailScreen(): JSX.Element {
     resetNavigationTo(navigation, 'Home');
   };
 
+  /**
+   * @deprecated
+   */
   const handleRemoveLocalPendingTx = useMemoizedFn(async () => {
     const keyringType = data.keyringType;
     let account: KeyringAccountWithAlias | undefined;
