@@ -445,7 +445,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         })),
       },
       {
-        show: !loadingNft && nftList.length + foldNftList.length === 0,
+        show: !loadingNft && nftList.length === 0,
         data: [
           {
             type: 'empty-nft',
