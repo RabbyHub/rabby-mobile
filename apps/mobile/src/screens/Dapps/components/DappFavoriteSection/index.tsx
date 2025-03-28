@@ -7,7 +7,13 @@ import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useMemo } from 'react';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  StyleProp,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappFavoriteItem } from './DappFavoriteItem';
 import { DappFavoriteSectionEmpty } from './DappFavoriteSectionEmpty';
@@ -33,6 +39,13 @@ export const DappFavoriteSection = ({
     return (data || []).slice(0, 8);
   }, [data]);
 
+  const { width } = useWindowDimensions();
+  const gapStyle = useMemo(() => {
+    return {
+      columnGap: Math.floor((width - 48 - 56 * 4) / 3),
+    };
+  }, [width]);
+
   return (
     <View style={[styles.container, style]}>
       <View style={styles.header}>
@@ -49,7 +62,7 @@ export const DappFavoriteSection = ({
         ) : null}
       </View>
       {list?.length ? (
-        <View style={styles.list}>
+        <View style={[styles.list, gapStyle]}>
           {list.map(item => {
             return (
               <View key={item.origin} style={styles.item}>
@@ -107,10 +120,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: -16,
+    rowGap: 16,
   },
   item: {
-    width: '25%',
-    marginBottom: 16,
+    // width: '25%',
+    width: 56,
   },
 }));
