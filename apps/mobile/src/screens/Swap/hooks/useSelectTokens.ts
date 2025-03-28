@@ -195,7 +195,6 @@ export const useSelectTokens = ({
         ),
       };
     });
-
     return tokenItems.map(token => {
       const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
       return tagTokenItem(data, userTokenSettings);
@@ -204,8 +203,7 @@ export const useSelectTokens = ({
 
   return {
     tokensMap,
-    tokenWithOwner,
-    tokens,
+    tokens: tokenWithOwner,
     isLoading,
     getCacheTop10Tokens,
     checkIsExpireAndUpdate,
