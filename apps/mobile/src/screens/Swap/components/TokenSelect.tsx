@@ -37,7 +37,6 @@ import { Account, IManageToken } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
   TokenItemMaybeWithOwner,
-  useQueryLocalTokens,
 } from '@/databases/hooks/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
@@ -101,7 +100,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     },
     ref,
   ) => {
-    const [fold, setFold] = useState(true);
     const [pinedQueue, setPinedQueue] = useState<IManageToken[]>([]);
     const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
@@ -119,7 +117,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const currentAccount = queryConds.account;
     const {
       tokens,
-      tokenWithOwner,
       getCacheTop10Tokens,
       checkIsExpireAndUpdate,
       loadToken,
@@ -187,14 +184,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
-        tokenWithOwner.map(
+        tokens.map(
           e =>
             ({
               ...abstractTokenToTokenItem(e),
               ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
             } as TokenItemMaybeWithOwner),
         ),
-      [tokenWithOwner],
+      [tokens],
     );
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
@@ -267,8 +264,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         : allTokenItems;
       return uniqBy(queryConds.keyword ? searchedTokenByQuery : _tokens, t => {
         return makeKeyForTokenItemMaybeWithOwner(t);
-      }).filter(
-        (e: TokenItemMaybeWithOwner) =>
+      }).filter((e: TokenItemMaybeWithOwner) => {
+        const res =
           !isExcludedTokens(e) &&
           !foldTokensList.some(f => {
             return (
@@ -277,8 +274,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
               f?.ownerAccount?.address.toLowerCase() ===
                 e?.ownerAccount?.address.toLowerCase()
             );
-          }),
-      );
+          });
+        return res;
+      });
     }, [
       queryConds.chainServerId,
       queryConds.keyword,
@@ -287,6 +285,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isExcludedTokens,
       foldTokensList,
     ]);
+    console.log('CUSTOM_LOGGER:=>: availableToken', availableToken[0]);
 
     const isListLoading = queryConds.keyword
       ? isSearchLoading
