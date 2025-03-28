@@ -54,6 +54,7 @@ import {
   StackActions,
   useFocusEffect,
   useNavigation,
+  useRoute,
 } from '@react-navigation/native';
 import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
 import { useTriggerTagAssets } from './hooks/refresh';
@@ -68,7 +69,10 @@ import {
 import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
+import {
+  GetRootScreenNavigationProps,
+  RootStackParamsList,
+} from '@/navigation-type';
 import { trigger } from 'react-native-haptic-feedback';
 import {
   createGlobalBottomSheetModal2024,
@@ -80,7 +84,7 @@ import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { openapi } from '@/core/request';
 import { DefiItemLoader, ItemLoader } from './components/Skeleton';
-import { chunk } from 'lodash';
+import { chunk, set } from 'lodash';
 import { getItemId } from './utils/listRenderId';
 
 const icons = {
@@ -125,6 +129,9 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const navigation =
     useNavigation<NativeStackScreenProps<RootStackParamsList>['navigation']>();
 
+  const route = useRoute();
+  const { scrollToTokenId, tokenIsFold } = route.params || {};
+
   const { currentAccount, switchAccount } = useCurrentAccount();
 
   const [firstRowType, setFirstRowType] = useState('');
@@ -136,6 +143,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [notBorn, setNotBorn] = useState(false);
+  const [scrollTokenReady, setScrollTokenReady] = useState(false);
 
   const dataProvider = useMemo(
     () =>
@@ -538,6 +546,45 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
       });
     }
   };
+
+  useEffect(() => {
+    if (!tokenIsFold) {
+      setFoldHideList(false);
+    }
+  }, [tokenIsFold]);
+
+  useEffect(() => {
+    if (scrollTokenReady) {
+      console.log('scrollTokenReady', scrollToTokenId);
+      requestAnimationFrame(() => {
+        const data = (listRef.current?.props.dataProvider.getAllData() ||
+          []) as ActionItem[];
+
+        console.log('scrollTokenReady', data.length);
+        if (!data.length) {
+          return;
+        }
+
+        const scrollToIndex = () => {
+          const index = data.findIndex(item => {
+            if (item.type === 'unfold_token' || item.type === 'fold_token') {
+              return item.data.id === scrollToTokenId;
+            }
+            return false;
+          });
+
+          index > 0 &&
+            listRef.current?.forceUpdate(() => {
+              console.log('scrollTokenReady scrollToIndex');
+              listRef.current?.scrollToIndex(index - 1, true);
+            });
+        };
+
+        scrollToIndex();
+      });
+    }
+  }, [scrollToTokenId, scrollTokenReady]);
+
   const handleSwitchTab = (key: AsssetKey) => {
     setFoldHideList(true);
     setTimeout(() => {
@@ -1031,6 +1078,15 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
         onVisibleIndicesChanged={indexes => {
           if (listData.getDataForIndex(indexes[1])?.type) {
             setFirstRowType(listData.getDataForIndex(indexes[1]).type);
+          }
+
+          if (
+            !scrollTokenReady &&
+            !loadingToken &&
+            scrollToTokenId &&
+            indexes.length > 0
+          ) {
+            setScrollTokenReady(true);
           }
         }}
         onScroll={event => {

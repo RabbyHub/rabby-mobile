@@ -66,12 +66,13 @@ export const TokenArea: React.FC<Props> = ({
         navigate(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
           params: {
-            scrollToToken: token.id, // to do
+            scrollToTokenId: token.id, // to do
+            tokenIsFold: token._isFold,
           },
         });
       }
     },
-    [accounts, switchAccount, token.id],
+    [accounts, switchAccount, token.id, token._isFold],
   );
 
   const renderItem = useCallback(
