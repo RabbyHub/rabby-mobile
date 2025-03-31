@@ -7421,23 +7421,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.15":
-  version: 0.9.15
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.15"
-  dependencies:
-    "@rabby-wallet/rabby-sign": 0.4.0
-    axios: ^0.27.2
-    axios-rate-limit: ^1.3.0
-    eth-rpc-errors: ^4.0.3
-    lodash: ^4.17.21
-    qss: ^2.0.3
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 7a20423656e7cf2f251e8c829e320659d456b7e9dd08de834fcefd6695b25867f8df54dadd93c181f1f43375a087a39741666fbbd8f83829bdcfd6d201027d7c
-  languageName: node
-  linkType: hard
-
 "@rabby-wallet/rabby-api@npm:0.9.15-beta.0":
   version: 0.9.15-beta.0
   resolution: "@rabby-wallet/rabby-api@npm:0.9.15-beta.0"
@@ -7452,6 +7435,23 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: eb81b0caad3b68af5937c7905bfb5ea4d96ae74996b70945b697fc6e709be03d6c2b9f5217d36a3f36d0686dd76ed42f81d9fdc433c09550690179521b504053
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-api@npm:0.9.17":
+  version: 0.9.17
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.17"
+  dependencies:
+    "@rabby-wallet/rabby-sign": 0.4.0
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: 7a20423656e7cf2f251e8c829e320659d456b7e9dd08de834fcefd6695b25867f8df54dadd93c181f1f43375a087a39741666fbbd8f83829bdcfd6d201027d7c
   languageName: node
   linkType: hard
 
