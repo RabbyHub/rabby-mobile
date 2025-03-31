@@ -1,15 +1,16 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TextInput, InteractionManager } from 'react-native';
+import { View, Text, TextInput } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { BuyTokenSelect } from './SelectBuyToken';
 import { Skeleton } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import { SelectCurrency, TCurrencyList } from './SelectCurrency';
+import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 
 export const BuyToken = ({
   type,
@@ -43,19 +44,7 @@ export const BuyToken = ({
   const isFiat = type === 'from';
   const isReceive = type === 'to';
 
-  const inputRef = useRef<TextInput>(null);
-
-  useLayoutEffect(() => {
-    const interaction = InteractionManager.runAfterInteractions(() => {
-      setTimeout(() => {
-        if (isFiat) {
-          inputRef?.current?.focus();
-        }
-      }, 200);
-    });
-
-    return () => interaction.cancel();
-  }, [isFiat]);
+  const { inputCallbackRef } = useAutoFocusInput(!isFiat);
 
   const displayValue = useMemo(() => {
     if (isReceive && value) {
@@ -111,7 +100,7 @@ export const BuyToken = ({
               onInputChange?.(e.replaceAll('$', ''));
             }}
             focusable={isFiat}
-            ref={inputRef}
+            ref={inputCallbackRef}
             editable={isFiat}
           />
         )}
