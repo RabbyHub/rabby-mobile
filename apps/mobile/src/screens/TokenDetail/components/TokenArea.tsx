@@ -231,6 +231,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
 
   itemCard: {
+    width: '100%',
     marginTop: 12,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
@@ -263,14 +264,15 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenBox: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    flex: 1,
     gap: 8,
   },
   actionBox: {
     display: 'flex',
     flexDirection: 'row',
-    width: 100,
-    gap: 8,
+    width: 60,
+    // gap: 8,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },

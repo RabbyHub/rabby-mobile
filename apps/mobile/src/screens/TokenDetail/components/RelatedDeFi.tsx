@@ -62,22 +62,29 @@ const DeFiListPopup = ({
             <View style={styles.defiItemContent}>
               <AssetAvatar
                 logo={item?.logo}
-                size={28}
+                size={46}
                 chain={item?.chain}
-                chainSize={12}
+                chainSize={16}
               />
-              <Text
-                style={styles.defiItemText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {/* {token?.name} */}
-                {ellipsisOverflowedText(item?.name, 10)}
-              </Text>
+              <View style={styles.content}>
+                <Text
+                  style={styles.defiItemText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {/* {token?.name} */}
+                  {ellipsisOverflowedText(item?.name, 20)}
+                </Text>
+                <Text style={styles.defiItemAmoutText}>{`${formatTokenAmount(
+                  item?.amount,
+                )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+              </View>
             </View>
             <View style={styles.defiItemContent}>
-              <Text style={styles.defiItemText}>{`${formatTokenAmount(
-                item?.amount,
-              )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+              <ArrowCircleCC
+                style={styles.arrow}
+                color={colors2024['neutral-body']}
+                backgroundColor={colors2024['neutral-bg-2']}
+              />
             </View>
           </View>
         </TouchableOpacity>
@@ -85,6 +92,10 @@ const DeFiListPopup = ({
     },
     [
       handleGoDeFi,
+      styles.arrow,
+      styles.content,
+      styles.defiItemAmoutText,
+      colors2024,
       onClose,
       styles.defiItem,
       styles.defiItemContent,
