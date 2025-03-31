@@ -25,6 +25,11 @@ import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useAtom } from 'jotai';
 import { cexInfoAtoms } from '@/hooks/useCexAccounts';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -111,10 +116,23 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
           addressBrandName: account.brandName,
         });
       } else {
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.ConfirmAddress,
-          params: {
-            account,
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.CONFIRM_ADDRESS,
+          account,
+          bottomSheetModalProps: {
+            enableDynamicSizing: true,
+          },
+          title: 'Confirm Recipient Address',
+          onCancel: () => {
+            removeGlobalBottomSheetModal2024(id);
+          },
+          onConfirm(acc, addressDesc) {
+            removeGlobalBottomSheetModal2024(id);
+            navigateToSendScreen({
+              addressBrandName: acc.brandName,
+              cexDes: addressDesc,
+              toAddress: acc.address,
+            });
           },
         });
       }
