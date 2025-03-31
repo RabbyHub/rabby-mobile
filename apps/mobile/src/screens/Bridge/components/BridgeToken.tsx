@@ -91,7 +91,7 @@ const BridgeToken = ({
         if (isFromToken && inputRef.current && !isMaxRef?.current) {
           inputRef.current.focus();
         }
-      }, 500);
+      }, 200);
     });
 
     return () => interaction.cancel();

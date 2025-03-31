@@ -51,7 +51,7 @@ export const BuyToken = ({
         if (isFiat) {
           inputRef?.current?.focus();
         }
-      }, 500);
+      }, 200);
     });
 
     return () => interaction.cancel();
