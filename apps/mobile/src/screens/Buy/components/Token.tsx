@@ -3,7 +3,7 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text, TextInput, InteractionManager } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { BuyTokenSelect } from './SelectBuyToken';
@@ -46,9 +46,15 @@ export const BuyToken = ({
   const inputRef = useRef<TextInput>(null);
 
   useLayoutEffect(() => {
-    if (isFiat) {
-      inputRef?.current?.focus();
-    }
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => {
+        if (isFiat) {
+          inputRef?.current?.focus();
+        }
+      }, 500);
+    });
+
+    return () => interaction.cancel();
   }, [isFiat]);
 
   const displayValue = useMemo(() => {

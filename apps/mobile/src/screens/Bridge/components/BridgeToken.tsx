@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  InteractionManager,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -83,10 +84,17 @@ const BridgeToken = ({
   const inputRef = useRef<TextInput>(null);
 
   useLayoutEffect(() => {
-    if (isFromToken && inputRef.current && !isMaxRef?.current) {
-      inputRef.current.focus();
-      isMaxRef && (isMaxRef.current = false);
-    }
+    isMaxRef && (isMaxRef.current = false);
+
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => {
+        if (isFromToken && inputRef.current && !isMaxRef?.current) {
+          inputRef.current.focus();
+        }
+      }, 500);
+    });
+
+    return () => interaction.cancel();
   }, [value, isFromToken, isMaxRef]);
 
   useLayoutEffect(() => {
