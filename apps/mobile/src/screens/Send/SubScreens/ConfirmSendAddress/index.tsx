@@ -147,7 +147,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   riskList: {
-    marginTop: 65,
+    marginTop: 41,
   },
   tipItem: {
     flexDirection: 'row',
