@@ -5,6 +5,7 @@ import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 import type { AuthenticationModalProps } from '@/components/AuthenticationModal/AuthenticationModal';
 import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
+import { ConfirmAddressScreenProps } from '@/screens/Send/SubScreens/ConfirmSendAddress';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -43,6 +44,7 @@ export enum MODAL_NAMES {
   'ONEKEY_INPUT_PASSPHRASE' = 'ONEKEY_INPUT_PASSPHRASE',
   'ONEKEY_TEMP_PIN_OR_PASSPHRASE' = 'ONEKEY_TEMP_PIN_OR_PASSPHRASE',
   'AUTHENTICATION' = 'AUTHENTICATION',
+  'CONFIRM_ADDRESS' = 'CONFIRM_ADDRESS',
   'NFT_DETAIL' = 'NFT_DETAIL',
   'DESCRIPTION' = 'DESCRIPTION',
   'RESTORE_FROM_CLOUD' = 'RESTORE_FROM_CLOUD',
@@ -84,6 +86,7 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: {};
   [MODAL_NAMES.TIP_UPGRADE]: {};
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {};
+  [MODAL_NAMES.CONFIRM_ADDRESS]: ConfirmAddressScreenProps;
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModalProps;
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupProps;
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<

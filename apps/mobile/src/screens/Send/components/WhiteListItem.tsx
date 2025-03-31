@@ -36,6 +36,11 @@ import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAl
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -174,10 +179,23 @@ export const WhiteListItem = ({
               addressBrandName: account.brandName,
             });
           } else {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.ConfirmAddress,
-              params: {
-                account,
+            const id = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.CONFIRM_ADDRESS,
+              account,
+              title: 'Confirm Recipient Address',
+              bottomSheetModalProps: {
+                enableDynamicSizing: true,
+              },
+              onCancel: () => {
+                removeGlobalBottomSheetModal2024(id);
+              },
+              onConfirm(acc, addressDesc) {
+                removeGlobalBottomSheetModal2024(id);
+                navigateToSendScreen({
+                  addressBrandName: acc.brandName,
+                  cexDes: addressDesc,
+                  toAddress: acc.address,
+                });
               },
             });
           }

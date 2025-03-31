@@ -1,39 +1,43 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from 'react-native-switch';
+import { noop } from 'lodash';
 
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { useNavigationState } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import AddressPopover from '../../components/AddressPopover';
 import AddressSource from '../../components/AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useRisks } from './risk';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { toast } from '@/components2024/Toast';
-
-const ConfirmAddressScreen = () => {
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+export interface ConfirmAddressScreenProps {
+  title?: string;
+  account: KeyringAccountWithAlias;
+  onConfirm?: (account: KeyringAccountWithAlias, addressDesc?: Cex) => void;
+  onCancel?: () => void;
+}
+const ConfirmAddress = ({
+  account,
+  onCancel,
+  onConfirm,
+  title,
+}: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
-  const { navigation } = useSafeSetNavigationOptions();
   const switchRef = useRef<Switch>(null);
-
-  const { account } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ConfirmAddress)?.params,
-  ) as {
-    account: KeyringAccountWithAlias;
-  };
   const { risks, addressDesc } = useRisks(account.address);
-  const { navigateToSendScreen } = useSendRoutes();
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    footerButtonGroupMb: 35,
+  });
 
   const inWhiteList = useMemo(
     () => isAddrOnWhitelist(account.address),
@@ -58,30 +62,12 @@ const ConfirmAddressScreen = () => {
     [account.address, addWhitelist, removeWhitelist, t],
   );
 
-  const onCancel = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  };
   const handleConfirm = () => {
-    navigateToSendScreen({
-      addressBrandName: account.brandName,
-      cexDes: addressDesc?.cex,
-      toAddress: account.address,
-    });
+    onConfirm?.(account, addressDesc?.cex);
   };
   return (
-    <FooterButtonScreenContainer
-      as="View"
-      buttonGroupProps={{
-        onCancel,
-        onConfirm: handleConfirm,
-      }}
-      style={styles.screen}
-      footerBottomOffset={76}
-      footerContainerStyle={{
-        paddingHorizontal: 4,
-      }}>
+    <View style={styles.screen}>
+      <Text style={styles.modalTitle}>{title}</Text>
       <AddressPopover address={account.address} style={styles.addressPopover} />
       <AddressSource
         cexDesc={addressDesc?.cex}
@@ -110,13 +96,31 @@ const ConfirmAddressScreen = () => {
           </View>
         ))}
       </View>
-    </FooterButtonScreenContainer>
+      <FooterButtonGroup
+        style={StyleSheet.flatten([
+          styles.footerButtonGroup,
+          { marginBottom: safeSizes.footerButtonGroupMb },
+        ])}
+        onCancel={onCancel ?? noop}
+        onConfirm={handleConfirm}
+      />
+    </View>
   );
 };
 
-export default ConfirmAddressScreen;
+export default ConfirmAddress;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  modalTitle: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+    paddingTop: 12,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
   addressPopover: {
     marginTop: 10,
   },
@@ -163,5 +167,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
+  },
+  footerButtonGroup: {
+    paddingTop: 0,
+    // ...makeDebugBorder('yellow'),
   },
 }));
