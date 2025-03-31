@@ -42,7 +42,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     alignSelf: 'flex-start',
-    marginBottom: 18,
+    marginBottom: 10,
     width: '100%',
   },
   bubble: {
@@ -62,7 +62,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   highlightAddrPart: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
