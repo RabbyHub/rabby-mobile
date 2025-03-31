@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { TextInput } from 'react-native';
 
 /**
- * @see https://github.com/react-navigation/react-navigation/issues/11626#issuecomment-1823745730
+ * @see https://github.com/react-navigation/react-navigation/issues/11626#issuecomment-1823588248
  */
 export default function useAutoFocusInput(disableAutoFocus = false) {
   const [isInputInitialized, setIsInputInitialized] = useState(false);
