@@ -116,10 +116,14 @@ const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 interface Props {
   onRefresh(): void;
+  onUpdateIsDecrease?: (isDecrease: boolean) => void;
 }
 const FOOTER_HEIGHT = 56;
 
-export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
+export const AssetContainer: React.FC<Props> = ({
+  onRefresh,
+  onUpdateIsDecrease,
+}) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation =
@@ -914,7 +918,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           />
         );
       case 'overview':
-        return <HomeTopArea currentAccount={currentAccount} />;
+        return (
+          <HomeTopArea
+            currentAccount={currentAccount}
+            onUpdateIsDecrease={onUpdateIsDecrease}
+          />
+        );
       case 'empty-token':
         return (
           <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />

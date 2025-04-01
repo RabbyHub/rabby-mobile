@@ -6,7 +6,7 @@ import { RcIconMore } from '@/assets/icons/home';
 import { useAddressDetailModal } from '../Address/useAddressDetailModal';
 import { useCurrentAccount } from '@/hooks/account';
 import PendingTx from '../Bridge/components/PendingTx';
-import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
+import RcIconHistory from '@/assets2024/singleHome/history.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { transactionHistoryService } from '@/core/services';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -101,7 +101,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
         {pendingTxCount ? (
           <PendingTx number={pendingTxCount} onClick={openHistory} />
         ) : (
-          <RcIconSwapHistory color={colors2024['neutral-body']} />
+          <RcIconHistory color={colors2024['neutral-body']} />
         )}
       </View>
     </CustomTouchableOpacity>

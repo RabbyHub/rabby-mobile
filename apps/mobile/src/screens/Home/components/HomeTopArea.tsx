@@ -34,7 +34,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
 import usePrevious from 'ahooks/lib/usePrevious';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
@@ -129,8 +129,10 @@ export function BadgeText({
 
 export const HomeTopArea = ({
   currentAccount,
+  onUpdateIsDecrease,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
+  onUpdateIsDecrease?: (status: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -351,6 +353,12 @@ export const HomeTopArea = ({
     refreshCurveData();
   }, [refreshCurveData]);
 
+  useEffect(() => {
+    if (isDecrease !== undefined) {
+      onUpdateIsDecrease?.(isDecrease);
+    }
+  }, [isDecrease, onUpdateIsDecrease]);
+
   return (
     <>
       <View style={styles.container}>
@@ -548,11 +556,10 @@ export const HomeTopArea = ({
 const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: 12,
+    paddingBottom: 30,
     paddingHorizontal: 8,
     backgroundColor: 'transparent',
-    height: 185,
     width: '100%',
   },
   header: {
@@ -565,13 +572,13 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
   },
   group: {
-    marginTop: 18,
+    marginTop: 16,
     justifyContent: 'space-between',
     // width: '100%',
     flexDirection: 'row',
   },
   action: {
-    gap: 9,
+    gap: 8,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -580,10 +587,9 @@ const getStyles = createGetStyles2024(ctx => ({
     opacity: 0.6,
   },
   actionIconWrapper: {
-    width: 54,
-    height: 54,
+    width: 48,
+    height: 48,
     borderRadius: 21,
-    backgroundColor: ctx.colors2024['brand-light-1'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -600,8 +606,8 @@ const getStyles = createGetStyles2024(ctx => ({
   actionText: {
     color: ctx.colors2024['neutral-secondary'],
     textAlign: 'center',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
