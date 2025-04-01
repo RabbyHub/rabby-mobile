@@ -425,8 +425,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         if (isLoading) {
           return null;
         }
-        // TODO: toast reasion
-        const { disable, reason } = disableItemCheck?.(token.$origin) || {};
+        const { disable: lightDisable } =
+          disableItemCheck?.(token.$origin) || {};
 
         const ownerAccount =
           'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
@@ -473,10 +473,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           .join('-');
         const currentChainItem = findChainByServerID(token._chain);
         const disabled =
-          disable ||
-          (!!supportChains?.length &&
-            currentChainItem &&
-            !supportChains.includes(currentChainItem.enum));
+          !!supportChains?.length &&
+          currentChainItem &&
+          !supportChains.includes(currentChainItem.enum);
 
         const isExcludeBalanceShowTips =
           token.$origin.isExcludeBalance &&
@@ -531,7 +530,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[
               styles.tokenItem,
               isSwapTo && { paddingRight: 0, paddingVertical: 0 },
-              disabled && styles.tokenItemDisabled,
+              (disabled || lightDisable) && styles.tokenItemDisabled,
             ]}>
             <View style={styles.tokenLeft}>
               <AssetAvatar

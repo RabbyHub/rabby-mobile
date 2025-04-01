@@ -108,6 +108,43 @@ function SendScreen({
     resetScreenState,
   } = useSendTokenScreenState();
 
+  const disableItemCheck = useCallback(
+    (token: TokenItem) => {
+      const toCexId = navParams?.addrDesc?.cex?.id;
+      if (toCexId) {
+        const noSupportToken = token.cex_ids?.every?.(
+          id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
+        );
+        if (noSupportToken) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupprotTokenForDex'),
+          };
+        }
+      } else {
+        const safeChains = Object.entries(navParams?.addrDesc?.contract || {})
+          .filter(([, contract]) => {
+            return contract.multisig;
+          })
+          .map(([chain]) => chain?.toLocaleLowerCase());
+        if (
+          safeChains.length > 0 &&
+          !safeChains.includes(token?.chain?.toLocaleLowerCase())
+        ) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupprotTokenForSafe'),
+          };
+        }
+      }
+      return {
+        disable: false,
+        reason: '',
+      };
+    },
+    [navParams?.addrDesc?.cex?.id, navParams?.addrDesc?.contract, t],
+  );
+
   const {
     sendTokenEvents,
     formik,
@@ -115,8 +152,8 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
-    isShowDepositeModeModal,
-    setIsShowDepositeModeModal,
+    depositeModalInfo,
+    setDepositeModalInfol,
 
     tmpToken,
     setTmpToken,
@@ -131,7 +168,11 @@ function SendScreen({
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendTokenForm(navParams?.toAddress, isForMultipleAdderss);
+  } = useSendTokenForm(
+    navParams?.toAddress,
+    isForMultipleAdderss,
+    disableItemCheck,
+  );
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances();
 
@@ -337,43 +378,6 @@ function SendScreen({
     screenState.selectedGasLevel,
   ]);
 
-  const disableItemCheck = useCallback(
-    (token: TokenItem) => {
-      const toCexId = navParams?.addrDesc?.cex?.id;
-      if (toCexId) {
-        const noSupportToken = token.cex_ids?.every?.(
-          id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
-        );
-        if (noSupportToken) {
-          return {
-            disable: true,
-            reason: t('page.sendToken.noSupprotTokenForDex'),
-          };
-        }
-      } else {
-        const safeChains = Object.entries(navParams?.addrDesc?.contract || {})
-          .filter(([, contract]) => {
-            return contract.multisig;
-          })
-          .map(([chain]) => chain.toLocaleLowerCase());
-        if (
-          safeChains.length > 0 &&
-          !safeChains.includes(token.chain.toLocaleLowerCase())
-        ) {
-          return {
-            disable: true,
-            reason: t('page.sendToken.noSupprotTokenForSafe'),
-          };
-        }
-      }
-      return {
-        disable: false,
-        reason: '',
-      };
-    },
-    [navParams?.addrDesc?.cex?.id, navParams?.addrDesc?.contract, t],
-  );
-
   return (
     <SendTokenInternalContextProvider
       value={{
@@ -441,9 +445,12 @@ function SendScreen({
           </View>
         </TouchableWithoutFeedback>
         <Modal
-          visible={isShowDepositeModeModal}
+          visible={depositeModalInfo.visable}
           onRequestClose={() => {
-            setIsShowDepositeModeModal(false);
+            setDepositeModalInfol({
+              visable: false,
+              tips: '',
+            });
           }}
           transparent
           animationType="fade">
@@ -452,20 +459,27 @@ function SendScreen({
               style={styles.modalContent}
               onStartShouldSetResponder={() => true}>
               <Text style={styles.alertModalText}>
-                {t('page.sendToken.noSupprotTokenForDex')}
+                {depositeModalInfo.tips}
               </Text>
               <FooterButtonGroup
                 style={styles.btns}
                 confirmText={t('page.sendToken.noSupportBtns.confirm')}
+                confirmType="ghost"
                 cancelText={t('page.sendToken.noSupportBtns.cancel')}
                 onCancel={() => {
-                  setIsShowDepositeModeModal(false);
+                  setDepositeModalInfol({
+                    visable: false,
+                    tips: '',
+                  });
                 }}
                 onConfirm={() => {
                   if (tmpToken) {
                     handleCurrentTokenChange(tmpToken);
                     setTmpToken(tmpToken);
-                    setIsShowDepositeModeModal(false);
+                    setDepositeModalInfol({
+                      visable: false,
+                      tips: '',
+                    });
                   }
                 }}
               />

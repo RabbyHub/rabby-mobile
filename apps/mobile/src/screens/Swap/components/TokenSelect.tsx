@@ -291,7 +291,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isExcludedTokens,
       foldTokensList,
     ]);
-    console.log('CUSTOM_LOGGER:=>: availableToken', availableToken[0]);
 
     const isListLoading = queryConds.keyword
       ? isSearchLoading

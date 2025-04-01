@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { memo, useMemo } from 'react';
+import { createGetStyles2024 } from '@/utils/styles';
+import { memo } from 'react';
 import { Text, View } from 'react-native';
 
 import { CaretDownIconCC } from './icons/CaretDownIconCC';
@@ -12,7 +12,6 @@ import {
   usePreFetchBeforeEnterScene,
 } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
-import { useTranslation } from 'react-i18next';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 
