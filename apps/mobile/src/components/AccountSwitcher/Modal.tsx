@@ -52,7 +52,8 @@ export function AccountSwitcherModal({
       Keyboard.dismiss();
     }
     toggleShowSheetModal('selectAddress', isVisible || 'destroy');
-  }, [isVisible, toggleShowSheetModal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
