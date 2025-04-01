@@ -256,7 +256,7 @@ const BridgeToken = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 24,
+    borderRadius: 16,
     // borderWidth: 0.5,
     // borderColor: '#D0D8E0',
     height: 148,

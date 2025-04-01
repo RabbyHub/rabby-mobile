@@ -613,7 +613,7 @@ const Swap = ({
           </View>
           <View
             style={{
-              borderRadius: 24,
+              borderRadius: 16,
               backgroundColor: colors2024['neutral-bg-2'],
               position: 'relative',
             }}>

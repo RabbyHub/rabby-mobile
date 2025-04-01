@@ -194,7 +194,7 @@ const PADDING = 12;
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
-      borderRadius: 30,
+      borderRadius: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       height: 98,
       flexDirection: 'row',
