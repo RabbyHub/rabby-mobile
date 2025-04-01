@@ -272,13 +272,12 @@ export const ImportSeedPhraseScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
+      );
       setConfirmCB(importSeedPhrase);
       return;
     }
-
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
-    );
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,

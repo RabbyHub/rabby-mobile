@@ -58,14 +58,14 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
             isFirstImportPassword: true,
           })
         ) {
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM,
+          );
           setConfirmCB(() =>
             apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr),
           );
           return;
         }
-        preferenceService.setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM,
-        );
         await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
       } catch (e) {
         console.log('backup error', e);

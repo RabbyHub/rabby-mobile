@@ -100,13 +100,13 @@ export const ImportPrivateKeyScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM,
+      );
+
       setConfirmCB(importPrivateKey);
       return;
     }
-
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM,
-    );
 
     importPrivateKey();
   }, [
