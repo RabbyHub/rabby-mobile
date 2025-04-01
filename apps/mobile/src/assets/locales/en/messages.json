@@ -581,6 +581,7 @@
     "sendToken": {
       "Chain": "Chain",
       "To": "To",
+      "From": "From",
       "Amount": "Amount:",
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
       "AddToContactsModal": {
