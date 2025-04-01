@@ -7,8 +7,8 @@ import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import AddressPopover from '../../components/AddressPopover';
-import AddressSource from '../../components/AddressSourceCard';
+import AddressPopover from '../AddressPopover';
+import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { StyleSheet, View } from 'react-native';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
@@ -20,6 +20,7 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 export interface ConfirmAddressScreenProps {
   title?: string;
+  disbaleWhiteSwitch?: boolean;
   account: KeyringAccountWithAlias;
   onConfirm?: (account: KeyringAccountWithAlias, addressDesc?: Cex) => void;
   onCancel?: () => void;
@@ -29,6 +30,7 @@ const ConfirmAddress = ({
   onCancel,
   onConfirm,
   title,
+  disbaleWhiteSwitch,
 }: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -67,21 +69,25 @@ const ConfirmAddress = ({
   };
   return (
     <View style={styles.screen}>
-      <Text style={styles.modalTitle}>{title}</Text>
+      <Text style={styles.modalTitle}>
+        {title || t('page.confirmAddress.title')}
+      </Text>
       <AddressPopover address={account.address} style={styles.addressPopover} />
       <AddressSource
         cexDesc={addressDesc?.cex}
         account={account}
         style={styles.addressCard}
       />
-      <View style={styles.whitelist}>
-        <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
-        <AppSwitch2024
-          ref={switchRef}
-          onValueChange={setInWhitelist}
-          value={inWhiteList}
-        />
-      </View>
+      {!disbaleWhiteSwitch && (
+        <View style={styles.whitelist}>
+          <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
+          <AppSwitch2024
+            ref={switchRef}
+            onValueChange={setInWhitelist}
+            value={inWhiteList}
+          />
+        </View>
+      )}
       <View style={styles.riskList}>
         {risks.map(risk => (
           <View key={risk.type} style={styles.tipItem}>

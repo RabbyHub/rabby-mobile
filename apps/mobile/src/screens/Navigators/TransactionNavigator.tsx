@@ -32,7 +32,6 @@ import SendInputScreen from '../Send/SubScreens/SendInput';
 import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
 import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
-import ConfirmWhitelistScreen from '../WhiteList/ConfirmWhiteAddress';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -72,19 +71,6 @@ export default function TransactionNavigator() {
         component={SendHistoryScreen}
         options={mergeScreenOptions({
           title: 'Select Address to add',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.WhitelistConfirm}
-        component={ConfirmWhitelistScreen}
-        options={mergeScreenOptions({
-          title: 'Confrim Address to Whitelist',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '800',

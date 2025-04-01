@@ -45,7 +45,7 @@ import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
 import { Dimensions } from 'react-native';
 import { CollectionNFTs } from '../CollectionNFTs';
 import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
-import ConfirmAddress from '@/screens/Send/SubScreens/ConfirmSendAddress';
+import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 

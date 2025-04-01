@@ -60,11 +60,10 @@ export const WhiteListItem = ({
   const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
-  const { removeWhitelist } = useWhitelist({
+  const { removeWhitelist, addWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const cexDesc = useMemo(
     () => cexInfoStore[account.address],
@@ -163,10 +162,23 @@ export const WhiteListItem = ({
             if (inWhiteList) {
               toast.show(t('page.whitelist.alreadyAdded'));
             } else {
-              navigation.push(RootNames.StackTransaction, {
-                screen: RootNames.WhitelistConfirm,
-                params: {
-                  account,
+              const id = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.CONFIRM_ADDRESS,
+                account,
+                disbaleWhiteSwitch: true,
+                bottomSheetModalProps: {
+                  enableDynamicSizing: true,
+                },
+                onCancel: () => {
+                  removeGlobalBottomSheetModal2024(id);
+                },
+                onConfirm() {
+                  removeGlobalBottomSheetModal2024(id);
+                  addWhitelist(account.address, {
+                    onAdded: () => {
+                      toast.success(t('page.whitelist.addSuccessful'));
+                    },
+                  });
                 },
               });
             }
@@ -182,7 +194,6 @@ export const WhiteListItem = ({
             const id = createGlobalBottomSheetModal2024({
               name: MODAL_NAMES.CONFIRM_ADDRESS,
               account,
-              title: 'Confirm Recipient Address',
               bottomSheetModalProps: {
                 enableDynamicSizing: true,
               },
