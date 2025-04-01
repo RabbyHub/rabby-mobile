@@ -15,6 +15,10 @@ import { trigger } from 'react-native-haptic-feedback';
 import { omit, uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
+import {
+  isSwapTokenType,
+  ITokenCheck,
+} from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import {
@@ -57,6 +61,7 @@ interface TokenSelectProps {
   useSwapTokenList?: boolean;
   excludeTokens?: TokenItem['id'][];
   type?: ComponentProps<typeof TokenSelectorSheetModal>['type'];
+  disableItemCheck?: ITokenCheck;
   placeholder?: string;
   hideChainIcon?: boolean;
   value?: string;
@@ -97,6 +102,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       useSwapTokenList = false,
       supportChains,
       searchPlaceholder,
+      disableItemCheck,
     },
     ref,
   ) => {
@@ -608,6 +614,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           onSearch={handleSearchTokens}
           isLoading={isListLoading}
           type={type}
+          disableItemCheck={disableItemCheck}
           selectToken={token}
           placeholder={placeholder}
           headerTitle={headerTitle}

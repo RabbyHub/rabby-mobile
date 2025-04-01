@@ -43,12 +43,15 @@ export const useRisks = (address: string) => {
 
   useLayoutEffect(() => {
     riskGetRef.current = false;
+    if (addressDesc) {
+      return;
+    }
     openapi.addrDesc(address).then(res => {
       if (res.desc) {
         setAddressDesc(res.desc);
       }
     });
-  }, [address]);
+  }, [address, addressDesc]);
   useEffect(() => {
     if (riskGetRef.current && !addressDesc) {
       return;

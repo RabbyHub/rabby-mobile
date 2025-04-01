@@ -6,18 +6,18 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import PQueue from 'p-queue';
-import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 
-const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
+const queue = new PQueue({ intervalCap: 10, concurrency: 7, interval: 1000 });
 
-export const cexInfoAtoms = atom<{
-  [address: string]: Cex | undefined;
+export const addrDescInfoAtoms = atom<{
+  [address: string]: AddrDescResponse['desc'] | undefined;
 }>({});
 
-export const useCexAccounts = () => {
+export const useAddrDescAccounts = () => {
   const { accounts } = useAccounts();
   const { whitelist } = useWhitelist();
-  const [cexInfo, setCexInfo] = useAtom(cexInfoAtoms);
+  const [addrDescInfo, setAddrDescInfo] = useAtom(addrDescInfoAtoms);
 
   const pendFechCexAddresses = useMemo(() => {
     const watchAccounts = accounts.filter(
@@ -41,23 +41,26 @@ export const useCexAccounts = () => {
   }, [accounts, whitelist]);
 
   useEffect(() => {
+    if (queue.size > 0) {
+      return;
+    }
     pendFechCexAddresses.forEach(address => {
-      if (cexInfo[address]) {
+      if (addrDescInfo[address]) {
         return;
       }
       queue.add(async () => {
         try {
-          if (cexInfo[address]) {
+          if (addrDescInfo[address]) {
             return;
           }
           const res = await openapi.addrDesc(address);
           if (res.desc.cex) {
-            setCexInfo(prev => ({ ...prev, [address]: res.desc.cex }));
+            setAddrDescInfo(prev => ({ ...prev, [address]: res.desc }));
           }
         } catch (error) {
           console.error('cex desc fetch error', error);
         }
       });
     });
-  }, [cexInfo, pendFechCexAddresses, setCexInfo]);
+  }, [addrDescInfo, pendFechCexAddresses, setAddrDescInfo]);
 };

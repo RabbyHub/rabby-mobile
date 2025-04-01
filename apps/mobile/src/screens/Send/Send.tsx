@@ -1,4 +1,9 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -28,7 +33,10 @@ import {
   makeTokenFromChain,
 } from '@/utils/chain';
 import { preferenceService } from '@/core/services';
-import { Cex, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import {
   useCurrentAccount,
@@ -81,13 +89,13 @@ function SendScreen({
         tokenId?: TokenItem['id'];
         toAddress?: string;
         addressBrandName?: string;
-        cexDes?: Cex;
+        addrDesc?: AddrDescResponse['desc'];
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
-        cexDes?: Cex;
+        addrDesc?: AddrDescResponse['desc'];
       }
     | undefined;
 
@@ -329,6 +337,43 @@ function SendScreen({
     screenState.selectedGasLevel,
   ]);
 
+  const disableItemCheck = useCallback(
+    (token: TokenItem) => {
+      const toCexId = navParams?.addrDesc?.cex?.id;
+      if (toCexId) {
+        const noSupportToken = token.cex_ids?.every?.(
+          id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
+        );
+        if (noSupportToken) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupprotTokenForDex'),
+          };
+        }
+      } else {
+        const safeChains = Object.entries(navParams?.addrDesc?.contract || {})
+          .filter(([, contract]) => {
+            return contract.multisig;
+          })
+          .map(([chain]) => chain.toLocaleLowerCase());
+        if (
+          safeChains.length > 0 &&
+          !safeChains.includes(token.chain.toLocaleLowerCase())
+        ) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupprotTokenForSafe'),
+          };
+        }
+      }
+      return {
+        disable: false,
+        reason: '',
+      };
+    },
+    [navParams?.addrDesc?.cex?.id, navParams?.addrDesc?.contract, t],
+  );
+
   return (
     <SendTokenInternalContextProvider
       value={{
@@ -382,11 +427,14 @@ function SendScreen({
                     marginBottom: 0,
                   }}
                   address={navParams?.toAddress || ''}
-                  cexDes={navParams?.cexDes}
+                  addrDesc={navParams?.addrDesc}
                   brandName={navParams?.addressBrandName}
                 />
                 {/* balance info */}
-                <BalanceSection style={styles.balance} />
+                <BalanceSection
+                  disableItemCheck={disableItemCheck}
+                  style={styles.balance}
+                />
               </View>
             </KeyboardAwareScrollView>
             <BottomArea />

@@ -16,7 +16,7 @@ import { RcIconLockCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { visibleAtom } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
-import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
 import { useTranslation } from 'react-i18next';
 import { useAlias2 } from '@/hooks/alias';
@@ -31,9 +31,9 @@ import { formatUsdValue } from '@/utils/number';
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
-  cexDesc?: Cex;
+  addressDesc?: AddrDescResponse['desc'];
 }
-const AddressSource = ({ account, style, cexDesc }: IProps) => {
+const AddressSource = ({ account, style, addressDesc }: IProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
@@ -46,7 +46,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   const inWhiteList = useMemo(() => {
     return whitelist.some(item => isSameAddress(item, account.address));
   }, [account.address, whitelist]);
-
+  const cexDesc = addressDesc?.cex;
   const brandColors = useMemo(
     () =>
       getBrandColors(cexDesc?.is_deposit ? cexDesc?.id : account.type, isLight),

@@ -5,7 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
-import { cexInfoAtoms } from './useCexAccounts';
+import { addrDescInfoAtoms } from './useAddrDesc';
 import { openapi } from '@/core/request';
 import {
   createGlobalBottomSheetModal2024,
@@ -22,7 +22,7 @@ export const useSendRoutes = () => {
   const { findAccount } = useWhiteListAddress(true);
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
-  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
+  const [addrDescInfo, setAddrDescInfo] = useAtom(addrDescInfoAtoms);
   const navigateToSendScreen = useCallback(
     (p?: { [key: string]: any }) => {
       navigation.push(RootNames.StackTransaction, {
@@ -37,17 +37,17 @@ export const useSendRoutes = () => {
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {
-        let cexDes = cexInfoStore[p?.toAddress];
-        if (!cexDes) {
+        let addrDesc = addrDescInfo[p?.toAddress];
+        if (!addrDesc) {
           const { desc } = await openapi.addrDesc(p?.toAddress);
-          cexDes = desc.cex;
-          setCexInfoStore(prev => ({ ...prev, [p?.toAddress]: cexDes }));
+          addrDesc = desc;
+          setAddrDescInfo(prev => ({ ...prev, [p?.toAddress]: addrDesc }));
         }
         const { inWhitelist, account } = await findAccount(p.toAddress);
         if (inWhitelist) {
           navigation.push(RootNames.StackTransaction, {
             screen: isForSingleAddress ? RootNames.Send : RootNames.MultiSend,
-            params: { ...params, ...p, cexDes },
+            params: { ...params, ...p, addrDesc },
           });
         } else {
           const id = createGlobalBottomSheetModal2024({
@@ -64,7 +64,7 @@ export const useSendRoutes = () => {
               navigateToSendScreen({
                 ...p,
                 addressBrandName: acc.brandName,
-                cexDes: addressDesc,
+                addrDesc: addressDesc,
                 toAddress: acc.address,
               });
             },
@@ -77,12 +77,12 @@ export const useSendRoutes = () => {
       });
     },
     [
-      cexInfoStore,
+      addrDescInfo,
       findAccount,
       navigateToSendScreen,
       navigation,
       params,
-      setCexInfoStore,
+      setAddrDescInfo,
       setIsSingleAddress,
       setParams,
     ],
