@@ -96,12 +96,11 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               ignoreAndroidSystemSettings: false,
             });
 
-            naviPush(RootNames.Scanner, { syncExtension: true });
-            onDone();
-
             preferenceService.setReportActionTs(
               REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
             );
+            naviPush(RootNames.Scanner, { syncExtension: true });
+            onDone();
           }}
           style={styles.importItem}
           title={t('page.nextComponent.addAddress.syncRabbyExtension')}
