@@ -54,7 +54,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   useEffect(() => {
     if (accounts.length) {
       fetchTotalBalance();
-      syncMultiAddressesHistory(accounts.slice(0, 10).map(e => e.address));
+      syncMultiAddressesHistory(accounts.slice(0, 5).map(e => e.address));
     }
   }, [accounts, fetchTotalBalance, syncMultiAddressesHistory]);
 

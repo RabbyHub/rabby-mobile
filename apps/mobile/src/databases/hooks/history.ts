@@ -363,6 +363,8 @@ export const useSyncHistoryDB = (
           !res.history_list.length &&
           setHistoryLoading(prev => ({ ...prev, [address]: false }));
       } catch (error) {
+        // set time for next resend fetch
+        updateHistoryTimeSingleAddress(address, 0);
         console.error('syncUserAllHistory Error fetching data:', error);
       }
       if (!address) {
@@ -376,8 +378,6 @@ export const useSyncHistoryDB = (
       console.debug('🔍syncTop10History some tx done so isNeedSyncData');
       return true;
     }
-
-    await prepareAppDataSource();
 
     const latestTime = updateHistoryTime[add] || 0;
 
