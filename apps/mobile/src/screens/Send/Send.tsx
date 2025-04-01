@@ -54,7 +54,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { ChainInfo2024 } from './components/ChainInfo2024';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
@@ -111,8 +110,6 @@ function SendScreen({
     isShowDepositeModeModal,
     setIsShowDepositeModeModal,
 
-    chainEnum,
-    handleChainChanged,
     tmpToken,
     setTmpToken,
     checkCexSupport,
@@ -380,20 +377,14 @@ function SendScreen({
                 <FromAddressControl2024 disableSwitch={!isForMultipleAdderss} />
                 {/* To */}
                 <ToAddressControl2024
+                  style={{
+                    marginTop: 24,
+                    marginBottom: 0,
+                  }}
                   address={navParams?.toAddress || ''}
                   cexDes={navParams?.cexDes}
                   brandName={navParams?.addressBrandName}
                 />
-                {/* ChainInfo */}
-                <View style={styles.chainSection}>
-                  <Text style={styles.sectionTitle}>
-                    {t('page.sendToken.Chain')}
-                  </Text>
-                  <ChainInfo2024
-                    chainEnum={chainEnum}
-                    onChange={handleChainChanged}
-                  />
-                </View>
                 {/* balance info */}
                 <BalanceSection style={styles.balance} />
               </View>

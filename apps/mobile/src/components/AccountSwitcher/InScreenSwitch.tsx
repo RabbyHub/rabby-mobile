@@ -24,20 +24,14 @@ function AccountSwitcherComponent({
     disableSwitch?: boolean;
   }>) {
   const { colors2024, styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
 
   const { isVisible: isOpen, toggleSceneVisible } =
     useAccountSceneVisible(forScene);
-  const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
-    useSwitchSceneCurrentAccount();
-  const {
-    isSceneSupportAllAccounts,
-    isSceneUsingAllAccounts,
-    finalSceneCurrentAccount,
-    myAddresses,
-  } = useSceneAccountInfo({
-    forScene,
-  });
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { isSceneUsingAllAccounts, finalSceneCurrentAccount } =
+    useSceneAccountInfo({
+      forScene,
+    });
 
   const { preFetchData } = usePreFetchBeforeEnterScene();
 
@@ -46,10 +40,6 @@ function AccountSwitcherComponent({
       switchSceneCurrentAccount(forScene, finalSceneCurrentAccount, {
         maybeReEntrant: true,
       });
-    }
-
-    if (isSceneSupportAllAccounts) {
-      toggleUseAllAccountsOnScene(forScene, true);
     }
   });
 
@@ -65,29 +55,20 @@ function AccountSwitcherComponent({
         }
       }}>
       <View style={styles.addressRow}>
-        {!isSceneUsingAllAccounts ? (
-          !!finalSceneCurrentAccount && (
-            <AddressItem account={finalSceneCurrentAccount}>
-              {({ WalletIcon }) => {
-                return (
-                  <View style={styles.addressRow}>
-                    <WalletIcon style={styles.walletIcon} />
-                    <Text style={styles.address}>
-                      {finalSceneCurrentAccount.aliasName ||
-                        ellipsisAddress(finalSceneCurrentAccount?.address)}
-                    </Text>
-                  </View>
-                );
-              }}
-            </AddressItem>
-          )
-        ) : (
-          <Text style={styles.address}>
-            {t('component.accountSwitcher.all')}{' '}
-            {t('component.accountSwitcher.screenHeaderSubTitle', {
-              count: myAddresses.length,
-            })}
-          </Text>
+        {!!finalSceneCurrentAccount && (
+          <AddressItem account={finalSceneCurrentAccount}>
+            {({ WalletIcon }) => {
+              return (
+                <View style={styles.addressRow}>
+                  <WalletIcon style={styles.walletIcon} />
+                  <Text style={styles.address}>
+                    {finalSceneCurrentAccount.aliasName ||
+                      ellipsisAddress(finalSceneCurrentAccount?.address)}
+                  </Text>
+                </View>
+              );
+            }}
+          </AddressItem>
         )}
         {!disableSwitch && (
           <CaretDownIconCC
