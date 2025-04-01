@@ -298,18 +298,27 @@ export class TransactionHistoryService {
     const groups = this.getTransactionGroups({
       address,
     });
+    const completeds = sortBy(
+      groups.filter(item => !item.isPending),
+      item => -item.createdAt,
+    );
+    const maxCompletedNonceByChain = completeds.reduce((res, item) => {
+      res[item.chainId] = Math.max(res[item.chainId] || 0, item.nonce);
+      return res;
+    }, {} as Record<string, number>);
 
     return {
       pendings: sortBy(
-        groups.filter(item => item.isPending),
+        groups.filter(
+          item =>
+            item.isPending &&
+            item.nonce > (maxCompletedNonceByChain[item.chainId] || 0),
+        ),
         item => {
           return -item.createdAt;
         },
       ),
-      completeds: sortBy(
-        groups.filter(item => !item.isPending),
-        item => -item.createdAt,
-      ),
+      completeds,
     };
   }
 
