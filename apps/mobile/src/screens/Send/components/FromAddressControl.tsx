@@ -30,7 +30,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     control: {
       width: '100%',
-      marginBottom: 16,
       gap: 12,
     },
 

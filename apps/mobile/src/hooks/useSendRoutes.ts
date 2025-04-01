@@ -62,6 +62,7 @@ export const useSendRoutes = () => {
             onConfirm(acc, addressDesc) {
               removeGlobalBottomSheetModal2024(id);
               navigateToSendScreen({
+                ...p,
                 addressBrandName: acc.brandName,
                 cexDes: addressDesc,
                 toAddress: acc.address,
