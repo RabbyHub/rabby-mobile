@@ -74,7 +74,7 @@ const ConfirmAddress = ({
       </Text>
       <AddressPopover address={account.address} style={styles.addressPopover} />
       <AddressSource
-        cexDesc={addressDesc?.cex}
+        addressDesc={addressDesc}
         account={account}
         style={styles.addressCard}
       />

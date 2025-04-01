@@ -1,11 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useMemo,
-  useEffect,
-  useCallback,
-  useState,
-  useLayoutEffect,
-} from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -94,6 +88,11 @@ const hitSlop = {
   right: 10,
 };
 
+export type ITokenCheck = (token: TokenItem) => {
+  disable: boolean;
+  reason: string;
+};
+
 interface SearchCallbackCtx {
   chainServerId?: Chain['serverId'] | null;
   filterAccountItem: Account | null;
@@ -135,6 +134,7 @@ export interface TokenSelectorProps<
   headerTitle?: React.ReactNode;
   selectToken?: TokenItem & { tokenId?: string };
   searchPlaceholder?: string;
+  disableItemCheck?: ITokenCheck;
   unshiftList?: { data: TokenItem[]; header?: () => React.ReactNode }[];
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
@@ -168,6 +168,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       isLoading,
       headerTitle: customHeaderTitle,
       searchPlaceholder,
+      disableItemCheck,
       unshiftList,
     },
     ref,
@@ -424,6 +425,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         if (isLoading) {
           return null;
         }
+        // TODO: toast reasion
+        const { disable, reason } = disableItemCheck?.(token.$origin) || {};
 
         const ownerAccount =
           'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
@@ -470,9 +473,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
           .join('-');
         const currentChainItem = findChainByServerID(token._chain);
         const disabled =
-          !!supportChains?.length &&
-          currentChainItem &&
-          !supportChains.includes(currentChainItem.enum);
+          disable ||
+          (!!supportChains?.length &&
+            currentChainItem &&
+            !supportChains.includes(currentChainItem.enum));
 
         const isExcludeBalanceShowTips =
           token.$origin.isExcludeBalance &&
@@ -646,6 +650,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
       },
       [
         isLoading,
+        disableItemCheck,
+        chainSearchCtx.filterAccountItem,
         selectToken,
         supportChains,
         isFromModalType,
@@ -659,10 +665,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tokenInfoColRight,
         styles.tardeLevel,
         styles.tardeLevelText,
-        styles.tokenHeaderAmount,
-        styles.textSecondary,
         styles.tokenHeaderNetworth,
         styles.tips,
+        styles.tokenHeaderAmount,
+        styles.textSecondary,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
         styles.tokenRowTokenInner,
@@ -671,17 +677,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.arrow,
         styles.tokenRowUsdValueWrap,
         styles.tokenRowUsdValue,
+        isSwapTo,
         isBridgeTo,
         colors2024,
         handleShowExcludeTips,
-        isSwapTo,
         onConfirm,
         toggleShowSheetModal,
         onPressToken,
         fold,
         disabledTips,
         isSingleAddress,
-        chainSearchCtx.filterAccountItem,
       ],
     );
 

@@ -88,7 +88,7 @@ import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useCexAccounts } from '@/hooks/useCexAccounts';
+import { useAddrDescAccounts } from '@/hooks/useAddrDesc';
 
 const HeaderHeight = 24;
 
@@ -347,7 +347,7 @@ function MultiAddressHome(): JSX.Element {
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
-  useCexAccounts();
+  useAddrDescAccounts();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,

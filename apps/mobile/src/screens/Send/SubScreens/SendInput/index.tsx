@@ -18,13 +18,12 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { openapi } from '@/core/request';
 import { useNavigationState } from '@react-navigation/native';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useAtom } from 'jotai';
-import { cexInfoAtoms } from '@/hooks/useCexAccounts';
+import { addrDescInfoAtoms } from '@/hooks/useAddrDesc';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -51,7 +50,6 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
-  const navigation = useRabbyAppNavigation();
   const [loading, setLoading] = useState(false);
   const navParams = useNavigationState(
     s =>
@@ -68,7 +66,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
-  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
+  const [addrDescInfo, setAddrDescInfo] = useAtom(addrDescInfoAtoms);
 
   const { t } = useTranslation();
 
@@ -119,15 +117,15 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         return;
       }
       if (inWhitelist) {
-        let cexDes = cexInfoStore[address];
-        if (!cexDes) {
+        let addrDesc = addrDescInfo[address];
+        if (!addrDesc) {
           const { desc } = await openapi.addrDesc(address);
-          cexDes = desc.cex;
-          setCexInfoStore(prev => ({ ...prev, [address]: cexDes }));
+          addrDesc = desc;
+          setAddrDescInfo(prev => ({ ...prev, [address]: addrDesc }));
         }
         navigateToSendScreen({
           toAddress: account.address,
-          cexDes: cexDes,
+          addrDesc: addrDesc,
           addressBrandName: account.brandName,
         });
       } else {
@@ -144,7 +142,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
             removeGlobalBottomSheetModal2024(id);
             navigateToSendScreen({
               addressBrandName: acc.brandName,
-              cexDes: addressDesc,
+              addrDesc: addressDesc,
               toAddress: acc.address,
             });
           },
