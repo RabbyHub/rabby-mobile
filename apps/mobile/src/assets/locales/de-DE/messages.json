@@ -1805,7 +1805,7 @@
       "fingerPrint": "Fingerabdruck",
       "tou": "Nutzungsbedingungen",
       "themeMode": "Designmodus",
-      "clearPending": "Ausstehend löschen",
+      "clearPending": "",
       "addCustomNetwork": "Benutzerdefiniertes Netzwerk hinzufügen",
       "clearPendingDesc1": "Dadurch werden alle Ihre ausstehenden Transaktionen gelöscht. Dies kann Ihnen helfen, das Problem zu lösen, dass in einigen Fällen der Zustand der Transaktion in Rabby nicht mit dem Zustand on-chain übereinstimmt.",
       "clearPendingDesc2": "Dadurch werden die Kontosalden nicht geändert oder Sie müssen Ihre Seed-Phrase nicht erneut eingeben. Alle Ihre Vermögenswerte und Kontoinformationen bleiben sicher.",

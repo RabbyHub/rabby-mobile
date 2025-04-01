@@ -50,7 +50,10 @@ function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
     return (priority[item1.type] || 100) - (priority[item2.type] || 100);
   })[0];
 }
-
+/**
+ *
+ * @deprecated
+ */
 export const TransactionItem = ({
   data,
   canCancel,

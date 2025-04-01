@@ -11,7 +11,11 @@ export const DappFavoriteSectionEmpty = () => {
 
   return (
     <View style={styles.empty}>
-      {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
+      {isLight ? (
+        <RcIconEmpty style={styles.emptyIcon} />
+      ) : (
+        <RcIconEmptyDark style={styles.emptyIcon} />
+      )}
       <Text style={styles.emptyText}>
         {IS_IOS ? 'No website added yet' : 'No Dapps added yet'}
       </Text>
@@ -21,17 +25,21 @@ export const DappFavoriteSectionEmpty = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 30,
+    borderRadius: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
     borderWidth: 1,
-    paddingVertical: 25,
+    paddingVertical: 20,
 
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
+  },
+  emptyIcon: {
+    width: 163,
+    height: 126,
   },
   emptyText: {
     fontSize: 16,

@@ -1,27 +1,49 @@
-import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
-import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
+import RcIconEmptyNft from '@/assets2024/singleHome/empty-nft.svg';
+import RcIconEmptyNftDark from '@/assets2024/singleHome/empty-nft-dark.svg';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
+import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
-import { Text, View, ViewProps } from 'react-native';
+import React, { useMemo } from 'react';
+import { Text, View, ViewProps, Image } from 'react-native';
 
 export const EmptyAssets = ({
   style,
   desc = '',
+  type = 'empty-assets',
 }: {
   style?: ViewProps['style'];
   desc?: '';
+  type?: 'empty-assets' | 'empty-defi' | 'empty-nft';
 }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
-
+  const icon = useMemo(() => {
+    switch (type) {
+      case 'empty-defi':
+        return (
+          <Image
+            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+            width={160}
+            height={120}
+            style={{
+              width: 163,
+              height: 126,
+            }}
+          />
+        );
+      case 'empty-nft':
+        return isLight ? <RcIconEmptyNft /> : <RcIconEmptyNftDark />;
+      case 'empty-assets':
+      default:
+        return isLight ? <RcIconEmptyToken /> : <RcIconEmptyTokenDark />;
+    }
+  }, [type, isLight]);
   return (
     <View style={[styles.container, style]}>
       <View style={styles.empty}>
-        {isLight ? (
-          <RcIconEmpty style={styles.image} />
-        ) : (
-          <RcIconEmptyDark style={styles.image} />
-        )}
+        {icon}
         <Text style={styles.title}>{desc}</Text>
       </View>
     </View>

@@ -59,7 +59,13 @@ export const toastWithIcon =
   ) => {
     const msgNode =
       typeof message === 'function' ? (
-        message({ textStyle: styles.content, config: _config }) || null
+        message({
+          textStyle: StyleSheet.flatten([
+            styles.content,
+            styles.selfDefinedContent,
+          ]),
+          config: _config,
+        }) || null
       ) : (
         <Text style={styles.content}>{message || ' '}</Text>
       );
@@ -203,5 +209,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  selfDefinedContent: {
+    maxWidth: 250,
   },
 });

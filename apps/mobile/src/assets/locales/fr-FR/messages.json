@@ -1663,7 +1663,7 @@
       "fingerPrint": "Empreinte digitale",
       "modifyRPCURL": "Modifier l'URL RPC",
       "autoLockTime": "Verrouillage automatique",
-      "clearPending": "Effacer en attente",
+      "clearPending": "",
       "aboutUs": "À propos de nous",
       "feedback": "Retour d'expérience",
       "clearPendingDesc1": "Cela supprimera toutes vos transactions en attente. Cela peut vous aider à résoudre le problème lorsque, dans certains cas, l'état de la transaction dans Rabby ne correspond pas à l'état sur la blockchain.",

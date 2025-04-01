@@ -9,18 +9,13 @@ import {
   Text,
   StyleProp,
   ViewStyle,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { RcIconLockCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
-import {
-  useAliasNameEditModal,
-  visibleAtom,
-} from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { visibleAtom } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +36,6 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
-  const editAliasName = useAliasNameEditModal();
   const [visible] = useAtom(visibleAtom);
 
   const { adderssAlias, fetchAlias } = useAlias2(account.address, {
@@ -112,23 +106,11 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
                   </Text>
                 </View>
               )}
-              <TouchableOpacity
-                style={styles.editAliasWrapper}
-                onPress={() => {
-                  editAliasName.show(
-                    account,
-                    cexDesc?.is_deposit ? cexDesc?.logo_url : '',
-                  );
-                }}>
+              <View style={styles.editAliasWrapper}>
                 <Text style={styles.itemNameText}>
                   {adderssAlias || ellipsisAddress(account.address)}
                 </Text>
-                <EditSVG
-                  color={colors2024['neutral-foot']}
-                  width={14}
-                  height={14}
-                />
-              </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}

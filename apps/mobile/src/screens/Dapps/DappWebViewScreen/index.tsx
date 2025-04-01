@@ -27,12 +27,17 @@ import { RootNames } from '@/constant/layout';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { useNavigationState } from '@react-navigation/native';
 import { HomeNavigatorParamsList } from '@/navigation-type';
+import LinearGradient from 'react-native-linear-gradient';
 
 /**
  * @description this screen will be put on top level of App's navigation
  */
 export function DappWebViewStubScreen() {
-  const { styles: stylesScreen, colors } = useTheme2024({
+  const {
+    styles: stylesScreen,
+    colors,
+    colors2024,
+  } = useTheme2024({
     getStyle: getScreenStyle,
   });
   const { styles } = useTheme2024({ getStyle: getWebViewStubStyles });
@@ -131,130 +136,137 @@ export function DappWebViewStubScreen() {
   }, []);
 
   return (
-    <View
-      style={[
-        stylesScreen.container,
-        stylesScreen.containerDefaultPadding,
-        {
-          paddingTop: safeTop,
-          paddingBottom: androidOnlyBottomOffset,
-        },
-      ]}>
-      <AutoLockView
-        as="View"
+    <LinearGradient
+      colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+      start={{ x: 0, y: 0.0728 }}
+      end={{ x: 0, y: 0.1614 }}>
+      <View
         style={[
-          styles.bsView,
-          // !!openedDappItems.length && styles.bsViewOpened,
-          !activeDapp ? styles.bgMustBeTransparent : styles.bsViewOpened,
+          stylesScreen.container,
+          stylesScreen.containerDefaultPadding,
           {
-            // paddingTop: containerPaddingTop,
-            // paddingBottom: containerPaddingBottom,
-            // ...makeDevOnlyStyle({
-            ///  // backgroundColor: 'blue',
-            //   // height: '100%'
-            // })
+            paddingTop: safeTop,
+            paddingBottom: androidOnlyBottomOffset,
           },
         ]}>
-        {!openedDappItems.length && !IS_ANDROID && (
-          <SilentTouchableView
-            style={{
-              height: '100%',
-              width: '100%',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Text
+        <AutoLockView
+          as="View"
+          style={[
+            styles.bsView,
+            // !!openedDappItems.length && styles.bsViewOpened,
+            !activeDapp ? styles.bgMustBeTransparent : styles.bsViewOpened,
+            {
+              // paddingTop: containerPaddingTop,
+              // paddingBottom: containerPaddingBottom,
+              // ...makeDevOnlyStyle({
+              ///  // backgroundColor: 'blue',
+              //   // height: '100%'
+              // })
+            },
+          ]}>
+          {!openedDappItems.length && !IS_ANDROID && (
+            <SilentTouchableView
               style={{
-                color: __DEV__ ? colors['neutral-title1'] : 'transparent',
-                flexDirection: 'row',
+                height: '100%',
+                width: '100%',
+                justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              No Dapp Opened, Touch here to close
-            </Text>
-          </SilentTouchableView>
-        )}
-        {openedDappItems.map((dappInfo, idx) => {
-          const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
-          const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
-          const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${dappInfo.dappTabId}`;
+              <Text
+                style={{
+                  color: __DEV__ ? colors['neutral-title1'] : 'transparent',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                No Dapp Opened, Touch here to close
+              </Text>
+            </SilentTouchableView>
+          )}
+          {openedDappItems.map((dappInfo, idx) => {
+            const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
+            const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
+            const isActiveDapp = activeDapp?.origin === dappInfo.origin;
+            const key = `${dappInfo.origin}-${dappInfo.dappTabId}`;
 
-          return (
-            <DappWebViewControl2
-              key={key}
-              ref={inst => {
-                if (isActiveDapp) {
-                  globalSetActiveDappState({ dappOrigin: dappInfo.origin });
-                  // @ts-expect-error
-                  activeDappWebViewControlRef.current = inst;
-                  globalSetActiveDappState({
-                    dappOrigin: dappInfo.origin,
-                    tabId: dappInfo.dappTabId,
-                  });
-                }
-              }}
-              style={[!isActiveDapp && { display: 'none' }]}
-              dappOrigin={dappInfo.origin}
-              dappTabId={dappInfo.dappTabId}
-              initialUrl={dappInfo.$openParams?.initialUrl}
-              onSelfClose={reason => {
-                if (reason === 'phishing') {
-                  closeOpenedDapp(dappInfo.origin);
-                }
-              }}
-              // webviewContainerMaxHeight={webviewMaxHeight}
-              webviewProps={{
-                /**
-                 * @platform ios
-                 */
-                contentMode: 'mobile',
-                /**
-                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
-                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
-                 * @platform android
-                 */
-                nestedScrollEnabled: false,
-                allowsInlineMediaPlayback: true,
-                disableJsPromptLike: !isActiveDapp,
-              }}
-              headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
-              onPressHeaderLeftClose={ctx => {
-                hideDappWebViewScreen(ctx);
-              }}
-              navControlContent={({ webviewState, webviewActions }) => {
-                return (
-                  <BottomNavControl2
-                    webviewState={webviewState}
-                    webviewActions={webviewActions}
-                    isFavorited={isFavorited}
-                    isConnected={isConnected}
-                    onPressButton={ctx => {
-                      switch (ctx.type) {
-                        case 'disconnect': {
-                          disconnectDapp(dappInfo.origin);
-                          toast.success('Disconnected');
-                          break;
+            return (
+              <DappWebViewControl2
+                key={key}
+                ref={inst => {
+                  if (isActiveDapp) {
+                    globalSetActiveDappState({ dappOrigin: dappInfo.origin });
+                    // @ts-expect-error
+                    activeDappWebViewControlRef.current = inst;
+                    globalSetActiveDappState({
+                      dappOrigin: dappInfo.origin,
+                      tabId: dappInfo.dappTabId,
+                    });
+                  }
+                }}
+                style={[!isActiveDapp && { display: 'none' }]}
+                dappOrigin={dappInfo.origin}
+                dappTabId={dappInfo.dappTabId}
+                initialUrl={dappInfo.$openParams?.initialUrl}
+                onSelfClose={reason => {
+                  if (reason === 'phishing') {
+                    closeOpenedDapp(dappInfo.origin);
+                  }
+                }}
+                // webviewContainerMaxHeight={webviewMaxHeight}
+                webviewProps={{
+                  /**
+                   * @platform ios
+                   */
+                  contentMode: 'mobile',
+                  /**
+                   * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                   * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                   * @platform android
+                   */
+                  nestedScrollEnabled: false,
+                  allowsInlineMediaPlayback: true,
+                  disableJsPromptLike: !isActiveDapp,
+                }}
+                headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
+                onPressHeaderLeftClose={ctx => {
+                  hideDappWebViewScreen(ctx);
+                }}
+                navControlContent={({ webviewState, webviewActions }) => {
+                  return (
+                    <BottomNavControl2
+                      webviewState={webviewState}
+                      webviewActions={webviewActions}
+                      isFavorited={isFavorited}
+                      isConnected={isConnected}
+                      onPressButton={ctx => {
+                        switch (ctx.type) {
+                          case 'disconnect': {
+                            disconnectDapp(dappInfo.origin);
+                            toast.success('Disconnected');
+                            break;
+                          }
+                          case 'favorite': {
+                            updateFavorite(dappInfo.origin, !isFavorited);
+                            break;
+                          }
+                          default:
+                            ctx.defaultAction(ctx);
+                            break;
                         }
-                        case 'favorite': {
-                          updateFavorite(dappInfo.origin, !isFavorited);
-                          break;
-                        }
-                        default:
-                          ctx.defaultAction(ctx);
-                          break;
-                      }
-                    }}
-                  />
-                );
-              }}
+                      }}
+                    />
+                  );
+                }}
+              />
+            );
+          })}
+          {openedDappItems.length > 0 && activeDapp && (
+            <AccountSwitcherModalInDappWebView
+              activeDappId={finalActiveDappId}
             />
-          );
-        })}
-        {openedDappItems.length > 0 && activeDapp && (
-          <AccountSwitcherModalInDappWebView activeDappId={finalActiveDappId} />
-        )}
-      </AutoLockView>
-    </View>
+          )}
+        </AutoLockView>
+      </View>
+    </LinearGradient>
   );
 }
 
@@ -262,7 +274,7 @@ const getScreenStyle = createGetStyles2024(ctx => {
   return {
     container: {
       height: '100%',
-      backgroundColor: ctx.colors['neutral-bg-1'],
+      // backgroundColor: ctx.colors['neutral-bg-1'],
     },
     containerDefaultPadding: {
       paddingTop: 56,

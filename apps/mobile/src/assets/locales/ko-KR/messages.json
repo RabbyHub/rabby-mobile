@@ -1654,7 +1654,7 @@
       "followUs": "팔로우하기",
       "feedback": "피드백",
       "addCustomNetwork": "사용자 지정 네트워크 추가",
-      "clearPending": "대기 중인 항목 삭제",
+      "clearPending": "",
       "clearPendingDesc1": "이 작업은 모든 대기 중인 거래를 삭제합니다. 이것은 일부 경우 Rabby에서 거래 상태가 온체인 상태와 일치하지 않는 문제를 해결하는 데 도움이 될 수 있습니다.",
       "currentVersion": "현재 버전",
       "aboutUs": "회사 소개",

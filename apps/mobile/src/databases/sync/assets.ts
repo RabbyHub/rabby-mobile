@@ -62,6 +62,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
 export async function syncRemoteHistory(
   address: string,
   history_list: TxAllHistoryResult['history_list'],
+  setHistoryLoading,
 ) {
   try {
     console.debug('syncRemoteHistory history_list.length', history_list.length);
@@ -81,14 +82,19 @@ export async function syncRemoteHistory(
     //   throw err;
     // });
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction');
-    await batchSaveWithPQueueAndTransaction(HistoryItemEntity, historyItems, {
-      owner_addr: address,
-      taskFor: 'all-history',
-      batchSize: 200,
-      concurrency: 1,
-      delayBetweenTasks: 1.5 * 1e3,
-      noNeedAbort: true,
-    }).then(({ taskSignal, taskKey }) => {
+    await batchSaveWithPQueueAndTransaction(
+      HistoryItemEntity,
+      historyItems,
+      {
+        owner_addr: address,
+        taskFor: 'all-history',
+        batchSize: 200,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+        noNeedAbort: true,
+      },
+      setHistoryLoading,
+    ).then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {
         console.warn(`[${taskKey}] Batch upsertion was aborted.`);
       } else {

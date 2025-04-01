@@ -5,54 +5,14 @@ import {
   SAFE_GAS_LIMIT_RATIO,
 } from '@/constant/gas';
 import * as apiProvider from '@/core/apis/provider';
+import { findChain } from '@/utils/chain';
+import { intToHex } from '@/utils/number';
 import type {
   ExplainTxResponse,
   GasLevel,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import {
-  transactionBroadcastWatcherService,
-  transactionHistoryService,
-  transactionWatcherService,
-} from '../services';
-import { findChain } from '@/utils/chain';
-import { intToHex } from '@/utils/number';
-
-export const clearPendingTxs = (address: string) => {
-  transactionHistoryService.clearPendingTransactions(address);
-  transactionWatcherService.clearPendingTx(address);
-  transactionBroadcastWatcherService.clearPendingTx(address);
-  return;
-};
-
-export const getPendingTxs = async ({
-  recommendNonce,
-  address,
-}: {
-  recommendNonce: string;
-  address: string;
-}) => {
-  const { pendings } = await transactionHistoryService.getList(address);
-
-  return pendings
-    .filter(item => new BigNumber(item.nonce).lt(recommendNonce))
-    .reduce((result, item) => {
-      return result.concat(item.txs.map(tx => tx.rawTx));
-    }, [] as Tx[])
-    .map(item => ({
-      from: item.from,
-      to: item.to,
-      chainId: item.chainId,
-      data: item.data || '0x',
-      nonce: item.nonce,
-      value: item.value,
-      gasPrice: `0x${new BigNumber(
-        item.gasPrice || item.maxFeePerGas || 0,
-      ).toString(16)}`,
-      gas: item.gas || item.gasLimit || '0x0',
-    }));
-};
 
 interface BlockInfo {
   baseFeePerGas: string;

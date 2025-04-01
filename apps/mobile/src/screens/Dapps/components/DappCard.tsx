@@ -8,7 +8,14 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
-import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  Image,
+  Platform,
+  StyleProp,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -110,9 +117,9 @@ export const DappCardInner: React.FC<DappCardProps> = ({
                 />
               )
             ) : null}
-            {!data?.isConnected ? (
+            {/* {!data?.isConnected ? (
               <RcIconDisconnect style={styles.chainIcon} />
-            ) : null}
+            ) : null} */}
           </>
         </View>
         <View style={styles.dappContent}>
@@ -167,15 +174,29 @@ export const DappCardInner: React.FC<DappCardProps> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappCard: {
-    borderRadius: 30,
+    borderRadius: 20,
     backgroundColor: colors2024['neutral-bg-1'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
-    padding: 24,
-    minHeight: 96,
+    paddingVertical: 16,
+    paddingLeft: 16,
+    paddingRight: 20,
+    minHeight: 78,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
+
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.02)',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 1,
+        shadowRadius: 11.9,
+      },
+      android: {
+        // elevation: 4,
+      },
+    }),
   },
 
   dappContent: {
@@ -187,8 +208,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappOrigin: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     color: colors2024['neutral-title-1'],
   },
 
@@ -206,8 +227,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappName: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '500',
     flexShrink: 1,
   },
@@ -245,9 +266,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   dappIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 1000,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
   dappIconCircle: {
     width: 40,

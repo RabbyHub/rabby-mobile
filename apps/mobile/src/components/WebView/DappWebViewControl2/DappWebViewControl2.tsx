@@ -459,7 +459,7 @@ const getStyles = createGetStyles2024(ctx =>
       height: ScreenLayouts2.dappWebViewControlHeaderHeight,
       paddingHorizontal: 20,
       paddingVertical: 0,
-      paddingTop: 10,
+      // paddingTop: 10,
       backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder('red'),
     },

@@ -31,6 +31,7 @@ type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
+  onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
 export type TokenChangeDataItem = {
@@ -42,7 +43,13 @@ export type TokenChangeDataItem = {
 };
 
 export const HistoryItem = React.memo(
-  ({ data, tokenDict, style, isForMultipleAdderss }: HistoryItemProps) => {
+  ({
+    data,
+    tokenDict,
+    style,
+    isForMultipleAdderss,
+    onPress,
+  }: HistoryItemProps) => {
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
@@ -181,6 +188,10 @@ export const HistoryItem = React.memo(
 
     const navigation = useRabbyAppNavigation();
     const handleNavigateDetail = useCallback(() => {
+      if (onPress) {
+        onPress(data);
+        return;
+      }
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
@@ -189,7 +200,7 @@ export const HistoryItem = React.memo(
           title: formatTitle,
         },
       });
-    }, [navigation, isForMultipleAdderss, data, formatTitle]);
+    }, [onPress, navigation, isForMultipleAdderss, data, formatTitle]);
 
     const noNeedTokenChangeType = useMemo(
       () =>
@@ -206,7 +217,7 @@ export const HistoryItem = React.memo(
         .map(item => {
           const tokenId = item?.token_id;
           const tokenUUID = `${data.chain}_token:${tokenId}`;
-          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID] || {};
           return {
             amount: item.amount,
             token,
@@ -216,17 +227,17 @@ export const HistoryItem = React.memo(
           };
         })
         .sort((a, b) => {
-          if (a.token.is_core === b.token.is_core) {
+          if (a.token?.is_core === b.token?.is_core) {
             return a.amount * a.price - b.amount * b.price;
           }
-          return a.token.is_core ? -1 : 1;
+          return a.token?.is_core ? -1 : 1;
         });
 
       const sends = data.sends
         .map(item => {
           const tokenId = item?.token_id;
           const tokenUUID = `${data.chain}_token:${tokenId}`;
-          const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+          const token = tokenDict[tokenId] || tokenDict[tokenUUID] || {};
           return {
             amount: item.amount,
             token,
@@ -236,10 +247,10 @@ export const HistoryItem = React.memo(
           };
         })
         .sort((a, b) => {
-          if (a.token.is_core === b.token.is_core) {
+          if (a.token?.is_core === b.token?.is_core) {
             return a.amount * a.price - b.amount * b.price;
           }
-          return a.token.is_core ? 1 : -1;
+          return a.token?.is_core ? 1 : -1;
         });
       return [...receives, ...sends];
     }, [data, tokenDict]);

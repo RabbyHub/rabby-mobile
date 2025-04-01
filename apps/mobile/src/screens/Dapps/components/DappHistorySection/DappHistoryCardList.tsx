@@ -47,6 +47,7 @@ export const DappHistoryCardList = ({
           <View style={styles.listItem}>
             <ContextMenuView
               triggerProps={{ action: 'longPress' }}
+              preViewBorderRadius={20}
               menuConfig={{
                 menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
                 menuActions: [
@@ -82,7 +83,7 @@ export const DappHistoryCardList = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   list: {
     marginBottom: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   listItem: {
     marginBottom: 12,

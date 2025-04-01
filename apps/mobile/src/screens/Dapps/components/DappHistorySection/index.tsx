@@ -42,7 +42,7 @@ export const DappHistorySection = ({
             {HeaderComponent}
             <View style={styles.header}>
               <View style={styles.titleWarper}>
-                <RcIconHistory />
+                {/* <RcIconHistory /> */}
                 <Text style={styles.title}>History</Text>
                 {isEmpty ? null : (
                   <Text style={styles.subTitle}>/Past 30 Days</Text>
@@ -65,13 +65,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   titleWarper: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 8,
     marginRight: 'auto',
   },
   title: {

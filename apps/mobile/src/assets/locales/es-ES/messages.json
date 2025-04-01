@@ -1694,7 +1694,7 @@
     "setting": {
       "feedback": "Comentarios",
       "screenTitle": "Configuración",
-      "clearPending": "Borrar Pendiente",
+      "clearPending": "",
       "touchId": "Touch ID",
       "aboutUs": "Sobre nosotros",
       "followUs": "Síguenos",

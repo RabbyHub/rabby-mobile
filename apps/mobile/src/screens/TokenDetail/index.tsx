@@ -253,7 +253,9 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { currentAccount, switchAccount } = useCurrentAccount({
+    disableAutoFetch: true,
+  });
   const finalAccount = account || currentAccount;
 
   const relateDefiList = useMemo(() => {
@@ -578,8 +580,8 @@ export const TokenDetailScreen = () => {
           isSingleAddress={isSingleAddress}
           tokenUsdValue={tokenWithAmount?.price}
           finalAccount={finalAccount}
-          tokenSupportSwap={tokenSupportSwap}
-          handleSwap={handleSwap}
+          accounts={accounts}
+          switchAccount={switchAccount}
           amountList={tokenFromAddress}
           token={token}
         />

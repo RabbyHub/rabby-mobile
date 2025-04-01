@@ -204,7 +204,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: 20,
-      // backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 16,
       paddingRight: 24,
       height: SIZES.itemH,
@@ -501,38 +501,37 @@ export function AccountsPanelInSheetModal({
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => {
                     const Content = (
+                      <AddressItemInSheetModal
+                        addressItemProps={{ account: item }}
+                        isPinned={isPinnedAccount(item)}
+                        onPressAccount={onSelectAccount}
+                        replaceNameWithAliasAddress={isReceive}
+                        isReceive={isReceive}
+                        showCopyAndQR={!isGasAccount}
+                        defaultPressAction={defaultPressItemAction}
+                        style={
+                          isGasAccount ? { backgroundColor: 'transparent' } : {}
+                        }
+                      />
+                    );
+                    return (
                       <View
                         key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                         style={[
                           { borderRadius: 20 },
                           index > 0 && styles.addressItemTopGap,
                         ]}>
-                        <AddressItemInSheetModal
-                          addressItemProps={{ account: item }}
-                          isPinned={isPinnedAccount(item)}
-                          onPressAccount={onSelectAccount}
-                          replaceNameWithAliasAddress={isReceive}
-                          isReceive={isReceive}
-                          showCopyAndQR={!isGasAccount}
-                          defaultPressAction={defaultPressItemAction}
-                          style={
-                            isGasAccount
-                              ? { backgroundColor: 'transparent' }
-                              : {}
-                          }
-                        />
+                        {isReceive ? (
+                          <AddressItemContextMenu
+                            account={item}
+                            actions={['edit']}>
+                            {Content}
+                          </AddressItemContextMenu>
+                        ) : (
+                          Content
+                        )}
                       </View>
                     );
-                    if (isReceive) {
-                      return (
-                        <AddressItemContextMenu
-                          account={item}
-                          actions={['edit']}>
-                          {Content}
-                        </AddressItemContextMenu>
-                      );
-                    }
-                    return Content;
                   }}
                   keyExtractor={(account, index) =>
                     `account-${account.address}-${account.brandName}-${index}`

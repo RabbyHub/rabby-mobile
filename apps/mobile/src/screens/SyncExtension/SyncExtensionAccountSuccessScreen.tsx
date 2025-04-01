@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { ScrollView, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -18,12 +18,14 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useSpecifyAccountsBalance } from './hooks/balance';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { useSyncHistoryDB } from '@/databases/hooks/history';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
+  const { syncMultiAddressesHistory } = useSyncHistoryDB();
 
   const navState = useNavigationState(
     s =>
@@ -53,8 +55,9 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   useEffect(() => {
     if (accounts.length) {
       fetchTotalBalance();
+      syncMultiAddressesHistory(accounts.slice(0, 10).map(e => e.address));
     }
-  }, [accounts, fetchTotalBalance]);
+  }, [accounts, fetchTotalBalance, syncMultiAddressesHistory]);
 
   const sortedList = useSortAddressList(
     balanceAccounts?.length ? balanceAccounts : accounts,

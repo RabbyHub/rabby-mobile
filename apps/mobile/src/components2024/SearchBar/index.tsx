@@ -88,6 +88,8 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
             <RcNextSearchCC
               style={styles.searchIcon}
               color={colors2024['neutral-foot']}
+              width={16}
+              height={16}
             />
           </TouchableWithoutFeedback>
           <TextInput
@@ -141,17 +143,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 15,
+    gap: 12,
   },
   inputContainer: {
     flex: 1,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 30,
+    borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-2'],
     paddingHorizontal: 8,
-    gap: 8,
+    gap: 7,
   },
 
   searchIcon: { marginLeft: 12 },

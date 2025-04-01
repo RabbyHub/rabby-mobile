@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Switch } from 'react-native-switch';
 
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,6 +25,7 @@ const ConfirmAddressScreen = () => {
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const { navigation } = useSafeSetNavigationOptions();
+  const switchRef = useRef<Switch>(null);
 
   const { account } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ConfirmAddress)?.params,
@@ -37,6 +39,9 @@ const ConfirmAddressScreen = () => {
     () => isAddrOnWhitelist(account.address),
     [account.address, isAddrOnWhitelist],
   );
+  useEffect(() => {
+    switchRef.current?.setState({ value: inWhiteList });
+  }, [inWhiteList]);
 
   const setInWhitelist = useCallback(
     (bool: boolean) => {
@@ -85,7 +90,11 @@ const ConfirmAddressScreen = () => {
       />
       <View style={styles.whitelist}>
         <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
-        <AppSwitch2024 onValueChange={setInWhitelist} value={inWhiteList} />
+        <AppSwitch2024
+          ref={switchRef}
+          onValueChange={setInWhitelist}
+          value={inWhiteList}
+        />
       </View>
       <View style={styles.riskList}>
         {risks.map(risk => (

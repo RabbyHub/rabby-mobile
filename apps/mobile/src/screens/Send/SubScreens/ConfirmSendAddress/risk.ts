@@ -69,7 +69,14 @@ export const useRisks = (address: string) => {
           value: t('page.confirmAddress.risks.dexNoDeposite'),
         });
       }
-      if (Object.keys(addressDesc?.contract || {}).length) {
+      const isContract = Object.keys(addressDesc?.contract || {}).length > 0;
+      const isSafeAddress = Object.keys(addressDesc?.contract || {}).some(
+        key => {
+          const contract = addressDesc?.contract?.[key];
+          return !!contract?.multisig;
+        },
+      );
+      if (isContract && !isSafeAddress) {
         currRisks.push({
           type: RiskType.CONTRACT_ADDRESS,
           value: t('page.confirmAddress.risks.contractAddress'),

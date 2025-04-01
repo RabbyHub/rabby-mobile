@@ -7,11 +7,7 @@
 /* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
-import {
-  DisplayKeyring,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -21,7 +17,6 @@ import type {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import type { ContactBookService } from '@rabby-wallet/service-address';
-import { deepmergeCustom } from 'deepmerge-ts';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
 import * as bip39 from 'react-native-quick-bip39';
@@ -31,6 +26,7 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
+import { mergeVault } from './utils/mergeVault';
 
 const UNENCRYPTED_IGNORE_KEYRING = [
   KEYRING_TYPE.SimpleKeyring,
@@ -1316,94 +1312,6 @@ export class KeyringService extends RNEventEmitter {
   }
 }
 
-const isUniqKeyringType = (keyringtype: KEYRING_TYPE) =>
-  [KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC].includes(keyringtype);
-
-/**
- *
- * @param origin
- * @param merge
- */
-function mergeVault(
-  origin: KeyringSerializedData[],
-  merge: KeyringSerializedData[],
-) {
-  const newData = [...origin];
-  const customDeepmerge = deepmergeCustom({
-    mergeArrays: (values, utils) => {
-      const isStringOrNumberArray = values.every(
-        arr =>
-          Array.isArray(arr) &&
-          arr.every(
-            item => typeof item === 'string' || typeof item === 'number',
-          ),
-      );
-
-      if (isStringOrNumberArray) {
-        const flatArray = values.flat();
-        return Array.from(new Set(flatArray));
-      }
-
-      return utils.defaultMergeFunctions.mergeArrays(values);
-    },
-  });
-  merge.forEach(item => {
-    const isUniq = isUniqKeyringType(item.type);
-    if (isUniq) {
-      if (item.type === KEYRING_TYPE.SimpleKeyring) {
-        const exist = newData.some(e => {
-          if (e.type === item.type) {
-            return (
-              Boolean(e?.data?.[0]) &&
-              Boolean(item?.data?.[0]) &&
-              e.data?.[0] === item.data?.[0]
-            );
-          }
-          return false;
-        });
-        if (!exist) {
-          newData.push(item);
-        }
-      }
-      if (item.type === KEYRING_TYPE.HdKeyring) {
-        const isSameHdKeyring = (
-          hd1: KeyringSerializedData,
-          hd2: KeyringSerializedData,
-        ) => {
-          if (
-            hd1.type === KEYRING_TYPE.HdKeyring &&
-            hd2.type === KEYRING_TYPE.HdKeyring
-          ) {
-            return Object.keys(hd2.data)
-              .filter(
-                key =>
-                  !['accountDetails', 'accounts', 'activeIndexes'].includes(
-                    key,
-                  ),
-              )
-              .every(key => hd1?.data?.[key] === hd2?.data?.[key]);
-          }
-          return false;
-        };
-        const targetIdx = newData.findIndex(old => isSameHdKeyring(old, item));
-        if (targetIdx > -1 && newData[targetIdx]) {
-          newData[targetIdx] = customDeepmerge(newData[targetIdx], item);
-        } else {
-          newData.push(item);
-        }
-      }
-    } else {
-      const targetIdx = newData.findIndex(old => old.type === item.type);
-      if (targetIdx > -1) {
-        newData[targetIdx] = customDeepmerge(newData[targetIdx], item);
-      } else {
-        newData.push(item);
-      }
-    }
-  });
-
-  return newData;
-}
 /* eslint-enable jsdoc/check-tag-names */
 /* eslint-enable jsdoc/check-types */
 /* eslint-enable jsdoc/no-types */
