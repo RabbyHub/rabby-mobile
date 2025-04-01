@@ -30,6 +30,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useWhitelist } from '@/hooks/whitelist';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -62,6 +63,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   ) as {
     autoScan?: boolean;
   };
+  const { addWhitelist } = useWhitelist();
 
   const { navigateToSendScreen } = useSendRoutes();
 
@@ -94,10 +96,23 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         if (inWhitelist) {
           toast.show(t('page.whitelist.alreadyAdded'));
         } else {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.WhitelistConfirm,
-            params: {
-              account,
+          const id = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES.CONFIRM_ADDRESS,
+            account,
+            disbaleWhiteSwitch: true,
+            bottomSheetModalProps: {
+              enableDynamicSizing: true,
+            },
+            onCancel: () => {
+              removeGlobalBottomSheetModal2024(id);
+            },
+            onConfirm() {
+              removeGlobalBottomSheetModal2024(id);
+              addWhitelist(account.address, {
+                onAdded: () => {
+                  toast.success(t('page.whitelist.addSuccessful'));
+                },
+              });
             },
           });
         }
@@ -122,7 +137,6 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
           bottomSheetModalProps: {
             enableDynamicSizing: true,
           },
-          title: 'Confirm Recipient Address',
           onCancel: () => {
             removeGlobalBottomSheetModal2024(id);
           },

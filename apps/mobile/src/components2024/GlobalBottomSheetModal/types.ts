@@ -5,7 +5,7 @@ import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 import type { AuthenticationModalProps } from '@/components/AuthenticationModal/AuthenticationModal';
 import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
-import { ConfirmAddressScreenProps } from '@/screens/Send/SubScreens/ConfirmSendAddress';
+import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',

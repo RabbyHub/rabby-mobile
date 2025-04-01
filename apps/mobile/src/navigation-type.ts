@@ -259,7 +259,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.WhitelistInput]?: {};
   [RootNames.SelectImportAddress]?: {};
   [RootNames.ImportAddress2Whitelist]?: {};
-  [RootNames.WhitelistConfirm]?: { account: KeyringAccountWithAlias };
   [RootNames.SelectTypeAddress]?: {
     type: 'watch' | 'safe';
   };

@@ -56,7 +56,6 @@ export const useSendRoutes = () => {
             bottomSheetModalProps: {
               enableDynamicSizing: true,
             },
-            title: 'Confirm Recipient Address',
             onCancel: () => {
               removeGlobalBottomSheetModal2024(id);
             },
