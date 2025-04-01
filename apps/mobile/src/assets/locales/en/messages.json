@@ -38,6 +38,8 @@
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",
       "ShowHiddenItems": "Show hidden transactions",
+      "ShowScamTransactions": "Show scam transactions",
+      "HideScamTransactions": "Hide scam transactions",
       "ShowAllTransactionsToast": "Hidden transactions shown",
       "NotShowAllTransactionsToast": "Hidden transactions concealed",
       "Today": "Today",

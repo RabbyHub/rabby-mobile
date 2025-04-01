@@ -7,6 +7,7 @@ import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
 import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
 
 const historyHitSlop = {
   top: 4,
@@ -26,17 +27,18 @@ export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
   const switchShowAll = () => {
     setIsShowAll(prev => {
       if (prev) {
-        toast.success(t('page.transactions.NotShowAllTransactionsToast'));
+        toast.success(t('page.transactions.HideScamTransactions'));
       } else {
-        toast.success(t('page.transactions.ShowAllTransactionsToast'));
+        toast.success(t('page.transactions.ShowScamTransactions'));
       }
       return !prev;
     });
   };
   return (
     <View style={styles.container}>
-      <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}>
-        {isShowAll ? (
+      {/* <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}> */}
+      <AppSwitch2024 value={isShowAll} onValueChange={e => switchShowAll()} />
+      {/* {isShowAll ? (
           <RcIconEyeCC
             color={colors2024['neutral-foot']}
             style={styles.filterIcon}
@@ -50,8 +52,8 @@ export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
             width={24}
             height={24}
           />
-        )}
-      </TouchableOpacity>
+        )} */}
+      {/* </TouchableOpacity> */}
     </View>
   );
 };
