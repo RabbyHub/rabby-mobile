@@ -150,14 +150,11 @@ export default function TransactionNavigator() {
         component={SendScreen}
         options={mergeScreenOptions({
           title: 'Send',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-                disableSwitch
-              />
-            );
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
           },
         })}
       />
@@ -166,13 +163,11 @@ export default function TransactionNavigator() {
         component={SendScreen.ForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Send',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-              />
-            );
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
           },
         })}
       />

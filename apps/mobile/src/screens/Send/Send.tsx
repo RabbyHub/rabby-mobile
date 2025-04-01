@@ -58,6 +58,7 @@ import { ChainInfo2024 } from './components/ChainInfo2024';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import FromAddressControl2024 from './components/FromAddressControl';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -375,6 +376,8 @@ function SendScreen({
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
               <View>
+                {/* From */}
+                <FromAddressControl2024 disableSwitch={!isForMultipleAdderss} />
                 {/* To */}
                 <ToAddressControl2024
                   address={navParams?.toAddress || ''}
