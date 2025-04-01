@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
-      borderRadius: 30,
+      borderRadius: 16,
       paddingHorizontal: 22,
       paddingVertical: 16,
       backgroundColor: colors2024['neutral-bg-2'],

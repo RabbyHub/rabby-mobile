@@ -143,7 +143,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tokenBox: {
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 24,
-    borderRadius: 20,
+    borderRadius: 16,
   },
 
   label: {
