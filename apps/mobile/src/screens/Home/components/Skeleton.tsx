@@ -80,12 +80,14 @@ export const DefiItemLoader = memo(() => {
 
 const getStyle = createGetStyles2024(ctx => ({
   positionLoader: {
+    width: '100%',
     height: ASSETS_ITEM_HEIGHT_NEW,
     alignItems: 'center',
     borderRadius: 16,
     flexDirection: 'row',
     paddingHorizontal: 12,
     paddingVertical: 15,
+    marginLeft: 16,
     gap: 12,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
@@ -103,6 +105,7 @@ const getStyle = createGetStyles2024(ctx => ({
     height: DEFI_ITEM_HEIGHT,
     flexDirection: 'row',
     gap: 12,
+    paddingHorizontal: 16,
   },
   defiLoader: {
     width: DEFI_CARD_WIDTH,

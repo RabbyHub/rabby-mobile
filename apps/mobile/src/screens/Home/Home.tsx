@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ImageBackground, View } from 'react-native';
+import { Image, ImageBackground, View, Animated } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
 
@@ -14,6 +14,7 @@ function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const [isDecrease, setIsDecrease] = React.useState<boolean>(false);
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { currentAccount } = useCurrentAccount({
@@ -22,27 +23,15 @@ function HomeScreen(): JSX.Element {
   const topBg = React.useMemo(() => {
     if (isDecrease) {
       if (isLight) {
-        return [
-          require('@/assets2024/singleHome/home-loss-bg-1.png'),
-          require('@/assets2024/singleHome/home-loss-bg-2.png'),
-        ];
+        return require('@/assets2024/singleHome/home-loss-bg-1.png');
       } else {
-        return [
-          require('@/assets2024/singleHome/home-loss-dark-bg-1.png'),
-          require('@/assets2024/singleHome/home-loss-dark-bg-2.png'),
-        ];
+        return require('@/assets2024/singleHome/home-loss-dark-bg-1.png');
       }
     } else {
       if (isLight) {
-        return [
-          require('@/assets2024/singleHome/home-profit-bg-1.png'),
-          require('@/assets2024/singleHome/home-profit-bg-2.png'),
-        ];
+        return require('@/assets2024/singleHome/home-profit-bg-1.png');
       } else {
-        return [
-          require('@/assets2024/singleHome/home-profit-dark-bg-1.png'),
-          require('@/assets2024/singleHome/home-profit-dark-bg-2.png'),
-        ];
+        return require('@/assets2024/singleHome/home-profit-dark-bg-1.png');
       }
     }
   }, [isDecrease, isLight]);
@@ -50,6 +39,18 @@ function HomeScreen(): JSX.Element {
   const handleUpdateIsDecrease = React.useCallback((status: boolean) => {
     setIsDecrease(status);
   }, []);
+
+  const handleReachTopStatusChange = React.useCallback(
+    (status: boolean) => {
+      Animated.timing(fadeAnim, {
+        toValue: status ? 1 : 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    },
+    [fadeAnim],
+  );
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: () => <HomeScreen.HeaderArea />,
@@ -60,34 +61,29 @@ function HomeScreen(): JSX.Element {
     <NormalScreenContainer2024
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
-      <ImageBackground
-        source={topBg[0]}
-        resizeMode="cover"
-        // eslint-disable-next-line react-native/no-inline-styles
+      <Animated.View
         style={{
           position: 'absolute',
           top: 0,
           right: 0,
           width: '100%',
           height: 100,
-        }}
-      />
-      <ImageBackground
-        source={topBg[1]}
-        resizeMode="cover"
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{
-          position: 'absolute',
-          top: 100,
-          right: 0,
-          width: '100%',
-          height: 150,
-        }}
-      />
+          opacity: fadeAnim,
+        }}>
+        <ImageBackground
+          source={topBg}
+          resizeMode="cover"
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </Animated.View>
       <View style={styles.safeView}>
         <AssetContainer
           onRefresh={triggerUpdate}
           onUpdateIsDecrease={handleUpdateIsDecrease}
+          onReachTopStatusChange={handleReachTopStatusChange}
         />
       </View>
     </NormalScreenContainer2024>

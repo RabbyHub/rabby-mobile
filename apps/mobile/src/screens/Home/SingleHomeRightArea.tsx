@@ -111,6 +111,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
   const { currentAccount } = useCurrentAccount();
   const showAddressDetail = useAddressDetailModal();
+  const { colors2024 } = useTheme2024();
 
   const onPress = () => {
     if (currentAccount) {
@@ -122,7 +123,7 @@ export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
     <>
       <HeaderRightHistory />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
-        <RcIconMore width={24} height={24} />
+        <RcIconMore width={24} height={24} color={colors2024['neutral-body']} />
       </CustomTouchableOpacity>
     </>
   );

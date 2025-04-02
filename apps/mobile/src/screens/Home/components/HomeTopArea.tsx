@@ -37,6 +37,7 @@ import usePrevious from 'ahooks/lib/usePrevious';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ImageBackground,
   Platform,
   StyleProp,
   StyleSheet,
@@ -135,7 +136,7 @@ export const HomeTopArea = ({
   onUpdateIsDecrease?: (status: boolean) => void;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
@@ -156,7 +157,6 @@ export const HomeTopArea = ({
     update: true,
     noNeedBalance: false,
   });
-
   const {
     result: curveData,
     isLoading,
@@ -340,6 +340,22 @@ export const HomeTopArea = ({
 
   const isDecrease = useCachedValue(curveData, 'isLoss');
 
+  const topBg = React.useMemo(() => {
+    if (isDecrease) {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-loss-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-loss-dark-bg-2.png');
+      }
+    } else {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-profit-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-profit-dark-bg-2.png');
+      }
+    }
+  }, [isDecrease, isLight]);
+
   const percent = useMemo(() => {
     return latestPercent || previousPercent;
   }, [latestPercent, previousPercent]);
@@ -362,6 +378,18 @@ export const HomeTopArea = ({
   return (
     <>
       <View style={styles.container}>
+        <ImageBackground
+          source={topBg}
+          resizeMode="cover"
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: 150,
+          }}
+        />
         <View style={styles.opacityWrapper}>
           <TouchableOpacity
             style={styles.textBox}
@@ -556,11 +584,9 @@ export const HomeTopArea = ({
 const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingTop: 12,
-    paddingBottom: 30,
-    paddingHorizontal: 8,
-    backgroundColor: 'transparent',
-    width: '100%',
+    paddingTop: 7,
+    paddingBottom: 18,
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
@@ -574,8 +600,8 @@ const getStyles = createGetStyles2024(ctx => ({
   group: {
     marginTop: 16,
     justifyContent: 'space-between',
-    // width: '100%',
     flexDirection: 'row',
+    paddingHorizontal: 24,
   },
   action: {
     gap: 8,
@@ -687,6 +713,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-foot'],
   },
   opacityWrapper: {
+    paddingHorizontal: 24,
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   textBox: {
