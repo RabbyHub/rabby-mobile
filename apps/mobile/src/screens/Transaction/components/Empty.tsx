@@ -1,10 +1,10 @@
-import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
-import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View, ViewProps } from 'react-native';
+import { Image, Text, View, ViewProps } from 'react-native';
 
 export const Empty = ({
   style,
@@ -20,11 +20,10 @@ export const Empty = ({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.empty}>
-        {isLight ? (
-          <RcIconEmpty style={styles.image} />
-        ) : (
-          <RcIconEmptyDark style={styles.image} />
-        )}
+        <Image
+          source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+          style={styles.image}
+        />
         <Text style={styles.title}>
           {t('page.activities.signedTx.empty.title')}
         </Text>
@@ -60,5 +59,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   image: {
     marginTop: 200,
     marginBottom: 16,
+    width: 163,
+    height: 126,
   },
 }));
