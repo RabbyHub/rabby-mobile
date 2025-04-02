@@ -1879,7 +1879,10 @@
       "common": "Common",
       "recent": "Recent",
       "searchPlaceHolder1": "Search by Name / Address",
-      "searchPlaceHolder2": "Search Token"
+      "searchPlaceHolder2": "Search Token",
+      "contextMenu": {
+        "viewDetail": "View Detail"
+      }
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

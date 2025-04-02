@@ -53,6 +53,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSelectTokens } from '../hooks/useSelectTokens';
 import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -108,7 +109,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     },
     ref,
   ) => {
-    const [pinedQueue, setPinedQueue] = useState<IManageToken[]>([]);
     const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
       account: accountInScreen,
@@ -135,7 +135,10 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       visible: tokenSelectorVisible,
       keyword: queryConds.keyword,
       chain_server_id: queryConds.chainServerId,
+      type: type,
     });
+
+    const isSwapTo = type === 'swapTo';
 
     useImperativeHandle(ref, () => ({
       openTokenModal: conds => {
@@ -193,18 +196,22 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         useSwapTokenList,
         tokenSelectorVisible,
       ]);
+
     const allRemoteTokens = useSortToken(tokens);
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
-        tokens.map(
-          e =>
-            ({
-              ...abstractTokenToTokenItem(e),
-              ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
-            } as TokenItemMaybeWithOwner),
-        ),
-      [tokens],
+        isSwapTo && queryConds.keyword
+          ? tokens
+          : tokens.map(
+              e =>
+                ({
+                  ...abstractTokenToTokenItem(e),
+                  ownerAccount:
+                    'ownerAccount' in e ? e.ownerAccount : undefined,
+                } as TokenItemMaybeWithOwner),
+            ),
+      [isSwapTo, queryConds.keyword, tokens],
     );
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
@@ -376,23 +383,22 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isExcludedTokens,
     ]);
 
-    // const { value: pinedQueue } = useAsync(async () => {
-    //   if (currentAccount?.address) {
-    //     const data = await preferenceService.getUserTokenSettings();
-    //     return data?.pinedQueue || [];
-    //   }
-    //   return [];
-    // });
+    const { userTokenSettings, fetchUserTokenSettings } =
+      useUserTokenSettings();
+
+    const pinedQueue = useMemo(
+      () => userTokenSettings.pinedQueue,
+      [userTokenSettings.pinedQueue],
+    );
 
     useFocusEffect(
       useCallback(() => {
         (async () => {
           if (currentAccount?.address) {
-            const data = await preferenceService.getUserTokenSettings();
-            setPinedQueue(data?.pinedQueue || []);
+            fetchUserTokenSettings();
           }
         })();
-      }, [currentAccount?.address]),
+      }, [currentAccount?.address, fetchUserTokenSettings]),
     );
 
     const recentTitle = useMemo(() => {

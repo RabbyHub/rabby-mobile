@@ -6,6 +6,7 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { findChainByServerID } from '@/utils/chain';
 import { devLog } from '@/utils/logger';
+import { openapi } from '@/core/request';
 
 const useSearchToken = (
   queryCond: {
@@ -16,11 +17,16 @@ const useSearchToken = (
   options?: {
     withBalance?: boolean;
     isTestnet?: boolean;
+    isSwapTo?: boolean;
   },
 ) => {
   const { address, keyword = '', chainServerId } = queryCond;
 
-  const { withBalance = false, isTestnet = false } = options || {};
+  const {
+    withBalance = false,
+    isTestnet = false,
+    isSwapTo = false,
+  } = options || {};
 
   const [result, setResult] = useState<AbstractPortfolioToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +48,12 @@ const useSearchToken = (
       const chainItem = !chainId ? null : findChainByServerID(chainId);
 
       try {
-        if (q.length === 42 && q.toLowerCase().startsWith('0x')) {
+        if (isSwapTo && q.trim().length) {
+          list = await openapi.searchTokensV2({
+            q,
+          });
+          list = list.filter(e => e.chain === chainId);
+        } else if (q.length === 42 && q.toLowerCase().startsWith('0x')) {
           list = await requestOpenApiWithChainId(
             ctx => ctx.openapi.searchToken(address, q, chainId, true),
             {
@@ -67,14 +78,29 @@ const useSearchToken = (
       }
 
       if (addressRef.current === address && kwRef.current === q) {
-        setResult([
-          ...(list.map(
-            item => new DisplayedToken(item),
-          ) as AbstractPortfolioToken[]),
-        ]);
+        setResult(
+          isSwapTo
+            ? list.map(
+                token =>
+                  ({
+                    ...token,
+                    _isPined: false,
+                    _isFold: false,
+                    _isExcludeBalance: false,
+                    _usdValueStr: 0,
+                    _amountStr: 1,
+                    _tokenId: token.id,
+                  } as unknown as AbstractPortfolioToken),
+              )
+            : [
+                ...(list.map(
+                  item => new DisplayedToken(item),
+                ) as AbstractPortfolioToken[]),
+              ],
+        );
       }
     },
-    [isTestnet, withBalance],
+    [isSwapTo, isTestnet, withBalance],
   );
 
   useEffect(() => {

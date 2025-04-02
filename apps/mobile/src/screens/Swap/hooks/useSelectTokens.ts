@@ -10,6 +10,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { tokenItem2AbstractTokenWithOwner } from '@/utils/token';
 import { tagTokenItem } from '@/screens/Home/utils/token';
 import { preferenceService } from '@/core/services';
+import useAsync from 'react-use/lib/useAsync';
+import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
+import { openapi } from '@/core/request';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
@@ -36,11 +40,13 @@ export const useSelectTokens = ({
   visible,
   keyword,
   chain_server_id,
+  type,
 }: {
   currentAddress?: string;
   visible?: boolean;
   keyword?: string;
   chain_server_id?: string;
+  type?: TokenSelectType;
 }) => {
   const [isLoading, setLoading] = useSafeState(false);
   const { accounts } = useMyAccounts({
@@ -50,6 +56,32 @@ export const useSelectTokens = ({
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
+
+  const {
+    value: swapToTokenSearchResult,
+    loading: swapToTokenSearchResultLoading,
+  } = useAsync(async () => {
+    if (type === 'swapTo' && keyword) {
+      const list = await openapi.searchTokensV2({
+        q: keyword,
+      });
+      return list
+        .filter(e => e.chain === chain_server_id)
+        .map(
+          e =>
+            ({
+              ...e,
+              _isPined: false,
+              _isFold: false,
+              _isExcludeBalance: false,
+              _usdValueStr: 0,
+              _amountStr: 1,
+              _tokenId: e.id,
+            } as any as AbstractPortfolioToken),
+        );
+    }
+    return [];
+  }, [keyword, chain_server_id]);
 
   useEffect(() => {
     if (visible && Object.keys(userTokenSettings).length === 0) {
@@ -192,6 +224,20 @@ export const useSelectTokens = ({
   }, [chain_server_id, currentAddress, keyword, tokensMap, visible]);
 
   const tokenWithOwner = useMemo(() => {
+    if (type === 'swapTo' && keyword) {
+      return (
+        swapToTokenSearchResult?.map(token =>
+          tagTokenItem(
+            {
+              ...token,
+
+              _tokenId: token.id,
+            },
+            userTokenSettings,
+          ),
+        ) || []
+      );
+    }
     const tokenItems = tokens.map(token => {
       return {
         ...token,
@@ -204,12 +250,19 @@ export const useSelectTokens = ({
       const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
       return tagTokenItem(data, userTokenSettings);
     });
-  }, [accounts, tokens, userTokenSettings]);
+  }, [
+    accounts,
+    keyword,
+    swapToTokenSearchResult,
+    tokens,
+    type,
+    userTokenSettings,
+  ]);
 
   return {
     tokensMap,
     tokens: tokenWithOwner,
-    isLoading,
+    isLoading: isLoading || swapToTokenSearchResultLoading,
     getCacheTop10Tokens,
     getCacheTokens,
     checkIsExpireAndUpdate,

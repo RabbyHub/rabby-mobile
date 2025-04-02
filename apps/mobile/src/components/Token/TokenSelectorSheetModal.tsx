@@ -68,6 +68,8 @@ import {
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
+import { TokenItemContextMenu } from './TokenContextMenu';
+import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -100,7 +102,7 @@ interface SearchCallbackCtx {
   chainItem: Chain | null;
 }
 
-type TokenSelectType =
+export type TokenSelectType =
   | 'send'
   | 'swapFrom'
   | 'swapTo'
@@ -514,135 +516,150 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        return (
-          <TouchableOpacity
-            key={token_key}
-            onPress={() => {
-              if (disabled) {
-                disabledTips && toast.info(disabledTips);
-                return;
-              }
-              onConfirm(token.$origin);
-              toggleShowSheetModal('collapse');
-            }}
-            style={[
-              styles.tokenItem,
-              isSwapTo && { paddingRight: 0, paddingVertical: 0 },
-              (disabled || lightDisable) && styles.tokenItemDisabled,
-            ]}>
-            <View style={styles.tokenLeft}>
-              <AssetAvatar
-                logo={token?._logo}
-                size={40}
-                chain={token?._chain}
-                chainSize={16}
-              />
-              <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
-                <View style={styles.tokenNameBox}>
-                  <Text style={styles.tokenName} numberOfLines={1}>
-                    {ellipsisOverflowedText(token?._symbol, 15)}
-                  </Text>
-                  {isPined && <TextBadge />}
-                  {isManualFold && <TextBadge type="folded" />}
-                </View>
-                {showOwnerAccount ? (
-                  !ownerAccount ? null : (
-                    <AccountInfoInTokenRow
-                      containerStyle={{ marginTop: 2 }}
-                      ownerAccount={ownerAccount}
-                    />
-                  )
-                ) : (
-                  <Text
-                    style={[styles.tokenPrice, { marginTop: 4 }]}
-                    numberOfLines={1}>
-                    {token._price}
-                  </Text>
-                )}
-              </View>
+        if (isSwapTo && query) {
+          return (
+            <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+              <TokenItemContextMenu
+                token={token.$origin}
+                closeBottomSheet={() => {
+                  toggleShowSheetModal('destroy');
+                }}
+                type={type}>
+                <ExternalTokenRow
+                  decimalPrecision
+                  data={token.$origin as unknown as any}
+                  logoSize={40}
+                  onTokenPress={() => {
+                    if (disabled) {
+                      disabledTips && toast.info(disabledTips);
+                      return;
+                    }
+                    onConfirm(token.$origin);
+                    toggleShowSheetModal('collapse');
+                  }}
+                />
+              </TokenItemContextMenu>
             </View>
-            {isBridgeTo ? (
-              <View
+          );
+        }
+
+        return (
+          <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+            <TokenItemContextMenu
+              token={token.$origin as any}
+              closeBottomSheet={() => {
+                toggleShowSheetModal('destroy');
+              }}
+              type={type}>
+              <TouchableOpacity
+                key={token_key}
+                onPress={() => {
+                  if (disabled) {
+                    disabledTips && toast.info(disabledTips);
+                    return;
+                  }
+                  onConfirm(token.$origin);
+                  toggleShowSheetModal('collapse');
+                }}
                 style={[
-                  styles.tokenInfoColRight,
-                  styles.tardeLevel,
-                  {
-                    backgroundColor:
-                      token.trade_volume_level === 'low'
-                        ? colors2024['orange-light-4']
-                        : colors2024['green-light-4'],
-                  },
+                  styles.tokenItem,
+                  isSwapTo && { paddingRight: 0, paddingVertical: 0 },
+                  disabled && styles.tokenItemDisabled,
                 ]}>
-                <Text
-                  style={[
-                    styles.tardeLevelText,
-                    {
-                      color:
-                        token.trade_volume_level === 'low'
-                          ? colors2024['orange-default']
-                          : colors2024['green-default'],
-                    },
-                  ]}>
-                  {token.trade_volume_level}
-                </Text>
-              </View>
-            ) : (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                  <Text style={[styles.tokenHeaderNetworth]}>
-                    {isExcludeBalanceShowTips ? (
-                      <TouchableOpacity
-                        hitSlop={hitSlop}
-                        onPress={handleShowExcludeTips}>
-                        <RcTipCC
-                          style={styles.tips}
-                          color={colors2024['neutral-info']}
+                <View style={styles.tokenLeft}>
+                  <AssetAvatar
+                    logo={token?._logo}
+                    size={40}
+                    chain={token?._chain}
+                    chainSize={16}
+                  />
+                  <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
+                    <View style={styles.tokenNameBox}>
+                      <Text style={styles.tokenName} numberOfLines={1}>
+                        {ellipsisOverflowedText(token?._symbol, 15)}
+                      </Text>
+                      {isPined && <TextBadge />}
+                      {isManualFold && <TextBadge type="folded" />}
+                    </View>
+                    {showOwnerAccount ? (
+                      !ownerAccount ? null : (
+                        <AccountInfoInTokenRow
+                          containerStyle={{ marginTop: 2 }}
+                          ownerAccount={ownerAccount}
                         />
-                      </TouchableOpacity>
+                      )
                     ) : (
-                      token._netWorthStr
+                      <Text
+                        style={[styles.tokenPrice, { marginTop: 4 }]}
+                        numberOfLines={1}>
+                        {token._price}
+                      </Text>
                     )}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.tokenHeaderAmount,
-                      { marginTop: 4 },
-                      isExcludeBalanceShowTips && styles.textSecondary,
-                    ]}>
-                    {token._amount}
-                  </Text>
+                  </View>
                 </View>
-                {isSwapTo ? (
-                  <Pressable
+                {isBridgeTo ? (
+                  <View
+                    style={[
+                      styles.tokenInfoColRight,
+                      styles.tardeLevel,
+                      {
+                        backgroundColor:
+                          token.trade_volume_level === 'low'
+                            ? colors2024['orange-light-4']
+                            : colors2024['green-light-4'],
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.tardeLevelText,
+                        {
+                          color:
+                            token.trade_volume_level === 'low'
+                              ? colors2024['orange-default']
+                              : colors2024['green-default'],
+                        },
+                      ]}>
+                      {token.trade_volume_level}
+                    </Text>
+                  </View>
+                ) : (
+                  <View
                     style={{
-                      padding: 16,
-                      paddingLeft: 12,
-                      height: '100%',
-                    }}
-                    onPress={() => {
-                      setSwapToTokenDetail(true);
-                      naviPush(RootNames.TokenDetail, {
-                        token: ensureAbstractPortfolioToken(token.$origin),
-                        needUseCacheToken: true,
-                        isSingleAddress,
-                        isSwapToTokenDetail: true,
-                      });
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingRight: 16,
                     }}>
-                    <RcIconTipCC
-                      width={20}
-                      height={20}
-                      color={colors2024['neutral-secondary']}
-                    />
-                  </Pressable>
-                ) : null}
-              </View>
-            )}
-          </TouchableOpacity>
+                    <View
+                      style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+                      <Text style={[styles.tokenHeaderNetworth]}>
+                        {isExcludeBalanceShowTips ? (
+                          <TouchableOpacity
+                            hitSlop={hitSlop}
+                            onPress={handleShowExcludeTips}>
+                            <RcTipCC
+                              style={styles.tips}
+                              color={colors2024['neutral-info']}
+                            />
+                          </TouchableOpacity>
+                        ) : (
+                          token._netWorthStr
+                        )}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.tokenHeaderAmount,
+                          { marginTop: 4 },
+                          isExcludeBalanceShowTips && styles.textSecondary,
+                        ]}>
+                        {token._amount}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </TokenItemContextMenu>
+          </View>
         );
       },
       [
@@ -652,6 +669,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
         selectToken,
         supportChains,
         isFromModalType,
+        isSwapTo,
+        query,
+        type,
         styles.tokenItem,
         styles.tokenItemDisabled,
         styles.tokenLeft,
@@ -674,7 +694,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.arrow,
         styles.tokenRowUsdValueWrap,
         styles.tokenRowUsdValue,
-        isSwapTo,
         isBridgeTo,
         colors2024,
         handleShowExcludeTips,
@@ -683,7 +702,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         onPressToken,
         fold,
         disabledTips,
-        isSingleAddress,
       ],
     );
 
@@ -913,11 +931,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
               />
             }
             extraData={isLoading}
-            getItemLayout={(_, index) => ({
-              length: ITEM_HEIGHT,
-              offset: ITEM_HEIGHT * index,
-              index,
-            })}
+            getItemLayout={(_, index) => {
+              const h = isSwapTo && query ? 124 : ITEM_HEIGHT;
+              return {
+                length: h,
+                offset: h * index,
+                index,
+              };
+            }}
             renderItem={renderItemRenderComponent}
           />
         </AutoLockView>
@@ -1082,8 +1103,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: ITEM_HEIGHT,
       paddingHorizontal: 8,
       paddingRight: 16,
-      marginHorizontal: 12,
-      marginTop: 8,
+      // marginHorizontal: 12,
+      // marginTop: 8,
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -1188,7 +1209,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 function LoadingItem() {
   const { styles } = useTheme2024({ getStyle });
   return (
-    <View style={[styles.tokenItem]}>
+    <View style={[styles.tokenItem, { marginTop: 8, marginHorizontal: 12 }]}>
       <View style={styles.tokenLeft}>
         <Skeleton circle width={36} height={36} />
 
