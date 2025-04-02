@@ -166,7 +166,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
             });
           }}>
           <RcIconSetting />
-          {true && <View style={styles.redDot} />}
+          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
       <View style={styles.balanceBox}>
