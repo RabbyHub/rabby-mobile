@@ -66,6 +66,8 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
+import { useAtom } from 'jotai';
+import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -101,6 +103,7 @@ function SendScreen({
 
   const { chainItem, currentToken, setCurrentToken, setChainEnum } =
     useSendTokenScreenChainToken();
+  const [routeParams] = useAtom(sendScreenParamsAtom);
 
   const {
     sendTokenScreenState: screenState,
@@ -220,7 +223,11 @@ function SendScreen({
       navParams?.chainEnum &&
       navParams?.tokenId
     ) {
-      const target = findChainByEnum(navParams?.chainEnum);
+      const isManualChangeToken =
+        routeParams?.tokenId && routeParams?.chainEnum;
+      const target = findChainByEnum(
+        isManualChangeToken ? routeParams.chainEnum : navParams?.chainEnum,
+      );
 
       const hideLoading = toastLoading('Loading Token...');
       try {
@@ -237,7 +244,7 @@ function SendScreen({
           setChainEnum(target.enum);
           await Promise.race([
             await loadCurrentToken(
-              navParams?.tokenId,
+              isManualChangeToken ? routeParams.tokenId : navParams?.tokenId,
               target.serverId,
               account.address,
             ),
@@ -248,6 +255,18 @@ function SendScreen({
         hideLoading();
       }
     } else {
+      const isManualChangeToken =
+        routeParams?.tokenId && routeParams?.chainEnum;
+      if (isManualChangeToken) {
+        const target = findChainByEnum(routeParams.chainEnum);
+        target &&
+          loadCurrentToken(
+            routeParams.tokenId,
+            target?.serverId,
+            account.address,
+          );
+        return;
+      }
       let tokenFromOrder: TokenItem | null = null;
 
       const _lastTimeToken = await preferenceService.getLastTimeSendToken(

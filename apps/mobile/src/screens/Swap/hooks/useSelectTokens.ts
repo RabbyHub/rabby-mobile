@@ -96,7 +96,9 @@ export const useSelectTokens = ({
         });
         return curr;
       });
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 0);
     },
     [setLoading, setTokensMap],
   );
