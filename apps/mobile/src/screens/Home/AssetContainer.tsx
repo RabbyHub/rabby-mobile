@@ -1057,7 +1057,7 @@ export const AssetContainer: React.FC<Props> = ({
               FOOTER_HEIGHT;
             const reachTop =
               event.nativeEvent.contentOffset.y <= HEADER_TOP_AREA_HEIGHT;
-            if (reachTop) {
+            if (event.nativeEvent.contentOffset.y <= 0) {
               onReachTopStatusChange?.(true);
             } else {
               onReachTopStatusChange?.(false);

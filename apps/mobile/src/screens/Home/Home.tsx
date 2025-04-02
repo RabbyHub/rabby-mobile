@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { Image, ImageBackground, View, Animated } from 'react-native';
 import HeaderArea from './HeaderArea';
@@ -9,6 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useHeaderHeight } from '@react-navigation/elements';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -20,6 +22,7 @@ function HomeScreen(): JSX.Element {
   const { currentAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
+  const headerHeight = useHeaderHeight();
   const topBg = React.useMemo(() => {
     if (isDecrease) {
       if (isLight) {
@@ -67,7 +70,7 @@ function HomeScreen(): JSX.Element {
           top: 0,
           right: 0,
           width: '100%',
-          height: 100,
+          height: Math.max(headerHeight, 100),
           opacity: fadeAnim,
         }}>
         <ImageBackground
@@ -75,7 +78,7 @@ function HomeScreen(): JSX.Element {
           resizeMode="cover"
           style={{
             width: '100%',
-            height: '100%',
+            height: Math.max(headerHeight, 100),
           }}
         />
       </Animated.View>

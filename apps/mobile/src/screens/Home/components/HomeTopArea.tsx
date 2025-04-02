@@ -495,14 +495,6 @@ export const HomeTopArea = ({
                 style={{
                   width: '100%',
                 }}>
-                <Text
-                  style={[
-                    styles.actionText,
-                    {
-                      fontSize: actions.length > 4 ? 13 : 14,
-                    },
-                  ]}
-                />
                 <View
                   style={{
                     position: 'absolute',
@@ -520,12 +512,7 @@ export const HomeTopArea = ({
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={[
-                      styles.actionText,
-                      {
-                        fontSize: actions.length > 4 ? 13 : 14,
-                      },
-                    ]}>
+                    style={[styles.actionText]}>
                     {item.title}
                   </Text>
                 </View>
@@ -585,7 +572,6 @@ const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingTop: 7,
-    paddingBottom: 18,
     position: 'relative',
   },
   header: {
