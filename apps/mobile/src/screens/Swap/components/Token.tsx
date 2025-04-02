@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -34,6 +34,7 @@ import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { Account } from '@/core/services/preference';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -52,7 +53,6 @@ interface SwapTokenItemProps {
   currentQuote?: QuoteProvider;
   finishedQuotes?: number;
 }
-
 export const SwapTokenItem = (props: SwapTokenItemProps) => {
   const {
     type,
@@ -243,7 +243,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         </View>
 
         {valueLoading ? (
-          <Skeleton
+          <CustomSkeleton
             animation="wave"
             LinearGradientComponent={Linear}
             style={styles.skeleton}
@@ -289,7 +289,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         </View>
         <View style={styles.usdValueContainer}>
           {valueLoading ? (
-            <Skeleton
+            <CustomSkeleton
               animation="wave"
               LinearGradientComponent={Linear}
               style={styles.skeleton2}
