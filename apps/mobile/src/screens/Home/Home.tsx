@@ -70,7 +70,7 @@ function HomeScreen(): JSX.Element {
           top: 0,
           right: 0,
           width: '100%',
-          height: Math.max(headerHeight, 100),
+          height: Math.max(headerHeight, 110),
           opacity: fadeAnim,
         }}>
         <ImageBackground
@@ -78,7 +78,7 @@ function HomeScreen(): JSX.Element {
           resizeMode="cover"
           style={{
             width: '100%',
-            height: Math.max(headerHeight, 100),
+            height: Math.max(headerHeight, 110),
           }}
         />
       </Animated.View>

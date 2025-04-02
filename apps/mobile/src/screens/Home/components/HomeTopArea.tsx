@@ -271,7 +271,7 @@ export const HomeTopArea = ({
               });
             },
             badgeStyle: {
-              backgroundColor: colors2024['brand-default'],
+              backgroundColor: colors2024['red-default'],
             },
           },
           {
