@@ -71,6 +71,7 @@ export type RootStackParamsList = {
     account?: KeyringAccountWithAlias;
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
+    tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   };
 };
 

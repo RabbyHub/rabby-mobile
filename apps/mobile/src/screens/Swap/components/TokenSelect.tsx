@@ -50,6 +50,7 @@ import { isWatchOrSafeAccount } from '@/utils/account';
 import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -103,8 +104,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     },
     ref,
   ) => {
-    const [fold, setFold] = useState(true);
-    const [pinedQueue, setPinedQueue] = useState<IManageToken[]>([]);
     const [_queryConds, setQueryConds] = useState<QueryConditions>({
       keyword: '',
       account: accountInScreen,
@@ -116,6 +115,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const [updateNonce, setUpdateNonce] = useState(0);
     const isSwapType = isSwapTokenType(type);
     const [_, setLongPressToken] = useLongPressTokenAtom();
+
+    const isSwapTo = type === 'swapTo';
 
     useImperativeHandle(ref, () => ({
       openTokenModal: conds => {
@@ -197,12 +198,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
       {
         withBalance: isSwapType ? false : true,
+        isSwapTo,
       },
     );
 
     const remoteSearchedTokenByQuery = useMemo(
-      () => _remoteSearchedTokenByQuery.map(abstractTokenToTokenItem),
-      [_remoteSearchedTokenByQuery],
+      () =>
+        isSwapTo
+          ? _remoteSearchedTokenByQuery
+          : _remoteSearchedTokenByQuery.map(abstractTokenToTokenItem),
+      [_remoteSearchedTokenByQuery, isSwapTo],
     );
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
@@ -397,23 +402,22 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isExcludedTokens,
     ]);
 
-    // const { value: pinedQueue } = useAsync(async () => {
-    //   if (currentAccount?.address) {
-    //     const data = await preferenceService.getUserTokenSettings();
-    //     return data?.pinedQueue || [];
-    //   }
-    //   return [];
-    // });
+    const { userTokenSettings, fetchUserTokenSettings } =
+      useUserTokenSettings();
+
+    const pinedQueue = useMemo(
+      () => userTokenSettings.pinedQueue,
+      [userTokenSettings.pinedQueue],
+    );
 
     useFocusEffect(
       useCallback(() => {
         (async () => {
           if (currentAccount?.address) {
-            const data = await preferenceService.getUserTokenSettings();
-            setPinedQueue(data?.pinedQueue || []);
+            fetchUserTokenSettings();
           }
         })();
-      }, [currentAccount?.address]),
+      }, [currentAccount?.address, fetchUserTokenSettings]),
     );
 
     const swapToHeader = useMemo(() => {
