@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -342,7 +348,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       currentAccount?.address
     ) {
       try {
-        setFetchingBridgeQuote(true);
         const { tx } = await pRetry(
           () =>
             openapi.getBridgeQuoteTxV2({
@@ -423,8 +428,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           payAmount: amount,
         });
         console.error(error);
-      } finally {
-        setFetchingBridgeQuote(false);
       }
     }
   };
@@ -447,21 +450,31 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     return !!impact?.showLoss;
   }, [fromToken, amount, selectedBridgeQuote?.to_token_amount, toToken]);
 
+  const runBuildSwapTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
+
+  const canUseMiniTx =
+    !toToken?.low_credit_score &&
+    !toToken?.is_scam &&
+    toToken?.is_verified !== false &&
+    !isSlippageHigh &&
+    !isSlippageLow &&
+    !showLoss &&
+    [
+      KEYRING_TYPE.SimpleKeyring,
+      KEYRING_TYPE.HdKeyring,
+      KEYRING_CLASS.HARDWARE.LEDGER,
+    ].includes((currentAccount?.type || '') as any);
+
   const handleBridge = useMemoizedFn(async () => {
-    if (
-      !toToken?.low_credit_score &&
-      !toToken?.is_scam &&
-      toToken?.is_verified !== false &&
-      !isSlippageHigh &&
-      !isSlippageLow &&
-      !showLoss &&
-      [
-        KEYRING_TYPE.SimpleKeyring,
-        KEYRING_TYPE.HdKeyring,
-        KEYRING_CLASS.HARDWARE.LEDGER,
-      ].includes((currentAccount?.type || '') as any)
-    ) {
-      await runBuildTxs();
+    if (canUseMiniTx) {
+      try {
+        setFetchingBridgeQuote(true);
+        await runBuildSwapTxsRef.current;
+      } catch (error) {
+        console.error('runBuildSwapTxsRef', error);
+      } finally {
+        setFetchingBridgeQuote(false);
+      }
       setIsShowSign(true);
       clearExpiredTimer();
     } else {
@@ -487,6 +500,13 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     !selectedBridgeQuote ||
     quoteLoading ||
     !quoteList?.length;
+
+  useEffect(() => {
+    if (!btnDisabled && selectedBridgeQuote && canUseMiniTx) {
+      mutateTxs([]);
+      runBuildSwapTxsRef.current = runBuildTxs();
+    }
+  }, [runBuildTxs, canUseMiniTx, btnDisabled, selectedBridgeQuote, mutateTxs]);
 
   const btnText = useMemo(() => {
     if (btnDisabled) {

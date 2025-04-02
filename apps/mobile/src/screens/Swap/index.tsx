@@ -444,13 +444,26 @@ const Swap = ({
       !isSlippageLow &&
       !showLoss
     ) {
-      runBuildSwapTxs();
+      // runBuildSwapTxs();
       setIsShowSign(true);
       clearExpiredTimer();
     } else {
       gotoSwap();
     }
   });
+
+  const canUseMiniTx =
+    [
+      KEYRING_TYPE.SimpleKeyring,
+      KEYRING_TYPE.HdKeyring,
+      KEYRING_CLASS.HARDWARE.LEDGER,
+    ].includes((currentAccount?.type || '') as any) &&
+    !receiveToken?.low_credit_score &&
+    !receiveToken?.is_scam &&
+    receiveToken?.is_verified !== false &&
+    !isSlippageHigh &&
+    !isSlippageLow &&
+    !showLoss;
 
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
@@ -464,6 +477,27 @@ const Swap = ({
   const lowCreditInit = useRef(false);
 
   const isFocused = useIsFocused();
+
+  const swapBtnDisabled =
+    quoteLoading ||
+    !payToken ||
+    !receiveToken ||
+    !amountAvailable ||
+    inSufficient ||
+    !activeProvider;
+
+  useEffect(() => {
+    if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
+      mutateTxs([]);
+      runBuildSwapTxs();
+    }
+  }, [
+    canUseMiniTx,
+    swapBtnDisabled,
+    activeProvider,
+    runBuildSwapTxs,
+    mutateTxs,
+  ]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -778,14 +812,7 @@ const Swap = ({
             handleSwap();
           }}
           title={btnText}
-          disabled={
-            quoteLoading ||
-            !payToken ||
-            !receiveToken ||
-            !amountAvailable ||
-            inSufficient ||
-            !activeProvider
-          }
+          disabled={swapBtnDisabled}
         />
       </View>
       <TwpStepApproveModal
