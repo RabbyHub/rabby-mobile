@@ -176,13 +176,12 @@ export const TokenAmountInput = React.forwardRef<
           <View style={styles.placeholder} />
           <TokenSelect
             accountInScreen={defaultAccount}
-            chainId={chainId}
+            chainId={''}
             token={token}
             disableItemCheck={disableItemCheck}
             onTokenChange={handleCurrentTokenChange}
             excludeTokens={excludeTokens}
             type="send"
-            searchPlaceholder={t('page.swap.search-by-name-address')}
             placeholder={placeholder}
             supportChains={[]}
           />

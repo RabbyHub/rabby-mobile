@@ -51,6 +51,8 @@ import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSelectTokens } from '../hooks/useSelectTokens';
+import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
+import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -124,6 +126,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const {
       tokens,
       getCacheTop10Tokens,
+      getCacheTokens,
       checkIsExpireAndUpdate,
       loadToken,
       isLoading: isLoadingAllTokens,
@@ -151,7 +154,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         return;
       }
       if (!tokens.length) {
-        getCacheTop10Tokens();
+        if (type === 'send') {
+          currentAccount?.address && getCacheTokens([currentAccount.address]);
+        } else {
+          getCacheTop10Tokens();
+        }
       }
       timeRef.current = setTimeout(() => {
         if (currentAccount?.address) {
@@ -240,9 +247,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       const list = convertSmallTokenList(
         allTokens.filter(i => {
           const condition = !!i._isFold || (!i.is_core && !i._isPined);
-          if (queryConds.chainServerId) {
-            return condition && i.chain === queryConds.chainServerId;
-          }
           return condition;
         }),
       ).map(
@@ -256,13 +260,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         list.filter(e => !isExcludedTokens(e)),
         e => makeKeyForTokenItemMaybeWithOwner(e),
       );
-    }, [
-      allTokens,
-      isExcludedTokens,
-      isFromModalType,
-      queryConds.chainServerId,
-      queryConds.keyword,
-    ]);
+    }, [allTokens, isExcludedTokens, isFromModalType, queryConds.keyword]);
 
     const availableToken = useMemo(() => {
       const _tokens = queryConds.chainServerId
@@ -397,38 +395,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       }, [currentAccount?.address]),
     );
 
-    const swapToHeader = useMemo(() => {
-      return (
-        <View style={[styles.headerBox]}>
-          <Text style={styles.headerBoxText}>
-            {t('component.TokenSelector.common')}
-          </Text>
-          <Text style={styles.headerBoxText}>
-            <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
-          </Text>
-        </View>
-      );
-    }, [styles.headerBox, styles.headerBoxText, t]);
-
-    const headerTitle = useMemo(() => {
-      if (type === 'swapTo') {
-        return swapToHeader;
-      }
-      return (
-        <View style={[styles.headerBox, styles.headerBoxNoPb]}>
-          <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
-          <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
-        </View>
-      );
-    }, [
-      styles.headerBox,
-      styles.headerBoxNoPb,
-      styles.headerBoxText,
-      swapToHeader,
-      t,
-      type,
-    ]);
-
     const recentTitle = useMemo(() => {
       if (recentDisplayToTokens.length) {
         return (
@@ -518,8 +484,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       return (
         forScene === 'MakeTransactionAbout' &&
         ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-          (RootNames.MultiSwap === ofScreen && type === 'swapFrom') ||
-          (RootNames.MultiSend === ofScreen && type === 'send'))
+          (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
       );
     }, [forScene, ofScreen, currentAccount?.type, type]);
 
@@ -568,6 +533,20 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       });
     });
 
+    const isSend = type === 'send';
+
+    const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
+      hideTestnetTab: !isSend,
+    });
+
+    const { testnetTokenList, loading: testnetTokenListLoading } =
+      useSearchTestnetToken({
+        address: currentAccount?.address,
+        withBalance: false,
+        q: queryConds.keyword,
+        enabled: selectedTab === 'testnet' && isSend,
+      });
+
     return (
       <>
         <TouchableOpacity
@@ -606,25 +585,27 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           searchPlaceholder={searchPlaceholder}
           visible={tokenSelectorVisible}
           unshiftList={unshiftList}
-          list={list}
-          foldTokensList={foldTokensList}
+          list={selectedTab === 'testnet' ? testnetTokenList : list}
+          foldTokensList={selectedTab === 'testnet' ? [] : foldTokensList}
           onConfirm={handleCurrentTokenChange}
           onCancel={handleTokenSelectorClose}
           onSearch={handleSearchTokens}
-          isLoading={isListLoading}
+          isLoading={
+            selectedTab === 'testnet' ? testnetTokenListLoading : isListLoading
+          }
           type={type}
           disableItemCheck={disableItemCheck}
           selectToken={token}
           placeholder={placeholder}
-          headerTitle={headerTitle}
           displayAccountFilter={allowClearAccountFilter}
           filterAccount={queryConds.account}
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}
           supportChains={supportChains}
-          hideChainFilter={
-            type === 'swapFrom' || type === 'send' ? false : true
-          }
+          hideChainFilter={type === 'swapFrom' ? false : true}
+          showTestNetSwitch={isShowTestnet}
+          selectTab={selectedTab}
+          onTabChange={onTabChange}
         />
       </>
     );

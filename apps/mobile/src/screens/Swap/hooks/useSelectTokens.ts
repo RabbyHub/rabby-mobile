@@ -85,10 +85,6 @@ export const useSelectTokens = ({
         return;
       }
       setLoading(true);
-      console.log(
-        'CUSTOM_LOGGER:=>: batchLoadCacheTokens',
-        addresses.map(addr => addr.slice(-4)),
-      );
       const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
         addresses,
       );
@@ -142,6 +138,13 @@ export const useSelectTokens = ({
     );
     await batchLoadCacheTokens(emptyTokenAddresses);
   }, [batchLoadCacheTokens, sortedAccounts, tokensMap]);
+
+  const getCacheTokens = useCallback(
+    (addrresses: string[]) => {
+      return batchLoadCacheTokens(addrresses);
+    },
+    [batchLoadCacheTokens],
+  );
 
   // filter tokens
   const tokens = useMemo(() => {
@@ -206,6 +209,7 @@ export const useSelectTokens = ({
     tokens: tokenWithOwner,
     isLoading,
     getCacheTop10Tokens,
+    getCacheTokens,
     checkIsExpireAndUpdate,
     loadToken,
     refreshing: !!isLoading && !isFirstFetch,

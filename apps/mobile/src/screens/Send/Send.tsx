@@ -115,7 +115,7 @@ function SendScreen({
         const noSupportToken = token.cex_ids?.every?.(
           id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
         );
-        if (noSupportToken) {
+        if (!token?.cex_ids?.length || noSupportToken) {
           return {
             disable: true,
             reason: t('page.sendToken.noSupprotTokenForDex'),
@@ -142,7 +142,7 @@ function SendScreen({
         reason: '',
       };
     },
-    [navParams?.addrDesc?.cex?.id, navParams?.addrDesc?.contract, t],
+    [navParams?.addrDesc, t],
   );
 
   const {

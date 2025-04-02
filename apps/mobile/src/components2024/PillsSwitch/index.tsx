@@ -14,6 +14,7 @@ export type PillsSwitchProps<T extends readonly Option[] | Option[]> = {
   options?: T;
   onTabChange?: (key: T[number]['key']) => any;
   style?: StyleProp<ViewStyle>;
+  height?: number;
   itemStyle?: StyleProp<ViewStyle>;
 };
 
@@ -43,6 +44,7 @@ export const PillsSwitch = <T extends readonly Option[] | Option[]>({
               ]}
               key={`pills-switch-${item.key}`}>
               <Text
+                numberOfLines={1}
                 style={[styles.itemText, isActive && styles.itemActiveText]}>
                 {item.label}
               </Text>

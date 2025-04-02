@@ -68,6 +68,7 @@ import {
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
+import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -136,6 +137,9 @@ export interface TokenSelectorProps<
   searchPlaceholder?: string;
   disableItemCheck?: ITokenCheck;
   unshiftList?: { data: TokenItem[]; header?: () => React.ReactNode }[];
+  showTestNetSwitch?: boolean;
+  selectTab?: 'mainnet' | 'testnet';
+  onTabChange?: (tab: 'mainnet' | 'testnet') => void;
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
@@ -170,6 +174,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
       searchPlaceholder,
       disableItemCheck,
       unshiftList,
+      showTestNetSwitch,
+      selectTab,
+      onTabChange,
     },
     ref,
   ) => {
@@ -289,15 +296,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         setQuery('');
       }
     }, [visible]);
-
-    const DefaultHeaderTitle = useMemo(() => {
-      return (
-        <View style={styles.headerBox}>
-          <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
-          <Text style={styles.headerBoxText}>{t('page.bridge.value')}</Text>
-        </View>
-      );
-    }, [styles, t]);
 
     const displayList = useMemo(() => {
       if (isBridgeTo || isSend) {
@@ -803,6 +801,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
               <Text style={[styles.modalTitle, styles.modalMainTitle]}>
                 {t('page.swap.select-token')}
               </Text>
+              {showTestNetSwitch ? (
+                <NetSwitchTabs
+                  value={selectTab}
+                  onTabChange={onTabChange}
+                  itemStyle={styles.netSwitchTabsItem}
+                  style={styles.netSwitchTabs}
+                />
+              ) : null}
             </BottomSheetHandlableView>
 
             <SearchInput
@@ -819,7 +825,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 placeholder:
                   searchPlaceholder ||
                   t('component.TokenSelector.searchPlaceHolder2'),
-                placeholderTextColor: colors2024['neutral-info'],
+                placeholderTextColor: colors2024['neutral-secondary'],
               }}
             />
           </View>
@@ -868,9 +874,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               </View>
             )}
           </View>
-          {(!isSwapTo || (query && !tokens.length)) && (
-            <>{customHeaderTitle || DefaultHeaderTitle}</>
-          )}
+          {(!isSwapTo || (query && !tokens.length)) && <>{customHeaderTitle}</>}
           <BottomSheetSectionList
             contentInset={{ bottom: 30 }}
             sections={section}
@@ -894,13 +898,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               isSwapTo
                 ? ({ section }) => {
                     const { header } = section;
-                    return (
-                      <>
-                        {header
-                          ? header()
-                          : customHeaderTitle || DefaultHeaderTitle}
-                      </>
-                    );
+                    return <>{header ? header() : customHeaderTitle}</>;
                   }
                 : undefined
             }
@@ -1030,7 +1028,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     modalTitle: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      marginBottom: 24,
+      marginBottom: 12,
       paddingTop: ModalLayouts.titleTopOffset,
     },
     modalMainTitle: {
@@ -1043,11 +1041,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     searchInputContainer: {
       borderRadius: 30,
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-line'],
       paddingHorizontal: 12,
       borderColor: 'transparent',
       alignItems: 'center',
-      marginBottom: 16,
+      marginBottom: 8,
     },
 
     filterRow: {
@@ -1175,6 +1173,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'center',
       color: colors2024['neutral-InvertHighlight'],
       backgroundColor: colors2024['brand-default'],
+    },
+    netSwitchTabs: {
+      marginBottom: 16,
+      paddingHorizontal: 32,
+    },
+    netSwitchTabsItem: {
+      height: 32,
+      borderRadius: 16,
     },
   };
 });
