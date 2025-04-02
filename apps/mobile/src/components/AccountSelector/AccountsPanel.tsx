@@ -524,7 +524,7 @@ export function AccountsPanelInSheetModal({
                         {isReceive ? (
                           <AddressItemContextMenu
                             account={item}
-                            actions={['edit']}>
+                            actions={['copy', 'edit']}>
                             {Content}
                           </AddressItemContextMenu>
                         ) : (

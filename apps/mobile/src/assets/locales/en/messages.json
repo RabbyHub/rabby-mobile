@@ -675,6 +675,7 @@
     "whitelist": {
       "addToWhitelist": "Add to Whitelist",
       "removeWhitelist": "Remove from Whitelist",
+      "copyAddress": "Copy Address",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "addSuccessful": "Address added to whitelist",
