@@ -210,6 +210,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                   placeholderTextColor: colors2024['neutral-secondary'],
                   value: input,
                   blurOnSubmit: true,
+                  autoFocus: true,
                   returnKeyType: 'done',
                   onChangeText: handleSubmit,
                 }}
