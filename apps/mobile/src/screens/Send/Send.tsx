@@ -68,6 +68,7 @@ import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog'
 import FromAddressControl2024 from './components/FromAddressControl';
 import { useAtom } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
+import { lowcaseSame } from '@/utils/common';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -277,7 +278,12 @@ function SendScreen({
           ? _lastTimeToken
           : null;
       if (lastTimeToken) {
-        setCurrentToken(lastTimeToken);
+        if (
+          !lowcaseSame(lastTimeToken.chain, currentToken.chain) ||
+          !lowcaseSame(lastTimeToken.id, currentToken.id)
+        ) {
+          setCurrentToken(lastTimeToken);
+        }
       } else {
         const { firstChain } = await fetchOrderedChainList({
           supportChains: undefined,
@@ -285,7 +291,12 @@ function SendScreen({
 
         tokenFromOrder = firstChain ? makeTokenFromChain(firstChain) : null;
         if (firstChain) {
-          setCurrentToken(tokenFromOrder!);
+          if (
+            !lowcaseSame(firstChain.serverId, currentToken.chain) ||
+            !lowcaseSame(firstChain.nativeTokenAddress, currentToken.id)
+          ) {
+            setCurrentToken(tokenFromOrder!);
+          }
         }
       }
 
