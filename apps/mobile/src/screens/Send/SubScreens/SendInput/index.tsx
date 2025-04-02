@@ -196,7 +196,9 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                 hasError={!!error}
                 fieldErrorTextStyle={styles.error}
                 containerStyle={Object.assign(
-                  {},
+                  {
+                    borderRadius: 16,
+                  },
                   error
                     ? {}
                     : {
@@ -205,6 +207,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                 )}
                 inputProps={{
                   placeholder: t('page.sendPoly.enterAddress'),
+                  placeholderTextColor: colors2024['neutral-secondary'],
                   value: input,
                   blurOnSubmit: true,
                   returnKeyType: 'done',
@@ -273,13 +276,15 @@ const getStyles = createGetStyles2024(ctx => ({
   },
 
   textContainer: {
-    marginTop: 20,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   textArea: {
     marginTop: 14,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors['neutral-card-1'],
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   error: {
     textAlign: 'left',

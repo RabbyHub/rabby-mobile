@@ -144,7 +144,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   input: {
     backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 10,
+    borderRadius: 16,
     display: 'flex',
     justifyContent: 'space-between',
     flexDirection: 'row',
