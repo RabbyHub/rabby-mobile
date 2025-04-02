@@ -90,7 +90,7 @@ export const useBridgeHistory = () => {
       getBridgeHistoryList(
         addr,
         d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
-        5,
+        20,
       ),
     {
       reloadDeps: [isInBridge],
@@ -106,7 +106,7 @@ export const useBridgeHistory = () => {
 
   const { value } = useAsync(async () => {
     if (addr) {
-      return getBridgeHistoryList(addr, 0, 5);
+      return getBridgeHistoryList(addr, 0, 20);
     }
   }, [addr, refreshTxListCount]);
 

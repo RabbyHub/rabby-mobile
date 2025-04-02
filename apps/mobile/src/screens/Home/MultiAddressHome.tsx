@@ -166,7 +166,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
             });
           }}>
           <RcIconSetting />
-          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+          {true && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
       <View style={styles.balanceBox}>
@@ -804,7 +804,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 3,
     backgroundColor: colors2024['red-default'],
     position: 'absolute',
-    top: 15,
+    top: 0,
     right: 13,
   },
   rootScreenContainer: {
