@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts, RootNames } from '@/constant/layout';
