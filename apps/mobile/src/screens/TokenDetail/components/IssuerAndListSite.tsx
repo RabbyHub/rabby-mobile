@@ -293,6 +293,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     // borderColor: ctx.colors2024['neutral-line'],
     // borderWidth: 1,
+    marginBottom: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
@@ -356,8 +357,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   itemIssuerText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '400',
   },
   itemIssuerTitle: {

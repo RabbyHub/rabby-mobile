@@ -10,11 +10,13 @@ import { keyBy } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDeleteAccountModal } from '../useDeleteAccountModal';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 interface Props {
   account: KeyringAccountWithAlias;
   children: React.ReactElement;
-  actions: ('pin' | 'edit' | 'delete')[];
+  actions: ('copy' | 'pin' | 'edit' | 'delete')[];
 }
 export const AddressItemContextMenu: React.FC<Props> = props => {
   const { account, children, actions } = props;
@@ -47,6 +49,18 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
   const menuActionDict = React.useMemo(() => {
     return keyBy(
       [
+        {
+          title: t('page.whitelist.copyAddress'),
+          icon: isDarkTheme
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+          androidIconName: 'ic_rabby_menu_copy',
+          key: 'copy',
+          action() {
+            Clipboard.setString(account.address);
+            toastCopyAddressSuccess(account.address);
+          },
+        },
         {
           title: pinned
             ? t('page.addressDetail.addressListScreen.unpin')

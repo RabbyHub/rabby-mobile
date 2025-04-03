@@ -34,6 +34,8 @@ import { useAtom } from 'jotai';
 import { cexInfoAtoms } from '@/hooks/useCexAccounts';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -82,6 +84,18 @@ export const WhiteListItem = ({
 
   const menuActions = React.useMemo(() => {
     return [
+      {
+        title: t('page.whitelist.copyAddress'),
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+        androidIconName: 'ic_rabby_menu_copy',
+        key: 'copy',
+        action() {
+          Clipboard.setString(account.address);
+          toastCopyAddressSuccess(account.address);
+        },
+      },
       ...(inWhiteList
         ? [
             {

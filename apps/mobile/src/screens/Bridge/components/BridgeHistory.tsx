@@ -52,7 +52,7 @@ const HistoryList = () => {
         </View>
       ) : loading ? (
         <>
-          {Array.from({ length: 4 }).map((_, idx) => (
+          {Array.from({ length: 10 }).map((_, idx) => (
             <Skeleton style={styles.skeletonBlock} key={idx} />
           ))}
         </>

@@ -24,6 +24,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { Account } from '@/core/services/preference';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 
 const BridgeToken = ({
@@ -153,7 +154,7 @@ const BridgeToken = ({
       <View style={styles.body}>
         <View style={styles.inputContainer}>
           {valueLoading ? (
-            <Skeleton
+            <CustomSkeleton
               animation="wave"
               LinearGradientComponent={Linear}
               style={styles.skeleton}
