@@ -110,7 +110,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       (sum, item) => sum + (Number(item.balance) || 0),
       0,
     );
-    return '$' + splitNumberByStep((num || 0).toFixed(num > 10 ? 0 : 2));
+    return '$' + splitNumberByStep(num > 10 ? Math.floor(num) : num.toFixed(2));
   }, [balanceAccounts]);
 
   const spin = spinValue.interpolate({

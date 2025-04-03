@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { Image, ImageBackground, View, Animated } from 'react-native';
+import { ImageBackground, View, Animated } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
 
@@ -47,7 +47,7 @@ function HomeScreen(): JSX.Element {
     (status: boolean) => {
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
-        duration: 300,
+        duration: 100,
         useNativeDriver: true,
       }).start();
     },
@@ -70,7 +70,7 @@ function HomeScreen(): JSX.Element {
           top: 0,
           right: 0,
           width: '100%',
-          height: Math.max(headerHeight, 110),
+          height: Math.max(headerHeight, 130),
           opacity: fadeAnim,
         }}>
         <ImageBackground
@@ -78,7 +78,7 @@ function HomeScreen(): JSX.Element {
           resizeMode="cover"
           style={{
             width: '100%',
-            height: Math.max(headerHeight, 110),
+            height: Math.max(headerHeight, 130),
           }}
         />
       </Animated.View>

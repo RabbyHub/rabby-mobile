@@ -72,10 +72,10 @@ export const AddressItem = (props: AddressItemProps) => {
     () => ellipsisAddress(account.address),
     [account?.address],
   );
-  const usdValue = useMemo(
-    () => `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`,
-    [account?.balance],
-  );
+  const usdValue = useMemo(() => {
+    const b = account.balance || 0;
+    return `$${splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2))}`;
+  }, [account?.balance]);
 
   const WalletIconWrapper = useCallback(
     (_props: Omit<WalletIconProps, 'type'>) => {

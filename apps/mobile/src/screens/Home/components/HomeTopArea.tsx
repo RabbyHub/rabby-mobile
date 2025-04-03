@@ -171,10 +171,10 @@ export const HomeTopArea = ({
     }),
   );
 
-  const usd = useMemo(
-    () => '$' + splitNumberByStep((balance || 0).toFixed(2)),
-    [balance],
-  );
+  const usd = useMemo(() => {
+    const b = balance || 0;
+    return '$' + splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2));
+  }, [balance]);
 
   const latestPercent = useMemo(
     () =>
