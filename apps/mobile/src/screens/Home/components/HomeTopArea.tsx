@@ -614,6 +614,10 @@ const getStyles = createGetStyles2024(ctx => ({
   actionIcon: {
     width: 24,
     height: 24,
+    shadowColor: 'rgba(112, 132, 255, 1)',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.12,
+    shadowRadius: 11.6,
   },
   actionText: {
     color: ctx.colors2024['neutral-secondary'],
@@ -686,7 +690,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['green-default'],
   },
   badgeText: {
-    color: ctx.colors2024['neutral-bg-1'],
+    color: '#fff', // always white
     fontSize: 12,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
