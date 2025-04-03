@@ -31,9 +31,7 @@ import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
 import SendInputScreen from '../Send/SubScreens/SendInput';
 import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
 import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
-import ConfirmAddressScreen from '../Send/SubScreens/ConfirmSendAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
-import ConfirmWhitelistScreen from '../WhiteList/ConfirmWhiteAddress';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -73,32 +71,6 @@ export default function TransactionNavigator() {
         component={SendHistoryScreen}
         options={mergeScreenOptions({
           title: 'Select Address to add',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.ConfirmAddress}
-        component={ConfirmAddressScreen}
-        options={mergeScreenOptions({
-          title: 'Confirm Recipient Address',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.WhitelistConfirm}
-        component={ConfirmWhitelistScreen}
-        options={mergeScreenOptions({
-          title: 'Confrim Address to Whitelist',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '800',
@@ -178,14 +150,11 @@ export default function TransactionNavigator() {
         component={SendScreen}
         options={mergeScreenOptions({
           title: 'Send',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-                disableSwitch
-              />
-            );
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
           },
         })}
       />
@@ -194,13 +163,11 @@ export default function TransactionNavigator() {
         component={SendScreen.ForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Send',
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-              />
-            );
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
           },
         })}
       />

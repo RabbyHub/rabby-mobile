@@ -25,22 +25,28 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
-import { Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { openapi } from '@/core/request';
+import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useAtom } from 'jotai';
-import { cexInfoAtoms } from '@/hooks/useCexAccounts';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  getAddrDescWithCexLocalCacheSync,
+  getCexWithLocalCache,
+} from '@/databases/hooks/cex';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
-  cexDes?: Cex;
+  addrDesc?: AddrDescResponse['desc'];
   inWhiteList?: boolean;
   isForWhitelist?: boolean;
   disableMenu?: boolean;
@@ -52,35 +58,31 @@ export const WhiteListItem = ({
   inWhiteList,
   disableMenu,
 }: IProps) => {
-  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
+  const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
-  const { removeWhitelist } = useWhitelist({
+  const { navigation } = useSafeSetNavigationOptions();
+  const { removeWhitelist, addWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
   const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const cexDesc = useMemo(
-    () => cexInfoStore[account.address],
-    [account.address, cexInfoStore],
-  );
   const showCexInfo = useMemo(() => {
-    return cexDesc?.id && cexDesc.is_deposit;
-  }, [cexDesc?.id, cexDesc?.is_deposit]);
+    return cexInfo?.id && cexInfo.is_deposit;
+  }, [cexInfo?.id, cexInfo?.is_deposit]);
 
   const editAliasName = useAliasNameEditModal();
 
   useLayoutEffect(() => {
-    if (cexInfoStore[account.address]) {
+    if (cexInfo) {
       return;
     }
-    openapi.addrDesc(account.address).then(res => {
-      if (res.desc.cex) {
-        setCexInfoStore(prev => ({ ...prev, [account.address]: res.desc.cex }));
+    getCexWithLocalCache(account.address).then(res => {
+      if (res) {
+        setCexInfo(res);
       }
     });
-  }, [account.address, cexInfoStore, setCexInfoStore]);
+  }, [account.address, cexInfo]);
 
   const menuActions = React.useMemo(() => {
     return [
@@ -158,26 +160,60 @@ export const WhiteListItem = ({
             if (inWhiteList) {
               toast.show(t('page.whitelist.alreadyAdded'));
             } else {
-              navigation.push(RootNames.StackTransaction, {
-                screen: RootNames.WhitelistConfirm,
-                params: {
-                  account,
+              const id = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.CONFIRM_ADDRESS,
+                account,
+                title: t('page.confirmAddress.addToWhitelist'),
+                disbaleWhiteSwitch: true,
+                bottomSheetModalProps: {
+                  enableDynamicSizing: true,
+                },
+                onCancel: () => {
+                  removeGlobalBottomSheetModal2024(id);
+                },
+                onConfirm() {
+                  removeGlobalBottomSheetModal2024(id);
+                  addWhitelist(account.address, {
+                    onAdded: () => {
+                      toast.success(t('page.whitelist.addSuccessful'));
+                      navigation.popToTop();
+                      navigation.dispatch(
+                        StackActions.push(RootNames.StackTransaction, {
+                          screen: RootNames.SendTo,
+                        }),
+                      );
+                    },
+                  });
                 },
               });
             }
             return;
           }
           if (inWhiteList) {
-            navigateToSendScreen({
-              toAddress: account.address,
-              cexDes: cexDesc,
-              addressBrandName: account.brandName,
+            getAddrDescWithCexLocalCacheSync(account.address).then(res => {
+              navigateToSendScreen({
+                toAddress: account.address,
+                addrDesc: res,
+                addressBrandName: account.brandName,
+              });
             });
           } else {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.ConfirmAddress,
-              params: {
-                account,
+            const id = createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.CONFIRM_ADDRESS,
+              account,
+              bottomSheetModalProps: {
+                enableDynamicSizing: true,
+              },
+              onCancel: () => {
+                removeGlobalBottomSheetModal2024(id);
+              },
+              onConfirm(acc, addressDesc) {
+                removeGlobalBottomSheetModal2024(id);
+                navigateToSendScreen({
+                  addressBrandName: acc.brandName,
+                  addrDesc: addressDesc,
+                  toAddress: acc.address,
+                });
               },
             });
           }
@@ -201,9 +237,9 @@ export const WhiteListItem = ({
             {({ WalletIcon, WalletBalance }) => (
               <View style={styles.item}>
                 <View style={styles.iconWrapper}>
-                  {showCexInfo && cexDesc?.logo_url ? (
+                  {showCexInfo && cexInfo?.logo_url ? (
                     <Image
-                      source={{ uri: cexDesc?.logo_url }}
+                      source={{ uri: cexInfo?.logo_url }}
                       style={styles.walletIcon}
                       width={46}
                       height={46}
@@ -263,11 +299,12 @@ export const WhiteListItem = ({
 export const WhiteListItemSwitch = ({
   account,
   style,
-  cexDes,
+  addrDesc,
   inWhiteList,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { navigation } = useSafeSetNavigationOptions();
+  const cexDes = addrDesc?.cex;
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
     const name = account.aliasName || ellipisName;
@@ -310,7 +347,7 @@ export const WhiteListItemSwitch = ({
                   )}
                 </View>
                 <View style={styles.itemInfo}>
-                  <View style={styles.itemName}>
+                  <Text numberOfLines={1} style={styles.itemName}>
                     <Text style={styles.itemNameText} numberOfLines={1}>
                       {formatName}
                     </Text>
@@ -319,7 +356,7 @@ export const WhiteListItemSwitch = ({
                         {`(${ellipsisAddress(account.address)})`}
                       </Text>
                     )}
-                  </View>
+                  </Text>
                   <WalletBalance style={styles.itemBalanceText} />
                 </View>
               </View>
@@ -378,7 +415,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flex: 1,
     flexGrow: 1,
-    marginRight: 20,
+    marginRight: 12,
   },
   item: {
     flexDirection: 'row',

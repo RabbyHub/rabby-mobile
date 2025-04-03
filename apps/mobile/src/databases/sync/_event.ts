@@ -15,7 +15,8 @@ export type SyncTaskOptions = {
     | 'nfts'
     | 'protocols'
     | 'balance'
-    | 'buy-history';
+    | 'buy-history'
+    | 'cex';
 };
 
 type RemoteDataUpsertedCtx<

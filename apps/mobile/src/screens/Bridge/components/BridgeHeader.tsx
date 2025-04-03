@@ -9,7 +9,7 @@ import { BridgeTxHistory } from './BridgeHistory';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import { Keyboard, View } from 'react-native';
 // import { RcIconSwapHistory } from '@/assets/icons/swap';
-import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
+import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import PendingTx from './PendingTx';

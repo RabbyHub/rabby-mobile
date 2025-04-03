@@ -38,7 +38,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenidentityDetail } from '@rabby-wallet/rabby-api/dist/types';
-import { formatUsdValue } from '@/utils/number';
+import { formatPrice, formatUsdValue } from '@/utils/number';
 import { RiskTokenTips } from '@/screens/TokenDetail';
 import BigNumber from 'bignumber.js';
 import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
@@ -263,6 +263,7 @@ export const ExternalTokenRow = memo(
     logoStyle,
     onTokenPress,
     touchable = true,
+    decimalPrecision = false,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -272,6 +273,7 @@ export const ExternalTokenRow = memo(
     chainLogoSize?: number;
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
+    decimalPrecision?: boolean;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
@@ -401,7 +403,10 @@ export const ExternalTokenRow = memo(
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>
-                  {formatUsdValue(data.price || 0)}
+                  {decimalPrecision ? '$' : ''}
+                  {(decimalPrecision ? formatPrice : formatUsdValue)(
+                    data.price || 0,
+                  )}
                 </Text>
                 <Text
                   style={StyleSheet.compose(styles.percent, {

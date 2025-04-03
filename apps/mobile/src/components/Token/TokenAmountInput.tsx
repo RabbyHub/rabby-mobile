@@ -11,7 +11,7 @@ import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TokenSelectorProps } from './TokenSelectorSheetModal';
+import { ITokenCheck, TokenSelectorProps } from './TokenSelectorSheetModal';
 import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
@@ -64,6 +64,7 @@ interface TokenAmountInputProps {
   placeholder?: string;
   isEstimatingGas?: boolean;
   defaultAccount?: KeyringAccountWithAlias | null;
+  disableItemCheck?: ITokenCheck;
 }
 
 /**
@@ -87,6 +88,7 @@ export const TokenAmountInput = React.forwardRef<
       handleClickMaxButton,
       isEstimatingGas,
       placeholder,
+      disableItemCheck,
       defaultAccount,
     },
     ref,
@@ -174,12 +176,12 @@ export const TokenAmountInput = React.forwardRef<
           <View style={styles.placeholder} />
           <TokenSelect
             accountInScreen={defaultAccount}
-            chainId={chainId}
+            chainId={''}
             token={token}
+            disableItemCheck={disableItemCheck}
             onTokenChange={handleCurrentTokenChange}
             excludeTokens={excludeTokens}
             type="send"
-            searchPlaceholder={t('page.swap.search-by-name-address')}
             placeholder={placeholder}
             supportChains={[]}
           />
@@ -194,7 +196,7 @@ const PADDING = 12;
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
-      borderRadius: 30,
+      borderRadius: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       height: 98,
       flexDirection: 'row',

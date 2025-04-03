@@ -108,6 +108,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
   @Column('text', { default: '1' })
   value_24h_change: string = '1';
+  // cex_ids
+  @Column({
+    type: 'text',
+    default: '[]',
+  })
+  cex_ids: string = '[]';
 
   makeDbId(): string {
     return (this._db_id = `${[
@@ -155,6 +161,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.price_24h_change = input.price_24h_change ?? 0;
     e.low_credit_score = input.low_credit_score ?? false;
     e.value_24h_change = input.value_24h_change ?? '1';
+    e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
 
     e.makeDbId();
   }
@@ -181,9 +188,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr })).filter(
-      i => i.id !== EMPTY_TOKEN_ITEM_ID,
-    );
+    return (await this.getRepository().findBy({ owner_addr }))
+      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
   }
 
   static async batchMultAddressTokens(addresses: string[]) {
@@ -195,7 +205,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         is_core: true,
         is_scam: false,
       })
-    ).filter(i => i.id !== EMPTY_TOKEN_ITEM_ID);
+    )
+      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
   }
 
   /**
@@ -257,6 +272,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           qb.orWhere('tokenitem.display_symbol LIKE :keyword', {
             keyword: `${keyword}%`,
           });
+          qb.orWhere('tokenitem.id LIKE :keyword', {
+            keyword: `${keyword}%`,
+          });
         }),
       );
     }
@@ -270,7 +288,13 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       ])
       .orderBy('tokenitem_token_usd_value', 'DESC');
 
-    return queryBuilder.getMany();
+    const tokens = await queryBuilder.getMany();
+    return tokens
+      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
   }
 
   static async queryTokensByOwner(
@@ -350,9 +374,16 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     //   queryBuilder.andWhere(`tokenitem.id NOT IN (:...excludeTokenIds)`, { excludeTokenIds });
     // }
 
-    if (topCount) queryBuilder.take(topCount);
-
-    return queryBuilder.getMany();
+    if (topCount) {
+      queryBuilder.take(topCount);
+    }
+    const tokens = await queryBuilder.getMany();
+    return tokens
+      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
   }
 
   static async isExpired(owner_addr: string) {

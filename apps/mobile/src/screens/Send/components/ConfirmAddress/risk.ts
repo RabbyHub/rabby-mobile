@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -43,12 +44,15 @@ export const useRisks = (address: string) => {
 
   useLayoutEffect(() => {
     riskGetRef.current = false;
-    openapi.addrDesc(address).then(res => {
-      if (res.desc) {
-        setAddressDesc(res.desc);
+    if (addressDesc) {
+      return;
+    }
+    getAddrDescWithCexLocalCacheSync(address).then(res => {
+      if (res) {
+        setAddressDesc(res);
       }
     });
-  }, [address]);
+  }, [address, addressDesc]);
   useEffect(() => {
     if (riskGetRef.current && !addressDesc) {
       return;
@@ -82,7 +86,6 @@ export const useRisks = (address: string) => {
           value: t('page.confirmAddress.risks.contractAddress'),
         });
       }
-      setRisks(currRisks);
       let hasSended = false;
       accounts.forEach(acc => {
         if (isSameAddress(acc.address, address)) {
@@ -128,5 +131,6 @@ export const useRisks = (address: string) => {
     risks,
     addressDesc,
     hasSend,
+    loading,
   };
 };

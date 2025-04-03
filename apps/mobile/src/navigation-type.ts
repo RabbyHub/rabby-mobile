@@ -71,6 +71,7 @@ export type RootStackParamsList = {
     account?: KeyringAccountWithAlias;
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
+    tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   };
 };
 
@@ -259,8 +260,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.WhitelistInput]?: {};
   [RootNames.SelectImportAddress]?: {};
   [RootNames.ImportAddress2Whitelist]?: {};
-  [RootNames.ConfirmAddress]?: { account: KeyringAccountWithAlias };
-  [RootNames.WhitelistConfirm]?: { account: KeyringAccountWithAlias };
   [RootNames.SelectTypeAddress]?: {
     type: 'watch' | 'safe';
   };
@@ -280,6 +279,7 @@ export type TransactionNavigatorParamList = {
     swapAgain?: boolean;
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
+    isFromSwap?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]?: {};

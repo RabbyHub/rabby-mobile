@@ -4,6 +4,7 @@ import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
 import {
   BuyHistoryList,
+  Cex,
   ComplexProtocol,
   NFTItem,
   SwapTradeList,
@@ -21,12 +22,14 @@ import { SwapItemEntity } from '../entities/swapitem';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
+import { CexEntity } from '../entities/cex';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
-  if (_tokens.length === 0) {
-    _tokens.push(EMPTY_TOKEN_ITEM);
+  const data = [..._tokens];
+  if (data.length === 0) {
+    data.push(EMPTY_TOKEN_ITEM);
   }
-  const tokens = _tokens.sort((a, b) =>
+  const tokens = data.sort((a, b) =>
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
 
@@ -162,10 +165,11 @@ export async function syncRemoteSwapHistory(
 }
 
 export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
-  if (_nfts.length === 0) {
-    _nfts.push(EMPTY_NFT_ITEM);
+  const data = [..._nfts];
+  if (data.length === 0) {
+    data.push(EMPTY_NFT_ITEM);
   }
-  const nfts = _nfts.sort((a, b) =>
+  const nfts = data.sort((a, b) =>
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
   const nftItems = nfts.map(raw => {
@@ -201,10 +205,11 @@ export async function syncRemotePortocols(
   address: string,
   protocals: ComplexProtocol[],
 ) {
-  if (protocals.length === 0) {
-    protocals.push(EMPTY_PROTOCOL_ITEM);
+  const data = [...protocals];
+  if (data.length === 0) {
+    data.push(EMPTY_PROTOCOL_ITEM);
   }
-  const items = protocals.map(raw => {
+  const items = data.map(raw => {
     const protocalItem = new PortocolItemEntity();
     PortocolItemEntity.fillEntity(protocalItem, address, raw);
 
@@ -289,6 +294,7 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       HistoryItemEntity.deleteForAddress(address),
       SwapItemEntity.deleteForAddress(address),
       BalanceEntity.deleteForAddress(address),
+      CexEntity.deleteForAddress(address),
     ]);
   } catch (error) {
     console.log('deleteDBResourceForAddress', error);
@@ -322,6 +328,36 @@ export async function syncBalance(
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
     taskFor: 'balance',
+    batchSize: 100,
+    concurrency: 1,
+  })
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
+    })
+    .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+}
+
+export async function syncCexInfo(address: string, cex?: Cex) {
+  const cexItem = new CexEntity();
+  CexEntity.fillEntity(
+    cexItem,
+    address,
+    cex?.id || '',
+    cex?.is_deposit || false,
+    cex?.name || '',
+    cex?.logo_url || '',
+  );
+
+  await prepareAppDataSource();
+  await batchSaveWithPQueueAndTransaction(CexEntity, [cexItem], {
+    owner_addr: address,
+    taskFor: 'cex',
     batchSize: 100,
     concurrency: 1,
   })

@@ -10,6 +10,7 @@ export const FooterButtonGroup: React.FC<{
   onConfirm?: () => void;
   cancelText?: string;
   confirmText?: string;
+  confirmType?: 'primary' | 'ghost';
   disable?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -18,6 +19,7 @@ export const FooterButtonGroup: React.FC<{
   onConfirm,
   cancelText,
   confirmText,
+  confirmType,
   style,
   disable,
   loading,
@@ -46,7 +48,7 @@ export const FooterButtonGroup: React.FC<{
         onPress={onConfirm}
         disabled={disable}
         loading={loading}
-        type={'primary'}
+        type={confirmType || 'primary'}
       />
     </View>
   );
