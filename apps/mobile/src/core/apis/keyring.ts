@@ -1,10 +1,15 @@
 import { KeyringTypeName, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
-import { keyringService, preferenceService } from '../services';
+import {
+  keyringService,
+  notificationService,
+  preferenceService,
+} from '../services';
 import { ethErrors } from 'eth-rpc-errors';
 import { getKeyringParams } from '../utils/getKeyringParams';
 import { EVENTS, eventBus } from '@/utils/events';
 import { t } from 'i18next';
+import { waitSignComponentAmounted } from '../utils/signEvent';
 
 export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
@@ -106,6 +111,21 @@ export const apisKeyring = {
       data: res,
     });
     return res;
+  },
+
+  signTypedDataWithUI: async (
+    type: string,
+    from: string,
+    data: string,
+    options?: any,
+  ) => {
+    const fn = () =>
+      waitSignComponentAmounted().then(() => {
+        apisKeyring.signTypedData(type, from, data as any, options);
+      });
+
+    notificationService.setCurrentRequestDeferFn(fn);
+    return fn();
   },
 };
 

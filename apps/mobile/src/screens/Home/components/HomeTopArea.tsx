@@ -51,6 +51,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -141,7 +142,7 @@ export const HomeTopArea = ({
   const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
 
   const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
-  const { data: gnosisPendingTxs, refreshAsync } = useGnosisPendingTxs({
+  const { total: gnosisTotal, refreshAsync } = useGnosisQueueTotalPending({
     address: isGnosisKeyring ? currentAccount?.address : undefined,
   });
   const {
@@ -261,7 +262,7 @@ export const HomeTopArea = ({
           {
             key: 'Queue',
             title: t('page.home.services.queue'),
-            badge: gnosisPendingTxs?.total,
+            badge: gnosisTotal,
             Icon: RcIconQueue,
             onPress: () => {
               navigation.push(RootNames.StackTransaction, {

@@ -34,7 +34,7 @@
     "@rabby-wallet/gnosis-sdk": "1.4.2",
     "@rabby-wallet/keyring-utils": "^0.1.0",
     "@safe-global/protocol-kit": "5.0.3",
-    "@safe-global/types-kit": "1.0.2",
+    "@safe-global/types-kit": "^2.0.1",
     "bignumber.js": "9.1.2",
     "ethereumjs-util": "^7.1.5",
     "semver": "^7.6.2",

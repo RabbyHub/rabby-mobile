@@ -21,7 +21,6 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
-import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
@@ -34,6 +33,7 @@ import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import ConfirmAddressScreen from '../Send/SubScreens/ConfirmSendAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
 import ConfirmWhitelistScreen from '../WhiteList/ConfirmWhiteAddress';
+import { GnosisQueueScreen } from '../GnosisQueue';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -327,7 +327,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}
-        component={GnosisTransactionQueue}
+        component={GnosisQueueScreen}
         options={mergeScreenOptions({
           title: 'Queue',
           ...headerPresets.withBgCard2,

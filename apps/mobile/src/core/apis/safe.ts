@@ -20,6 +20,8 @@ import {
 import { EVENTS, eventBus } from '@/utils/events';
 import { Account } from '../services/preference';
 import { uniq } from 'lodash';
+import { toChecksumAddress } from '@ethereumjs/util';
+import { hashSafeMessage } from '@safe-global/protocol-kit';
 
 export const createSafeService = async ({
   address,
@@ -306,6 +308,51 @@ class ApisSafe {
     };
   };
 
+  getGnosisAllPendingMessages = async (address: string) => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    if (!keyring) {
+      throw new Error(t('background.error.notFoundGnosisKeyring'));
+    }
+    const networks = keyring.networkIdsMap[address.toLowerCase()];
+    if (!networks || !networks.length) {
+      return null;
+    }
+    const safeAddress = toChecksumAddress(address);
+    const results = await Promise.all(
+      networks.map(async networkId => {
+        try {
+          const safe = await createSafeService({
+            networkId: networkId,
+            address: safeAddress,
+          });
+          const threshold = await safe.getThreshold();
+          const { results } = await safe.apiKit.getMessages(safeAddress);
+          return {
+            networkId,
+            messages: results.filter(
+              item => item.confirmations.length < threshold,
+            ),
+          };
+        } catch (e) {
+          console.error(e);
+          return {
+            networkId,
+            messages: [],
+          };
+        }
+      }),
+    );
+
+    const total = results.reduce((t, item) => {
+      return t + item.messages.length;
+    }, 0);
+
+    return {
+      total,
+      results,
+    };
+  };
+
   getGnosisPendingTxs = async (address: string, networkId: string) => {
     if (!networkId) {
       return [];
@@ -438,6 +485,184 @@ class ApisSafe {
       keyring.currentTransaction = null;
       keyring.safeInstance = null;
     }
+  };
+
+  buildGnosisMessage = async ({
+    account,
+    safeAddress,
+    networkId,
+    version,
+    message,
+  }: {
+    safeAddress: string;
+    account: Account;
+    version: string;
+    networkId: string;
+    message: string | Record<string, any>;
+  }) => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (keyring) {
+      const currentProvider = new EthereumProvider();
+      currentProvider.currentAccount = account.address;
+      currentProvider.currentAccountType = account.type;
+      currentProvider.currentAccountBrand = account.brandName;
+      currentProvider.chainId = networkId;
+      return keyring.buildMessage({
+        address: safeAddress,
+        provider: new ethers.providers.Web3Provider(currentProvider),
+        version,
+        networkId,
+        message: message as any,
+      });
+    } else {
+      throw new Error(t('background.error.notFoundGnosisKeyring'));
+    }
+  };
+
+  // getGnosisSafeMessageInfo = async () => {
+  //   const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+  //   if (!keyring) {
+  //     throw new Error(t('background.error.notFoundGnosisKeyring'));
+  //   }
+  //   return keyring.getMessageInfo();
+  // };
+
+  addGnosisMessage = async ({
+    signerAddress,
+    signature,
+  }: {
+    signerAddress: string;
+    signature: string;
+  }) => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (!keyring) throw new Error(t('background.error.notFoundGnosisKeyring'));
+    return keyring.addMessage({
+      signerAddress,
+      signature,
+    });
+  };
+
+  addGnosisMessageSignature = async ({
+    signerAddress,
+    signature,
+  }: {
+    signerAddress: string;
+    signature: string;
+  }) => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (!keyring) throw new Error(t('background.error.notFoundGnosisKeyring'));
+    return keyring.addMessageSignature({
+      signerAddress,
+      signature,
+    });
+  };
+
+  handleGnosisMessage = async ({
+    signerAddress,
+    signature,
+  }: {
+    signerAddress: string;
+    signature: string;
+  }) => {
+    const sigs = await this.getGnosisMessageSignatures();
+    if (sigs.length > 0) {
+      await this.addGnosisMessageSignature({
+        signature: signature,
+        signerAddress: signerAddress,
+      });
+    } else {
+      await this.addGnosisMessage({
+        signature: signature,
+        signerAddress: signerAddress,
+      });
+    }
+  };
+
+  addPureGnosisMessageSignature = async ({
+    signerAddress,
+    signature,
+  }: {
+    signerAddress: string;
+    signature: string;
+  }) => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (!keyring) throw new Error(t('background.error.notFoundGnosisKeyring'));
+    return keyring.addPureMessageSignature({
+      signerAddress,
+      signature,
+    });
+  };
+
+  getGnosisMessage = async ({
+    chainId,
+    messageHash,
+  }: {
+    chainId: number;
+    messageHash: string;
+  }) => {
+    const apiKit = Safe.createSafeApiKit(String(chainId));
+    return apiKit.getMessage(messageHash);
+  };
+
+  getGnosisMessageHash = async ({
+    safeAddress,
+    chainId,
+    message,
+  }: {
+    safeAddress: string;
+    chainId: number;
+    message: string | Record<string, any>;
+  }) => {
+    const safe = await createSafeService({
+      address: safeAddress,
+      networkId: String(chainId),
+    });
+    return safe.getSafeMessageHash(hashSafeMessage(message as any));
+  };
+
+  getGnosisMessageSignatures = async () => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (keyring.currentSafeMessage) {
+      const sigs = Array.from(keyring.currentSafeMessage.signatures.values());
+      return sigs.map(sig => ({ data: sig.data, signer: sig.signer }));
+    }
+    return [];
+  };
+
+  validateGnosisMessage = async (
+    {
+      address,
+      chainId,
+      message,
+    }: {
+      address: string;
+      chainId: number;
+      message: string | Record<string, any>;
+    },
+    hash: string,
+  ) => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (!keyring) {
+      throw new Error(t('background.error.notFoundGnosisKeyring'));
+    }
+
+    if (
+      !keyring.accounts.find(
+        account => account.toLowerCase() === address.toLowerCase(),
+      )
+    ) {
+      throw new Error('Can not find this address');
+    }
+    const checksumAddress = toChecksumAddress(address);
+
+    const safe = await createSafeService({
+      address: checksumAddress,
+      networkId: String(chainId),
+    });
+    const currentSafeMessageHash = await safe.getSafeMessageHash(
+      hashSafeMessage(message as any),
+    );
+    return currentSafeMessageHash === hash;
   };
 }
 
