@@ -663,6 +663,7 @@
       "dexNameTail": "Deposit Address",
       "brandNameTail": "Address",
       "title": "Confirm Address",
+      "sendTo": "Send to this Address",
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
         "noSend": "You haven't sent funds to this address in the past 180 days. Please confirm if you wish to proceed.",

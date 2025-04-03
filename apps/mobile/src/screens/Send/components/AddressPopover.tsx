@@ -8,8 +8,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 interface IProps {
   address: string;
   style?: StyleProp<ViewStyle>;
+  loading?: boolean;
 }
-const AddressPopover = ({ address, style }: IProps) => {
+const AddressPopover = ({ address, style, loading }: IProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const addressSplit = useMemo(() => {
     if (!address) {
@@ -22,6 +23,14 @@ const AddressPopover = ({ address, style }: IProps) => {
     return [prefix, middle, suffix];
   }, [address]);
 
+  if (loading) {
+    return (
+      <View style={[styles.container, style]}>
+        <View style={[styles.loadingBubble]} />
+        <View style={[styles.arrow]} />
+      </View>
+    );
+  }
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.bubble]}>
@@ -82,5 +91,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRightWidth: 0,
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 0,
+  },
+  loadingBubble: {
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-4'],
+    paddingHorizontal: 15.5,
+    paddingVertical: 15,
+    elevation: 5,
+    height: 70,
   },
 }));

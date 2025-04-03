@@ -18,6 +18,7 @@ import { toast } from '@/components2024/Toast';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { Skeleton } from '@rneui/themed';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
@@ -39,7 +40,7 @@ const ConfirmAddress = ({
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const switchRef = useRef<Switch>(null);
-  const { risks, addressDesc } = useRisks(account.address);
+  const { loading, risks, addressDesc } = useRisks(account.address);
   const { safeSizes } = useSafeAndroidBottomSizes({
     footerButtonGroupMb: 35,
   });
@@ -71,17 +72,28 @@ const ConfirmAddress = ({
     onConfirm?.(account, addressDesc);
   };
   return (
-    <View style={styles.screen}>
+    <View
+      style={[
+        styles.screen,
+        loading && {
+          minHeight: disbaleWhiteSwitch ? 464 : 515,
+        },
+      ]}>
       <Text style={styles.modalTitle}>
-        {title || t('page.confirmAddress.title')}
+        {title || t('page.confirmAddress.sendTo')}
       </Text>
-      <AddressPopover address={account.address} style={styles.addressPopover} />
+      <AddressPopover
+        loading={loading}
+        address={account.address}
+        style={styles.addressPopover}
+      />
       <AddressSource
+        loading={loading}
         addressDesc={addressDesc}
         account={account}
         style={styles.addressCard}
       />
-      {!disbaleWhiteSwitch && (
+      {!loading && !disbaleWhiteSwitch && (
         <View style={styles.whitelist}>
           <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
           <AppSwitch2024
@@ -91,9 +103,16 @@ const ConfirmAddress = ({
           />
         </View>
       )}
-      <View style={styles.riskList}>
-        {risks.map(risk => (
-          <View key={risk.type} style={styles.tipItem}>
+      <View
+        style={[
+          styles.riskList,
+          loading && {
+            marginTop: disbaleWhiteSwitch ? 41 : 92,
+            marginBottom: 123,
+          },
+        ]}>
+        {loading ? (
+          <View style={styles.tipItem}>
             <View style={styles.tipIcon}>
               <RcTipCC
                 width={14}
@@ -101,18 +120,33 @@ const ConfirmAddress = ({
                 color={colors2024['neutral-info']}
               />
             </View>
-            <Text style={styles.tipText}>{risk.value}</Text>
+            <Skeleton style={styles.loading} height={40} />
           </View>
-        ))}
+        ) : (
+          risks.map(risk => (
+            <View key={risk.type} style={styles.tipItem}>
+              <View style={styles.tipIcon}>
+                <RcTipCC
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+              <Text style={styles.tipText}>{risk.value}</Text>
+            </View>
+          ))
+        )}
       </View>
-      <FooterButtonGroup
-        style={StyleSheet.flatten([
-          styles.footerButtonGroup,
-          { marginBottom: safeSizes.footerButtonGroupMb },
-        ])}
-        onCancel={onCancel ?? noop}
-        onConfirm={handleConfirm}
-      />
+      {!loading && (
+        <FooterButtonGroup
+          style={StyleSheet.flatten([
+            styles.footerButtonGroup,
+            { marginBottom: safeSizes.footerButtonGroupMb },
+          ])}
+          onCancel={onCancel ?? noop}
+          onConfirm={handleConfirm}
+        />
+      )}
     </View>
   );
 };
@@ -136,6 +170,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   screen: {
     paddingHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  loadingScreen: {
+    minHeight: 515,
   },
   whitelist: {
     flexDirection: 'row',
@@ -180,5 +217,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   footerButtonGroup: {
     paddingTop: 0,
     // ...makeDebugBorder('yellow'),
+  },
+  loadingList: {
+    marginTop: 92,
+    marginBottom: 123,
+  },
+  loading: {
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 8,
+    flex: 1,
   },
 }));

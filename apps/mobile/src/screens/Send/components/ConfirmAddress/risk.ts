@@ -131,5 +131,6 @@ export const useRisks = (address: string) => {
     risks,
     addressDesc,
     hasSend,
+    loading,
   };
 };

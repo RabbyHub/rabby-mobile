@@ -165,6 +165,7 @@ export const WhiteListItem = ({
               const id = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.CONFIRM_ADDRESS,
                 account,
+                title: t('page.confirmAddress.addToWhitelist'),
                 disbaleWhiteSwitch: true,
                 bottomSheetModalProps: {
                   enableDynamicSizing: true,

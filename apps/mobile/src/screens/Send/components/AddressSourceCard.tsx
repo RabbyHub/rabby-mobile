@@ -27,13 +27,15 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils/dist/types';
 import { formatUsdValue } from '@/utils/number';
+import { Skeleton } from '@rneui/themed';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
+  loading?: boolean;
   addressDesc?: AddrDescResponse['desc'];
 }
-const AddressSource = ({ account, style, addressDesc }: IProps) => {
+const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
@@ -58,6 +60,17 @@ const AddressSource = ({ account, style, addressDesc }: IProps) => {
     }
   }, [fetchAlias, visible]);
 
+  if (loading) {
+    return (
+      <Card style={StyleSheet.flatten([styles.card, style])}>
+        <Skeleton style={styles.loadingSquare} width={46} height={46} />
+        <View style={styles.loaderList}>
+          <Skeleton style={styles.loading} height={20} />
+          <Skeleton style={styles.loading} width={53} height={20} />
+        </View>
+      </Card>
+    );
+  }
   return (
     <Card style={StyleSheet.flatten([styles.card, style])}>
       <InnerAddressItem style={styles.rootItem} account={account}>
@@ -211,5 +224,18 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  loaderList: {
+    gap: 4,
+    flex: 1,
+    marginLeft: 11,
+  },
+  loading: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 8,
+  },
+  loadingSquare: {
+    backgroundColor: colors2024['neutral-bg-4'],
+    borderRadius: 12,
   },
 }));
