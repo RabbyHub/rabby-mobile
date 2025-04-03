@@ -743,8 +743,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
       <AppBottomSheetModal
         ref={tokenSelectorModal}
         snapPoints={[ModalLayouts.defaultHeightPercentText]}
-        enableContentPanningGesture={false}
-        enableDismissOnClose={true}
+        enableContentPanningGesture
+        enableDismissOnClose
         onChange={idx => {
           if (idx < 0) {
             onCancel();
@@ -788,7 +788,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
           }}
         />
         <AutoLockView
-          as="BottomSheetView"
           style={[
             styles.container,
             {

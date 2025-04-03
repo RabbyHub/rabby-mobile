@@ -29,6 +29,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { IS_IOS } from '@/core/native/utils';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { stats } from '@/utils/stats';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -57,6 +60,9 @@ function MainListBlocks() {
         removeGlobalBottomSheetModal2024(id);
       },
     });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP,
+    );
   }, [state]);
 
   const handleBackupToPaper = React.useCallback(() => {
@@ -76,6 +82,9 @@ function MainListBlocks() {
         removeGlobalBottomSheetModal2024(id);
       },
     });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP,
+    );
   }, [state]);
 
   return (

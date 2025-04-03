@@ -29,6 +29,7 @@ import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { updateExpiredTime } from '@/databases/sync/assets';
 import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
+import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -101,11 +102,17 @@ export class TransactionHistoryService {
    * @description notice, always set store.transactions by calling `_setStoreTransaction`
    */
   store!: TxHistoryStore;
+  preferenceService?: import('./preference').PreferenceService;
 
   private _signingTxList: TransactionSigningItem[] = [];
   private _txHistoryLimit = 100;
 
-  constructor(options?: StorageAdapaterOptions) {
+  constructor(
+    options?: StorageAdapaterOptions & {
+      preferenceService: import('./preference').PreferenceService;
+    },
+  ) {
+    this.preferenceService = options?.preferenceService;
     this.store = createPersistStore<TxHistoryStore>(
       {
         name: APP_STORE_NAMES.txHistory,
@@ -305,18 +312,27 @@ export class TransactionHistoryService {
     const groups = this.getTransactionGroups({
       address,
     });
+    const completeds = sortBy(
+      groups.filter(item => !item.isPending),
+      item => -item.createdAt,
+    );
+    const maxCompletedNonceByChain = completeds.reduce((res, item) => {
+      res[item.chainId] = Math.max(res[item.chainId] || 0, item.nonce);
+      return res;
+    }, {} as Record<string, number>);
 
     return {
       pendings: sortBy(
-        groups.filter(item => item.isPending),
+        groups.filter(
+          item =>
+            item.isPending &&
+            item.nonce > (maxCompletedNonceByChain[item.chainId] || 0),
+        ),
         item => {
           return -item.createdAt;
         },
       ),
-      completeds: sortBy(
-        groups.filter(item => !item.isPending),
-        item => -item.createdAt,
-      ),
+      completeds,
     };
   }
 
@@ -529,6 +545,14 @@ export class TransactionHistoryService {
         trigger: target?.$ctx?.ga?.trigger || '',
         networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
       });
+
+      target?.$ctx?.ga?.category === 'Swap' &&
+        this.preferenceService?.setReportActionTs(
+          REPORT_TIMEOUT_ACTION_KEY.SWAP_ACTION_HAVE_DONE,
+          {
+            chain: chain.serverId,
+          },
+        );
     }
     this.clearBefore({ address, chainId, nonce });
   }

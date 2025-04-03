@@ -16,8 +16,9 @@ import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useSpecifyAccountsBalance } from './hooks/balance';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { useMemoizedFn } from 'ahooks';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
@@ -54,7 +55,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   useEffect(() => {
     if (accounts.length) {
       fetchTotalBalance();
-      syncMultiAddressesHistory(accounts.slice(0, 10).map(e => e.address));
+      syncMultiAddressesHistory(accounts.slice(0, 5).map(e => e.address));
     }
   }, [accounts, fetchTotalBalance, syncMultiAddressesHistory]);
 
@@ -74,6 +75,10 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
         },
       ],
     });
+
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE,
+    );
   };
 
   useEffect(() => {

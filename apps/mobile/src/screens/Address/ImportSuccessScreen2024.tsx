@@ -48,6 +48,9 @@ import { apiBalance } from '@/core/apis';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { stats } from '@/utils/stats';
+import { IS_IOS } from '@/core/native/utils';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -109,6 +112,10 @@ export const ImportSuccessScreen2024 = () => {
   const handleDone = React.useCallback(() => {
     saveFirstAddressAlias();
     Keyboard.dismiss();
+
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE,
+    );
 
     navigation.reset({
       index: 0,

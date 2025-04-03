@@ -36,10 +36,10 @@ export function useHistoryTokenDict() {
   );
   const [historyLoading, setHistoryLoading] = useAtom(historyLoadingDict);
 
-  const updateHistoryTimeSingleAddress = (add: string) => {
+  const updateHistoryTimeSingleAddress = (add: string, time?: number) => {
     setUpdateHistoryTime(prev => ({
       ...prev,
-      [add]: Date.now(),
+      [add]: time || Date.now(),
     }));
   };
 

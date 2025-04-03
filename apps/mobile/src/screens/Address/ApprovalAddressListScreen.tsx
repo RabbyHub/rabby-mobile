@@ -113,7 +113,7 @@ export function ApprovalAddressListScreen(): JSX.Element {
             style={
               index < displayAccounts.length - 1 ? styles.itemGap : undefined
             }>
-            <AddressItemContextMenu account={item} actions={['edit']}>
+            <AddressItemContextMenu account={item} actions={['copy', 'edit']}>
               <AddressItemEntry
                 account={item}
                 alertCount={alertInfo.address2count?.[item.address]}

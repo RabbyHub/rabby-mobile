@@ -43,6 +43,7 @@ import { updateUnlockTime } from '@/core/apis/lock';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -118,7 +119,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       if (getFormikErrorsCount(errors)) return;
 
       const { needAlert } = await tipEnableBiometrics(values.password);
-
+      console.log('needAlert', needAlert);
       const hideToast = needAlert ? null : toastUnlocking();
       try {
         const result = await unlockApp(values.password);
@@ -244,10 +245,14 @@ export default function UnlockScreen() {
   }, [unlockApp, t]);
 
   const manualUnlockWithBiometrics = useCallback(async () => {
-    const hideToast = toastUnlocking();
-    await unlockWithBiometrics().finally(() => checkUnlocked());
-    hideToast();
-  }, [unlockWithBiometrics, checkUnlocked]);
+    if (!isFaceID) {
+      const hideToast = toastUnlocking();
+      await unlockWithBiometrics().finally(() => checkUnlocked());
+      hideToast();
+    } else {
+      await unlockWithBiometrics().finally(() => checkUnlocked());
+    }
+  }, [unlockWithBiometrics, checkUnlocked, isFaceID]);
 
   useLayoutEffect(() => {
     incToReset(true);

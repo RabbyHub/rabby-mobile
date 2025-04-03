@@ -1562,6 +1562,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         </ScrollView>
         {txDetail && (
           <FooterBar
+            isSwap={isSwap}
             Header={
               <GasSelectorHeader
                 tx={tx}

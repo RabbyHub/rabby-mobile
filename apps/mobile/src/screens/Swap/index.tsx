@@ -9,7 +9,7 @@ import {
   getChainDefaultToken,
   SWAP_SUPPORT_CHAINS,
 } from '@/constant/swap';
-import { swapService } from '@/core/services';
+import { preferenceService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
@@ -79,6 +79,7 @@ import {
 } from '@/navigation-type';
 import { TokenInfoPopup } from './components/TokenInfoPopup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -427,6 +428,10 @@ const Swap = ({
 
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
 
+  const chainServerId = useMemo(() => {
+    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
+  }, [chain]);
+
   const handleSwap = useMemoizedFn(() => {
     if (receiveToken) {
       setRecentSwapToToken(receiveToken);
@@ -450,6 +455,12 @@ const Swap = ({
     } else {
       gotoSwap();
     }
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
+      {
+        chain: chainServerId,
+      },
+    );
   });
 
   const canUseMiniTx =
@@ -464,10 +475,6 @@ const Swap = ({
     !isSlippageHigh &&
     !isSlippageLow &&
     !showLoss;
-
-  const chainServerId = useMemo(() => {
-    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
-  }, [chain]);
 
   const amountAvailable = useMemo(
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
@@ -876,6 +883,12 @@ const Swap = ({
               }),
             );
           }, 500);
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
+            {
+              chain: chainServerId,
+            },
+          );
         }}
       />
 

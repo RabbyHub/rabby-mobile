@@ -8,7 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { SyncExtensionHeader } from './components/Header';
 import { NextInput } from '@/components2024/Form/Input';
-import { contactService, keyringService } from '@/core/services';
+import {
+  contactService,
+  keyringService,
+  preferenceService,
+} from '@/core/services';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { decryptWithDetail } from './utils';
 import { toast } from '@/components2024/Toast';
@@ -22,6 +26,7 @@ import { usePinAddresses } from '@/hooks/account';
 import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import useAsync from 'react-use/lib/useAsync';
 import { NoNewAddressesModal } from './components/NoNewAddresses';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
@@ -47,6 +52,10 @@ export const SyncExtensionPasswordScreen = () => {
   const [noAddrVisible, setNoAddrVisible] = useState(false);
 
   useEffect(() => {
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_SHOW_PASSWORD,
+    );
+
     return () => {
       clear();
       setNoAddrVisible(false);
@@ -155,6 +164,10 @@ export const SyncExtensionPasswordScreen = () => {
       const { vault } = await decryptWithDetail(
         password,
         JSON.stringify(encryptoVault),
+      );
+
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_CONFIRM,
       );
 
       const shouldAsk = await apisLock.shouldAskSetPassword();

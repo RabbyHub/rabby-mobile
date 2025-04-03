@@ -1013,6 +1013,7 @@ const MiniSignTx = ({
             }}
           />
         }
+        isSwap={isSwap}
         noCustomRPC={noCustomRPC}
         gasMethod={gasMethod}
         gasAccountCost={gasAccountCost}

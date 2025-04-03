@@ -3,7 +3,7 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
-import { keyringService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
@@ -25,6 +25,7 @@ import {
   useSafeAreaFrame,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -39,7 +40,9 @@ function GetStartedScreen2024(): JSX.Element {
   });
 
   const handleGoToHome = useCallback(async () => {
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
@@ -60,13 +63,18 @@ function GetStartedScreen2024(): JSX.Element {
   );
 
   const handleGoToCreate = useCallback(async () => {
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
 
     startCreateAddressProc(ProcDataType.Seed, '');
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
+    );
     navigate(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
     });
@@ -77,12 +85,17 @@ function GetStartedScreen2024(): JSX.Element {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
 
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
+    );
     navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
   }, [getStaretd.processedInit]);
 
@@ -91,7 +104,9 @@ function GetStartedScreen2024(): JSX.Element {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
 
@@ -101,6 +116,9 @@ function GetStartedScreen2024(): JSX.Element {
     navigate(RootNames.Scanner, {
       syncExtension: true,
     });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
+    );
   }, [getStaretd.processedInit]);
 
   const navigation = useRabbyAppNavigation();
