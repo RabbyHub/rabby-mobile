@@ -29,6 +29,7 @@ export const FundYourWallet = () => {
               screen: RootNames.ImportMethods,
               params: {
                 isNotNewUserProc: true,
+                isFromEmptyAddress: true,
               },
             }),
           );

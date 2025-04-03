@@ -97,3 +97,5 @@ scripts/tmp
 
 # android/sentry.properties
 # ios/sentry.properties
+
+/ios/bitcode_frameworks.txt

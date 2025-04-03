@@ -60,7 +60,7 @@ jobs:
         id: setup-xcode
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
-          xcode-version: '15.3'
+          xcode-version: '16.2'
 
       - name: Install dependencies && Build app
         shell: bash

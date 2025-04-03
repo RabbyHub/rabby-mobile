@@ -17,6 +17,10 @@ import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { stats } from '@/utils/stats';
+import { IS_IOS } from '../native/utils';
+import { reportActionStats } from '../utils/reportActionStats';
+import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 
 const { isSameAddress } = addressUtils;
 
@@ -133,6 +137,8 @@ export interface PreferenceStore {
   foldNfts?: IManageNft[];
   unFoldNfts?: IManageNft[];
 
+  reportActionTsSet: Record<REPORT_TIMEOUT_ACTION_KEY, number>;
+  currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY;
   tokenManageSettingMap: ITokenManageSettingMap;
   collectionStarred?: Token[];
   /**
@@ -178,6 +184,7 @@ export type SetCurrentAccountOptions = {
 };
 
 export class PreferenceService {
+  [x: string]: any;
   store!: PreferenceStore;
   keyringService: KeyringService;
   sessionService: import('./session').SessionService;
@@ -218,6 +225,8 @@ export class PreferenceService {
           customizedToken: [],
           blockedToken: [],
           collectionStarred: [],
+          reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
+          currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
           hiddenBalance: false,
           isShowTestnet: false,
           autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
@@ -265,7 +274,9 @@ export class PreferenceService {
   /** @deprecated */
   _dangerouslySetTokenManageSettingMap(input: ITokenManageSettingMap) {
     // only allow use in non-production environment
-    if (!isNonPublicProductionEnv) return;
+    if (!isNonPublicProductionEnv) {
+      return;
+    }
 
     this.store.tokenManageSettingMap = input;
     console.warn(
@@ -385,7 +396,7 @@ export class PreferenceService {
       );
     } else if (__DEV__ && doNotify && !this._allowedToNotifyAccountsChanged) {
       console.error(
-        `[PreferenceService::_notifyAccountsChanged] You're trying to notify accountsChanged event, but it's not allowed now!`,
+        "[PreferenceService::_notifyAccountsChanged] You're trying to notify accountsChanged event, but it's not allowed now!",
       );
     }
   }
@@ -614,6 +625,53 @@ export class PreferenceService {
   getCollectionStarred = () => {
     return this.store.collectionStarred || [];
   };
+
+  getReportActionTs = (key: REPORT_TIMEOUT_ACTION_KEY) => {
+    return this.store.reportActionTsSet?.[key] || 0;
+  };
+
+  getReportActionTimeout = (
+    from: REPORT_TIMEOUT_ACTION_KEY,
+    to: REPORT_TIMEOUT_ACTION_KEY,
+  ) => {
+    if (
+      this.store.reportActionTsSet?.[to] &&
+      this.store.reportActionTsSet?.[from] &&
+      this.store.reportActionTsSet?.[to] > this.store.reportActionTsSet?.[from]
+    ) {
+      return (
+        this.store.reportActionTsSet[to] - this.store.reportActionTsSet[from]
+      );
+    }
+
+    return 0;
+  };
+
+  setReportActionTs = (
+    key: REPORT_TIMEOUT_ACTION_KEY,
+    reportExtra?: Record<string, string> | undefined,
+  ) => {
+    try {
+      const ts = Date.now();
+      this.store.reportActionTsSet = {
+        ...this.store.reportActionTsSet,
+        [key]: ts,
+      };
+
+      const beforeKey = this.store.currentReportActionStats;
+      if (key === beforeKey) {
+        return;
+      }
+
+      // report stats
+      reportActionStats(this, key, beforeKey, reportExtra);
+
+      this.store.currentReportActionStats = key;
+    } catch (error) {
+      console.error('[PreferenceService] setReportActionTs error', error);
+    }
+  };
+
   addCollectionStarred = (token: Token) => {
     if (
       !this.store.collectionStarred?.find(
