@@ -18,7 +18,7 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { useNavigationState } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import {
@@ -28,6 +28,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -49,6 +50,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
+  const { navigation } = useSafeSetNavigationOptions();
   const navParams = useNavigationState(
     s =>
       s.routes.find(
@@ -107,6 +109,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
               addWhitelist(account.address, {
                 onAdded: () => {
                   toast.success(t('page.whitelist.addSuccessful'));
+                  navigation.popToTop();
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackTransaction, {
+                      screen: RootNames.SendTo,
+                    }),
+                  );
                 },
               });
             },

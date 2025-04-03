@@ -61,6 +61,7 @@ export const WhiteListItem = ({
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
+  const { navigation } = useSafeSetNavigationOptions();
   const { removeWhitelist, addWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
@@ -175,6 +176,12 @@ export const WhiteListItem = ({
                   addWhitelist(account.address, {
                     onAdded: () => {
                       toast.success(t('page.whitelist.addSuccessful'));
+                      navigation.popToTop();
+                      navigation.dispatch(
+                        StackActions.push(RootNames.StackTransaction, {
+                          screen: RootNames.SendTo,
+                        }),
+                      );
                     },
                   });
                 },

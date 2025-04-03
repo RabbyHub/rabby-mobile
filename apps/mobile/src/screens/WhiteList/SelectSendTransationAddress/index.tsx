@@ -24,6 +24,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
+import { StackActions } from '@react-navigation/native';
 
 function SendHistoryScreen() {
   const { accounts } = useMyAccounts({
@@ -155,6 +156,12 @@ function SendHistoryScreen() {
             addWhitelist(account.address, {
               onAdded: () => {
                 toast.success(t('page.whitelist.addSuccessful'));
+                navigation.popToTop();
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTransaction, {
+                    screen: RootNames.SendTo,
+                  }),
+                );
               },
             });
           },
