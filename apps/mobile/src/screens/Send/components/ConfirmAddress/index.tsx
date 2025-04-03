@@ -17,12 +17,15 @@ import { useRisks } from './risk';
 import { toast } from '@/components2024/Toast';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
   account: KeyringAccountWithAlias;
-  onConfirm?: (account: KeyringAccountWithAlias, addressDesc?: Cex) => void;
+  onConfirm?: (
+    account: KeyringAccountWithAlias,
+    addressDesc?: AddrDescResponse['desc'],
+  ) => void;
   onCancel?: () => void;
 }
 const ConfirmAddress = ({
@@ -65,7 +68,7 @@ const ConfirmAddress = ({
   );
 
   const handleConfirm = () => {
-    onConfirm?.(account, addressDesc?.cex);
+    onConfirm?.(account, addressDesc);
   };
   return (
     <View style={styles.screen}>

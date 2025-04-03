@@ -38,8 +38,7 @@ export const batchQueryTokens = async (
       chainIdList.map(serverId =>
         pQueue.add(() => {
           return requestOpenApiWithChainId(
-            // TODO: remove testOpenapi
-            ({ openapi }) => testOpenapi.listToken(user_id, serverId, true),
+            ({ openapi }) => openapi.listToken(user_id, serverId, true),
             {
               isTestnet,
             },

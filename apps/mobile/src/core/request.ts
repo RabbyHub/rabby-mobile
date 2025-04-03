@@ -38,7 +38,9 @@ openapi.initSync();
 
 export const testOpenapi = new OpenApiService({
   store: {
-    host: __DEV__ ? 'https://alpha.rabby.io' : 'https://alpha.rabby.io',
+    host: __DEV__
+      ? 'https://app-api.testnet.rabby.io'
+      : 'https://app-api.testnet.rabby.io',
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
