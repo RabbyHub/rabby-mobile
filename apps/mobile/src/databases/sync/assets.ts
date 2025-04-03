@@ -23,10 +23,11 @@ import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
-  if (_tokens.length === 0) {
-    _tokens.push(EMPTY_TOKEN_ITEM);
+  const data = [..._tokens];
+  if (data.length === 0) {
+    data.push(EMPTY_TOKEN_ITEM);
   }
-  const tokens = _tokens.sort((a, b) =>
+  const tokens = data.sort((a, b) =>
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
 
@@ -162,10 +163,11 @@ export async function syncRemoteSwapHistory(
 }
 
 export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
-  if (_nfts.length === 0) {
-    _nfts.push(EMPTY_NFT_ITEM);
+  const data = [..._nfts];
+  if (data.length === 0) {
+    data.push(EMPTY_NFT_ITEM);
   }
-  const nfts = _nfts.sort((a, b) =>
+  const nfts = data.sort((a, b) =>
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
   const nftItems = nfts.map(raw => {
@@ -201,10 +203,11 @@ export async function syncRemotePortocols(
   address: string,
   protocals: ComplexProtocol[],
 ) {
-  if (protocals.length === 0) {
-    protocals.push(EMPTY_PROTOCOL_ITEM);
+  const data = [...protocals];
+  if (data.length === 0) {
+    data.push(EMPTY_PROTOCOL_ITEM);
   }
-  const items = protocals.map(raw => {
+  const items = data.map(raw => {
     const protocalItem = new PortocolItemEntity();
     PortocolItemEntity.fillEntity(protocalItem, address, raw);
 

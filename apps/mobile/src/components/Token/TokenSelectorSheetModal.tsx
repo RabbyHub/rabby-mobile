@@ -933,12 +933,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
             stickySectionHeadersEnabled={true}
             ListHeaderComponent={ListHeader}
             ListEmptyComponent={
-              <NotMatchedHolder
-                style={{
-                  height: 400,
-                }}
-                text="No tokens"
-              />
+              isLoading ? null : (
+                <NotMatchedHolder
+                  style={{
+                    height: 400,
+                  }}
+                  text="No tokens"
+                />
+              )
             }
             extraData={isLoading}
             getItemLayout={(_, index) => {

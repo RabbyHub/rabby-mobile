@@ -22,8 +22,8 @@ import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
-import RcIconNoFind from '@/assets2024/icons/address/noFind.svg';
-import RcIconNoFindDark from '@/assets2024/icons/address/not-Found-dark.svg';
+import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
+import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
@@ -384,7 +384,7 @@ export function NotMatchedHolder({
     getStyle: getNotMatchedHolderStyle,
   });
   const RcIconNotFound = useMemo(
-    () => (isLight ? RcIconNoFind : RcIconNoFindDark),
+    () => (isLight ? RcIconEmptyToken : RcIconEmptyTokenDark),
     [isLight],
   );
   return (
