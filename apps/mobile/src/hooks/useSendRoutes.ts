@@ -5,13 +5,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
-import { addrDescInfoAtoms } from './useAddrDesc';
-import { openapi } from '@/core/request';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -22,7 +21,6 @@ export const useSendRoutes = () => {
   const { findAccount } = useWhiteListAddress(true);
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
-  const [addrDescInfo, setAddrDescInfo] = useAtom(addrDescInfoAtoms);
   const navigateToSendScreen = useCallback(
     (p?: { [key: string]: any }) => {
       navigation.push(RootNames.StackTransaction, {
@@ -37,12 +35,7 @@ export const useSendRoutes = () => {
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {
-        let addrDesc = addrDescInfo[p?.toAddress];
-        if (!addrDesc) {
-          const { desc } = await openapi.addrDesc(p?.toAddress);
-          addrDesc = desc;
-          setAddrDescInfo(prev => ({ ...prev, [p?.toAddress]: addrDesc }));
-        }
+        let addrDesc = await getAddrDescWithCexLocalCacheSync(p?.toAddress);
         const { inWhitelist, account } = await findAccount(p.toAddress);
         if (inWhitelist) {
           navigation.push(RootNames.StackTransaction, {
@@ -77,12 +70,10 @@ export const useSendRoutes = () => {
       });
     },
     [
-      addrDescInfo,
       findAccount,
       navigateToSendScreen,
       navigation,
       params,
-      setAddrDescInfo,
       setIsSingleAddress,
       setParams,
     ],

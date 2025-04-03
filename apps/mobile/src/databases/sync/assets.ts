@@ -4,6 +4,7 @@ import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
 import {
   BuyHistoryList,
+  Cex,
   ComplexProtocol,
   NFTItem,
   SwapTradeList,
@@ -21,6 +22,7 @@ import { SwapItemEntity } from '../entities/swapitem';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
+import { CexEntity } from '../entities/cex';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -292,6 +294,7 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       HistoryItemEntity.deleteForAddress(address),
       SwapItemEntity.deleteForAddress(address),
       BalanceEntity.deleteForAddress(address),
+      CexEntity.deleteForAddress(address),
     ]);
   } catch (error) {
     console.log('deleteDBResourceForAddress', error);
@@ -325,6 +328,36 @@ export async function syncBalance(
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
     taskFor: 'balance',
+    batchSize: 100,
+    concurrency: 1,
+  })
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] batch upsert tasks created`);
+      }
+    })
+    .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+}
+
+export async function syncCexInfo(address: string, cex?: Cex) {
+  const cexItem = new CexEntity();
+  CexEntity.fillEntity(
+    cexItem,
+    address,
+    cex?.id || '',
+    cex?.is_deposit || false,
+    cex?.name || '',
+    cex?.logo_url || '',
+  );
+
+  await prepareAppDataSource();
+  await batchSaveWithPQueueAndTransaction(CexEntity, [cexItem], {
+    owner_addr: address,
+    taskFor: 'cex',
     batchSize: 100,
     concurrency: 1,
   })

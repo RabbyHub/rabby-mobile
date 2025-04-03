@@ -25,13 +25,10 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
-import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { openapi } from '@/core/request';
+import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useAtom } from 'jotai';
-import { addrDescInfoAtoms } from '@/hooks/useAddrDesc';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -41,6 +38,10 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  getAddrDescWithCexLocalCacheSync,
+  getCexWithLocalCache,
+} from '@/databases/hooks/cex';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -57,7 +58,7 @@ export const WhiteListItem = ({
   inWhiteList,
   disableMenu,
 }: IProps) => {
-  const [addrDescInfo, setAddrDescInfo] = useAtom(addrDescInfoAtoms);
+  const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
   const { removeWhitelist, addWhitelist } = useWhitelist({
@@ -65,26 +66,22 @@ export const WhiteListItem = ({
   });
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
-  const cexDesc = useMemo(
-    () => addrDescInfo[account.address]?.cex,
-    [account.address, addrDescInfo],
-  );
   const showCexInfo = useMemo(() => {
-    return cexDesc?.id && cexDesc.is_deposit;
-  }, [cexDesc?.id, cexDesc?.is_deposit]);
+    return cexInfo?.id && cexInfo.is_deposit;
+  }, [cexInfo?.id, cexInfo?.is_deposit]);
 
   const editAliasName = useAliasNameEditModal();
 
   useLayoutEffect(() => {
-    if (addrDescInfo[account.address]) {
+    if (cexInfo) {
       return;
     }
-    openapi.addrDesc(account.address).then(res => {
-      if (res.desc) {
-        setAddrDescInfo(prev => ({ ...prev, [account.address]: res.desc }));
+    getCexWithLocalCache(account.address).then(res => {
+      if (res) {
+        setCexInfo(res);
       }
     });
-  }, [account.address, addrDescInfo, setAddrDescInfo]);
+  }, [account.address, cexInfo]);
 
   const menuActions = React.useMemo(() => {
     return [
@@ -186,10 +183,12 @@ export const WhiteListItem = ({
             return;
           }
           if (inWhiteList) {
-            navigateToSendScreen({
-              toAddress: account.address,
-              addrDesc: addrDescInfo[account.address],
-              addressBrandName: account.brandName,
+            getAddrDescWithCexLocalCacheSync(account.address).then(res => {
+              navigateToSendScreen({
+                toAddress: account.address,
+                addrDesc: res,
+                addressBrandName: account.brandName,
+              });
             });
           } else {
             const id = createGlobalBottomSheetModal2024({
@@ -231,9 +230,9 @@ export const WhiteListItem = ({
             {({ WalletIcon, WalletBalance }) => (
               <View style={styles.item}>
                 <View style={styles.iconWrapper}>
-                  {showCexInfo && cexDesc?.logo_url ? (
+                  {showCexInfo && cexInfo?.logo_url ? (
                     <Image
-                      source={{ uri: cexDesc?.logo_url }}
+                      source={{ uri: cexInfo?.logo_url }}
                       style={styles.walletIcon}
                       width={46}
                       height={46}

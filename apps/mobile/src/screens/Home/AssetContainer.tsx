@@ -78,10 +78,10 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { collectionNftList, NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
-import { openapi } from '@/core/request';
 import { DefiItemLoader, ItemLoader } from './components/Skeleton';
 import { chunk } from 'lodash';
 import { getItemId } from './utils/listRenderId';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
 const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -477,8 +477,8 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
 
   useLayoutEffect(() => {
     if (currentAccount?.address) {
-      openapi.addrDesc(currentAccount?.address).then(res => {
-        if (!res.desc.born_at) {
+      getAddrDescWithCexLocalCacheSync(currentAccount?.address).then(res => {
+        if (!res?.born_at) {
           setNotBorn(true);
         }
       });

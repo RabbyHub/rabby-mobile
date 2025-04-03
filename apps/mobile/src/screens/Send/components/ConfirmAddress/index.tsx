@@ -216,6 +216,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   footerButtonGroup: {
     paddingTop: 0,
+    paddingHorizontal: 4,
     // ...makeDebugBorder('yellow'),
   },
   loadingList: {

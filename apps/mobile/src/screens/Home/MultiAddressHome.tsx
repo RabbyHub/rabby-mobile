@@ -89,7 +89,7 @@ import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { useAddrDescAccounts } from '@/hooks/useAddrDesc';
+import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 
 const HeaderHeight = 24;
 
@@ -348,7 +348,7 @@ function MultiAddressHome(): JSX.Element {
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
-  useAddrDescAccounts();
+  useFetchCexInfo();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,

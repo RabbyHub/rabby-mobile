@@ -18,18 +18,16 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { openapi } from '@/core/request';
 import { useNavigationState } from '@react-navigation/native';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useAtom } from 'jotai';
-import { addrDescInfoAtoms } from '@/hooks/useAddrDesc';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -66,7 +64,6 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
-  const [addrDescInfo, setAddrDescInfo] = useAtom(addrDescInfoAtoms);
 
   const { t } = useTranslation();
 
@@ -118,12 +115,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         return;
       }
       if (inWhitelist) {
-        let addrDesc = addrDescInfo[address];
-        if (!addrDesc) {
-          const { desc } = await openapi.addrDesc(address);
-          addrDesc = desc;
-          setAddrDescInfo(prev => ({ ...prev, [address]: addrDesc }));
-        }
+        let addrDesc = await getAddrDescWithCexLocalCacheSync(address);
         navigateToSendScreen({
           toAddress: account.address,
           addrDesc: addrDesc,
