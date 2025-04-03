@@ -1338,7 +1338,7 @@
         "receiveHeader": "Nhận Crypto",
         "receiveBody": "Chuyển token từ địa chỉ khác.",
         "buyHeader": "Mua bằng Fiat",
-        "buyBody": ""
+        "buyBody": "Mua crypto đơn giản"
       },
       "nft": {
         "floorPrice": "/Giá sàn:"

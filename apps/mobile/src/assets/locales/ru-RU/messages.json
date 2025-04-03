@@ -1466,7 +1466,7 @@
         "title": "Пополните ваш кошелек",
         "receiveBody": "Переведите токены с другого адреса.",
         "receiveHeader": "Получить Crypto",
-        "buyBody": ""
+        "buyBody": "Простая покупка криптовалюты"
       },
       "nft": {
         "floorPrice": "/Floor Price:"

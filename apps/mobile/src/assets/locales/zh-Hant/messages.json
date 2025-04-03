@@ -1412,7 +1412,7 @@
         "buyHeader": "使用法幣購買",
         "title": "為您的錢包充值",
         "receiveBody": "從另一個地址轉移 tokens。",
-        "buyBody": ""
+        "buyBody": "簡單的加密貨幣購買"
       },
       "nft": {
         "floorPrice": "/Floor Price:"

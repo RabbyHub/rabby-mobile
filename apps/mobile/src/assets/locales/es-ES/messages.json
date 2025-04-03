@@ -1601,7 +1601,7 @@
         "title": "Fondea tu Wallet",
         "receiveBody": "Transferir tokens desde otra dirección.",
         "buyHeader": "Comprar con Fiat",
-        "buyBody": ""
+        "buyBody": "Compra sencilla de cripto"
       },
       "nft": {
         "floorPrice": "/Precio de suelo:"

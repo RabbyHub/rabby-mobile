@@ -1616,7 +1616,7 @@
       "emptyToken": {
         "receiveHeader": "Receber Crypto",
         "receiveBody": "Transferir tokens de outro endereço.",
-        "buyBody": "",
+        "buyBody": "Compra simples de cripto",
         "title": "Financiar a Sua Wallet",
         "buyHeader": "Comprar com Fiat"
       },

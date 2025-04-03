@@ -1439,9 +1439,9 @@
       "emptyToken": {
         "receiveHeader": "暗号を受け取る",
         "buyHeader": "法定通貨で購入",
-        "buyBody": "",
         "receiveBody": "別のアドレスからトークンを転送します。",
-        "title": "ウォレットに資金を入れる"
+        "title": "ウォレットに資金を入れる",
+        "buyBody": "簡単な暗号通貨購入"
       },
       "nft": {
         "floorPrice": "/Floor Price:"

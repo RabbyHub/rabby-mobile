@@ -1391,8 +1391,8 @@
         "buyHeader": "Acheter avec Fiat",
         "receiveHeader": "Recevoir des cryptos",
         "receiveBody": "Transférer des tokens depuis une autre adresse.",
-        "buyBody": "",
-        "title": "Alimentez votre portefeuille"
+        "title": "Alimentez votre portefeuille",
+        "buyBody": "Achat simple de crypto"
       },
       "nft": {
         "floorPrice": "/Prix plancher:"
