@@ -31,10 +31,10 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@keystonehq/base-eth-keyring": "^0.14.1",
+    "@keystonehq/base-eth-keyring": "0.15.1",
     "@keystonehq/bc-ur-registry": "^0.6.0",
     "@keystonehq/hw-app-eth": "^0.3.2",
-    "@keystonehq/metamask-airgapped-keyring": "^0.13.1",
+    "@keystonehq/metamask-airgapped-keyring": "0.15.2",
     "ethereumjs-util": "^7.1.5"
   },
   "devDependencies": {
