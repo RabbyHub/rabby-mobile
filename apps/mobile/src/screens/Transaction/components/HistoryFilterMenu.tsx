@@ -37,7 +37,7 @@ export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
   return (
     <View style={styles.container}>
       {/* <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}> */}
-      <AppSwitch2024 value={isShowAll} onValueChange={e => switchShowAll()} />
+      <AppSwitch2024 value={!isShowAll} onValueChange={e => switchShowAll()} />
       {/* {isShowAll ? (
           <RcIconEyeCC
             color={colors2024['neutral-foot']}
