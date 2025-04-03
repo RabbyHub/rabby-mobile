@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  Pressable,
   SectionListRenderItem,
 } from 'react-native';
 import {
@@ -525,7 +524,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   toggleShowSheetModal('destroy');
                 }}
                 type={type}>
-                <Pressable
+                <TouchableOpacity
                   delayLongPress={200}
                   onLongPress={() => {
                     console.log('prevent trigger onPress');
@@ -544,7 +543,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     logoSize={40}
                     touchable={false}
                   />
-                </Pressable>
+                </TouchableOpacity>
               </TokenItemContextMenu>
             </View>
           );

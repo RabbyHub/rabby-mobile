@@ -186,7 +186,6 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
               onSlidingComplete={onAfterChangeSlider}
               minimumValue={0}
               maximumValue={100}
-              disabled={!token}
               minimumTrackTintColor={colors2024['brand-default']}
               maximumTrackTintColor={colors2024['neutral-line']}
               step={1}

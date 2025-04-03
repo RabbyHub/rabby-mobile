@@ -220,7 +220,6 @@ const Swap = ({
       return;
     }
 
-    const isBuy = navState?.type === 'Buy';
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
 
     if (navState.swapAgain) {
@@ -231,11 +230,6 @@ const Swap = ({
       );
       return;
     }
-
-    switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
-      payTokenId: navState?.tokenId,
-      changeTo: isBuy,
-    });
   });
 
   const navigation = useNavigation<SwapRouteProps['navigation']>();
@@ -245,6 +239,7 @@ const Swap = ({
     const isBuy = navState?.type === 'Buy';
     console.log(
       'navState?.isFromSwap',
+      isBuy,
       navState,
       navState?.isFromSwap,
       receiveToken?.chain,
@@ -258,6 +253,7 @@ const Swap = ({
           (payToken && payToken.chain !== chainItem.serverId) ||
           (receiveToken && receiveToken.chain !== chainItem.serverId)
         ) {
+          console.log('??????');
           switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
             payTokenId: navState?.tokenId,
             changeTo: isBuy,
@@ -276,6 +272,13 @@ const Swap = ({
           });
         }
         return;
+      }
+    } else {
+      if (navState?.tokenId) {
+        switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
+          payTokenId: navState?.tokenId,
+          changeTo: isBuy,
+        });
       }
     }
     navigation.setParams({
