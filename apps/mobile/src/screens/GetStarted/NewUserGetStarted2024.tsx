@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
@@ -21,6 +21,10 @@ import {
 } from '@/hooks/address/useNewUser';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  useSafeAreaFrame,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 function GetStartedScreen2024(): JSX.Element {
@@ -148,9 +152,25 @@ function GetStartedScreen2024(): JSX.Element {
     }, [isAppUnlocked, initAccounts]),
   );
 
+  const { bottom, top } = useSafeAreaInsets();
+  const { height } = useSafeAreaFrame();
+
+  const { height: WHeight } = useWindowDimensions();
+  const offsetAreaStyle = useMemo(() => {
+    const availableHeight = Math.min(height - bottom - top, WHeight);
+
+    return {
+      flexShrink: 0,
+      height:
+        availableHeight > 700
+          ? Math.floor(availableHeight - LOGO_SIZE.wrapperHeight) / 2
+          : 140,
+    };
+  }, [bottom, height, top, WHeight]);
+
   return (
     <View style={styles.screen}>
-      <View style={styles.offsetArea} />
+      <View style={offsetAreaStyle} />
       <View style={styles.contentArea}>
         <View style={styles.centerWrapper}>
           {/* <RcIconLogo /> */}
@@ -250,17 +270,10 @@ const getStyles = createGetStyles2024(ctx =>
       backgroundColor: ctx.colors['neutral-card1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      height: '100%',
+      // height: '100%',
+      flex: 1,
     },
-    offsetArea: {
-      flexShrink: 0,
-      height:
-        Dimensions.get('screen').height > 700
-          ? Math.floor(
-              Dimensions.get('screen').height - LOGO_SIZE.wrapperHeight,
-            ) / 2
-          : 140,
-    },
+
     contentArea: {
       flexShrink: 1,
       height: '100%',

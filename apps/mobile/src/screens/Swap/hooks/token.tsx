@@ -23,6 +23,7 @@ import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
+import { isSwapWrapToken } from '../utils';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
@@ -362,13 +363,7 @@ export const useTokenPair = (userAddress: string) => {
 
   const [isWrapToken, wrapTokenSymbol] = useMemo(() => {
     if (payToken?.id && receiveToken?.id) {
-      const wrapTokens = [
-        WrapTokenAddressMap[chain],
-        chainInfo.nativeTokenAddress,
-      ];
-      const res =
-        !!wrapTokens.find(token => isSameAddress(payToken?.id, token)) &&
-        !!wrapTokens.find(token => isSameAddress(receiveToken?.id, token));
+      const res = isSwapWrapToken(payToken?.id, receiveToken?.id, chain);
       return [
         res,
         isSameAddress(payToken?.id, WrapTokenAddressMap[chain])
@@ -377,7 +372,7 @@ export const useTokenPair = (userAddress: string) => {
       ];
     }
     return [false, ''];
-  }, [payToken, receiveToken, chain, chainInfo.nativeTokenAddress]);
+  }, [payToken, receiveToken, chain]);
 
   const inSufficient = useMemo(
     () =>
