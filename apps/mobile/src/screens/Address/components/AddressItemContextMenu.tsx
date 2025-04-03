@@ -52,9 +52,9 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
         {
           title: t('page.whitelist.copyAddress'),
           icon: isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
-          androidIconName: 'ic_rabby_menu_edit',
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+          androidIconName: 'ic_rabby_menu_copy',
           key: 'copy',
           action() {
             Clipboard.setString(account.address);
