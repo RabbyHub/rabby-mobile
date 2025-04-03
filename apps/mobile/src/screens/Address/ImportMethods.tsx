@@ -1,6 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Image,
+  ScrollView,
+} from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,7 +15,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Card } from '@/components2024/Card';
 
-import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 
 import SeedPhraseIcon from '@/assets2024/icons/common/seed-phrase.svg';
@@ -17,6 +23,7 @@ import HardWareIcon from '@/assets2024/icons/common/IconHardWare.png';
 // TODO: replace to svg
 // import HardWareIcon from '@/assets2024/icons/common/IconHardWare.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
+import IconSyncRabby from '@/assets2024/icons/common/iconSyncExtension.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -52,6 +59,7 @@ function ImportMethods(): JSX.Element {
   ) as
     | {
         isNotNewUserProc?: boolean; // if has address
+        isFromEmptyAddress?: boolean;
       }
     | undefined;
   // const state = undefined;
@@ -66,7 +74,8 @@ function ImportMethods(): JSX.Element {
         }}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}>
-        <View
+        <ScrollView
+          showsVerticalScrollIndicator={false}
           style={StyleSheet.flatten([
             styles.blockView,
             state?.isNotNewUserProc && styles.noMarginTop,
@@ -136,6 +145,51 @@ function ImportMethods(): JSX.Element {
                 {t('page.nextComponent.importAddress.privateKey')}
               </Text>
             </Card>
+            {state?.isFromEmptyAddress && (
+              <>
+                <Card
+                  hasArrow={state?.isNotNewUserProc}
+                  style={styles.importItem}
+                  onPress={() => {
+                    trigger('impactLight', {
+                      enableVibrateFallback: true,
+                      ignoreAndroidSystemSettings: false,
+                    });
+
+                    navigation.dispatch(
+                      StackActions.push(RootNames.StackAddress, {
+                        screen: RootNames.ImportHardwareAddress,
+                        params: {},
+                      }),
+                    );
+                  }}>
+                  <Image source={HardWareIcon} style={styles.icon} />
+                  <Text style={styles.importType}>
+                    {t('page.nextComponent.addAddress.hardwareWallet')}
+                  </Text>
+                </Card>
+                <Card
+                  hasArrow={state?.isNotNewUserProc}
+                  style={styles.importItem}
+                  onPress={() => {
+                    trigger('impactLight', {
+                      enableVibrateFallback: true,
+                      ignoreAndroidSystemSettings: false,
+                    });
+
+                    navigation.dispatch(
+                      StackActions.push(RootNames.Scanner, {
+                        syncExtension: true,
+                      }),
+                    );
+                  }}>
+                  <IconSyncRabby style={styles.icon} />
+                  <Text style={styles.importType}>
+                    {t('page.nextComponent.addAddress.syncRabbyExtension')}
+                  </Text>
+                </Card>
+              </>
+            )}
             {state?.isNotNewUserProc && (
               <>
                 <Text style={styles.titleText}>
@@ -223,7 +277,7 @@ function ImportMethods(): JSX.Element {
               </Card>
             )}
           </View>
-        </View>
+        </ScrollView>
         {!state?.isNotNewUserProc && (
           <Pressable
             style={styles.tipWrapper}
