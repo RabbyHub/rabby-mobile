@@ -150,7 +150,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '700',
       lineHeight: 22,
       fontSize: 17,
-      color: ctx.colors2024['brand-default'],
+      color: ctx.colors2024['neutral-title-1'],
     },
     addressCaretIcon: {
       marginLeft: 4,

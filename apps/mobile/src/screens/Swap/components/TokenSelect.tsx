@@ -35,7 +35,7 @@ import { AssetAvatar } from '@/components';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useSwapRecentToTokens } from '../hooks/recent';
-import { preferenceService } from '@/core/services';
+import { customTestnetService, preferenceService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
 import { Account, IManageToken } from '@/core/services/preference';
 import {
@@ -149,27 +149,30 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     // fetch tokens
     useEffect(() => {
-      if (timeRef.current) {
-        clearTimeout(timeRef.current);
-        timeRef.current = null;
-      }
-      if (!tokenSelectorVisible || useSwapTokenList) {
-        return;
-      }
-      if (!tokens.length) {
-        if (type === 'send') {
-          currentAccount?.address && getCacheTokens([currentAccount.address]);
-        } else {
-          getCacheTop10Tokens();
+      (async () => {
+        if (timeRef.current) {
+          clearTimeout(timeRef.current);
+          timeRef.current = null;
         }
-      }
-      timeRef.current = setTimeout(() => {
-        if (currentAccount?.address) {
-          loadToken(currentAccount.address, true);
-        } else {
-          checkIsExpireAndUpdate();
+        if (!tokenSelectorVisible || useSwapTokenList) {
+          return;
         }
-      }, 500);
+        if (!tokens.length) {
+          if (type === 'send') {
+            currentAccount?.address &&
+              (await getCacheTokens([currentAccount.address]));
+          } else {
+            await getCacheTop10Tokens();
+          }
+        }
+        timeRef.current = setTimeout(() => {
+          if (currentAccount?.address) {
+            loadToken(currentAccount.address, true);
+          } else {
+            checkIsExpireAndUpdate();
+          }
+        }, 500);
+      })();
       return () => {
         if (timeRef.current) {
           clearTimeout(timeRef.current);
@@ -542,7 +545,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const isSend = type === 'send';
 
     const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
-      hideTestnetTab: !isSend,
+      hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
     });
 
     const { testnetTokenList, loading: testnetTokenListLoading } =

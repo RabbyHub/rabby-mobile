@@ -564,7 +564,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 style={[
                   styles.tokenItem,
                   isSwapTo && { paddingRight: 0, paddingVertical: 0 },
-                  disabled && styles.tokenItemDisabled,
+                  (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
                 <View style={styles.tokenLeft}>
                   <AssetAvatar
