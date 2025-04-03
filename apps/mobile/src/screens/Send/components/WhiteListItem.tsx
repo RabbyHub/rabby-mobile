@@ -347,7 +347,7 @@ export const WhiteListItemSwitch = ({
                   )}
                 </View>
                 <View style={styles.itemInfo}>
-                  <View style={styles.itemName}>
+                  <Text numberOfLines={1} style={styles.itemName}>
                     <Text style={styles.itemNameText} numberOfLines={1}>
                       {formatName}
                     </Text>
@@ -356,7 +356,7 @@ export const WhiteListItemSwitch = ({
                         {`(${ellipsisAddress(account.address)})`}
                       </Text>
                     )}
-                  </View>
+                  </Text>
                   <WalletBalance style={styles.itemBalanceText} />
                 </View>
               </View>
@@ -415,7 +415,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flex: 1,
     flexGrow: 1,
-    marginRight: 20,
+    marginRight: 12,
   },
   item: {
     flexDirection: 'row',
