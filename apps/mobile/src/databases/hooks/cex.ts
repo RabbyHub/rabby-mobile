@@ -29,8 +29,13 @@ export const getCexWithLocalCache = async (
 export const getAddrDescWithCexLocalCacheSync = async (
   address: FirstParameter<typeof openapi.addrDesc>,
 ): Promise<AddrDescResponse['desc'] | undefined> => {
-  const addressDesc = await openapi.addrDesc(address);
-  const cexInfo = addressDesc?.desc?.cex;
-  runOnJS(syncCexInfo)(address, cexInfo);
-  return addressDesc?.desc;
+  try {
+    const addressDesc = await openapi.addrDesc(address);
+    const cexInfo = addressDesc?.desc?.cex;
+    runOnJS(syncCexInfo)(address, cexInfo);
+    return addressDesc?.desc;
+  } catch (error) {
+    // may 429 error
+    return undefined;
+  }
 };
