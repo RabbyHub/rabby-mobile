@@ -455,7 +455,7 @@ const Swap = ({
       !isSlippageLow &&
       !showLoss
     ) {
-      // runBuildSwapTxs();
+      runBuildSwapTxs();
       setIsShowSign(true);
       clearExpiredTimer();
     } else {
@@ -469,19 +469,6 @@ const Swap = ({
     );
   });
 
-  const canUseMiniTx =
-    [
-      KEYRING_TYPE.SimpleKeyring,
-      KEYRING_TYPE.HdKeyring,
-      KEYRING_CLASS.HARDWARE.LEDGER,
-    ].includes((currentAccount?.type || '') as any) &&
-    !receiveToken?.low_credit_score &&
-    !receiveToken?.is_scam &&
-    receiveToken?.is_verified !== false &&
-    !isSlippageHigh &&
-    !isSlippageLow &&
-    !showLoss;
-
   const amountAvailable = useMemo(
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
     [payToken],
@@ -490,27 +477,6 @@ const Swap = ({
   const lowCreditInit = useRef(false);
 
   const isFocused = useIsFocused();
-
-  const swapBtnDisabled =
-    quoteLoading ||
-    !payToken ||
-    !receiveToken ||
-    !amountAvailable ||
-    inSufficient ||
-    !activeProvider;
-
-  useEffect(() => {
-    if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
-      mutateTxs([]);
-      runBuildSwapTxs();
-    }
-  }, [
-    canUseMiniTx,
-    swapBtnDisabled,
-    activeProvider,
-    runBuildSwapTxs,
-    mutateTxs,
-  ]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -825,7 +791,14 @@ const Swap = ({
             handleSwap();
           }}
           title={btnText}
-          disabled={swapBtnDisabled}
+          disabled={
+            quoteLoading ||
+            !payToken ||
+            !receiveToken ||
+            !amountAvailable ||
+            inSufficient ||
+            !activeProvider
+          }
         />
       </View>
       <TwpStepApproveModal

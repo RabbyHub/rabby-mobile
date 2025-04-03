@@ -37,14 +37,7 @@ import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
 import _ from 'lodash';
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
@@ -1112,35 +1105,20 @@ export const MiniApproval = ({
 
   const { sheetModalRef } = useSheetModal();
 
-  const innerMountedRef = useRef(false);
-
   useEffect(() => {
     if (visible) {
       sheetModalRef.current?.present();
-      sheetModalRef.current?.snapToIndex(0);
     } else {
       sheetModalRef.current?.dismiss();
     }
-  }, [sheetModalRef, visible, txs?.length]);
-
-  const onDismiss = useCallback(() => {
-    onReject?.();
-    innerMountedRef.current = false;
-  }, [onReject]);
-
-  useEffect(() => {
-    if (txs?.length && !visible && !innerMountedRef.current) {
-      sheetModalRef.current?.present();
-      innerMountedRef.current = true;
-    }
-  }, [sheetModalRef, txs?.length, visible]);
+  }, [sheetModalRef, visible]);
 
   return (
     <AppBottomSheetModal
-      index={-1}
       ref={sheetModalRef}
+      // snapPoints={snapPoints}
       enableDismissOnClose
-      onDismiss={onDismiss}
+      onDismiss={onReject}
       handleStyle={styles.sheetBg}
       enableDynamicSizing
       backgroundStyle={styles.sheetBg}>
