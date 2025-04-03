@@ -801,22 +801,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
           },
         }}
         backdropComponent={renderBackdrop}>
-        <LinearGradient
-          start={{ x: 0.5, y: 0.64 }}
-          end={{ x: 0.5, y: 1 }}
-          colors={
-            isLight
-              ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-0']]
-              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']]
-          }
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: 120,
-          }}
-        />
         <AutoLockView
           style={[
             styles.container,
