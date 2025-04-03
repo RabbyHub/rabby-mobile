@@ -1391,7 +1391,7 @@
         "buyHeader": "Acheter avec Fiat",
         "receiveHeader": "Recevoir des cryptos",
         "receiveBody": "Transférer des tokens depuis une autre adresse.",
-        "buyBody": "Achetez des cryptomonnaies en utilisant une carte de débit ou un compte bancaire.",
+        "buyBody": "",
         "title": "Alimentez votre portefeuille"
       },
       "nft": {

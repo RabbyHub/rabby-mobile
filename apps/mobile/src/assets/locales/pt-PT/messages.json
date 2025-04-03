@@ -1616,7 +1616,7 @@
       "emptyToken": {
         "receiveHeader": "Receber Crypto",
         "receiveBody": "Transferir tokens de outro endereço.",
-        "buyBody": "Compre criptomoedas usando um cartão de débito ou conta bancária.",
+        "buyBody": "",
         "title": "Financiar a Sua Wallet",
         "buyHeader": "Comprar com Fiat"
       },

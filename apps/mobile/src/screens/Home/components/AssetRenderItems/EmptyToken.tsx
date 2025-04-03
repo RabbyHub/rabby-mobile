@@ -5,7 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { Card } from '@/components2024/Card';
-import { RcIconReceive, RcIconBuy } from '@/assets2024/singleHome';
+import { RcIconOldReceive, RcIconBuy } from '@/assets2024/singleHome';
 interface IProps {
   onReceive: () => void;
   onBuy: () => void;
@@ -25,7 +25,7 @@ export const EmptyTokenRow = memo(({ onBuy, onReceive }: IProps) => {
         <View style={styles.cardList}>
           <Card onPress={onReceive} style={styles.card}>
             <View style={styles.icon}>
-              <RcIconReceive width={16.8} height={16.8} />
+              <RcIconOldReceive width={16.8} height={16.8} />
             </View>
             <View style={styles.sectionDescription}>
               <Text style={styles.sectionHeader}>
@@ -61,8 +61,9 @@ const getStyle = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 24,
+    borderRadius: 20,
     height: TOKEN_EMPTY_ROW_HIGHT,
+    paddingHorizontal: 16,
   },
   imageBackground: {
     flex: 1,
@@ -99,12 +100,15 @@ const getStyle = createGetStyles2024(ctx => ({
     width: '100%',
   },
   card: {
-    height: 98,
     width: '100%',
     borderRadius: 24,
     display: 'flex',
     flexDirection: 'row',
     gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   sectionDescription: {
     gap: 4,

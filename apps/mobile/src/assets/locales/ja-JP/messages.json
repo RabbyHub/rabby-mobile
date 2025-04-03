@@ -1439,7 +1439,7 @@
       "emptyToken": {
         "receiveHeader": "暗号を受け取る",
         "buyHeader": "法定通貨で購入",
-        "buyBody": "デビットカードまたは銀行口座を使用して暗号を購入します。",
+        "buyBody": "",
         "receiveBody": "別のアドレスからトークンを転送します。",
         "title": "ウォレットに資金を入れる"
       },
