@@ -173,10 +173,10 @@ function History({
         setFirstFetchDone(true);
       }
 
-      !isFirst &&
-        historyList.length === 0 &&
-        !isSceneUsingAllAccounts &&
-        syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
+      // !isFirst &&
+      //   historyList.length === 0 &&
+      //   !isSceneUsingAllAccounts &&
+      //   syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
 
       const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(item => {
@@ -443,6 +443,18 @@ function History({
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
   });
+
+  useEffect(() => {
+    if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
+      syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    dbData.length,
+    isSceneUsingAllAccounts,
+    firstFetchDone,
+    finalSceneCurrentAccount?.address,
+  ]);
 
   useEffect(() => {
     if (isReady.current) {

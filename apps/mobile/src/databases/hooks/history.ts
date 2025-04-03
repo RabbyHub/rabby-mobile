@@ -140,6 +140,11 @@ export const useSyncHistoryDB = (
           page_count: 20,
         });
 
+        const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
+        res.history_list = res.history_list.filter(
+          i => i.time_at > ninetyDaysAgo,
+        );
+
         console.debug(
           'synHistoryInRealTimeApi length:',
           res.history_list.length,
@@ -296,6 +301,10 @@ export const useSyncHistoryDB = (
           page_count: isAddUpdate ? 500 : 2000,
         });
 
+        const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
+        res.history_list = res.history_list.filter(
+          i => i.time_at > ninetyDaysAgo,
+        );
         console.debug('getAllTxHistory length:', res.history_list.length);
         if (res.history_list.length) {
           const lastItemTime =
