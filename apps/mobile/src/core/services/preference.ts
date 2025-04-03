@@ -644,11 +644,6 @@ export class PreferenceService {
       );
     }
 
-    console.debug(
-      'getReportActionTimeout error',
-      this.store.reportActionTsSet?.[to],
-      this.store.reportActionTsSet?.[from],
-    );
     return 0;
   };
 
@@ -656,22 +651,25 @@ export class PreferenceService {
     key: REPORT_TIMEOUT_ACTION_KEY,
     reportExtra?: Record<string, string> | undefined,
   ) => {
-    const ts = Date.now();
-    this.store.reportActionTsSet = {
-      ...this.store.reportActionTsSet,
-      [key]: ts,
-    };
+    try {
+      const ts = Date.now();
+      this.store.reportActionTsSet = {
+        ...this.store.reportActionTsSet,
+        [key]: ts,
+      };
 
-    const beforeKey = this.store.currentReportActionStats;
-    if (key === beforeKey) {
-      return;
+      const beforeKey = this.store.currentReportActionStats;
+      if (key === beforeKey) {
+        return;
+      }
+
+      // report stats
+      reportActionStats(this, key, beforeKey, reportExtra);
+
+      this.store.currentReportActionStats = key;
+    } catch (error) {
+      console.error('[PreferenceService] setReportActionTs error', error);
     }
-
-    // report stats
-    reportActionStats(this, key, beforeKey, reportExtra);
-    console.debug('setReportActionTs', key, beforeKey);
-
-    this.store.currentReportActionStats = key;
   };
 
   addCollectionStarred = (token: Token) => {
