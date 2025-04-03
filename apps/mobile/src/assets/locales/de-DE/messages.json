@@ -1598,7 +1598,7 @@
         "receiveHeader": "Krypto empfangen",
         "receiveBody": "Übertragen Sie Token von einer anderen Adresse.",
         "title": "Finanzieren Sie Ihr Wallet",
-        "buyBody": "Kaufen Sie Krypto mit einer Debitkarte oder einem Bankkonto."
+        "buyBody": "Einfacher Krypto-Kauf"
       },
       "nft": {
         "floorPrice": "/Floor Price:"

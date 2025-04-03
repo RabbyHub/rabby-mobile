@@ -10,7 +10,6 @@ import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
-import { useBottomTabScreenConfig } from '@/hooks/navigation';
 import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadSettingsScreen } from '@/perfs/preloads';
@@ -20,7 +19,6 @@ const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
-  const { mergeBottomTabOptions2024 } = useBottomTabScreenConfig();
 
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');

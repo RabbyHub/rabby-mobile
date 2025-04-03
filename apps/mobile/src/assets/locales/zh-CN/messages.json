@@ -1446,7 +1446,7 @@
         "title": "为您的钱包注资",
         "receiveBody": "将代币从另一个地址转移。",
         "buyHeader": "使用法币购买",
-        "buyBody": "使用借记卡或银行账户购买加密货币。",
+        "buyBody": "简单的加密货币购买",
         "receiveHeader": "接收 Crypto"
       },
       "nft": {

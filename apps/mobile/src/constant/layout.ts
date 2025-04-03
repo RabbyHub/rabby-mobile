@@ -33,7 +33,7 @@ export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 404;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;
 export const ASSETS_SEPARATOR_HEIGHT = 8;
-export const HEADER_TOP_AREA_HEIGHT = 185;
+export const HEADER_TOP_AREA_HEIGHT = 170;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {

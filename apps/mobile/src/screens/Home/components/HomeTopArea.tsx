@@ -34,9 +34,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
 import usePrevious from 'ahooks/lib/usePrevious';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ImageBackground,
   Platform,
   StyleProp,
   StyleSheet,
@@ -129,11 +130,13 @@ export function BadgeText({
 
 export const HomeTopArea = ({
   currentAccount,
+  onUpdateIsDecrease,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
+  onUpdateIsDecrease?: (status: boolean) => void;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
@@ -154,7 +157,6 @@ export const HomeTopArea = ({
     update: true,
     noNeedBalance: false,
   });
-
   const {
     result: curveData,
     isLoading,
@@ -169,10 +171,10 @@ export const HomeTopArea = ({
     }),
   );
 
-  const usd = useMemo(
-    () => '$' + splitNumberByStep((balance || 0).toFixed(2)),
-    [balance],
-  );
+  const usd = useMemo(() => {
+    const b = balance || 0;
+    return '$' + splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2));
+  }, [balance]);
 
   const latestPercent = useMemo(
     () =>
@@ -269,7 +271,7 @@ export const HomeTopArea = ({
               });
             },
             badgeStyle: {
-              backgroundColor: colors2024['brand-default'],
+              backgroundColor: colors2024['red-default'],
             },
           },
           {
@@ -338,6 +340,22 @@ export const HomeTopArea = ({
 
   const isDecrease = useCachedValue(curveData, 'isLoss');
 
+  const topBg = React.useMemo(() => {
+    if (isDecrease) {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-loss-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-loss-dark-bg-2.png');
+      }
+    } else {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-profit-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-profit-dark-bg-2.png');
+      }
+    }
+  }, [isDecrease, isLight]);
+
   const percent = useMemo(() => {
     return latestPercent || previousPercent;
   }, [latestPercent, previousPercent]);
@@ -351,9 +369,27 @@ export const HomeTopArea = ({
     refreshCurveData();
   }, [refreshCurveData]);
 
+  useEffect(() => {
+    if (isDecrease !== undefined) {
+      onUpdateIsDecrease?.(isDecrease);
+    }
+  }, [isDecrease, onUpdateIsDecrease]);
+
   return (
     <>
       <View style={styles.container}>
+        <ImageBackground
+          source={topBg}
+          resizeMode="cover"
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: 150,
+          }}
+        />
         <View style={styles.opacityWrapper}>
           <TouchableOpacity
             style={styles.textBox}
@@ -459,14 +495,6 @@ export const HomeTopArea = ({
                 style={{
                   width: '100%',
                 }}>
-                <Text
-                  style={[
-                    styles.actionText,
-                    {
-                      fontSize: actions.length > 4 ? 13 : 14,
-                    },
-                  ]}
-                />
                 <View
                   style={{
                     position: 'absolute',
@@ -484,12 +512,7 @@ export const HomeTopArea = ({
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={[
-                      styles.actionText,
-                      {
-                        fontSize: actions.length > 4 ? 13 : 14,
-                      },
-                    ]}>
+                    style={[styles.actionText]}>
                     {item.title}
                   </Text>
                 </View>
@@ -548,12 +571,8 @@ export const HomeTopArea = ({
 const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingTop: 16,
-    paddingBottom: 20,
-    paddingHorizontal: 8,
-    backgroundColor: 'transparent',
-    height: 185,
-    width: '100%',
+    paddingTop: 7,
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
@@ -565,13 +584,13 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
   },
   group: {
-    marginTop: 18,
+    marginTop: 16,
     justifyContent: 'space-between',
-    // width: '100%',
     flexDirection: 'row',
+    paddingHorizontal: 24,
   },
   action: {
-    gap: 9,
+    gap: 8,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -580,10 +599,9 @@ const getStyles = createGetStyles2024(ctx => ({
     opacity: 0.6,
   },
   actionIconWrapper: {
-    width: 54,
-    height: 54,
+    width: 48,
+    height: 48,
     borderRadius: 21,
-    backgroundColor: ctx.colors2024['brand-light-1'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -596,12 +614,16 @@ const getStyles = createGetStyles2024(ctx => ({
   actionIcon: {
     width: 24,
     height: 24,
+    shadowColor: 'rgba(112, 132, 255, 1)',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.12,
+    shadowRadius: 11.6,
   },
   actionText: {
     color: ctx.colors2024['neutral-secondary'],
     textAlign: 'center',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
@@ -668,7 +690,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['green-default'],
   },
   badgeText: {
-    color: ctx.colors2024['neutral-bg-1'],
+    color: '#fff', // always white
     fontSize: 12,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
@@ -681,6 +703,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-foot'],
   },
   opacityWrapper: {
+    paddingHorizontal: 24,
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   textBox: {

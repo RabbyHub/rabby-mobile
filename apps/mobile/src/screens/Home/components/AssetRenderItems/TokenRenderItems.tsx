@@ -502,6 +502,8 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     height: ASSETS_SECTION_HEADER,
+    paddingRight: 16 + 8,
+    paddingLeft: 16,
   },
   serachTokenContent: {
     flexDirection: 'row',

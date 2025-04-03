@@ -42,7 +42,7 @@ export const AssestAllHeader = memo(
     };
 
     return (
-      <View style={[styles.constainer, style]}>
+      <View style={[styles.container, style]}>
         <View style={styles.leftContainer}>
           <Pressable onPress={() => handlePress('token')}>
             <Text
@@ -105,7 +105,7 @@ export const AssestAllHeader = memo(
 );
 
 const getStyle = createGetStyles2024(ctx => ({
-  constainer: {
+  container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     height: ASSETS_SECTION_HEADER,

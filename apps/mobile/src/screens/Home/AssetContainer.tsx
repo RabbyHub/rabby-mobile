@@ -113,15 +113,21 @@ const NOT_BORN_DATA = [
     type: 'empty-token',
   },
 ];
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 interface Props {
   onRefresh(): void;
+  onUpdateIsDecrease?: (isDecrease: boolean) => void;
+  onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 56;
 
-export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
+export const AssetContainer: React.FC<Props> = ({
+  onRefresh,
+  onUpdateIsDecrease,
+  onReachTopStatusChange,
+}) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation =
@@ -164,6 +170,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
     reloadNftList,
     chainsInfo,
   } = useQueryProjects(currentAccount?.address);
+
   const { tokens, portfolios, nftList } = useMemo(() => {
     return {
       tokens: _rawTokens?.filter(item =>
@@ -247,7 +254,7 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
             dim.height = DEFI_ITEM_HEIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           default:
-            dim.width = SCREEN_WIDTH;
+            dim.width = SCREEN_WIDTH - 32;
             dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
         }
       },
@@ -924,7 +931,12 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
           />
         );
       case 'overview':
-        return <HomeTopArea currentAccount={currentAccount} />;
+        return (
+          <HomeTopArea
+            currentAccount={currentAccount}
+            onUpdateIsDecrease={onUpdateIsDecrease}
+          />
+        );
       case 'empty-token':
         return (
           <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
@@ -1057,6 +1069,11 @@ export const AssetContainer: React.FC<Props> = ({ onRefresh }) => {
               FOOTER_HEIGHT;
             const reachTop =
               event.nativeEvent.contentOffset.y <= HEADER_TOP_AREA_HEIGHT;
+            if (event.nativeEvent.contentOffset.y <= 0) {
+              onReachTopStatusChange?.(true);
+            } else {
+              onReachTopStatusChange?.(false);
+            }
             setShowScrollIndicator(!reachEnd && !reachTop);
           }
         }}
@@ -1085,7 +1102,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   list: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   stickyHeader: {
     position: 'absolute',
@@ -1093,7 +1109,7 @@ const getStyles = createGetStyles2024(ctx => ({
     left: 0,
     right: 0,
     height: ASSETS_SECTION_HEADER,
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     zIndex: 1,
   },
   bgContainer: {
@@ -1104,12 +1120,14 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 16,
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
-    paddingRight: 16,
+    width: '100%',
+    marginLeft: 16,
   },
   defiGroups: {
     flexDirection: 'row',
     height: DEFI_ITEM_HEIGHT,
     gap: 12,
+    paddingHorizontal: 16,
   },
   renderDefiItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
@@ -1123,7 +1141,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   sectionHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
-    paddingRight: 8,
+    // paddingRight: 8,
     height: ASSETS_SECTION_HEADER,
   },
   buttonHeader: {
@@ -1133,13 +1151,15 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
     height: ASSETS_SECTION_HEADER,
     paddingBottom: 8,
-    paddingLeft: 12,
+    paddingLeft: 12 + 16,
+    paddingRight: 16,
+    width: '100%',
   },
   symbol: {
     fontSize: 16,
     height: ASSETS_SECTION_HEADER,
     lineHeight: ASSETS_SECTION_HEADER,
-    paddingLeft: 9,
+    paddingLeft: 9 + 16,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-secondary'],
