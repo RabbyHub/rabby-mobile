@@ -526,7 +526,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 }}
                 type={type}>
                 <Pressable
-                  delayLongPress={100}
+                  delayLongPress={200}
                   onLongPress={() => {
                     console.log('prevent trigger onPress');
                   }}
@@ -560,7 +560,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               type={type}>
               <TouchableOpacity
                 key={token_key}
-                delayLongPress={100}
+                delayLongPress={200}
                 onLongPress={() => {
                   console.log('prevent trigger onPress');
                 }}
