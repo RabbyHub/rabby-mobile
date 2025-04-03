@@ -6,12 +6,13 @@ import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
 import axios from 'axios';
 import { MMKV } from 'react-native-mmkv';
 import { DEFAULT_CHAIN_LIST } from './default-chain-data';
+import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 
 export type { Chain } from '@debank/common';
 export { CHAINS_ENUM };
 
 const storage = new MMKV({
-  id: 'mmkv.chains',
+  id: MMKV_FILE_NAMES.CHAINS,
 });
 
 const getChainsFromStorage = () => {
