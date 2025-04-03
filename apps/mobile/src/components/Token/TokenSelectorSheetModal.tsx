@@ -1058,7 +1058,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     searchInputContainer: {
       borderRadius: 30,
-      backgroundColor: colors2024['neutral-line'],
+      backgroundColor: isLight ? '#E6E9EE' : colors2024['neutral-bg-2'],
       paddingHorizontal: 12,
       borderColor: 'transparent',
       alignItems: 'center',
