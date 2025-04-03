@@ -131,7 +131,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       loadToken,
       isLoading: isLoadingAllTokens,
     } = useSelectTokens({
-      currentAddress: currentAccount?.address.toLocaleLowerCase(),
+      currentAccount,
       visible: tokenSelectorVisible,
       keyword: queryConds.keyword,
       chain_server_id: queryConds.chainServerId,
