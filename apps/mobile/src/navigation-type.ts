@@ -279,6 +279,7 @@ export type TransactionNavigatorParamList = {
     swapAgain?: boolean;
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
+    isFromSwap?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]?: {};

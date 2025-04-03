@@ -405,17 +405,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     );
 
     const recentTitle = useMemo(() => {
-      if (recentDisplayToTokens.length) {
-        return (
-          <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>
-              {t('component.TokenSelector.recent')}
-            </Text>
-          </View>
-        );
-      }
-      return null;
-    }, [recentDisplayToTokens, t, styles.headerBox, styles.headerBoxText]);
+      return <View style={{ paddingTop: 10 }} />;
+    }, []);
 
     const list = useMemo(() => {
       if (pinedQueue?.length) {

@@ -12,6 +12,7 @@ import { RootNames } from '@/constant/layout';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface Props {
   token: TokenItem;
@@ -47,11 +48,11 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
     }, 100);
 
     navigate(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(token),
+      token: ensureAbstractPortfolioToken({ ...token, _isPined: isPined }),
       needUseCacheToken: true,
       tokenSelectType: type,
     });
-  }, [closeBottomSheet, token, type]);
+  }, [closeBottomSheet, isPined, token, type]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
@@ -100,6 +101,10 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       })
       .filter(v => v);
   }, [menuActionDict]);
+
+  if (IS_ANDROID) {
+    return <>{children}</>;
+  }
 
   return (
     <ContextMenuView

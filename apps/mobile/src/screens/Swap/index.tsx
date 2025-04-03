@@ -243,13 +243,17 @@ const Swap = ({
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
+    console.log(
+      'navState?.isFromSwap',
+      navState,
+      navState?.isFromSwap,
+      receiveToken?.chain,
+      payToken?.chain,
+      chainItem?.serverId,
+    );
 
-    if (navState?.isSwapToTokenDetail) {
-      if (
-        navState?.tokenId &&
-        navState.isSwapToTokenDetail &&
-        chainItem?.enum === chain
-      ) {
+    if (navState?.isFromSwap) {
+      if (navState?.tokenId && chainItem?.enum === chain) {
         if (
           (payToken && payToken.chain !== chainItem.serverId) ||
           (receiveToken && receiveToken.chain !== chainItem.serverId)
@@ -271,15 +275,14 @@ const Swap = ({
             id: navState?.tokenId,
           });
         }
-
-        navigation.setParams({
-          ...navState,
-          isSwapToTokenDetail: false,
-        });
-
         return;
       }
     }
+    navigation.setParams({
+      ...navState,
+      isSwapToTokenDetail: false,
+      isFromSwap: false,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     navState?.chainEnum,

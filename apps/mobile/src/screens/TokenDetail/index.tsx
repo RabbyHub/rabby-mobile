@@ -481,6 +481,9 @@ export const TokenDetailScreen = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
+  const isFromSwap =
+    !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
+
   const handleSwap = useMemoizedFn(
     async (
       type: 'Buy' | 'Sell',
@@ -504,22 +507,18 @@ export const TokenDetailScreen = () => {
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
 
-      const isSwapTo = tokenSelectType === 'swapTo';
       navigation.navigate(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?._tokenId,
-          type: isSwapTo ? 'Buy' : type,
+          type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
-          isSwapToTokenDetail: isSwapTo,
+          isFromSwap,
         },
       });
     },
   );
-
-  const isFromSwap =
-    !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
 
   const { t } = useTranslation();
 

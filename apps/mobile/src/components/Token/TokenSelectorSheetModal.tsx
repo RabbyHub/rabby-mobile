@@ -516,7 +516,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (isSwapTo && query) {
+        if (isSwapTo) {
           return (
             <View style={{ marginTop: 8, marginHorizontal: 12 }}>
               <TokenItemContextMenu
@@ -681,7 +681,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         supportChains,
         isFromModalType,
         isSwapTo,
-        query,
         type,
         styles.tokenItem,
         styles.tokenItemDisabled,
