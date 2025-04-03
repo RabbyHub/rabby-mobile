@@ -104,6 +104,7 @@ export const whitelistService = new WhitelistService({
 
 export const transactionHistoryService = new TransactionHistoryService({
   storageAdapter: appStorage,
+  preferenceService,
 });
 
 export const notificationService = new NotificationService({

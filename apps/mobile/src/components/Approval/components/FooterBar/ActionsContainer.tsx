@@ -42,6 +42,7 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
 }));
 
 export interface Props {
+  isSwap?: boolean;
   onSubmit(): void;
   onCancel(): void;
   account: Account;

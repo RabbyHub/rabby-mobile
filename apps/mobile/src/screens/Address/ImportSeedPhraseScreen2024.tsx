@@ -38,6 +38,8 @@ import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useMemoizedFn } from 'ahooks';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -270,10 +272,12 @@ export const ImportSeedPhraseScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
+      );
       setConfirmCB(importSeedPhrase);
       return;
     }
-
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,

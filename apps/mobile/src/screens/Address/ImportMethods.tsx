@@ -42,6 +42,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -110,6 +112,10 @@ function ImportMethods(): JSX.Element {
                     params: {},
                   }),
                 );
+
+                preferenceService.setReportActionTs(
+                  REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
+                );
               }}>
               <SeedPhraseIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -138,6 +144,10 @@ function ImportMethods(): JSX.Element {
                     screen: RootNames.ImportPrivateKey2024,
                     params: {},
                   }),
+                );
+
+                preferenceService.setReportActionTs(
+                  REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
                 );
               }}>
               <PrivateKeyIcon style={styles.icon} />
@@ -268,6 +278,10 @@ function ImportMethods(): JSX.Element {
                       screen: RootNames.ImportHardwareAddress,
                       params: {},
                     }),
+                  );
+
+                  preferenceService.setReportActionTs(
+                    REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE,
                   );
                 }}>
                 <Image source={HardWareIcon} style={styles.icon} />
