@@ -525,19 +525,25 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   toggleShowSheetModal('destroy');
                 }}
                 type={type}>
-                <ExternalTokenRow
-                  decimalPrecision
-                  data={token.$origin as unknown as any}
-                  logoSize={40}
-                  onTokenPress={() => {
+                <Pressable
+                  delayLongPress={100}
+                  onLongPress={() => {
+                    console.log('prevent trigger onPress');
+                  }}
+                  onPress={() => {
                     if (disabled) {
                       disabledTips && toast.info(disabledTips);
                       return;
                     }
                     onConfirm(token.$origin);
                     toggleShowSheetModal('collapse');
-                  }}
-                />
+                  }}>
+                  <ExternalTokenRow
+                    decimalPrecision
+                    data={token.$origin as unknown as any}
+                    logoSize={40}
+                  />
+                </Pressable>
               </TokenItemContextMenu>
             </View>
           );
@@ -553,6 +559,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
               type={type}>
               <TouchableOpacity
                 key={token_key}
+                delayLongPress={100}
+                onLongPress={() => {
+                  console.log('prevent trigger onPress');
+                }}
                 onPress={() => {
                   if (disabled) {
                     disabledTips && toast.info(disabledTips);
