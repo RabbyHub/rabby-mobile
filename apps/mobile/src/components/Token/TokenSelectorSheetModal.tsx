@@ -542,6 +542,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     decimalPrecision
                     data={token.$origin as unknown as any}
                     logoSize={40}
+                    touchable={false}
                   />
                 </Pressable>
               </TokenItemContextMenu>
