@@ -1088,7 +1088,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       gap: 8,
       maxHeight: 34,
-      marginBottom: 14,
+      marginTop: 2,
+      marginBottom: 4,
       // ...makeDebugBorder(),
     },
 
