@@ -790,7 +790,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
             borderRadius: 32,
           },
           handleStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
             paddingVertical: 18,
           },
           backgroundStyle: {
