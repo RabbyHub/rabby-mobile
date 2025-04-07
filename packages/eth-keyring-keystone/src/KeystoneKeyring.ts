@@ -226,6 +226,7 @@ export default class KeystoneKeyring extends MetaMaskKeyring {
 
   removeAccount = (address: string) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     super.removeAccount(address);
     delete this.brandsMap[address.toLowerCase()];
   };
