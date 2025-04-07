@@ -8,20 +8,29 @@ import { createGetStyles2024 } from '@/utils/styles';
 interface IProps {
   address: string;
   style?: StyleProp<ViewStyle>;
+  loading?: boolean;
 }
-const AddressPopover = ({ address, style }: IProps) => {
+const AddressPopover = ({ address, style, loading }: IProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const addressSplit = useMemo(() => {
     if (!address) {
       return [];
     }
-    const prefix = address.slice(0, 10);
-    const middle = address.slice(10, -6);
-    const suffix = address.slice(-6);
+    const prefix = address.slice(0, 6);
+    const middle = address.slice(6, -4);
+    const suffix = address.slice(-4);
 
     return [prefix, middle, suffix];
   }, [address]);
 
+  if (loading) {
+    return (
+      <View style={[styles.container, style]}>
+        <View style={[styles.loadingBubble]} />
+        <View style={[styles.arrow]} />
+      </View>
+    );
+  }
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.bubble]}>
@@ -42,7 +51,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     alignSelf: 'flex-start',
-    marginBottom: 18,
+    marginBottom: 10,
     width: '100%',
   },
   bubble: {
@@ -62,7 +71,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   highlightAddrPart: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
@@ -82,5 +91,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRightWidth: 0,
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 0,
+  },
+  loadingBubble: {
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-4'],
+    paddingHorizontal: 15.5,
+    paddingVertical: 15,
+    elevation: 5,
+    height: 70,
   },
 }));

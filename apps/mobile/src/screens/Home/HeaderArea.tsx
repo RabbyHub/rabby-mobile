@@ -6,7 +6,6 @@ import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-import TouchableView from '@/components/Touchable/TouchableView';
 import { useCurrentAccount } from '@/hooks/account';
 import { Text } from '@/components';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -102,7 +101,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 1,
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 20,
     lineHeight: 22,
     fontWeight: '700',
     flexWrap: 'nowrap',

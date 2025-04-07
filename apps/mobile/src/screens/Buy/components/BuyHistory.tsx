@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts, RootNames } from '@/constant/layout';
@@ -18,7 +17,8 @@ import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/ut
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { naviPush } from '@/utils/navigation';
 import { BuyHistoryItem as TBuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
-import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -30,7 +30,7 @@ const HistoryList = ({
 }: {
   onGoToDetail: (txId: string, chain: string, data: any) => void;
 }) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const { txList, loading, loadMore, noMore } = useBuyHistory();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -62,16 +62,35 @@ const HistoryList = ({
     () =>
       !loading && (!txList || !txList?.list?.length) ? (
         <View style={styles.emptyView}>
-          <NotMatchedHolder text={t('page.swap.no-transaction-records')} />
+          <Image
+            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+            width={160}
+            height={120}
+            style={{
+              width: 163,
+              height: 126,
+            }}
+          />
+          <Text style={styles.emptyText}>
+            {t('page.swap.no-transaction-records')}
+          </Text>
         </View>
       ) : loading ? (
         <>
-          {Array.from({ length: 4 }).map((_, idx) => (
+          {Array.from({ length: 10 }).map((_, idx) => (
             <Skeleton style={styles.skeletonBlock} key={idx} />
           ))}
         </>
       ) : null,
-    [loading, txList, styles.emptyView, styles.skeletonBlock, t],
+    [
+      loading,
+      txList,
+      styles.emptyView,
+      styles.emptyText,
+      styles.skeletonBlock,
+      isLight,
+      t,
+    ],
   );
 
   const sortedList = useMemo(() => {
@@ -222,8 +241,9 @@ export const BuyHistory = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   emptyText: {
     textAlign: 'center',
-    fontSize: 14,
-    color: colors2024['neutral-foot'],
+    fontSize: 16,
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
   },
   skeletonBlock: {
     width: '100%',

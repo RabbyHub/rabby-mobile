@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 
 import PendingTx from '@/screens/Bridge/components/PendingTx';
-import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
+import RcIconHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { usePollBuyPendingNumber } from '../hooks/history';
 import { BuyHistory } from './BuyHistory';
@@ -30,7 +30,7 @@ export const RightHeader = () => {
         {loadingNumber ? (
           <PendingTx number={loadingNumber} onClick={openHistory} />
         ) : (
-          <RcIconSwapHistory
+          <RcIconHistory
             style={styles.icon}
             color={colors2024['neutral-body']}
           />

@@ -1,6 +1,7 @@
 import { default as RcIconSendCC } from './send.svg';
 import { default as RcIconSwapCC } from './swap.svg';
 import { default as RcIconReceiveCC } from './receive.svg';
+import { default as RcIconOldReceiveCC } from './old-receive.svg';
 import { default as RcIconMoreCC } from './more.svg';
 import { default as RcIconApprovalCC } from './approvals.svg';
 import { default as RcIconBridgeCC } from './bridge.svg';
@@ -21,6 +22,11 @@ export const RcIconSwap = makeThemeIconFromCC(RcIconSwapCC, {
 });
 
 export const RcIconReceive = makeThemeIconFromCC(RcIconReceiveCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const RcIconOldReceive = makeThemeIconFromCC(RcIconOldReceiveCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });

@@ -1,13 +1,9 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import * as Sentry from '@sentry/react-native';
 
-import { TokenItemEntity } from '../entities/tokenitem';
-import {
-  DisplayedTokenWithOwner,
-  tokenItem2AbstractTokenWithOwner,
-} from '@/utils/token';
+import { tokenItem2AbstractTokenWithOwner } from '@/utils/token';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   contactService,
@@ -21,7 +17,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { filterMyAccounts, isWatchOrSafeAccount } from '@/utils/account';
-import { TaggedPortfolioToken, tagTokenItem } from '@/screens/Home/utils/token';
+import { tagTokenItem } from '@/screens/Home/utils/token';
 import groupBy from 'lodash/groupBy';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
@@ -100,121 +96,110 @@ async function fetchAccountsForTokens() {
   }
 }
 
-export function useQueryLocalTokens() {
+export function useQueryLocalTokens(tokens: TokenItem[]) {
   const [accountTokenMap, setAccountTokenMap] = useAtom(
     allAccountsTokensMapAtom,
   );
-  const [isRequesting, _setIsRequesting] = useState(false);
-
-  const setIsRequesting = useCallback((value: boolean) => {
-    isRequestingRef.current = value;
-    _setIsRequesting(value);
-  }, []);
-
   const fetchAllLocalTokens = useCallback(
     async (filters?: { keyword?: string; chain_server_id?: string }) => {
       if (isRequestingRef.current) {
         return;
       }
-      setIsRequesting(true);
-      const [allAccounts, tokenSettings] = await Promise.all([
-        fetchAccountsForTokens().then(accounts =>
-          accounts.filter(account => !isWatchOrSafeAccount(account)),
-        ),
-        preferenceService
-          .getUserTokenSettings()
-          .then(res => res || {})
-          .catch(err => {
-            console.error('fetchAllLocalTokens', err);
-            return {};
-          }),
-      ]);
-
       const { keyword, chain_server_id } = filters || {};
+      if (
+        !accountTokenMap.accounts.length ||
+        !Object.keys(accountTokenMap.userTokenSettings).length
+      ) {
+        const [allAccounts, tokenSettings] = await Promise.all([
+          fetchAccountsForTokens().then(accounts =>
+            accounts.filter(account => !isWatchOrSafeAccount(account)),
+          ),
+          preferenceService
+            .getUserTokenSettings()
+            .then(res => res || {})
+            .catch(err => {
+              console.error('fetchAllLocalTokens', err);
+              return {};
+            }),
+        ]);
+        setAccountTokenMap(prev => ({
+          ...prev,
+          accounts: allAccounts,
+          userTokenSettings: tokenSettings,
+        }));
+      }
 
-      setAccountTokenMap(prev => ({
-        ...prev,
-        accounts: allAccounts,
-        userTokenSettings: tokenSettings,
-      }));
-
-      const addresses = [
-        ...new Set(allAccounts.map(account => account.address)),
-      ];
-
-      return TokenItemEntity.searchAllTokens({
-        addresses,
-        keyword,
-        chain_server_id,
-      })
-        .then(tokens => {
-          if (!tokens.length) {
-            return;
-          }
-          const assestGroup = groupBy(tokens, 'owner_addr');
-          setAccountTokenMap(prev => {
-            return {
-              ...prev,
-              addressIndexedTokens: assestGroup,
-            };
-          });
-        })
-        .catch(error => {
-          console.error('[useQueryLocalTokens] error', error);
-          if (__DEV__) setAccountTokenMap(getInitData());
-        })
-        .finally(() => {
-          setIsRequesting(false);
+      let resTokens: TokenItem[] = [...tokens];
+      if (keyword) {
+        resTokens = resTokens.filter(item => {
+          const allMatchKeyWords = [item.chain, item.id];
+          const partMatchKeyWords = [
+            item.name,
+            item.symbol,
+            item.optimized_symbol,
+            item.display_symbol,
+          ];
+          const allMatch = allMatchKeyWords.some(
+            i => i?.toLocaleLowerCase() === keyword.toLocaleLowerCase(),
+          );
+          const partMatch = partMatchKeyWords.some(i =>
+            i?.toLocaleLowerCase().includes(keyword.toLocaleLowerCase()),
+          );
+          return allMatch || partMatch;
         });
+      }
+      if (chain_server_id) {
+        resTokens = resTokens.filter(token => token.chain === chain_server_id);
+      }
+      resTokens = resTokens.sort((a, b) => {
+        const aUsdValue = a.usd_value || a.price * a.amount;
+        const bUsdValue = b.usd_value || b.price * b.amount;
+
+        return bUsdValue - aUsdValue;
+      });
+      if (!resTokens.length) {
+        return;
+      }
+      const assestGroup = groupBy(resTokens, 'owner_addr');
+      setAccountTokenMap(prev => {
+        return {
+          ...prev,
+          addressIndexedTokens: assestGroup,
+        };
+      });
     },
-    [setAccountTokenMap, setIsRequesting],
+    [
+      accountTokenMap.accounts.length,
+      accountTokenMap.userTokenSettings,
+      setAccountTokenMap,
+      tokens,
+    ],
   );
 
-  const {
-    tokenItems: sortedTokensWithOwner,
-    displayTokens: sortedDisplayTokensWithOwner,
-  } = useMemo(() => {
+  const sortedDisplayTokensWithOwner = useMemo(() => {
     const { accounts, addressIndexedTokens } = accountTokenMap;
 
-    const result = accounts.reduce(
-      (accu, account) => {
-        const tokens = addressIndexedTokens[account.address] || [];
+    const tokenItems = accounts
+      .reduce((pre, curr) => {
+        const _tokens = addressIndexedTokens[curr.address] || [];
 
-        accu.tokenItems = accu.tokenItems.concat(
-          tokens.map(x => ({ ...x, ownerAccount: account })),
-        );
-        // accu.displayTokens = accu.displayTokens.concat(
-        //   tokens.map(token => tokenItem2AbstractTokenWithOwner(token, account)),
-        // );
-        return accu;
-      },
-      {
-        tokenItems: [] as TokenItemMaybeWithOwner[],
-        displayTokens: [] as TaggedPortfolioToken<DisplayedTokenWithOwner>[],
-      },
-    );
+        pre = pre.concat(_tokens.map(x => ({ ...x, ownerAccount: curr })));
+        return pre;
+      }, [] as TokenItemMaybeWithOwner[])
+      .sort((a, b) => {
+        const aUsdValue = a.price * a.amount;
+        const bUsdValue = b.price * b.amount;
 
-    // sort all tokens by usd_value = item.price * item.amount descending, for same usd_value, sort by account order
-    result.tokenItems.sort((a, b) => {
-      const aUsdValue = a.price * a.amount;
-      const bUsdValue = b.price * b.amount;
+        return bUsdValue - aUsdValue;
+      });
 
-      return bUsdValue - aUsdValue;
-    });
-
-    result.displayTokens = result.tokenItems.map(token => {
+    return tokenItems.map(token => {
       const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
-
       return tagTokenItem(data, accountTokenMap.userTokenSettings);
     });
-
-    return result;
   }, [accountTokenMap]);
 
   return {
-    isSearchingLocalTokens: isRequesting,
-    // accountTokenMap,
-    sortedTokensWithOwner,
     sortedDisplayTokensWithOwner,
     fetchAllLocalTokens,
   };

@@ -56,7 +56,6 @@
     "@debank/common@^0.3.54": "patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch",
     "@keystonehq/bc-ur-registry@^0.5.0-alpha.4": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
     "@keystonehq/bc-ur-registry@^0.6.0": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
-    "@keystonehq/metamask-airgapped-keyring@^0.13.1": "patch:@keystonehq/metamask-airgapped-keyring@npm%3A0.13.1#./.yarn/patches/@keystonehq-metamask-airgapped-keyring-npm-0.13.1-3b32a92c47.patch",
     "@ledgerhq/hw-app-eth@^6.40.0": "patch:@ledgerhq/hw-app-eth@npm%3A6.40.2#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.40.2-ffdc4add8c.patch",
     "@ledgerhq/hw-transport@^6.31.4": "patch:@ledgerhq/hw-transport@npm%3A6.31.4#./.yarn/patches/@ledgerhq-hw-transport-npm-6.31.4-b439e9a1f8.patch",
     "@metamask/eth-sig-util@5.1.0": "patch:@metamask/eth-sig-util@npm%3A5.1.0#./.yarn/patches/@metamask-eth-sig-util-npm-5.1.0-fb33750b27.patch",

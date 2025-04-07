@@ -7,7 +7,7 @@ import { DisplayedProject, DisplayedToken, pQueue } from './project';
 import { isTestnet as checkIsTestnet } from '@/utils/chain';
 import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
-import { openapi } from '@/core/request';
+import { openapi, testOpenapi } from '@/core/request';
 import { AbstractPortfolioToken } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';

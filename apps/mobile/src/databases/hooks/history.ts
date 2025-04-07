@@ -140,6 +140,11 @@ export const useSyncHistoryDB = (
           page_count: 20,
         });
 
+        const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
+        res.history_list = res.history_list.filter(
+          i => i.time_at > ninetyDaysAgo,
+        );
+
         console.debug(
           'synHistoryInRealTimeApi length:',
           res.history_list.length,
@@ -296,6 +301,10 @@ export const useSyncHistoryDB = (
           page_count: isAddUpdate ? 500 : 2000,
         });
 
+        const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
+        res.history_list = res.history_list.filter(
+          i => i.time_at > ninetyDaysAgo,
+        );
         console.debug('getAllTxHistory length:', res.history_list.length);
         if (res.history_list.length) {
           const lastItemTime =
@@ -363,6 +372,8 @@ export const useSyncHistoryDB = (
           !res.history_list.length &&
           setHistoryLoading(prev => ({ ...prev, [address]: false }));
       } catch (error) {
+        // set time for next resend fetch
+        updateHistoryTimeSingleAddress(address, 0);
         console.error('syncUserAllHistory Error fetching data:', error);
       }
       if (!address) {
@@ -376,8 +387,6 @@ export const useSyncHistoryDB = (
       console.debug('🔍syncTop10History some tx done so isNeedSyncData');
       return true;
     }
-
-    await prepareAppDataSource();
 
     const latestTime = updateHistoryTime[add] || 0;
 

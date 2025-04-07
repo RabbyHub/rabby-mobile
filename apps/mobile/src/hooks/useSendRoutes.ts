@@ -5,8 +5,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
-import { cexInfoAtoms } from './useCexAccounts';
-import { openapi } from '@/core/request';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -17,30 +21,45 @@ export const useSendRoutes = () => {
   const { findAccount } = useWhiteListAddress(true);
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
-  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
-
+  const navigateToSendScreen = useCallback(
+    (p?: { [key: string]: any }) => {
+      navigation.push(RootNames.StackTransaction, {
+        screen: isSingleAddress ? RootNames.Send : RootNames.MultiSend,
+        params: { ...params, ...p },
+      });
+    },
+    [navigation, params, isSingleAddress],
+  );
   const navigateToSendPolyScreen = useCallback(
     async (isForSingleAddress: boolean, p?: { [key: string]: any }) => {
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {
-        let cexDes = cexInfoStore[p?.toAddress];
-        if (!cexDes) {
-          const { desc } = await openapi.addrDesc(p?.toAddress);
-          cexDes = desc.cex;
-          setCexInfoStore(prev => ({ ...prev, [p?.toAddress]: cexDes }));
-        }
+        let addrDesc = await getAddrDescWithCexLocalCacheSync(p?.toAddress);
         const { inWhitelist, account } = await findAccount(p.toAddress);
         if (inWhitelist) {
           navigation.push(RootNames.StackTransaction, {
             screen: isForSingleAddress ? RootNames.Send : RootNames.MultiSend,
-            params: { ...params, ...p, cexDes },
+            params: { ...params, ...p, addrDesc },
           });
         } else {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.ConfirmAddress,
-            params: {
-              account,
+          const id = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES.CONFIRM_ADDRESS,
+            account,
+            bottomSheetModalProps: {
+              enableDynamicSizing: true,
+            },
+            onCancel: () => {
+              removeGlobalBottomSheetModal2024(id);
+            },
+            onConfirm(acc, addressDesc) {
+              removeGlobalBottomSheetModal2024(id);
+              navigateToSendScreen({
+                ...p,
+                addressBrandName: acc.brandName,
+                addrDesc: addressDesc,
+                toAddress: acc.address,
+              });
             },
           });
         }
@@ -51,24 +70,15 @@ export const useSendRoutes = () => {
       });
     },
     [
-      cexInfoStore,
       findAccount,
+      navigateToSendScreen,
       navigation,
       params,
-      setCexInfoStore,
       setIsSingleAddress,
       setParams,
     ],
   );
-  const navigateToSendScreen = useCallback(
-    (p?: { [key: string]: any }) => {
-      navigation.push(RootNames.StackTransaction, {
-        screen: isSingleAddress ? RootNames.Send : RootNames.MultiSend,
-        params: { ...params, ...p },
-      });
-    },
-    [navigation, params, isSingleAddress],
-  );
+
   return {
     navigateToSendPolyScreen,
     navigateToSendScreen,

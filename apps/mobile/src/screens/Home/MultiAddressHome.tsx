@@ -15,7 +15,6 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
-  Pressable,
 } from 'react-native';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
@@ -30,7 +29,7 @@ import {
 } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
@@ -49,10 +48,9 @@ import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisAccount } from '@/core/apis';
@@ -62,7 +60,6 @@ import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
 import {
   KeyringAccountWithAlias,
-  useAccounts,
   useCurrentAccount,
   useMyAccounts,
 } from '@/hooks/account';
@@ -70,14 +67,12 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import useHomePinAddress from './hooks/useHomePinAddress';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
-import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { ellipsisAddress } from '@/utils/address';
 import { useSyncAssetsDB } from '@/databases/hooks/assets';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
@@ -88,7 +83,8 @@ import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useCexAccounts } from '@/hooks/useCexAccounts';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 
 const HeaderHeight = 24;
 
@@ -115,7 +111,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       (sum, item) => sum + (Number(item.balance) || 0),
       0,
     );
-    return '$' + splitNumberByStep((num || 0).toFixed(2));
+    return '$' + splitNumberByStep(num > 10 ? Math.floor(num) : num.toFixed(2));
   }, [balanceAccounts]);
 
   const spin = spinValue.interpolate({
@@ -347,7 +343,7 @@ function MultiAddressHome(): JSX.Element {
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
-  useCexAccounts();
+  useFetchCexInfo();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -516,6 +512,10 @@ function MultiAddressHome(): JSX.Element {
               screen: RootNames.MultiSwap,
               params: {},
             }),
+          );
+
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
           );
           break;
         case MultiHomeFeatTitle.Bridge:
@@ -716,8 +716,8 @@ function MultiAddressHome(): JSX.Element {
                         style={StyleSheet.flatten([styles.pinGridItem])}>
                         <WalletIcon
                           type={item.brandName}
-                          width={18}
-                          height={18}
+                          width={22}
+                          height={22}
                           borderRadius={5}
                         />
                         <Text style={styles.pinGridText}>
@@ -765,7 +765,7 @@ function MultiAddressHome(): JSX.Element {
                     });
                   }}>
                   <View style={styles.iconWrapper}>
-                    <el.icon />
+                    <el.icon width={28} height={28} />
                     {!!el.badge && el.badge > 0 && (
                       <BadgeText
                         count={el.badge}
@@ -804,7 +804,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 3,
     backgroundColor: colors2024['red-default'],
     position: 'absolute',
-    top: 15,
+    top: 0,
     right: 13,
   },
   rootScreenContainer: {
@@ -928,10 +928,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   gridText: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
     fontWeight: '700',
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
   },
@@ -982,9 +982,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
-    height: 46,
-    gap: 8,
+    paddingHorizontal: 10,
+    height: 42,
+    gap: 10,
     position: 'relative',
     borderColor: isLight
       ? colors2024['neutral-bg-1']
@@ -1002,21 +1002,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
   },
   gridItem: {
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: 2,
+    borderColor: isLight
+      ? colors2024['neutral-InvertHighlight']
+      : 'transparent',
     backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
+      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
       : colors2024['neutral-bg-2'],
     width: '48%', // default
     minWidth: 0,
-    borderRadius: 18,
+    borderRadius: 16,
     flexShrink: 0,
-    padding: 20,
+    padding: 18,
+    paddingLeft: 20,
+    paddingBottom: 16,
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'center',
     height: 96,
-    gap: 12,
+    gap: 14,
     position: 'relative',
   },
   pendingContainer: {

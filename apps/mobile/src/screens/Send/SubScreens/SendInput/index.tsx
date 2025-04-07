@@ -18,13 +18,17 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { openapi } from '@/core/request';
-import { useNavigationState } from '@react-navigation/native';
+import { StackActions, useNavigationState } from '@react-navigation/native';
 import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useAtom } from 'jotai';
-import { cexInfoAtoms } from '@/hooks/useCexAccounts';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useWhitelist } from '@/hooks/whitelist';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -45,8 +49,8 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
-  const navigation = useRabbyAppNavigation();
   const [loading, setLoading] = useState(false);
+  const { navigation } = useSafeSetNavigationOptions();
   const navParams = useNavigationState(
     s =>
       s.routes.find(
@@ -57,11 +61,11 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   ) as {
     autoScan?: boolean;
   };
+  const { addWhitelist } = useWhitelist();
 
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
-  const [cexInfoStore, setCexInfoStore] = useAtom(cexInfoAtoms);
 
   const { t } = useTranslation();
 
@@ -89,32 +93,59 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         if (inWhitelist) {
           toast.show(t('page.whitelist.alreadyAdded'));
         } else {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.WhitelistConfirm,
-            params: {
-              account,
+          const id = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES.CONFIRM_ADDRESS,
+            account,
+            title: t('page.confirmAddress.addToWhitelist'),
+            disbaleWhiteSwitch: true,
+            bottomSheetModalProps: {
+              enableDynamicSizing: true,
+            },
+            onCancel: () => {
+              removeGlobalBottomSheetModal2024(id);
+            },
+            onConfirm() {
+              removeGlobalBottomSheetModal2024(id);
+              addWhitelist(account.address, {
+                onAdded: () => {
+                  toast.success(t('page.whitelist.addSuccessful'));
+                  navigation.popToTop();
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackTransaction, {
+                      screen: RootNames.SendTo,
+                    }),
+                  );
+                },
+              });
             },
           });
         }
         return;
       }
       if (inWhitelist) {
-        let cexDes = cexInfoStore[address];
-        if (!cexDes) {
-          const { desc } = await openapi.addrDesc(address);
-          cexDes = desc.cex;
-          setCexInfoStore(prev => ({ ...prev, [address]: cexDes }));
-        }
+        let addrDesc = await getAddrDescWithCexLocalCacheSync(address);
         navigateToSendScreen({
           toAddress: account.address,
-          cexDes: cexDes,
+          addrDesc: addrDesc,
           addressBrandName: account.brandName,
         });
       } else {
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.ConfirmAddress,
-          params: {
-            account,
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.CONFIRM_ADDRESS,
+          account,
+          bottomSheetModalProps: {
+            enableDynamicSizing: true,
+          },
+          onCancel: () => {
+            removeGlobalBottomSheetModal2024(id);
+          },
+          onConfirm(acc, addressDesc) {
+            removeGlobalBottomSheetModal2024(id);
+            navigateToSendScreen({
+              addressBrandName: acc.brandName,
+              addrDesc: addressDesc,
+              toAddress: acc.address,
+            });
           },
         });
       }
@@ -166,7 +197,9 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                 hasError={!!error}
                 fieldErrorTextStyle={styles.error}
                 containerStyle={Object.assign(
-                  {},
+                  {
+                    borderRadius: 16,
+                  },
                   error
                     ? {}
                     : {
@@ -175,8 +208,10 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                 )}
                 inputProps={{
                   placeholder: t('page.sendPoly.enterAddress'),
+                  placeholderTextColor: colors2024['neutral-secondary'],
                   value: input,
                   blurOnSubmit: true,
+                  autoFocus: true,
                   returnKeyType: 'done',
                   onChangeText: handleSubmit,
                 }}
@@ -243,13 +278,15 @@ const getStyles = createGetStyles2024(ctx => ({
   },
 
   textContainer: {
-    marginTop: 20,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   textArea: {
     marginTop: 14,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors['neutral-card-1'],
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   error: {
     textAlign: 'left',

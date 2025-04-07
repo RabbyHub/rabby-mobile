@@ -55,7 +55,7 @@ export const useSwapHistory = () => {
       getSwapList(
         addr,
         d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
-        5,
+        20,
       ),
     {
       isNoMore(data) {
@@ -70,7 +70,7 @@ export const useSwapHistory = () => {
 
   const { value } = useAsync(async () => {
     if (addr) {
-      return getSwapList(addr, 0, 5);
+      return getSwapList(addr, 0, 20);
     }
   }, [addr, refreshSwapTxListCount]);
 

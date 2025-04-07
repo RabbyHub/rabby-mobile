@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { WhiteListItemSwitch } from './WhiteListItem';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
-import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { useWhiteListAddress } from '../hooks/useWhiteListAddress';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { ellipsisAddress } from '@/utils/address';
@@ -16,12 +16,12 @@ export default function ToAddressControl2024({
   style,
   address,
   brandName,
-  cexDes,
+  addrDesc,
 }: React.PropsWithChildren<
   RNViewProps & {
     address: string;
     brandName?: string;
-    cexDes?: Cex;
+    addrDesc?: AddrDescResponse['desc'];
   }
 >) {
   const { styles } = useTheme2024({ getStyle });
@@ -61,7 +61,7 @@ export default function ToAddressControl2024({
       </View>
       <WhiteListItemSwitch
         account={currentAccount}
-        cexDes={cexDes}
+        addrDesc={addrDesc}
         inWhiteList={isAddrOnWhitelist(currentAccount.address)}
       />
     </View>

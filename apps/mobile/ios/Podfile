@@ -98,10 +98,10 @@ target 'RabbyMobile' do
     patch_build_settings(installer)
 
     # @see https://stackoverflow.com/a/79022687
-    # if use Xcode > 16, uncomment it to do bitcode strip,
-    # but maybe stripped hermes's dysym wouldn't match UUID it's expected on upload asset to App Store
-    #
-    # system("bash ./handle_bitcode.sh")
+    ## if use Xcode > 16, uncomment it to do bitcode strip,
+    ## but maybe stripped hermes's dysym wouldn't match UUID it's expected on upload asset to App Store
+    ##
+    system("bash ./handle_bitcode.sh")
   end
 end
 

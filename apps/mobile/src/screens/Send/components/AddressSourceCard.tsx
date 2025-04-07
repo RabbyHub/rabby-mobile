@@ -16,7 +16,7 @@ import { RcIconLockCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { visibleAtom } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
-import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
 import { useTranslation } from 'react-i18next';
 import { useAlias2 } from '@/hooks/alias';
@@ -26,13 +26,16 @@ import {
   BRAND_ALIAS_TYPE_TEXT,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils/dist/types';
+import { formatUsdValue } from '@/utils/number';
+import { Skeleton } from '@rneui/themed';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
-  cexDesc?: Cex;
+  loading?: boolean;
+  addressDesc?: AddrDescResponse['desc'];
 }
-const AddressSource = ({ account, style, cexDesc }: IProps) => {
+const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
@@ -45,7 +48,7 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
   const inWhiteList = useMemo(() => {
     return whitelist.some(item => isSameAddress(item, account.address));
   }, [account.address, whitelist]);
-
+  const cexDesc = addressDesc?.cex;
   const brandColors = useMemo(
     () =>
       getBrandColors(cexDesc?.is_deposit ? cexDesc?.id : account.type, isLight),
@@ -57,6 +60,17 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
     }
   }, [fetchAlias, visible]);
 
+  if (loading) {
+    return (
+      <Card style={StyleSheet.flatten([styles.card, style])}>
+        <Skeleton style={styles.loadingSquare} width={46} height={46} />
+        <View style={styles.loaderList}>
+          <Skeleton style={styles.loading} height={20} />
+          <Skeleton style={styles.loading} width={53} height={20} />
+        </View>
+      </Card>
+    );
+  }
   return (
     <Card style={StyleSheet.flatten([styles.card, style])}>
       <InnerAddressItem style={styles.rootItem} account={account}>
@@ -84,31 +98,36 @@ const AddressSource = ({ account, style, cexDesc }: IProps) => {
               )}
             </View>
             <View style={styles.itemInfo}>
-              {((cexDesc?.is_deposit && cexDesc?.id) ||
-                account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
-                <View style={styles.itemName}>
-                  <Text
-                    style={[
-                      styles.itemType,
-                      {
-                        color: brandColors.brandColor,
-                        backgroundColor: brandColors.brandBg,
-                      },
-                    ]}>
-                    {cexDesc?.is_deposit && cexDesc?.name
-                      ? `${cexDesc.name} ${t(
-                          'page.confirmAddress.dexNameTail',
-                        )}`
-                      : `${
-                          BRAND_ALIAS_TYPE_TEXT[account.type] ||
-                          account.brandName
-                        } ${t('page.confirmAddress.brandNameTail')}`}
-                  </Text>
-                </View>
-              )}
-              <View style={styles.editAliasWrapper}>
+              <View style={styles.itemNameWrapper}>
                 <Text style={styles.itemNameText}>
                   {adderssAlias || ellipsisAddress(account.address)}
+                </Text>
+                {((cexDesc?.is_deposit && cexDesc?.id) ||
+                  account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
+                  <View style={styles.itemName}>
+                    <Text
+                      style={[
+                        styles.itemType,
+                        {
+                          color: brandColors.brandColor,
+                          backgroundColor: brandColors.brandBg,
+                        },
+                      ]}>
+                      {cexDesc?.is_deposit && cexDesc?.name
+                        ? `${cexDesc.name} ${t(
+                            'page.confirmAddress.dexNameTail',
+                          )}`
+                        : `${
+                            BRAND_ALIAS_TYPE_TEXT[account.type] ||
+                            account.brandName
+                          } ${t('page.confirmAddress.brandNameTail')}`}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.editAliasWrapper}>
+                <Text style={styles.balanceText}>
+                  {formatUsdValue(account.balance || 0)}
                 </Text>
               </View>
             </View>
@@ -163,15 +182,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   itemNameText: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '500',
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   itemType: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
     paddingHorizontal: 4,
     paddingVertical: 2,
@@ -191,6 +210,32 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   walletIcon: {
+    borderRadius: 12,
+  },
+  itemNameWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  balanceText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+  },
+  loaderList: {
+    gap: 4,
+    flex: 1,
+    marginLeft: 11,
+  },
+  loading: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 8,
+  },
+  loadingSquare: {
+    backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 12,
   },
 }));

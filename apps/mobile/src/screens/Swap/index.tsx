@@ -9,7 +9,7 @@ import {
   getChainDefaultToken,
   SWAP_SUPPORT_CHAINS,
 } from '@/constant/swap';
-import { swapService } from '@/core/services';
+import { preferenceService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
@@ -79,6 +79,7 @@ import {
 } from '@/navigation-type';
 import { TokenInfoPopup } from './components/TokenInfoPopup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -219,7 +220,6 @@ const Swap = ({
       return;
     }
 
-    const isBuy = navState?.type === 'Buy';
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
 
     if (navState.swapAgain) {
@@ -230,11 +230,6 @@ const Swap = ({
       );
       return;
     }
-
-    switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
-      payTokenId: navState?.tokenId,
-      changeTo: isBuy,
-    });
   });
 
   const navigation = useNavigation<SwapRouteProps['navigation']>();
@@ -242,17 +237,23 @@ const Swap = ({
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
+    console.log(
+      'navState?.isFromSwap',
+      isBuy,
+      navState,
+      navState?.isFromSwap,
+      receiveToken?.chain,
+      payToken?.chain,
+      chainItem?.serverId,
+    );
 
-    if (navState?.isSwapToTokenDetail) {
-      if (
-        navState?.tokenId &&
-        navState.isSwapToTokenDetail &&
-        chainItem?.enum === chain
-      ) {
+    if (navState?.isFromSwap) {
+      if (navState?.tokenId && chainItem?.enum === chain) {
         if (
           (payToken && payToken.chain !== chainItem.serverId) ||
           (receiveToken && receiveToken.chain !== chainItem.serverId)
         ) {
+          console.log('??????');
           switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
             payTokenId: navState?.tokenId,
             changeTo: isBuy,
@@ -270,15 +271,21 @@ const Swap = ({
             id: navState?.tokenId,
           });
         }
-
-        navigation.setParams({
-          ...navState,
-          isSwapToTokenDetail: false,
-        });
-
         return;
       }
+    } else {
+      if (navState?.tokenId) {
+        switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
+          payTokenId: navState?.tokenId,
+          changeTo: isBuy,
+        });
+      }
     }
+    navigation.setParams({
+      ...navState,
+      isSwapToTokenDetail: false,
+      isFromSwap: false,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     navState?.chainEnum,
@@ -427,6 +434,10 @@ const Swap = ({
 
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
 
+  const chainServerId = useMemo(() => {
+    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
+  }, [chain]);
+
   const handleSwap = useMemoizedFn(() => {
     if (receiveToken) {
       setRecentSwapToToken(receiveToken);
@@ -450,11 +461,13 @@ const Swap = ({
     } else {
       gotoSwap();
     }
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
+      {
+        chain: chainServerId,
+      },
+    );
   });
-
-  const chainServerId = useMemo(() => {
-    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
-  }, [chain]);
 
   const amountAvailable = useMemo(
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
@@ -613,7 +626,7 @@ const Swap = ({
           </View>
           <View
             style={{
-              borderRadius: 24,
+              borderRadius: 16,
               backgroundColor: colors2024['neutral-bg-2'],
               position: 'relative',
             }}>
@@ -849,6 +862,12 @@ const Swap = ({
               }),
             );
           }, 500);
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
+            {
+              chain: chainServerId,
+            },
+          );
         }}
       />
 

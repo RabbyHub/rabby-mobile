@@ -230,6 +230,7 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
     isSwapToTokenDetail,
+    tokenSelectType,
   } = route.params || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -480,6 +481,9 @@ export const TokenDetailScreen = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
+  const isFromSwap =
+    !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
+
   const handleSwap = useMemoizedFn(
     async (
       type: 'Buy' | 'Sell',
@@ -495,8 +499,6 @@ export const TokenDetailScreen = () => {
         serverId: token.chain,
       });
 
-      console.log('isSwapToTokenDetail', isSwapToTokenDetail);
-
       const toAccount =
         address && accountType
           ? accounts.find(
@@ -504,14 +506,15 @@ export const TokenDetailScreen = () => {
             ) || finalAccount
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
+
       navigation.navigate(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?._tokenId,
-          type: isSwapToTokenDetail ? 'Buy' : type,
+          type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
-          isSwapToTokenDetail: isSwapToTokenDetail,
+          isFromSwap,
         },
       });
     },
@@ -632,7 +635,7 @@ export const TokenDetailScreen = () => {
                   : undefined
               }>
               <Button
-                title={t('page.swap.title')}
+                title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 onPress={() => handleSwap('Sell')}
                 disabled={!tokenSupportSwap}

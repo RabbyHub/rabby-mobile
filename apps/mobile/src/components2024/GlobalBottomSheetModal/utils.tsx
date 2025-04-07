@@ -45,6 +45,7 @@ import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
 import { Dimensions } from 'react-native';
 import { CollectionNFTs } from '../CollectionNFTs';
 import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
+import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -78,6 +79,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['95%'],
   [MODAL_NAMES.AUTHENTICATION]: undefined,
+  [MODAL_NAMES.CONFIRM_ADDRESS]: undefined,
   [MODAL_NAMES.NFT_DETAIL]: ['85%'],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: [526],
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: ['95%'],
@@ -131,6 +133,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal2024,
+  [MODAL_NAMES.CONFIRM_ADDRESS]: ConfirmAddress,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
   [MODAL_NAMES.DESCRIPTION]: Descriptions,
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,

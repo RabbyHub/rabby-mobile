@@ -7,7 +7,7 @@ import {
 } from '../hooks/history';
 import { SwapTxHistory } from './SwapTxHistory';
 import PendingTx from '@/screens/Bridge/components/PendingTx';
-import RcIconSwapHistory from '@/assets2024/icons/bridge/IconTopHistory.svg';
+import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 
 export const SwapHeader = ({
@@ -49,7 +49,7 @@ const getStyle = createGetStyles2024(() => ({
     alignItems: 'center',
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
   },
 }));

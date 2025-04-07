@@ -15,8 +15,14 @@ import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
 import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
+import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
-export function BalanceSection({ style }: RNViewProps) {
+export function BalanceSection({
+  style,
+  disableItemCheck,
+}: RNViewProps & {
+  disableItemCheck?: ITokenCheck;
+}) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -110,6 +116,7 @@ export function BalanceSection({ style }: RNViewProps) {
             onChange={value => {
               handleFieldChange?.('amount', value);
             }}
+            disableItemCheck={disableItemCheck}
             chainId={chainItem.serverId}
             token={currentToken}
             isEstimatingGas={screenState.isEstimatingGas}

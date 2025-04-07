@@ -1,8 +1,13 @@
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
-import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
+import {
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  View,
+  Image,
+} from 'react-native';
 import { ModalLayouts, RootNames } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -19,6 +24,8 @@ import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/ut
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useCurrentAccount } from '@/hooks/account';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -54,8 +61,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   emptyText: {
     textAlign: 'center',
-    color: colors2024['neutral-foot'],
-    fontSize: 14,
+    fontSize: 16,
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
   },
   item: {
     height: 8,
@@ -74,7 +82,7 @@ const HistoryList = ({
 }) => {
   const { txList, loading, loadMore, noMore } = useSwapHistory();
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   const renderItem = useCallback(
     ({ item }) => (
@@ -105,14 +113,22 @@ const HistoryList = ({
     () =>
       !loading && (!txList || !txList?.list?.length) ? (
         <View style={styles.emptyView}>
-          <RcIconSwapHistoryEmpty width={52} height={52} />
+          <Image
+            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+            width={160}
+            height={120}
+            style={{
+              width: 163,
+              height: 126,
+            }}
+          />
           <Text style={styles.emptyText}>
             {t('page.swap.no-transaction-records')}
           </Text>
         </View>
       ) : loading ? (
         <>
-          {Array.from({ length: 4 }).map((_, idx) => (
+          {Array.from({ length: 10 }).map((_, idx) => (
             <Skeleton style={styles.skeletonBlock} key={idx} />
           ))}
         </>
@@ -123,6 +139,7 @@ const HistoryList = ({
       styles.emptyView,
       styles.emptyText,
       styles.skeletonBlock,
+      isLight,
       t,
     ],
   );

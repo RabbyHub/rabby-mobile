@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
-import { keyringService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
@@ -21,6 +21,11 @@ import {
 } from '@/hooks/address/useNewUser';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  useSafeAreaFrame,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -35,7 +40,9 @@ function GetStartedScreen2024(): JSX.Element {
   });
 
   const handleGoToHome = useCallback(async () => {
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
@@ -56,13 +63,18 @@ function GetStartedScreen2024(): JSX.Element {
   );
 
   const handleGoToCreate = useCallback(async () => {
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
 
     startCreateAddressProc(ProcDataType.Seed, '');
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
+    );
     navigate(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
     });
@@ -73,12 +85,17 @@ function GetStartedScreen2024(): JSX.Element {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
 
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
+    );
     navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
   }, [getStaretd.processedInit]);
 
@@ -87,7 +104,9 @@ function GetStartedScreen2024(): JSX.Element {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    if (!getStaretd.processedInit) return;
+    if (!getStaretd.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
 
@@ -97,6 +116,9 @@ function GetStartedScreen2024(): JSX.Element {
     navigate(RootNames.Scanner, {
       syncExtension: true,
     });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
+    );
   }, [getStaretd.processedInit]);
 
   const navigation = useRabbyAppNavigation();
@@ -130,9 +152,25 @@ function GetStartedScreen2024(): JSX.Element {
     }, [isAppUnlocked, initAccounts]),
   );
 
+  const { bottom, top } = useSafeAreaInsets();
+  const { height } = useSafeAreaFrame();
+
+  const { height: WHeight } = useWindowDimensions();
+  const offsetAreaStyle = useMemo(() => {
+    const availableHeight = Math.min(height - bottom - top, WHeight);
+
+    return {
+      flexShrink: 0,
+      height:
+        availableHeight > 700
+          ? Math.floor(availableHeight - LOGO_SIZE.wrapperHeight) / 2
+          : 140,
+    };
+  }, [bottom, height, top, WHeight]);
+
   return (
     <View style={styles.screen}>
-      <View style={styles.offsetArea} />
+      <View style={offsetAreaStyle} />
       <View style={styles.contentArea}>
         <View style={styles.centerWrapper}>
           {/* <RcIconLogo /> */}
@@ -232,17 +270,10 @@ const getStyles = createGetStyles2024(ctx =>
       backgroundColor: ctx.colors['neutral-card1'],
       flexDirection: 'column',
       justifyContent: 'center',
-      height: '100%',
+      // height: '100%',
+      flex: 1,
     },
-    offsetArea: {
-      flexShrink: 0,
-      height:
-        Dimensions.get('screen').height > 700
-          ? Math.floor(
-              Dimensions.get('screen').height - LOGO_SIZE.wrapperHeight,
-            ) / 2
-          : 140,
-    },
+
     contentArea: {
       flexShrink: 1,
       height: '100%',

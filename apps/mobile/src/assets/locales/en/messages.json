@@ -38,6 +38,8 @@
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",
       "ShowHiddenItems": "Show hidden transactions",
+      "ShowScamTransactions": "Show scam transactions",
+      "HideScamTransactions": "Hide scam transactions",
       "ShowAllTransactionsToast": "Hidden transactions shown",
       "NotShowAllTransactionsToast": "Hidden transactions concealed",
       "Today": "Today",
@@ -581,6 +583,7 @@
     "sendToken": {
       "Chain": "Chain",
       "To": "To",
+      "From": "From",
       "Amount": "Amount:",
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
       "AddToContactsModal": {
@@ -631,6 +634,7 @@
       },
       "ContractAddress": "Contract Address",
       "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
+      "noSupprotTokenForSafe": "The Safe address you're sending tokens to isn't deployed on this chain. Check before proceeding to avoid loss.",
       "noSupportBtns": {
         "confirm": "Proceed",
         "cancel": "Cancel"
@@ -658,6 +662,8 @@
       "addToWhitelist": "Add to whitelist",
       "dexNameTail": "Deposit Address",
       "brandNameTail": "Address",
+      "title": "Confirm Address",
+      "sendTo": "Send to this Address",
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
         "noSend": "You haven't sent funds to this address in the past 180 days. Please confirm if you wish to proceed.",
@@ -673,6 +679,7 @@
     "whitelist": {
       "addToWhitelist": "Add to Whitelist",
       "removeWhitelist": "Remove from Whitelist",
+      "copyAddress": "Copy Address",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "addSuccessful": "Address added to whitelist",
@@ -1671,7 +1678,7 @@
         "receiveHeader": "Receive Crypto",
         "receiveBody": "Transfer tokens from another address.",
         "buyHeader": "Buy with Fiat",
-        "buyBody": "Purchase crypto using a debit card or bank account."
+        "buyBody": "Simple crypto purchase"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1879,7 +1886,10 @@
       "common": "Common",
       "recent": "Recent",
       "searchPlaceHolder1": "Search by Name / Address",
-      "searchPlaceHolder2": "Search Token"
+      "searchPlaceHolder2": "Search Token",
+      "contextMenu": {
+        "viewDetail": "View Detail"
+      }
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

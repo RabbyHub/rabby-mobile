@@ -58,7 +58,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   return (
     <AddressItemContextMenu
       account={account}
-      actions={['pin', 'edit', 'delete']}>
+      actions={['copy', 'pin', 'edit', 'delete']}>
       <AddressItemShadowView style={isPressing && styles.rootPressing}>
         <TouchableOpacity
           activeOpacity={1}

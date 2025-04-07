@@ -18,6 +18,13 @@ import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useWhitelist } from '@/hooks/whitelist';
+import { StackActions } from '@react-navigation/native';
 
 function SendHistoryScreen() {
   const { accounts } = useMyAccounts({
@@ -118,6 +125,7 @@ function SendHistoryScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyLoading]);
   const { findAccount } = useWhiteListAddress(true);
+  const { addWhitelist } = useWhitelist();
 
   const fetchFromDbLoading = useMemo(
     () =>
@@ -132,10 +140,30 @@ function SendHistoryScreen() {
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.WhitelistConfirm,
-          params: {
-            account,
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.CONFIRM_ADDRESS,
+          account,
+          title: t('page.confirmAddress.addToWhitelist'),
+          disbaleWhiteSwitch: true,
+          bottomSheetModalProps: {
+            enableDynamicSizing: true,
+          },
+          onCancel: () => {
+            removeGlobalBottomSheetModal2024(id);
+          },
+          onConfirm() {
+            removeGlobalBottomSheetModal2024(id);
+            addWhitelist(account.address, {
+              onAdded: () => {
+                toast.success(t('page.whitelist.addSuccessful'));
+                navigation.popToTop();
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTransaction, {
+                    screen: RootNames.SendTo,
+                  }),
+                );
+              },
+            });
           },
         });
       }

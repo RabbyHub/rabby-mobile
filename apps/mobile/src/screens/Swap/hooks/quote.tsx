@@ -632,6 +632,9 @@ export function isSwapWrapToken(
       CHAINS[chain].nativeTokenAddress,
   ];
   return (
+    !!payTokenId &&
+    !!receiveId &&
+    payTokenId !== receiveId &&
     !!wrapTokens.find(token => isSameAddress(payTokenId, token)) &&
     !!wrapTokens.find(token => isSameAddress(receiveId, token))
   );

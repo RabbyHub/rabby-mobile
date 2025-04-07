@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { Account } from '@/core/services/preference';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 
 const BridgeToken = ({
   type = 'from',
@@ -79,20 +81,19 @@ const BridgeToken = ({
 
   const name = isFromToken ? t('page.bridge.From') : t('page.bridge.To');
   const chainObj = findChainByEnum(chain);
-
-  const inputRef = useRef<TextInput>(null);
+  const { inputCallbackRef, inputRef } = useAutoFocusInput(
+    !(isFromToken && !isMaxRef?.current),
+  );
 
   useLayoutEffect(() => {
-    if (isFromToken && inputRef.current && !isMaxRef?.current) {
-      inputRef.current.focus();
-      isMaxRef && (isMaxRef.current = false);
-    }
+    isMaxRef && (isMaxRef.current = false);
   }, [value, isFromToken, isMaxRef]);
 
   useLayoutEffect(() => {
     if (clickMaxBtnCount) {
       handleScroll();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clickMaxBtnCount]);
 
   const handleScroll = () => {
@@ -153,7 +154,7 @@ const BridgeToken = ({
       <View style={styles.body}>
         <View style={styles.inputContainer}>
           {valueLoading ? (
-            <Skeleton
+            <CustomSkeleton
               animation="wave"
               LinearGradientComponent={Linear}
               style={styles.skeleton}
@@ -181,7 +182,7 @@ const BridgeToken = ({
                 scrollEnabled={true}
                 value={value?.toString()}
                 onChangeText={inputChange}
-                ref={inputRef}
+                ref={inputCallbackRef}
               />
             </View>
           )}
@@ -256,7 +257,7 @@ const BridgeToken = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 24,
+    borderRadius: 16,
     // borderWidth: 0.5,
     // borderColor: '#D0D8E0',
     height: 148,

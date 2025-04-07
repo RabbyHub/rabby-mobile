@@ -22,3 +22,6 @@ export const hashCode = (str: string) => {
   }
   return hash;
 };
+export const lowcaseSame = (a: string, b: string) => {
+  return a.toLowerCase() === b.toLowerCase();
+};

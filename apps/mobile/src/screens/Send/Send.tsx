@@ -1,4 +1,9 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -28,7 +33,10 @@ import {
   makeTokenFromChain,
 } from '@/utils/chain';
 import { preferenceService } from '@/core/services';
-import { Cex, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import {
   useCurrentAccount,
@@ -54,10 +62,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { ChainInfo2024 } from './components/ChainInfo2024';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import FromAddressControl2024 from './components/FromAddressControl';
+import { useAtom } from 'jotai';
+import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
+import { lowcaseSame } from '@/utils/common';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -81,24 +92,62 @@ function SendScreen({
         tokenId?: TokenItem['id'];
         toAddress?: string;
         addressBrandName?: string;
-        cexDes?: Cex;
+        addrDesc?: AddrDescResponse['desc'];
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
-        cexDes?: Cex;
+        addrDesc?: AddrDescResponse['desc'];
       }
     | undefined;
 
   const { chainItem, currentToken, setCurrentToken, setChainEnum } =
     useSendTokenScreenChainToken();
+  const [routeParams] = useAtom(sendScreenParamsAtom);
 
   const {
     sendTokenScreenState: screenState,
     putScreenState,
     resetScreenState,
   } = useSendTokenScreenState();
+
+  const disableItemCheck = useCallback(
+    (token: TokenItem) => {
+      const toCexId = navParams?.addrDesc?.cex?.id;
+      if (toCexId) {
+        const noSupportToken = token.cex_ids?.every?.(
+          id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
+        );
+        if (!token?.cex_ids?.length || noSupportToken) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupprotTokenForDex'),
+          };
+        }
+      } else {
+        const safeChains = Object.entries(navParams?.addrDesc?.contract || {})
+          .filter(([, contract]) => {
+            return contract.multisig;
+          })
+          .map(([chain]) => chain?.toLocaleLowerCase());
+        if (
+          safeChains.length > 0 &&
+          !safeChains.includes(token?.chain?.toLocaleLowerCase())
+        ) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupprotTokenForSafe'),
+          };
+        }
+      }
+      return {
+        disable: false,
+        reason: '',
+      };
+    },
+    [navParams?.addrDesc, t],
+  );
 
   const {
     sendTokenEvents,
@@ -107,11 +156,9 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
-    isShowDepositeModeModal,
-    setIsShowDepositeModeModal,
+    depositeModalInfo,
+    setDepositeModalInfol,
 
-    chainEnum,
-    handleChainChanged,
     tmpToken,
     setTmpToken,
     checkCexSupport,
@@ -125,7 +172,11 @@ function SendScreen({
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendTokenForm(navParams?.toAddress, isForMultipleAdderss);
+  } = useSendTokenForm(
+    navParams?.toAddress,
+    isForMultipleAdderss,
+    disableItemCheck,
+  );
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances();
 
@@ -173,7 +224,11 @@ function SendScreen({
       navParams?.chainEnum &&
       navParams?.tokenId
     ) {
-      const target = findChainByEnum(navParams?.chainEnum);
+      const isManualChangeToken =
+        routeParams?.tokenId && routeParams?.chainEnum;
+      const target = findChainByEnum(
+        isManualChangeToken ? routeParams.chainEnum : navParams?.chainEnum,
+      );
 
       const hideLoading = toastLoading('Loading Token...');
       try {
@@ -190,7 +245,7 @@ function SendScreen({
           setChainEnum(target.enum);
           await Promise.race([
             await loadCurrentToken(
-              navParams?.tokenId,
+              isManualChangeToken ? routeParams.tokenId : navParams?.tokenId,
               target.serverId,
               account.address,
             ),
@@ -201,6 +256,18 @@ function SendScreen({
         hideLoading();
       }
     } else {
+      const isManualChangeToken =
+        routeParams?.tokenId && routeParams?.chainEnum;
+      if (isManualChangeToken) {
+        const target = findChainByEnum(routeParams.chainEnum);
+        target &&
+          loadCurrentToken(
+            routeParams.tokenId,
+            target?.serverId,
+            account.address,
+          );
+        return;
+      }
       let tokenFromOrder: TokenItem | null = null;
 
       const _lastTimeToken = await preferenceService.getLastTimeSendToken(
@@ -211,7 +278,12 @@ function SendScreen({
           ? _lastTimeToken
           : null;
       if (lastTimeToken) {
-        setCurrentToken(lastTimeToken);
+        if (
+          !lowcaseSame(lastTimeToken.chain, currentToken.chain) ||
+          !lowcaseSame(lastTimeToken.id, currentToken.id)
+        ) {
+          setCurrentToken(lastTimeToken);
+        }
       } else {
         const { firstChain } = await fetchOrderedChainList({
           supportChains: undefined,
@@ -219,7 +291,12 @@ function SendScreen({
 
         tokenFromOrder = firstChain ? makeTokenFromChain(firstChain) : null;
         if (firstChain) {
-          setCurrentToken(tokenFromOrder!);
+          if (
+            !lowcaseSame(firstChain.serverId, currentToken.chain) ||
+            !lowcaseSame(firstChain.nativeTokenAddress, currentToken.id)
+          ) {
+            setCurrentToken(tokenFromOrder!);
+          }
         }
       }
 
@@ -375,33 +452,35 @@ function SendScreen({
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
               <View>
+                {/* From */}
+                <FromAddressControl2024 disableSwitch={!isForMultipleAdderss} />
                 {/* To */}
                 <ToAddressControl2024
+                  style={{
+                    marginTop: 24,
+                    marginBottom: 0,
+                  }}
                   address={navParams?.toAddress || ''}
-                  cexDes={navParams?.cexDes}
+                  addrDesc={navParams?.addrDesc}
                   brandName={navParams?.addressBrandName}
                 />
-                {/* ChainInfo */}
-                <View style={styles.chainSection}>
-                  <Text style={styles.sectionTitle}>
-                    {t('page.sendToken.Chain')}
-                  </Text>
-                  <ChainInfo2024
-                    chainEnum={chainEnum}
-                    onChange={handleChainChanged}
-                  />
-                </View>
                 {/* balance info */}
-                <BalanceSection style={styles.balance} />
+                <BalanceSection
+                  disableItemCheck={disableItemCheck}
+                  style={styles.balance}
+                />
               </View>
             </KeyboardAwareScrollView>
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
         <Modal
-          visible={isShowDepositeModeModal}
+          visible={depositeModalInfo.visable}
           onRequestClose={() => {
-            setIsShowDepositeModeModal(false);
+            setDepositeModalInfol({
+              visable: false,
+              tips: '',
+            });
           }}
           transparent
           animationType="fade">
@@ -410,20 +489,27 @@ function SendScreen({
               style={styles.modalContent}
               onStartShouldSetResponder={() => true}>
               <Text style={styles.alertModalText}>
-                {t('page.sendToken.noSupprotTokenForDex')}
+                {depositeModalInfo.tips}
               </Text>
               <FooterButtonGroup
                 style={styles.btns}
                 confirmText={t('page.sendToken.noSupportBtns.confirm')}
+                confirmType="ghost"
                 cancelText={t('page.sendToken.noSupportBtns.cancel')}
                 onCancel={() => {
-                  setIsShowDepositeModeModal(false);
+                  setDepositeModalInfol({
+                    visable: false,
+                    tips: '',
+                  });
                 }}
                 onConfirm={() => {
                   if (tmpToken) {
                     handleCurrentTokenChange(tmpToken);
                     setTmpToken(tmpToken);
-                    setIsShowDepositeModeModal(false);
+                    setDepositeModalInfol({
+                      visable: false,
+                      tips: '',
+                    });
                   }
                 }}
               />

@@ -1,18 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Image } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useBridgeHistory } from '../hooks';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { RcIconSwapHistoryEmpty } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts } from '@/constant/layout';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BridgeHistoryItem } from '@/components2024/HistoryItem/BridgeHistoryItem';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -20,7 +21,7 @@ const ItemSeparator = () => {
 };
 
 const HistoryList = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const { txList, loading, loadMore, noMore } = useBridgeHistory();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -45,14 +46,22 @@ const HistoryList = () => {
     () =>
       !loading && (!txList || !txList?.list?.length) ? (
         <View style={styles.emptyView}>
-          <RcIconSwapHistoryEmpty width={52} height={52} />
+          <Image
+            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+            width={160}
+            height={120}
+            style={{
+              width: 163,
+              height: 126,
+            }}
+          />
           <Text style={styles.emptyText}>
             {t('page.swap.no-transaction-records')}
           </Text>
         </View>
       ) : loading ? (
         <>
-          {Array.from({ length: 4 }).map((_, idx) => (
+          {Array.from({ length: 10 }).map((_, idx) => (
             <Skeleton style={styles.skeletonBlock} key={idx} />
           ))}
         </>
@@ -63,6 +72,7 @@ const HistoryList = () => {
       styles.emptyView,
       styles.emptyText,
       styles.skeletonBlock,
+      isLight,
       t,
     ],
   );
@@ -144,8 +154,9 @@ export const BridgeTxHistory = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   emptyText: {
     textAlign: 'center',
-    fontSize: 14,
-    color: colors2024['neutral-foot'],
+    fontSize: 16,
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
   },
   skeletonBlock: {
     width: '100%',

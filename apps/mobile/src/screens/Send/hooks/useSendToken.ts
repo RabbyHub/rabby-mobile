@@ -48,6 +48,7 @@ import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
+import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -57,6 +58,7 @@ function makeDefaultToken(): TokenItem & { tokenId?: string } {
     symbol: 'ETH',
     display_symbol: null,
     optimized_symbol: 'ETH',
+    cex_ids: [],
     decimals: 18,
     logo_url:
       'https://static.debank.com/image/token/logo_url/eth/935ae4e4d1d12d59a99717a24f2540b5.png',
@@ -378,6 +380,7 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 export function useSendTokenForm(
   toAddress?: string,
   isForMultipleAdderss = false,
+  disableItemCheck?: ITokenCheck,
 ) {
   const { t } = useTranslation();
 
@@ -398,7 +401,13 @@ export function useSendTokenForm(
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
-  const [isShowDepositeModeModal, setIsShowDepositeModeModal] = useState(false);
+  const [depositeModalInfo, setDepositeModalInfol] = useState<{
+    visable: boolean;
+    tips: string;
+  }>({
+    visable: false,
+    tips: '',
+  });
   const [tmpToken, setTmpToken] = useState<TokenItem>();
 
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
@@ -996,20 +1005,14 @@ export function useSendTokenForm(
 
   const checkCexSupport = useCallback(
     async (token: TokenItem) => {
-      if (toAddress) {
-        const { desc } = await openapi.addrDesc(toAddress);
-        if (desc.cex?.id) {
-          const { support } = await openapi.depositCexSupport(
-            token.id,
-            token.chain,
-            desc.cex.id,
-          );
-          if (!support) {
-            setTmpToken(token);
-            setIsShowDepositeModeModal(true);
-            return;
-          }
-        }
+      const { reason } = disableItemCheck?.(token) || {};
+      if (toAddress && reason) {
+        setTmpToken(token);
+        setDepositeModalInfol({
+          visable: true,
+          tips: reason,
+        });
+        return;
       }
       if (!isForMultipleAdderss) {
         handleCurrentTokenChange(token);
@@ -1035,6 +1038,7 @@ export function useSendTokenForm(
     },
     [
       currentAccount,
+      disableItemCheck,
       handleCurrentTokenChange,
       isForMultipleAdderss,
       multiNavParams,
@@ -1234,6 +1238,7 @@ export function useSendTokenForm(
           is_core: true,
           is_verified: true,
           is_wallet: true,
+          cex_ids: [],
           amount: 0,
           price: 0,
           name: chain.nativeTokenSymbol,
@@ -1334,8 +1339,8 @@ export function useSendTokenForm(
     whitelistEnabled,
     computed,
 
-    isShowDepositeModeModal,
-    setIsShowDepositeModeModal,
+    depositeModalInfo,
+    setDepositeModalInfol,
   };
 }
 export function useSendTokenFormikContext() {
