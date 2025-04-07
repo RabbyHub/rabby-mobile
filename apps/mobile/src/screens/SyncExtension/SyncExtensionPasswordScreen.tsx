@@ -161,6 +161,12 @@ export const SyncExtensionPasswordScreen = () => {
         }[];
       };
 
+      if (!password) {
+        setError(t('page.unlock.password.error'));
+        setLoading(false);
+        return;
+      }
+
       const { vault } = await decryptWithDetail(
         password,
         JSON.stringify(encryptoVault),
