@@ -195,12 +195,9 @@ export const WhiteListItem = ({
             return;
           }
           if (inWhiteList) {
-            getAddrDescWithCexLocalCacheSync(account.address).then(res => {
-              navigateToSendScreen({
-                toAddress: account.address,
-                addrDesc: res,
-                addressBrandName: account.brandName,
-              });
+            navigateToSendScreen({
+              toAddress: account.address,
+              addressBrandName: account.brandName,
             });
           } else {
             const id = createGlobalBottomSheetModal2024({
