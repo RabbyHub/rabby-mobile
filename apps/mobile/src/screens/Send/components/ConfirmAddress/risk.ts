@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -31,6 +32,7 @@ export const useRisks = (address: string) => {
   );
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
   const [loading, setLoading] = useState(true);
   const riskGetRef = useRef(false);
 
@@ -60,7 +62,7 @@ export const useRisks = (address: string) => {
       const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
 
       const checkTransferPromise = new Promise<void>(resolve => {
-        accounts.forEach(acc => {
+        sortedAccounts.slice(0, 10).forEach(acc => {
           if (isSameAddress(acc.address, address)) {
             return;
           }
@@ -90,7 +92,6 @@ export const useRisks = (address: string) => {
           Promise.all([addressDescPromise, checkTransferPromise]),
           timeoutPromise,
         ])) as [AddrDescResponse['desc']];
-
         if (addressRes) {
           setAddressDesc(addressRes);
         }
@@ -133,11 +134,12 @@ export const useRisks = (address: string) => {
         }
       } catch (error) {
         console.error('check transfer timeout or error', error);
+        queue.clear();
         setRisks(currRisks);
       }
       setLoading(false);
     })();
-  }, [accounts, address, t]);
+  }, [address, sortedAccounts, t]);
   return {
     risks,
     addressDesc,
