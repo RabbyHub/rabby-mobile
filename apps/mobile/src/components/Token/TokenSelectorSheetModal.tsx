@@ -928,14 +928,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               )
             }
             extraData={isLoading}
-            getItemLayout={(_, index) => {
-              const h = isSwapTo && query ? 124 : ITEM_HEIGHT;
-              return {
-                length: h,
-                offset: h * index,
-                index,
-              };
-            }}
+            initialNumToRender={20}
             renderItem={renderItemRenderComponent}
           />
         </AutoLockView>

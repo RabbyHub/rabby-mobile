@@ -1121,16 +1121,28 @@ export const MiniApproval = ({
     } else {
       sheetModalRef.current?.dismiss();
     }
-  }, [sheetModalRef, visible, txs?.length]);
+  }, [sheetModalRef, visible]);
 
   const onDismiss = useCallback(() => {
-    onReject?.();
     innerMountedRef.current = false;
-  }, [onReject]);
+  }, []);
+
+  const indexRef = useRef(-2);
+
+  const onChange = useCallback(
+    (index: number) => {
+      if (index === -1 && indexRef.current > -1) {
+        onReject?.();
+      }
+      indexRef.current = index;
+    },
+    [onReject],
+  );
 
   useEffect(() => {
     if (txs?.length && !visible && !innerMountedRef.current) {
-      sheetModalRef.current?.present();
+      sheetModalRef.current?.dismiss?.();
+      sheetModalRef.current?.present?.();
       innerMountedRef.current = true;
     }
   }, [sheetModalRef, txs?.length, visible]);
@@ -1143,7 +1155,8 @@ export const MiniApproval = ({
       onDismiss={onDismiss}
       handleStyle={styles.sheetBg}
       enableDynamicSizing
-      backgroundStyle={styles.sheetBg}>
+      backgroundStyle={styles.sheetBg}
+      onChange={onChange}>
       <BottomSheetView>
         {txs?.length ? (
           <MiniSignTx
