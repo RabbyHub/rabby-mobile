@@ -7,6 +7,8 @@ import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { getTokenSettings } from '@/utils/getTokenSettings';
+import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -26,10 +28,11 @@ export const enum RiskType {
   CONTRACT_ADDRESS = 3,
   CEX_NO_DEPOSIT = 4,
 }
-export const useRisks = (address: string) => {
+export const useRisks = (address: string, disableBalance?: boolean) => {
   const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
     [],
   );
+  const [balance, setBalance] = useState(0);
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -58,6 +61,25 @@ export const useRisks = (address: string) => {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('timeout')), 2000);
       });
+
+      const balancePromise = async (_address: string) => {
+        if (disableBalance) {
+          return;
+        }
+        try {
+          const tokenSetting = await getTokenSettings();
+          const res = await batchBalanceWithLocalCache({
+            address: _address,
+            isCore: false,
+            ...tokenSetting,
+          });
+          if (res.total_usd_value) {
+            setBalance(res.total_usd_value);
+          }
+        } catch (error) {
+          console.error('balance fetch error', error);
+        }
+      };
 
       const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
 
@@ -89,7 +111,11 @@ export const useRisks = (address: string) => {
 
       try {
         const [addressRes] = (await Promise.race([
-          Promise.all([addressDescPromise, checkTransferPromise]),
+          Promise.all([
+            addressDescPromise,
+            balancePromise(address),
+            checkTransferPromise,
+          ]),
           timeoutPromise,
         ])) as [AddrDescResponse['desc']];
         if (addressRes) {
@@ -139,10 +165,11 @@ export const useRisks = (address: string) => {
       }
       setLoading(false);
     })();
-  }, [address, sortedAccounts, t]);
+  }, [address, disableBalance, sortedAccounts, t]);
   return {
     risks,
     addressDesc,
+    balance,
     hasSend,
     loading,
   };

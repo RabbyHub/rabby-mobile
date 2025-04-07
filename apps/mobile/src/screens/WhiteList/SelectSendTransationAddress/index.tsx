@@ -137,7 +137,11 @@ function SendHistoryScreen() {
   const handlePressItem = async (item: HistoryDisplayItem) => {
     const toAddress = item.sends[0]?.to_addr;
     if (toAddress) {
-      const { inWhitelist, account } = await findAccount(toAddress);
+      const { inWhitelist, account } = await findAccount(
+        toAddress,
+        undefined,
+        true,
+      );
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
