@@ -95,7 +95,10 @@ const ConfirmAddress = ({
       <AddressSource
         loading={loading}
         addressDesc={addressDesc}
-        account={account}
+        account={{
+          ...account,
+          balance: account.balance || addressDesc?.usd_value || 0,
+        }}
         style={styles.addressCard}
       />
       {!loading && !disbaleWhiteSwitch && (
