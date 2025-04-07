@@ -713,7 +713,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   };
 
   const handleGnosisConfirm = async (account: Account) => {
-    console.log('handleGnosisConfirm', account, safeInfo);
     if (!safeInfo) {
       return;
     }
