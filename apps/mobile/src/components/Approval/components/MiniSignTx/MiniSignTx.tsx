@@ -1112,22 +1112,15 @@ export const MiniApproval = ({
 
   const { sheetModalRef } = useSheetModal();
 
-  const innerMountedRef = useRef(false);
-
   useEffect(() => {
-    if (visible) {
+    if (visible || txs?.length) {
       sheetModalRef.current?.present();
-      sheetModalRef.current?.snapToIndex(0);
     } else {
       sheetModalRef.current?.dismiss();
     }
-  }, [sheetModalRef, visible]);
+  }, [sheetModalRef, visible, txs?.length]);
 
-  const onDismiss = useCallback(() => {
-    innerMountedRef.current = false;
-  }, []);
-
-  const indexRef = useRef(-2);
+  const indexRef = useRef(-1);
 
   const onChange = useCallback(
     (index: number) => {
@@ -1139,20 +1132,11 @@ export const MiniApproval = ({
     [onReject],
   );
 
-  useEffect(() => {
-    if (txs?.length && !visible && !innerMountedRef.current) {
-      sheetModalRef.current?.dismiss?.();
-      sheetModalRef.current?.present?.();
-      innerMountedRef.current = true;
-    }
-  }, [sheetModalRef, txs?.length, visible]);
-
   return (
     <AppBottomSheetModal
-      index={-1}
+      index={visible ? 0 : -1}
       ref={sheetModalRef}
       enableDismissOnClose
-      onDismiss={onDismiss}
       handleStyle={styles.sheetBg}
       enableDynamicSizing
       backgroundStyle={styles.sheetBg}
