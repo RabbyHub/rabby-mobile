@@ -7073,7 +7073,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.4.2
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@safe-global/protocol-kit": 5.0.3
-    "@safe-global/types-kit": ^2.0.1
+    "@safe-global/types-kit": 1.0.2
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
@@ -7270,7 +7270,6 @@ __metadata:
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
     "@rabby-wallet/rabby-api": 0.9.15-beta.0
-    "@safe-global/types-kit": ^2.0.1
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
@@ -9085,15 +9084,6 @@ __metadata:
   dependencies:
     abitype: ^1.0.2
   checksum: 3dcd9f19962e53ca23dc945a3a7353327088634d07e962b8e0f1ecdf28782ce1c4c4dfce1b54c23c1382ee534e232b73f914500cf58c9baa1d20b10f3701e765
-  languageName: node
-  linkType: hard
-
-"@safe-global/types-kit@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "@safe-global/types-kit@npm:2.0.1"
-  dependencies:
-    abitype: ^1.0.2
-  checksum: eefcf5897a4fa3a883abf46a99955d83ffa8f384579c9835598075a32046ac943c0ec42c3fa5fa6d5763fb95d2d168a70142cf30241dd8f7bf41da59d6689eab
   languageName: node
   linkType: hard
 
@@ -29260,6 +29250,7 @@ __metadata:
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
     "@safe-global/protocol-kit": 5.0.3
+    "@safe-global/types-kit": 1.0.2
     "@sentry/react-native": 5.31.0
     "@tsconfig/react-native": ^3.0.0
     "@types/highlight-words-core": 1.2.3
