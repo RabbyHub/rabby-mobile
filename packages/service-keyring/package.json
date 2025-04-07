@@ -33,6 +33,7 @@
     "tool:decrypt": "yarn ../../ build:deps && node ./scripts/decyrptKeyringState.js"
   },
   "dependencies": {
+    "@metamask/browser-passworder": "6.0.0",
     "@metamask/obs-store": "^9.0.0",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "^0.1.0",

@@ -76,7 +76,8 @@
     "react-native@0.73.11": "patch:react-native@npm%3A0.73.11#./.yarn/patches/react-native-npm-0.73.11-e22ce94c88.patch",
     "react-use@17.4.2": "patch:react-use@npm%3A17.4.2#./.yarn/patches/react-use-npm-17.4.2-d0e8220eaa.patch",
     "typeorm@^0.3.20": "patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch",
-    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch"
+    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
+    "@metamask/browser-passworder@6.0.0": "patch:@metamask/browser-passworder@npm%3A6.0.0#./.yarn/patches/@metamask-browser-passworder-npm-6.0.0-b3e10a0dba.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
