@@ -47,6 +47,8 @@ import { generateTypedData } from '@safe-global/protocol-kit';
 import { apisKeyring } from '@/core/apis/keyring';
 import { GnosisDrawer } from './TxComponents/GnosisDrawer';
 import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPopup';
+import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
+import { useSetState } from 'ahooks';
 
 interface SignTextProps {
   data: string[];
@@ -86,6 +88,11 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   const [currentGnosisAdmin, setCurrentGnosisAdmin] = useState<Account | null>(
     null,
   );
+  const [sameMessageState, setSameMessageState] = useSetState({
+    visible: false,
+    preparedSignature: '',
+  });
+
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const currentAccount = useMemo(() => {
@@ -298,6 +305,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   const { data: safeInfo } = useGetCurrentSafeInfo({
     chainId: chainId,
     account: currentAccount!,
+    rejectApproval,
   });
   const { data: safeMessageHash } = useGetMessageHash({
     chainId,
@@ -314,32 +322,10 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     {
       onSuccess(res) {
         if (res?.isFinished) {
-          // const modal = Modal.info({
-          //   maskClosable: false,
-          //   closable: false,
-          //   width: 320,
-          //   centered: true,
-          //   className: 'same-safe-message-modal modal-support-darkmode',
-          //   content: (
-          //     <div>
-          //       <div className="text-[16px] leading-[140%] text-r-neutral-title1 font-medium text-center">
-          //         {t('page.signText.sameSafeMessageAlert')}
-          //       </div>
-          //       <div className="mt-[32px]">
-          //         <Button
-          //           type="primary"
-          //           block
-          //           onClick={() => {
-          //             modal.destroy();
-          //             resolveApproval(res.safeMessage.preparedSignature);
-          //           }}
-          //           className="text-[15px] h-[40px] rounded-[6px]">
-          //           {t('global.ok')}
-          //         </Button>
-          //       </div>
-          //     </div>
-          //   ),
-          // });
+          setSameMessageState({
+            visible: true,
+            preparedSignature: res.safeMessage.preparedSignature,
+          });
         }
       },
     },
@@ -513,7 +499,6 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
           />
         )}
       </ScrollView>
-
       {isGnosisAccount && safeInfo ? (
         <GnosisDrawer
           visible={drawerVisible}
@@ -527,7 +512,6 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
           }
         />
       ) : null}
-
       {isGnosisAccount && safeInfo && currentGnosisAdmin && (
         <GnosisAdminFooterBarPopup
           visible={gnosisFooterBarVisible}
@@ -547,7 +531,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
           }
           tooltipContent={
             currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring ? (
-              <div>{t('page.signTx.canOnlyUseImportedAddress')}</div>
+              <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>
             ) : null
           }
           disabledProcess={
@@ -557,7 +541,6 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
           onIgnoreAllRules={handleIgnoreAllRules}
         />
       )}
-
       <FooterBar
         hasShadow={footerShowShadow}
         securityLevel={securityLevel}
@@ -580,6 +563,21 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
         onUndo={handleUndoIgnore}
         onRuleEnableStatusChange={handleRuleEnableStatusChange}
         onClose={handleRuleDrawerClose}
+      />
+      <GnosisSameMessageModal
+        visible={sameMessageState.visible}
+        onCancel={() => {
+          setSameMessageState({
+            visible: false,
+          });
+          rejectApproval('');
+        }}
+        onConfirm={() => {
+          setSameMessageState({
+            visible: false,
+          });
+          resolveApproval(sameMessageState.preparedSignature);
+        }}
       />
     </View>
   );

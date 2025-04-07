@@ -1227,7 +1227,8 @@
       "createKey": {
         "interactDapp": "Interact Dapp",
         "description": "Description"
-      }
+      },
+      "sameSafeMessageAlert": "The same message is confirmed; no additional signature is required."
     },
     "securityEngine": {
       "yes": "Yes",

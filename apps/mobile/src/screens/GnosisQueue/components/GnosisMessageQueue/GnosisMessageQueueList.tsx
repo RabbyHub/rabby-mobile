@@ -27,6 +27,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { FlatList } from 'react-native-gesture-handler';
 import { verifyTypedData } from 'viem';
 import { GnosisMessageQueueItem } from './GnosisMessageQueueItem';
+import { apisSafe } from '@/core/apis/safe';
 
 interface TransactionConfirmationsProps {
   confirmations: SafeMessage['confirmations'];
@@ -92,6 +93,7 @@ export const GnosisMessageQueueList = (props: {
   usefulChain: CHAINS_ENUM;
   pendingTxs?: SafeMessage[];
   loading?: boolean;
+  reload?(): void;
 }) => {
   const { usefulChain: chain, pendingTxs, loading } = props;
   const themeColors = useThemeColors();
@@ -114,27 +116,26 @@ export const GnosisMessageQueueList = (props: {
     error: isLoadFailed,
   } = useRequest(
     async () => {
-      // const messageHashValidation = await Promise.all(
-      //   (pendingTxs || []).map(async item => {
-      //     return wallet.validateGnosisMessage(
-      //       {
-      //         address: account.address,
-      //         chainId: Number(networkId),
-      //         message: item.message,
-      //       },
-      //       item.messageHash,
-      //     );
-      //   }),
-      // );
+      const messageHashValidation = await Promise.all(
+        (pendingTxs || []).map(async item => {
+          return apisSafe.validateGnosisMessage(
+            {
+              address: account?.address!,
+              chainId: Number(networkId),
+              message: item.message,
+            },
+            item.messageHash,
+          );
+        }),
+      );
 
-      // const result = (pendingTxs || []).filter((item, index) => {
-      //   if (!messageHashValidation[index]) {
-      //     return false;
-      //   }
-      //   return true;
-      // });
-      // return result;
-      return pendingTxs;
+      const result = (pendingTxs || []).filter((item, index) => {
+        if (!messageHashValidation[index]) {
+          return false;
+        }
+        return true;
+      });
+      return result;
     },
     {
       refreshDeps: [pendingTxs],
@@ -148,6 +149,7 @@ export const GnosisMessageQueueList = (props: {
           safeInfo={safeInfo}
           data={item}
           networkId={networkId}
+          reload={props.reload}
         />
       ) : null;
     },

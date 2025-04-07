@@ -125,7 +125,7 @@ export const GnosisMessageQueue = () => {
           usefulChain={activeKey}
           key={activeKey}
           loading={loading}
-          // reload={refreshAsync}
+          reload={refreshAsync}
         />
       )}
     </View>

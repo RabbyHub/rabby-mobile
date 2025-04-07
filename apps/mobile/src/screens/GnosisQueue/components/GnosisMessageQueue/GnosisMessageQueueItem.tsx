@@ -32,10 +32,12 @@ export const GnosisMessageQueueItem = ({
   data,
   networkId,
   safeInfo,
+  reload,
 }: {
   data: SafeMessage;
   networkId: string;
   safeInfo: BasicSafeInfo;
+  reload?(): void;
 }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -94,7 +96,7 @@ export const GnosisMessageQueueItem = ({
         }),
       ]);
       if (isString(data.message)) {
-        sendRequest(
+        await sendRequest(
           {
             method: 'personal_sign',
             params: [stringToHex(data.message), data.safe],
@@ -106,7 +108,7 @@ export const GnosisMessageQueueItem = ({
           INTERNAL_REQUEST_SESSION,
         );
       } else {
-        sendRequest(
+        await sendRequest(
           {
             method: 'eth_signTypedData_v4',
             params: [data.safe, JSON.stringify(data.message)],
@@ -118,6 +120,7 @@ export const GnosisMessageQueueItem = ({
           INTERNAL_REQUEST_SESSION,
         );
       }
+      reload?.();
     },
     {
       manual: true,

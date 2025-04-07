@@ -1,4 +1,4 @@
-import { toast } from '@/components2024/Toast';
+import { toast } from '@/components/Toast';
 import { apisSafe } from '@/core/apis/safe';
 import { Account } from '@/core/services/preference';
 import { findChain } from '@/utils/chain';
@@ -9,9 +9,11 @@ import { useTranslation } from 'react-i18next';
 export const useGetCurrentSafeInfo = ({
   chainId,
   account,
+  rejectApproval,
 }: {
   chainId?: number;
   account: Account;
+  rejectApproval?(msg?: string): void;
 }) => {
   const { t } = useTranslation();
   return useRequest(
@@ -46,19 +48,12 @@ export const useGetCurrentSafeInfo = ({
     {
       refreshDeps: [chainId, account],
       onError(e) {
-        toast.error(e.message || JSON.stringify(e), {
+        toast.show(e.message || JSON.stringify(e), {
           position: toast.positions.CENTER,
         });
-        // todo
-        // Modal.error({
-        //   className: 'modal-support-darkmode',
-        //   title: 'Error',
-        //   content: e.message || JSON.stringify(e),
-        //   closable: false,
-        //   // onOk() {
-        //   //   rejectApproval();
-        //   // },
-        // });
+        setTimeout(() => {
+          rejectApproval?.(e.message);
+        }, 2000);
       },
     },
   );

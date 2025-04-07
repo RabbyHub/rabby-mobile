@@ -664,6 +664,14 @@ class ApisSafe {
     );
     return currentSafeMessageHash === hash;
   };
+
+  clearGnosisMessage = async () => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    if (keyring.currentSafeMessage || keyring.safeInstance) {
+      keyring.currentSafeMessage = null;
+      keyring.safeInstance = null;
+    }
+  };
 }
 
 export const apisSafe = new ApisSafe();
