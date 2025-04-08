@@ -635,6 +635,7 @@ export function useSendTokenForm(
                 ga: {
                   category: 'Send',
                   source: 'sendToken',
+                  toAddress,
                   // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
                   trigger: 'sendToken',
                 },
@@ -666,6 +667,7 @@ export function useSendTokenForm(
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
       screenState.showGasReserved,
+      toAddress,
     ],
   );
 

@@ -835,8 +835,9 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
     if (isSend) {
       const sendActionRequireData = actionRequireData as SendRequireData;
-      tx.to &&
-        toType(tx.to, !!sendActionRequireData.cex).then(type => {
+      const toAddress = params?.$ctx?.ga?.toAddress;
+      toAddress &&
+        toType(toAddress, !!sendActionRequireData.cex).then(type => {
           matomoRequestEvent({
             category: 'Send Usage',
             action: `Send_${type}_${
