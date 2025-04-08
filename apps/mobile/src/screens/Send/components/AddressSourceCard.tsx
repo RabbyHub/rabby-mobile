@@ -100,7 +100,7 @@ const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
             <View style={styles.itemInfo}>
               <View style={styles.itemNameWrapper}>
                 <Text style={styles.itemNameText}>
-                  {adderssAlias || ellipsisAddress(account.address)}
+                  {adderssAlias || ellipsisAddress(account.address, 6)}
                 </Text>
                 {((cexDesc?.is_deposit && cexDesc?.id) ||
                   account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
