@@ -29,6 +29,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -106,6 +107,10 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
             },
             onConfirm() {
               removeGlobalBottomSheetModal2024(id);
+              matomoRequestEvent({
+                category: 'Send Usage',
+                action: 'Send_AddWhitelist',
+              });
               addWhitelist(account.address, {
                 onAdded: () => {
                   toast.success(t('page.whitelist.addSuccessful'));

@@ -35,6 +35,7 @@ import {
   formatSecurityEngineContext,
   ActionRequireData,
   ParsedTransactionActionData,
+  SendRequireData,
 } from '@rabby-wallet/rabby-action';
 import { openapi, testOpenapi } from '@/core/request';
 import {
@@ -73,7 +74,7 @@ import {
   explainGas,
 } from './calc';
 import { TxTypeComponent } from './TxTypeComponent';
-import { normalizeTxParams } from './util';
+import { normalizeTxParams, toType } from './util';
 import { getStyles } from './style';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -831,6 +832,21 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           requiredData: actionRequireData,
         },
       }));
+
+    if (isSend) {
+      const sendActionRequireData = actionRequireData as SendRequireData;
+      tx.to &&
+        toType(tx.to, !!sendActionRequireData.cex).then(type => {
+          matomoRequestEvent({
+            category: 'Send Usage',
+            action: `Send_${type}_${
+              sendActionRequireData?.onTransferWhitelist
+                ? 'Whitelist'
+                : 'NotWhitelist'
+            }`,
+          });
+        });
+    }
 
     if (currentAccount?.type && WaitingSignComponent[currentAccount.type]) {
       resolveApproval({

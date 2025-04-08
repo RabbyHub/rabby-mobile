@@ -11,6 +11,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -32,6 +33,10 @@ export const useSendRoutes = () => {
   );
   const navigateToSendPolyScreen = useCallback(
     async (isForSingleAddress: boolean, p?: { [key: string]: any }) => {
+      matomoRequestEvent({
+        category: 'Send Usage',
+        action: 'Send_Enter',
+      });
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {
