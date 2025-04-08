@@ -12,6 +12,7 @@ import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
+import { ANIMATION_DURATION } from '@gorhom/bottom-sheet';
 
 type SceneAccountInfo = {
   currentAccount: KeyringAccount | null;
@@ -126,7 +127,7 @@ export function usePreFetchBeforeEnterScene() {
         fetchCurrentAccountAsync(),
         getPinAddressesAsync(),
       ]);
-    }, 50);
+    }, ANIMATION_DURATION + 1);
   }, [fetchAccounts, fetchCurrentAccountAsync, getPinAddressesAsync]);
 
   return {
