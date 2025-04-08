@@ -88,16 +88,16 @@ export const TokenRow = memo(
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
     const percentColor = useMemo(() => {
       if (
-        !data?.value_24h_change ||
-        Math.abs(Number(data.value_24h_change)) < 0.00001
+        !data?.price_24h_change ||
+        Math.abs(Number(data.price_24h_change)) < 0.00001
       ) {
         return colors2024['neutral-secondary'];
       }
-      if (Number(data.value_24h_change) > 0) {
+      if (Number(data.price_24h_change) > 0) {
         return colors2024['green-default'];
       }
       return colors2024['red-default'];
-    }, [colors2024, data.value_24h_change]);
+    }, [colors2024, data.price_24h_change]);
 
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
@@ -205,7 +205,7 @@ export const TokenRow = memo(
                   : {}),
                 color: percentColor,
               })}>
-              {formatPercentage(Number(data.value_24h_change) || 0)}
+              {formatPercentage(Number(data.price_24h_change) || 0)}
             </Text>
           ) : null}
         </View>

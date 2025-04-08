@@ -73,85 +73,9 @@ export const batchQueryTokensWithLocalCache = async (
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
     if (force || isExpired) {
-      const [tokensResult, historyTokensResult, chainListResult] =
-        await Promise.allSettled([
-          batchQueryTokens(user_id, chainId, isTestnet),
-          batchQueryHistoryTokens(
-            user_id,
-            dayjs().subtract(1, 'days').unix(),
-            isTestnet,
-          ),
-          openapi.getChainList(),
-        ]);
-
-      const tokens =
-        tokensResult.status === 'fulfilled' ? tokensResult.value : [];
-      const historyTokens =
-        historyTokensResult.status === 'fulfilled'
-          ? historyTokensResult.value
-          : [];
-      const chainList =
-        chainListResult.status === 'fulfilled' ? chainListResult.value : [];
-
-      const writeTokens = [...tokens] as (TokenItem & {
-        value_24h_change?: string;
-      })[];
-
-      historyTokens?.forEach(historyToken => {
-        const idx = tokens.findIndex(
-          t =>
-            isSameAddress(historyToken.id, t.id) &&
-            historyToken.chain === t.chain,
-        );
-        if (idx > -1) {
-          const token24hAgo = new BigNumber(historyToken.amount).times(
-            historyToken.price,
-          );
-          writeTokens[idx].value_24h_change = new BigNumber(
-            writeTokens[idx].amount,
-          )
-            .times(writeTokens[idx].price)
-            .minus(token24hAgo)
-            .div(token24hAgo)
-            .toString();
-
-          if (historyToken.price === 0 && writeTokens[idx].price === 0) {
-            const token24hAgoAmount = new BigNumber(historyToken.amount);
-
-            writeTokens[idx].value_24h_change = new BigNumber(
-              writeTokens[idx].amount,
-            )
-              .minus(token24hAgoAmount)
-              .div(token24hAgoAmount)
-              .toString();
-          }
-
-          if (writeTokens[idx].price === 0 && historyToken.price !== 0) {
-            writeTokens[idx].value_24h_change = '-1';
-          }
-
-          if (writeTokens[idx].amount === 0) {
-            writeTokens[idx].value_24h_change = '-1';
-          }
-        }
-      });
-
-      writeTokens.forEach((wt, idx) => {
-        if (wt.value_24h_change === undefined) {
-          // only this token has history data
-          const isSupportedHistory =
-            !!chainList?.find(chain => wt.chain === chain.id)
-              ?.is_support_history &&
-            wt.is_core &&
-            !wt.is_scam;
-          writeTokens[idx].value_24h_change = isSupportedHistory
-            ? '1'
-            : (writeTokens[idx].price_24h_change || '0') + '';
-        }
-      });
-
-      runOnJS(syncRemoteTokens)(user_id, writeTokens);
-      return writeTokens;
+      const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
+      runOnJS(syncRemoteTokens)(user_id, [...tokens]);
+      return tokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
     }
