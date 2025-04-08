@@ -1,137 +1,88 @@
 #import "AppDelegate.h"
 
 #import <Firebase.h>
-// #import <React/RCTAppSetupUtils.h>
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
+#import <React/RCTLinkingManager.h>
 #import <React/RCTHTTPRequestHandler.h>
-// Import RNSplashScreen
+
+// splash screen
 #import "RNSplashScreen.h"
 
+// device info
 #import "RNDeviceInfo/RNDeviceInfo.h"
 
-#import <React/RCTLinkingManager.h>
+#import <sys/utsname.h>
 
-
-#if DEBUG
-void devLog(NSString *format, ...) {
-  va_list args;
-  va_start(args, format);
-  NSLogv(format, args);
-  va_end(args);
-}
-#else
-void devLog(NSString *format, ...) {}
-#endif
-
-// #ifdef FB_SONARKIT_ENABLED
-// #import <FlipperKit/FlipperClient.h>
-// #import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
-// #import <FlipperKitUserDefaultsPlugin/FKUserDefaultsPlugin.h>
-// #import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
-// #import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
-// #import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
-// static void InitializeFlipper(UIApplication *application) {
-//   FlipperClient *client = [FlipperClient sharedClient];
-//   SKDescriptorMapper *layoutDescriptorMapper = [[SKDescriptorMapper alloc] initWithDefaults];
-//   [client addPlugin:[[FlipperKitLayoutPlugin alloc] initWithRootNode:application withDescriptorMapper:layoutDescriptorMapper]];
-//   [client addPlugin:[[FKUserDefaultsPlugin alloc] initWithSuiteName:nil]];
-//   [client addPlugin:[FlipperKitReactPlugin new]];
-//   [client addPlugin:[[FlipperKitNetworkPlugin alloc] initWithNetworkAdapter:[SKIOSNetworkAdapter new]]];
-//   [client start];
-// }
-// #endif
 @implementation AppDelegate
+
 - (NSString *)_getDarwinVersion
 {
-    struct utsname u;
-    (void) uname(&u);
-    return [NSString stringWithUTF8String:u.release];
+  struct utsname u;
+  uname(&u);
+  return [NSString stringWithUTF8String:u.release];
 }
-// make userAgent
+
 - (NSString *)makeUserAgent
 {
-  NSDictionary * cfnInfo = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"].infoDictionary;
-  // devLog(@"[app] cfnInfo: %@", cfnInfo);
+  NSDictionary *cfnInfo = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"].infoDictionary;
+  NSString *cfnVersion = cfnInfo[@"CFBundleVersion"];
 
-  NSString * cfnVersion = cfnInfo[@"CFBundleVersion"];
-  // NSString * cfnShortVersion = cfnInfo[@"CFBundleShortVersionString"];
   RNDeviceInfo* rnDeviveInfo = [self.bridge moduleForClass:[RNDeviceInfo class]];
-  // we don't expect logic here triggered, if it does, we need check codebase
   if (rnDeviveInfo == nil) {
     NSLog(@"[app] device-info module not found!");
     rnDeviveInfo = [[RNDeviceInfo alloc] init];
   }
-  NSDictionary * deviceInfo = [rnDeviveInfo constantsToExport];
-  NSString * userAgent =
-    [NSString stringWithFormat:@"%@/%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
-      self.moduleName,
-      deviceInfo[@"appVersion"],
-      // deviceInfo[@"buildNumber"],
-      cfnVersion,
-      [self _getDarwinVersion],
-      deviceInfo[@"model"],
-      deviceInfo[@"systemName"],
-      deviceInfo[@"systemVersion"]
-    ];
 
-  devLog(@"[app] userAgent: %@; deviceInfo: %@", userAgent, deviceInfo);
+  NSDictionary *deviceInfo = [rnDeviveInfo constantsToExport];
 
-  return userAgent;
+  return [NSString stringWithFormat:@"%@/%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
+    self.moduleName,
+    deviceInfo[@"appVersion"],
+    cfnVersion,
+    [self _getDarwinVersion],
+    deviceInfo[@"model"],
+    deviceInfo[@"systemName"],
+    deviceInfo[@"systemVersion"]
+  ];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-// #ifdef FB_SONARKIT_ENABLED
-//   InitializeFlipper(application);
-// #endif
   [FIRApp configure];
+
   self.moduleName = @"RabbyMobile";
 
   NSString *rabbitCodeFromBundle = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"rabbit_code"];
-  NSString *rabbitCode;
-
-  if(rabbitCodeFromBundle != nil){ rabbitCode = rabbitCodeFromBundle; }
-  else { rabbitCode = @"RABBY_MOBILE_CODE_DEV"; }
-
-  // You can add your custom initial props in the dictionary below.
-  // They will be passed down to the ViewController used by React Native.
+  NSString *rabbitCode = rabbitCodeFromBundle ?: @"RABBY_MOBILE_CODE_DEV";
   self.initialProps = @{ @"rabbitCode": rabbitCode };
 
-  // RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
-  // RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
-  //                                                  moduleName:@"RabbyMobile"
-  //                                           initialProperties:self.initialProps];
-  // if (@available(iOS 13.0, *)) {
-  //     rootView.backgroundColor = [UIColor systemBackgroundColor];
-  // } else {
-  //     rootView.backgroundColor = [UIColor whiteColor];
-  // }
-  // self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-  // UIViewController *rootViewController = [UIViewController new];
-  // rootViewController.view = rootView;
-  // self.window.rootViewController = rootViewController;
-  // [self.window makeKeyAndVisible];
+  RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
 
-  // [super application:application didFinishLaunchingWithOptions:launchOptions];
-  // [RNSplashScreen showSplash:@"LaunchScreen" inRootView:self.rootView]; // react-native-splash-screen
+  // ✅ 设置 User-Agent 到 RCTHTTPRequestHandler（私有 API，需使用 selector）
+  NSString *userAgent = [self makeUserAgent];
+  RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
+  if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
+    [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
+                         withObject:@{@"User-Agent": userAgent}];
+  }
 
-  NSString * userAgent = [self makeUserAgent];
+  RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
+                                                   moduleName:self.moduleName
+                                            initialProperties:self.initialProps];
 
-  // set RCTSetCustomNSURLSessionConfigurationProvider
-  RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
-    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-    configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
+  rootView.backgroundColor = [UIColor systemBackgroundColor];
 
-    // configure the session
-    return configuration;
-  });
+  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+  UIViewController *rootViewController = [UIViewController new];
+  rootViewController.view = rootView;
+  self.window.rootViewController = rootViewController;
+  [self.window makeKeyAndVisible];
 
-  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
-  [RNSplashScreen show]; // react-native-splash-screen
+  [RNSplashScreen show];
 
-  return didFinish;
+  return YES;
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
@@ -143,22 +94,22 @@ void devLog(NSString *format, ...) {}
 #endif
 }
 
-
-// Deep linking
+// deep link
 - (BOOL)application:(UIApplication *)application
-   openURL:(NSURL *)url
-   options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+            openURL:(NSURL *)url
+            options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
 {
   return [RCTLinkingManager application:application openURL:url options:options];
 }
 
-// Universal Links
-- (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity
- restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
+// universal link
+- (BOOL)application:(UIApplication *)application
+continueUserActivity:(NSUserActivity *)userActivity
+ restorationHandler:(void (^)(NSArray *))restorationHandler
 {
- return [RCTLinkingManager application:application
-                  continueUserActivity:userActivity
-                    restorationHandler:restorationHandler];
+  return [RCTLinkingManager application:application
+                   continueUserActivity:userActivity
+                     restorationHandler:restorationHandler];
 }
 
 @end

@@ -10,7 +10,7 @@ const defaultModuleResolver =
 
 /**
  * Metro configuration
- * https://facebook.github.io/metro/docs/configuration
+ * https://reactnative.dev/docs/metro
  *
  * @return {import('metro-config').MetroConfig}
  */

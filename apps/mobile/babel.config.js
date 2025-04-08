@@ -1,5 +1,4 @@
 const child_process = require('child_process');
-
 const pkg = require('./package.json');
 
 const { version } = pkg;
@@ -27,22 +26,19 @@ const buildGitInfo = (function getBuildEnvVars() {
     buildchannel !== 'selfhost-reg'
       ? ''
       : child_process
-          // format: name
           .execSync('git show --quiet --format="%cn"')
-          // // format: name(email)
-          // .execSync('git log -1 --pretty=format:"%an(%ae)"')
           .toString()
           .trim();
 
   const BUILD_GIT_COMMITS_COUNT_BASEVER = version;
 
-  // calculate commits count from v{version}
   let BUILD_GIT_COMMITS_COUNT = '';
   try {
     BUILD_GIT_COMMITS_COUNT =
       buildchannel !== 'selfhost-reg'
         ? ''
         : child_process
+
             .execSync(
               `git fetch --tags; git rev-list --count v${BUILD_GIT_COMMITS_COUNT_BASEVER}..HEAD`,
             )
@@ -66,8 +62,11 @@ const buildGitInfo = (function getBuildEnvVars() {
 module.exports = {
   presets: [
     [
-      'module:metro-react-native-babel-preset',
-      { useTransformReactJSXExperimental: true },
+      '@react-native/babel-preset',
+      {
+        runtime: 'automatic',
+        reactTransform: true,
+      },
     ],
   ],
   plugins: [
@@ -108,35 +107,14 @@ module.exports = {
           'styled-components': 'styled-components/native',
           'react-native-sqlite-storage':
             '@rabby-wallet/react-native-sqlite-storage',
-
-          // 'crypto': 'react-native-quick-crypto',
-          // // 'stream': 'stream-browserify',
-          // 'stream': 'readable-stream',
-          // 'buffer': '@craftzdog/react-native-buffer',
         },
       },
     ],
-    ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }],
     ['@babel/plugin-transform-export-namespace-from'],
-    'react-native-reanimated/plugin',
-    [
-      'module:react-native-dotenv',
-      {
-        moduleName: '@env',
-      },
-    ],
-    [
-      'nativewind/babel',
-      {
-        // mode: "transformOnly",
-        // mode: "compileOnly",
-      },
-    ],
-    // 'babel-plugin-transform-typescript-metadata',
+
+    ['module:react-native-dotenv', { moduleName: '@env' }],
+    ['nativewind/babel', {}],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
-    ['@babel/plugin-proposal-class-properties', { loose: true }],
-    // ['@babel/plugin-transform-flow-strip-types', { loose: true }],
-    // ['@babel/plugin-proposal-private-methods', { loose: true }],
   ],
   env: {
     production: {
