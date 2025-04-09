@@ -192,19 +192,20 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     [method],
   );
 
-  const signTypedData: null | Record<string, any> = useMemo(() => {
-    if (!isSignTypedDataV1) {
-      try {
-        const v = JSON.parse(data[1]);
-        const normalized = normalizeTypeData(v);
-        return normalized;
-      } catch (error) {
-        console.error('parse signTypedData error: ', error);
-        return null;
+  const [signTypedData, rawMessage]: (null | Record<string, any>)[] =
+    useMemo(() => {
+      if (!isSignTypedDataV1) {
+        try {
+          const v = JSON.parse(data[1]);
+          const normalized = normalizeTypeData(v);
+          return [normalized, v];
+        } catch (error) {
+          console.error('parse signTypedData error: ', error);
+          return [null, null];
+        }
       }
-    }
-    return null;
-  }, [data, isSignTypedDataV1]);
+      return [null, null];
+    }, [data, isSignTypedDataV1]);
 
   const chain = useMemo(() => {
     if (!isSignTypedDataV1 && signTypedData) {
@@ -261,11 +262,12 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     const _isGnosisAccount =
       currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
     setIsGnosisAccount(_isGnosisAccount);
-    if (!isSignTypedDataV1 && signTypedData) {
+    if (_isGnosisAccount) {
       if (!isViewGnosisSafe) {
         apisSafe.clearGnosisMessage();
       }
-
+    }
+    if (!isSignTypedDataV1 && signTypedData) {
       const chainId = signTypedData?.domain?.chainId;
       if (isTestnetChainId(chainId)) {
         return null;
@@ -294,6 +296,15 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       setIsWatch(true);
       setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
     }
+
+    if (
+      currentAccount &&
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isSignTypedDataV1
+    ) {
+      setIsWatch(true);
+      setCantProcessReason(t('page.signTypedData.safeCantSignTypedData'));
+    }
   };
 
   const { data: safeInfo } = useGetCurrentSafeInfo({
@@ -303,7 +314,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   });
   const { data: safeMessageHash } = useGetMessageHash({
     chainId: currentChainId,
-    message: signTypedData,
+    message: rawMessage,
     account: currentAccount!,
   });
   const { data: currentSafeMessage } = useCheckCurrentSafeMessage(
@@ -585,8 +596,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
   const handleGnosisSign = async () => {
     const account = currentGnosisAdmin;
-    // todo check this
-    const signTypedData = data[1];
+    const signTypedData = rawMessage;
     if (!safeInfo || !account || !signTypedData) {
       return;
     }

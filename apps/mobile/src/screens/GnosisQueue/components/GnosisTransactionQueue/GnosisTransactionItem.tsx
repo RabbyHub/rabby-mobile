@@ -36,6 +36,7 @@ import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 export type ConfirmationProps = {
   owner: string;
@@ -173,10 +174,12 @@ export const GnosisTransactionItem = ({
   };
 
   const { navigateToSendPolyScreen } = useSendRoutes();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleReplace = async (type: string) => {
     setIsShowReplacePopup(false);
     if (type === 'send') {
+      await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
       navigateToSendPolyScreen(true, {
         safeInfo: {
           nonce: data.nonce,
