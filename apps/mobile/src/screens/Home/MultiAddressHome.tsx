@@ -90,6 +90,8 @@ import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useCexAccounts } from '@/hooks/useCexAccounts';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 const HeaderHeight = 24;
 
@@ -519,9 +521,6 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
 
-          preferenceService.setReportActionTs(
-            REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
-          );
           break;
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
@@ -683,6 +682,18 @@ function MultiAddressHome(): JSX.Element {
                               },
                             ]
                           : []),
+                        {
+                          title: t('page.whitelist.copyAddress'),
+                          icon: isDarkTheme
+                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
+                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+                          androidIconName: 'ic_rabby_menu_copy',
+                          key: 'copy',
+                          action() {
+                            Clipboard.setString(item.address);
+                            toastCopyAddressSuccess(item.address);
+                          },
+                        },
                         {
                           title: 'UnPin',
                           icon: isDarkTheme
