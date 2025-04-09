@@ -43,7 +43,7 @@ export function ScreenHeaderAccountSwitcher({
     forScene,
   });
 
-  // const { preFetchData } = usePreFetchBeforeEnterScene();
+  const { preFetchData } = usePreFetchBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
     return typeof titleText === 'string' ? (
@@ -74,9 +74,9 @@ export function ScreenHeaderAccountSwitcher({
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
-        // if (nextOpen) {
-        //   preFetchData();
-        // }
+        if (nextOpen) {
+          preFetchData();
+        }
       }}>
       {titleTextNode}
       <View style={styles.addressRow}>
