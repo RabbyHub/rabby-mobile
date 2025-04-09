@@ -1,4 +1,4 @@
-export const ellipsis = (text: string, length = 4) => {
+export const ellipsis = (text: string, length = 6) => {
   const reg = new RegExp(`^(.{${length + 2}})(.*)(.{${length}})$`);
   return text.toString().replace(reg, '$1...$3');
 };
@@ -12,7 +12,7 @@ export function formatAddressToShow(
     length?: number;
   },
 ) {
-  const { ellipsis: isEllipsis = true, length = 4 } = options || {};
+  const { ellipsis: isEllipsis = true, length = 6 } = options || {};
   return isEllipsis
     ? `${ellipsisAddress(address || '')
         .toLowerCase()
