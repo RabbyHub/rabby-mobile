@@ -438,6 +438,7 @@
       "beginSigning": "Begin signing process",
       "ledgerSign": "Sign",
       "oneKeySign": "Sign",
+      "keystoneSign": "Sign",
       "qrcode": {
         "signWith": "Sign with {{brand}}",
         "failedToGetExplain": "Failed to get explain",
