@@ -49,9 +49,9 @@ function AccountSwitcherComponent({
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
-        if (nextOpen) {
-          preFetchData();
-        }
+        // if (nextOpen) {
+        //   preFetchData();
+        // }
       }}>
       <View style={styles.addressRow}>
         {!!finalSceneCurrentAccount && (

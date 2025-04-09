@@ -74,9 +74,9 @@ export function ScreenHeaderAccountSwitcher({
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
-        if (nextOpen) {
-          preFetchData();
-        }
+        // if (nextOpen) {
+        //   preFetchData();
+        // }
       }}>
       {titleTextNode}
       <View style={styles.addressRow}>

@@ -120,6 +120,9 @@ export function usePreFetchBeforeEnterScene() {
     disableAutoFetch: true,
   });
 
+  /**
+   * @deprecated
+   */
   const preFetchData = useCallback(async () => {
     setTimeout(() => {
       Promise.allSettled([
