@@ -2,17 +2,13 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { atom, useAtom } from 'jotai';
-import {
-  sortAccountList,
-  useSortAddressList,
-} from '@/screens/Address/useSortAddressList';
+import React, { useCallback, useMemo } from 'react';
+import { useAtom } from 'jotai';
+import { sortAccountList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
-import { ANIMATION_DURATION } from '@gorhom/bottom-sheet';
 import { Platform } from 'react-native';
 
 type SceneAccountInfo = {
