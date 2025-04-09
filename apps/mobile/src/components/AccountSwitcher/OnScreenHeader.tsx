@@ -43,7 +43,7 @@ export function ScreenHeaderAccountSwitcher({
     forScene,
   });
 
-  const { preFetchData } = usePreFetchBeforeEnterScene();
+  // const { preFetchData } = usePreFetchBeforeEnterScene();
 
   const titleTextNode = useMemo(() => {
     return typeof titleText === 'string' ? (

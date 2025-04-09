@@ -32,7 +32,7 @@ function AccountSwitcherComponent({
       forScene,
     });
 
-  const { preFetchData } = usePreFetchBeforeEnterScene();
+  // const { preFetchData } = usePreFetchBeforeEnterScene();
 
   useMount(() => {
     if (!isSceneUsingAllAccounts) {
