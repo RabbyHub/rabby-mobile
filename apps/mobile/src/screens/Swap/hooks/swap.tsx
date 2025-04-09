@@ -12,6 +12,7 @@ import { navigationRef } from '@/utils/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -205,6 +206,12 @@ export const dexSwap = async (
     )
       .then(() => {
         console.log('after swap');
+        preferenceService.setReportActionTs(
+          REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
+          {
+            chain: chainObj.serverId as string,
+          },
+        );
         navigationRef.dispatch(
           StackActions.replace(RootNames.StackRoot, {
             screen: RootNames.Home,

@@ -216,6 +216,10 @@ const Swap = ({
   ) as TransactionNavigatorParamList['Swap'] | undefined;
 
   useMount(() => {
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
+    );
+
     if (!navState?.chainEnum) {
       return;
     }
@@ -444,7 +448,7 @@ const Swap = ({
     }
     if (
       [
-        KEYRING_TYPE.SimpleKeyring,
+        // KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
         KEYRING_CLASS.HARDWARE.LEDGER,
       ].includes((currentAccount?.type || '') as any) &&
