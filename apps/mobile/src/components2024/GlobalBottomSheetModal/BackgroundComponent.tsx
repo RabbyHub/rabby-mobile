@@ -15,6 +15,7 @@ export const BackgroundComponent: React.FC<
       accessible={true}
       accessibilityRole="adjustable"
       accessibilityLabel="Bottom Sheet"
+      inBottomSheet
     />
   );
 };

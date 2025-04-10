@@ -9,6 +9,7 @@ import LinearGradient, {
 
 export type LinearGradientContainerProps = {
   type?: 'linear' | 'bg1' | 'bg2' | 'classical:bg2' | 'linear-bg2' | 'tx-page';
+  inBottomSheet?: boolean;
 } & Omit<LinearGradientProps, 'colors'>;
 
 function makeTxPageColors({
@@ -22,7 +23,7 @@ function makeTxPageColors({
 
 export const LinearGradientContainer: React.FC<
   LinearGradientContainerProps
-> = ({ type, ...props }) => {
+> = ({ type, inBottomSheet, ...props }) => {
   const { colors, isLight, colors2024 } = useTheme2024();
   const [showLinearGradient, setShowLinearGradient] =
     React.useState<boolean>(false);
@@ -32,23 +33,31 @@ export const LinearGradientContainer: React.FC<
   });
 
   if (type === 'linear') {
+    if (inBottomSheet) {
+      return (
+        <View {...props}>
+          {showLinearGradient ? (
+            <LinearGradient
+              colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+          ) : null}
+          {props.children}
+        </View>
+      );
+    }
     return (
-      <View {...props}>
-        {showLinearGradient ? (
-          <LinearGradient
-            colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          />
-        ) : null}
-        {props.children}
-      </View>
+      <LinearGradient
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        {...props}
+      />
     );
   }
 
