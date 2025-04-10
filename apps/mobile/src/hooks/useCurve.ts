@@ -1,4 +1,4 @@
-import { openapi } from '@/core/request';
+import { getNetCurve } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import { formatUsdValue } from '@/utils/number';
 import dayjs from 'dayjs';
@@ -94,7 +94,7 @@ export const useCurve = (
 
   const fetch = useCallback(
     async (addr: string, force = false) => {
-      const curve = await openapi.getNetCurve(addr, days);
+      const curve = await getNetCurve(addr, days, force);
       const start =
         days === CurveDayType.DAY
           ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
