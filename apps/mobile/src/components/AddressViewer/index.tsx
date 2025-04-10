@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './style';
+import { ellipsisAddress } from '@/utils/address.js';
 
 interface AddressViewProps {
   address: string;
@@ -57,9 +58,7 @@ export const AddressViewer = ({
             addressStyle,
           ]}>
           {ellipsis
-            ? `${address?.toLowerCase().slice(0, 6)}...${address
-                ?.toLowerCase()
-                .slice(-4)}`
+            ? ellipsisAddress(address.toLowerCase())
             : address?.toLowerCase()}
         </Text>
       </View>
