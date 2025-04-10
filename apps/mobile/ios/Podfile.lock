@@ -1083,27 +1083,8 @@ PODS:
     - React-debug
   - react-native-aes (2.1.2):
     - React-Core
-  - react-native-animateable-text (0.15.0):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.01.01.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Codegen
+  - react-native-animateable-text (0.12.1):
     - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - react-native-ble-manager (8.8.0):
     - React-Core
   - react-native-ble-plx (3.1.2):
@@ -2143,7 +2124,7 @@ SPEC CHECKSUMS:
   React-logger: 87cddd161bd9784d60fc5528f21c57ca07d2962a
   React-Mapbuffer: 1cc78f4d99f0b72286776ebf3406afd816838055
   react-native-aes: b580a7919ae1ba5a1b457e7e4914a87eb01de6f4
-  react-native-animateable-text: ed8dd7d1401be8cf2a64a27a687210ac3158c873
+  react-native-animateable-text: c95b74a78a13e416e6c4e8b012eea29e14913207
   react-native-ble-manager: f8add48474ad08a0bd3e46b2d1ebff5e00a628b7
   react-native-ble-plx: 08026d63dc92bb9aba31ea7f2c6a6906df8014d2
   react-native-blur: cfdad7b3c01d725ab62a8a729f42ea463998afa2
