@@ -48,7 +48,10 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
     }, 100);
 
     navigate(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken({ ...token, _isPined: isPined }),
+      token: {
+        ...ensureAbstractPortfolioToken(token),
+        _isPined: isPined,
+      },
       needUseCacheToken: true,
       tokenSelectType: type,
     });

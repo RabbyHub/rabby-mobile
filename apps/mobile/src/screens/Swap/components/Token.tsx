@@ -137,17 +137,9 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     [width],
   );
 
-  const disabledSlider = useMemo(
-    () => !token || tokenAmountBn(token).lte(0),
-    [token],
-  );
-
   const onSlidingStart = useCallback(() => {
-    if (disabledSlider) {
-      return;
-    }
     showBubble.value = true;
-  }, [disabledSlider, showBubble]);
+  }, [showBubble]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
@@ -178,7 +170,8 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
         {isFrom && (
           <View style={styles.sliderContainer}>
             <Slider
-              allowTouchTrack={!disabledSlider}
+              key={`${token?.id}-${token?.chain}`}
+              allowTouchTrack
               style={styles.slider}
               value={slider}
               onSlidingStart={onSlidingStart}
@@ -189,13 +182,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
               minimumTrackTintColor={colors2024['brand-default']}
               maximumTrackTintColor={colors2024['neutral-line']}
               step={1}
-              thumbStyle={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 14,
-                height: 14,
-                backgroundColor: 'transparent',
-              }}
+              thumbStyle={styles.thumbStyle}
               thumbProps={{
                 children: (
                   <View>
@@ -424,5 +411,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   insufficient: {
     color: colors2024['red-default'],
+  },
+
+  thumbStyle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 14,
+    height: 14,
+    backgroundColor: 'transparent',
   },
 }));

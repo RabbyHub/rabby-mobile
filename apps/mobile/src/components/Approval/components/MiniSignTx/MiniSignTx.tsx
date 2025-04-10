@@ -37,7 +37,14 @@ import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
 import _ from 'lodash';
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
@@ -1106,22 +1113,34 @@ export const MiniApproval = ({
   const { sheetModalRef } = useSheetModal();
 
   useEffect(() => {
-    if (visible) {
+    if (visible || txs?.length) {
       sheetModalRef.current?.present();
     } else {
       sheetModalRef.current?.dismiss();
     }
-  }, [sheetModalRef, visible]);
+  }, [sheetModalRef, visible, txs?.length]);
+
+  const indexRef = useRef(-1);
+
+  const onChange = useCallback(
+    (index: number) => {
+      if (index === -1 && indexRef.current > -1) {
+        onReject?.();
+      }
+      indexRef.current = index;
+    },
+    [onReject],
+  );
 
   return (
     <AppBottomSheetModal
+      index={visible ? 0 : -1}
       ref={sheetModalRef}
-      // snapPoints={snapPoints}
       enableDismissOnClose
-      onDismiss={onReject}
       handleStyle={styles.sheetBg}
       enableDynamicSizing
-      backgroundStyle={styles.sheetBg}>
+      backgroundStyle={styles.sheetBg}
+      onChange={onChange}>
       <BottomSheetView>
         {txs?.length ? (
           <MiniSignTx
