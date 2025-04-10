@@ -174,7 +174,7 @@
     "react-native-vector-icons": "^10.0.2",
     "react-native-version-check": "^3.4.7",
     "react-native-video": "^5.2.1",
-    "react-native-vision-camera": "^3.6.17",
+    "react-native-vision-camera": "4.6.4",
     "react-native-wagmi-charts": "^2.3.2",
     "react-native-walkthrough-tooltip": "^1.5.0",
     "react-native-webview": "13.10.5",
