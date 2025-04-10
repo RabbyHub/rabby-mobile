@@ -435,9 +435,10 @@
         "login": "Log in",
         "deposit": "Deposit"
       },
-      "beginSigning": "Begin signing process",
+      "beginSigning": "Start Signing",
       "ledgerSign": "Sign",
       "oneKeySign": "Sign",
+      "keystoneSign": "Sign",
       "qrcode": {
         "signWith": "Sign with {{brand}}",
         "failedToGetExplain": "Failed to get explain",
