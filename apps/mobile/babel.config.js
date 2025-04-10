@@ -115,6 +115,7 @@ module.exports = {
     ['module:react-native-dotenv', { moduleName: '@env' }],
     ['nativewind/babel', {}],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
+    ['react-native-reanimated/plugin'],
   ],
   env: {
     production: {

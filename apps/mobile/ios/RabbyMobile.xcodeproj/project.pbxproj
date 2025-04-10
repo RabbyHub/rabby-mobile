@@ -386,6 +386,8 @@
 			<dict>
 				<key>ALWAYS_SEARCH_USER_PATHS</key>
 				<string>NO</string>
+				<key>CC</key>
+				<string></string>
 				<key>CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED</key>
 				<string>YES</string>
 				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
@@ -440,6 +442,8 @@
 				<string>iPhone Developer</string>
 				<key>COPY_PHASE_STRIP</key>
 				<string>YES</string>
+				<key>CXX</key>
+				<string></string>
 				<key>DEVELOPMENT_TEAM</key>
 				<string>ZPNP2SF27Q</string>
 				<key>ENABLE_NS_ASSERTIONS</key>
@@ -516,9 +520,16 @@
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
 				</array>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
+				<key>LD</key>
+				<string></string>
+				<key>LDPLUSPLUS</key>
+				<string></string>
 				<key>LD_RUNPATH_SEARCH_PATHS</key>
 				<array>
 					<string>/usr/lib/swift</string>
@@ -1588,6 +1599,8 @@
 			<dict>
 				<key>ALWAYS_SEARCH_USER_PATHS</key>
 				<string>NO</string>
+				<key>CC</key>
+				<string></string>
 				<key>CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED</key>
 				<string>YES</string>
 				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
@@ -1642,6 +1655,8 @@
 				<string>iPhone Developer</string>
 				<key>COPY_PHASE_STRIP</key>
 				<string>NO</string>
+				<key>CXX</key>
+				<string></string>
 				<key>DEVELOPMENT_TEAM</key>
 				<string>ZPNP2SF27Q</string>
 				<key>ENABLE_STRICT_OBJC_MSGSEND</key>
@@ -1725,9 +1740,16 @@
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
 				</array>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
+				<key>LD</key>
+				<string></string>
+				<key>LDPLUSPLUS</key>
+				<string></string>
 				<key>LD_RUNPATH_SEARCH_PATHS</key>
 				<array>
 					<string>/usr/lib/swift</string>
@@ -1774,6 +1796,8 @@
 			<dict>
 				<key>ALWAYS_SEARCH_USER_PATHS</key>
 				<string>NO</string>
+				<key>CC</key>
+				<string></string>
 				<key>CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED</key>
 				<string>YES</string>
 				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
@@ -1828,6 +1852,8 @@
 				<string>iPhone Developer</string>
 				<key>COPY_PHASE_STRIP</key>
 				<string>YES</string>
+				<key>CXX</key>
+				<string></string>
 				<key>DEVELOPMENT_TEAM</key>
 				<string>ZPNP2SF27Q</string>
 				<key>ENABLE_NS_ASSERTIONS</key>
@@ -1877,6 +1903,10 @@
 				</array>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
+				<key>LD</key>
+				<string></string>
+				<key>LDPLUSPLUS</key>
+				<string></string>
 				<key>LD_RUNPATH_SEARCH_PATHS</key>
 				<array>
 					<string>/usr/lib/swift</string>
