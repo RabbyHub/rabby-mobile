@@ -19,6 +19,7 @@ import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
+import { matomoRequestEvent } from '@/utils/analytics';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
@@ -56,6 +57,10 @@ const ConfirmAddress = ({
   const setInWhitelist = useCallback(
     (bool: boolean) => {
       if (bool) {
+        matomoRequestEvent({
+          category: 'Send Usage',
+          action: 'Send_AddWhitelist',
+        });
         addWhitelist(account.address, {
           onAdded: () => {
             toast.success(t('page.whitelist.addSuccessful'));

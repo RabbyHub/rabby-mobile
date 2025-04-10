@@ -42,6 +42,7 @@ import {
   getAddrDescWithCexLocalCacheSync,
   getCexWithLocalCache,
 } from '@/databases/hooks/cex';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -173,6 +174,10 @@ export const WhiteListItem = ({
                 },
                 onConfirm() {
                   removeGlobalBottomSheetModal2024(id);
+                  matomoRequestEvent({
+                    category: 'Send Usage',
+                    action: 'Send_AddWhitelist',
+                  });
                   addWhitelist(account.address, {
                     onAdded: () => {
                       toast.success(t('page.whitelist.addSuccessful'));
