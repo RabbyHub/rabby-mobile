@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './style';
-import { ellipsisAddress } from '@/utils/address.js';
+import { ellipsisAddress } from '@/utils/address';
 
 interface AddressViewProps {
   address: string;
