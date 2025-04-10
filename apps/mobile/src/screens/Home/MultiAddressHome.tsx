@@ -187,7 +187,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
             });
             navigation.dispatch(
               StackActions.push(RootNames.StackAddress, {
-                screen: RootNames.AddressList,
+                screen: RootNames.AddressAssetsOverview,
                 params: {},
               }),
             );

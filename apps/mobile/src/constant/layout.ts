@@ -141,6 +141,7 @@ export const RootNames = {
 
   StackAddress: 'StackAddress',
   AddressList: 'AddressList',
+  AddressAssetsOverview: 'AddressAssetsOverview',
   ApprovalAddressList: 'ApprovalAddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
