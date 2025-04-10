@@ -120,7 +120,7 @@ PODS:
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
   - lottie-ios (4.5.0)
-  - lottie-react-native (7.1.0):
+  - lottie-react-native (7.2.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1083,8 +1083,27 @@ PODS:
     - React-debug
   - react-native-aes (2.1.2):
     - React-Core
-  - react-native-animateable-text (0.11.1):
+  - react-native-animateable-text (0.15.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-ble-manager (8.8.0):
     - React-Core
   - react-native-ble-plx (3.1.2):
@@ -1571,7 +1590,73 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated (3.6.1):
+  - RNReanimated (3.16.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNReanimated/reanimated (= 3.16.7)
+    - RNReanimated/worklets (= 3.16.7)
+    - Yoga
+  - RNReanimated/reanimated (3.16.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNReanimated/reanimated/apple (= 3.16.7)
+    - Yoga
+  - RNReanimated/reanimated/apple (3.16.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - RNReanimated/worklets (3.16.7):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2024,7 +2109,7 @@ SPEC CHECKSUMS:
   hermes-engine: 21ea4e6a0b64854652c8c20cb815efdbb3131fdd
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
-  lottie-react-native: 7dac0f0fc60d1665816f3ccfc64f63ba5ace2746
+  lottie-react-native: ce3bc284fb34a9bffb592c4db4100cb55373dac2
   MMKV: 506311d0494023c2f7e0b62cc1f31b7370fa3cfb
   MMKVCore: edbad9714bb70344544148f086a4a69061ff31b6
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
@@ -2056,7 +2141,7 @@ SPEC CHECKSUMS:
   React-logger: 87cddd161bd9784d60fc5528f21c57ca07d2962a
   React-Mapbuffer: 1cc78f4d99f0b72286776ebf3406afd816838055
   react-native-aes: b580a7919ae1ba5a1b457e7e4914a87eb01de6f4
-  react-native-animateable-text: 79b31ec28f4ed14dab76b304eb74a24eeb2fa9c0
+  react-native-animateable-text: ed8dd7d1401be8cf2a64a27a687210ac3158c873
   react-native-ble-manager: f8add48474ad08a0bd3e46b2d1ebff5e00a628b7
   react-native-ble-plx: 08026d63dc92bb9aba31ea7f2c6a6906df8014d2
   react-native-blur: cfdad7b3c01d725ab62a8a729f42ea463998afa2
@@ -2115,7 +2200,7 @@ SPEC CHECKSUMS:
   RNNotifee: 8e2d3df3f0e9ce8f5d1fe4c967431138190b6175
   RNPermissions: 2d82571768dcc029f99859f4cacca1ad1efadedc
   RNReactNativeHapticFeedback: dd1df8ab143dfd0ac79fe483cd08822d7a86fc85
-  RNReanimated: d6e42074ef60e1b90f51e291c95d7dc764c76b66
+  RNReanimated: 9cc0e570f6a96d4579b408e8604bfc442d393593
   RNScreens: 3b123205167166ac51936897b804eea9c6ffb8f5
   RNSentry: 4055b88d1c5882a8bc29e61f25b19b0bfd775086
   RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a

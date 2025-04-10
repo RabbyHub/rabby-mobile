@@ -523,6 +523,9 @@
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
 				</array>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
@@ -1701,6 +1704,9 @@
 					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios</string>
 					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers</string>
 					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
+					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
 					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
