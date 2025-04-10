@@ -1246,7 +1246,7 @@ PODS:
     - Yoga
   - react-native-randombytes (3.6.1):
     - React-Core
-  - react-native-safe-area-context (4.8.2):
+  - react-native-safe-area-context (5.0.0):
     - React-Core
   - react-native-splash-screen (3.3.0):
     - React-Core
@@ -1530,7 +1530,7 @@ PODS:
     - React-Core
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.14.0):
+  - RNGestureHandler (2.18.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2154,7 +2154,7 @@ SPEC CHECKSUMS:
   react-native-pager-view: 50783067e56e20482c43d066112b1a775a29d7b8
   react-native-quick-crypto: 0fd69f9aab7bbbddc56ac24a80b91be01eadeec1
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
-  react-native-safe-area-context: 0ee144a6170530ccc37a0fd9388e28d06f516a89
+  react-native-safe-area-context: ab7beb734b0f9f79f55ae144a6c946a6422f55d6
   react-native-splash-screen: 4312f786b13a81b5169ef346d76d33bc0c6dc457
   react-native-sqlite-storage: 539c4cc1ad30de152e3e04ee8d556e825fec4432
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
@@ -2191,7 +2191,7 @@ SPEC CHECKSUMS:
   RNFBAnalytics: 991772a4cd8c90de9a5eec33ef24dbba6e028c5b
   RNFBApp: a4f5b074984cf612e4c97d68b42be690c59e2638
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
-  RNGestureHandler: cc26ca57ecbe24cce0a3d1cce327a6a3335359e0
+  RNGestureHandler: fc0d83b45872ee937ecc9814012d9b48586b4d7a
   RNGoogleSignin: 97d8ec68fbbe6beb4820b374acf4470acac21756
   RNIap: 2fba6c91f79fb7c71fcc44465f606061653caf01
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
