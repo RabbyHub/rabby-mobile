@@ -10,6 +10,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { RootNames } from '@/constant/layout';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { MaskContainer } from './components/MaskContainer';
+import { toast } from '@/components2024/Toast';
 
 const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 
@@ -130,7 +131,11 @@ export const BackupPrivateKeyScreen = () => {
           {!maskTextVisible && (
             <>
               <Text style={styles.privateKeyContainerText}>{data}</Text>
-              <CopyAddressIcon style={styles.copyButton} address={data} />
+              <CopyAddressIcon
+                style={styles.copyButton}
+                address={data}
+                onToastSucess={() => toast.success('Copied')}
+              />
             </>
           )}
         </View>
