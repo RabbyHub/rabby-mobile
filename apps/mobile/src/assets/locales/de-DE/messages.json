@@ -129,7 +129,10 @@
       "hot": "Heiß",
       "searchPlaceHolder2": "Token suchen",
       "common": "Allgemein",
-      "searchPlaceHolder1": "Suche nach Name / Adresse"
+      "searchPlaceHolder1": "Suche nach Name / Adresse",
+      "contextMenu": {
+        "viewDetail": "Detail anzeigen"
+      }
     },
     "AuthenticationModals": {
       "processBiometrics": {
@@ -297,7 +300,14 @@
       "ShowHiddenItems": "Verborgene Transaktionen anzeigen",
       "Yesterday": "Gestern",
       "NotShowAllTransactionsToast": "Versteckte Transaktionen verborgen",
-      "ShowAllTransactionsToast": "Verborgene Transaktionen angezeigt"
+      "ShowAllTransactionsToast": "Verborgene Transaktionen angezeigt",
+      "TransactionAlert": {
+        "clearPendingSuccess": "Lokale ausstehende Transaktion entfernt",
+        "clearPendingText": "{{chainName}}-Transaktion ({{nonces}}) wartet seit über 3 Minuten. Sie können <5></5> <6>Pending lokal löschen</6> <7></7> und die Transaktion erneut einreichen.",
+        "skipNonceText": "Nonce #{{nonce}} wurde auf der {{chainName}}-Blockchain übersprungen. Dies kann zu ausstehenden Transaktionen führen. <5></5> <6>Reichen Sie eine tx</6> <7></7> auf der Blockchain ein, um das Problem zu beheben."
+      },
+      "ShowScamTransactions": "Zeige Betrugstransaktionen an",
+      "HideScamTransactions": "Scam-Transaktionen ausblenden"
     },
     "getStart": {
       "goToHome": "Gehe zu Home",
@@ -333,6 +343,10 @@
               "title": "Schnelles Abbrechen",
               "tips": "Nur für Transaktionen unterstützt, die noch nicht gesendet wurden.",
               "desc": "Vor dem Senden stornieren, keine Gasgebühr"
+            },
+            "removeLocalPendingTx": {
+              "title": "Lokale ausstehende löschen",
+              "desc": "Entfernen Sie die ausstehende Transaktion aus der Schnittstelle"
             }
           }
         },
@@ -341,7 +355,8 @@
           "pendingDetail": "Nur eine Transaktion wird abgeschlossen, und es ist fast immer die mit dem höchsten Gaspreis."
         },
         "message": {
-          "cancelSuccess": "Abgebrochen"
+          "cancelSuccess": "Abgebrochen",
+          "deleteSuccess": "Lokale ausstehende Transaktion entfernt"
         },
         "empty": {
           "desc": "Alle Transaktionen, die über Rabby signiert wurden, werden hier aufgeführt.",
@@ -371,6 +386,11 @@
           "unlimited": "unbegrenzt",
           "pendingDetail": "Ausstehende Details",
           "unknownProtocol": "Unbekanntes Protokoll"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "Lokale ausstehende Elemente löschen",
+          "warning": "Die entfernte Transaktion kann weiterhin on-chain bestätigt werden, es sei denn, sie wird ersetzt.",
+          "desc": "Dies entfernt die ausstehende Transaktion von Ihrer Benutzeroberfläche. Sie können dann eine neue Transaktion initiieren."
         }
       }
     },
@@ -699,7 +719,8 @@
         "listNFT": "NFT auflisten",
         "specificBuyer": "Spezifischer Käufer",
         "title": "NFT Order"
-      }
+      },
+      "safeCantSignTypedData": "Dies ist eine Safe-Adresse, und sie unterstützt nur das Signieren von EIP-712 typisierten Daten oder Strings."
     },
     "sendToken": {
       "To": "Um",
@@ -757,7 +778,9 @@
         "cancel": "Abbrechen",
         "confirm": "Fortfahren"
       },
-      "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden."
+      "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden.",
+      "From": "Von",
+      "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden."
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -816,7 +839,9 @@
         "misMatchSignId": "Inkonsistente Transaktionsdaten. Bitte überprüfen Sie die Transaktionsdetails.",
         "qrcodeDesc": "Scannen Sie mit Ihrem {{brand}}, um zu unterschreiben  \nNach der Unterschrift klicken Sie auf die Schaltfläche unten, um die Unterschrift zu erhalten"
       },
-      "blockDappFromSendingRequests": "Blockiere Dapp für 1 Minute vom Senden von Anfragen"
+      "blockDappFromSendingRequests": "Blockiere Dapp für 1 Minute vom Senden von Anfragen",
+      "keystoneSign": "Unterzeichnen",
+      "startSigning": "Beginnen Sie mit dem Signieren"
     },
     "gasTopUp": {
       "Loading_Tokens": "Lade Tokens...",
@@ -1139,7 +1164,8 @@
       "createKey": {
         "interactDapp": "Interagiere mit Dapp",
         "description": "Beschreibung"
-      }
+      },
+      "sameSafeMessageAlert": "Die gleiche Nachricht ist bestätigt; es wird keine zusätzliche Signatur benötigt."
     },
     "securityEngine": {
       "undo": "Rückgängig",
@@ -1458,7 +1484,8 @@
       },
       "accountSelectTitle": "Sie können diese Transaktion mit jeder beliebigen Adresse einreichen.",
       "sameNonceWarning": "Diese Transaktionen stehen im Konflikt, da sie denselben Nonce verwenden. Die Ausführung einer wird automatisch die andere(n) ersetzen.",
-      "cancelExplain": "Widerrufen Sie {{token}} Genehmigung für {{protocol}}"
+      "cancelExplain": "Widerrufen Sie {{token}} Genehmigung für {{protocol}}",
+      "title": "Warteschlange ({{total}})"
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "QR Code",
@@ -1805,13 +1832,16 @@
       "fingerPrint": "Fingerabdruck",
       "tou": "Nutzungsbedingungen",
       "themeMode": "Designmodus",
-      "clearPending": "",
+      "clearPending": "Lokal Ausstehendes Löschen",
       "addCustomNetwork": "Benutzerdefiniertes Netzwerk hinzufügen",
       "clearPendingDesc1": "Dadurch werden alle Ihre ausstehenden Transaktionen gelöscht. Dies kann Ihnen helfen, das Problem zu lösen, dass in einigen Fällen der Zustand der Transaktion in Rabby nicht mit dem Zustand on-chain übereinstimmt.",
       "clearPendingDesc2": "Dadurch werden die Kontosalden nicht geändert oder Sie müssen Ihre Seed-Phrase nicht erneut eingeben. Alle Ihre Vermögenswerte und Kontoinformationen bleiben sicher.",
       "autoLockTime": "Automatische Sperrzeit",
       "currentLanguage": "Aktuelle Sprache",
-      "appCache": "App-Cache löschen"
+      "appCache": "App-Cache löschen",
+      "clearPendingResetDesc": "Setze auch meine lokalen Nonce-Daten und Signaturaufzeichnungen zurück.",
+      "clearPendingToast": "Lokale ausstehende Transaktion entfernt",
+      "clearPendingWarning": "Die entfernte Transaktion kann weiterhin on-chain bestätigt werden, es sei denn, sie wird ersetzt."
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -1933,7 +1963,9 @@
       "addToWhitelist": "Zur Whitelist hinzufügen",
       "brandNameTail": "Adresse",
       "dexNameTail": "Einzahlungsadresse",
-      "tipForWhiteList": "Fügen Sie Ihrer Whitelist für schnelle Überweisungen hinzu, keine Bestätigung beim nächsten Mal erforderlich"
+      "tipForWhiteList": "Fügen Sie Ihrer Whitelist für schnelle Überweisungen hinzu, keine Bestätigung beim nächsten Mal erforderlich",
+      "sendTo": "An diese Adresse senden",
+      "title": "Bestätige Adresse"
     },
     "selectAddress": {
       "selectSafeAddress": "Aus Safe-Adressen auswählen",
@@ -1946,7 +1978,8 @@
       "confirm": "Bestätigen",
       "alreadyAdded": "Bereits zur Whitelist hinzugefügt",
       "addSuccessful": "Adresse zur Whitelist hinzugefügt",
-      "confirmPassword": "Geben Sie das Passwort ein, um zu bestätigen"
+      "confirmPassword": "Geben Sie das Passwort ein, um zu bestätigen",
+      "copyAddress": "Adresse kopieren"
     },
     "syncExtension": {
       "syncingProgress": "Scannen ({{ percent }})",
@@ -1960,6 +1993,10 @@
       "noNewAddr": "Keine neuen Adressen zum Importieren gefunden",
       "syncingTips": "Halten Sie die Kamera ruhig, bis der Scan abgeschlossen ist.",
       "scanTips2": "Scannen Sie den Code und beginnen Sie mit der Synchronisierung"
+    },
+    "safeMessageQueue": {
+      "loading": "Lade Nachrichten",
+      "noData": "Keine Nachrichten"
     }
   },
   "constant": {

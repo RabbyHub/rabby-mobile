@@ -78,7 +78,10 @@
       "recent": "Recente",
       "searchPlaceHolder1": "Procurar por Nome / Endereço",
       "common": "Comum",
-      "searchPlaceHolder2": "Procurar Token"
+      "searchPlaceHolder2": "Procurar Token",
+      "contextMenu": {
+        "viewDetail": "Ver Detalhes"
+      }
     },
     "PillsSwitch": {
       "NetSwitchTabs": {
@@ -303,7 +306,14 @@
       "ViewSmallItems": "Ver transações < $0,1",
       "Today": "Hoje",
       "NotShowAllTransactionsToast": "Transações ocultas escondidas",
-      "ShowAllTransactionsToast": "Transações ocultas mostradas"
+      "ShowAllTransactionsToast": "Transações ocultas mostradas",
+      "TransactionAlert": {
+        "clearPendingSuccess": "Transação pendente local removida",
+        "clearPendingText": "{{chainName}} Transação ({{nonces}}) está pendente há mais de 3 minutos. Você pode <5></5> <6>Limpar Pendentes Localmente</6> <7></7> e reenviar a transação.",
+        "skipNonceText": "Nonce #{{nonce}} ignorado na cadeia {{chainName}}. Isso pode causar transações pendentes à frente. <5></5> <6>Submeter uma tx</6> <7></7> na cadeia para resolver."
+      },
+      "ShowScamTransactions": "Mostrar transações fraudulentas",
+      "HideScamTransactions": "Ocultar transações fraudulentas"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Insira a sua seed phrase"
@@ -323,7 +333,8 @@
     "activities": {
       "signedTx": {
         "message": {
-          "cancelSuccess": "Cancelado"
+          "cancelSuccess": "Cancelado",
+          "deleteSuccess": "Transação pendente local removida"
         },
         "status": {
           "submitFailed": "Falha ao submeter",
@@ -369,8 +380,17 @@
               "title": "Cancelamento Rápido",
               "desc": "Cancelar antes de transmitir, sem taxa de gas",
               "tips": "Apenas suportado para transações que não foram transmitidas"
+            },
+            "removeLocalPendingTx": {
+              "title": "Limpar Pendentes Localmente",
+              "desc": "Remover a transação pendente da interface"
             }
           }
+        },
+        "CancelTxConfirmPopup": {
+          "title": "Limpar Pendente Localmente",
+          "desc": "Isto irá remover a transação pendente da sua interface. Você pode então iniciar uma nova transação.",
+          "warning": "A transação removida ainda pode ser confirmada na cadeia, a menos que seja substituída."
         }
       }
     },
@@ -696,7 +716,8 @@
         "approvalExpiretime": "Tempo de expiração da aprovação",
         "sigExpireTimeTip": "A duração para esta assinatura ser válida na cadeia",
         "title": "Permit2 Token Approval"
-      }
+      },
+      "safeCantSignTypedData": "Este é um endereço Safe, e suporta apenas a assinatura de dados tipados EIP-712 ou strings."
     },
     "sendToken": {
       "Chain": "Chain",
@@ -754,7 +775,9 @@
         "cancel": "Cancelar",
         "confirm": "Prosseguir"
       },
-      "noSupprotTokenForDex": "Este token pode não ser suportado por esta bolsa. Verifique antes de continuar para evitar perdas"
+      "noSupprotTokenForDex": "Este token pode não ser suportado por esta bolsa. Verifique antes de continuar para evitar perdas",
+      "From": "De",
+      "noSupprotTokenForSafe": "O endereço Safe para o qual está a enviar tokens não está implantado nesta cadeia. Verifique antes de prosseguir para evitar perdas."
     },
     "signFooterBar": {
       "importedByLedger": "Importado por Ledger",
@@ -813,7 +836,9 @@
         "siging": "A enviar pedido de assinatura",
         "unlockAlert": "Por favor, ligue e desbloqueie o seu Ledger e abra Ethereum nele.",
         "updateFirmwareAlert": "Por favor, atualize o firmware e o aplicativo Ethereum no seu Ledger."
-      }
+      },
+      "startSigning": "Começar a Assinar",
+      "keystoneSign": "Assinar"
     },
     "sendTokenComponents": {
       "GasReserved": "Reservado <1>0</1> {{ tokenName }} para custo de gás"
@@ -1360,7 +1385,8 @@
       "createKey": {
         "interactDapp": "Interagir com Dapp",
         "description": "Descrição"
-      }
+      },
+      "sameSafeMessageAlert": "A mesma mensagem está confirmada; nenhuma assinatura adicional é necessária."
     },
     "securityEngine": {
       "riskProcessed": "O alerta de risco foi ignorado",
@@ -1570,7 +1596,8 @@
       },
       "loadingFaild": "Devido à instabilidade do servidor Safe, os dados não estão disponíveis. Por favor, verifique novamente após 5 minutos.",
       "sameNonceWarning": "Essas transações entram em conflito pois usam o mesmo nonce. Executar uma substituirá automaticamente a(s) outra(s).",
-      "loading": "A carregar transações pendentes"
+      "loading": "A carregar transações pendentes",
+      "title": "Fila ({{total}})"
     },
     "importSafe": {
       "loading": "A procurar na cadeia implementada deste endereço",
@@ -1742,7 +1769,7 @@
       "autoLockTime": "Tempo de bloqueio automático",
       "tou": "Term Of Use",
       "touchId": "Touch ID",
-      "clearPending": "",
+      "clearPending": "Limpar Pendentes Localmente",
       "modifyRPCURL": "Modificar URL RPC",
       "feedback": "Feedback",
       "followUs": "Siga-nos",
@@ -1752,7 +1779,10 @@
       "clearPendingDesc2": "Isso não alterará os saldos nas suas contas nem exigirá que você reinsira a sua seed phrase. Todos os seus ativos e informações de contas permanecerão seguros.",
       "clearPendingDesc1": "Isto limpará todas as suas transações pendentes. Isso pode ajudá-lo a resolver o problema em que, em alguns casos, o estado da transação no Rabby não corresponde ao estado na blockchain.",
       "appCache": "Limpar Cache da App",
-      "currentLanguage": "Idioma Atual"
+      "currentLanguage": "Idioma Atual",
+      "clearPendingToast": "Transação pendente local removida",
+      "clearPendingResetDesc": "Também redefina meus dados locais de nonce e registro de assinatura.",
+      "clearPendingWarning": "A transação removida pode ainda estar confirmada na cadeia, a menos que seja substituída."
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -1933,7 +1963,9 @@
       "brandNameTail": "Endereço",
       "dexNameTail": "Endereço de Depósito",
       "addToWhitelist": "Adicionar à lista de permissões",
-      "tipForWhiteList": "Adicione à sua whitelist para transferências rápidas, sem necessidade de confirmação na próxima vez."
+      "tipForWhiteList": "Adicione à sua whitelist para transferências rápidas, sem necessidade de confirmação na próxima vez.",
+      "title": "Confirmar Endereço",
+      "sendTo": "Enviar para este Endereço"
     },
     "selectAddress": {
       "selectSafeAddress": "Selecionar de endereços Safe",
@@ -1946,7 +1978,8 @@
       "addSuccessful": "Endereço adicionado à lista branca",
       "removeWhitelist": "Remover da Whitelist",
       "alreadyAdded": "Já adicionado à sua lista de permissões",
-      "confirmPassword": "Introduza a Palavra-passe para Confirmar"
+      "confirmPassword": "Introduza a Palavra-passe para Confirmar",
+      "copyAddress": "Copiar Endereço"
     },
     "syncExtension": {
       "syncingProgress": "A digitalização ({{ percent }})",
@@ -1960,6 +1993,10 @@
       "verifyWithPassword": "Verifique com a sua Palavra-passe da Extensão Rabby",
       "verifyTips": "Os seus dados são encriptados offline. Insira a senha da sua extensão Rabby para desencriptar e verificar.",
       "importedTips": "Se a APP já tiver um endereço duplicado, não será importado. As notas de endereço e listas brancas também serão sincronizadas."
+    },
+    "safeMessageQueue": {
+      "noData": "Sem mensagens",
+      "loading": "A carregar mensagens"
     }
   },
   "constant": {

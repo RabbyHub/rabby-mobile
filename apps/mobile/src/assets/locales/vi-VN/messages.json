@@ -162,7 +162,14 @@
       "ShowHiddenItems": "Hiển thị giao dịch ẩn",
       "Yesterday": "Hôm qua",
       "ShowAllTransactionsToast": "Các giao dịch ẩn được hiển thị",
-      "NotShowAllTransactionsToast": "Giao dịch ẩn được che giấu"
+      "NotShowAllTransactionsToast": "Giao dịch ẩn được che giấu",
+      "TransactionAlert": {
+        "clearPendingSuccess": "Giao dịch đang chờ tại địa phương đã bị xóa",
+        "clearPendingText": "{{chainName}} Giao dịch ({{nonces}}) đã bị giữ trong hơn 3 phút. Bạn có thể <5></5> <6>Xóa chờ tại địa phương</6> <7></7> và gửi lại giao dịch.",
+        "skipNonceText": "Nonce #{{nonce}} bị bỏ qua trên chuỗi {{chainName}}. Điều này có thể gây ra các giao dịch đang chờ phía trước. <5></5> <6>Gửi một tx</6> <7></7> trên chuỗi để giải quyết."
+      },
+      "ShowScamTransactions": "Hiện scam transactions",
+      "HideScamTransactions": "Ẩn giao dịch lừa đảo"
     },
     "getStart": {
       "alreadyHaveAddress": "Tôi đã có một địa chỉ",
@@ -215,7 +222,8 @@
         "approvalExpiretime": "Thời gian hết hạn phê duyệt",
         "sigExpireTime": "Thời gian hết hạn chữ ký",
         "sigExpireTimeTip": "Thời gian hiệu lực của chữ ký này trên chuỗi"
-      }
+      },
+      "safeCantSignTypedData": "Địa chỉ này là một Safe địa chỉ, và nó chỉ hỗ trợ ký dữ liệu kiểu EIP-712 hoặc chuỗi."
     },
     "signFooterBar": {
       "confirm": "Xác nhận",
@@ -274,7 +282,9 @@
         "resubmited": "Gửi lại",
         "unlockAlert": "Vui lòng cắm và mở khóa Ledger của bạn, mở Ethereum trên đó"
       },
-      "detectedMultipleRequestsFromThisDapp": "Phát hiện nhiều yêu cầu từ Dapp này"
+      "detectedMultipleRequestsFromThisDapp": "Phát hiện nhiều yêu cầu từ Dapp này",
+      "keystoneSign": "Ký tên",
+      "startSigning": "Bắt đầu ký"
     },
     "activities": {
       "signedTx": {
@@ -284,7 +294,8 @@
           "pendingDetail": "Chi tiết đang chờ xử lý"
         },
         "message": {
-          "cancelSuccess": "Đã hủy"
+          "cancelSuccess": "Đã hủy",
+          "deleteSuccess": "Giao dịch đang chờ địa phương đã được xóa."
         },
         "status": {
           "submitFailed": "Không thể gửi",
@@ -320,6 +331,10 @@
               "title": "Hủy Nhanh",
               "desc": "Hủy trước khi phát sóng, không có phí gas",
               "tips": "Chỉ hỗ trợ cho các giao dịch chưa phát sóng"
+            },
+            "removeLocalPendingTx": {
+              "title": "Xóa Tạm Thời Cục Bộ",
+              "desc": "Xóa giao dịch đang chờ từ giao diện"
             }
           },
           "title": "Hủy giao dịch"
@@ -327,6 +342,11 @@
         "tips": {
           "pendingDetail": "Chỉ có một giao dịch sẽ được hoàn tất và gần như luôn luôn là giao dịch có giá gas cao nhất.",
           "canNotCancel": "Không thể tăng tốc hoặc hủy: Không phải là giao dịch chờ xử lý đầu tiên"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "Xóa Đang Chờ Tại Địa Phương",
+          "warning": "Giao dịch đã bị loại bỏ có thể vẫn được xác nhận trên chuỗi trừ khi nó bị thay thế.",
+          "desc": "Điều này sẽ xóa giao dịch đang chờ xử lý khỏi giao diện của bạn. Bạn sau đó có thể khởi tạo một giao dịch mới."
         }
       }
     },
@@ -678,7 +698,9 @@
         "cancel": "Hủy",
         "confirm": "Tiếp tục"
       },
-      "noSupprotTokenForDex": "Token này có thể không được hỗ trợ bởi sàn giao dịch này. Kiểm tra trước khi tiếp tục để tránh mất mát."
+      "noSupprotTokenForDex": "Token này có thể không được hỗ trợ bởi sàn giao dịch này. Kiểm tra trước khi tiếp tục để tránh mất mát.",
+      "From": "Từ",
+      "noSupprotTokenForSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát."
     },
     "approvals": {
       "list": {
@@ -983,7 +1005,8 @@
       "createKey": {
         "interactDapp": "Tương tác Dapp",
         "description": "Mô tả"
-      }
+      },
+      "sameSafeMessageAlert": "Tin nhắn giống nhau đã được xác nhận; không cần chữ ký bổ sung."
     },
     "switchChain": {
       "requestsReceived": "1 yêu cầu đã nhận",
@@ -1500,7 +1523,7 @@
       "touchId": "Touch ID",
       "enableWhitelist": "Bật danh sách trắng để gửi tài sản",
       "followUs": "Theo dõi chúng tôi",
-      "clearPending": "",
+      "clearPending": "Xóa chờ cục bộ",
       "faceId": "Face ID",
       "feedback": "Phản hồi",
       "screenTitle": "Cài đặt",
@@ -1512,7 +1535,10 @@
       "clearPendingDesc2": "Điều này sẽ không thay đổi số dư trong các tài khoản của bạn hoặc yêu cầu bạn nhập lại cụm từ khôi phục. Tất cả tài sản và thông tin tài khoản của bạn sẽ được bảo mật.",
       "clearPendingDesc1": "Điều này sẽ xóa tất cả các giao dịch đang chờ xử lý của bạn. Điều này có thể giúp bạn giải quyết vấn đề trong một số trường hợp trạng thái giao dịch trong Rabby không khớp với trạng thái trên chuỗi.",
       "currentLanguage": "Ngôn ngữ hiện tại",
-      "appCache": "Xóa bộ nhớ cache của ứng dụng"
+      "appCache": "Xóa bộ nhớ cache của ứng dụng",
+      "clearPendingToast": "Giao dịch chờ địa phương đã bị xóa",
+      "clearPendingResetDesc": "Cũng đặt lại dữ liệu nonce địa phương và bản ghi chữ ký của tôi",
+      "clearPendingWarning": "Giao dịch đã bị xóa có thể vẫn được xác nhận trên chuỗi trừ khi nó bị thay thế."
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -1608,7 +1634,8 @@
         },
         "title": "Chọn cách thay thế giao dịch này",
         "desc": "Một giao dịch đã ký không thể bị xóa nhưng có thể được thay thế bằng một giao dịch mới cùng với nonce giống nhau."
-      }
+      },
+      "title": "Hàng đợi ({{total}})"
     },
     "createPassword": {
       "passwordMinTip": "Phải có ít nhất 8 ký tự",
@@ -1798,7 +1825,9 @@
       "brandNameTail": "Địa chỉ",
       "addToWhitelist": "Thêm vào danh sách trắng",
       "dexNameTail": "Địa chỉ gửi tiền",
-      "tipForWhiteList": "Thêm vào danh sách trắng của bạn để chuyển nhanh, không cần xác nhận lần tới"
+      "tipForWhiteList": "Thêm vào danh sách trắng của bạn để chuyển nhanh, không cần xác nhận lần tới",
+      "sendTo": "Gửi tới địa chỉ này",
+      "title": "Xác nhận địa chỉ"
     },
     "selectAddress": {
       "selectWatchAddress": "Chọn từ địa chỉ chỉ xem",
@@ -1811,7 +1840,8 @@
       "addToWhitelist": "Thêm vào danh sách trắng",
       "alreadyAdded": "Đã được thêm vào danh sách trắng của bạn",
       "removeWhitelist": "Xóa khỏi danh sách trắng",
-      "confirmPassword": "Nhập Mật khẩu để Xác nhận"
+      "confirmPassword": "Nhập Mật khẩu để Xác nhận",
+      "copyAddress": "Sao chép địa chỉ"
     },
     "syncExtension": {
       "importedSuccessfully": "Đã nhập thành công!",
@@ -1825,6 +1855,10 @@
       "scanTips1": "Nhấp vào \"Rabby Mobile\" trên Rabby Extension",
       "syncingTips": "Giữ máy ảnh ổn định cho đến khi quét xong",
       "importedTips": "Nếu trong ứng dụng đã có địa chỉ trùng lặp, nó sẽ không được nhập. Ghi chú địa chỉ và danh sách trắng cũng sẽ được đồng bộ hóa."
+    },
+    "safeMessageQueue": {
+      "noData": "Không có tin nhắn",
+      "loading": "Đang tải tin nhắn"
     }
   },
   "component": {
@@ -1844,7 +1878,10 @@
       "hot": "Nóng",
       "common": "Phổ biến",
       "searchPlaceHolder1": "Tìm kiếm theo Tên / Địa chỉ",
-      "searchPlaceHolder2": "Tìm kiếm Token"
+      "searchPlaceHolder2": "Tìm kiếm Token",
+      "contextMenu": {
+        "viewDetail": "Xem Chi Tiết"
+      }
     },
     "PillsSwitch": {
       "NetSwitchTabs": {

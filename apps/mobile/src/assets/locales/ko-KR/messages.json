@@ -106,7 +106,14 @@
       "ShowHiddenItems": "숨겨진 거래 표시",
       "ViewSmallItems": "$0.1 미만의 거래 보기",
       "NotShowAllTransactionsToast": "숨겨진 거래 감춤",
-      "ShowAllTransactionsToast": "숨겨진 거래 표시됨"
+      "ShowAllTransactionsToast": "숨겨진 거래 표시됨",
+      "TransactionAlert": {
+        "clearPendingSuccess": "로컬 보류 중인 거래가 제거되었습니다.",
+        "clearPendingText": "{{chainName}} 거래 ({{nonces}})가 3분 이상 대기 중입니다. <5></5> <6>로컬에서 대기 해제</6> <7></7>를 선택하고 거래를 다시 제출할 수 있습니다.",
+        "skipNonceText": "Nonce #{{nonce}}가 {{chainName}} 체인에서 건너뛰었습니다. 이로 인해 앞에 대기 중인 거래가 발생할 수 있습니다. <5></5> <6>체인에 tx 제출</6> <7></7>하여 해결하십시오."
+      },
+      "HideScamTransactions": "사기 거래 숨기기",
+      "ShowScamTransactions": "사기 거래 표시"
     },
     "getStart": {
       "goToHome": "홈으로 이동",
@@ -182,7 +189,9 @@
         "txRejected": "트랜잭션이 거부되었습니다.",
         "resubmited": "재제출되었습니다"
       },
-      "cancelAll": "모든 {{count}}개의 Dapp 요청 취소"
+      "cancelAll": "모든 {{count}}개의 Dapp 요청 취소",
+      "keystoneSign": "서명",
+      "startSigning": "서명 시작"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "잔액 부족",
@@ -240,7 +249,8 @@
         "approvalExpiretime": "승인 만료 시간",
         "sigExpireTimeTip": "서명 유효 기간의 온체인 기간",
         "title": "Permit2 Token Approval"
-      }
+      },
+      "safeCantSignTypedData": "이 주소는 Safe 주소이며, EIP-712 유형 데이터 또는 문자열 서명만 지원합니다."
     },
     "sendToken": {
       "Chain": "체인",
@@ -298,7 +308,9 @@
         "confirm": "진행하기",
         "cancel": "취소"
       },
-      "noSupprotTokenForDex": "이 토큰은 이 거래소에서 지원되지 않을 수 있습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오."
+      "noSupprotTokenForDex": "이 토큰은 이 거래소에서 지원되지 않을 수 있습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오.",
+      "noSupprotTokenForSafe": "전송하려는 토큰의 Safe 주소가 이 체인에 배포되어 있지 않습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오.",
+      "From": "에서"
     },
     "signTx": {
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.  \n가스 한도가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
@@ -646,7 +658,8 @@
     "activities": {
       "signedTx": {
         "message": {
-          "cancelSuccess": "취소됨"
+          "cancelSuccess": "취소됨",
+          "deleteSuccess": "로컬 보류 중인 거래가 제거되었습니다."
         },
         "tips": {
           "canNotCancel": "속도 조절 또는 취소할 수 없음: 첫 번째 보류 중인 거래가 아님",
@@ -682,6 +695,10 @@
               "title": "빠른 취소",
               "tips": "방송되지 않은 거래에 대해서만 지원됩니다.",
               "desc": "방송 전에 취소, 가스 요금 없음"
+            },
+            "removeLocalPendingTx": {
+              "title": "로컬에서 보류 중인 항목 지우기",
+              "desc": "인터페이스에서 보류 중인 거래를 제거하세요."
             }
           }
         },
@@ -694,6 +711,11 @@
           "failed": "실패했습니다",
           "pendingBroadcast": "대기 중: 전송 준비 완료",
           "pendingBroadcastFailed": "보류 중: 브로드캐스트 실패"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "로컬에서 보류된 항목 지우기",
+          "warning": "제거된 거래는 교체되지 않는 한 여전히 온체인에서 확인될 수 있습니다.",
+          "desc": "이 작업은 귀하의 인터페이스에서 대기 중인 거래를 제거합니다. 그런 다음 새 거래를 시작할 수 있습니다."
         }
       }
     },
@@ -971,7 +993,8 @@
       "createKey": {
         "description": "설명",
         "interactDapp": "Dapp 상호작용"
-      }
+      },
+      "sameSafeMessageAlert": "같은 메시지가 확인되었습니다. 추가 서명이 필요하지 않습니다."
     },
     "addToken": {
       "title": "Rabby에 사용자 정의 토큰 추가",
@@ -1160,7 +1183,8 @@
       "unknownTx": "알 수 없는 거래",
       "approvalExplain": "{{protocol}}에 대해 {{counts}} {{token}} 승인하기",
       "loading": "보류 중인 거래 불러오는 중",
-      "LowerNonceError": "nonce {{nonce}}의 트랜잭션을 먼저 실행해야 합니다"
+      "LowerNonceError": "nonce {{nonce}}의 트랜잭션을 먼저 실행해야 합니다",
+      "title": "대기열 ({{total}})"
     },
     "sign": {
       "transactionSpeed": "트랜잭션 속도"
@@ -1654,7 +1678,7 @@
       "followUs": "팔로우하기",
       "feedback": "피드백",
       "addCustomNetwork": "사용자 지정 네트워크 추가",
-      "clearPending": "",
+      "clearPending": "로컬에서 보류 중인 항목 지우기",
       "clearPendingDesc1": "이 작업은 모든 대기 중인 거래를 삭제합니다. 이것은 일부 경우 Rabby에서 거래 상태가 온체인 상태와 일치하지 않는 문제를 해결하는 데 도움이 될 수 있습니다.",
       "currentVersion": "현재 버전",
       "aboutUs": "회사 소개",
@@ -1662,7 +1686,10 @@
       "policy": "개인정보처리방침",
       "clearPendingDesc2": "이렇게 해도 귀하의 계좌 잔액에는 변화가 없으며 시드 구문을 재입력할 필요도 없습니다. 모든 자산과 계좌 정보는 안전하게 유지됩니다.",
       "currentLanguage": "현재 언어",
-      "appCache": "앱 캐시 지우기"
+      "appCache": "앱 캐시 지우기",
+      "clearPendingResetDesc": "또한 내 로컬 nonce 데이터 및 서명 기록을 재설정합니다.",
+      "clearPendingToast": "로컬 보류 중인 거래가 제거되었습니다.",
+      "clearPendingWarning": "삭제된 거래는 교체되지 않는 한 여전히 온체인에서 확인될 수 있습니다."
     },
     "settingModal": {
       "themeMode": {
@@ -1742,7 +1769,9 @@
       "dexNameTail": "입금 주소",
       "brandNameTail": "주소",
       "addToWhitelist": "화이트리스트에 추가",
-      "tipForWhiteList": "화이트리스트에 추가하여 빠른 전송을 위한 준비 완료, 다음번에는 확인이 필요 없습니다"
+      "tipForWhiteList": "화이트리스트에 추가하여 빠른 전송을 위한 준비 완료, 다음번에는 확인이 필요 없습니다",
+      "title": "주소 확인",
+      "sendTo": "이 주소로 보내기"
     },
     "selectAddress": {
       "selectWatchAddress": "감시 전용 주소에서 선택",
@@ -1755,7 +1784,8 @@
       "addSuccessful": "화이트리스트에 주소가 추가되었습니다",
       "addToWhitelist": "화이트리스트에 추가",
       "removeWhitelist": "화이트리스트에서 제거",
-      "cancel": "취소"
+      "cancel": "취소",
+      "copyAddress": "주소 복사"
     },
     "syncExtension": {
       "scanTips2": "코드를 스캔하고 동기화를 시작하세요",
@@ -1769,6 +1799,10 @@
       "verifyTips": "귀하의 데이터는 오프라인에서 암호화됩니다. 복호화 및 확인을 위해 Rabby Extension 비밀번호를 입력하세요.",
       "importedTips": "앱에 중복 주소가 이미 있는 경우, 가져오지 않습니다. 주소 노트 및 허용 목록도 동기화됩니다.",
       "imported": "Rabby Mobile에 이미 있는 주소는 다시 가져오지 않습니다. 주소 노트와 화이트리스트는 자동으로 동기화됩니다."
+    },
+    "safeMessageQueue": {
+      "noData": "메시지가 없습니다",
+      "loading": "로딩 중 메시지"
     }
   },
   "global": {
@@ -1841,7 +1875,10 @@
       "hot": "핫",
       "common": "일반",
       "searchPlaceHolder1": "이름 / 주소로 검색",
-      "searchPlaceHolder2": "토큰 검색"
+      "searchPlaceHolder2": "토큰 검색",
+      "contextMenu": {
+        "viewDetail": "자세히 보기"
+      }
     },
     "NFTNumberInput": {
       "erc1155Tips": "귀하의 잔액은 {{amount}} 입니다.",
