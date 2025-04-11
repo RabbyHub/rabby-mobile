@@ -24,23 +24,6 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   const { isLight } = useTheme2024();
   const Icon = getWalletIcon2024(type, isLight);
 
-  if (typeof Icon === 'function') {
-    return (
-      <Icon
-        width={width}
-        height={height}
-        style={StyleSheet.flatten([
-          {
-            borderRadius,
-            width,
-            height,
-          },
-          style as any,
-        ])}
-      />
-    );
-  }
-
   return (
     <Image
       source={Icon}

@@ -10,7 +10,6 @@ import SeedPNG from '@/assets2024/icons/wallet/seed.png';
 import WatchPNG from '@/assets2024/icons/wallet/watch@2x.png';
 import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark@2x.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
-import { WALLET_INFO } from './walletInfo';
 
 export const getWalletIcon2024 = (
   brandName: string | undefined,
@@ -50,8 +49,5 @@ export const getWalletIcon2024 = (
     return PrivateKeyPNG;
   }
 
-  return (
-    WALLET_INFO?.[brandName as keyof typeof WALLET_INFO]?.icon ||
-    WALLET_INFO.UnknownWallet.icon
-  );
+  return isLight ? WatchPNG : WatchDarkDark;
 };
