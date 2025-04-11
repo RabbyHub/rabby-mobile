@@ -1252,10 +1252,10 @@ export class KeyringService extends RNEventEmitter {
         throw new Error('Cannot unlock without a previous vault');
       }
 
-      oldKeyringSerializedData = await this.encryptor.decrypt(
+      oldKeyringSerializedData = (await this.encryptor.decrypt(
         this.#password!,
         encryptedVault,
-      );
+      )) as KeyringSerializedData[];
     }
 
     const allAccounts = await this.getAllVisibleAccountsArray();

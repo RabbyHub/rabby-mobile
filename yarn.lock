@@ -6169,6 +6169,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/browser-passworder@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@metamask/browser-passworder@npm:6.0.0"
+  dependencies:
+    "@metamask/utils": ^11.0.1
+  checksum: f9fce610a6731f02dd0577a61c88bb4a8aefe661c59f2d5736f538d9cc9133dd20a27f861137a8b221d84155a74651c177ea8ef78929d0f7b62d5876719d0e05
+  languageName: node
+  linkType: hard
+
+"@metamask/browser-passworder@patch:@metamask/browser-passworder@npm%3A6.0.0#./.yarn/patches/@metamask-browser-passworder-npm-6.0.0-b3e10a0dba.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 6.0.0
+  resolution: "@metamask/browser-passworder@patch:@metamask/browser-passworder@npm%3A6.0.0#./.yarn/patches/@metamask-browser-passworder-npm-6.0.0-b3e10a0dba.patch::version=6.0.0&hash=c03b97&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@metamask/utils": ^11.0.1
+  checksum: 62c3c576e796778bf9cce51bd45a46d80f7fbadf4c97c1e60858fd1d209886dd6a14d12fb6f23fcacc004d391c381a06d6a8dc661cecad234cd1355ebfaec409
+  languageName: node
+  linkType: hard
+
 "@metamask/create-release-branch@npm:^1.1.0":
   version: 1.1.0
   resolution: "@metamask/create-release-branch@npm:1.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Fcreate-release-branch%2F-%2Fcreate-release-branch-1.1.0.tgz"
@@ -6424,6 +6442,30 @@ __metadata:
   version: 3.1.0
   resolution: "@metamask/superstruct@npm:3.1.0"
   checksum: 00e4d0c0aae8b25ccc1885c1db0bb4ed1590010570140c255e4deee3bf8a10c859c8fce5e475b4ae09c8a56316207af87585b91f7f5a5c028d668ccd111f19e3
+  languageName: node
+  linkType: hard
+
+"@metamask/superstruct@npm:^3.1.0":
+  version: 3.2.1
+  resolution: "@metamask/superstruct@npm:3.2.1"
+  checksum: 194e4afc4df89f347e4dd16db8f8dfcbf7990ff82169c3bd43b98ecff2f1ef09488b987af612cc1ea2689826e8460bb2b01e1a3a340383420115b3a90aa68465
+  languageName: node
+  linkType: hard
+
+"@metamask/utils@npm:^11.0.1":
+  version: 11.4.0
+  resolution: "@metamask/utils@npm:11.4.0"
+  dependencies:
+    "@ethereumjs/tx": ^4.2.0
+    "@metamask/superstruct": ^3.1.0
+    "@noble/hashes": ^1.3.1
+    "@scure/base": ^1.1.3
+    "@types/debug": ^4.1.7
+    debug: ^4.3.4
+    pony-cause: ^2.1.10
+    semver: ^7.5.4
+    uuid: ^9.0.1
+  checksum: 18f4ac60221b4651a4c64fe9b2985092537248662634e8c6757afaef752b9dc400bd13fb7f4e8172823f5e5ec96ea129d7622c0fb2f3b9abfec2af8b466fff92
   languageName: node
   linkType: hard
 
@@ -7562,6 +7604,7 @@ __metadata:
   resolution: "@rabby-wallet/service-keyring@workspace:packages/service-keyring"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
+    "@metamask/browser-passworder": 6.0.0
     "@metamask/obs-store": ^9.0.0
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
@@ -29208,6 +29251,7 @@ __metadata:
     "@gorhom/bottom-sheet": 5.0.0-alpha.9
     "@ledgerhq/react-native-hw-transport-ble": 6.33.4
     "@metamask/abi-utils": 2.0.2
+    "@metamask/browser-passworder": 6.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@ngraveio/bc-ur": 1.1.6
     "@noble/hashes": ^1.4.0
@@ -30208,7 +30252,7 @@ __metadata:
 
 "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.7.10
-  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch::version=0.7.10&hash=87f7c6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.10#./.yarn/patches/react-native-quick-crypto-npm-0.7.10-e50ff7fecf.patch::version=0.7.10&hash=c6ecb9&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@craftzdog/react-native-buffer": ^6.0.5
     events: ^3.3.0
@@ -30218,7 +30262,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 3b35dc42dd5cad48906f603c50b181b0ff6e92886979d028a52abad21b56c1c29f8b04bc2e6e2e45eef72c0de1ab00aa5bcaa127be0e841dfa18c7d70cb99239
+  checksum: 0944c1a4b2cb7cbf45585a1dd0d6fe9b747ff28e57c26f127706105f5685ce91c07a4c268a226b0ed2a439de5a919ee98a569df90371d9369839517fc6f8fece
   languageName: node
   linkType: hard
 

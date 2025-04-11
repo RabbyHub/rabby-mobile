@@ -12,3 +12,7 @@ import 'src/utils/date';
 import '@walletconnect/react-native-compat';
 
 import 'reflect-metadata';
+
+import { install } from 'react-native-quick-crypto';
+
+install();

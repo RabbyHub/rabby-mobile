@@ -14,7 +14,7 @@ import {
   preferenceService,
 } from '@/core/services';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { decryptWithDetail } from './utils';
+import { decryptWithDetail } from '@metamask/browser-passworder';
 import { toast } from '@/components2024/Toast';
 import { useBiometrics } from '@/hooks/biometrics';
 import { apisLock } from '@/core/apis';
@@ -160,6 +160,12 @@ export const SyncExtensionPasswordScreen = () => {
           address: string;
         }[];
       };
+
+      if (!password) {
+        setError(t('page.unlock.password.error'));
+        setLoading(false);
+        return;
+      }
 
       const { vault } = await decryptWithDetail(
         password,
