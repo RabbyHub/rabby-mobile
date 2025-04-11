@@ -10,7 +10,7 @@ import * as Sentry from '@sentry/react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
-import { RootNames } from './constant/layout';
+import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from './constant/layout';
 import {
   useSetCurrentRouteName,
   useSetNavigationReady,
@@ -45,6 +45,7 @@ import { useAppUnlocked } from './hooks/useLock';
 import type {
   AccountNavigatorParamList,
   DappsNavigatorParamsList,
+  HomeNavigatorParamsList,
   RootStackParamsList,
 } from './navigation-type';
 
@@ -72,8 +73,15 @@ import {
   DeFiDetailScreen,
 } from '@/screens/index.eager';
 import getLinkingConfig from './LinkingConfig';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { DappWebViewStubScreen } from './screens/Dapps/DappWebViewScreen';
+import MultiAddressHome from './screens/Home/MultiAddressHome';
+import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
+import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import WebViewControlPreload from './components/WebView/WebViewControlPreload';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
+const HomeHiddenTabStack = createBottomTabNavigator<any>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
@@ -93,6 +101,7 @@ const backRestCountRef = {
   current: REST_COUNTS.CANT_EXIT,
   resetTimer: null as any,
 };
+
 function useGetSetBackRestCount() {
   const getBackRestCount = useCallback(() => {
     return backRestCountRef.current;
@@ -171,6 +180,151 @@ function useDetermineExitAppOnPressBack() {
     return () => backHandler.remove();
   }, [getBackRestCount, setBackStage]);
 }
+
+const Stack1 = () => {
+  const { mergeScreenOptions } = useStackScreenConfig();
+  const colors = useThemeColors();
+  return (
+    <RootStack.Navigator
+      screenOptions={{
+        ...RootStackOptions,
+        navigationBarColor: 'transparent',
+      }}
+      initialRouteName={RootNames.StackGetStarted}>
+      <RootStack.Screen
+        name={RootNames.StackGetStarted}
+        component={GetStartedNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.StackRoot}
+        component={HomeScreenNavigator}
+        options={RootOptions}
+      />
+      <RootStack.Screen
+        name={RootNames.StackHomeNonTab}
+        component={HomeNonTabNavigator}
+        options={RootOptions}
+      />
+      <RootStack.Screen
+        name={RootNames.SingleAddressStack}
+        component={SingleAddressNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.Unlock}
+        component={UnlockScreen}
+        options={mergeScreenOptions({
+          title: '',
+          // another valid composition
+          // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
+          // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
+          // animationTypeForReplace: 'push',
+          animation: 'fade_from_bottom',
+          headerTitle: '',
+          headerBackVisible: false,
+          headerShadowVisible: false,
+          // headerShown: true,
+          headerTransparent: true,
+          headerStyle: {
+            // backgroundColor: colors['neutral-bg1'],
+          },
+        })}
+      />
+      <RootStack.Screen
+        name={RootNames.NotFound}
+        component={NotFoundScreen}
+        options={mergeScreenOptions({
+          title: 'Rabby Wallet',
+          headerShadowVisible: false,
+          headerShown: true,
+          headerTransparent: false,
+          headerStyle: {
+            backgroundColor: colors['neutral-bg1'],
+          },
+        })}
+      />
+      <RootStack.Screen
+        name={RootNames.StackTestkits}
+        component={TestkitsNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.AccountTransaction}
+        component={AccountNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.StackTransaction}
+        component={TransactionNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.StackSettings}
+        component={SettingNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.StackAddress}
+        component={AddressNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.StackDapps}
+        component={DappsNavigator}
+      />
+      <RootStack.Screen
+        name={RootNames.NftDetail}
+        component={NFTDetailScreen}
+        options={mergeScreenOptions({
+          headerShown: true,
+          headerTitleAlign: 'center',
+          headerTitle: '',
+          headerStyle: {
+            // backgroundColor: colors['neutral-bg-2'],
+            backgroundColor: 'transparent',
+          },
+        })}
+      />
+      <RootStack.Screen
+        name={RootNames.DeFiDetail}
+        component={DeFiDetailScreen}
+        options={mergeScreenOptions({
+          headerShown: true,
+          headerTitleAlign: 'center',
+          headerTitle: '',
+          headerLeft: () => null,
+          headerStyle: {
+            backgroundColor: 'transparent',
+          },
+        })}
+      />
+      <RootStack.Screen
+        name={RootNames.TokenDetail}
+        component={TokenDetailScreen}
+        options={mergeScreenOptions({
+          headerShown: true,
+          headerTitleAlign: 'left',
+          headerTitle: '',
+          headerStyle: {
+            // backgroundColor: colors['neutral-bg-2'],
+            backgroundColor: 'transparent',
+          },
+        })}
+      />
+      <RootStack.Screen
+        name={RootNames.Scanner}
+        component={ScannerScreen}
+        options={mergeScreenOptions({
+          title: 'Scan',
+          headerShadowVisible: false,
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: colors['neutral-black'],
+          },
+          headerTintColor: colors['neutral-title-2'],
+          headerTitleStyle: {
+            color: colors['neutral-title-2'],
+            fontWeight: 'normal',
+          },
+        })}
+      />
+    </RootStack.Navigator>
+  );
+};
 
 export default function AppNavigation({
   colorScheme,
@@ -280,144 +434,60 @@ export default function AppNavigation({
         <AliasNameEditModal />
         <QrCodeModal />
 
-        <RootStack.Navigator
-          screenOptions={{
-            ...RootStackOptions,
-            navigationBarColor: 'transparent',
-          }}
-          initialRouteName={RootNames.StackGetStarted}>
-          <RootStack.Screen
-            name={RootNames.StackGetStarted}
-            component={GetStartedNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.StackRoot}
-            component={HomeScreenNavigator}
-            options={RootOptions}
-          />
-          <RootStack.Screen
-            name={RootNames.StackHomeNonTab}
-            component={HomeNonTabNavigator}
-            options={RootOptions}
-          />
-          <RootStack.Screen
-            name={RootNames.SingleAddressStack}
-            component={SingleAddressNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.Unlock}
-            component={UnlockScreen}
-            options={mergeScreenOptions({
-              title: '',
-              // another valid composition
-              // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
-              // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
-              // animationTypeForReplace: 'push',
-              animation: 'fade_from_bottom',
-              headerTitle: '',
-              headerBackVisible: false,
-              headerShadowVisible: false,
-              // headerShown: true,
-              headerTransparent: true,
-              headerStyle: {
-                // backgroundColor: colors['neutral-bg1'],
-              },
-            })}
-          />
-          <RootStack.Screen
-            name={RootNames.NotFound}
-            component={NotFoundScreen}
-            options={mergeScreenOptions({
-              title: 'Rabby Wallet',
-              headerShadowVisible: false,
-              headerShown: true,
-              headerTransparent: false,
-              headerStyle: {
-                backgroundColor: colors['neutral-bg1'],
-              },
-            })}
-          />
-          <RootStack.Screen
-            name={RootNames.StackTestkits}
-            component={TestkitsNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.AccountTransaction}
-            component={AccountNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.StackTransaction}
-            component={TransactionNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.StackSettings}
-            component={SettingNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.StackAddress}
-            component={AddressNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.StackDapps}
-            component={DappsNavigator}
-          />
-          <RootStack.Screen
-            name={RootNames.NftDetail}
-            component={NFTDetailScreen}
-            options={mergeScreenOptions({
-              headerShown: true,
+        <HomeHiddenTabStack.Navigator
+          screenOptions={
+            /* mergeScreenOptions */ {
+              // gestureEnabled: false,
               headerTitleAlign: 'center',
-              headerTitle: '',
-              headerStyle: {
-                // backgroundColor: colors['neutral-bg-2'],
-                backgroundColor: 'transparent',
-              },
-            })}
-          />
-          <RootStack.Screen
-            name={RootNames.DeFiDetail}
-            component={DeFiDetailScreen}
-            options={mergeScreenOptions({
-              headerShown: true,
-              headerTitleAlign: 'center',
-              headerTitle: '',
-              headerLeft: () => null,
               headerStyle: {
                 backgroundColor: 'transparent',
               },
-            })}
-          />
-          <RootStack.Screen
-            name={RootNames.TokenDetail}
-            component={TokenDetailScreen}
-            options={mergeScreenOptions({
-              headerShown: true,
-              headerTitleAlign: 'left',
-              headerTitle: '',
-              headerStyle: {
-                // backgroundColor: colors['neutral-bg-2'],
-                backgroundColor: 'transparent',
-              },
-            })}
-          />
-          <RootStack.Screen
-            name={RootNames.Scanner}
-            component={ScannerScreen}
-            options={mergeScreenOptions({
-              title: 'Scan',
-              headerShadowVisible: false,
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: colors['neutral-black'],
-              },
-              headerTintColor: colors['neutral-title-2'],
+              // headerShadowVisible: true,
+              headerTintColor: colors['neutral-title-1'],
               headerTitleStyle: {
-                color: colors['neutral-title-2'],
-                fontWeight: 'normal',
+                color: colors['neutral-title-1'],
+                fontWeight: '500',
+                fontSize: DEFAULT_NAVBAR_FONT_SIZE,
               },
-            })}
+              // headerTransparent: true,
+            }
+          }
+          tabBar={() => null}>
+          <HomeHiddenTabStack.Screen
+            name={RootNames.Home}
+            component={Stack1}
+            options={{
+              headerShown: false,
+            }}
           />
-        </RootStack.Navigator>
+
+          <HomeHiddenTabStack.Screen
+            name={RootNames.DappWebViewStubOnHome}
+            component={DappWebViewStubScreen}
+            options={{
+              title: '',
+              headerShadowVisible: false,
+              headerShown: false,
+              // tabBarStyle: { height: 0, display: 'none' },
+              // tabBarButton(props) {
+              //   return null;
+              // },
+              // animation: 'slide_from_bottom',
+              // animationDuration: 500,
+              // animationTypeForReplace: 'push',
+              // header: (headerProps) => {
+              //   // return <DappWebViewStubScreen.Header />
+              //   return null;
+              // }
+            }}
+          />
+        </HomeHiddenTabStack.Navigator>
+
+        <BiometricsStubModal />
+
+        <ApprovalTokenDetailSheetModalStub />
+
+        <WebViewControlPreload />
       </NavigationContainer>
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />

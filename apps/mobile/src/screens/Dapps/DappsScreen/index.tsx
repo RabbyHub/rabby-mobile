@@ -10,7 +10,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useNavigation } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import React, { useMemo, useRef } from 'react';
-import { Keyboard, View } from 'react-native';
+import { Keyboard, Text, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -24,6 +24,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IS_IOS } from '@/core/native/utils';
 import { debounce } from 'lodash';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
+import { RcIconGoogle } from '@/assets/icons/dapp';
 
 export function DappsScreen(): JSX.Element {
   const {
@@ -36,7 +39,7 @@ export function DappsScreen(): JSX.Element {
   } = useDappsHome();
   const { openUrlAsDapp } = useDappWebViewScreen();
 
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -76,14 +79,6 @@ export function DappsScreen(): JSX.Element {
   // todo fix any
   const inputRef = useRef<any>(null);
 
-  const handleEmptyPress = useMemoizedFn(() => {
-    searchState.setState({
-      searchText: '',
-      isFocus: true,
-    });
-    inputRef.current?.focus();
-  });
-
   const handleOpenURLDebounced = useMemo(() => {
     return debounce((dapp: DappInfo) => {
       handleOpenURL(dapp.origin);
@@ -101,29 +96,12 @@ export function DappsScreen(): JSX.Element {
         end={{ x: 0, y: 0.5235 }}>
         <NormalScreenContainer noHeader overwriteStyle={styles.page}>
           <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => {
-                if (searchState.state.isFocus || searchState.state.searchText) {
-                  searchState.setState({
-                    chain: undefined,
-                    searchText: '',
-                    loading: false,
-                  });
-                } else if (navigation.canGoBack()) {
-                  navigation.goBack();
-                }
-                Keyboard.dismiss();
-              }}>
-              <RcNextLeftCC color={colors2024['neutral-title-1']} />
-            </TouchableOpacity>
             <NextSearchBar
               style={styles.searchBar}
-              placeholder={
-                IS_IOS
-                  ? 'Search website name or URL'
-                  : 'Search Dapp name or URL'
-              }
+              placeholder={IS_IOS ? 'Search website' : 'Search Dapp'}
               value={searchState.state.searchText}
+              searchIcon={<RcIconGoogle />}
+              alwaysShowCancel
               onChangeText={v => {
                 searchState.setState({
                   chain: undefined,
@@ -142,64 +120,17 @@ export function DappsScreen(): JSX.Element {
                 });
               }}
               onCancel={() => {
-                searchState.setState({
-                  isFocus: false,
-                  searchText: '',
-                  chain: undefined,
-                });
+                navigation.goBack();
               }}
               ref={inputRef}
-              // returnKeyType={searchState.returnKeyType}
-              // onSubmitEditing={() => {
-              //   const url =
-              //     searchState.currentDapp?.origin || searchState.currentURL;
-              //   if (url) {
-              //     handleOpenURL(url);
-              //   }
-              //   // console.log('keyPress', e.nativeEvent.key, url);
-              // }}
-              // enterKeyHint={searchState.returnKeyType ? 'go' : undefined}
             />
           </View>
-          {!searchState.state.isFocus && !searchState.state.searchText ? (
-            <View style={styles.container}>
-              <DappHistorySection
-                style={{ height: '100%' }}
-                data={browserHistoryList}
-                onPress={handleOpenURLDebounced}
-                onFavoritePress={handleFavoriteDapp}
-                onDeletePress={handleDeleteHistory}
-                HeaderComponent={
-                  <DappFavoriteSection
-                    data={favoriteApps}
-                    onPress={handleOpenURLDebounced}
-                  />
-                }
-              />
-            </View>
-          ) : (
-            <DappSearchSection
-              list={searchState.list}
-              loadMore={searchState.loadMore}
-              loading={searchState.state.loading}
-              total={searchState.total}
-              onChainChange={c => {
-                searchState.setState({
-                  chain: c,
-                  loading: true,
-                });
-              }}
-              chain={searchState.state.chain}
-              onFavoritePress={handleFavoriteDapp}
-              onOpenURL={(newUrl: string) =>
-                handleOpenURL(newUrl, { forceReopen: true })
-              }
-              currentDapp={searchState.currentDapp}
-              currentURL={searchState.currentURL}
-              searchText={searchState.state.searchText}
-              onEmptyPress={handleEmptyPress}
+          <View style={styles.container}>
+            <DappFavoriteSection
+              data={favoriteApps}
+              onPress={handleOpenURLDebounced}
             />
-          )}
+          </View>
         </NormalScreenContainer>
       </LinearGradient>
     </TouchableWithoutFeedback>

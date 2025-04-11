@@ -64,12 +64,12 @@ export type OpenedDappItem = {
   lastOpenWebViewId?: string | null;
 };
 const DAPPS_VIEW_LIMIT = {
-  maxCount: 1,
+  maxCount: 3,
   // 30days
   expireDuration: 3 * 86400 * 1e3,
 };
 const DAPPS_VIEW_LIMIT_SHORT = {
-  maxCount: 1,
+  maxCount: 3,
   // 5 mins
   expireDuration: 5 * 60 * 1e3,
 };

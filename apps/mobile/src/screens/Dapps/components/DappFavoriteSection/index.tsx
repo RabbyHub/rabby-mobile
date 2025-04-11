@@ -6,7 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   StyleProp,
   Text,
@@ -28,16 +28,13 @@ export const DappFavoriteSection = ({
   onPress?: (dapp: DappInfo) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const [isFold, setIsFold] = useState(true);
 
-  const handlePressAll = useMemoizedFn(() => {
-    naviPush(RootNames.StackDapps, {
-      screen: RootNames.FavoriteDapps,
-    });
-  });
-
-  const list = useMemo(() => {
-    return (data || []).slice(0, 8);
-  }, [data]);
+  const { list } = useMemo(() => {
+    return {
+      list: isFold ? (data || []).slice(0, 8) : data || [],
+    };
+  }, [data, isFold]);
 
   const { width } = useWindowDimensions();
   const gapStyle = useMemo(() => {
@@ -48,29 +45,43 @@ export const DappFavoriteSection = ({
 
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.header}>
-        <View style={styles.titleWarper}>
-          <Text style={styles.title}>Favorites</Text>
-        </View>
-        {data?.length ? (
-          <TouchableOpacity hitSlop={8} onPress={handlePressAll}>
-            <View style={styles.headerExtra}>
-              <Text style={styles.headerExtraText}>All</Text>
-              <RcIconRight />
-            </View>
-          </TouchableOpacity>
-        ) : null}
-      </View>
       {list?.length ? (
-        <View style={[styles.list, gapStyle]}>
-          {list.map(item => {
-            return (
-              <View key={item.origin} style={styles.item}>
-                <DappFavoriteItem data={item} onPress={onPress} />
-              </View>
-            );
-          })}
-        </View>
+        <>
+          <View style={styles.header}>
+            <View style={styles.titleWarper}>
+              <Text style={styles.title}>Favorites</Text>
+            </View>
+            {data?.length && data.length > 8 ? (
+              <TouchableOpacity
+                hitSlop={8}
+                onPress={() => {
+                  setIsFold(prev => !prev);
+                }}>
+                {isFold ? (
+                  <View style={styles.headerExtra}>
+                    <Text style={styles.headerExtraText}>All</Text>
+                    <RcIconRight />
+                  </View>
+                ) : (
+                  <View style={styles.headerExtra}>
+                    <Text style={styles.headerExtraText}>Fold</Text>
+                    <RcIconRight />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <View style={[styles.list, gapStyle]}>
+            {list.map(item => {
+              return (
+                <View key={item.origin} style={styles.item}>
+                  <DappFavoriteItem data={item} onPress={onPress} />
+                </View>
+              );
+            })}
+          </View>
+        </>
       ) : (
         <DappFavoriteSectionEmpty />
       )}
@@ -81,7 +92,7 @@ export const DappFavoriteSection = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     marginBottom: 30,
-    paddingHorizontal: 4,
+    paddingHorizontal: 24,
   },
   header: {
     display: 'flex',

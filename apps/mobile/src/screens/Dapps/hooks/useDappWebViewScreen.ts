@@ -30,6 +30,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
+import { TabActions, useNavigation } from '@react-navigation/native';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -153,6 +154,8 @@ export function useDappWebViewScreen() {
     useAtom(activeDappOriginAtom);
 
   const { activate, inactivate } = useDappLastUsedAccount();
+
+  const navigation = useNavigation();
 
   // const openingActiveDappRef = useRef<boolean>(false);
   const { stateRef: openingActiveDappRef } = useRefState<any>(false);
@@ -374,13 +377,20 @@ export function useDappWebViewScreen() {
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
          **/
-        naviPush(RootNames.StackRoot, {
-          screen: RootNames.DappWebViewStubOnHome,
-          params: {
+        // naviPush(RootNames.StackRoot, {
+        //   screen: RootNames.DappWebViewStubOnHome,
+        //   params: {
+        //     dappsWebViewFromRoute,
+        //     // nextOpenDappInfo: dapps[item.origin],
+        //   },
+        // });
+
+        navigation.dispatch(
+          TabActions.jumpTo(RootNames.DappWebViewStubOnHome, {
             dappsWebViewFromRoute,
-            // nextOpenDappInfo: dapps[item.origin],
-          },
-        });
+          }),
+        );
+
         // try trigger notify again
         setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
       } else {
@@ -389,19 +399,29 @@ export function useDappWebViewScreen() {
 
       return true;
     },
-    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin, activate],
+    [
+      dapps,
+      setOpenedOriginsDapps,
+      activate,
+      addDapp,
+      setActiveDappOrigin,
+      navigation,
+    ],
   );
 
   const removeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
-      if (IS_ANDROID) {
-        // dont keep the dapp in the stack on android
-        setOpenedOriginsDapps([]);
-      } else {
-        setOpenedOriginsDapps(prev =>
-          prev.filter(item => item.origin !== dappOrigin),
-        );
-      }
+      // if (IS_ANDROID) {
+      //   // dont keep the dapp in the stack on android
+      //   setOpenedOriginsDapps([]);
+      // } else {
+      //   setOpenedOriginsDapps(prev =>
+      //     prev.filter(item => item.origin !== dappOrigin),
+      //   );
+      // }
+      setOpenedOriginsDapps(prev =>
+        prev.filter(item => item.origin !== dappOrigin),
+      );
 
       if (activeDappOrigin === dappOrigin) {
         setActiveDappOrigin(null);
