@@ -171,7 +171,14 @@
       "Yesterday": "昨天",
       "Today": "今天",
       "NotShowAllTransactionsToast": "隐藏交易已隐藏",
-      "ShowAllTransactionsToast": "隐藏交易已显示"
+      "ShowAllTransactionsToast": "隐藏交易已显示",
+      "TransactionAlert": {
+        "clearPendingSuccess": "本地待处理交易已移除",
+        "clearPendingText": "{{chainName}} 交易 ({{nonces}}) 已挂起超过 3 分钟。您可以 <5></5> <6>本地清除挂起</6> <7></7> 并重新提交该交易。",
+        "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易待处理。<5></5> <6>提交交易</6> <7></7> 到链上以解决"
+      },
+      "HideScamTransactions": "隐藏欺诈交易",
+      "ShowScamTransactions": "显示骗局交易"
     },
     "getStart": {
       "alreadyHaveAddress": "我已经有一个地址",
@@ -485,7 +492,8 @@
           "pendingDetail": "只会完成一笔交易，几乎总是具有最高 gas 价格的那一笔。"
         },
         "message": {
-          "cancelSuccess": "已取消"
+          "cancelSuccess": "已取消",
+          "deleteSuccess": "本地待处理交易已移除"
         },
         "status": {
           "failed": "失败",
@@ -508,6 +516,10 @@
               "title": "快速取消",
               "tips": "仅支持尚未广播的交易",
               "desc": "在广播之前取消，无需 gas 费"
+            },
+            "removeLocalPendingTx": {
+              "desc": "从界面中移除待处理交易",
+              "title": "清除本地待处理项"
             }
           }
         },
@@ -520,6 +532,11 @@
           "cancel": "取消对{{protocol}}的{{token}}授权",
           "cancelSingleNFTApproval": "取消 {{protocol}} 的单个 NFT 授权",
           "singleNFTApproval": "为 {{protocol}} 单个 NFT 授权"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "清除本地待处理项",
+          "warning": "被移除的交易可能仍会在链上确认，除非它被替换。",
+          "desc": "这将从您的界面中移除待处理交易。您可以随后发起新的交易。"
         }
       }
     },
@@ -585,7 +602,9 @@
         "cancel": "取消",
         "confirm": "继续"
       },
-      "noSupprotTokenForDex": "该交易所可能不支持此代币。请在继续操作前检查以避免损失。"
+      "noSupprotTokenForDex": "该交易所可能不支持此代币。请在继续操作前检查以避免损失。",
+      "From": "来自",
+      "noSupprotTokenForSafe": "您要发送代币的安全地址未在此链上部署。请在继续之前检查，以避免损失。"
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
@@ -631,7 +650,8 @@
         "specificBuyer": "特定买家",
         "title": "NFT 订单",
         "listNFT": "列出 NFT"
-      }
+      },
+      "safeCantSignTypedData": "这是一个 Safe 地址，它仅支持签名 EIP-712 类型的数据或字符串。"
     },
     "signFooterBar": {
       "cancelConnection": "取消连接",
@@ -690,7 +710,9 @@
         "submitting": "已签名。创建交易",
         "qrcodeDesc": "使用您的 {{brand}} 扫描以签名  \n签名后，点击下面的按钮以接收签名",
         "afterSignDesc": "扫描 Keystone 上的二维码以获取签名"
-      }
+      },
+      "keystoneSign": "签名",
+      "startSigning": "开始签名"
     },
     "gasTopUp": {
       "Token": "Token",
@@ -1008,7 +1030,8 @@
         "interactDapp": "交互 Dapp",
         "description": "描述"
       },
-      "title": "签署文本"
+      "title": "签署文本",
+      "sameSafeMessageAlert": "相同的消息已被确认；不需要额外的签名。"
     },
     "switchChain": {
       "requestsReceivedPlural": "{{count}} requests received",
@@ -1342,7 +1365,8 @@
       "action": {
         "send": "发送",
         "cancel": "取消待处理的交易"
-      }
+      },
+      "title": "队列（{{total}}）"
     },
     "addressDetail": {
       "assets": "资产",
@@ -1721,13 +1745,16 @@
       "addCustomNetwork": "添加自定义网络",
       "enableWhitelist": "启用白名单以发送资产",
       "autoLockTime": "自动锁定时间",
-      "clearPending": "",
+      "clearPending": "清除本地待处理事项",
       "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的种子短语。您所有的资产和账户信息都将保持安全。",
       "currentVersion": "当前版本",
       "clearPendingDesc1": "这将清除您所有的待处理交易。这样可以帮助您解决在某些情况下 Rabby 中的交易状态与链上状态不匹配的问题。",
       "touchId": "Touch ID",
       "appCache": "清空应用缓存",
-      "currentLanguage": "当前语言"
+      "currentLanguage": "当前语言",
+      "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
+      "clearPendingResetDesc": "还重置了我的本地 nonce 数据和签名记录。",
+      "clearPendingToast": "本地待处理交易已被移除"
     },
     "settingModal": {
       "themeMode": {
@@ -1807,7 +1834,9 @@
       "brandNameTail": "地址",
       "dexNameTail": "充值地址",
       "addToWhitelist": "添加到白名单",
-      "tipForWhiteList": "将其添加到您的白名单中，以便快速转账，下次无需确认"
+      "tipForWhiteList": "将其添加到您的白名单中，以便快速转账，下次无需确认",
+      "sendTo": "发送到此地址",
+      "title": "确认地址"
     },
     "selectAddress": {
       "selectSafeAddress": "从 Safe 地址中选择",
@@ -1820,7 +1849,8 @@
       "confirmPassword": "请输入密码以确认",
       "addSuccessful": "地址已添加到白名单",
       "removeWhitelist": "从白名单中移除",
-      "alreadyAdded": "已添加到您的白名单"
+      "alreadyAdded": "已添加到您的白名单",
+      "copyAddress": "复制地址"
     },
     "syncExtension": {
       "noNewAddr": "未找到可导入的新地址",
@@ -1834,6 +1864,10 @@
       "scanTips1": "在 Rabby 插件上点击“Rabby Mobile”",
       "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
       "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
+    },
+    "safeMessageQueue": {
+      "noData": "没有消息",
+      "loading": "加载消息"
     }
   },
   "component": {
@@ -1880,7 +1914,10 @@
       "hot": "热门",
       "common": "常规",
       "searchPlaceHolder1": "按名称 / 地址搜索",
-      "searchPlaceHolder2": "搜索 Token"
+      "searchPlaceHolder2": "搜索 Token",
+      "contextMenu": {
+        "viewDetail": "查看详情"
+      }
     },
     "NoLongerSupports": {
       "button": "知道了",

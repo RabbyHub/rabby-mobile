@@ -230,7 +230,14 @@
       "ShowHiddenItems": "顯示隱藏的交易",
       "Yesterday": "昨天",
       "ShowAllTransactionsToast": "隱藏交易已顯示",
-      "NotShowAllTransactionsToast": "隱藏交易已隱藏"
+      "NotShowAllTransactionsToast": "隱藏交易已隱藏",
+      "TransactionAlert": {
+        "clearPendingSuccess": "本地待处理交易已移除",
+        "clearPendingText": "{{chainName}} 交易 ({{nonces}}) 已待处理超过 3 分钟。您可以 <5></5> <6>本地清除待处理</6> <7></7> 并重新提交交易。",
+        "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 鏈上被跳過。這可能導致前面的交易待處理。<5></5> <6>提交一筆 tx</6> <7></7> 在鏈上以解決此問題。"
+      },
+      "HideScamTransactions": "隱藏詐騙交易",
+      "ShowScamTransactions": "顯示詐騙交易"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "輸入您的助記詞"
@@ -301,7 +308,9 @@
         "confirm": "繼續",
         "cancel": "取消"
       },
-      "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。"
+      "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。",
+      "From": "從",
+      "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。"
     },
     "sendTokenComponents": {
       "GasReserved": "預留 <1>0</1> {{ tokenName }} 用於 gas 費用"
@@ -309,7 +318,8 @@
     "activities": {
       "signedTx": {
         "message": {
-          "cancelSuccess": "已取消"
+          "cancelSuccess": "已取消",
+          "deleteSuccess": "本地待处理交易已移除"
         },
         "common": {
           "unknownProtocol": "未知協議",
@@ -327,6 +337,10 @@
               "title": "快速取消",
               "tips": "僅支持尚未廣播的交易",
               "desc": "在廣播之前取消，無需 gas 費"
+            },
+            "removeLocalPendingTx": {
+              "title": "清除本地待处理事项",
+              "desc": "從介面中移除待處理交易"
             }
           }
         },
@@ -357,6 +371,11 @@
         "empty": {
           "title": "沒有已簽名的交易",
           "desc": "所有通過 Rabby 簽名的交易將列在這裡。"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "清除本地待处理项",
+          "desc": "這將從您的介面中移除待處理的交易。您可以隨後發起新的交易。",
+          "warning": "被移除的交易仍然可能在链上被确认，除非它被替换。"
         }
       }
     },
@@ -679,7 +698,8 @@
         "approvalExpiretime": "授權過期時間",
         "sigExpireTimeTip": "此簽名在鏈上的有效時長"
       },
-      "safeCantSignText": "這是一個Safe地址，不能用來簽署文本。"
+      "safeCantSignText": "這是一個Safe地址，不能用來簽署文本。",
+      "safeCantSignTypedData": "這是一個 Safe 地址，它僅支援簽署 EIP-712 類型數據或字符串。"
     },
     "gasTopUp": {
       "No_Tokens": "無代幣",
@@ -926,7 +946,9 @@
         "submitting": "已簽名。正在創建交易",
         "unlockAlert": "請插入並解鎖您的 Ledger，並在上面打開 Ethereum。",
         "siging": "發送簽名請求"
-      }
+      },
+      "keystoneSign": "簽署",
+      "startSigning": "開始簽署"
     },
     "switchChain": {
       "requestRabbyToSupport": "請求 Rabby 支援",
@@ -999,7 +1021,8 @@
       "createKey": {
         "interactDapp": "互動 Dapp",
         "description": "描述"
-      }
+      },
+      "sameSafeMessageAlert": "相同的消息已被確認；無需額外的簽名。"
     },
     "unlock": {
       "password": {
@@ -1148,7 +1171,8 @@
         "send": "发送",
         "cancel": "取消待處理的交易"
       },
-      "sameNonceWarning": "這些交易存在衝突，因為它們使用了相同的 nonce。執行其中一個將自動替換其他交易。"
+      "sameNonceWarning": "這些交易存在衝突，因為它們使用了相同的 nonce。執行其中一個將自動替換其他交易。",
+      "title": "隊列 ({{total}})"
     },
     "connect": {
       "popularLevelHigh": "高",
@@ -1752,7 +1776,7 @@
       "feedback": "反饋",
       "faceId": "Face ID",
       "addCustomNetwork": "新增自定義網路",
-      "clearPending": "",
+      "clearPending": "清除本地待处理项",
       "touchId": "Touch ID",
       "autoLockTime": "自動鎖定時間",
       "themeMode": "主題模式",
@@ -1764,7 +1788,10 @@
       "clearPendingDesc2": "這不會改變您賬戶中的餘額，也不需要您重新輸入您的種子短語。您所有的資產和賬戶信息都將保持安全。",
       "clearPendingDesc1": "這將清除您所有的待處理交易。這樣可以幫助您解決在某些情況下 Rabby 中的交易狀態與鏈上狀態不匹配的問題。",
       "currentLanguage": "當前語言",
-      "appCache": "清除應用程式快取"
+      "appCache": "清除應用程式快取",
+      "clearPendingResetDesc": "還要重置我的本地 nonce 數據和簽名記錄",
+      "clearPendingToast": "本地待处理交易已移除",
+      "clearPendingWarning": "移除的交易可能仍然会在链上被确认，除非它被替换。"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -1855,7 +1882,9 @@
       "dexNameTail": "存款地址",
       "brandNameTail": "地址",
       "addToWhitelist": "添加至白名單",
-      "tipForWhiteList": "將其添加到白名單中，以便快速轉賬，下次無需確認。"
+      "tipForWhiteList": "將其添加到白名單中，以便快速轉賬，下次無需確認。",
+      "title": "確認地址",
+      "sendTo": "發送到此地址"
     },
     "selectAddress": {
       "selectWatchAddress": "從 Watch-only 地址中選擇",
@@ -1868,7 +1897,8 @@
       "confirm": "確認",
       "addSuccessful": "地址已加入白名單",
       "cancel": "取消",
-      "confirmPassword": "輸入密碼以確認"
+      "confirmPassword": "輸入密碼以確認",
+      "copyAddress": "複製地址"
     },
     "syncExtension": {
       "scanTips2": "掃描二維碼開始同步",
@@ -1882,6 +1912,10 @@
       "importedTips": "如果應用程式已經存在重複地址，則不會導入。地址備註和白名單也將同步。",
       "scanTips1": "點擊 Rabby Extension 上的 “Rabby Mobile”",
       "verifyTips": "您的數據已離線加密。請輸入您的 Rabby 擴展密碼以解密和驗證。"
+    },
+    "safeMessageQueue": {
+      "noData": "沒有消息",
+      "loading": "正在加載訊息"
     }
   },
   "component": {
@@ -2016,7 +2050,10 @@
       "recent": "最近",
       "searchPlaceHolder1": "按名稱/地址搜尋",
       "searchPlaceHolder2": "搜索 Token",
-      "common": "常用"
+      "common": "常用",
+      "contextMenu": {
+        "viewDetail": "查看詳細資訊"
+      }
     }
   },
   "common": {

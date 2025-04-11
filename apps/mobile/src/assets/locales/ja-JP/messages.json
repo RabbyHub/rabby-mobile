@@ -164,7 +164,14 @@
       "ViewSmallItems": "$0.1 以下の取引を表示",
       "ShowHiddenItems": "非表示のトランザクションを表示",
       "ShowAllTransactionsToast": "表示された隠しトランザクション",
-      "NotShowAllTransactionsToast": "隠された取引が隠蔽されました"
+      "NotShowAllTransactionsToast": "隠された取引が隠蔽されました",
+      "TransactionAlert": {
+        "clearPendingSuccess": "ローカルの保留中のトランザクションが削除されました",
+        "clearPendingText": "{{chainName}} トランザクション ({{nonces}}) は 3 分以上保留中です。ローカルで <6>保留をクリア</6> して、トランザクションを再送信できます。",
+        "skipNonceText": "Nonce #{{nonce}} は {{chainName}} チェーンでスキップされました。これにより、保留中のトランザクションが発生する可能性があります。<5></5> <6>トランザクションを送信</6> <7></7>して解決してください。"
+      },
+      "HideScamTransactions": "詐欺取引を非表示にする",
+      "ShowScamTransactions": "詐欺トランザクションを表示"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "シードフレーズを入力してください"
@@ -472,7 +479,8 @@
     "activities": {
       "signedTx": {
         "message": {
-          "cancelSuccess": "キャンセルされました"
+          "cancelSuccess": "キャンセルされました",
+          "deleteSuccess": "ローカルの保留中のトランザクションが削除されました"
         },
         "common": {
           "unknownProtocol": "不明なプロトコル",
@@ -504,6 +512,10 @@
               "title": "クイックキャンセル",
               "tips": "まだブロードキャストされていないトランザクションのみサポートします。",
               "desc": "ブロードキャストする前にキャンセル、ガス料金なし"
+            },
+            "removeLocalPendingTx": {
+              "title": "ローカルで保留をクリア",
+              "desc": "インターフェースから保留中のトランザクションを削除します。"
             }
           }
         },
@@ -520,6 +532,11 @@
         "tips": {
           "pendingDetail": "1回のトランザクションのみが完了し、ほとんどの場合、最も高いガス価格のものになります。",
           "canNotCancel": "スピードアップまたはキャンセルできません：最初の保留中のtxnではありません。"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "ローカルで保留をクリア",
+          "warning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される場合があります。",
+          "desc": "これにより、保留中のトランザクションがインターフェースから削除されます。その後、新しいトランザクションを開始できます。"
         }
       }
     },
@@ -580,7 +597,9 @@
       "blockDappFromSendingRequests": "1分間、Dappからのリクエスト送信をブロックする",
       "cancelAll": "Dappからのすべての{{count}}リクエストをキャンセルする",
       "detectedMultipleRequestsFromThisDapp": "このDappからの複数のリクエストが検出されました。",
-      "cancelTransaction": "トランザクションをキャンセル"
+      "cancelTransaction": "トランザクションをキャンセル",
+      "keystoneSign": "サイン",
+      "startSigning": "署名を開始"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "残高不足",
@@ -707,7 +726,9 @@
         "confirm": "進む",
         "cancel": "キャンセル"
       },
-      "noSupprotTokenForDex": "このトークンはこの取引所でサポートされていない可能性があります。損失を避けるために、事前に確認してください。"
+      "noSupprotTokenForDex": "このトークンはこの取引所でサポートされていない可能性があります。損失を避けるために、事前に確認してください。",
+      "From": "から",
+      "noSupprotTokenForSafe": "あなたがトークンを送信しているSafeアドレスは、このチェーンにデプロイされていません。損失を避けるために、進む前に確認してください。"
     },
     "swap": {
       "hidden-no-quote-rates_other": "{{count}} のレートが利用できません。",
@@ -807,7 +828,8 @@
         "expireTime": "有効期限",
         "receiveNFT": "NFTを受け取る",
         "payToken": "支払いトークン"
-      }
+      },
+      "safeCantSignTypedData": "これはSafeアドレスであり、EIP-712型データまたは文字列の署名のみをサポートしています。"
     },
     "home": {
       "services": {
@@ -1034,7 +1056,8 @@
       "createKey": {
         "description": "説明",
         "interactDapp": "Dappと連携"
-      }
+      },
+      "sameSafeMessageAlert": "同じメッセージが確認されました。追加の署名は必要ありません。"
     },
     "addToken": {
       "tokenSupported": "TokenはRabbyでサポートされています。",
@@ -1503,7 +1526,8 @@
           "reject": "トランザクションを拒否",
           "send": "トークンを送信"
         }
-      }
+      },
+      "title": "キュー ({{total}})"
     },
     "importSafe": {
       "title": "Safeアドレスを追加",
@@ -1707,14 +1731,17 @@
       "currentVersion": "現在のバージョン",
       "aboutUs": "私たちについて",
       "addCustomNetwork": "カスタムネットワークを追加",
-      "clearPending": "",
+      "clearPending": "ローカルで保留をクリア",
       "autoLockTime": "自動ロック時間",
       "faceId": "Face ID",
       "themeMode": "テーマモード",
       "clearPendingDesc1": "これにより、すべての未処理の取引がクリアされます。これは、一部のケースでRabbyにおける取引の状態がオンチェーンの状態と一致しないという問題を解決するのに役立ちます。",
       "clearPendingDesc2": "これにより、アカウントの残高が変更されたり、シードフレーズを再入力する必要が生じたりすることはありません。すべての資産とアカウント情報は安全に保たれます。",
       "appCache": "アプリのキャッシュをクリア",
-      "currentLanguage": "現在の言語"
+      "currentLanguage": "現在の言語",
+      "clearPendingToast": "ローカルの保留中のトランザクションが削除されました",
+      "clearPendingResetDesc": "ローカルの nonce データと署名記録もリセットします。",
+      "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。"
     },
     "settingModal": {
       "themeMode": {
@@ -1794,7 +1821,9 @@
       "brandNameTail": "アドレス",
       "dexNameTail": "入金アドレス",
       "addToWhitelist": "ホワイトリストに追加",
-      "tipForWhiteList": "ホワイトリストに追加すると、次回は確認なしで高速転送が可能です。"
+      "tipForWhiteList": "ホワイトリストに追加すると、次回は確認なしで高速転送が可能です。",
+      "title": "アドレスを確認する",
+      "sendTo": "このアドレスに送信"
     },
     "selectAddress": {
       "selectSafeAddress": "Safeアドレスから選択",
@@ -1807,7 +1836,8 @@
       "alreadyAdded": "すでにホワイトリストに追加されています。",
       "removeWhitelist": "ホワイトリストから削除",
       "cancel": "キャンセル",
-      "confirmPassword": "パスワードを入力して確認してください"
+      "confirmPassword": "パスワードを入力して確認してください",
+      "copyAddress": "アドレスをコピー"
     },
     "syncExtension": {
       "noNewAddr": "新しいアドレスは見つかりませんでしたインポートするために",
@@ -1821,6 +1851,10 @@
       "importedSuccessfully": "インポートが成功しました！",
       "verifyTips": "データはオフラインで暗号化されています。Rabby Extension のパスワードを入力して復号化と検証を行ってください。",
       "importedTips": "アプリに既に重複するアドレスがある場合、インポートされません。アドレスのメモとホワイトリストも同期されます。"
+    },
+    "safeMessageQueue": {
+      "loading": "メッセージを読み込み中",
+      "noData": "メッセージはありません"
     }
   },
   "global": {
@@ -1890,7 +1924,10 @@
       "recent": "最近",
       "searchPlaceHolder2": "トークンを検索",
       "searchPlaceHolder1": "名前 / アドレスで検索",
-      "common": "一般"
+      "common": "一般",
+      "contextMenu": {
+        "viewDetail": "詳細を見る"
+      }
     },
     "accountSwitcher": {
       "screenHeaderSubTitle_one": "1 address",
