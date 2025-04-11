@@ -2,6 +2,7 @@ import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
 
 import provider from '../controllers';
 import { ProviderRequest } from '../controllers/type';
+import { setGlobalTmpStore } from './globalProvider';
 
 export function sendRequest<T = any>(
   data: ProviderRequest['data'],
@@ -16,5 +17,7 @@ export function sendRequest<T = any>(
     session,
   });
 }
+
+setGlobalTmpStore({ sendRequest });
 
 export const abiCoder = abiCoderInst as unknown as AbiCoder;
