@@ -1,2639 +1,1144 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>archiveVersion</key>
-	<string>1</string>
-	<key>classes</key>
-	<dict/>
-	<key>objectVersion</key>
-	<string>54</string>
-	<key>objects</key>
-	<dict>
-		<key>00DD1BFF1BD5951E006B06BC</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputPaths</key>
-			<array>
-				<string>$(SRCROOT)/.xcode.env.local</string>
-				<string>$(SRCROOT)/.xcode.env</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>Bundle React Native code and images</string>
-			<key>outputPaths</key>
-			<array/>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>. ./patches/phase-bundle-rn.sh
-</string>
-		</dict>
-		<key>00E356EA1AD99517003FC87E</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array>
-				<string>00E356F31AD99517003FC87E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXSourcesBuildPhase</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-		</dict>
-		<key>00E356EB1AD99517003FC87E</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array>
-				<string>953B5635BA976F3287BF7F26</string>
-			</array>
-			<key>isa</key>
-			<string>PBXFrameworksBuildPhase</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-		</dict>
-		<key>00E356EC1AD99517003FC87E</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array>
-				<string>01C69DDA2C2C93CA007C7A6E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXResourcesBuildPhase</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-		</dict>
-		<key>00E356ED1AD99517003FC87E</key>
-		<dict>
-			<key>buildConfigurationList</key>
-			<string>00E357021AD99517003FC87E</string>
-			<key>buildPhases</key>
-			<array>
-				<string>A55EABD7B0C7F3A422A6CC61</string>
-				<string>00E356EA1AD99517003FC87E</string>
-				<string>00E356EB1AD99517003FC87E</string>
-				<string>00E356EC1AD99517003FC87E</string>
-				<string>C59DA0FBD6956966B86A3779</string>
-				<string>F6A41C54EA430FDDC6A6ED99</string>
-			</array>
-			<key>buildRules</key>
-			<array/>
-			<key>dependencies</key>
-			<array>
-				<string>00E356F51AD99517003FC87E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXNativeTarget</string>
-			<key>name</key>
-			<string>RabbyMobileTests</string>
-			<key>productName</key>
-			<string>RabbyMobileTests</string>
-			<key>productReference</key>
-			<string>00E356EE1AD99517003FC87E</string>
-			<key>productType</key>
-			<string>com.apple.product-type.bundle.unit-test</string>
-		</dict>
-		<key>00E356EE1AD99517003FC87E</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>wrapper.cfbundle</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>RabbyMobileTests.xctest</string>
-			<key>sourceTree</key>
-			<string>BUILT_PRODUCTS_DIR</string>
-		</dict>
-		<key>00E356EF1AD99517003FC87E</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>00E356F21AD99517003FC87E</string>
-				<string>00E356F01AD99517003FC87E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>path</key>
-			<string>RabbyMobileTests</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>00E356F01AD99517003FC87E</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>00E356F11AD99517003FC87E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>Supporting Files</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>00E356F11AD99517003FC87E</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.plist.xml</string>
-			<key>path</key>
-			<string>Info.plist</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>00E356F21AD99517003FC87E</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-			<key>path</key>
-			<string>RabbyMobileTests.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>00E356F31AD99517003FC87E</key>
-		<dict>
-			<key>fileRef</key>
-			<string>00E356F21AD99517003FC87E</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>00E356F41AD99517003FC87E</key>
-		<dict>
-			<key>containerPortal</key>
-			<string>83CBB9F71A601CBA00E9B192</string>
-			<key>isa</key>
-			<string>PBXContainerItemProxy</string>
-			<key>proxyType</key>
-			<string>1</string>
-			<key>remoteGlobalIDString</key>
-			<string>13B07F861A680F5B00A75B9A</string>
-			<key>remoteInfo</key>
-			<string>RabbyMobile</string>
-		</dict>
-		<key>00E356F51AD99517003FC87E</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXTargetDependency</string>
-			<key>target</key>
-			<string>13B07F861A680F5B00A75B9A</string>
-			<key>targetProxy</key>
-			<string>00E356F41AD99517003FC87E</string>
-		</dict>
-		<key>00E356F61AD99517003FC87E</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>5B7EB9410499542E8C5724F5</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES</key>
-				<string>YES</string>
-				<key>BUNDLE_LOADER</key>
-				<string>$(TEST_HOST)</string>
-				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
-				<array>
-					<string>DEBUG=1</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>INFOPLIST_FILE</key>
-				<string>RabbyMobileTests/Info.plist</string>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>12.4</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>@executable_path/Frameworks</string>
-					<string>@loader_path/Frameworks</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>-ObjC</string>
-					<string>-lc++</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>com.debank.rabby-mobile-debug</string>
-				<key>PRODUCT_NAME</key>
-				<string>$(TARGET_NAME)</string>
-				<key>TEST_HOST</key>
-				<string>$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Debug</string>
-		</dict>
-		<key>00E356F71AD99517003FC87E</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>89C6BE57DB24E9ADA2F236DE</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES</key>
-				<string>YES</string>
-				<key>BUNDLE_LOADER</key>
-				<string>$(TEST_HOST)</string>
-				<key>COPY_PHASE_STRIP</key>
-				<string>NO</string>
-				<key>INFOPLIST_FILE</key>
-				<string>RabbyMobileTests/Info.plist</string>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>12.4</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>@executable_path/Frameworks</string>
-					<string>@loader_path/Frameworks</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>-ObjC</string>
-					<string>-lc++</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>com.debank.rabby-mobile</string>
-				<key>PRODUCT_NAME</key>
-				<string>$(TARGET_NAME)</string>
-				<key>TEST_HOST</key>
-				<string>$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Release</string>
-		</dict>
-		<key>00E357021AD99517003FC87E</key>
-		<dict>
-			<key>buildConfigurations</key>
-			<array>
-				<string>00E356F61AD99517003FC87E</string>
-				<string>00E356F71AD99517003FC87E</string>
-				<string>0169DF5E2D1286360098402E</string>
-			</array>
-			<key>defaultConfigurationIsVisible</key>
-			<string>0</string>
-			<key>defaultConfigurationName</key>
-			<string>Release</string>
-			<key>isa</key>
-			<string>XCConfigurationList</string>
-		</dict>
-		<key>00EEFC60759A1932668264C0</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks-${CONFIGURATION}-input-files.xcfilelist</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP] Embed Pods Frameworks</string>
-			<key>outputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks-${CONFIGURATION}-output-files.xcfilelist</string>
-			</array>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks.sh"
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-		<key>0120B20E2D082C0000FCB1B1</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>name</key>
-			<string>RNHelpers.h</string>
-			<key>path</key>
-			<string>RabbyMobile/RNHelpers.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>0120B20F2D082C0000FCB1B1</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.cpp.objcpp</string>
-			<key>name</key>
-			<string>RNHelpers.mm</string>
-			<key>path</key>
-			<string>RabbyMobile/RNHelpers.mm</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>0120B2102D082C0000FCB1B1</key>
-		<dict>
-			<key>fileRef</key>
-			<string>0120B20F2D082C0000FCB1B1</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>014102612BF348FE00629679</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xml</string>
-			<key>path</key>
-			<string>PrivacyInfo.xcprivacy</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>014102622BF348FE00629679</key>
-		<dict>
-			<key>fileRef</key>
-			<string>014102612BF348FE00629679</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>0169DF5C2D1286360098402E</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>01C69DD82C2C93CA007C7A6E</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ALWAYS_SEARCH_USER_PATHS</key>
-				<string>NO</string>
-				<key>CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED</key>
-				<string>YES</string>
-				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-				<string>c++20</string>
-				<key>CLANG_CXX_LIBRARY</key>
-				<string>libc++</string>
-				<key>CLANG_ENABLE_MODULES</key>
-				<string>YES</string>
-				<key>CLANG_ENABLE_OBJC_ARC</key>
-				<string>YES</string>
-				<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING</key>
-				<string>YES</string>
-				<key>CLANG_WARN_BOOL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_COMMA</key>
-				<string>YES</string>
-				<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-				<string>YES</string>
-				<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-				<string>YES_ERROR</string>
-				<key>CLANG_WARN_EMPTY_BODY</key>
-				<string>YES</string>
-				<key>CLANG_WARN_ENUM_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_INFINITE_RECURSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_INT_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-				<string>YES_ERROR</string>
-				<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-				<string>YES</string>
-				<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-				<string>YES</string>
-				<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-				<string>YES</string>
-				<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-				<string>YES</string>
-				<key>CLANG_WARN_UNREACHABLE_CODE</key>
-				<string>YES</string>
-				<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-				<string>YES</string>
-				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
-				<string>iPhone Developer</string>
-				<key>COPY_PHASE_STRIP</key>
-				<string>YES</string>
-				<key>DEVELOPMENT_TEAM</key>
-				<string>ZPNP2SF27Q</string>
-				<key>ENABLE_NS_ASSERTIONS</key>
-				<string>NO</string>
-				<key>ENABLE_STRICT_OBJC_MSGSEND</key>
-				<string>YES</string>
-				<key>EXCLUDED_ARCHS[sdk=iphonesimulator*]</key>
-				<string>arm64</string>
-				<key>GCC_C_LANGUAGE_STANDARD</key>
-				<string>gnu99</string>
-				<key>GCC_NO_COMMON_BLOCKS</key>
-				<string>YES</string>
-				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION</string>
-				</array>
-				<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
-				<string>YES</string>
-				<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
-				<string>YES_ERROR</string>
-				<key>GCC_WARN_UNDECLARED_SELECTOR</key>
-				<string>YES</string>
-				<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
-				<string>YES_AGGRESSIVE</string>
-				<key>GCC_WARN_UNUSED_FUNCTION</key>
-				<string>YES</string>
-				<key>GCC_WARN_UNUSED_VARIABLE</key>
-				<string>YES</string>
-				<key>HEADER_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-				</array>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>/usr/lib/swift</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>LIBRARY_SEARCH_PATHS</key>
-				<array>
-					<string>"$(SDKROOT)/usr/lib/swift"</string>
-					<string>"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)"</string>
-					<string>"$(inherited)"</string>
-				</array>
-				<key>MTL_ENABLE_DEBUG_INFO</key>
-				<string>NO</string>
-				<key>OTHER_CFLAGS</key>
-				<string>$(inherited)</string>
-				<key>OTHER_CPLUSPLUSFLAGS</key>
-				<array>
-					<string>$(OTHER_CFLAGS)</string>
-					<string>-DFOLLY_NO_CONFIG</string>
-					<string>-DFOLLY_MOBILE=1</string>
-					<string>-DFOLLY_USE_LIBCPP=1</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<string>$(inherited)</string>
-				<key>REACT_NATIVE_PATH</key>
-				<string>${PODS_ROOT}/../../node_modules/react-native</string>
-				<key>SDKROOT</key>
-				<string>iphoneos</string>
-				<key>USE_HERMES</key>
-				<string>true</string>
-				<key>VALIDATE_PRODUCT</key>
-				<string>YES</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Regression</string>
-		</dict>
-		<key>0169DF5D2D1286360098402E</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>C6BA4F495157A98E3F4D95B4</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
-				<string>AppIconRegression</string>
-				<key>CLANG_ENABLE_MODULES</key>
-				<string>YES</string>
-				<key>CODE_SIGN_ENTITLEMENTS</key>
-				<string>RabbyMobile/RabbyMobile.entitlements</string>
-				<key>CODE_SIGN_IDENTITY</key>
-				<string>iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)</string>
-				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
-				<string>iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)</string>
-				<key>CODE_SIGN_STYLE</key>
-				<string>Manual</string>
-				<key>CURRENT_PROJECT_VERSION</key>
-				<string>1</string>
-				<key>DEVELOPMENT_TEAM</key>
-				<string>ZPNP2SF27Q</string>
-				<key>DEVELOPMENT_TEAM[sdk=iphoneos*]</key>
-				<string>ZPNP2SF27Q</string>
-				<key>INFOPLIST_FILE</key>
-				<string>RabbyMobile/Info.plist</string>
-				<key>INFOPLIST_KEY_CFBundleDisplayName</key>
-				<string>Rabby Wallet</string>
-				<key>INFOPLIST_KEY_LSApplicationCategoryType</key>
-				<string>public.app-category.utilities</string>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>@executable_path/Frameworks</string>
-				</array>
-				<key>MARKETING_VERSION</key>
-				<string>0.1.0</string>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>-ObjC</string>
-					<string>-lc++</string>
-				</array>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>com.debank.rabby-mobile-regression</string>
-				<key>PRODUCT_NAME</key>
-				<string>RabbyMobile</string>
-				<key>PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]</key>
-				<string>RabbyMobileAdHocRegression</string>
-				<key>RABBY_MOBILE_DISPLAY_NAME</key>
-				<string>Reg Wallet</string>
-				<key>SUPPORTED_PLATFORMS</key>
-				<string>iphoneos iphonesimulator</string>
-				<key>SUPPORTS_MACCATALYST</key>
-				<string>NO</string>
-				<key>SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD</key>
-				<string>NO</string>
-				<key>SWIFT_OBJC_BRIDGING_HEADER</key>
-				<string></string>
-				<key>SWIFT_VERSION</key>
-				<string>5.0</string>
-				<key>TARGETED_DEVICE_FAMILY</key>
-				<string>1</string>
-				<key>VERSIONING_SYSTEM</key>
-				<string>apple-generic</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Regression</string>
-		</dict>
-		<key>0169DF5E2D1286360098402E</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>6B576D0FC998649BFE6FCB60</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES</key>
-				<string>YES</string>
-				<key>BUNDLE_LOADER</key>
-				<string>$(TEST_HOST)</string>
-				<key>CODE_SIGN_STYLE</key>
-				<string>Manual</string>
-				<key>COPY_PHASE_STRIP</key>
-				<string>NO</string>
-				<key>INFOPLIST_FILE</key>
-				<string>RabbyMobileTests/Info.plist</string>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>12.4</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>@executable_path/Frameworks</string>
-					<string>@loader_path/Frameworks</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>-ObjC</string>
-					<string>-lc++</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>com.debank.rabby-mobile-regression</string>
-				<key>PRODUCT_NAME</key>
-				<string>$(TARGET_NAME)</string>
-				<key>PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]</key>
-				<string>RabbyMobileAdHocRegression</string>
-				<key>TEST_HOST</key>
-				<string>$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Regression</string>
-		</dict>
-		<key>01BBE0122C3879380033D12B</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-			<key>name</key>
-			<string>UIImage+ImageEffects.m</string>
-			<key>path</key>
-			<string>RabbyMobile/UIImage+ImageEffects.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01BBE0132C3879380033D12B</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-			<key>name</key>
-			<string>RNScreenshotPrevent.m</string>
-			<key>path</key>
-			<string>RabbyMobile/RNScreenshotPrevent.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01BBE0162C3879380033D12B</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01BBE0122C3879380033D12B</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01BBE0172C3879380033D12B</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01BBE0132C3879380033D12B</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01BBE0182C387B8C0033D12B</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>name</key>
-			<string>RNScreenshotPrevent.h</string>
-			<key>path</key>
-			<string>RabbyMobile/RNScreenshotPrevent.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01BBE0192C387B8C0033D12B</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>name</key>
-			<string>UIImage+ImageEffects.h</string>
-			<key>path</key>
-			<string>RabbyMobile/UIImage+ImageEffects.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01BBE01E2C3889BB0033D12B</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.swift</string>
-			<key>name</key>
-			<string>ScreenShield.swift</string>
-			<key>path</key>
-			<string>RabbyMobile/ScreenShield.swift</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01BBE0212C3889BB0033D12B</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01BBE01E2C3889BB0033D12B</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01C69DD82C2C93CA007C7A6E</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>AppConfig.xcconfig</string>
-			<key>path</key>
-			<string>RabbyMobile/AppConfig.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01C69DD92C2C93CA007C7A6E</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01C69DD82C2C93CA007C7A6E</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01C69DDA2C2C93CA007C7A6E</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01C69DD82C2C93CA007C7A6E</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01D18D942C804A750067DA5F</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.plist.entitlements</string>
-			<key>name</key>
-			<string>RabbyMobileDebug.entitlements</string>
-			<key>path</key>
-			<string>RabbyMobile/RabbyMobileDebug.entitlements</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01D49C742CBE7D5E008C5EE2</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>name</key>
-			<string>RNTimeChanged.h</string>
-			<key>path</key>
-			<string>RabbyMobile/RNTimeChanged.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01D49C752CBE7D5E008C5EE2</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.cpp.objcpp</string>
-			<key>name</key>
-			<string>RNTimeChanged.mm</string>
-			<key>path</key>
-			<string>RabbyMobile/RNTimeChanged.mm</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01D49C762CBE7D5E008C5EE2</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01D49C752CBE7D5E008C5EE2</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01E584B52C370990007F3280</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>file.xib</string>
-			<key>name</key>
-			<string>LaunchScreen.xib</string>
-			<key>path</key>
-			<string>RabbyMobile/LaunchScreen.xib</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01E584B62C370990007F3280</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01E584B52C370990007F3280</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>01EF41A82C36CAFF009D8053</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>name</key>
-			<string>ReactNativeSecurity.h</string>
-			<key>path</key>
-			<string>RabbyMobile/ReactNativeSecurity.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01EF41A92C36CB00009D8053</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.cpp.objcpp</string>
-			<key>name</key>
-			<string>ReactNativeSecurity.mm</string>
-			<key>path</key>
-			<string>RabbyMobile/ReactNativeSecurity.mm</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>01EF41AA2C36CB00009D8053</key>
-		<dict>
-			<key>fileRef</key>
-			<string>01EF41A92C36CB00009D8053</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>096900DC3A7A4F9FB3367687</key>
-		<dict>
-			<key>fileRef</key>
-			<string>A5FDCD7CC73A48D1BD873FF0</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>0FDFDF1FBA404AB3A3E6ECCA</key>
-		<dict>
-			<key>fileRef</key>
-			<string>A4836FAFC22B499AAA2E435D</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>13B07F861A680F5B00A75B9A</key>
-		<dict>
-			<key>buildConfigurationList</key>
-			<string>13B07F931A680F5B00A75B9A</string>
-			<key>buildPhases</key>
-			<array>
-				<string>C38B50BA6285516D6DCD4F65</string>
-				<string>FD10A7F022414F080027D42C</string>
-				<string>13B07F871A680F5B00A75B9A</string>
-				<string>13B07F8C1A680F5B00A75B9A</string>
-				<string>13B07F8E1A680F5B00A75B9A</string>
-				<string>00DD1BFF1BD5951E006B06BC</string>
-				<string>00EEFC60759A1932668264C0</string>
-				<string>E235C05ADACE081382539298</string>
-				<string>8CDE046FA7F7E8D18AC6AC0E</string>
-				<string>97C8DB28D26F4537BDE36325</string>
-			</array>
-			<key>buildRules</key>
-			<array/>
-			<key>dependencies</key>
-			<array/>
-			<key>isa</key>
-			<string>PBXNativeTarget</string>
-			<key>name</key>
-			<string>RabbyMobile</string>
-			<key>productName</key>
-			<string>RabbyMobile</string>
-			<key>productReference</key>
-			<string>13B07F961A680F5B00A75B9A</string>
-			<key>productType</key>
-			<string>com.apple.product-type.application</string>
-		</dict>
-		<key>13B07F871A680F5B00A75B9A</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array>
-				<string>01BBE0162C3879380033D12B</string>
-				<string>13B07FBC1A68108700A75B9A</string>
-				<string>01EF41AA2C36CB00009D8053</string>
-				<string>01BBE0212C3889BB0033D12B</string>
-				<string>13B07FC11A68108700A75B9A</string>
-				<string>01D49C762CBE7D5E008C5EE2</string>
-				<string>01BBE0172C3879380033D12B</string>
-				<string>0120B2102D082C0000FCB1B1</string>
-			</array>
-			<key>isa</key>
-			<string>PBXSourcesBuildPhase</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-		</dict>
-		<key>13B07F8C1A680F5B00A75B9A</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array>
-				<string>61119C058F0C8F2FBCC8530A</string>
-			</array>
-			<key>isa</key>
-			<string>PBXFrameworksBuildPhase</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-		</dict>
-		<key>13B07F8E1A680F5B00A75B9A</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array>
-				<string>01E584B62C370990007F3280</string>
-				<string>81AB9BB82411601600AC10FF</string>
-				<string>014102622BF348FE00629679</string>
-				<string>13B07FBF1A68108700A75B9A</string>
-				<string>01C69DD92C2C93CA007C7A6E</string>
-				<string>ACB2DE2D2B72015F00A5516C</string>
-				<string>62F658AD5D35470FBE7DF799</string>
-				<string>E576F98C62E44D04A874C8B7</string>
-				<string>0FDFDF1FBA404AB3A3E6ECCA</string>
-				<string>5497879220EF4D48850C0543</string>
-				<string>096900DC3A7A4F9FB3367687</string>
-				<string>9F540D8831AB4D5AA7FB6BC0</string>
-			</array>
-			<key>isa</key>
-			<string>PBXResourcesBuildPhase</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-		</dict>
-		<key>13B07F931A680F5B00A75B9A</key>
-		<dict>
-			<key>buildConfigurations</key>
-			<array>
-				<string>13B07F941A680F5B00A75B9A</string>
-				<string>13B07F951A680F5B00A75B9A</string>
-				<string>0169DF5D2D1286360098402E</string>
-			</array>
-			<key>defaultConfigurationIsVisible</key>
-			<string>0</string>
-			<key>defaultConfigurationName</key>
-			<string>Release</string>
-			<key>isa</key>
-			<string>XCConfigurationList</string>
-		</dict>
-		<key>13B07F941A680F5B00A75B9A</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>3B4392A12AC88292D35C810B</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
-				<string>AppIconDebug</string>
-				<key>CLANG_ENABLE_MODULES</key>
-				<string>YES</string>
-				<key>CODE_SIGN_ENTITLEMENTS</key>
-				<string>RabbyMobile/RabbyMobileDebug.entitlements</string>
-				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
-				<string>iPhone Developer</string>
-				<key>CODE_SIGN_STYLE</key>
-				<string>Manual</string>
-				<key>CURRENT_PROJECT_VERSION</key>
-				<string>1</string>
-				<key>DEVELOPMENT_TEAM</key>
-				<string>ZPNP2SF27Q</string>
-				<key>DEVELOPMENT_TEAM[sdk=iphoneos*]</key>
-				<string>ZPNP2SF27Q</string>
-				<key>ENABLE_BITCODE</key>
-				<string>NO</string>
-				<key>INFOPLIST_FILE</key>
-				<string>RabbyMobile/Info.plist</string>
-				<key>INFOPLIST_KEY_CFBundleDisplayName</key>
-				<string>Rabby Wallet</string>
-				<key>INFOPLIST_KEY_LSApplicationCategoryType</key>
-				<string>public.app-category.utilities</string>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>@executable_path/Frameworks</string>
-				</array>
-				<key>MARKETING_VERSION</key>
-				<string>0.1.0</string>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>-ObjC</string>
-					<string>-lc++</string>
-				</array>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>com.debank.rabby-mobile-debug</string>
-				<key>PRODUCT_NAME</key>
-				<string>RabbyMobile</string>
-				<key>PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]</key>
-				<string>RabbyMobileDevelopment</string>
-				<key>RABBY_MOBILE_DISPLAY_NAME</key>
-				<string>Debug Rabby</string>
-				<key>SUPPORTED_PLATFORMS</key>
-				<string>iphoneos iphonesimulator</string>
-				<key>SUPPORTS_MACCATALYST</key>
-				<string>NO</string>
-				<key>SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD</key>
-				<string>NO</string>
-				<key>SWIFT_OBJC_BRIDGING_HEADER</key>
-				<string></string>
-				<key>SWIFT_OPTIMIZATION_LEVEL</key>
-				<string>-Onone</string>
-				<key>SWIFT_VERSION</key>
-				<string>5.0</string>
-				<key>TARGETED_DEVICE_FAMILY</key>
-				<string>1</string>
-				<key>VERSIONING_SYSTEM</key>
-				<string>apple-generic</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Debug</string>
-		</dict>
-		<key>13B07F951A680F5B00A75B9A</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>5709B34CF0A7D63546082F79</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
-				<string>AppIcon</string>
-				<key>CLANG_ENABLE_MODULES</key>
-				<string>YES</string>
-				<key>CODE_SIGN_ENTITLEMENTS</key>
-				<string>RabbyMobile/RabbyMobile.entitlements</string>
-				<key>CODE_SIGN_IDENTITY</key>
-				<string>iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)</string>
-				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
-				<string>iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)</string>
-				<key>CODE_SIGN_STYLE</key>
-				<string>Manual</string>
-				<key>CURRENT_PROJECT_VERSION</key>
-				<string>1</string>
-				<key>DEVELOPMENT_TEAM</key>
-				<string>ZPNP2SF27Q</string>
-				<key>DEVELOPMENT_TEAM[sdk=iphoneos*]</key>
-				<string>ZPNP2SF27Q</string>
-				<key>INFOPLIST_FILE</key>
-				<string>RabbyMobile/Info.plist</string>
-				<key>INFOPLIST_KEY_CFBundleDisplayName</key>
-				<string>Rabby Wallet</string>
-				<key>INFOPLIST_KEY_LSApplicationCategoryType</key>
-				<string>public.app-category.utilities</string>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>@executable_path/Frameworks</string>
-				</array>
-				<key>MARKETING_VERSION</key>
-				<string>0.1.0</string>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>-ObjC</string>
-					<string>-lc++</string>
-				</array>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>com.debank.rabby-mobile</string>
-				<key>PRODUCT_NAME</key>
-				<string>RabbyMobile</string>
-				<key>PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]</key>
-				<string>RabbyMobileAppStore</string>
-				<key>RABBY_MOBILE_DISPLAY_NAME</key>
-				<string>Rabby Wallet</string>
-				<key>SUPPORTED_PLATFORMS</key>
-				<string>iphoneos iphonesimulator</string>
-				<key>SUPPORTS_MACCATALYST</key>
-				<string>NO</string>
-				<key>SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD</key>
-				<string>NO</string>
-				<key>SWIFT_OBJC_BRIDGING_HEADER</key>
-				<string></string>
-				<key>SWIFT_VERSION</key>
-				<string>5.0</string>
-				<key>TARGETED_DEVICE_FAMILY</key>
-				<string>1</string>
-				<key>VERSIONING_SYSTEM</key>
-				<string>apple-generic</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Release</string>
-		</dict>
-		<key>13B07F961A680F5B00A75B9A</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>wrapper.application</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>RabbyMobile.app</string>
-			<key>sourceTree</key>
-			<string>BUILT_PRODUCTS_DIR</string>
-		</dict>
-		<key>13B07FAE1A68108700A75B9A</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>0120B20E2D082C0000FCB1B1</string>
-				<string>0120B20F2D082C0000FCB1B1</string>
-				<string>01D49C742CBE7D5E008C5EE2</string>
-				<string>01D49C752CBE7D5E008C5EE2</string>
-				<string>01D18D942C804A750067DA5F</string>
-				<string>A8D4D12C2C7EFDA1002B827D</string>
-				<string>01E584B52C370990007F3280</string>
-				<string>01BBE01E2C3889BB0033D12B</string>
-				<string>01BBE0182C387B8C0033D12B</string>
-				<string>01BBE0132C3879380033D12B</string>
-				<string>01BBE0192C387B8C0033D12B</string>
-				<string>01BBE0122C3879380033D12B</string>
-				<string>01EF41A82C36CAFF009D8053</string>
-				<string>01EF41A92C36CB00009D8053</string>
-				<string>13B07FAF1A68108700A75B9A</string>
-				<string>13B07FB01A68108700A75B9A</string>
-				<string>13B07FB51A68108700A75B9A</string>
-				<string>13B07FB61A68108700A75B9A</string>
-				<string>81AB9BB72411601600AC10FF</string>
-				<string>13B07FB71A68108700A75B9A</string>
-				<string>01C69DD82C2C93CA007C7A6E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>RabbyMobile</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>13B07FAF1A68108700A75B9A</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>name</key>
-			<string>AppDelegate.h</string>
-			<key>path</key>
-			<string>RabbyMobile/AppDelegate.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>13B07FB01A68108700A75B9A</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.cpp.objcpp</string>
-			<key>name</key>
-			<string>AppDelegate.mm</string>
-			<key>path</key>
-			<string>RabbyMobile/AppDelegate.mm</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>13B07FB51A68108700A75B9A</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>folder.assetcatalog</string>
-			<key>name</key>
-			<string>Images.xcassets</string>
-			<key>path</key>
-			<string>RabbyMobile/Images.xcassets</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>13B07FB61A68108700A75B9A</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.plist.xml</string>
-			<key>name</key>
-			<string>Info.plist</string>
-			<key>path</key>
-			<string>RabbyMobile/Info.plist</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>13B07FB71A68108700A75B9A</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-			<key>name</key>
-			<string>main.m</string>
-			<key>path</key>
-			<string>RabbyMobile/main.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>13B07FBC1A68108700A75B9A</key>
-		<dict>
-			<key>fileRef</key>
-			<string>13B07FB01A68108700A75B9A</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>13B07FBF1A68108700A75B9A</key>
-		<dict>
-			<key>fileRef</key>
-			<string>13B07FB51A68108700A75B9A</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>13B07FC11A68108700A75B9A</key>
-		<dict>
-			<key>fileRef</key>
-			<string>13B07FB71A68108700A75B9A</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>2D16E6871FA4F8E400B85C8A</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>ED297162215061F000B7C4FE</string>
-				<string>CA3D14902716EB42CC78905B</string>
-				<string>EAEC992AC950B3ACACBDE0F2</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>Frameworks</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>3B4392A12AC88292D35C810B</key>
-		<dict>
-			<key>includeInIndex</key>
-			<string>1</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>Pods-RabbyMobile.debug.xcconfig</string>
-			<key>path</key>
-			<string>Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>48A3C610244545BBA590D079</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>undefined</string>
-			<key>fileEncoding</key>
-			<string>9</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>unknown</string>
-			<key>name</key>
-			<string>SF-Pro-Rounded-Regular.otf</string>
-			<key>path</key>
-			<string>../assets/fonts/SF-Pro-Rounded-Regular.otf</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>5497879220EF4D48850C0543</key>
-		<dict>
-			<key>fileRef</key>
-			<string>48A3C610244545BBA590D079</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>5709B34CF0A7D63546082F79</key>
-		<dict>
-			<key>includeInIndex</key>
-			<string>1</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>Pods-RabbyMobile.release.xcconfig</string>
-			<key>path</key>
-			<string>Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>5B7EB9410499542E8C5724F5</key>
-		<dict>
-			<key>includeInIndex</key>
-			<string>1</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig</string>
-			<key>path</key>
-			<string>Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>5B9880A4659D4B78872720D4</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>undefined</string>
-			<key>fileEncoding</key>
-			<string>9</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>unknown</string>
-			<key>name</key>
-			<string>SF-Pro-Rounded-Bold.otf</string>
-			<key>path</key>
-			<string>../assets/fonts/SF-Pro-Rounded-Bold.otf</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>61119C058F0C8F2FBCC8530A</key>
-		<dict>
-			<key>fileRef</key>
-			<string>CA3D14902716EB42CC78905B</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>62F658AD5D35470FBE7DF799</key>
-		<dict>
-			<key>fileRef</key>
-			<string>5B9880A4659D4B78872720D4</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>6B576D0FC998649BFE6FCB60</key>
-		<dict>
-			<key>includeInIndex</key>
-			<string>1</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig</string>
-			<key>path</key>
-			<string>Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>81AB9BB72411601600AC10FF</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>file.storyboard</string>
-			<key>name</key>
-			<string>LaunchScreen.storyboard</string>
-			<key>path</key>
-			<string>RabbyMobile/LaunchScreen.storyboard</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>81AB9BB82411601600AC10FF</key>
-		<dict>
-			<key>fileRef</key>
-			<string>81AB9BB72411601600AC10FF</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>832341AE1AAA6A7D00B99B32</key>
-		<dict>
-			<key>children</key>
-			<array/>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>Libraries</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>83CBB9F61A601CBA00E9B192</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>014102612BF348FE00629679</string>
-				<string>ACB2DE2C2B72015F00A5516C</string>
-				<string>13B07FAE1A68108700A75B9A</string>
-				<string>832341AE1AAA6A7D00B99B32</string>
-				<string>00E356EF1AD99517003FC87E</string>
-				<string>83CBBA001A601CBA00E9B192</string>
-				<string>2D16E6871FA4F8E400B85C8A</string>
-				<string>BBD78D7AC51CEA395F1C20DB</string>
-				<string>D0CA49A24C31446D8C53F168</string>
-			</array>
-			<key>indentWidth</key>
-			<string>2</string>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-			<key>tabWidth</key>
-			<string>2</string>
-			<key>usesTabs</key>
-			<string>0</string>
-		</dict>
-		<key>83CBB9F71A601CBA00E9B192</key>
-		<dict>
-			<key>attributes</key>
-			<dict>
-				<key>LastUpgradeCheck</key>
-				<string>1210</string>
-				<key>TargetAttributes</key>
-				<dict>
-					<key>00E356ED1AD99517003FC87E</key>
-					<dict>
-						<key>CreatedOnToolsVersion</key>
-						<string>6.2</string>
-						<key>TestTargetID</key>
-						<string>13B07F861A680F5B00A75B9A</string>
-					</dict>
-					<key>13B07F861A680F5B00A75B9A</key>
-					<dict>
-						<key>LastSwiftMigration</key>
-						<string>1520</string>
-					</dict>
-				</dict>
-			</dict>
-			<key>buildConfigurationList</key>
-			<string>83CBB9FA1A601CBA00E9B192</string>
-			<key>compatibilityVersion</key>
-			<string>Xcode 12.0</string>
-			<key>developmentRegion</key>
-			<string>en</string>
-			<key>hasScannedForEncodings</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXProject</string>
-			<key>knownRegions</key>
-			<array>
-				<string>en</string>
-				<string>Base</string>
-			</array>
-			<key>mainGroup</key>
-			<string>83CBB9F61A601CBA00E9B192</string>
-			<key>productRefGroup</key>
-			<string>83CBBA001A601CBA00E9B192</string>
-			<key>projectDirPath</key>
-			<string></string>
-			<key>projectRoot</key>
-			<string></string>
-			<key>targets</key>
-			<array>
-				<string>13B07F861A680F5B00A75B9A</string>
-				<string>00E356ED1AD99517003FC87E</string>
-			</array>
-		</dict>
-		<key>83CBB9FA1A601CBA00E9B192</key>
-		<dict>
-			<key>buildConfigurations</key>
-			<array>
-				<string>83CBBA201A601CBA00E9B192</string>
-				<string>83CBBA211A601CBA00E9B192</string>
-				<string>0169DF5C2D1286360098402E</string>
-			</array>
-			<key>defaultConfigurationIsVisible</key>
-			<string>0</string>
-			<key>defaultConfigurationName</key>
-			<string>Release</string>
-			<key>isa</key>
-			<string>XCConfigurationList</string>
-		</dict>
-		<key>83CBBA001A601CBA00E9B192</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>13B07F961A680F5B00A75B9A</string>
-				<string>00E356EE1AD99517003FC87E</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>Products</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>83CBBA201A601CBA00E9B192</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>01C69DD82C2C93CA007C7A6E</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ALWAYS_SEARCH_USER_PATHS</key>
-				<string>NO</string>
-				<key>CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED</key>
-				<string>YES</string>
-				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-				<string>c++20</string>
-				<key>CLANG_CXX_LIBRARY</key>
-				<string>libc++</string>
-				<key>CLANG_ENABLE_MODULES</key>
-				<string>YES</string>
-				<key>CLANG_ENABLE_OBJC_ARC</key>
-				<string>YES</string>
-				<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING</key>
-				<string>YES</string>
-				<key>CLANG_WARN_BOOL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_COMMA</key>
-				<string>YES</string>
-				<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-				<string>YES</string>
-				<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-				<string>YES_ERROR</string>
-				<key>CLANG_WARN_EMPTY_BODY</key>
-				<string>YES</string>
-				<key>CLANG_WARN_ENUM_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_INFINITE_RECURSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_INT_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-				<string>YES_ERROR</string>
-				<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-				<string>YES</string>
-				<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-				<string>YES</string>
-				<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-				<string>YES</string>
-				<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-				<string>YES</string>
-				<key>CLANG_WARN_UNREACHABLE_CODE</key>
-				<string>YES</string>
-				<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-				<string>YES</string>
-				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
-				<string>iPhone Developer</string>
-				<key>COPY_PHASE_STRIP</key>
-				<string>NO</string>
-				<key>DEVELOPMENT_TEAM</key>
-				<string>ZPNP2SF27Q</string>
-				<key>ENABLE_STRICT_OBJC_MSGSEND</key>
-				<string>YES</string>
-				<key>ENABLE_TESTABILITY</key>
-				<string>YES</string>
-				<key>EXCLUDED_ARCHS[sdk=iphonesimulator*]</key>
-				<string>arm64</string>
-				<key>GCC_C_LANGUAGE_STANDARD</key>
-				<string>gnu99</string>
-				<key>GCC_DYNAMIC_NO_PIC</key>
-				<string>NO</string>
-				<key>GCC_NO_COMMON_BLOCKS</key>
-				<string>YES</string>
-				<key>GCC_OPTIMIZATION_LEVEL</key>
-				<string>0</string>
-				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
-				<array>
-					<string>DEBUG=1</string>
-					<string>$(inherited)</string>
-					<string>_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION</string>
-				</array>
-				<key>GCC_SYMBOLS_PRIVATE_EXTERN</key>
-				<string>NO</string>
-				<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
-				<string>YES</string>
-				<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
-				<string>YES_ERROR</string>
-				<key>GCC_WARN_UNDECLARED_SELECTOR</key>
-				<string>YES</string>
-				<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
-				<string>YES_AGGRESSIVE</string>
-				<key>GCC_WARN_UNUSED_FUNCTION</key>
-				<string>YES</string>
-				<key>GCC_WARN_UNUSED_VARIABLE</key>
-				<string>YES</string>
-				<key>HEADER_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string> ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-				</array>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>/usr/lib/swift</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>LIBRARY_SEARCH_PATHS</key>
-				<array>
-					<string>"$(SDKROOT)/usr/lib/swift"</string>
-					<string>"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)"</string>
-					<string>"$(inherited)"</string>
-				</array>
-				<key>MTL_ENABLE_DEBUG_INFO</key>
-				<string>YES</string>
-				<key>ONLY_ACTIVE_ARCH</key>
-				<string>YES</string>
-				<key>OTHER_CFLAGS</key>
-				<string>$(inherited)</string>
-				<key>OTHER_CPLUSPLUSFLAGS</key>
-				<array>
-					<string>$(OTHER_CFLAGS)</string>
-					<string>-DFOLLY_NO_CONFIG</string>
-					<string>-DFOLLY_MOBILE=1</string>
-					<string>-DFOLLY_USE_LIBCPP=1</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<string>$(inherited)</string>
-				<key>REACT_NATIVE_PATH</key>
-				<string>${PODS_ROOT}/../../node_modules/react-native</string>
-				<key>SDKROOT</key>
-				<string>iphoneos</string>
-				<key>USE_HERMES</key>
-				<string>true</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Debug</string>
-		</dict>
-		<key>83CBBA211A601CBA00E9B192</key>
-		<dict>
-			<key>baseConfigurationReference</key>
-			<string>01C69DD82C2C93CA007C7A6E</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ALWAYS_SEARCH_USER_PATHS</key>
-				<string>NO</string>
-				<key>CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED</key>
-				<string>YES</string>
-				<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-				<string>c++20</string>
-				<key>CLANG_CXX_LIBRARY</key>
-				<string>libc++</string>
-				<key>CLANG_ENABLE_MODULES</key>
-				<string>YES</string>
-				<key>CLANG_ENABLE_OBJC_ARC</key>
-				<string>YES</string>
-				<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING</key>
-				<string>YES</string>
-				<key>CLANG_WARN_BOOL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_COMMA</key>
-				<string>YES</string>
-				<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-				<string>YES</string>
-				<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-				<string>YES_ERROR</string>
-				<key>CLANG_WARN_EMPTY_BODY</key>
-				<string>YES</string>
-				<key>CLANG_WARN_ENUM_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_INFINITE_RECURSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_INT_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-				<string>YES</string>
-				<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-				<string>YES_ERROR</string>
-				<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-				<string>YES</string>
-				<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-				<string>YES</string>
-				<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-				<string>YES</string>
-				<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-				<string>YES</string>
-				<key>CLANG_WARN_UNREACHABLE_CODE</key>
-				<string>YES</string>
-				<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-				<string>YES</string>
-				<key>CODE_SIGN_IDENTITY[sdk=iphoneos*]</key>
-				<string>iPhone Developer</string>
-				<key>COPY_PHASE_STRIP</key>
-				<string>YES</string>
-				<key>DEVELOPMENT_TEAM</key>
-				<string>ZPNP2SF27Q</string>
-				<key>ENABLE_NS_ASSERTIONS</key>
-				<string>NO</string>
-				<key>ENABLE_STRICT_OBJC_MSGSEND</key>
-				<string>YES</string>
-				<key>EXCLUDED_ARCHS[sdk=iphonesimulator*]</key>
-				<string>arm64</string>
-				<key>GCC_C_LANGUAGE_STANDARD</key>
-				<string>gnu99</string>
-				<key>GCC_NO_COMMON_BLOCKS</key>
-				<string>YES</string>
-				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION</string>
-				</array>
-				<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
-				<string>YES</string>
-				<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
-				<string>YES_ERROR</string>
-				<key>GCC_WARN_UNDECLARED_SELECTOR</key>
-				<string>YES</string>
-				<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
-				<string>YES_AGGRESSIVE</string>
-				<key>GCC_WARN_UNUSED_FUNCTION</key>
-				<string>YES</string>
-				<key>GCC_WARN_UNUSED_VARIABLE</key>
-				<string>YES</string>
-				<key>HEADER_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx</string>
-					<string>${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers</string>
-				</array>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>LD_RUNPATH_SEARCH_PATHS</key>
-				<array>
-					<string>/usr/lib/swift</string>
-					<string>$(inherited)</string>
-				</array>
-				<key>LIBRARY_SEARCH_PATHS</key>
-				<array>
-					<string>"$(SDKROOT)/usr/lib/swift"</string>
-					<string>"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)"</string>
-					<string>"$(inherited)"</string>
-				</array>
-				<key>MTL_ENABLE_DEBUG_INFO</key>
-				<string>NO</string>
-				<key>OTHER_CFLAGS</key>
-				<string>$(inherited)</string>
-				<key>OTHER_CPLUSPLUSFLAGS</key>
-				<array>
-					<string>$(OTHER_CFLAGS)</string>
-					<string>-DFOLLY_NO_CONFIG</string>
-					<string>-DFOLLY_MOBILE=1</string>
-					<string>-DFOLLY_USE_LIBCPP=1</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<string>$(inherited)</string>
-				<key>REACT_NATIVE_PATH</key>
-				<string>${PODS_ROOT}/../../node_modules/react-native</string>
-				<key>SDKROOT</key>
-				<string>iphoneos</string>
-				<key>USE_HERMES</key>
-				<string>true</string>
-				<key>VALIDATE_PRODUCT</key>
-				<string>YES</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Release</string>
-		</dict>
-		<key>89C6BE57DB24E9ADA2F236DE</key>
-		<dict>
-			<key>includeInIndex</key>
-			<string>1</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>Pods-RabbyMobile-RabbyMobileTests.release.xcconfig</string>
-			<key>path</key>
-			<string>Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>8CDE046FA7F7E8D18AC6AC0E</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputPaths</key>
-			<array>
-				<string>$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP-User] [RNFB] Core Configuration</string>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>#!/usr/bin/env bash
-#
-# Copyright (c) 2016-present Invertase Limited &amp; Contributors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this library except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-set -e
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
 
-_MAX_LOOKUPS=2;
-_SEARCH_RESULT=''
-_RN_ROOT_EXISTS=''
-_CURRENT_LOOKUPS=1
-_JSON_ROOT="'react-native'"
-_JSON_FILE_NAME='firebase.json'
-_JSON_OUTPUT_BASE64='e30=' # { }
-_CURRENT_SEARCH_DIR=${PROJECT_DIR}
-_PLIST_BUDDY=/usr/libexec/PlistBuddy
-_TARGET_PLIST="${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}"
-_DSYM_PLIST="${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist"
+/* Begin PBXBuildFile section */
+		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
+		0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */; };
+		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
+		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
+		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
+		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
+		01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
+		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
+		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
+		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
+		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
+		096900DC3A7A4F9FB3367687 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = A5FDCD7CC73A48D1BD873FF0 /* vconsole.min.js */; };
+		0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */; };
+		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
+		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
+		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
+		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9F540D8831AB4D5AA7FB6BC0 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = DFD1003081D24764B2E937A3 /* InpageBridgeWeb3.js */; };
+		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
+		B2AE283CF1B1758A141448EF /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 069D82E82D2D813C144A5695 /* Pods_RabbyMobile_RabbyMobileTests.framework */; };
+		E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */; };
+		F20F80EEAE1D50D91E66759B /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E754316B4EBC7A6FD407FED1 /* Pods_RabbyMobile.framework */; };
+/* End PBXBuildFile section */
 
-# plist arrays
-_PLIST_ENTRY_KEYS=()
-_PLIST_ENTRY_TYPES=()
-_PLIST_ENTRY_VALUES=()
+/* Begin PBXContainerItemProxy section */
+		00E356F41AD99517003FC87E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = RabbyMobile;
+		};
+/* End PBXContainerItemProxy section */
 
-function setPlistValue {
-  echo "info:      setting plist entry '$1' of type '$2' in file '$4'"
-  ${_PLIST_BUDDY} -c "Add :$1 $2 '$3'" $4 || echo "info:      '$1' already exists"
+/* Begin PBXFileReference section */
+		00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RabbyMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
+		0120B20E2D082C0000FCB1B1 /* RNHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNHelpers.h; path = RabbyMobile/RNHelpers.h; sourceTree = "<group>"; };
+		0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNHelpers.mm; path = RabbyMobile/RNHelpers.mm; sourceTree = "<group>"; };
+		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+ImageEffects.m"; path = "RabbyMobile/UIImage+ImageEffects.m"; sourceTree = "<group>"; };
+		01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNScreenshotPrevent.m; path = RabbyMobile/RNScreenshotPrevent.m; sourceTree = "<group>"; };
+		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
+		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
+		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
+		01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.xcconfig; path = RabbyMobile/AppConfig.xcconfig; sourceTree = "<group>"; };
+		01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileDebug.entitlements; path = RabbyMobile/RabbyMobileDebug.entitlements; sourceTree = "<group>"; };
+		01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNTimeChanged.h; path = RabbyMobile/RNTimeChanged.h; sourceTree = "<group>"; };
+		01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RNTimeChanged.mm; path = RabbyMobile/RNTimeChanged.mm; sourceTree = "<group>"; };
+		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
+		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
+		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
+		069D82E82D2D813C144A5695 /* Pods_RabbyMobile_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		11316482FD2E1D9130ECF9E5 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* RabbyMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RabbyMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = RabbyMobile/AppDelegate.h; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = RabbyMobile/AppDelegate.mm; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = RabbyMobile/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = RabbyMobile/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = RabbyMobile/main.m; sourceTree = "<group>"; };
+		2E220D8D39B9D09418D3C273 /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
+		3EEE4549100C4D8220CE23EC /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; sourceTree = "<group>"; };
+		48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Regular.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular.otf"; sourceTree = "<group>"; };
+		5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
+		77CC3F9A92E21D42188025A6 /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Medium.otf"; path = "../assets/fonts/SF-Pro-Rounded-Medium.otf"; sourceTree = "<group>"; };
+		A5FDCD7CC73A48D1BD873FF0 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
+		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
+		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		DFD1003081D24764B2E937A3 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
+		E754316B4EBC7A6FD407FED1 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Heavy.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy.otf"; sourceTree = "<group>"; };
+		F1884AD849DF48B89EE1A709 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
+		F4997D11389601E920E11DFC /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		00E356EB1AD99517003FC87E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B2AE283CF1B1758A141448EF /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F20F80EEAE1D50D91E66759B /* Pods_RabbyMobile.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00E356EF1AD99517003FC87E /* RabbyMobileTests */ = {
+			isa = PBXGroup;
+			children = (
+				00E356F21AD99517003FC87E /* RabbyMobileTests.m */,
+				00E356F01AD99517003FC87E /* Supporting Files */,
+			);
+			path = RabbyMobileTests;
+			sourceTree = "<group>";
+		};
+		00E356F01AD99517003FC87E /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				00E356F11AD99517003FC87E /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		13B07FAE1A68108700A75B9A /* RabbyMobile */ = {
+			isa = PBXGroup;
+			children = (
+				0120B20E2D082C0000FCB1B1 /* RNHelpers.h */,
+				0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */,
+				01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */,
+				01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */,
+				01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */,
+				A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */,
+				01E584B52C370990007F3280 /* LaunchScreen.xib */,
+				01BBE01E2C3889BB0033D12B /* ScreenShield.swift */,
+				01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */,
+				01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */,
+				01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */,
+				01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */,
+				01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */,
+				01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */,
+				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
+				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB71A68108700A75B9A /* main.m */,
+				01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */,
+			);
+			name = RabbyMobile;
+			sourceTree = "<group>";
+		};
+		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				E754316B4EBC7A6FD407FED1 /* Pods_RabbyMobile.framework */,
+				069D82E82D2D813C144A5695 /* Pods_RabbyMobile_RabbyMobileTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		83CBB9F61A601CBA00E9B192 = {
+			isa = PBXGroup;
+			children = (
+				014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */,
+				ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */,
+				13B07FAE1A68108700A75B9A /* RabbyMobile */,
+				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				00E356EF1AD99517003FC87E /* RabbyMobileTests */,
+				83CBBA001A601CBA00E9B192 /* Products */,
+				2D16E6871FA4F8E400B85C8A /* Frameworks */,
+				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				D0CA49A24C31446D8C53F168 /* Resources */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+			usesTabs = 0;
+		};
+		83CBBA001A601CBA00E9B192 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B07F961A680F5B00A75B9A /* RabbyMobile.app */,
+				00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				2E220D8D39B9D09418D3C273 /* Pods-RabbyMobile.debug.xcconfig */,
+				F1884AD849DF48B89EE1A709 /* Pods-RabbyMobile.release.xcconfig */,
+				F4997D11389601E920E11DFC /* Pods-RabbyMobile.regression.xcconfig */,
+				3EEE4549100C4D8220CE23EC /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */,
+				77CC3F9A92E21D42188025A6 /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */,
+				11316482FD2E1D9130ECF9E5 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		D0CA49A24C31446D8C53F168 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */,
+				F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */,
+				A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */,
+				48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */,
+				A5FDCD7CC73A48D1BD873FF0 /* vconsole.min.js */,
+				DFD1003081D24764B2E937A3 /* InpageBridgeWeb3.js */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		00E356ED1AD99517003FC87E /* RabbyMobileTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "RabbyMobileTests" */;
+			buildPhases = (
+				CBB56710033F93E809419FAF /* [CP] Check Pods Manifest.lock */,
+				00E356EA1AD99517003FC87E /* Sources */,
+				00E356EB1AD99517003FC87E /* Frameworks */,
+				00E356EC1AD99517003FC87E /* Resources */,
+				D636120E60A6564ECC45FD63 /* [CP] Embed Pods Frameworks */,
+				F61E50F25983CFEE4E80E255 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				00E356F51AD99517003FC87E /* PBXTargetDependency */,
+			);
+			name = RabbyMobileTests;
+			productName = RabbyMobileTests;
+			productReference = 00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		13B07F861A680F5B00A75B9A /* RabbyMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "RabbyMobile" */;
+			buildPhases = (
+				B20BE154709D5BAA92932964 /* [CP] Check Pods Manifest.lock */,
+				FD10A7F022414F080027D42C /* Start Packager */,
+				13B07F871A680F5B00A75B9A /* Sources */,
+				13B07F8C1A680F5B00A75B9A /* Frameworks */,
+				13B07F8E1A680F5B00A75B9A /* Resources */,
+				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
+				97C8DB28D26F4537BDE36325 /* Upload Debug Symbols to Sentry */,
+				7E9B04BD109342111C9D3731 /* [CP] Embed Pods Frameworks */,
+				63C4623FC7BF4E727CF0E1DE /* [CP] Copy Pods Resources */,
+				848AC5477C8EE854B8D2E207 /* [CP-User] [RNFB] Core Configuration */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RabbyMobile;
+			productName = RabbyMobile;
+			productReference = 13B07F961A680F5B00A75B9A /* RabbyMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		83CBB9F71A601CBA00E9B192 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1210;
+				TargetAttributes = {
+					00E356ED1AD99517003FC87E = {
+						CreatedOnToolsVersion = 6.2;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
+					13B07F861A680F5B00A75B9A = {
+						LastSwiftMigration = 1520;
+					};
+				};
+			};
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "RabbyMobile" */;
+			compatibilityVersion = "Xcode 12.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 83CBB9F61A601CBA00E9B192;
+			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13B07F861A680F5B00A75B9A /* RabbyMobile */,
+				00E356ED1AD99517003FC87E /* RabbyMobileTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		00E356EC1AD99517003FC87E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F8E1A680F5B00A75B9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */,
+				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */,
+				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */,
+				ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */,
+				62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */,
+				E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */,
+				0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */,
+				5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */,
+				096900DC3A7A4F9FB3367687 /* vconsole.min.js in Resources */,
+				9F540D8831AB4D5AA7FB6BC0 /* InpageBridgeWeb3.js in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/.xcode.env",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = ". ./patches/phase-bundle-rn.sh\n";
+		};
+		63C4623FC7BF4E727CF0E1DE /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7E9B04BD109342111C9D3731 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		848AC5477C8EE854B8D2E207 /* [CP-User] [RNFB] Core Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "[CP-User] [RNFB] Core Configuration";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/usr/bin/env bash\n#\n# Copyright (c) 2016-present Invertase Limited & Contributors\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this library except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\nset -e\n\n_MAX_LOOKUPS=2;\n_SEARCH_RESULT=''\n_RN_ROOT_EXISTS=''\n_CURRENT_LOOKUPS=1\n_JSON_ROOT=\"'react-native'\"\n_JSON_FILE_NAME='firebase.json'\n_JSON_OUTPUT_BASE64='e30=' # { }\n_CURRENT_SEARCH_DIR=${PROJECT_DIR}\n_PLIST_BUDDY=/usr/libexec/PlistBuddy\n_TARGET_PLIST=\"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n_DSYM_PLIST=\"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist\"\n\n# plist arrays\n_PLIST_ENTRY_KEYS=()\n_PLIST_ENTRY_TYPES=()\n_PLIST_ENTRY_VALUES=()\n\nfunction setPlistValue {\n  echo \"info:      setting plist entry '$1' of type '$2' in file '$4'\"\n  ${_PLIST_BUDDY} -c \"Add :$1 $2 '$3'\" $4 || echo \"info:      '$1' already exists\"\n}\n\nfunction getFirebaseJsonKeyValue () {\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    ruby -Ku -e \"require 'rubygems';require 'json'; output=JSON.parse('$1'); puts output[$_JSON_ROOT]['$2']\"\n  else\n    echo \"\"\n  fi;\n}\n\nfunction jsonBoolToYesNo () {\n  if [[ $1 == \"false\" ]]; then\n    echo \"NO\"\n  elif [[ $1 == \"true\" ]]; then\n    echo \"YES\"\n  else echo \"NO\"\n  fi\n}\n\necho \"info: -> RNFB build script started\"\necho \"info: 1) Locating ${_JSON_FILE_NAME} file:\"\n\nif [[ -z ${_CURRENT_SEARCH_DIR} ]]; then\n  _CURRENT_SEARCH_DIR=$(pwd)\nfi;\n\nwhile true; do\n  _CURRENT_SEARCH_DIR=$(dirname \"$_CURRENT_SEARCH_DIR\")\n  if [[ \"$_CURRENT_SEARCH_DIR\" == \"/\" ]] || [[ ${_CURRENT_LOOKUPS} -gt ${_MAX_LOOKUPS} ]]; then break; fi;\n  echo \"info:      ($_CURRENT_LOOKUPS of $_MAX_LOOKUPS) Searching in '$_CURRENT_SEARCH_DIR' for a ${_JSON_FILE_NAME} file.\"\n  _SEARCH_RESULT=$(find \"$_CURRENT_SEARCH_DIR\" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | /usr/bin/head -n 1)\n  if [[ ${_SEARCH_RESULT} ]]; then\n    echo \"info:      ${_JSON_FILE_NAME} found at $_SEARCH_RESULT\"\n    break;\n  fi;\n  _CURRENT_LOOKUPS=$((_CURRENT_LOOKUPS+1))\ndone\n\nif [[ ${_SEARCH_RESULT} ]]; then\n  _JSON_OUTPUT_RAW=$(cat \"${_SEARCH_RESULT}\")\n  _RN_ROOT_EXISTS=$(ruby -Ku -e \"require 'rubygems';require 'json'; output=JSON.parse('$_JSON_OUTPUT_RAW'); puts output[$_JSON_ROOT]\" || echo '')\n\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    if ! python3 --version >/dev/null 2>&1; then echo \"python3 not found, firebase.json file processing error.\" && exit 1; fi\n    _JSON_OUTPUT_BASE64=$(python3 -c 'import json,sys,base64;print(base64.b64encode(bytes(json.dumps(json.loads(open('\"'${_SEARCH_RESULT}'\"', '\"'rb'\"').read())['${_JSON_ROOT}']), '\"'utf-8'\"')).decode())' || echo \"e30=\")\n  fi\n\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n\n  # config.app_data_collection_default_enabled\n  _APP_DATA_COLLECTION_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_data_collection_default_enabled\")\n  if [[ $_APP_DATA_COLLECTION_ENABLED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseDataCollectionDefaultEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_DATA_COLLECTION_ENABLED\")\")\n  fi\n\n  # config.analytics_auto_collection_enabled\n  _ANALYTICS_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_auto_collection_enabled\")\n  if [[ $_ANALYTICS_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_COLLECTION\")\")\n  fi\n\n  # config.analytics_collection_deactivated\n  _ANALYTICS_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_collection_deactivated\")\n  if [[ $_ANALYTICS_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_DEACTIVATED\")\")\n  fi\n\n  # config.analytics_idfv_collection_enabled\n  _ANALYTICS_IDFV_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_idfv_collection_enabled\")\n  if [[ $_ANALYTICS_IDFV_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_IDFV_COLLECTION\")\")\n  fi\n\n  # config.analytics_default_allow_ad_personalization_signals\n  _ANALYTICS_PERSONALIZATION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_personalization_signals\")\n  if [[ $_ANALYTICS_PERSONALIZATION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_PERSONALIZATION\")\")\n  fi\n\n  # config.analytics_registration_with_ad_network_enabled\n  _ANALYTICS_REGISTRATION_WITH_AD_NETWORK=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_registration_with_ad_network_enabled\")\n  if [[ $_ANALYTICS_REGISTRATION_WITH_AD_NETWORK ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_REGISTRATION_WITH_AD_NETWORK_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_REGISTRATION_WITH_AD_NETWORK\")\")\n  fi\n\n  # config.google_analytics_automatic_screen_reporting_enabled\n  _ANALYTICS_AUTO_SCREEN_REPORTING=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_automatic_screen_reporting_enabled\")\n  if [[ $_ANALYTICS_AUTO_SCREEN_REPORTING ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAutomaticScreenReportingEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_SCREEN_REPORTING\")\")\n  fi\n\n  # config.perf_auto_collection_enabled\n  _PERF_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_auto_collection_enabled\")\n  if [[ $_PERF_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_enabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_AUTO_COLLECTION\")\")\n  fi\n\n  # config.perf_collection_deactivated\n  _PERF_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_collection_deactivated\")\n  if [[ $_PERF_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_deactivated\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_DEACTIVATED\")\")\n  fi\n\n  # config.messaging_auto_init_enabled\n  _MESSAGING_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"messaging_auto_init_enabled\")\n  if [[ $_MESSAGING_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseMessagingAutoInitEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_MESSAGING_AUTO_INIT\")\")\n  fi\n\n  # config.in_app_messaging_auto_colllection_enabled\n  _FIAM_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"in_app_messaging_auto_collection_enabled\")\n  if [[ $_FIAM_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseInAppMessagingAutomaticDataCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_FIAM_AUTO_INIT\")\")\n  fi\n\n  # config.app_check_token_auto_refresh\n  _APP_CHECK_TOKEN_AUTO_REFRESH=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_check_token_auto_refresh\")\n  if [[ $_APP_CHECK_TOKEN_AUTO_REFRESH ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAppCheckTokenAutoRefreshEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_CHECK_TOKEN_AUTO_REFRESH\")\")\n  fi\n\n  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes useful\n  _CRASHLYTICS_AUTO_DISABLE_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"crashlytics_disable_auto_disabler\")\n  if [[ $_CRASHLYTICS_AUTO_DISABLE_ENABLED == \"true\" ]]; then\n    echo \"Disabled Crashlytics auto disabler.\" # do nothing\n  else\n    _PLIST_ENTRY_KEYS+=(\"FirebaseCrashlyticsCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"NO\")\n  fi\nelse\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n  echo \"warning:   A firebase.json file was not found, whilst this file is optional it is recommended to include it to configure firebase services in React Native Firebase.\"\nfi;\n\necho \"info: 2) Injecting Info.plist entries: \"\n\n# Log out the keys we're adding\nfor i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n  echo \"    ->  $i) ${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\"\ndone\n\nfor plist in \"${_TARGET_PLIST}\" \"${_DSYM_PLIST}\" ; do\n  if [[ -f \"${plist}\" ]]; then\n\n    # paths with spaces break the call to setPlistValue. temporarily modify\n    # the shell internal field separator variable (IFS), which normally\n    # includes spaces, to consist only of line breaks\n    oldifs=$IFS\n    IFS=\"\n\"\n\n    for i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n      setPlistValue \"${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\" \"${plist}\"\n    done\n\n    # restore the original internal field separator value\n    IFS=$oldifs\n  else\n    echo \"warning:   A Info.plist build output file was not found (${plist})\"\n  fi\ndone\n\necho \"info: <- RNFB build script finished\"\n";
+		};
+		97C8DB28D26F4537BDE36325 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export NODE_BINARY=$(command -v node);\n\necho \"[RabbyMobileBuild] upload debug symbols to sentry...\"\n\n/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\n\necho \"[RabbyMobileBuild] finish upload symbols to sentry.\"\n";
+		};
+		B20BE154709D5BAA92932964 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RabbyMobile-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		CBB56710033F93E809419FAF /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RabbyMobile-RabbyMobileTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D636120E60A6564ECC45FD63 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F61E50F25983CFEE4E80E255 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FD10A7F022414F080027D42C /* Start Packager */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Start Packager";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then\n    if ! curl -s \"http://localhost:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		00E356EA1AD99517003FC87E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F871A680F5B00A75B9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */,
+				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */,
+				01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */,
+				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */,
+				01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */,
+				0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* RabbyMobile */;
+			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00E356F61AD99517003FC87E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3EEE4549100C4D8220CE23EC /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-debug";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile";
+			};
+			name = Debug;
+		};
+		00E356F71AD99517003FC87E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 77CC3F9A92E21D42188025A6 /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COPY_PHASE_STRIP = NO;
+				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile";
+			};
+			name = Release;
+		};
+		0169DF5C2D1286360098402E /* Regression */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = ZPNP2SF27Q;
+				ENABLE_BITCODE = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION,
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = true;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Regression;
+		};
+		0169DF5D2D1286360098402E /* Regression */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F4997D11389601E920E11DFC /* Pods-RabbyMobile.regression.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconRegression;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobile.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZPNP2SF27Q;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
+				INFOPLIST_FILE = RabbyMobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
+				PRODUCT_NAME = RabbyMobile;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegression;
+				RABBY_MOBILE_DISPLAY_NAME = "Reg Wallet";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Regression;
+		};
+		0169DF5E2D1286360098402E /* Regression */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 11316482FD2E1D9130ECF9E5 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegression;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile";
+			};
+			name = Regression;
+		};
+		13B07F941A680F5B00A75B9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2E220D8D39B9D09418D3C273 /* Pods-RabbyMobile.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconDebug;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobileDebug.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZPNP2SF27Q;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = RabbyMobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-debug";
+				PRODUCT_NAME = RabbyMobile;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileDevelopment;
+				RABBY_MOBILE_DISPLAY_NAME = "Debug Rabby";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		13B07F951A680F5B00A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F1884AD849DF48B89EE1A709 /* Pods-RabbyMobile.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobile.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZPNP2SF27Q;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
+				INFOPLIST_FILE = RabbyMobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
+				PRODUCT_NAME = RabbyMobile;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStore;
+				RABBY_MOBILE_DISPLAY_NAME = "Rabby Wallet";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		83CBBA201A601CBA00E9B192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = ZPNP2SF27Q;
+				ENABLE_BITCODE = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = true;
+			};
+			name = Debug;
+		};
+		83CBBA211A601CBA00E9B192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = ZPNP2SF27Q;
+				ENABLE_BITCODE = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION,
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = true;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "RabbyMobileTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00E356F61AD99517003FC87E /* Debug */,
+				00E356F71AD99517003FC87E /* Release */,
+				0169DF5E2D1286360098402E /* Regression */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "RabbyMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B07F941A680F5B00A75B9A /* Debug */,
+				13B07F951A680F5B00A75B9A /* Release */,
+				0169DF5D2D1286360098402E /* Regression */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "RabbyMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
+				0169DF5C2D1286360098402E /* Regression */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }
-
-function getFirebaseJsonKeyValue () {
-  if [[ ${_RN_ROOT_EXISTS} ]]; then
-    ruby -Ku -e "require 'rubygems';require 'json'; output=JSON.parse('$1'); puts output[$_JSON_ROOT]['$2']"
-  else
-    echo ""
-  fi;
-}
-
-function jsonBoolToYesNo () {
-  if [[ $1 == "false" ]]; then
-    echo "NO"
-  elif [[ $1 == "true" ]]; then
-    echo "YES"
-  else echo "NO"
-  fi
-}
-
-echo "info: -&gt; RNFB build script started"
-echo "info: 1) Locating ${_JSON_FILE_NAME} file:"
-
-if [[ -z ${_CURRENT_SEARCH_DIR} ]]; then
-  _CURRENT_SEARCH_DIR=$(pwd)
-fi;
-
-while true; do
-  _CURRENT_SEARCH_DIR=$(dirname "$_CURRENT_SEARCH_DIR")
-  if [[ "$_CURRENT_SEARCH_DIR" == "/" ]] || [[ ${_CURRENT_LOOKUPS} -gt ${_MAX_LOOKUPS} ]]; then break; fi;
-  echo "info:      ($_CURRENT_LOOKUPS of $_MAX_LOOKUPS) Searching in '$_CURRENT_SEARCH_DIR' for a ${_JSON_FILE_NAME} file."
-  _SEARCH_RESULT=$(find "$_CURRENT_SEARCH_DIR" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | /usr/bin/head -n 1)
-  if [[ ${_SEARCH_RESULT} ]]; then
-    echo "info:      ${_JSON_FILE_NAME} found at $_SEARCH_RESULT"
-    break;
-  fi;
-  _CURRENT_LOOKUPS=$((_CURRENT_LOOKUPS+1))
-done
-
-if [[ ${_SEARCH_RESULT} ]]; then
-  _JSON_OUTPUT_RAW=$(cat "${_SEARCH_RESULT}")
-  _RN_ROOT_EXISTS=$(ruby -Ku -e "require 'rubygems';require 'json'; output=JSON.parse('$_JSON_OUTPUT_RAW'); puts output[$_JSON_ROOT]" || echo '')
-
-  if [[ ${_RN_ROOT_EXISTS} ]]; then
-    if ! python3 --version &gt;/dev/null 2&gt;&amp;1; then echo "python3 not found, firebase.json file processing error." &amp;&amp; exit 1; fi
-    _JSON_OUTPUT_BASE64=$(python3 -c 'import json,sys,base64;print(base64.b64encode(bytes(json.dumps(json.loads(open('"'${_SEARCH_RESULT}'"', '"'rb'"').read())['${_JSON_ROOT}']), '"'utf-8'"')).decode())' || echo "e30=")
-  fi
-
-  _PLIST_ENTRY_KEYS+=("firebase_json_raw")
-  _PLIST_ENTRY_TYPES+=("string")
-  _PLIST_ENTRY_VALUES+=("$_JSON_OUTPUT_BASE64")
-
-  # config.app_data_collection_default_enabled
-  _APP_DATA_COLLECTION_ENABLED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "app_data_collection_default_enabled")
-  if [[ $_APP_DATA_COLLECTION_ENABLED ]]; then
-    _PLIST_ENTRY_KEYS+=("FirebaseDataCollectionDefaultEnabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_APP_DATA_COLLECTION_ENABLED")")
-  fi
-
-  # config.analytics_auto_collection_enabled
-  _ANALYTICS_AUTO_COLLECTION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_auto_collection_enabled")
-  if [[ $_ANALYTICS_AUTO_COLLECTION ]]; then
-    _PLIST_ENTRY_KEYS+=("FIREBASE_ANALYTICS_COLLECTION_ENABLED")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_AUTO_COLLECTION")")
-  fi
-
-  # config.analytics_collection_deactivated
-  _ANALYTICS_DEACTIVATED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_collection_deactivated")
-  if [[ $_ANALYTICS_DEACTIVATED ]]; then
-    _PLIST_ENTRY_KEYS+=("FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_DEACTIVATED")")
-  fi
-
-  # config.analytics_idfv_collection_enabled
-  _ANALYTICS_IDFV_COLLECTION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_idfv_collection_enabled")
-  if [[ $_ANALYTICS_IDFV_COLLECTION ]]; then
-    _PLIST_ENTRY_KEYS+=("GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_IDFV_COLLECTION")")
-  fi
-
-  # config.analytics_default_allow_ad_personalization_signals
-  _ANALYTICS_PERSONALIZATION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_default_allow_ad_personalization_signals")
-  if [[ $_ANALYTICS_PERSONALIZATION ]]; then
-    _PLIST_ENTRY_KEYS+=("GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_PERSONALIZATION")")
-  fi
-
-  # config.analytics_registration_with_ad_network_enabled
-  _ANALYTICS_REGISTRATION_WITH_AD_NETWORK=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "google_analytics_registration_with_ad_network_enabled")
-  if [[ $_ANALYTICS_REGISTRATION_WITH_AD_NETWORK ]]; then
-    _PLIST_ENTRY_KEYS+=("GOOGLE_ANALYTICS_REGISTRATION_WITH_AD_NETWORK_ENABLED")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_REGISTRATION_WITH_AD_NETWORK")")
-  fi
-
-  # config.google_analytics_automatic_screen_reporting_enabled
-  _ANALYTICS_AUTO_SCREEN_REPORTING=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "google_analytics_automatic_screen_reporting_enabled")
-  if [[ $_ANALYTICS_AUTO_SCREEN_REPORTING ]]; then
-    _PLIST_ENTRY_KEYS+=("FirebaseAutomaticScreenReportingEnabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_AUTO_SCREEN_REPORTING")")
-  fi
-
-  # config.perf_auto_collection_enabled
-  _PERF_AUTO_COLLECTION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "perf_auto_collection_enabled")
-  if [[ $_PERF_AUTO_COLLECTION ]]; then
-    _PLIST_ENTRY_KEYS+=("firebase_performance_collection_enabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_PERF_AUTO_COLLECTION")")
-  fi
-
-  # config.perf_collection_deactivated
-  _PERF_DEACTIVATED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "perf_collection_deactivated")
-  if [[ $_PERF_DEACTIVATED ]]; then
-    _PLIST_ENTRY_KEYS+=("firebase_performance_collection_deactivated")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_PERF_DEACTIVATED")")
-  fi
-
-  # config.messaging_auto_init_enabled
-  _MESSAGING_AUTO_INIT=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "messaging_auto_init_enabled")
-  if [[ $_MESSAGING_AUTO_INIT ]]; then
-    _PLIST_ENTRY_KEYS+=("FirebaseMessagingAutoInitEnabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_MESSAGING_AUTO_INIT")")
-  fi
-
-  # config.in_app_messaging_auto_colllection_enabled
-  _FIAM_AUTO_INIT=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "in_app_messaging_auto_collection_enabled")
-  if [[ $_FIAM_AUTO_INIT ]]; then
-    _PLIST_ENTRY_KEYS+=("FirebaseInAppMessagingAutomaticDataCollectionEnabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_FIAM_AUTO_INIT")")
-  fi
-
-  # config.app_check_token_auto_refresh
-  _APP_CHECK_TOKEN_AUTO_REFRESH=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "app_check_token_auto_refresh")
-  if [[ $_APP_CHECK_TOKEN_AUTO_REFRESH ]]; then
-    _PLIST_ENTRY_KEYS+=("FirebaseAppCheckTokenAutoRefreshEnabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_APP_CHECK_TOKEN_AUTO_REFRESH")")
-  fi
-
-  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes useful
-  _CRASHLYTICS_AUTO_DISABLE_ENABLED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "crashlytics_disable_auto_disabler")
-  if [[ $_CRASHLYTICS_AUTO_DISABLE_ENABLED == "true" ]]; then
-    echo "Disabled Crashlytics auto disabler." # do nothing
-  else
-    _PLIST_ENTRY_KEYS+=("FirebaseCrashlyticsCollectionEnabled")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("NO")
-  fi
-else
-  _PLIST_ENTRY_KEYS+=("firebase_json_raw")
-  _PLIST_ENTRY_TYPES+=("string")
-  _PLIST_ENTRY_VALUES+=("$_JSON_OUTPUT_BASE64")
-  echo "warning:   A firebase.json file was not found, whilst this file is optional it is recommended to include it to configure firebase services in React Native Firebase."
-fi;
-
-echo "info: 2) Injecting Info.plist entries: "
-
-# Log out the keys we're adding
-for i in "${!_PLIST_ENTRY_KEYS[@]}"; do
-  echo "    -&gt;  $i) ${_PLIST_ENTRY_KEYS[$i]}" "${_PLIST_ENTRY_TYPES[$i]}" "${_PLIST_ENTRY_VALUES[$i]}"
-done
-
-for plist in "${_TARGET_PLIST}" "${_DSYM_PLIST}" ; do
-  if [[ -f "${plist}" ]]; then
-
-    # paths with spaces break the call to setPlistValue. temporarily modify
-    # the shell internal field separator variable (IFS), which normally
-    # includes spaces, to consist only of line breaks
-    oldifs=$IFS
-    IFS="
-"
-
-    for i in "${!_PLIST_ENTRY_KEYS[@]}"; do
-      setPlistValue "${_PLIST_ENTRY_KEYS[$i]}" "${_PLIST_ENTRY_TYPES[$i]}" "${_PLIST_ENTRY_VALUES[$i]}" "${plist}"
-    done
-
-    # restore the original internal field separator value
-    IFS=$oldifs
-  else
-    echo "warning:   A Info.plist build output file was not found (${plist})"
-  fi
-done
-
-echo "info: &lt;- RNFB build script finished"
-</string>
-		</dict>
-		<key>953B5635BA976F3287BF7F26</key>
-		<dict>
-			<key>fileRef</key>
-			<string>EAEC992AC950B3ACACBDE0F2</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>97C8DB28D26F4537BDE36325</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputPaths</key>
-			<array/>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>Upload Debug Symbols to Sentry</string>
-			<key>outputPaths</key>
-			<array/>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>export NODE_BINARY=$(command -v node);
-
-echo "[RabbyMobileBuild] upload debug symbols to sentry..."
-
-/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh
-
-echo "[RabbyMobileBuild] finish upload symbols to sentry."
-</string>
-		</dict>
-		<key>9F540D8831AB4D5AA7FB6BC0</key>
-		<dict>
-			<key>fileRef</key>
-			<string>DFD1003081D24764B2E937A3</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>A4836FAFC22B499AAA2E435D</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>undefined</string>
-			<key>fileEncoding</key>
-			<string>9</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>unknown</string>
-			<key>name</key>
-			<string>SF-Pro-Rounded-Medium.otf</string>
-			<key>path</key>
-			<string>../assets/fonts/SF-Pro-Rounded-Medium.otf</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>A55EABD7B0C7F3A422A6CC61</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array/>
-			<key>inputPaths</key>
-			<array>
-				<string>${PODS_PODFILE_DIR_PATH}/Podfile.lock</string>
-				<string>${PODS_ROOT}/Manifest.lock</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP] Check Pods Manifest.lock</string>
-			<key>outputFileListPaths</key>
-			<array/>
-			<key>outputPaths</key>
-			<array>
-				<string>$(DERIVED_FILE_DIR)/Pods-RabbyMobile-RabbyMobileTests-checkManifestLockResult.txt</string>
-			</array>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>diff "${PODS_PODFILE_DIR_PATH}/Podfile.lock" "${PODS_ROOT}/Manifest.lock" &gt; /dev/null
-if [ $? != 0 ] ; then
-    # print error to STDERR
-    echo "error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation." &gt;&amp;2
-    exit 1
-fi
-# This output is used by Xcode 'outputs' to avoid re-running this script phase.
-echo "SUCCESS" &gt; "${SCRIPT_OUTPUT_FILE_0}"
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-		<key>A5FDCD7CC73A48D1BD873FF0</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>undefined</string>
-			<key>fileEncoding</key>
-			<string>undefined</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>unknown</string>
-			<key>name</key>
-			<string>vconsole.min.js</string>
-			<key>path</key>
-			<string>../assets/custom/vconsole.min.js</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>A8D4D12C2C7EFDA1002B827D</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.plist.entitlements</string>
-			<key>name</key>
-			<string>RabbyMobile.entitlements</string>
-			<key>path</key>
-			<string>RabbyMobile/RabbyMobile.entitlements</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>ACB2DE2C2B72015F00A5516C</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.plist.xml</string>
-			<key>path</key>
-			<string>GoogleService-Info.plist</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>ACB2DE2D2B72015F00A5516C</key>
-		<dict>
-			<key>fileRef</key>
-			<string>ACB2DE2C2B72015F00A5516C</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>BBD78D7AC51CEA395F1C20DB</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>3B4392A12AC88292D35C810B</string>
-				<string>5709B34CF0A7D63546082F79</string>
-				<string>5B7EB9410499542E8C5724F5</string>
-				<string>89C6BE57DB24E9ADA2F236DE</string>
-				<string>C6BA4F495157A98E3F4D95B4</string>
-				<string>6B576D0FC998649BFE6FCB60</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>path</key>
-			<string>Pods</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>C38B50BA6285516D6DCD4F65</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array/>
-			<key>inputPaths</key>
-			<array>
-				<string>${PODS_PODFILE_DIR_PATH}/Podfile.lock</string>
-				<string>${PODS_ROOT}/Manifest.lock</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP] Check Pods Manifest.lock</string>
-			<key>outputFileListPaths</key>
-			<array/>
-			<key>outputPaths</key>
-			<array>
-				<string>$(DERIVED_FILE_DIR)/Pods-RabbyMobile-checkManifestLockResult.txt</string>
-			</array>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>diff "${PODS_PODFILE_DIR_PATH}/Podfile.lock" "${PODS_ROOT}/Manifest.lock" &gt; /dev/null
-if [ $? != 0 ] ; then
-    # print error to STDERR
-    echo "error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation." &gt;&amp;2
-    exit 1
-fi
-# This output is used by Xcode 'outputs' to avoid re-running this script phase.
-echo "SUCCESS" &gt; "${SCRIPT_OUTPUT_FILE_0}"
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-		<key>C59DA0FBD6956966B86A3779</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-frameworks-${CONFIGURATION}-input-files.xcfilelist</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP] Embed Pods Frameworks</string>
-			<key>outputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-frameworks-${CONFIGURATION}-output-files.xcfilelist</string>
-			</array>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-frameworks.sh"
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-		<key>C6BA4F495157A98E3F4D95B4</key>
-		<dict>
-			<key>includeInIndex</key>
-			<string>1</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>text.xcconfig</string>
-			<key>name</key>
-			<string>Pods-RabbyMobile.regression.xcconfig</string>
-			<key>path</key>
-			<string>Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>CA3D14902716EB42CC78905B</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>wrapper.framework</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>Pods_RabbyMobile.framework</string>
-			<key>sourceTree</key>
-			<string>BUILT_PRODUCTS_DIR</string>
-		</dict>
-		<key>D0CA49A24C31446D8C53F168</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>5B9880A4659D4B78872720D4</string>
-				<string>F13B8F76DB574CA1A0D00501</string>
-				<string>A4836FAFC22B499AAA2E435D</string>
-				<string>48A3C610244545BBA590D079</string>
-				<string>A5FDCD7CC73A48D1BD873FF0</string>
-				<string>DFD1003081D24764B2E937A3</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>Resources</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>DFD1003081D24764B2E937A3</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>undefined</string>
-			<key>fileEncoding</key>
-			<string>undefined</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>unknown</string>
-			<key>name</key>
-			<string>InpageBridgeWeb3.js</string>
-			<key>path</key>
-			<string>../assets/custom/InpageBridgeWeb3.js</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>E235C05ADACE081382539298</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-resources-${CONFIGURATION}-input-files.xcfilelist</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP] Copy Pods Resources</string>
-			<key>outputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-resources-${CONFIGURATION}-output-files.xcfilelist</string>
-			</array>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-resources.sh"
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-		<key>E576F98C62E44D04A874C8B7</key>
-		<dict>
-			<key>fileRef</key>
-			<string>F13B8F76DB574CA1A0D00501</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
-		<key>EAEC992AC950B3ACACBDE0F2</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>wrapper.framework</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>Pods_RabbyMobile_RabbyMobileTests.framework</string>
-			<key>sourceTree</key>
-			<string>BUILT_PRODUCTS_DIR</string>
-		</dict>
-		<key>ED297162215061F000B7C4FE</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>wrapper.framework</string>
-			<key>name</key>
-			<string>JavaScriptCore.framework</string>
-			<key>path</key>
-			<string>System/Library/Frameworks/JavaScriptCore.framework</string>
-			<key>sourceTree</key>
-			<string>SDKROOT</string>
-		</dict>
-		<key>F13B8F76DB574CA1A0D00501</key>
-		<dict>
-			<key>explicitFileType</key>
-			<string>undefined</string>
-			<key>fileEncoding</key>
-			<string>9</string>
-			<key>includeInIndex</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>unknown</string>
-			<key>name</key>
-			<string>SF-Pro-Rounded-Heavy.otf</string>
-			<key>path</key>
-			<string>../assets/fonts/SF-Pro-Rounded-Heavy.otf</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>F6A41C54EA430FDDC6A6ED99</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-resources-${CONFIGURATION}-input-files.xcfilelist</string>
-			</array>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>[CP] Copy Pods Resources</string>
-			<key>outputFileListPaths</key>
-			<array>
-				<string>${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-resources-${CONFIGURATION}-output-files.xcfilelist</string>
-			</array>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests-resources.sh"
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-		<key>FD10A7F022414F080027D42C</key>
-		<dict>
-			<key>buildActionMask</key>
-			<string>2147483647</string>
-			<key>files</key>
-			<array/>
-			<key>inputFileListPaths</key>
-			<array/>
-			<key>inputPaths</key>
-			<array/>
-			<key>isa</key>
-			<string>PBXShellScriptBuildPhase</string>
-			<key>name</key>
-			<string>Start Packager</string>
-			<key>outputFileListPaths</key>
-			<array/>
-			<key>outputPaths</key>
-			<array/>
-			<key>runOnlyForDeploymentPostprocessing</key>
-			<string>0</string>
-			<key>shellPath</key>
-			<string>/bin/sh</string>
-			<key>shellScript</key>
-			<string>export RCT_METRO_PORT="${RCT_METRO_PORT:=8081}"
-echo "export RCT_METRO_PORT=${RCT_METRO_PORT}" &gt; "${SRCROOT}/../node_modules/react-native/scripts/.packager.env"
-if [ -z "${RCT_NO_LAUNCH_PACKAGER+xxx}" ] ; then
-  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then
-    if ! curl -s "http://localhost:${RCT_METRO_PORT}/status" | grep -q "packager-status:running" ; then
-      echo "Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly"
-      exit 2
-    fi
-  else
-    open "$SRCROOT/../node_modules/react-native/scripts/launchPackager.command" || echo "Can't start packager automatically"
-  fi
-fi
-</string>
-			<key>showEnvVarsInLog</key>
-			<string>0</string>
-		</dict>
-	</dict>
-	<key>rootObject</key>
-	<string>83CBB9F71A601CBA00E9B192</string>
-</dict>
-</plist>
