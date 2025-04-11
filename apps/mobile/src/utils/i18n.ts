@@ -12,7 +12,8 @@ import fr_FR from '@/assets/locales/fr-FR/messages.json';
 import es_ES from '@/assets/locales/es-ES/messages.json';
 import de_DE from '@/assets/locales/de-DE/messages.json';
 import pt_PT from '@/assets/locales/pt-PT/messages.json';
-
+import id_ID from '@/assets/locales/id-ID/messages.json';
+import tr_TR from '@/assets/locales/tr-TR/messages.json';
 import codeConfig from '@/assets/locales/index.json';
 
 export enum SupportedLang {
@@ -47,6 +48,8 @@ const locales = {
   [SupportedLang['es-ES']]: es_ES,
   [SupportedLang['de-DE']]: de_DE,
   [SupportedLang['pt-PT']]: pt_PT,
+  [SupportedLang['id-ID']]: id_ID,
+  [SupportedLang['tr-TR']]: tr_TR,
 };
 
 export const SupportedLangs = (
