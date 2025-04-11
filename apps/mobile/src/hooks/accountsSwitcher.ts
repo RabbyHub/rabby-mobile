@@ -2,16 +2,14 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { atom, useAtom } from 'jotai';
-import {
-  sortAccountList,
-  useSortAddressList,
-} from '@/screens/Address/useSortAddressList';
+import React, { useCallback, useMemo } from 'react';
+import { useAtom } from 'jotai';
+import { sortAccountList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
+import { Platform } from 'react-native';
 
 type SceneAccountInfo = {
   currentAccount: KeyringAccount | null;
@@ -120,13 +118,19 @@ export function usePreFetchBeforeEnterScene() {
   });
 
   const preFetchData = useCallback(async () => {
-    setTimeout(() => {
-      Promise.allSettled([
-        fetchAccounts(),
-        fetchCurrentAccountAsync(),
-        getPinAddressesAsync(),
-      ]);
-    }, 50);
+    setTimeout(
+      () => {
+        Promise.allSettled([
+          fetchAccounts(),
+          fetchCurrentAccountAsync(),
+          getPinAddressesAsync(),
+        ]);
+      },
+      // FIXME: this is a workaround for the bottom sheet animation issue
+      // in iOS, Spring animation maybe 600ms; in Android, Timing animation maybe 250ms
+      // we maybe not need to fetch data, need to check
+      Platform.OS === 'ios' ? 600 : 250,
+    );
   }, [fetchAccounts, fetchCurrentAccountAsync, getPinAddressesAsync]);
 
   return {
