@@ -448,7 +448,7 @@ const Swap = ({
     }
     if (
       [
-        // KEYRING_TYPE.SimpleKeyring,
+        KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
         KEYRING_CLASS.HARDWARE.LEDGER,
       ].includes((currentAccount?.type || '') as any) &&
