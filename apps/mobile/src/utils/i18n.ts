@@ -28,6 +28,8 @@ export enum SupportedLang {
   'es-ES' = 'es-ES',
   'de-DE' = 'de-DE',
   'pt-PT' = 'pt-PT',
+  'id-ID' = 'id-ID',
+  'tr-TR' = 'tr-TR',
 }
 
 export const DEFAULT_LANG = SupportedLang['en-US'];
