@@ -13,7 +13,7 @@ import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { GnosisTransactionQueueList } from './components/GnosisTransactionQueueList';
+import { GnosisTransactionQueueList } from './GnosisTransactionQueueList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apisSafe } from '@/core/apis/safe';
 
@@ -94,13 +94,7 @@ export const GnosisTransactionQueue = () => {
   const { bottom } = useSafeAreaInsets();
 
   return (
-    <NormalScreenContainer
-      style={[
-        {
-          paddingBottom: bottom,
-        },
-        styles.container,
-      ]}>
+    <View style={[styles.container]}>
       <View style={[styles.tabsContainer]}>
         <View style={styles.tabs}>
           {tabs?.map(tab => {
@@ -132,13 +126,14 @@ export const GnosisTransactionQueue = () => {
           reload={refreshAsync}
         />
       )}
-    </NormalScreenContainer>
+    </View>
   );
 };
 
 const getStyles = createGetStyles(colors => ({
   container: {
     flexDirection: 'column',
+    height: '100%',
   },
   tabsContainer: {
     paddingHorizontal: 20,

@@ -6,11 +6,13 @@ import { trigger } from 'react-native-haptic-feedback';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Card } from '@/components2024/Card';
-import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { BadgeText } from '@/screens/Home/components/HomeTopArea';
 import { useTranslation } from 'react-i18next';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
+import { isNumber } from 'lodash';
+import LinearGradient from 'react-native-linear-gradient';
+import { Skeleton } from '@rneui/themed';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -153,9 +155,19 @@ export const AddressItemEntry = (props: AddressItemProps) => {
                   <View style={styles.itemName}>
                     <WalletName style={styles.itemNameText} />
                   </View>
-                  <Text style={styles.approvalCount}>
-                    {approvalCount || 0} {t('page.approvals.list.symbol')}
-                  </Text>
+                  {isNumber(approvalCount) ? (
+                    <Text style={styles.approvalCount}>
+                      {approvalCount || 0} {t('page.approvals.list.symbol')}
+                    </Text>
+                  ) : (
+                    <Skeleton
+                      circle
+                      width={102}
+                      height={20}
+                      animation="wave"
+                      LinearGradientComponent={LinearGradient}
+                    />
+                  )}
                 </View>
               </View>
             )}

@@ -14,6 +14,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { Account } from '@/core/services/preference';
 
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
@@ -36,13 +37,13 @@ export const useTokenAssetsMap = () => {
 };
 
 export const useSelectTokens = ({
-  currentAddress,
+  currentAccount,
   visible,
   keyword,
   chain_server_id,
   type,
 }: {
-  currentAddress?: string;
+  currentAccount?: Account | null;
   visible?: boolean;
   keyword?: string;
   chain_server_id?: string;
@@ -56,6 +57,7 @@ export const useSelectTokens = ({
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
+  const currentAddress = currentAccount?.address;
 
   const {
     value: swapToTokenSearchResult,
@@ -241,9 +243,13 @@ export const useSelectTokens = ({
     const tokenItems = tokens.map(token => {
       return {
         ...token,
-        ownerAccount: accounts.find(acc =>
-          isSameAddress(acc.address, token.owner_addr),
-        ),
+        ownerAccount:
+          currentAccount &&
+          isSameAddress(currentAccount.address, token.owner_addr)
+            ? currentAccount
+            : accounts.find(acc =>
+                isSameAddress(acc.address, token.owner_addr),
+              ),
       };
     });
     return tokenItems.map(token => {
@@ -252,6 +258,7 @@ export const useSelectTokens = ({
     });
   }, [
     accounts,
+    currentAccount,
     keyword,
     swapToTokenSearchResult,
     tokens,

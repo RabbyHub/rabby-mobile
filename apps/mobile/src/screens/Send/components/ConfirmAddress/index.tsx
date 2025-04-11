@@ -19,6 +19,7 @@ import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
+import { matomoRequestEvent } from '@/utils/analytics';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
@@ -40,7 +41,10 @@ const ConfirmAddress = ({
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const switchRef = useRef<Switch>(null);
-  const { loading, risks, addressDesc } = useRisks(account.address);
+  const { loading, risks, addressDesc, balance } = useRisks(
+    account.address,
+    !!account.balance,
+  );
   const { safeSizes } = useSafeAndroidBottomSizes({
     footerButtonGroupMb: 35,
   });
@@ -56,6 +60,10 @@ const ConfirmAddress = ({
   const setInWhitelist = useCallback(
     (bool: boolean) => {
       if (bool) {
+        matomoRequestEvent({
+          category: 'Send Usage',
+          action: 'Send_AddWhitelist',
+        });
         addWhitelist(account.address, {
           onAdded: () => {
             toast.success(t('page.whitelist.addSuccessful'));
@@ -90,7 +98,10 @@ const ConfirmAddress = ({
       <AddressSource
         loading={loading}
         addressDesc={addressDesc}
-        account={account}
+        account={{
+          ...account,
+          balance: account.balance || balance || 0,
+        }}
         style={styles.addressCard}
       />
       {!loading && !disbaleWhiteSwitch && (

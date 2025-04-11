@@ -46,6 +46,12 @@ interface ApprovalParams {
   account?: Account;
   $ctx?: any;
   extra?: Record<string, any>;
+  safeMessage?: {
+    safeMessageHash: string;
+    safeAddress: string;
+    message: string;
+    chainId: number;
+  };
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -147,12 +153,20 @@ export const KeystoneHardwareWaiting = ({
         try {
           if (params.isGnosis) {
             sig = adjustV('eth_signTypedData', sig);
-            const sigs = await apisSafe.getGnosisTransactionSignatures();
-            if (sigs.length > 0) {
-              await apisSafe.gnosisAddConfirmation(account.address, sig);
+            const safeMessage = params.safeMessage;
+            if (safeMessage) {
+              await apisSafe.handleGnosisMessage({
+                signature: data.data,
+                signerAddress: params.account!.address!,
+              });
             } else {
-              await apisSafe.gnosisAddSignature(account.address, sig);
-              await apisSafe.postGnosisTransaction();
+              const sigs = await apisSafe.getGnosisTransactionSignatures();
+              if (sigs.length > 0) {
+                await apisSafe.gnosisAddConfirmation(account.address, sig);
+              } else {
+                await apisSafe.gnosisAddSignature(account.address, sig);
+                await apisSafe.postGnosisTransaction();
+              }
             }
           }
         } catch (e: any) {

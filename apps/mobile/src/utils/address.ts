@@ -1,5 +1,6 @@
-export const ellipsis = (text: string) => {
-  return text.toString().replace(/^(.{6})(.*)(.{4})$/, '$1...$3');
+export const ellipsis = (text: string, length = 6) => {
+  const reg = new RegExp(`^(.{${length + 2}})(.*)(.{${length}})$`);
+  return text.toString().replace(reg, '$1...$3');
 };
 
 export const ellipsisAddress = ellipsis;
@@ -8,14 +9,14 @@ export function formatAddressToShow(
   address?: string,
   options?: {
     ellipsis?: boolean;
+    length?: number;
   },
 ) {
-  const { ellipsis: isEllipsis = true } = options || {};
-
+  const { ellipsis: isEllipsis = true, length = 6 } = options || {};
   return isEllipsis
     ? `${ellipsisAddress(address || '')
         .toLowerCase()
-        .slice(0, 6)}...${address?.toLowerCase().slice(-4)}`
+        .slice(0, length + 2)}...${address?.toLowerCase().slice(-length)}`
     : address?.toLowerCase();
 }
 

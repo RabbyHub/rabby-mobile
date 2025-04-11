@@ -25,6 +25,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
 import { StackActions } from '@react-navigation/native';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 function SendHistoryScreen() {
   const { accounts } = useMyAccounts({
@@ -136,7 +137,11 @@ function SendHistoryScreen() {
   const handlePressItem = async (item: HistoryDisplayItem) => {
     const toAddress = item.sends[0]?.to_addr;
     if (toAddress) {
-      const { inWhitelist, account } = await findAccount(toAddress);
+      const { inWhitelist, account } = await findAccount(
+        toAddress,
+        undefined,
+        true,
+      );
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
@@ -155,6 +160,10 @@ function SendHistoryScreen() {
             removeGlobalBottomSheetModal2024(id);
             addWhitelist(account.address, {
               onAdded: () => {
+                matomoRequestEvent({
+                  category: 'Send Usage',
+                  action: 'Send_AddWhitelist',
+                });
                 toast.success(t('page.whitelist.addSuccessful'));
                 navigation.popToTop();
                 navigation.dispatch(

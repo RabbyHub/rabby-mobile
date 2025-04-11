@@ -483,14 +483,14 @@ export const AssetContainer: React.FC<Props> = ({
   ]);
 
   useLayoutEffect(() => {
-    if (currentAccount?.address) {
+    if (currentAccount?.address && !currentAccount.balance) {
       getAddrDescWithCexLocalCacheSync(currentAccount?.address).then(res => {
         if (!res?.born_at) {
           setNotBorn(true);
         }
       });
     }
-  }, [currentAccount?.address]);
+  }, [currentAccount?.address, currentAccount?.balance]);
 
   useEffect(() => {
     if (notBorn) {
