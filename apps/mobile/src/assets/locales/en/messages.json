@@ -469,7 +469,8 @@
       "cancelAll": "Cancel all {{count}} requests from Dapp",
       "blockDappFromSendingRequests": "Block Dapp from sending requests for 1 min",
       "cancelConnection": "Cancel connection",
-      "cancelCurrentConnection": "Cancel current connection"
+      "cancelCurrentConnection": "Cancel current connection",
+      "startSigning": "Start Signing"
     },
     "signTypedData": {
       "safeCantSignText": "This is a Safe address, and it cannot be used to sign text.",
@@ -508,7 +509,8 @@
       },
       "contractCall": {
         "operationDecoded": "Operation is decoded from message"
-      }
+      },
+      "safeCantSignTypedData": "This is a Safe address, and it only support sign EIP-712 typed data or string"
     },
     "activities": {
       "signedTx": {
@@ -1235,7 +1237,8 @@
       "createKey": {
         "interactDapp": "Interact Dapp",
         "description": "Description"
-      }
+      },
+      "sameSafeMessageAlert": "The same message is confirmed; no additional signature is required."
     },
     "securityEngine": {
       "yes": "Yes",
@@ -1360,7 +1363,8 @@
         },
         "title": "Select how to replace this transaction",
         "desc": "A signed transaction cannot be removed but it can be replaced with a new transaction with the same nonce."
-      }
+      },
+      "title": "Queue ({{total}})"
     },
     "backupSeedPhrase": {
       "alert": "This seed phrase is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
@@ -1794,6 +1798,10 @@
       "syncingProgress": "Scanning ({{ percent }})",
       "syncingTips": "Keep the camera steady until the scan is complete",
       "noNewAddr": "No new addresses found to import"
+    },
+    "safeMessageQueue": {
+      "loading": "Loading messages",
+      "noData": "No messages"
     }
   },
   "component": {

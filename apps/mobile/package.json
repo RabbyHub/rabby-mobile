@@ -92,6 +92,8 @@
     "@rematch/core": "^2.2.0",
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
+    "@safe-global/protocol-kit": "5.0.3",
+    "@safe-global/types-kit": "1.0.2",
     "@sentry/react-native": "5.31.0",
     "@types/highlight-words-core": "1.2.3",
     "@types/lodash.debounce": "^4.0.9",

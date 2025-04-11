@@ -84,7 +84,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { maxBy } from 'lodash';
 import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import {
   GasSelectorHeader,
@@ -103,6 +103,9 @@ import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { EIP7702Warning } from '../EIP7702Warning';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
+import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
+import { apisKeyring } from '@/core/apis/keyring';
+import { adjustV } from '@/utils/gnosis';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -271,14 +274,18 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const [useGasLess, setUseGasLess] = useState(false);
 
   const [isGnosisAccount, setIsGnosisAccount] = useState(false);
+
   const [gasLessFailedReason, setGasLessFailedReason] = useState<
     string | undefined
   >(undefined);
-
   // const [isGnosisAccount, setIsGnosisAccount] = useState(false);
   // const [isCoboArugsAccount, setIsCoboArugsAccount] = useState(false);
   const isCoboArugsAccount = false;
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [gnosisFooterBarVisible, setGnosisFooterBarVisible] = useState(false);
+  const [currentGnosisAdmin, setCurrentGnosisAdmin] = useState<Account | null>(
+    null,
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
@@ -710,6 +717,23 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     if (!safeInfo) {
       return;
     }
+    setGnosisFooterBarVisible(true);
+    setCurrentGnosisAdmin(account);
+  };
+
+  const handleGnosisSign = async () => {
+    const account = currentGnosisAdmin;
+    if (!safeInfo || !account) {
+      return;
+    }
+    if (activeApprovalPopup()) {
+      return;
+    }
+
+    if (account?.type === KEYRING_TYPE.HdKeyring) {
+      await invokeEnterPassphrase(account.address);
+    }
+
     stats.report('signTransaction', {
       type: KEYRING_TYPE.GnosisKeyring,
       category: KEYRING_CATEGORY_MAP[KEYRING_CLASS.GNOSIS],
@@ -739,21 +763,68 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       );
     }
     const typedData = await apisSafe.gnosisGenerateTypedData();
-    try {
-      await resolveApproval({
-        data: [account.address, JSON.stringify(typedData)],
-        session: params.session,
-        isGnosis: true,
-        isSend,
-        account: account,
-        method: 'ethSignTypedDataV4',
-        uiRequestComponent: 'SignTypedData',
-      });
-      setDrawerVisible(false);
-    } catch (e) {
-      console.log(e);
+    if (!typedData) {
+      throw new Error('Failed to generate typed data');
     }
+
+    if (WaitingSignComponent[account.type]) {
+      apisKeyring.signTypedDataWithUI(
+        account.type,
+        account.address,
+        typedData as any,
+        {
+          brandName: account.brandName,
+          version: 'V4',
+        },
+      );
+
+      resolveApproval({
+        uiRequestComponent: WaitingSignComponent[account.type],
+        type: account.type,
+        address: account.address,
+        data: [account.address, JSON.stringify(typedData)],
+        isGnosis: true,
+        account: account,
+        extra: {
+          popupProps: {
+            maskStyle: {
+              backgroundColor: 'transparent',
+            },
+          },
+        },
+      });
+    } else {
+      // it should never go to here
+      try {
+        let result = await apisKeyring.signTypedData(
+          account.type,
+          account.address,
+          typedData as any,
+          {
+            version: 'V4',
+          },
+        );
+        result = adjustV('eth_signTypedData', result);
+
+        const sigs = await apisSafe.getGnosisTransactionSignatures();
+        if (sigs.length > 0) {
+          await apisSafe.gnosisAddConfirmation(account.address, result);
+        } else {
+          await apisSafe.gnosisAddSignature(account.address, result);
+          await apisSafe.postGnosisTransaction();
+        }
+        resolveApproval();
+      } catch (e) {
+        toast.show((e as any).message);
+      }
+    }
+    return;
   };
+
+  const { loading: isSubmittingGnosis, runAsync: runHandleGnosisSign } =
+    useRequest(handleGnosisSign, {
+      manual: true,
+    });
 
   const { activeApprovalPopup } = useCommonPopupView();
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
@@ -986,6 +1057,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const handleCancel = () => {
     // gaEvent('cancel');
+    setGnosisFooterBarVisible(false);
     rejectApproval('User rejected the request.');
   };
 
@@ -1567,6 +1639,35 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
               onConfirm={handleGnosisConfirm}
             />
           ) : null}
+
+          {isGnosisAccount && safeInfo && currentGnosisAdmin && (
+            <GnosisAdminFooterBarPopup
+              visible={gnosisFooterBarVisible}
+              origin={params.session.origin}
+              originLogo={params.session.icon}
+              chain={chain}
+              gnosisAccount={currentGnosisAdmin}
+              onCancel={handleCancel}
+              // securityLevel={securityLevel}
+              // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+              onSubmit={runHandleGnosisSign}
+              enableTooltip={
+                currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
+              }
+              tooltipContent={
+                currentGnosisAdmin?.type ===
+                KEYRING_TYPE.WatchAddressKeyring ? (
+                  <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>
+                ) : null
+              }
+              disabledProcess={
+                currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
+              }
+              // isSubmitting={isSubmittingGnosis}
+              isTestnet={chain?.isTestnet}
+              onIgnoreAllRules={handleIgnoreAllRules}
+            />
+          )}
           <RuleDrawer
             selectRule={currentTx.ruleDrawer.selectRule}
             visible={currentTx.ruleDrawer.visible}

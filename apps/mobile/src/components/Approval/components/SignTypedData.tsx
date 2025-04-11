@@ -40,16 +40,24 @@ import { getStyles } from './SignTx/style';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { stats } from '@/utils/stats';
-import { apisSafe } from '@/core/apis/safe';
 import { toast } from '@/components/Toast';
 import { adjustV } from '@/utils/gnosis';
-import { apisKeyring } from '@/core/apis/keyring';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { TestnetTag } from './TestnetTag';
 import { normalizeTypeData } from './TypedDataActions/utils';
 import { CHAINS } from '@debank/common';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { getTimeSpan } from '@/utils/time';
+import { useGetCurrentSafeInfo } from '@/hooks/gnosis/useGetCurrentSafeInfo';
+import { useGetMessageHash } from '@/hooks/gnosis/useGetCurrentMessageHash';
+import { useCheckCurrentSafeMessage } from '@/hooks/gnosis/useCheckCurrentSafeMessage';
+import { apisSafe } from '@/core/apis/safe';
+import { generateTypedData } from '@safe-global/protocol-kit';
+import { apisKeyring } from '@/core/apis/keyring';
+import { GnosisDrawer } from './TxComponents/GnosisDrawer';
+import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPopup';
+import { useSetState } from 'ahooks';
+import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 
 interface SignTypedDataProps {
   method: string;
@@ -62,11 +70,13 @@ interface SignTypedDataProps {
   isGnosis?: boolean;
   isSend?: boolean;
   account?: Account;
+  $ctx?: any;
 }
 
 export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
+  const { data, session, method, isGnosis, isSend, account } = params;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isWatch, setIsWatch] = useState(false);
@@ -80,9 +90,26 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const [currentChainId, setCurrentChainId] = useState<
-    number | string | undefined
-  >(undefined);
+  const [currentChainId, setCurrentChainId] = useState<number | undefined>(
+    undefined,
+  );
+
+  const [isGnosisAccount, setIsGnosisAccount] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [gnosisFooterBarVisible, setGnosisFooterBarVisible] = useState(false);
+  const [currentGnosisAdmin, setCurrentGnosisAdmin] = useState<Account | null>(
+    null,
+  );
+  const [sameMessageState, setSameMessageState] = useSetState({
+    visible: false,
+    preparedSignature: '',
+  });
+
+  const currentAccount = useMemo(() => {
+    return isGnosis ? params.account : preferenceService.getCurrentAccount();
+  }, [isGnosis, params.account]);
+
+  const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
   // useSignPermissionCheck({
   //   origin: params.session.origin,
@@ -141,7 +168,6 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     }
   }, [engineResults, currentTx]);
 
-  const { data, session, method, isGnosis, isSend, account } = params;
   let parsedMessage = '';
   let _message = '';
   try {
@@ -166,19 +192,20 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     [method],
   );
 
-  const signTypedData: null | Record<string, any> = useMemo(() => {
-    if (!isSignTypedDataV1) {
-      try {
-        const v = JSON.parse(data[1]);
-        const normalized = normalizeTypeData(v);
-        return normalized;
-      } catch (error) {
-        console.error('parse signTypedData error: ', error);
-        return null;
+  const [signTypedData, rawMessage]: (null | Record<string, any>)[] =
+    useMemo(() => {
+      if (!isSignTypedDataV1) {
+        try {
+          const v = JSON.parse(data[1]);
+          const normalized = normalizeTypeData(v);
+          return [normalized, v];
+        } catch (error) {
+          console.error('parse signTypedData error: ', error);
+          return [null, null];
+        }
       }
-    }
-    return null;
-  }, [data, isSignTypedDataV1]);
+      return [null, null];
+    }, [data, isSignTypedDataV1]);
 
   const chain = useMemo(() => {
     if (!isSignTypedDataV1 && signTypedData) {
@@ -210,6 +237,8 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
           enum: site?.chainId,
         })?.id;
       }
+    } else if (params.$ctx.chainId) {
+      return params.$ctx.chainId;
     } else {
       return chain?.id;
     }
@@ -226,11 +255,19 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     loading,
     error,
   } = useAsync(async () => {
-    if (!isSignTypedDataV1 && signTypedData) {
-      const currentAccount = isGnosis
-        ? account
-        : await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? account
+      : await preferenceService.getCurrentAccount();
 
+    const _isGnosisAccount =
+      currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
+    setIsGnosisAccount(_isGnosisAccount);
+    if (_isGnosisAccount) {
+      if (!isViewGnosisSafe) {
+        apisSafe.clearGnosisMessage();
+      }
+    }
+    if (!isSignTypedDataV1 && signTypedData) {
       const chainId = signTypedData?.domain?.chainId;
       if (isTestnetChainId(chainId)) {
         return null;
@@ -259,11 +296,45 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       setIsWatch(true);
       setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
     }
-    if (currentAccount && currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
+
+    if (
+      currentAccount &&
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isSignTypedDataV1
+    ) {
       setIsWatch(true);
-      setCantProcessReason(t('page.signTypedData.safeCantSignText'));
+      setCantProcessReason(t('page.signTypedData.safeCantSignTypedData'));
     }
   };
+
+  const { data: safeInfo } = useGetCurrentSafeInfo({
+    chainId: currentChainId,
+    account: currentAccount!,
+    rejectApproval,
+  });
+  const { data: safeMessageHash } = useGetMessageHash({
+    chainId: currentChainId,
+    message: rawMessage,
+    account: currentAccount!,
+  });
+  const { data: currentSafeMessage } = useCheckCurrentSafeMessage(
+    {
+      chainId: currentChainId,
+      safeMessageHash,
+      threshold: safeInfo?.threshold,
+      account: currentAccount!,
+    },
+    {
+      onSuccess(res) {
+        if (res?.isFinished) {
+          setSameMessageState({
+            visible: true,
+            preparedSignature: res.safeMessage.preparedSignature,
+          });
+        }
+      },
+    },
+  );
 
   const report = async (
     action:
@@ -313,6 +384,11 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
     if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
       await invokeEnterPassphrase(currentAccount.address);
+    }
+
+    if (isGnosisAccount) {
+      setDrawerVisible(true);
+      return;
     }
 
     if (isGnosis && params.account) {
@@ -508,6 +584,87 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     apiApprovalSecurityEngine.closeRuleDrawer();
   };
 
+  const handleDrawerCancel = () => {
+    setDrawerVisible(false);
+  };
+
+  const handleGnosisConfirm = async (account: Account) => {
+    if (!safeInfo) return;
+    setGnosisFooterBarVisible(true);
+    setCurrentGnosisAdmin(account);
+  };
+
+  const handleGnosisSign = async () => {
+    const account = currentGnosisAdmin;
+    const signTypedData = rawMessage;
+    if (!safeInfo || !account || !signTypedData) {
+      return;
+    }
+    if (activeApprovalPopup()) {
+      return;
+    }
+
+    if (!isViewGnosisSafe) {
+      await apisSafe.buildGnosisMessage({
+        safeAddress: safeInfo.address,
+        account,
+        version: safeInfo.version,
+        networkId: currentChainId + '',
+        message: signTypedData,
+      });
+      await Promise.all(
+        (currentSafeMessage?.safeMessage?.confirmations || []).map(item => {
+          return apisSafe.addPureGnosisMessageSignature({
+            signerAddress: item.owner,
+            signature: item.signature,
+          });
+        }),
+      );
+    }
+
+    const typedData = generateTypedData({
+      safeAddress: safeInfo.address,
+      safeVersion: safeInfo.version,
+      chainId: BigInt(currentChainId!),
+      data: signTypedData as any,
+    });
+
+    if (WaitingSignComponent[account.type]) {
+      apisKeyring.signTypedDataWithUI(
+        account.type,
+        account.address,
+        typedData as any,
+        {
+          brandName: account.brandName,
+          version: 'V4',
+        },
+      );
+
+      resolveApproval({
+        uiRequestComponent: WaitingSignComponent[account.type],
+        type: account.type,
+        address: account.address,
+        data: [account.address, JSON.stringify(typedData)],
+        isGnosis: true,
+        account: account,
+        safeMessage: {
+          message: signTypedData,
+          safeAddress: safeInfo.address,
+          chainId: currentChainId,
+          safeMessageHash: safeMessageHash,
+        },
+        extra: {
+          popupProps: {
+            maskStyle: {
+              backgroundColor: 'transparent',
+            },
+          },
+        },
+      });
+    }
+    return;
+  };
+
   useEffect(() => {
     executeSecurityEngine();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -584,6 +741,49 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         ) : null}
       </ScrollView>
 
+      {isGnosisAccount && safeInfo ? (
+        <GnosisDrawer
+          visible={drawerVisible}
+          safeInfo={safeInfo}
+          onCancel={handleDrawerCancel}
+          onConfirm={handleGnosisConfirm}
+          confirmations={
+            isGnosisAccount
+              ? currentSafeMessage?.safeMessage?.confirmations || []
+              : undefined
+          }
+        />
+      ) : null}
+      {isGnosisAccount && safeInfo && currentGnosisAdmin && (
+        <GnosisAdminFooterBarPopup
+          visible={gnosisFooterBarVisible}
+          origin={params.session.origin}
+          originLogo={params.session.icon}
+          // chain={chain}
+          gnosisAccount={currentGnosisAdmin}
+          onCancel={() => {
+            setGnosisFooterBarVisible(false);
+            handleCancel();
+          }}
+          // securityLevel={securityLevel}
+          // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+          onSubmit={handleGnosisSign}
+          enableTooltip={
+            currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
+          }
+          tooltipContent={
+            currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring ? (
+              <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>
+            ) : null
+          }
+          disabledProcess={
+            currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
+          }
+          // isSubmitting={isSubmittingGnosis}
+          onIgnoreAllRules={handleIgnoreAllRules}
+        />
+      )}
+
       <FooterBar
         hasShadow={footerShowShadow}
         origin={params.session.origin}
@@ -616,6 +816,22 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         hideOperationButtons
         variant="add"
       /> */}
+
+      <GnosisSameMessageModal
+        visible={sameMessageState.visible}
+        onCancel={() => {
+          setSameMessageState({
+            visible: false,
+          });
+          rejectApproval('');
+        }}
+        onConfirm={() => {
+          setSameMessageState({
+            visible: false,
+          });
+          resolveApproval(sameMessageState.preparedSignature);
+        }}
+      />
     </View>
   );
 };
