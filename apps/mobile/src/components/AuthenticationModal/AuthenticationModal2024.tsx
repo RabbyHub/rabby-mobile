@@ -418,12 +418,12 @@ export const AuthenticationModal2024 = ({
                   fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
                   tipText={error}
                 />
-                {__DEV__ && bioComputed.isBiometricsEnabled && (
+                {/* {__DEV__ && bioComputed.isBiometricsEnabled && (
                   <BioButton
                     disabled={hasCheckFailed}
                     handlePress={handleSwitchToBioAndPrepare}
                   />
-                )}
+                )} */}
               </View>
             </>
           )}
@@ -534,11 +534,12 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
     },
     inputWrapper: {
       display: 'flex',
-      // flexDirection: 'column',
-      flexDirection: 'row',
+      flexDirection: 'column',
+      // flexDirection: 'row',
     },
     input: {
       borderRadius: 12,
+      minHeight: 56,
     },
     inputWithAddOn: {
       flex: 1,

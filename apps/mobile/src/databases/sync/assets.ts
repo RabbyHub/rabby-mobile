@@ -355,6 +355,7 @@ export async function syncCexInfo(address: string, cex?: Cex) {
   );
 
   await prepareAppDataSource();
+  await CexEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(CexEntity, [cexItem], {
     owner_addr: address,
     taskFor: 'cex',

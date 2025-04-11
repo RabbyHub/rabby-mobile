@@ -69,6 +69,7 @@ import FromAddressControl2024 from './components/FromAddressControl';
 import { useAtom } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { lowcaseSame } from '@/utils/common';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -104,6 +105,17 @@ function SendScreen({
 
   const { chainItem, currentToken, setCurrentToken, setChainEnum } =
     useSendTokenScreenChainToken();
+  const [addrDesc, setAddrDesc] = useState<
+    AddrDescResponse['desc'] | undefined
+  >(navParams?.addrDesc);
+  useEffect(() => {
+    if (addrDesc || !navParams?.toAddress) {
+      return;
+    }
+    getAddrDescWithCexLocalCacheSync(navParams.toAddress).then(res => {
+      setAddrDesc(res);
+    });
+  }, [addrDesc, navParams?.toAddress]);
   const [routeParams] = useAtom(sendScreenParamsAtom);
 
   const {
@@ -114,7 +126,13 @@ function SendScreen({
 
   const disableItemCheck = useCallback(
     (token: TokenItem) => {
-      const toCexId = navParams?.addrDesc?.cex?.id;
+      if (!addrDesc) {
+        return {
+          disable: false,
+          reason: '',
+        };
+      }
+      const toCexId = addrDesc?.cex?.id;
       if (toCexId) {
         const noSupportToken = token.cex_ids?.every?.(
           id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
@@ -126,7 +144,7 @@ function SendScreen({
           };
         }
       } else {
-        const safeChains = Object.entries(navParams?.addrDesc?.contract || {})
+        const safeChains = Object.entries(addrDesc?.contract || {})
           .filter(([, contract]) => {
             return contract.multisig;
           })
@@ -146,7 +164,7 @@ function SendScreen({
         reason: '',
       };
     },
-    [navParams?.addrDesc, t],
+    [addrDesc, t],
   );
 
   const {
@@ -461,7 +479,7 @@ function SendScreen({
                     marginBottom: 0,
                   }}
                   address={navParams?.toAddress || ''}
-                  addrDesc={navParams?.addrDesc}
+                  addrDesc={addrDesc}
                   brandName={navParams?.addressBrandName}
                 />
                 {/* balance info */}

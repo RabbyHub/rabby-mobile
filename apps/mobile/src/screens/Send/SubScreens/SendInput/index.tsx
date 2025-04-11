@@ -27,7 +27,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
-import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { matomoRequestEvent } from '@/utils/analytics';
 
@@ -128,10 +127,8 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
         return;
       }
       if (inWhitelist) {
-        let addrDesc = await getAddrDescWithCexLocalCacheSync(address);
         navigateToSendScreen({
           toAddress: account.address,
-          addrDesc: addrDesc,
           addressBrandName: account.brandName,
         });
       } else {
