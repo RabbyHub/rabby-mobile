@@ -13,6 +13,7 @@ import QrCodeSVG from '@/assets/icons/common/qrcode-cc.svg';
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
 import QRCode from 'react-native-qrcode-svg';
 import { WINDOW_WIDTH } from '@gorhom/bottom-sheet';
+import { toast } from '@/components2024/Toast';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -159,6 +160,7 @@ export const BackSeedPhraseScreen = () => {
               address={data}
               color={colors['neutral-body']}
               titleStyle={styles.copyButtonText}
+              onToastSucess={() => toast.success('Copied')}
             />
           </View>
         )}
