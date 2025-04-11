@@ -15,6 +15,7 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
+  AppState,
 } from 'react-native';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
@@ -438,12 +439,31 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      if (appState === 'active') {
-        triggerUpdate();
-        triggerUpdateAlert();
-        syncTop10Assets();
-        syncTop10History();
-      }
+      // add more check to ensure refresh balance in force quit
+      const checkActiveState = () => {
+        const isReallyActive = AppState.currentState === 'active';
+        if (isReallyActive) {
+          triggerUpdate();
+          triggerUpdateAlert();
+          syncTop10Assets();
+          syncTop10History();
+        }
+      };
+
+      checkActiveState();
+
+      const timeoutId = setTimeout(checkActiveState, 500);
+
+      const subscription = AppState.addEventListener('change', state => {
+        if (state === 'active') {
+          checkActiveState();
+        }
+      });
+
+      return () => {
+        clearTimeout(timeoutId);
+        subscription.remove();
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
       triggerUpdate,
