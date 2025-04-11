@@ -468,7 +468,8 @@
       "cancelAll": "Cancel all {{count}} requests from Dapp",
       "blockDappFromSendingRequests": "Block Dapp from sending requests for 1 min",
       "cancelConnection": "Cancel connection",
-      "cancelCurrentConnection": "Cancel current connection"
+      "cancelCurrentConnection": "Cancel current connection",
+      "startSigning": "Start Signing"
     },
     "signTypedData": {
       "safeCantSignText": "This is a Safe address, and it cannot be used to sign text.",

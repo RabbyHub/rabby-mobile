@@ -104,8 +104,8 @@ const getStyles = createGetStyles(colors => ({
     height: 16,
   },
   nameAndAddress: {
-    // flex: 1,
-    // minWidth: 0,
+    flexShrink: 1,
+    minWidth: 0,
   },
   nameStyle: {
     fontSize: 15,
