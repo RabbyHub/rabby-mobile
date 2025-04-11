@@ -18,7 +18,7 @@ export type ContactBookStore = {
 };
 
 export class ContactBookService {
-  private readonly store: ContactBookStore;
+  store: ContactBookStore;
 
   constructor(options?: StorageAdapaterOptions) {
     this.store = createPersistStore<ContactBookStore>(

@@ -26,6 +26,7 @@ export const getTxScanLink = (scankLink: string, hash: string) => {
     : `${scankLink}/tx/${hash}`;
 };
 
-export function ellipsis (text: string) {
-  return text.toString().replace(/^(.{6})(.*)(.{4})$/, '$1...$3');
+export const ellipsis = (text: string, length = 6) => {
+  const reg = new RegExp(`^(.{${length + 2}})(.*)(.{${length}})$`);
+  return text.toString().replace(reg, '$1...$3');
 };

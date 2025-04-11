@@ -121,7 +121,14 @@
       "ShowHiddenItems": "Afficher les transactions masquées",
       "ViewSmallItems": "Voir les transactions < $0,1",
       "ShowAllTransactionsToast": "Transactions cachées affichées",
-      "NotShowAllTransactionsToast": "Transactions cachées dissimulées"
+      "NotShowAllTransactionsToast": "Transactions cachées dissimulées",
+      "TransactionAlert": {
+        "clearPendingSuccess": "Transaction en attente locale supprimée",
+        "clearPendingText": "{{chainName}} Transaction ({{nonces}}) est en attente depuis plus de 3 minutes. Vous pouvez <5></5> <6>Effacer la file d'attente localement</6> <7></7> et re-soumettre la transaction.",
+        "skipNonceText": "Nonce #{{nonce}} sauté sur la chaîne {{chainName}}. Cela peut causer des transactions en attente. <5></5> <6>Soumettre un tx</6> <7></7> sur la chaîne pour résoudre"
+      },
+      "HideScamTransactions": "Masquer les transactions frauduleuses",
+      "ShowScamTransactions": "Afficher les transactions frauduleuses"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -416,7 +423,8 @@
     "activities": {
       "signedTx": {
         "message": {
-          "cancelSuccess": "Annulé"
+          "cancelSuccess": "Annulé",
+          "deleteSuccess": "Transaction en attente locale supprimée"
         },
         "status": {
           "withdrawed": "Annulation rapide",
@@ -444,6 +452,10 @@
               "title": "Annuler rapidement",
               "desc": "Annuler avant la diffusion, pas de frais de gas",
               "tips": "Pris en charge uniquement pour les transactions qui n'ont pas encore été diffusées"
+            },
+            "removeLocalPendingTx": {
+              "title": "Effacer les en attentes localement",
+              "desc": "Supprimer la transaction en attente de l'interface"
             }
           }
         },
@@ -464,6 +476,11 @@
           "cancel": "Annuler l'approbation de {{token}} pour {{protocol}}",
           "cancelNFTCollectionApproval": "Annuler l'approbation de la collection NFT pour {{protocol}}",
           "send": "Envoyer {{amount}} {{symbol}}"
+        },
+        "CancelTxConfirmPopup": {
+          "title": "Effacer les en attente localement",
+          "desc": "Cela supprimera la transaction en attente de votre interface. Vous pouvez ensuite initier une nouvelle transaction.",
+          "warning": "La transaction supprimée peut toujours être confirmée on-chain, sauf si elle est remplacée."
         }
       }
     },
@@ -511,7 +528,8 @@
       },
       "contractCall": {
         "operationDecoded": "L'opération est décodée à partir du message"
-      }
+      },
+      "safeCantSignTypedData": "Ceci est une adresse Safe, et elle ne prend en charge que la signature des données typées EIP-712 ou des chaînes."
     },
     "signFooterBar": {
       "confirmWithPassword": "Confirmer",
@@ -570,7 +588,9 @@
         "misMatchSignId": "Données de transaction incohérentes. Veuillez vérifier les détails de la transaction.",
         "qrcodeDesc": "Scannez avec votre {{brand}} pour signer  \nAprès la signature, cliquez sur le bouton ci-dessous pour recevoir la signature",
         "signWith": "Signer avec {{brand}}"
-      }
+      },
+      "startSigning": "Commencer à signer",
+      "keystoneSign": "Signer"
     },
     "sendNFT": {
       "sendButton": "Envoyer"
@@ -694,7 +714,9 @@
         "cancel": "Annuler",
         "confirm": "Continuer"
       },
-      "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte."
+      "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte.",
+      "From": "De",
+      "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte."
     },
     "gasTopUp": {
       "Value": "Valeur",
@@ -952,7 +974,8 @@
       "createKey": {
         "description": "Description",
         "interactDapp": "Interact Dapp"
-      }
+      },
+      "sameSafeMessageAlert": "Le même message est confirmé ; aucune signature supplémentaire n'est requise."
     },
     "switchChain": {
       "requestsReceivedPlural": "{{count}} demandes reçues",
@@ -1106,7 +1129,8 @@
       },
       "approvalExplain": "Approuver {{counts}} {{token}} pour {{protocol}}",
       "sameNonceWarning": "Ces transactions sont en conflit car elles utilisent le même nonce. L'exécution de l'une remplacera automatiquement l'autre(s).",
-      "cancelExplain": "Annuler {{token}} Approve pour {{protocol}}"
+      "cancelExplain": "Annuler {{token}} Approve pour {{protocol}}",
+      "title": "File d'attente ({{total}})"
     },
     "backupPrivateKey": {
       "clickToShow": "Cliquez pour afficher la clé privée",
@@ -1663,7 +1687,7 @@
       "fingerPrint": "Empreinte digitale",
       "modifyRPCURL": "Modifier l'URL RPC",
       "autoLockTime": "Verrouillage automatique",
-      "clearPending": "",
+      "clearPending": "Effacer les éléments en attente localement",
       "aboutUs": "À propos de nous",
       "feedback": "Retour d'expérience",
       "clearPendingDesc1": "Cela supprimera toutes vos transactions en attente. Cela peut vous aider à résoudre le problème lorsque, dans certains cas, l'état de la transaction dans Rabby ne correspond pas à l'état sur la blockchain.",
@@ -1671,7 +1695,10 @@
       "screenTitle": "Paramètres",
       "themeMode": "Mode Thème",
       "currentLanguage": "Langue actuelle",
-      "appCache": "Effacer le cache de l'application"
+      "appCache": "Effacer le cache de l'application",
+      "clearPendingToast": "Transaction en attente local supprimée",
+      "clearPendingWarning": "La transaction supprimée peut toujours être confirmée sur la chaîne, à moins qu'elle ne soit remplacée.",
+      "clearPendingResetDesc": "Réinitialiser également mes données de nonce locales et mon enregistrement de signature."
     },
     "settingModal": {
       "themeMode": {
@@ -1751,7 +1778,9 @@
       "brandNameTail": "Adresse",
       "dexNameTail": "Adresse de dépôt",
       "tipForWhiteList": "Ajoutez à votre liste blanche pour des transferts rapides, aucune confirmation n'est nécessaire la prochaine fois.",
-      "addToWhitelist": "Ajouter à la liste blanche"
+      "addToWhitelist": "Ajouter à la liste blanche",
+      "title": "Confirmer l'adresse",
+      "sendTo": "Envoyer à cette adresse"
     },
     "selectAddress": {
       "selectSafeAddress": "Sélectionner parmi les adresses Safe",
@@ -1764,7 +1793,8 @@
       "confirmPassword": "Entrez le mot de passe pour confirmer",
       "removeWhitelist": "Supprimer de la liste blanche",
       "cancel": "Annuler",
-      "alreadyAdded": "Déjà ajouté à votre liste blanche"
+      "alreadyAdded": "Déjà ajouté à votre liste blanche",
+      "copyAddress": "Copier l'adresse"
     },
     "syncExtension": {
       "syncingProgress": "Analyse ({{ percent }})",
@@ -1778,6 +1808,10 @@
       "verifyTips": "Vos données sont chiffrées hors ligne. Entrez votre mot de passe de l'extension Rabby pour déchiffrer et vérifier.",
       "imported": "Les adresses déjà présentes dans Rabby Mobile ne seront pas importées à nouveau. Les notes d'adresse et les listes blanches se synchroniseront automatiquement.",
       "importedTips": "Si l'application a déjà une adresse en double, elle ne sera pas importée. Les notes d'adresse et les listes blanches se synchroniseront également."
+    },
+    "safeMessageQueue": {
+      "loading": "Chargement des messages",
+      "noData": "Aucun message"
     }
   },
   "native": {
@@ -1825,7 +1859,10 @@
       "hot": "Hot",
       "searchPlaceHolder1": "Rechercher par nom / adresse",
       "searchPlaceHolder2": "Rechercher Token",
-      "common": "Commun"
+      "common": "Commun",
+      "contextMenu": {
+        "viewDetail": "Voir les détails"
+      }
     },
     "AccountSelectDrawer": {
       "btn": {

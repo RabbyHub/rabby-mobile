@@ -67,6 +67,7 @@ import { bytesToHex } from '@ethereumjs/util';
 import { CustomTestnetTokenBase } from '../services/customTestnetService';
 import { updateExpiredTime } from '@/databases/sync/assets';
 import { PENDGING_TIME } from '@/constant/expireTime';
+import { isString } from 'lodash';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -184,7 +185,10 @@ const signTypedDataVlidation = ({
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
   }
-  const currentChain = dappService.getDapp(session.origin)?.chainId;
+  const currentChain = dappService.isInternalDapp(session.origin)
+    ? findChain({ id: jsonData.domain.chainId })?.enum
+    : dappService.getDapp(session.origin)?.chainId;
+
   if (jsonData.domain.chainId) {
     const chainItem = findChainByEnum(currentChain);
     if (
@@ -917,6 +921,12 @@ class ProviderController extends BaseController {
   }) => {
     if (!data.params) return;
     const currentAccount = preferenceService.getCurrentAccount()!;
+    if (
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isString(approvalRes)
+    ) {
+      return approvalRes;
+    }
     try {
       const [string, from] = data.params;
       const hex = isHexString(string) ? string : stringToHex(string);
@@ -988,6 +998,12 @@ class ProviderController extends BaseController {
     approvalRes: ApprovalRes;
   }) => {
     const currentAccount = preferenceService.getCurrentAccount()!;
+    if (
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isString(approvalRes)
+    ) {
+      return approvalRes;
+    }
     try {
       const result = await this._signTypedData(
         from,
@@ -1031,6 +1047,12 @@ class ProviderController extends BaseController {
     approvalRes: ApprovalRes;
   }) => {
     const currentAccount = preferenceService.getCurrentAccount()!;
+    if (
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isString(approvalRes)
+    ) {
+      return approvalRes;
+    }
     try {
       const result = await this._signTypedData(
         from,
@@ -1073,6 +1095,12 @@ class ProviderController extends BaseController {
     approvalRes: ApprovalRes;
   }) => {
     const currentAccount = preferenceService.getCurrentAccount()!;
+    if (
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isString(approvalRes)
+    ) {
+      return approvalRes;
+    }
     try {
       const result = await this._signTypedData(
         from,
@@ -1115,6 +1143,12 @@ class ProviderController extends BaseController {
     approvalRes: ApprovalRes;
   }) => {
     const currentAccount = preferenceService.getCurrentAccount()!;
+    if (
+      currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
+      isString(approvalRes)
+    ) {
+      return approvalRes;
+    }
     try {
       const result = await this._signTypedData(
         from,

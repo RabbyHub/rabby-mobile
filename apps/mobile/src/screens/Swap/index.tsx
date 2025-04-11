@@ -216,6 +216,10 @@ const Swap = ({
   ) as TransactionNavigatorParamList['Swap'] | undefined;
 
   useMount(() => {
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
+    );
+
     if (!navState?.chainEnum) {
       return;
     }

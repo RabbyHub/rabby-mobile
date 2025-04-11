@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "private": true,
   "repository": {
     "type": "git",
@@ -55,6 +55,7 @@
     "@gorhom/bottom-sheet": "5.0.0-alpha.9",
     "@ledgerhq/react-native-hw-transport-ble": "6.33.4",
     "@metamask/abi-utils": "2.0.2",
+    "@metamask/browser-passworder": "6.0.0",
     "@metamask/eth-sig-util": "5.1.0",
     "@ngraveio/bc-ur": "1.1.6",
     "@notifee/react-native": "^7.8.0",
@@ -92,6 +93,8 @@
     "@rematch/core": "^2.2.0",
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
+    "@safe-global/protocol-kit": "5.0.3",
+    "@safe-global/types-kit": "1.0.2",
     "@sentry/react-native": "5.31.0",
     "@types/highlight-words-core": "1.2.3",
     "@types/lodash.debounce": "^4.0.9",

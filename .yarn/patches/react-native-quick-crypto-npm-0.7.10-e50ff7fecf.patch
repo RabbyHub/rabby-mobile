@@ -1,40 +1,3 @@
-diff --git a/android/CMakeLists.txt b/android/CMakeLists.txt
-index aad644087ba5181838357401eee63f4d8f961459..c2669fa3f76d716e767933c63102e5c6201a9f98 100644
---- a/android/CMakeLists.txt
-+++ b/android/CMakeLists.txt
-@@ -5,6 +5,7 @@ set(PACKAGE_NAME "reactnativequickcrypto")
- set(BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
- set(CMAKE_VERBOSE_MAKEFILE ON)
- set(CMAKE_CXX_STANDARD 17)
-+# set(OPENSSL_USE_STATIC_LIBS true) # in fact, no .a files in `io.github.ronickg:openssl` maven package
- 
- # set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
- # set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-@@ -13,6 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
- find_package(fbjni REQUIRED CONFIG)
- find_package(ReactAndroid REQUIRED CONFIG)
- find_package(openssl REQUIRED CONFIG)
-+
- find_library(LOG_LIB log)
- 
- add_library(
-@@ -63,12 +65,16 @@ target_include_directories(
- 
- #file(GLOB LIBRN_DIR "${BUILD_DIR}/react-native-0*/jni/${ANDROID_ABI}")
- 
-+# debug, release
-+message("RABBY_QUICK_CRYPTO_BUILD_TYPE is ${RABBY_QUICK_CRYPTO_BUILD_TYPE}")
-+
- target_link_libraries(
-   ${PACKAGE_NAME}
-   fbjni::fbjni                           # <-- fbjni
-   ${LOG_LIB}                             # <-- Logcat logger
-   ReactAndroid::jsi                      # <-- RN: JSI
-   android                                # <-- Android JNI core
-+  # openssl::ssl                           # <-- OpenSSL (SSL)
-   openssl::crypto                        # <-- OpenSSL (Crypto)
- )
- 
 diff --git a/android/build.gradle b/android/build.gradle
 index 2caa753ed480a81cfcde9ce8ac33adbd540a800d..d9bee8db6433bae32d29a3bf965f9f08ee28dbe4 100644
 --- a/android/build.gradle
@@ -48,3 +11,36 @@ index 2caa753ed480a81cfcde9ce8ac33adbd540a800d..d9bee8db6433bae32d29a3bf965f9f08
          abiFilters (*reactNativeArchitectures())
        }
      }
+diff --git a/lib/module/index.js b/lib/module/index.js
+index f52cc589a4aef892833ecb2c43a547927c435a3d..e9e13042193216db232e2d6ed2713d0caf614c92 100644
+--- a/lib/module/index.js
++++ b/lib/module/index.js
+@@ -12,7 +12,7 @@ import { constants } from './constants';
+ import { subtle } from './subtle';
+ import { getCiphers, getHashes } from './Utils';
+ import webcrypto from './webcrypto';
+-import { createPrivateKey, createPublicKey, createSecretKey } from './keys';
++import * as keys from './keys';
+ 
+ /**
+  * Loosely matches Node.js {crypto} with some unimplemented functionality
+@@ -26,9 +26,6 @@ const QuickCrypto = {
+   createCipheriv,
+   createDecipher,
+   createDecipheriv,
+-  createPublicKey,
+-  createPrivateKey,
+-  createSecretKey,
+   publicEncrypt,
+   publicDecrypt,
+   privateDecrypt,
+@@ -44,7 +41,8 @@ const QuickCrypto = {
+   ...random,
+   getCiphers,
+   getHashes,
+-  webcrypto
++  webcrypto,
++  ...keys
+ };
+ 
+ /**

@@ -14,6 +14,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { Account } from '@/core/services/preference';
 
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
@@ -36,13 +37,13 @@ export const useTokenAssetsMap = () => {
 };
 
 export const useSelectTokens = ({
-  currentAddress,
+  currentAccount,
   visible,
   keyword,
   chain_server_id,
   type,
 }: {
-  currentAddress?: string;
+  currentAccount?: Account | null;
   visible?: boolean;
   keyword?: string;
   chain_server_id?: string;
@@ -56,6 +57,7 @@ export const useSelectTokens = ({
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
+  const currentAddress = currentAccount?.address;
 
   const {
     value: swapToTokenSearchResult,
@@ -191,35 +193,79 @@ export const useSelectTokens = ({
     } else {
       resTokens = Object.values(tokensMap).flat();
     }
-
-    if (keyword) {
-      resTokens = resTokens.filter(item => {
-        const allMatchKeyWords = [item.chain, item.id];
-        const partMatchKeyWords = [
-          item.name,
-          item.symbol,
-          item.optimized_symbol,
-          item.display_symbol,
-        ];
-        const allMatch = allMatchKeyWords.some(
-          i => i?.toLocaleLowerCase() === keyword.toLocaleLowerCase(),
-        );
-        const partMatch = partMatchKeyWords.some(i =>
-          i?.toLocaleLowerCase().includes(keyword.toLocaleLowerCase()),
-        );
-        return allMatch || partMatch;
-      });
-    }
     if (chain_server_id) {
       resTokens = resTokens.filter(token => token.chain === chain_server_id);
     }
-    // TODO: need to check may use useSortToken
-    resTokens = resTokens.sort((a, b) => {
-      const aUsdValue = a.usd_value || a.price * a.amount;
-      const bUsdValue = b.usd_value || b.price * b.amount;
+    if (keyword) {
+      resTokens = resTokens
+        .filter(item => {
+          const matchKeyWords = [item.id, item.symbol];
+          return matchKeyWords.some(i =>
+            i?.toLocaleLowerCase().includes(keyword.toLocaleLowerCase()),
+          );
+        })
+        .sort((a, b) => {
+          const keywordLower = keyword.toLocaleLowerCase();
+          const aIdLower = a.id?.toLocaleLowerCase() || '';
+          const bIdLower = b.id?.toLocaleLowerCase() || '';
+          const aSymbolLower = a.symbol?.toLocaleLowerCase() || '';
+          const bSymbolLower = b.symbol?.toLocaleLowerCase() || '';
 
-      return bUsdValue - aUsdValue;
-    });
+          // Check exact matches
+          const aExactMatch =
+            aIdLower === keywordLower || aSymbolLower === keywordLower;
+          const bExactMatch =
+            bIdLower === keywordLower || bSymbolLower === keywordLower;
+
+          // Check is_core status
+          const aIsCore = a.is_core;
+          const bIsCore = b.is_core;
+
+          // Calculate scores based on match type and is_core status
+          const getScore = (exactMatch: boolean, isCore: boolean) => {
+            if (exactMatch && isCore) return 4;
+            if (exactMatch && !isCore) return 3;
+            if (!exactMatch && isCore) return 2;
+            return 1;
+          };
+
+          const aScore = getScore(aExactMatch, aIsCore);
+          const bScore = getScore(bExactMatch, bIsCore);
+
+          // Compare scores
+          if (aScore !== bScore) {
+            return bScore - aScore; // Higher score comes first
+          }
+
+          // If scores are equal, use is_scam as tiebreaker
+          if (a.is_scam !== b.is_scam) {
+            return a.is_scam ? 1 : -1;
+          }
+
+          // If still equal, prioritize id matches over symbol matches
+          const aIdMatch = aIdLower.includes(keywordLower);
+          const bIdMatch = bIdLower.includes(keywordLower);
+          const aSymbolMatch = aSymbolLower.includes(keywordLower);
+          const bSymbolMatch = bSymbolLower.includes(keywordLower);
+
+          if (aIdMatch && !bIdMatch) return -1;
+          if (!aIdMatch && bIdMatch) return 1;
+          if (aSymbolMatch && !bSymbolMatch) return -1;
+          if (!aSymbolMatch && bSymbolMatch) return 1;
+
+          // sort with balance
+          const aUsdValue = a.usd_value || a.price * a.amount;
+          const bUsdValue = b.usd_value || b.price * b.amount;
+          return bUsdValue - aUsdValue;
+        });
+    } else {
+      resTokens = resTokens.sort((a, b) => {
+        const aUsdValue = a.usd_value || a.price * a.amount;
+        const bUsdValue = b.usd_value || b.price * b.amount;
+        return bUsdValue - aUsdValue;
+      });
+    }
+
     return resTokens;
   }, [chain_server_id, currentAddress, keyword, tokensMap, visible]);
 
@@ -241,9 +287,13 @@ export const useSelectTokens = ({
     const tokenItems = tokens.map(token => {
       return {
         ...token,
-        ownerAccount: accounts.find(acc =>
-          isSameAddress(acc.address, token.owner_addr),
-        ),
+        ownerAccount:
+          currentAccount &&
+          isSameAddress(currentAccount.address, token.owner_addr)
+            ? currentAccount
+            : accounts.find(acc =>
+                isSameAddress(acc.address, token.owner_addr),
+              ),
       };
     });
     return tokenItems.map(token => {
@@ -252,6 +302,7 @@ export const useSelectTokens = ({
     });
   }, [
     accounts,
+    currentAccount,
     keyword,
     swapToTokenSearchResult,
     tokens,

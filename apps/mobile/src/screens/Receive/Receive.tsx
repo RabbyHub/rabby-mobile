@@ -77,8 +77,8 @@ function ReceiveScreen(): JSX.Element {
     if (!account?.address) {
       return [];
     }
-    const prefix = account.address.slice(0, 10);
-    const middle = account.address.slice(10, -6);
+    const prefix = account.address.slice(0, 8);
+    const middle = account.address.slice(8, -6);
     const suffix = account.address.slice(-6);
 
     return [prefix, middle, suffix];

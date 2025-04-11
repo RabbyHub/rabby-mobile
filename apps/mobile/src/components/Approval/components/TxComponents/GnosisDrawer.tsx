@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { groupBy } from 'lodash';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import {
   KeyringAccountWithAlias as Account,
   useAccounts,
@@ -29,6 +29,7 @@ interface GnosisDrawerProps {
   onCancel(): void;
   onConfirm(account: Account, isNew?: boolean): Promise<void>;
   visible?: boolean;
+  confirmations?: SafeMessage['confirmations'];
 }
 
 interface Signature {
@@ -41,6 +42,7 @@ export const GnosisDrawer = ({
   onCancel,
   onConfirm,
   visible,
+  confirmations,
 }: GnosisDrawerProps) => {
   const { t } = useTranslation();
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -109,14 +111,27 @@ export const GnosisDrawer = ({
   };
 
   const init = useMemoizedFn(async () => {
-    const sigs = await apisSafe.getGnosisTransactionSignatures();
-    setSignatures(sigs);
     sortOwners();
   });
 
   useEffect(() => {
     init();
   }, [init]);
+
+  useEffect(() => {
+    if (confirmations) {
+      setSignatures(
+        confirmations.map(item => {
+          return {
+            signer: item.owner,
+            data: item.signature,
+          };
+        }),
+      );
+    } else {
+      apisSafe.getGnosisTransactionSignatures().then(setSignatures);
+    }
+  }, [confirmations]);
 
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const { bottom } = useSafeAreaInsets();

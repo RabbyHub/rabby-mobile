@@ -2,6 +2,9 @@ import * as Sentry from '@sentry/react-native';
 import { intToHex } from '@/utils/number';
 import { addHexPrefix, isHexPrefixed } from 'ethereumjs-util';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { keyringService } from '@/core/services';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const { isStringOrNumber } = stringUtils;
 
@@ -67,4 +70,35 @@ export const normalizeTxParams = tx => {
     console.error(`normalizeTxParams failed, ${JSON.stringify(e)}`);
   }
   return copy;
+};
+
+export const toType = async (toAddress: string, hasCex?: boolean) => {
+  if (hasCex) {
+    return 'Exchange';
+  }
+  try {
+    const toAddr = toAddress.toLowerCase();
+    const existAccountType = (await keyringService.getAllAddresses())?.find(
+      item => isSameAddress(item.address, toAddr),
+    )?.type;
+    if (!existAccountType) {
+      return 'Unknown';
+    }
+    if (existAccountType === KEYRING_CLASS.MNEMONIC) {
+      return 'SeedPhrase';
+    }
+    if (existAccountType === KEYRING_CLASS.PRIVATE_KEY) {
+      return 'PrivateKey';
+    }
+    if (
+      Object.values(KEYRING_CLASS.HARDWARE).includes(
+        existAccountType as KEYRING_TYPE,
+      )
+    ) {
+      return 'Hardware';
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return 'Unknown';
 };

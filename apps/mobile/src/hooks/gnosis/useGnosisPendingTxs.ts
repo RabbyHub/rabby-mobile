@@ -28,6 +28,7 @@ export const useGnosisPendingTxs = (
     {
       refreshDeps: [address],
       cacheKey: `useGnosisPendingTxs-${address}`,
+      staleTime: 500,
       ...options,
     },
   );

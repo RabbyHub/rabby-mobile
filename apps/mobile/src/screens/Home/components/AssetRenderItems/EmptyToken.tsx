@@ -108,7 +108,6 @@ const getStyle = createGetStyles2024(ctx => ({
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 20,
-    justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
   sectionDescription: {

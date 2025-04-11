@@ -23,7 +23,7 @@ export class CexEntity extends EntityAddressAssetBase {
   logo_url: string = '';
 
   makeDbId(): string {
-    return (this._db_id = `${this.owner_addr}-${this.cexId}`);
+    return (this._db_id = `${this.owner_addr}`);
   }
 
   static fillEntity(

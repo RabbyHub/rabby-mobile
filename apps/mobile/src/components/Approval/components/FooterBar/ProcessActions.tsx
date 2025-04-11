@@ -55,7 +55,7 @@ export const ProcessActions: React.FC<Props> = ({
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
 
   const buttonIsPrimary = isPrimary || gasLess;
-  const buttonText = submitText ?? t('page.signFooterBar.beginSigning');
+  const buttonText = submitText ?? t('page.signFooterBar.startSigning');
   const buttonTextStyle = StyleSheet.flatten([
     styles.buttonText,
     buttonIsPrimary ? { color: colors['neutral-title-2'] } : {},
