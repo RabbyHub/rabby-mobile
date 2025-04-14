@@ -970,12 +970,12 @@
         "pin": "Pin",
         "fundYourWallet": "为您的钱包充值",
         "buyWithFiat": "法币购买",
-        "importAddressDesc": "添加一个已有且有资金的地址。",
+        "importAddressDesc": "添加一个已有且有资金的地址",
         "importAddress": "导入地址",
         "receiveCrypto": "接收加密货币",
         "noAssets": "没有资产？",
-        "buyWithFiatDesc": "使用借记卡或银行账户购买加密货币。",
-        "receiveCryptoDesc": "从其他地址转移代币。"
+        "buyWithFiatDesc": "",
+        "receiveCryptoDesc": "从其他地址转移代币"
       },
       "createNewAddress": {
         "verificationFailed": "验证失败",
@@ -1468,7 +1468,7 @@
       },
       "emptyToken": {
         "title": "为您的钱包注资",
-        "receiveBody": "将代币从另一个地址转移。",
+        "receiveBody": "将代币从另一个地址转移",
         "buyHeader": "使用法币购买",
         "buyBody": "简单的加密货币购买",
         "receiveHeader": "接收 Crypto"

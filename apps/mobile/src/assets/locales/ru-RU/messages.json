@@ -961,11 +961,11 @@
         "pin": "Пин-код",
         "receiveCrypto": "Получить Crypto",
         "noAssets": "Нет активов?",
-        "importAddressDesc": "Добавить существующий адрес с средствами.",
+        "importAddressDesc": "Добавить существующий адрес с средствами",
         "importAddress": "Импортировать адрес",
         "buyWithFiat": "Купить за фиат",
-        "buyWithFiatDesc": "Приобретайте криптовалюту с помощью дебетовой карты или банковского счета.",
-        "receiveCryptoDesc": "Перевод токенов с другого адреса.",
+        "buyWithFiatDesc": "",
+        "receiveCryptoDesc": "Перевод токенов с другого адреса",
         "fundYourWallet": "Пополните ваш кошелек"
       },
       "createNewAddress": {
@@ -1488,7 +1488,7 @@
       "emptyToken": {
         "buyHeader": "Купить за Fiat",
         "title": "Пополните ваш кошелек",
-        "receiveBody": "Переведите токены с другого адреса.",
+        "receiveBody": "Переведите токены с другого адреса",
         "receiveHeader": "Получить Crypto",
         "buyBody": "Простая покупка криптовалюты"
       },

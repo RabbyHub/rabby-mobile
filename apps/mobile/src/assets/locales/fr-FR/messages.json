@@ -914,12 +914,12 @@
         "totalBalance": "Solde total",
         "importAddress": "Importer une adresse",
         "receiveCrypto": "Recevoir des Crypto",
-        "importAddressDesc": "Ajoutez une adresse existante avec des fonds.",
+        "importAddressDesc": "Ajoutez une adresse existante avec des fonds",
         "noAssets": "Pas d'actifs ?",
         "buyWithFiat": "Acheter avec Fiat",
         "fundYourWallet": "Alimentez votre portefeuille",
-        "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse.",
-        "buyWithFiatDesc": "Achetez des cryptos avec une carte de débit ou un compte bancaire."
+        "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse",
+        "buyWithFiatDesc": ""
       },
       "addAddress": {
         "createAddress": "Créer une adresse",
@@ -1414,7 +1414,7 @@
       "emptyToken": {
         "buyHeader": "Acheter avec Fiat",
         "receiveHeader": "Recevoir des cryptos",
-        "receiveBody": "Transférer des tokens depuis une autre adresse.",
+        "receiveBody": "Transférer des tokens depuis une autre adresse",
         "title": "Alimentez votre portefeuille",
         "buyBody": "Achat simple de crypto"
       },

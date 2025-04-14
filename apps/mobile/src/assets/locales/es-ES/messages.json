@@ -1065,13 +1065,13 @@
         "totalBalance": "Saldo total",
         "pin": "PIN",
         "noAssets": "¿Sin activos?",
-        "receiveCryptoDesc": "Transfiere tokens desde otra dirección.",
+        "receiveCryptoDesc": "Transfiere tokens desde otra dirección",
         "importAddress": "Importar una dirección",
         "receiveCrypto": "Recibir Crypto",
         "buyWithFiat": "Comprar con Fiat",
         "fundYourWallet": "Financiar tu wallet",
-        "buyWithFiatDesc": "Compra criptomonedas usando una tarjeta de débito o cuenta bancaria.",
-        "importAddressDesc": "Añadir una dirección existente con fondos."
+        "buyWithFiatDesc": "",
+        "importAddressDesc": "Añadir una dirección existente con fondos"
       }
     },
     "bridge": {
@@ -1626,7 +1626,7 @@
       "emptyToken": {
         "receiveHeader": "Recibir Crypto",
         "title": "Fondea tu Wallet",
-        "receiveBody": "Transferir tokens desde otra dirección.",
+        "receiveBody": "Transferir tokens desde otra dirección",
         "buyHeader": "Comprar con Fiat",
         "buyBody": "Compra sencilla de cripto"
       },

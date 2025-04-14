@@ -983,10 +983,10 @@
         "receiveCrypto": "Kripto Al ",
         "pin": "Pin",
         "noAssets": "Varlık yok mu?",
-        "importAddressDesc": "Mevcut fonlara sahip bir adres ekleyin.",
+        "importAddressDesc": "Mevcut fonlara sahip bir adres ekleyin",
         "totalBalance": "Toplam Bakiyeniz",
-        "buyWithFiatDesc": "Bir banka kartı veya banka hesabı kullanarak kripto satın alın.",
-        "receiveCryptoDesc": "Başka bir adrese token transfer et.",
+        "buyWithFiatDesc": "",
+        "receiveCryptoDesc": "Başka bir adrese token transfer et",
         "buyWithFiat": "Fiat ile Satın Al"
       },
       "importAddress": {
@@ -1680,7 +1680,7 @@
         "buyBody": "Basit kripto alımı",
         "buyHeader": "Fiat ile Satın Al",
         "receiveHeader": "Kripto Al ",
-        "receiveBody": "Başka bir adresten token transfer et.",
+        "receiveBody": "Başka bir adresten token transfer et",
         "title": "Cüzdanınızı Fonlayın"
       },
       "nft": {

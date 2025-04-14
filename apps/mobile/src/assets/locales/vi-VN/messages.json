@@ -945,11 +945,11 @@
         "services": "Dịch vụ",
         "receiveCrypto": "Nhận Crypto",
         "buyWithFiat": "Mua bằng Fiat",
-        "buyWithFiatDesc": "Mua tiền điện tử bằng thẻ ghi nợ hoặc tài khoản ngân hàng.",
+        "buyWithFiatDesc": "",
         "importAddress": "Nhập một Địa chỉ",
         "fundYourWallet": "Nạp tiền vào Ví của bạn",
-        "importAddressDesc": "Thêm một địa chỉ hiện có với quỹ.",
-        "receiveCryptoDesc": "Chuyển token từ địa chỉ khác.",
+        "importAddressDesc": "Thêm một địa chỉ hiện có với quỹ",
+        "receiveCryptoDesc": "Chuyển token từ địa chỉ khác",
         "noAssets": "Không có tài sản?"
       },
       "addAddress": {
@@ -1359,7 +1359,7 @@
       "emptyToken": {
         "title": "Nạp tiền vào Ví của bạn",
         "receiveHeader": "Nhận Crypto",
-        "receiveBody": "Chuyển token từ địa chỉ khác.",
+        "receiveBody": "Chuyển token từ địa chỉ khác",
         "buyHeader": "Mua bằng Fiat",
         "buyBody": "Mua crypto đơn giản"
       },

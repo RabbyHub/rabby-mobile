@@ -1050,10 +1050,10 @@
         "noAssets": "Keine Assets?",
         "buyWithFiat": "Mit Fiat kaufen",
         "importAddress": "Eine Adresse importieren",
-        "receiveCryptoDesc": "Token von einer anderen Adresse übertragen.",
+        "receiveCryptoDesc": "Token von einer anderen Adresse übertragen",
         "fundYourWallet": "Finanzieren Sie Ihr Wallet",
-        "buyWithFiatDesc": "Kaufen Sie Krypto mit einer Debitkarte oder einem Bankkonto.",
-        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu."
+        "buyWithFiatDesc": "",
+        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu"
       },
       "addAddress": {
         "importAddress": "Adresse importieren",
@@ -1623,7 +1623,7 @@
       "emptyToken": {
         "buyHeader": "Mit Fiat kaufen",
         "receiveHeader": "Krypto empfangen",
-        "receiveBody": "Übertragen Sie Token von einer anderen Adresse.",
+        "receiveBody": "Übertragen Sie Token von einer anderen Adresse",
         "title": "Finanzieren Sie Ihr Wallet",
         "buyBody": "Einfacher Krypto-Kauf"
       },

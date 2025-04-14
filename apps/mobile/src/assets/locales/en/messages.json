@@ -983,11 +983,11 @@
         "noAssets": "No Assets?",
         "fundYourWallet": "Fund Your Wallet",
         "importAddress": "Import an Address",
-        "importAddressDesc": "Add an existing address with funds.",
+        "importAddressDesc": "Add an existing address with funds",
         "receiveCrypto": "Receive Crypto",
-        "receiveCryptoDesc": "Transfer tokens from another address.",
+        "receiveCryptoDesc": "Transfer tokens from another address",
         "buyWithFiat": "Buy with Fiat",
-        "buyWithFiatDesc": "Purchase crypto using a debit card or bank account."
+        "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
         "importTitle": "Import Address",
@@ -1679,7 +1679,7 @@
       "emptyToken": {
         "title": "Fund Your Wallet",
         "receiveHeader": "Receive Crypto",
-        "receiveBody": "Transfer tokens from another address.",
+        "receiveBody": "Transfer tokens from another address",
         "buyHeader": "Buy with Fiat",
         "buyBody": "Simple crypto purchase"
       },

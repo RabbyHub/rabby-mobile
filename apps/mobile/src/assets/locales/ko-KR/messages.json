@@ -914,9 +914,9 @@
         "noAssets": "자산 없음?",
         "buyWithFiat": "법정 화폐로 구매",
         "fundYourWallet": "지갑에 자금 추가하기",
-        "importAddressDesc": "기존 주소를 추가하여 자금을 보유하세요.",
-        "receiveCryptoDesc": "다른 주소에서 토큰 전송.",
-        "buyWithFiatDesc": "직불 카드 또는 은행 계좌를 사용하여 암호화폐를 구매하세요."
+        "importAddressDesc": "기존 주소를 추가하여 자금을 보유하세요",
+        "receiveCryptoDesc": "다른 주소에서 토큰 전송",
+        "buyWithFiatDesc": ""
       },
       "createNewAddress": {
         "Continue": "계속하기",
@@ -1355,7 +1355,7 @@
       },
       "emptyToken": {
         "buyHeader": "법정 화폐로 구매하기",
-        "receiveBody": "다른 주소에서 토큰 전송.",
+        "receiveBody": "다른 주소에서 토큰 전송",
         "title": "지갑 자금 조달",
         "receiveHeader": "암호화폐 받기",
         "buyBody": "간단한 암호화폐 구매"

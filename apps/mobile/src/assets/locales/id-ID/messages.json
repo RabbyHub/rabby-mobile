@@ -979,14 +979,14 @@
         "totalBalance": "Total Balance",
         "noAssets": "Tidak ada Aset?",
         "pin": "Pin",
-        "receiveCryptoDesc": "Transfer token dari alamat lain.",
+        "receiveCryptoDesc": "Transfer token dari alamat lain",
         "receiveCrypto": "Terima Crypto",
         "buyWithFiat": "Beli dengan Fiat",
         "importAddress": "Impor Alamat",
         "fundYourWallet": "Isi Ulang Dompet Anda",
         "services": "Layanan",
-        "importAddressDesc": "Tambahkan alamat yang sudah ada dengan dana.",
-        "buyWithFiatDesc": "Beli kripto menggunakan kartu debit atau rekening bank."
+        "importAddressDesc": "Tambahkan alamat yang sudah ada dengan dana",
+        "buyWithFiatDesc": ""
       },
       "importAddress": {
         "tips": {
@@ -1678,7 +1678,7 @@
       "emptyToken": {
         "buyHeader": "Beli dengan Fiat",
         "buyBody": "Pembelian crypto yang sederhana",
-        "receiveBody": "Transfer token dari alamat lain.",
+        "receiveBody": "Transfer token dari alamat lain",
         "title": "Danai Dompet Anda",
         "receiveHeader": "Terima Crypto"
       },

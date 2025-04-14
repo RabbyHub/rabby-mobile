@@ -1065,9 +1065,9 @@
         "noAssets": "沒有資產？",
         "fundYourWallet": "向錢包充值",
         "buyWithFiat": "法幣購買",
-        "importAddressDesc": "添加已有資金的地址。",
-        "receiveCryptoDesc": "從其他地址轉移代幣。\n",
-        "buyWithFiatDesc": "使用借記卡或銀行帳戶購買加密貨幣。"
+        "importAddressDesc": "添加已有資金的地址",
+        "receiveCryptoDesc": "從其他地址轉移代幣",
+        "buyWithFiatDesc": ""
       },
       "createNewAddress": {
         "BackupSeedPhrase": "手動備份助記詞",
@@ -1435,7 +1435,7 @@
         "receiveHeader": "接收 Crypto",
         "buyHeader": "使用法幣購買",
         "title": "為您的錢包充值",
-        "receiveBody": "從另一個地址轉移 tokens。",
+        "receiveBody": "從另一個地址轉移 tokens",
         "buyBody": "簡單的加密貨幣購買"
       },
       "nft": {

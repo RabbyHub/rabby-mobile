@@ -857,9 +857,9 @@
         "importAddress": "アドレスをインポート",
         "buyWithFiat": "法定通貨で購入",
         "fundYourWallet": "ウォレットに資金を追加",
-        "buyWithFiatDesc": "デビットカードまたは銀行口座を使用して暗号通貨を購入します。",
-        "importAddressDesc": "既存の資金があるアドレスを追加します。",
-        "receiveCryptoDesc": "別のアドレスからトークンを転送します。"
+        "buyWithFiatDesc": "",
+        "importAddressDesc": "既存の資金があるアドレスを追加します",
+        "receiveCryptoDesc": "別のアドレスからトークンを転送します"
       },
       "addAddress": {
         "importAddress": "アドレスをインポート",
@@ -1462,7 +1462,7 @@
       "emptyToken": {
         "receiveHeader": "暗号を受け取る",
         "buyHeader": "法定通貨で購入",
-        "receiveBody": "別のアドレスからトークンを転送します。",
+        "receiveBody": "別のアドレスからトークンを転送します",
         "title": "ウォレットに資金を入れる",
         "buyBody": "簡単な暗号通貨購入"
       },
