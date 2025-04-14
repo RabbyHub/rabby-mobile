@@ -1,0 +1,142 @@
+import { getNetCurve, ITIME_STEP_ITEM } from '@/utils/24balanceCurveCache';
+import { patchCurveData } from '@/utils/curve';
+import dayjs from 'dayjs';
+import { useCallback, useEffect, useMemo } from 'react';
+import { CurveDayType } from './useCurve';
+import PQueue from 'p-queue';
+import { atom, useAtom } from 'jotai';
+
+const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
+
+export const multiTimeStampAtom = atom<
+  Record<string, { loading: boolean; data: ITIME_STEP_ITEM[] }>
+>({});
+
+export const waitQueueFinished = (q: PQueue) => {
+  return new Promise(resolve => {
+    q.on('idle', () => {
+      resolve(null);
+    });
+  });
+};
+
+const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
+  if (!timeStamps.length) {
+    return [];
+  }
+
+  // 获取24小时前的起始时间戳
+  const startTime = dayjs().add(-24, 'hours').unix();
+  // 30分钟的秒数
+  const interval = 30 * 60;
+  // 创建48个时间窗口
+  const windows: ITIME_STEP_ITEM[] = Array(48)
+    .fill(null)
+    .map((_, index) => ({
+      timestamp: startTime + index * interval,
+      usd_value: 0,
+    }));
+
+  // 遍历每个窗口
+  return windows.map((window, i) => {
+    const windowStart = window.timestamp;
+    const windowEnd = windowStart + interval;
+    let sum = 0;
+    let count = 0;
+
+    // 在每个窗口中查找所有地址的数据点
+    timeStamps.forEach(addressData => {
+      // 找到该时间窗口内的所有数据点
+      const pointsInWindow = addressData.filter(
+        point => point.timestamp >= windowStart && point.timestamp < windowEnd,
+      );
+
+      // 如果窗口内有数据点，取最新的一个
+      if (pointsInWindow.length > 0) {
+        const latestPoint = pointsInWindow.reduce((latest, current) =>
+          current.timestamp > latest.timestamp ? current : latest,
+        );
+        sum += latestPoint.usd_value;
+        count++;
+      }
+    });
+
+    // 返回该时间窗口的数据点
+    return {
+      timestamp: windowStart,
+      usd_value: count > 0 ? sum : 0,
+    };
+  });
+};
+
+// TODO: auto update after some transaction finished
+export const useMultiCurve = (addresses: string[]) => {
+  const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
+
+  const fetch = useCallback(
+    async (addres: string[], force = false) => {
+      if (!addres.length) {
+        return;
+      }
+      addres.forEach(_addr => {
+        const addr = _addr.toLocaleLowerCase();
+        queue.add(async () => {
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              loading: true,
+              data: [],
+            },
+          }));
+          const curve = await getNetCurve(addr, CurveDayType.DAY, force);
+          const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
+          const step = 5 * 60 * 1000;
+          const result = patchCurveData(
+            curve.map(item => {
+              return {
+                timestamp: item.timestamp * 1000,
+                price: item.usd_value,
+              };
+            }),
+            start,
+            step,
+          );
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              loading: false,
+              data: result.map(item => {
+                return {
+                  timestamp: dayjs(item.timestamp).unix(),
+                  usd_value: item.price,
+                };
+              }),
+            },
+          }));
+        });
+      });
+    },
+    [setMultiTimeStamp],
+  );
+
+  const refresh = async () => {
+    await fetch(addresses, true);
+  };
+
+  useEffect(() => {
+    fetch(addresses);
+  }, [addresses, fetch]);
+  const combineData = useMemo(() => {
+    return combineMulitCurve(
+      addresses
+        .map(addr => multiTimeStamp[addr.toLocaleLowerCase()]?.data)
+        .filter(i => i.length),
+    );
+  }, [addresses, multiTimeStamp]);
+
+  return {
+    combineData,
+    multiTimeStamp,
+    refresh,
+  };
+};

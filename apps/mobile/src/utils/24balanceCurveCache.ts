@@ -3,7 +3,7 @@ import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 import { openapi } from '@/core/request';
 import { CurveDayType } from '@/hooks/useCurve';
 
-interface ITIME_STEP_ITEM {
+export interface ITIME_STEP_ITEM {
   timestamp: number;
   usd_value: number;
 }

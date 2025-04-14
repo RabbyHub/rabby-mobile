@@ -11,7 +11,7 @@ export enum CurveDayType {
   WEEK = 7,
 }
 
-const formChartData = (
+export const formChartData = (
   data: CurveList,
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,

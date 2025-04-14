@@ -28,6 +28,7 @@ import {
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
+  DEFI_SEPARATOR_HEIGHT,
   HEADER_TOP_AREA_HEIGHT,
   RootNames,
   TOKEN_EMPTY_ROW_HIGHT,
@@ -251,7 +252,7 @@ export const AssetContainer: React.FC<Props> = ({
             break;
           case ViewTypes.DEFI:
             dim.width = SCREEN_WIDTH;
-            dim.height = DEFI_ITEM_HEIGHT + ASSETS_SEPARATOR_HEIGHT;
+            dim.height = DEFI_ITEM_HEIGHT + DEFI_SEPARATOR_HEIGHT;
             break;
           default:
             dim.width = SCREEN_WIDTH - 32;

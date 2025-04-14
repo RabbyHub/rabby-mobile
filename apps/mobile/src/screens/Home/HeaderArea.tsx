@@ -101,7 +101,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 1,
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: 18,
     lineHeight: 22,
     fontWeight: '700',
     flexWrap: 'nowrap',
