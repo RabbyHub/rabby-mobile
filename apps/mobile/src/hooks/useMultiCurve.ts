@@ -1,8 +1,8 @@
 import { getNetCurve, ITIME_STEP_ITEM } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo } from 'react';
-import { CurveDayType } from './useCurve';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CurveDayType, formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
 
@@ -72,49 +72,59 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 // TODO: auto update after some transaction finished
 export const useMultiCurve = (addresses: string[]) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
+  const [loading, setLoading] = useState(false);
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
       if (!addres.length) {
         return;
       }
+      setLoading(true);
+      queue.clear();
       addres.forEach(_addr => {
-        const addr = _addr.toLocaleLowerCase();
-        queue.add(async () => {
-          setMultiTimeStamp(prev => ({
-            ...prev,
-            [addr]: {
-              loading: true,
-              data: [],
-            },
-          }));
-          const curve = await getNetCurve(addr, CurveDayType.DAY, force);
-          const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
-          const step = 5 * 60 * 1000;
-          const result = patchCurveData(
-            curve.map(item => {
-              return {
-                timestamp: item.timestamp * 1000,
-                price: item.usd_value,
-              };
-            }),
-            start,
-            step,
-          );
-          setMultiTimeStamp(prev => ({
-            ...prev,
-            [addr]: {
-              loading: false,
-              data: result.map(item => {
+        try {
+          const addr = _addr.toLocaleLowerCase();
+          queue.add(async () => {
+            setMultiTimeStamp(prev => ({
+              ...prev,
+              [addr]: {
+                loading: true,
+                data: [],
+              },
+            }));
+            const curve = await getNetCurve(addr, CurveDayType.DAY, force);
+            const start = dayjs()
+              .add(-24, 'hours')
+              .add(10, 'minutes')
+              .valueOf();
+            const step = 5 * 60 * 1000;
+            const result = patchCurveData(
+              curve.map(item => {
                 return {
-                  timestamp: dayjs(item.timestamp).unix(),
-                  usd_value: item.price,
+                  timestamp: item.timestamp * 1000,
+                  price: item.usd_value,
                 };
               }),
-            },
-          }));
-        });
+              start,
+              step,
+            );
+            setMultiTimeStamp(prev => ({
+              ...prev,
+              [addr]: {
+                loading: false,
+                data: result.map(item => {
+                  return {
+                    timestamp: dayjs(item.timestamp).unix(),
+                    usd_value: item.price,
+                  };
+                }),
+              },
+            }));
+          });
+        } catch (error) {}
       });
+      await waitQueueFinished(queue);
+      setLoading(false);
     },
     [setMultiTimeStamp],
   );
@@ -123,20 +133,27 @@ export const useMultiCurve = (addresses: string[]) => {
     await fetch(addresses, true);
   };
 
+  const combineData = useMemo(
+    () =>
+      formChartData(
+        combineMulitCurve(Object.values(multiTimeStamp).map(i => i.data)),
+      ),
+    [multiTimeStamp],
+  );
+
   useEffect(() => {
-    fetch(addresses);
-  }, [addresses, fetch]);
-  const combineData = useMemo(() => {
-    return combineMulitCurve(
-      addresses
-        .map(addr => multiTimeStamp[addr.toLocaleLowerCase()]?.data)
-        .filter(i => i.length),
-    );
-  }, [addresses, multiTimeStamp]);
+    if (queue.size > 0) {
+      return;
+    }
+    if (combineData.list.length === 0) {
+      fetch(addresses);
+    }
+  }, [addresses, combineData?.list.length, fetch]);
 
   return {
     combineData,
     multiTimeStamp,
+    loading,
     refresh,
   };
 };

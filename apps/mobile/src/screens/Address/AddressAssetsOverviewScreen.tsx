@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+} from 'react-native';
 import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/AddressItem';
@@ -17,8 +23,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { useSortAddressList } from './useSortAddressList';
 import { AddressEmptyContainer } from './components/AddressEmptyContainer';
-import { Card } from '@/components2024/Card';
-import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
+import { MultiChart } from './components/CurveChart';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -27,6 +32,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -109,12 +115,39 @@ export function AddressAssetsOverview(): JSX.Element {
     }, [fetchAccounts]),
   );
 
+  const { combineData, refresh, loading } = useMultiCurve(
+    list.slice(0, 10).map(i => i.address),
+  );
+  const pathColor = !combineData.isLoss
+    ? colors2024['green-default']
+    : colors2024['red-default'];
+
   return (
     <AddressListScreenContainer>
+      <View style={styles.chart}>
+        <View>
+          <Text>{combineData.netWorth}</Text>
+          <View>
+            <Text>{combineData.change}</Text>
+            <Text>{combineData.changePercent}</Text>
+            <Text>24h</Text>
+          </View>
+        </View>
+        <MultiChart
+          isOffline={false}
+          data={combineData.list}
+          loading={loading}
+          pathColor={pathColor}
+          isNoAssets={false}
+        />
+      </View>
       <FlatList
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
+        refreshControl={
+          <RefreshControl refreshing={false} onRefresh={refresh} />
+        }
         renderItem={({ item, index }) => (
           <View
             key={`${item.address}-${item.type}-${item.brandName}-${index}`}
@@ -162,6 +195,10 @@ export function AddressAssetsOverview(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  chart: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
   headline: {
     paddingHorizontal: 8,
     paddingVertical: 16,
