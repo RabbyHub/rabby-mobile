@@ -33,6 +33,7 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { MultiAssets } from './components/MultiAssets';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -133,7 +134,8 @@ export function AddressAssetsOverview(): JSX.Element {
           isNoAssets={false}
         />
       </View>
-      <FlatList
+      <MultiAssets />
+      {/* <FlatList
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         style={styles.listContainer}
@@ -150,18 +152,6 @@ export function AddressAssetsOverview(): JSX.Element {
         ListEmptyComponent={AddressEmptyContainer}
         ListFooterComponent={
           <View style={styles.footer}>
-            {/* <Card style={styles.footerCard} onPress={gotoAddAddress}>
-              <View style={styles.footerMain}>
-                <PlusSVG
-                  width={20}
-                  height={20}
-                  color={colors2024['neutral-secondary']}
-                />
-                <Text style={styles.footerCardText}>
-                  {t('page.addressDetail.addressListScreen.addAddress')}
-                </Text>
-              </View>
-            </Card> */}
             {hasSafeAddress && (
               <OtherAddressNav
                 onPress={onGotoSafeAddress}
@@ -181,7 +171,7 @@ export function AddressAssetsOverview(): JSX.Element {
             <View style={styles.footerGap} />
           </View>
         }
-      />
+      /> */}
     </AddressListScreenContainer>
   );
 }
