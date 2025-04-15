@@ -125,17 +125,9 @@ export function AddressAssetsOverview(): JSX.Element {
   return (
     <AddressListScreenContainer>
       <View style={styles.chart}>
-        <View>
-          <Text>{combineData.netWorth}</Text>
-          <View>
-            <Text>{combineData.change}</Text>
-            <Text>{combineData.changePercent}</Text>
-            <Text>24h</Text>
-          </View>
-        </View>
         <MultiChart
           isOffline={false}
-          data={combineData.list}
+          data={combineData}
           loading={loading}
           pathColor={pathColor}
           isNoAssets={false}
@@ -196,7 +188,7 @@ export function AddressAssetsOverview(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   chart: {
-    paddingVertical: 20,
+    // paddingVertical: 20,
     paddingHorizontal: 20,
   },
   headline: {

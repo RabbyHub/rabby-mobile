@@ -31,6 +31,11 @@ export const getCurveCache = (_address: string) => {
   const data = storage.getString(address);
   if (data) {
     const cache = JSON.parse(data) as ICURVE_DATA;
+    console.log(
+      '🔍 CUSTOM_LOGGER:=>: isExpired:',
+      address.slice(-4),
+      (Date.now() - cache.updateTime) / 1000 / 60,
+    );
     return {
       data: cache.data,
       updateTime: cache.updateTime,

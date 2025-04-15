@@ -14,6 +14,7 @@ export type CurvePoint = {
   changePercent: string;
   timestamp: number;
   dateString: string;
+  clockTimeString: string;
 };
 
 export const use24hCurveData = ({
@@ -141,6 +142,7 @@ export const formatTokenDateCurve = (
             : `${(Math.abs(change * 100) / startData.value).toFixed(2)}%`,
         timestamp: dayjs(item.timestamp).valueOf(),
         dateString: dayjs(item.timestamp).format('MM DD, YYYY'),
+        clockTimeString: dayjs(item.timestamp).format('HH:mm'),
       };
     }) || [];
 

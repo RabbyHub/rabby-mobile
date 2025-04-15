@@ -33,6 +33,7 @@ export const formChartData = (
             : `${(Math.abs(change * 100) / startData.usd_value).toFixed(2)}%`,
         timestamp: x.timestamp,
         dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
+        clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
       };
     }) || [];
 
@@ -55,6 +56,7 @@ export const formChartData = (
             )}%`,
       timestamp: Math.floor(realtimeTimestamp / 1000),
       dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
+      clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
     });
   }
 

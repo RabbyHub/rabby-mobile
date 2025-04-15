@@ -60,6 +60,7 @@ export type CurvePoint = {
   changePercent: string;
   timestamp: number;
   dateString: string;
+  clockTimeString: string;
 };
 
 export const formatTimeMachineCurve = (range: number[], data?: AssetsCurve) => {
@@ -110,6 +111,7 @@ export const formatTimeMachineCurve = (range: number[], data?: AssetsCurve) => {
             : `${(Math.abs(change * 100) / startData.value).toFixed(2)}%`,
         timestamp: x[0],
         dateString: dayjs.unix(x[0]).format('MM DD, YYYY'),
+        clockTimeString: dayjs.unix(x[0]).format('HH:mm'),
       };
     }) || [];
 

@@ -1,4 +1,8 @@
-import { getNetCurve, ITIME_STEP_ITEM } from '@/utils/24balanceCurveCache';
+import {
+  getCurveCache,
+  getNetCurve,
+  ITIME_STEP_ITEM,
+} from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -72,7 +76,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 // TODO: auto update after some transaction finished
 export const useMultiCurve = (addresses: string[]) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
@@ -80,6 +84,46 @@ export const useMultiCurve = (addresses: string[]) => {
         return;
       }
       setLoading(true);
+      addres.forEach(_addr => {
+        const addr = _addr.toLocaleLowerCase();
+        setMultiTimeStamp(prev => ({
+          ...prev,
+          [addr]: {
+            ...(prev[addr] || {}),
+            loading: true,
+          },
+        }));
+        const cacheData = getCurveCache(addr);
+        if (!cacheData?.data) {
+          return;
+        }
+        const curve = cacheData.data;
+        console.log('🔍 CUSTOM_LOGGER:=>: curve', curve.length, addr.slice(-4));
+        const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
+        const step = 5 * 60 * 1000;
+        const result = patchCurveData(
+          curve.map(item => {
+            return {
+              timestamp: item.timestamp * 1000,
+              price: item.usd_value,
+            };
+          }),
+          start,
+          step,
+        );
+        setMultiTimeStamp(prev => ({
+          ...prev,
+          [addr]: {
+            loading: false,
+            data: result.map(item => {
+              return {
+                timestamp: dayjs(item.timestamp).unix(),
+                usd_value: item.price,
+              };
+            }),
+          },
+        }));
+      });
       queue.clear();
       addres.forEach(_addr => {
         try {
@@ -88,8 +132,8 @@ export const useMultiCurve = (addresses: string[]) => {
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
+                ...prev[addr],
                 loading: true,
-                data: [],
               },
             }));
             const curve = await getNetCurve(addr, CurveDayType.DAY, force);
@@ -148,7 +192,10 @@ export const useMultiCurve = (addresses: string[]) => {
     if (combineData.list.length === 0) {
       fetch(addresses);
     }
-  }, [addresses, combineData?.list.length, fetch]);
+    if (Object.keys(multiTimeStamp).length === addresses.length) {
+      setLoading(false);
+    }
+  }, [addresses, combineData.list.length, fetch, multiTimeStamp]);
 
   return {
     combineData,
