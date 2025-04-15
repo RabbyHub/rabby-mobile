@@ -171,6 +171,7 @@ const Swap = ({
     swapUseSlider,
     clearExpiredTimer,
     finishedQuotes,
+    inSufficientCanGetQuote,
   } = useTokenPair(currentAccount!.address);
 
   const {
@@ -556,7 +557,7 @@ const Swap = ({
   const noQuoteOrigin = useMemo(
     () =>
       Number(payAmount) > 0 &&
-      !inSufficient &&
+      inSufficientCanGetQuote &&
       amountAvailable &&
       !quoteLoading &&
       !!payToken &&
@@ -564,7 +565,7 @@ const Swap = ({
       !activeProvider,
     [
       payAmount,
-      inSufficient,
+      inSufficientCanGetQuote,
       amountAvailable,
       quoteLoading,
       payToken,
@@ -586,7 +587,7 @@ const Swap = ({
       if (
         !isWrapToken &&
         Number(payAmount) > 0 &&
-        !inSufficient &&
+        inSufficientCanGetQuote &&
         amountAvailable &&
         !quoteLoading &&
         !!payToken &&
@@ -602,7 +603,7 @@ const Swap = ({
       showMoreVisible,
       isWrapToken,
       payAmount,
-      inSufficient,
+      inSufficientCanGetQuote,
       amountAvailable,
       payToken,
       receiveToken,
@@ -749,6 +750,7 @@ const Swap = ({
             <BridgeSwitchBtn
               onPress={exchangeToken}
               style={styles.arrowWrapper}
+              loading={quoteLoading}
             />
           </View>
 
@@ -758,7 +760,7 @@ const Swap = ({
 
           {showMoreVisible &&
             Number(payAmount) > 0 &&
-            !inSufficient &&
+            inSufficientCanGetQuote &&
             !!amountAvailable &&
             !!payToken &&
             !!receiveToken && (

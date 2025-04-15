@@ -25,6 +25,8 @@ import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { isSwapWrapToken } from '../utils';
 
+export const enableInsufficientQuote = true;
+
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
 const { isSameAddress } = addressUtils;
@@ -382,6 +384,10 @@ export const useTokenPair = (userAddress: string) => {
     [payToken, payAmount],
   );
 
+  const inSufficientCanGetQuote = enableInsufficientQuote
+    ? true
+    : !inSufficient;
+
   useEffect(() => {
     if (autoSlippage) {
       setSlippage(getSwapAutoSlippageValue(isStableCoin));
@@ -423,7 +429,7 @@ export const useTokenPair = (userAddress: string) => {
         chain &&
         Number(payAmount) > 0 &&
         feeRate &&
-        !inSufficient &&
+        inSufficientCanGetQuote &&
         !isDraggingSlider
       ) {
         setQuotesList(e =>
@@ -474,11 +480,10 @@ export const useTokenPair = (userAddress: string) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      !inSufficient
+      inSufficientCanGetQuote
     ) {
       setFinishedQuotes(0);
       setQuoteLoading(true);
-      setActiveProvider(undefined);
       fetchIdRef.current += 1;
       runGetAllQuotes(fetchIdRef.current);
     } else {
@@ -487,13 +492,13 @@ export const useTokenPair = (userAddress: string) => {
       setQuoteLoading(false);
     }
   }, [
+    inSufficientCanGetQuote,
     refreshId,
     userAddress,
     payToken?.id,
     receiveToken?.id,
     chain,
     feeRate,
-    inSufficient,
     receiveToken,
     payAmount,
     runGetAllQuotes,
@@ -509,15 +514,15 @@ export const useTokenPair = (userAddress: string) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      !inSufficient
+      inSufficientCanGetQuote
     ) {
       return true;
     }
     return false;
   }, [
+    inSufficientCanGetQuote,
     chain,
     feeRate,
-    inSufficient,
     payAmount,
     payToken?.id,
     receiveToken,
@@ -526,7 +531,7 @@ export const useTokenPair = (userAddress: string) => {
 
   useEffect(() => {
     setQuotesList([]);
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount]);
 
   useEffect(() => {
     if (
@@ -642,7 +647,25 @@ export const useTokenPair = (userAddress: string) => {
     if (expiredTimer.current) {
       clearTimeout(expiredTimer.current);
     }
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount, setActiveProvider]);
+
+  useEffect(() => {
+    setActiveProvider(undefined);
+  }, [payToken?.id, receiveToken?.id, chain, setActiveProvider]);
+
+  useEffect(() => {
+    if (!enableInsufficientQuote || !payAmount) {
+      setActiveProvider(undefined);
+    }
+  }, [payAmount, setActiveProvider]);
+
+  useEffect(() => {
+    if (!inSufficientCanGetQuote) {
+      clearTimeout(expiredTimer.current);
+      setQuotesList([]);
+      setActiveProvider(undefined);
+    }
+  }, [inSufficientCanGetQuote, setActiveProvider]);
 
   const search = {};
   const [searchObj] = useState<{
@@ -780,6 +803,7 @@ export const useTokenPair = (userAddress: string) => {
     isWrapToken,
     wrapTokenSymbol,
     inSufficient,
+    inSufficientCanGetQuote,
     slippageChanged,
     setSlippageChanged,
     slippageState,

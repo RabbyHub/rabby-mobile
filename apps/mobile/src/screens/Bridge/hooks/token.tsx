@@ -1,14 +1,9 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
-import { useAsyncInitializeChainList } from '@/hooks/useChain';
 import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
-import {
-  BridgeQuote,
-  GasLevel,
-  TokenItem,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // import { useAsyncFn, useDebounce } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
@@ -16,12 +11,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { stats } from '@/utils/stats';
 import { openapi } from '@/core/request';
-import {
-  useQuoteVisible,
-  useRefreshId,
-  useSetQuoteVisible,
-  useSetRefreshId,
-} from './context';
+import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import BigNumber from 'bignumber.js';
@@ -33,12 +23,12 @@ import {
 } from '@/hooks/account';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { GasLevelType } from '@/components/ReserveGasPopup';
 import { apiProvider } from '@/core/apis';
 import { useMount } from 'ahooks';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import usePrevious from 'react-use/lib/usePrevious';
+
+export const enableInsufficientQuote = true;
 
 export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
   shouldApproveToken?: boolean;
@@ -171,6 +161,11 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
         ? tokenAmountBn(fromToken).lt(amount)
         : new BigNumber(0).lt(amount),
     [fromToken, amount],
+  );
+
+  const inSufficientCanGetQuote = useMemo(
+    () => (enableInsufficientQuote ? true : !inSufficient),
+    [inSufficient],
   );
 
   const getRecommendToChain = async (chain: CHAINS_ENUM) => {
@@ -344,6 +339,9 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     }
     setUseGasPrice(false);
     setAmount(v);
+    if (Number(v) > 0) {
+      setPending(true);
+    }
   }, []);
 
   const switchToken = useCallback(() => {
@@ -382,7 +380,24 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
   useEffect(() => {
     setQuotesList([]);
     setRecommendFromToken(undefined);
-  }, [fromToken?.id, toToken?.id, fromChain, toChain, amount, inSufficient]);
+    setSelectedBridgeQuote(undefined);
+  }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
+
+  useEffect(() => {
+    if (!inSufficientCanGetQuote) {
+      setQuotesList([]);
+      setRecommendFromToken(undefined);
+      setSelectedBridgeQuote(undefined);
+    }
+  }, [inSufficientCanGetQuote, setSelectedBridgeQuote]);
+
+  useEffect(() => {
+    if (!enableInsufficientQuote || !amount || amount === '0') {
+      setQuotesList([]);
+      setRecommendFromToken(undefined);
+      setSelectedBridgeQuote(undefined);
+    }
+  }, [amount, setSelectedBridgeQuote]);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
@@ -394,7 +409,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       const currentFetchId = fetchIdRef.current;
 
       if (
-        !inSufficient &&
+        inSufficientCanGetQuote &&
         userAddress &&
         fromToken?.id &&
         toToken?.id &&
@@ -609,9 +624,8 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
           }
         }
       }
-      setSelectedBridgeQuote(undefined);
     }, [
-      inSufficient,
+      inSufficientCanGetQuote,
       aggregatorsList,
       refreshId,
       userAddress,
@@ -627,7 +641,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
 
   useEffect(() => {
     if (
-      !inSufficient &&
+      inSufficientCanGetQuote &&
       userAddress &&
       fromToken?.id &&
       toToken?.id &&
@@ -642,7 +656,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       setPending(false);
     }
   }, [
-    inSufficient,
+    inSufficientCanGetQuote,
     userAddress,
     fromToken?.id,
     toToken?.id,
@@ -824,6 +838,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     fillRecommendFromToken,
 
     inSufficient,
+    inSufficientCanGetQuote,
     amount,
     handleAmountChange,
     showLoss,
