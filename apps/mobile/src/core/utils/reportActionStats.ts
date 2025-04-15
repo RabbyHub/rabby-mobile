@@ -273,6 +273,14 @@ export const reportActionStats = async (
           ...extra,
         });
       }
+      if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN) {
+        // not swap no sign progress  to do test
+        reportFunc('SwapSign_to_SwapFinish', {
+          value: timeGap,
+          deviceType: IS_IOS ? 'iOS' : 'Android',
+          ...extra,
+        });
+      }
       break;
   }
 };
