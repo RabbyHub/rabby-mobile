@@ -34,6 +34,7 @@ import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface Props {
   data: TransactionGroup;
@@ -290,9 +291,14 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
                         actionData.payToken?.id,
                         actionData.receiveToken?.id,
                       ],
+                      entryType: 'SwapHistory',
                     },
                   }),
                 );
+                matomoRequestEvent({
+                  category: 'Entrance_Swap',
+                  action: 'EnterSwap_SwapHistory',
+                });
               }}
               title={t('page.transactions.detail.SwapAgain')}
             />

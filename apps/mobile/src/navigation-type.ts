@@ -280,6 +280,11 @@ export type TransactionNavigatorParamList = {
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
+    entryType?:
+      | 'MultipleAddress'
+      | 'SingleAddress'
+      | 'SwapHistory'
+      | 'TokenDetail';
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]?: {};

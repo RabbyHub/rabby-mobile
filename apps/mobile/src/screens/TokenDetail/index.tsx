@@ -64,6 +64,7 @@ import { unionBy } from 'lodash';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -515,7 +516,12 @@ export const TokenDetailScreen = () => {
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
           isFromSwap,
+          entryType: 'TokenDetail',
         },
+      });
+      matomoRequestEvent({
+        category: 'Entrance_Swap',
+        action: 'EnterSwap_TokenDetail',
       });
     },
   );

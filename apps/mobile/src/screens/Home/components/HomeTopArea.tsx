@@ -53,6 +53,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -204,6 +205,13 @@ export const HomeTopArea = ({
       await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.Bridge,
+        params: {
+          entryType: 'SingleAddress',
+        },
+      });
+      matomoRequestEvent({
+        category: 'Entrance_Bridge',
+        action: 'EnterBridge_SingleAddress',
       });
     },
   };
@@ -226,7 +234,9 @@ export const HomeTopArea = ({
           return;
         }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        navigateToSendPolyScreen(true);
+        navigateToSendPolyScreen(true, {
+          entryType: 'SingleAddress',
+        });
       },
     },
     {
@@ -256,6 +266,13 @@ export const HomeTopArea = ({
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Swap,
+          params: {
+            entryType: 'SingleAddress',
+          },
+        });
+        matomoRequestEvent({
+          category: 'Entrance_Swap',
+          action: 'EnterSwap_SingleAddress',
         });
       },
     },

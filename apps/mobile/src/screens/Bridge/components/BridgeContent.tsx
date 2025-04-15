@@ -32,7 +32,11 @@ import { toast } from '@/components/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
-import { StackActions, useNavigation } from '@react-navigation/native';
+import {
+  StackActions,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
@@ -44,6 +48,7 @@ import { Button } from '@/components2024/Button';
 
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -242,6 +247,15 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const [fetchingBridgeQuote, setFetchingBridgeQuote] = useState(false);
 
   const [isShowSign, setIsShowSign] = useState(false);
+
+  const navState = useNavigationState(
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiBridge : RootNames.Bridge),
+      )?.params,
+  ) as any;
 
   const gotoBridge = useMemoizedFn(async () => {
     if (
@@ -535,6 +549,10 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       return;
     }
     handleBridge();
+    matomoRequestEvent({
+      category: 'Entrance_Bridge',
+      action: `CreateBridge_${navState?.entryType || 'MultipleAddress'}`,
+    });
   };
 
   const switchFeePopup = useSetSettingVisible();

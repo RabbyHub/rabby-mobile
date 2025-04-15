@@ -49,6 +49,7 @@ import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -398,6 +399,14 @@ export function useSendTokenForm(
   const multiNavParams = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.MultiSend)?.params,
   );
+  const navParams = useNavigationState(
+    s =>
+      s.routes.find(
+        r =>
+          r.name ===
+          (isForMultipleAdderss ? RootNames.MultiSend : RootNames.Send),
+      )?.params,
+  ) as any;
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
@@ -558,6 +567,12 @@ export function useSendTokenForm(
       messageDataForSendToEoa,
       messageDataForContractCall,
     }: FormSendToken) => {
+      const reportType = navParams?.entryType || 'MultipleAddress';
+      matomoRequestEvent({
+        category: 'Entrance_Send',
+        action: `CreateSend_${reportType}`,
+      });
+
       sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
       putScreenState({ isSubmitLoading: true });
       const chain = findChain({
@@ -668,6 +683,7 @@ export function useSendTokenForm(
       screenState.selectedGasLevel?.price,
       screenState.showGasReserved,
       toAddress,
+      navParams,
     ],
   );
 

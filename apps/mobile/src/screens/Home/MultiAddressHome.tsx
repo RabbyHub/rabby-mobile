@@ -497,7 +497,9 @@ function MultiAddressHome(): JSX.Element {
       });
       switch (key) {
         case MultiHomeFeatTitle.Send:
-          navigateToSendPolyScreen(false);
+          navigateToSendPolyScreen(false, {
+            entryType: 'MultipleAddress',
+          });
           break;
         case MultiHomeFeatTitle.Receive:
           navigation.dispatch(
@@ -512,18 +514,30 @@ function MultiAddressHome(): JSX.Element {
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiSwap,
-              params: {},
+              params: {
+                entryType: 'MultipleAddress',
+              },
             }),
           );
+          matomoRequestEvent({
+            category: 'Entrance_Swap',
+            action: `EnterSwap_MultipleAddress`,
+          });
 
           break;
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiBridge,
-              params: {},
+              params: {
+                entryType: 'MultipleAddress',
+              },
             }),
           );
+          matomoRequestEvent({
+            category: 'Entrance_Bridge',
+            action: `EnterBridge_MultipleAddress`,
+          });
           break;
         case MultiHomeFeatTitle.History:
           toggleUseAllAccountsOnScene('MultiHistory', true);

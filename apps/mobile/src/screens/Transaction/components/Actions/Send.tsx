@@ -236,6 +236,7 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
                 navigateToSendPolyScreen(!!isSingleAddress, {
                   chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
                   tokenId: actionData.token?.id,
+                  entryType: 'SendHistory',
                 });
               }}
               title={t('page.transactions.detail.SendAgain')}

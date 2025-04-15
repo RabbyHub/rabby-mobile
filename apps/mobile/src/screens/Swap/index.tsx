@@ -80,6 +80,7 @@ import {
 import { TokenInfoPopup } from './components/TokenInfoPopup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -471,6 +472,10 @@ const Swap = ({
         chain: chainServerId,
       },
     );
+    matomoRequestEvent({
+      category: 'Entrance_Swap',
+      action: `CreateSwap_${navState?.entryType || 'MultipleAddress'}`,
+    });
   });
 
   const canUseMiniTx =

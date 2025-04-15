@@ -36,6 +36,11 @@ export const useSendRoutes = () => {
         category: 'Send Usage',
         action: 'Send_Enter',
       });
+      matomoRequestEvent({
+        category: 'Entrance_Send',
+        action: `EnterSend_${p?.entryType || 'MultipleAddress'}`,
+      });
+
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {

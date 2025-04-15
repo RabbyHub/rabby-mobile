@@ -26,6 +26,7 @@ import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface ItemProps {
   status: number;
@@ -111,6 +112,7 @@ export const HistoryBottomBtn = ({
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenId: sends[0]?.token_id,
                 toAddress: sends[0]?.to_addr,
+                entryType: 'SendHistory',
               });
             }}
             title={t('page.transactions.detail.SendAgain')}
@@ -207,9 +209,14 @@ export const HistoryBottomBtn = ({
                     swapAgain: true,
                     chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                     swapTokenId: [sends[0]?.token_id, receives[0]?.token_id],
+                    entryType: 'SwapHistory',
                   },
                 }),
               );
+              matomoRequestEvent({
+                category: 'Entrance_Swap',
+                action: 'EnterSwap_SwapHistory',
+              });
             }}
             title={t('page.transactions.detail.SwapAgain')}
           />

@@ -185,6 +185,7 @@ export const GnosisTransactionItem = ({
           nonce: data.nonce,
           chainId: Number(networkId),
         },
+        entryType: 'SafeQueue',
       });
     } else if (type === 'reject') {
       const params = {
