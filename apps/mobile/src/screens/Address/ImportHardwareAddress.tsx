@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,8 +20,9 @@ import { apiKeystone } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { trigger } from 'react-native-haptic-feedback';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { preferenceService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { useFocusEffect } from '@react-navigation/native';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -44,6 +45,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 export function ImportHardwareAddressScreen(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const [hasAccounts, setHasAccounts] = React.useState(false);
+
+  const initAccounts = useCallback(async () => {
+    try {
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      setHasAccounts(!!accounts.length);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [setHasAccounts]);
+
+  useFocusEffect(
+    useCallback(() => {
+      initAccounts();
+    }, [initAccounts]),
+  );
 
   const handleLedger = React.useCallback(() => {
     trigger('impactLight', {
@@ -67,10 +84,11 @@ export function ImportHardwareAddressScreen(): JSX.Element {
       action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
       label: KEYRING_CLASS.HARDWARE.LEDGER,
     });
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT,
-    );
-  }, []);
+    !hasAccounts &&
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_LEDGER_CONNECT,
+      );
+  }, [hasAccounts]);
 
   const goImport = useImportKeystone();
 

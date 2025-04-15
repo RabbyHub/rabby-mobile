@@ -60,9 +60,10 @@ function MainListBlocks() {
         removeGlobalBottomSheetModal2024(id);
       },
     });
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP,
-    );
+    state?.delaySetPassword &&
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_ICLOUD_BACKUP,
+      );
   }, [state]);
 
   const handleBackupToPaper = React.useCallback(() => {
@@ -82,9 +83,10 @@ function MainListBlocks() {
         removeGlobalBottomSheetModal2024(id);
       },
     });
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP,
-    );
+    state?.delaySetPassword &&
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_MANUAL_BACKUP,
+      );
   }, [state]);
 
   return (
