@@ -392,7 +392,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
   }, [inSufficientCanGetQuote, setSelectedBridgeQuote]);
 
   useEffect(() => {
-    if (!enableInsufficientQuote || !amount || amount === '0') {
+    if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
       setQuotesList([]);
       setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);

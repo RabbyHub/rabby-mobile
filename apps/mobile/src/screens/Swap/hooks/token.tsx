@@ -654,7 +654,7 @@ export const useTokenPair = (userAddress: string) => {
   }, [payToken?.id, receiveToken?.id, chain, setActiveProvider]);
 
   useEffect(() => {
-    if (!enableInsufficientQuote || !payAmount) {
+    if (!enableInsufficientQuote || !payAmount || Number(payAmount) === 0) {
       setActiveProvider(undefined);
     }
   }, [payAmount, setActiveProvider]);
