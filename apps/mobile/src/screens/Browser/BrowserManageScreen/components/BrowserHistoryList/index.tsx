@@ -1,14 +1,14 @@
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
-import { useBrowserHistory } from '@/hooks/useBrowserHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, Text, View, ViewStyle } from 'react-native';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserBookmark } from '@/hooks/useBrowserBookmark';
 import { BrowserHistoryEmpty } from './BrowserHistoryEmpty';
 import { BrowserHistorySiteList } from './BrowserHistorySiteList';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 
 export const BrowserHistoryList = ({
   style,
@@ -17,18 +17,21 @@ export const BrowserHistoryList = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { browserHistoryList, removeBrowserHistory } = useBrowserHistory();
-  const { openUrlAsDapp } = useBrowser();
+  const { openTab } = useBrowser();
   const { removeBookmark, addBookmark, getBookmark } = useBrowserBookmark();
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
-    openUrlAsDapp(dappInfo.url || dappInfo.origin);
+    openTab(dappInfo.url || dappInfo.origin);
   });
 
   const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {
     const key = dappInfo.url || dappInfo.origin;
+    // console.log('handleFavoritePress', 'favirate', key, dappInfo);
     if (getBookmark(key)) {
+      console.log('remove?');
       removeBookmark(key);
     } else {
+      console.log('add?');
       addBookmark({
         url: key,
         name: dappInfo.name,
@@ -49,6 +52,11 @@ export const BrowserHistoryList = ({
         onPress={handlePress}
         onFavoritePress={handleFavoritePress}
         onDeletePress={handleDelete}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>History</Text>
+          </View>
+        }
         ListEmptyComponent={BrowserHistoryEmpty}
       />
     </View>
@@ -64,6 +72,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    paddingHorizontal: 8,
   },
   titleWarper: {
     display: 'flex',

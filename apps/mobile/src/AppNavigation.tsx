@@ -81,6 +81,7 @@ import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/App
 import WebViewControlPreload from './components/WebView/WebViewControlPreload';
 import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 import { BrowserScreen } from './screens/Browser/BrowserScreen';
+import { BrowserNavigator } from './screens/Navigators/BrowserNavigator';
 // import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
@@ -184,7 +185,7 @@ function useDetermineExitAppOnPressBack() {
   }, [getBackRestCount, setBackStage]);
 }
 
-const MainStack = () => {
+const StackMain = () => {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   return (
@@ -457,25 +458,16 @@ export default function AppNavigation({
           }
           tabBar={() => null}>
           <HomeHiddenTabStack.Screen
-            name={RootNames.Home}
-            component={MainStack}
+            name={RootNames.StackMain}
+            component={StackMain}
             options={{
               headerShown: false,
             }}
           />
 
           <HomeHiddenTabStack.Screen
-            name={RootNames.DappWebViewStubOnHome}
-            component={BrowserScreen}
-            options={{
-              title: '',
-              headerShadowVisible: false,
-              headerShown: false,
-            }}
-          />
-          <HomeHiddenTabStack.Screen
-            name={RootNames.BrowserManage}
-            component={BrowserManageScreen}
+            name={RootNames.StackBrowser}
+            component={BrowserNavigator}
             options={{
               title: '',
               headerShadowVisible: false,

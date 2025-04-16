@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TextInputProps,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -23,10 +24,12 @@ import {
 
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
+  inputContainerStyle?: StyleProp<ViewStyle>;
   onCancel?(): void;
   noCancel?: boolean;
   searchIcon?: ReactNode;
   alwaysShowCancel?: boolean;
+  inputStyle?: StyleProp<TextStyle>;
   ref?: React.ForwardedRef<{
     focus(): void;
     blur(): void;
@@ -38,6 +41,8 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
   (
     {
       style,
+      inputContainerStyle,
+      inputStyle,
       value,
       searchIcon,
       alwaysShowCancel,
@@ -83,7 +88,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
 
     return (
       <View style={[styles.container, style]}>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, inputContainerStyle]}>
           <TouchableWithoutFeedback
             hitSlop={8}
             onPress={() => {
@@ -100,7 +105,11 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
           </TouchableWithoutFeedback>
           <TextInput
             ref={inputRef}
-            style={[styles.input, isEmpty ? styles.placeholder : null]}
+            style={[
+              styles.input,
+              inputStyle,
+              isEmpty ? styles.placeholder : null,
+            ]}
             placeholderTextColor={styles.placeholder.color}
             value={value}
             onChangeText={onChangeText}

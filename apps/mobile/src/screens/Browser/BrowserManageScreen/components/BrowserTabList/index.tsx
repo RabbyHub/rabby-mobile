@@ -1,36 +1,24 @@
 import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { Tab, useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { Tab } from '@/screens/Dapps/hooks/useDappWebViewScreen';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import {
   Dimensions,
   ListRenderItem,
+  StyleProp,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { BrowserTabCard } from './BrowserTabCard';
 
-export const BrowserTabList = () => {
+export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
-  const navigation = useRabbyAppNavigation();
-  const {
-    tabs,
-    activeTab,
-    switchToTab,
-    closeTab,
-    // openedDappItems,
-    // finalActiveDappId,
-    // activeDapp,
-    // collapseDappWebViewScreen,
-    closeOpenedDapp,
-    clearActiveDappOrigin,
-  } = useBrowser();
+  const { tabs, activeTab, switchToTab, closeTab } = useBrowser();
 
   const renderItem: ListRenderItem<Tab> = useMemoizedFn(({ item, index }) => {
     return (
@@ -58,7 +46,7 @@ export const BrowserTabList = () => {
     );
   });
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <FlatList
         data={tabs}
         renderItem={renderItem}
@@ -90,6 +78,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 9,
     gap: 12,
     position: 'relative',
+    height: '100%',
   },
   addBtn: {
     position: 'absolute',

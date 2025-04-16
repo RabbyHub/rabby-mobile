@@ -1,19 +1,17 @@
-import React, { useMemo } from 'react';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import { RootNames } from '@/constant/layout';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { createGetStyles2024 } from '@/utils/styles';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
+import { debounce } from 'lodash';
+import React, { useMemo } from 'react';
+import { Text } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { DappCardList } from '../components/DappCardList';
 import { useDappWebViewScreen } from '../hooks/useDappWebViewScreen';
-import { Text } from 'react-native';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import LinearGradient from 'react-native-linear-gradient';
-import { debounce } from 'lodash';
-import { RootNames } from '@/constant/layout';
 
 export function DappWebViewManageScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();

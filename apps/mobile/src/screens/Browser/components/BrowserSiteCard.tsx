@@ -86,9 +86,9 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
         <View style={styles.dappIconWraper}>
           <DappIcon
             source={
-              data?.info?.logo_url
+              data?.icon
                 ? {
-                    uri: data.info?.logo_url,
+                    uri: data.icon,
                   }
                 : undefined
             }
@@ -133,12 +133,12 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
             </Text>
           )}
           <View style={styles.dappInfo}>
-            {data.info?.name ? (
+            {data.name ? (
               <Text style={[styles.dappName]} numberOfLines={1}>
-                {data.info?.name}
+                {data.name}
               </Text>
             ) : null}
-            {data.info?.name && data.info?.collected_list?.length ? (
+            {data.name && data.info?.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
             <BrowserSiteListBy data={data.info?.collected_list} />

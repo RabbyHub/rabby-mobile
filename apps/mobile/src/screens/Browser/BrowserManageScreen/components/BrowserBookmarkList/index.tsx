@@ -1,28 +1,27 @@
-import RcIconHistory from '@/assets/icons/dapp/icon-history.svg';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { StyleProp, Text, View, ViewStyle } from 'react-native';
-import { DappHistoryCardList } from './DappHistoryCardList';
-import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
-import { useBrowserHistory } from '@/hooks/useBrowserHistory';
-import { useMemoizedFn } from 'ahooks';
-import { useBrowserTabs } from '../../hooks/useBrowserTabs';
-import { useBrowserBookmark } from '@/hooks/useBrowserBookmark';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
+import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
 
-export const BrowserHistoryList = ({
+export const BrowserBookmarkList = ({
   style,
 }: {
   style?: StyleProp<ViewStyle>;
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const { browserHistoryList, removeBrowserHistory } = useBrowserHistory();
-  const { openUrlAsDapp } = useBrowserTabs();
-  const { removeBookmark, addBookmark, getBookmark } = useBrowserBookmark();
+  const { openTab } = useBrowser();
+  const { bookmarkList, removeBookmark, addBookmark, getBookmark } =
+    useBrowserBookmark();
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
-    openUrlAsDapp(dappInfo.url || dappInfo.origin);
+    openTab(dappInfo.url || dappInfo.origin);
   });
 
   const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {
@@ -39,18 +38,18 @@ export const BrowserHistoryList = ({
     }
   });
 
-  const handleDelete = useMemoizedFn((dappInfo: DappInfo) => {
-    removeBrowserHistory(dappInfo.url || dappInfo.origin);
-  });
-
   return (
     <View style={[styles.container, style]}>
-      <DappHistoryCardList
-        data={browserHistoryList}
+      <BrowserSiteCardList
+        data={bookmarkList}
         onPress={handlePress}
         onFavoritePress={handleFavoritePress}
-        onDeletePress={handleDelete}
-        ListEmptyComponent={DappHistorySectionEmpty}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>Favorites</Text>
+          </View>
+        }
+        ListEmptyComponent={BrowserBookmarkEmpty}
       />
     </View>
   );
@@ -58,13 +57,14 @@ export const BrowserHistoryList = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    // paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
   header: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    paddingHorizontal: 8,
   },
   titleWarper: {
     display: 'flex',

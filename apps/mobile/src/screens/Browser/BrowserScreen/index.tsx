@@ -7,12 +7,12 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useBrowserHistory } from '@/hooks/useBrowserHistory';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useNavigationState } from '@react-navigation/native';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTab } from './components/BrowserTab';
 
@@ -34,27 +34,17 @@ export function BrowserScreen() {
       {},
   ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
 
-  const {
-    tabs,
-    activeTab,
-    closeTab,
-    updateTab,
-    // openedDappItems,
-    // finalActiveDappId,
-    // activeDapp,
-    // collapseDappWebViewScreen,
-    closeOpenedDapp,
-  } = useBrowser();
+  const { tabs, activeTab, closeTab, updateTab, openTab } = useBrowser();
 
   const { setBrowserHistory } = useBrowserHistory();
 
   const navigation = useRabbyAppNavigation();
 
   useLayoutEffect(() => {
-    console.debug('DappWebViewStubScreen mounted');
+    console.debug('BrowserScreen mounted');
 
     return () => {
-      console.debug('DappWebViewStubScreen unmounted');
+      console.debug('BrowserScreen unmounted');
     };
   }, []);
 
@@ -72,67 +62,74 @@ export function BrowserScreen() {
             paddingBottom: androidOnlyBottomOffset,
           },
         ]}>
-        {tabs.map((tab, idx) => {
-          const isActiveTab = activeTab?.id === tab.id;
-          const key = tab.id;
-          const urlInfo = urlUtils.canoicalizeDappUrl(tab.url);
+        {!tabs.length ? (
+          <BrowserTab origin={''} url="" onOpenTab={openTab} />
+        ) : (
+          <>
+            {tabs.map((tab, idx) => {
+              const isActiveTab = activeTab?.id === tab.id;
+              const key = tab.id;
+              const urlInfo = urlUtils.canoicalizeDappUrl(tab.url);
 
-          return (
-            <BrowserTab
-              key={key}
-              ref={inst => {
-                if (isActiveTab) {
-                  // globalSetActiveDappState({ dappOrigin: urlInfo.origin });
-                  // // @ts-expect-error
-                  // activeDappWebViewControlRef.current = inst;
-                  // globalSetActiveDappState({
-                  //   dappOrigin: urlInfo.origin,
-                  //   tabId: tab.id,
-                  // });
-                }
-              }}
-              onUpdateTab={({ url, viewShot }) => {
-                updateTab(tab.id, {
-                  url,
-                  viewShot,
-                });
-              }}
-              onUpdateHistory={({ url, name }) => {
-                setBrowserHistory({
-                  url,
-                  name,
-                  createdAt: Date.now(),
-                });
-              }}
-              style={[!isActiveTab && { display: 'none' }]}
-              origin={tab.url}
-              tabId={tab.id}
-              url={tab.url}
-              tabsCount={tabs.length}
-              onSelfClose={reason => {
-                if (reason === 'phishing') {
-                  // todo
-                  closeTab(tab.id);
-                }
-              }}
-              // webviewContainerMaxHeight={webviewMaxHeight}
-              webviewProps={{
-                /**
-                 * @platform ios
-                 */
-                contentMode: 'mobile',
-                /**
-                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
-                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
-                 * @platform android
-                 */
-                nestedScrollEnabled: false,
-                allowsInlineMediaPlayback: true,
-                disableJsPromptLike: !isActiveTab,
-              }}
-            />
-          );
-        })}
+              return (
+                <BrowserTab
+                  key={key}
+                  ref={inst => {
+                    if (isActiveTab) {
+                      // globalSetActiveDappState({ dappOrigin: urlInfo.origin });
+                      // // @ts-expect-error
+                      // activeDappWebViewControlRef.current = inst;
+                      // globalSetActiveDappState({
+                      //   dappOrigin: urlInfo.origin,
+                      //   tabId: tab.id,
+                      // });
+                    }
+                  }}
+                  onUpdateTab={({ url, viewShot }) => {
+                    updateTab(tab.id, {
+                      url,
+                      viewShot,
+                    });
+                  }}
+                  onUpdateHistory={({ url, name }) => {
+                    setBrowserHistory({
+                      url,
+                      name,
+                      createdAt: Date.now(),
+                    });
+                  }}
+                  onOpenTab={openTab}
+                  style={[!isActiveTab && { display: 'none' }]}
+                  origin={tab.url}
+                  tabId={tab.id}
+                  url={tab.url}
+                  tabsCount={tabs.length}
+                  onSelfClose={reason => {
+                    if (reason === 'phishing') {
+                      // todo
+                      closeTab(tab.id);
+                    }
+                  }}
+                  // webviewContainerMaxHeight={webviewMaxHeight}
+                  webviewProps={{
+                    /**
+                     * @platform ios
+                     */
+                    contentMode: 'mobile',
+                    /**
+                     * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                     * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                     * @platform android
+                     */
+                    nestedScrollEnabled: false,
+                    allowsInlineMediaPlayback: true,
+                    disableJsPromptLike: !isActiveTab,
+                  }}
+                />
+              );
+            })}
+          </>
+        )}
         {/* {tabs.length > 0 && activeTab&& (
             <AccountSwitcherModalInDappWebView
               activeDappId={finalActiveDappId}

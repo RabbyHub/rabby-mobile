@@ -30,9 +30,6 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
-import { TabActions, useNavigation } from '@react-navigation/native';
-import { v4 as uuid } from 'uuid';
-import { useMemoizedFn } from 'ahooks';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -59,11 +56,12 @@ export function useOpenedActiveDappState() {
 }
 
 export type OpenedDappItem = {
-  url: string;
-  id: string;
+  origin: DappInfo['origin'];
+  dappTabId: string;
   $openParams?: {
     initialUrl?: string;
   };
+  maybeDappInfo?: DappInfo;
   /**
    * @description timestamp on opening
    *
@@ -73,9 +71,6 @@ export type OpenedDappItem = {
   openTime: number;
   lastOpenWebViewId?: string | null;
 };
-
-export type Tab = OpenedDappItem;
-
 const DAPPS_VIEW_LIMIT = {
   maxCount: 1,
   // 30days
@@ -92,10 +87,25 @@ const dappsViewConfigAtom = atom({
     ? DAPPS_VIEW_LIMIT_SHORT.expireDuration
     : DAPPS_VIEW_LIMIT.expireDuration,
 });
+const openedDappWebViewRecordsAtom = atom<OpenedDappItem[]>([]);
+/**
+ * @deprecated
+ */
+export function useOpenedDappsRecordsOnDEV() {
+  const openedDappRecords = useAtomValue(openedDappWebViewRecordsAtom);
 
-const tabsAtom = atom<Tab[]>([]);
+  return {
+    openedDappRecords,
+  };
+}
 
-const activeTabAtom = atom<Tab | undefined | null>(null);
+function makeDappWebViewTabId(seed?: string) {
+  if (seed) {
+    return hashUtils.djb2hash(seed).toString(16);
+  }
+
+  return stringUtils.randString(8);
+}
 
 /**
  * auto activate and inactivate last used account in dapp
@@ -138,13 +148,11 @@ export type DappWebViewHideContext = {
   latestUrl?: string;
 };
 export function useDappWebViewScreen() {
-  // const { dapps, addDapp } = useDapps();
+  const { dapps, addDapp } = useDapps();
   const [activeDappOrigin, _setActiveDappOrigin] =
     useAtom(activeDappOriginAtom);
 
-  // const { activate, inactivate } = useDappLastUsedAccount();
-
-  const navigation = useNavigation();
+  const { activate, inactivate } = useDappLastUsedAccount();
 
   // const openingActiveDappRef = useRef<boolean>(false);
   const { stateRef: openingActiveDappRef } = useRefState<any>(false);
@@ -155,37 +163,99 @@ export function useDappWebViewScreen() {
 
       if (!origin) {
         preferenceService.toggleAllowNotifyAccountsChanged(false);
-        // inactivate();
+        inactivate();
       }
     },
-    [_setActiveDappOrigin],
+    [_setActiveDappOrigin, inactivate],
   );
 
-  const [tabs, setTabs] = useAtom(tabsAtom);
-  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
-  const switchToTab = useMemoizedFn((tab: Tab) => {
-    setActiveTab(tab);
-  });
-  const closeTab = useMemoizedFn((tab: Tab) => {
-    if (tab.id === activeTab?.id) {
-      const index = tabs.findIndex(item => item.id === tab.id);
-      if (index === -1) {
-        return;
+  const { dappsViewConfig } = useDappsViewConfig();
+
+  // TODO: how about opened non-dapp urls?
+  const [openedDappRecords, _setOpenedOriginsDapps] = useAtom(
+    openedDappWebViewRecordsAtom,
+  );
+  const setOpenedOriginsDapps = useCallback<typeof _setOpenedOriginsDapps>(
+    valueOrFunc => {
+      let nextVal =
+        typeof valueOrFunc === 'function'
+          ? valueOrFunc(openedDappRecords)
+          : valueOrFunc;
+      if (nextVal.length > dappsViewConfig.maxCount) {
+        // sort desc by openTime
+        nextVal.sort((a, b) => b.openTime - a.openTime);
       }
-      const newActiveTab = tabs[index + 1] || tabs[index - 1];
-      setActiveTab(newActiveTab);
-    }
-    const newTabs = tabs.filter(item => item.id !== tab.id);
-    setTabs(newTabs);
-    if (newTabs.length <= 0) {
-      // todo
-      navigation.goBack();
-    }
-  });
+
+      // trim all dapps expired
+      nextVal = nextVal.filter(
+        item => Date.now() - item.openTime <= dappsViewConfig.expireDuration,
+      );
+
+      _setOpenedOriginsDapps(nextVal.slice(0, dappsViewConfig.maxCount));
+    },
+    [openedDappRecords, _setOpenedOriginsDapps, dappsViewConfig],
+  );
+
+  const expandDappWebViewScreen = useCallback(
+    ({ onDone }: { onDone?: () => void } = {}) => {
+      if (openingActiveDappRef.current) return;
+
+      openingActiveDappRef.current = setTimeout(() => {
+        openingActiveDappRef.current = false;
+        onDone?.();
+      }, 500);
+    },
+    [openingActiveDappRef],
+  );
+
+  const setLastWebViewIdByDappOrigin = useCallback(
+    (
+      dappOrigin: DappInfo['origin'],
+      input: {
+        webviewId?: string;
+        url?: string;
+      },
+    ) => {
+      if (
+        !input.url ||
+        urlUtils.canoicalizeDappUrl(input.url).httpOrigin !== dappOrigin
+      )
+        return;
+
+      setOpenedOriginsDapps(prev => {
+        const itemIdx = prev.findIndex(item => item.origin === dappOrigin);
+        if (itemIdx === -1) return prev;
+
+        prev[itemIdx].lastOpenWebViewId = input.webviewId || null;
+
+        return [...prev];
+      });
+    },
+    [setOpenedOriginsDapps],
+  );
+
+  const collapseDappWebViewScreen = useCallback(
+    (ctx?: DappWebViewHideContext) => {
+      const result = { willClose: false };
+      if (openingActiveDappRef.current) return result;
+
+      if (ctx?.dappOrigin && ctx.webviewId) {
+        setLastWebViewIdByDappOrigin(ctx.dappOrigin, {
+          webviewId: ctx.webviewId,
+          url: ctx.latestUrl,
+        });
+      }
+
+      result.willClose = true;
+
+      return result;
+    },
+    [openingActiveDappRef, setLastWebViewIdByDappOrigin],
+  );
 
   const openUrlAsDapp = useCallback(
     (
-      url: string,
+      dappUrl: DappInfo['origin'] | OpenedDappItem,
       options?: {
         /** @default {true} */
         isActiveDapp?: boolean;
@@ -197,34 +267,105 @@ export function useDappWebViewScreen() {
     ) => {
       const {
         isActiveDapp = true,
-        forceReopen = true,
+        forceReopen = false,
         dappsWebViewFromRoute = RootNames.Dapps,
       } = options || {};
+      let useLatestWebViewId = true;
+      if (forceReopen) useLatestWebViewId = false;
 
-      const newTab: OpenedDappItem = {
-        url,
-        id: uuid(),
-        openTime: Date.now(),
-      };
+      const item =
+        typeof dappUrl === 'string'
+          ? {
+              origin: dappUrl,
+              dappTabId: '',
+              openTime: Date.now(),
+            }
+          : dappUrl;
 
+      const newUrl = item.origin;
       const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
-        newTab.url,
+        item.origin,
       );
+      item.dappTabId = makeDappWebViewTabId(targetOrigin);
 
-      if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
-        return false;
+      if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) return false;
+
+      item.origin = targetOrigin;
+
+      if (!dapps[item.origin]) {
+        addDapp(
+          createDappBySession({
+            origin: item.origin,
+            name: '',
+            icon: '',
+          }),
+        );
       }
 
-      setTabs(prev => {
-        return [...prev, newTab];
+      // this will change data in dapps backend, maybe not sync with dappInfo, but we don't need basic info later
+      syncBasicDappInfo(item.origin);
+
+      const dappInfo: DappInfo = dapps[item.origin];
+      if (!dappInfo.currentAccount) {
+        const account = apisDapp.setCurrentAccountForDapp(item.origin);
+        dappInfo.currentAccount = account;
+      }
+
+      const needTriggerWebViewReload =
+        forceReopen || item.$openParams?.initialUrl !== newUrl;
+
+      const $openParams = { ...item.$openParams };
+      if (needTriggerWebViewReload) {
+        $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
+        item.$openParams = $openParams;
+      }
+
+      setOpenedOriginsDapps(prev => {
+        const itemIdx = prev.findIndex(
+          prevItem => prevItem.origin === item.origin,
+        );
+        if (itemIdx === -1) {
+          return [...prev, item];
+        }
+
+        prev[itemIdx] = {
+          ...prev[itemIdx],
+          openTime: Date.now(),
+        };
+
+        if (
+          useLatestWebViewId &&
+          prev[itemIdx].lastOpenWebViewId === prev[itemIdx].dappTabId
+        ) {
+          // call to open active id
+          setActiveDappOrigin(item.origin);
+          console.debug(
+            `[dapp webview - ${prev[itemIdx].dappTabId}] just show webview.`,
+          );
+        } else {
+          prev[itemIdx] = {
+            ...prev[itemIdx],
+            $openParams: {
+              ...prev[itemIdx].$openParams,
+              ...$openParams,
+            },
+          };
+          console.debug(
+            `[dapp webview - ${prev[itemIdx].dappTabId}] will redirect webview.`,
+          );
+        }
+
+        return [...prev];
       });
 
-      setActiveTab(newTab);
+      if (isActiveDapp) {
+        setActiveDappOrigin(item.origin);
+      }
 
-      // preferenceService.toggleAllowNotifyAccountsChanged(true);
+      preferenceService.toggleAllowNotifyAccountsChanged(true);
 
-      // activate(dappInfo);
-      //
+      activate(dappInfo);
+
       const routeName = getLatestNavigationName();
       const needRedirect =
         routeName && routeName !== RootNames.DappWebViewStubOnHome;
@@ -233,41 +374,40 @@ export function useDappWebViewScreen() {
          * @description always push here, because we put RootNames.DappWebViewStubOnHome
          * at top level home-navigator (which's bottom-tabs-navigator)
          **/
-        // naviPush(RootNames.StackRoot, {
-        //   screen: RootNames.DappWebViewStubOnHome,
-        //   params: {
-        //     dappsWebViewFromRoute,
-        //     // nextOpenDappInfo: dapps[item.origin],
-        //   },
-        // });
-
-        navigation.dispatch(
-          TabActions.jumpTo(RootNames.DappWebViewStubOnHome, {
+        naviPush(RootNames.StackRoot, {
+          screen: RootNames.DappWebViewStubOnHome,
+          params: {
             dappsWebViewFromRoute,
-          }),
-        );
-
+            // nextOpenDappInfo: dapps[item.origin],
+          },
+        });
         // try trigger notify again
-        // setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
+        setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
       } else {
-        // activate(dapps[item.origin]);
+        activate(dapps[item.origin]);
       }
 
       return true;
     },
-    [setTabs, setActiveTab, navigation],
+    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin, activate],
   );
 
   const removeOpenedDapp = useCallback(
-    (tabId: string) => {
-      setTabs(prev => prev.filter(item => item.id !== tabId));
+    (dappOrigin: DappInfo['origin']) => {
+      if (IS_ANDROID) {
+        // dont keep the dapp in the stack on android
+        setOpenedOriginsDapps([]);
+      } else {
+        setOpenedOriginsDapps(prev =>
+          prev.filter(item => item.origin !== dappOrigin),
+        );
+      }
 
-      // todo
-      if (activeDappOrigin === tabId) {
+      if (activeDappOrigin === dappOrigin) {
         setActiveDappOrigin(null);
       }
     },
-    [setTabs, activeDappOrigin, setActiveDappOrigin],
+    [setOpenedOriginsDapps, activeDappOrigin, setActiveDappOrigin],
   );
 
   const clearActiveDappOrigin = useCallback(() => {
@@ -278,24 +418,54 @@ export function useDappWebViewScreen() {
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
       removeOpenedDapp(dappOrigin);
-      // if (activeDappOrigin === dappOrigin) {
-      //   collapseDappWebViewScreen();
-      // }
+      if (activeDappOrigin === dappOrigin) {
+        collapseDappWebViewScreen();
+      }
     },
-    [removeOpenedDapp],
+    [removeOpenedDapp, activeDappOrigin, collapseDappWebViewScreen],
   );
+
+  const originalInfo = useMemo(() => {
+    const retOpenedDapps = [] as OpenedDappItem[];
+    openedDappRecords.forEach(item => {
+      retOpenedDapps.push({
+        ...item,
+        maybeDappInfo: dapps[item.origin]
+          ? dapps[item.origin]
+          : createDappBySession({
+              origin: item.origin,
+              name: '',
+              icon: '',
+            }),
+      });
+    });
+
+    const retActiveDapp = activeDappOrigin
+      ? dapps[activeDappOrigin] ||
+        createDappBySession({
+          origin: activeDappOrigin,
+          name: 'Temp Dapp',
+          icon: '',
+        })
+      : null;
+
+    return {
+      openedDappItems: retOpenedDapps,
+      activeDapp: retActiveDapp,
+    };
+  }, [dapps, activeDappOrigin, openedDappRecords]);
+
+  const openedDappItems = useDebounceValue(originalInfo.openedDappItems, 100);
+  const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
 
   return {
     openingActiveDappRef,
-    // activeDapp,
-    // finalActiveDappId: activeDapp?.origin,
-    // openedDappItems,
-    activeTab,
-    tabs,
-    switchToTab,
-    closeTab,
-    // expandDappWebViewScreen,
-    // collapseDappWebViewScreen,
+    activeDapp,
+    finalActiveDappId: activeDapp?.origin,
+    openedDappItems,
+
+    expandDappWebViewScreen,
+    collapseDappWebViewScreen,
 
     openUrlAsDapp,
     removeOpenedDapp,

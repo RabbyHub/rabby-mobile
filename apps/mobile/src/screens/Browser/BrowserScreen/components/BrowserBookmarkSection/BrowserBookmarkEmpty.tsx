@@ -7,7 +7,7 @@ import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { IS_IOS } from '@/core/native/utils';
 import { RcIconDynamicArrowCC } from '@/assets/icons/dapp';
 
-export const DappFavoriteSectionEmpty = () => {
+export const BrowserBookmarkEmpty = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
 
   return (

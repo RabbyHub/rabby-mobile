@@ -28,7 +28,6 @@ import { getLatestNavigationName } from '@/utils/navigation';
 import { useNavigationState } from '@react-navigation/native';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import LinearGradient from 'react-native-linear-gradient';
-import { BrowserTabList } from '@/components/WebView/BrowserTabList';
 
 /**
  * @description this screen will be put on top level of App's navigation
@@ -52,17 +51,81 @@ export function DappWebViewStubScreen() {
   ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
 
   const {
-    tabs,
-    activeTab,
-    // openedDappItems,
-    // finalActiveDappId,
-    // activeDapp,
-    // collapseDappWebViewScreen,
+    openedDappItems,
+    finalActiveDappId,
+    activeDapp,
+    collapseDappWebViewScreen,
     closeOpenedDapp,
     clearActiveDappOrigin,
   } = useDappWebViewScreen();
 
+  const activeDappWebViewControlRef = useRef<DappWebViewControl2Type>(null);
+
+  const { isDappConnected, disconnectDapp, updateFavorite } = useDapps();
+
   const navigation = useRabbyAppNavigation();
+
+  /**
+   * @description we put this screen at top level home-navigator (which's bottom-tabs-navigator)
+   */
+  const backToDappsScreen = useCallback(() => {
+    switch (dappsWebViewFromRoute) {
+      case RootNames.Dapps:
+      case RootNames.FavoriteDapps: {
+        navigation.navigate(RootNames.StackDapps, {
+          screen: dappsWebViewFromRoute,
+        });
+        break;
+      }
+      default: {
+        navigation.replace(RootNames.StackDapps, {
+          screen: dappsWebViewFromRoute,
+        });
+      }
+    }
+  }, [navigation, dappsWebViewFromRoute]);
+
+  const hideDappWebViewScreen = useCallback(
+    (ctx?: DappWebViewHideContext) => {
+      backToDappsScreen();
+
+      if (IS_ANDROID && ctx?.dappOrigin) {
+        closeOpenedDapp(ctx?.dappOrigin);
+        clearActiveDappOrigin();
+      } else {
+        const { willClose } = collapseDappWebViewScreen(ctx);
+        if (!willClose) return;
+        clearActiveDappOrigin();
+      }
+    },
+    [
+      closeOpenedDapp,
+      collapseDappWebViewScreen,
+      clearActiveDappOrigin,
+      backToDappsScreen,
+    ],
+  );
+
+  useLayoutEffect(() => {
+    const listener = () => {
+      // prevent default action
+      const shouldPrevent =
+        getLatestNavigationName() === RootNames.DappWebViewStubOnHome;
+      if (shouldPrevent) {
+        backToDappsScreen();
+      }
+
+      return shouldPrevent;
+    };
+
+    BackHandler.addEventListener('hardwareBackPress', listener);
+
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', listener);
+    };
+  }, [backToDappsScreen]);
+
+  // const hasOpenedDapps = !!openedDappItems.length && !!activeDapp;
 
   useLayoutEffect(() => {
     console.debug('DappWebViewStubScreen mounted');
@@ -91,7 +154,7 @@ export function DappWebViewStubScreen() {
           style={[
             styles.bsView,
             // !!openedDappItems.length && styles.bsViewOpened,
-            !activeTab ? styles.bgMustBeTransparent : styles.bsViewOpened,
+            !activeDapp ? styles.bgMustBeTransparent : styles.bsViewOpened,
             {
               // paddingTop: containerPaddingTop,
               // paddingBottom: containerPaddingBottom,
@@ -101,7 +164,7 @@ export function DappWebViewStubScreen() {
               // })
             },
           ]}>
-          {!tabs.length && !IS_ANDROID && (
+          {!openedDappItems.length && !IS_ANDROID && (
             <SilentTouchableView
               style={{
                 height: '100%',
@@ -119,37 +182,33 @@ export function DappWebViewStubScreen() {
               </Text>
             </SilentTouchableView>
           )}
-          {tabs.map((tab, idx) => {
-            // const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
-            // const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
-            // const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-            // const key = `${dappInfo.origin}-${dappInfo.dappTabId}`;
-            const isConnected = false;
-            const isFavorited = false;
-            const isActiveTab = activeTab?.id === tab.id;
-            const key = tab.id;
+          {openedDappItems.map((dappInfo, idx) => {
+            const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
+            const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
+            const isActiveDapp = activeDapp?.origin === dappInfo.origin;
+            const key = `${dappInfo.origin}-${dappInfo.dappTabId}`;
 
             return (
               <DappWebViewControl2
                 key={key}
                 ref={inst => {
-                  if (isActiveTab) {
-                    // globalSetActiveDappState({ dappOrigin: dappInfo.origin });
+                  if (isActiveDapp) {
+                    globalSetActiveDappState({ dappOrigin: dappInfo.origin });
                     // @ts-expect-error
-                    // activeDappWebViewControlRef.current = inst;
-                    // globalSetActiveDappState({
-                    //   dappOrigin: dappInfo.origin,
-                    //   tabId: dappInfo.dappTabId,
-                    // });
+                    activeDappWebViewControlRef.current = inst;
+                    globalSetActiveDappState({
+                      dappOrigin: dappInfo.origin,
+                      tabId: dappInfo.dappTabId,
+                    });
                   }
                 }}
-                style={[!isActiveTab && { display: 'none' }]}
-                dappOrigin={tab.url}
-                dappTabId={tab.id}
-                initialUrl={tab.url}
+                style={[!isActiveDapp && { display: 'none' }]}
+                dappOrigin={dappInfo.origin}
+                dappTabId={dappInfo.dappTabId}
+                initialUrl={dappInfo.$openParams?.initialUrl}
                 onSelfClose={reason => {
                   if (reason === 'phishing') {
-                    closeOpenedDapp(tab.url);
+                    closeOpenedDapp(dappInfo.origin);
                   }
                 }}
                 // webviewContainerMaxHeight={webviewMaxHeight}
@@ -165,12 +224,11 @@ export function DappWebViewStubScreen() {
                    */
                   nestedScrollEnabled: false,
                   allowsInlineMediaPlayback: true,
-                  disableJsPromptLike: !isActiveTab,
+                  disableJsPromptLike: !isActiveDapp,
                 }}
-                // headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
+                headerRight={<WebViewHeaderRight activeDapp={activeDapp} />}
                 onPressHeaderLeftClose={ctx => {
-                  navigation.goBack();
-                  // hideDappWebViewScreen(ctx);
+                  hideDappWebViewScreen(ctx);
                 }}
                 navControlContent={({ webviewState, webviewActions }) => {
                   return (
@@ -201,11 +259,11 @@ export function DappWebViewStubScreen() {
               />
             );
           })}
-          {/* {tabs.length > 0 && activeTab&& (
+          {openedDappItems.length > 0 && activeDapp && (
             <AccountSwitcherModalInDappWebView
               activeDappId={finalActiveDappId}
             />
-          )} */}
+          )}
         </AutoLockView>
       </View>
     </LinearGradient>

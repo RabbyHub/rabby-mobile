@@ -1,22 +1,40 @@
-import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 
 import { RcIconCloseCC } from '@/assets/icons/common';
+import { RcIconGoogle } from '@/assets/icons/dapp';
 import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
+import { NextSearchBar } from '@/components2024/SearchBar';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { IS_IOS } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-// import { RcIconCloseCC, RcIconCloseCircleCC } from '@/assets/icons/common';
 
-export function BrowserHeader({ url }: { url: string }) {
+export function BrowserHeader({
+  url,
+  isFocused,
+  onFocusChange,
+  onSearch,
+}: {
+  url?: string;
+  isFocused?: boolean;
+  onFocusChange?(isFocused: boolean): void;
+  onSearch?(search: string): void;
+}) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
 
+  const [searchText, setSearchText] = useState('');
   const navigation = useRabbyAppNavigation();
   const forScene = '@ActiveDappWebViewModal';
   const { finalSceneCurrentAccount, sceneCurrentAccount } = useSceneAccountInfo(
@@ -31,7 +49,42 @@ export function BrowserHeader({ url }: { url: string }) {
     navigation.goBack();
   });
 
-  const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url), [url]);
+  const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
+  const inputRef = useRef<any>(null);
+
+  if (isFocused) {
+    return (
+      <View style={styles.header}>
+        <NextSearchBar
+          style={styles.searchBar}
+          inputStyle={styles.searchBarInput}
+          placeholder={IS_IOS ? 'Search website' : 'Search Dapp'}
+          value={searchText}
+          searchIcon={<RcIconGoogle />}
+          autoFocus
+          alwaysShowCancel
+          onChangeText={setSearchText}
+          onFocus={() => {
+            onFocusChange?.(true);
+          }}
+          onBlur={() => {
+            onFocusChange?.(false);
+            setTimeout(() => {
+              setSearchText('');
+            }, 50);
+          }}
+          onCancel={() => {
+            inputRef.current.blur();
+          }}
+          ref={inputRef}
+          onSubmitEditing={e => {
+            onSearch?.(e.nativeEvent.text);
+          }}
+          enterKeyHint={'go'}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.header}>
@@ -49,7 +102,18 @@ export function BrowserHeader({ url }: { url: string }) {
         ) : null}
       </TouchableOpacity>
       <View style={styles.addressBar}>
-        <Text style={styles.addressBarText}>{urlInfo.fullDomain}</Text>
+        <TouchableWithoutFeedback onPress={() => onFocusChange?.(true)}>
+          {url ? (
+            <Text style={styles.addressBarText}>{urlInfo.fullDomain}</Text>
+          ) : (
+            <View style={styles.addressBarInner}>
+              <RcIconGoogle />
+              <Text style={styles.addressBarPlaceholder}>
+                Search {IS_IOS ? 'Website' : 'Dapp'}
+              </Text>
+            </View>
+          )}
+        </TouchableWithoutFeedback>
       </View>
       <View>
         <TouchableOpacity onPress={handleClose}>
@@ -74,6 +138,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 5,
     paddingBottom: 9,
     gap: 12,
+    width: '100%',
     // borderBottomWidth: 1,
     // borderBottomColor: colors2024['neutral-line'],
   },
@@ -85,6 +150,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 11,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 12,
+    height: 42,
+  },
+  addressBarInner: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
   },
   addressBarText: {
     color: colors2024['neutral-body'],
@@ -92,6 +164,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
+  },
+  addressBarPlaceholder: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
   },
   iconCloseCircle: {
     width: 32,
@@ -101,5 +180,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 32,
+  },
+  searchBar: {
+    flex: 1,
+  },
+  searchBarInput: {
+    height: 42,
   },
 }));

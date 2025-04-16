@@ -3,6 +3,7 @@ import { Tab } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { createGetStyles2024 } from '@/utils/styles';
+import { urlUtils } from '@rabby-wallet/base-utils';
 import {
   Image,
   StyleProp,
@@ -31,6 +32,8 @@ export const BrowserTabCard: React.FC<Props> = ({
     getStyle,
   });
 
+  const urlInfo = urlUtils.canoicalizeDappUrl(tab.url);
+
   return (
     <View
       style={[styles.wrap, isActive ? [styles.active, styles.shadow] : null]}>
@@ -41,7 +44,7 @@ export const BrowserTabCard: React.FC<Props> = ({
         }}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-            {tab.url}
+            {urlInfo.fullDomain}
           </Text>
           <TouchableOpacity
             hitSlop={8}

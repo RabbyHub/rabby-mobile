@@ -22,7 +22,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { TabActions } from '@react-navigation/native';
 import { DropdownMenuView } from './DropdownMenuView';
-import { useBrowserBookmark } from '@/hooks/useBrowserBookmark';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 
 export const BOTTOM_NAV_CONTROL_PRESS_OPACITY = 0.3;
 
@@ -211,9 +211,6 @@ export function BrowserFooter({
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.navControlItem]}
-        // onPress={() => {
-        //   navigation.dispatch(TabActions.jumpTo(RootNames.BrowserManage));
-        // }}
         onPress={onPressViewTabs}>
         <Text>{tabsCount || 0}</Text>
       </TouchableOpacity>

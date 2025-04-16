@@ -14,9 +14,9 @@ import { chainListAtom } from '@/hooks/useChainList';
 import { getChainList } from '@/constant/chains';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { useDappsHome } from '@/hooks/useDappsHome';
-import { useBrowserHistory } from '@/hooks/useBrowserHistory';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { dappsAtom, dappServiceAtom } from '@/hooks/useDapps';
-import { useBrowserBookmark } from '@/hooks/useBrowserBookmark';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 
 /**
  * @description only call this hook on app's top level

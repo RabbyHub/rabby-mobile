@@ -38,10 +38,6 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useMemoizedFn } from 'ahooks';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components2024/Toast';
-import { BrowserFooter } from './BrowserFooter';
-import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { BrowserHeader } from './BrowserHeader';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl2::error]', ...info);
@@ -420,7 +416,8 @@ const DappWebViewControl2 = React.forwardRef<
 
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
-        <BrowserHeader />
+        {renderedHeaderNode}
+
         {/* webvbiew */}
         <View
           // renderToHardwareTextureAndroid
@@ -434,13 +431,8 @@ const DappWebViewControl2 = React.forwardRef<
           ]}>
           {renderedWebviewNode}
         </View>
-        <View style={styles.dappWebViewNavControl}>
-          <BrowserFooter
-            webviewState={webviewState}
-            webviewActions={webviewActions}
-          />
-        </View>
-        <AccountSwitcherModal forScene="@ActiveDappWebViewModal" inScreen />
+
+        <View style={styles.dappWebViewNavControl}>{finalNavControlNode}</View>
       </AutoLockView>
     );
   },

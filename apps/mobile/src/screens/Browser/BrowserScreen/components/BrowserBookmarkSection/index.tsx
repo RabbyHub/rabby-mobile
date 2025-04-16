@@ -1,11 +1,7 @@
 import RcIconRight from '@/assets/icons/dapp/icon-right.svg';
-import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
-import { RootNames } from '@/constant/layout';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
-import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
 import React, { useMemo, useState } from 'react';
 import {
   StyleProp,
@@ -15,20 +11,21 @@ import {
   ViewStyle,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { DappFavoriteItem } from './DappFavoriteItem';
-import { DappFavoriteSectionEmpty } from './DappFavoriteSectionEmpty';
+import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
+import { BrowserBookmarkItem } from './BrowserBookmarkItem';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 
-export const DappFavoriteSection = ({
-  data,
+export const BrowserBookmarkSection = ({
   onPress,
   style,
 }: {
-  data?: DappInfo[];
   style?: StyleProp<ViewStyle>;
   onPress?: (dapp: DappInfo) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const [isFold, setIsFold] = useState(true);
+
+  const { bookmarkList: data } = useBrowserBookmark();
 
   const { list } = useMemo(() => {
     return {
@@ -75,15 +72,15 @@ export const DappFavoriteSection = ({
           <View style={[styles.list, gapStyle]}>
             {list.map(item => {
               return (
-                <View key={item.origin} style={styles.item}>
-                  <DappFavoriteItem data={item} onPress={onPress} />
+                <View key={item.url || item.origin} style={styles.item}>
+                  <BrowserBookmarkItem data={item} onPress={onPress} />
                 </View>
               );
             })}
           </View>
         </>
       ) : (
-        <DappFavoriteSectionEmpty />
+        <BrowserBookmarkEmpty />
       )}
     </View>
   );
@@ -93,6 +90,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     marginBottom: 30,
     paddingHorizontal: 24,
+    marginTop: 12,
   },
   header: {
     display: 'flex',

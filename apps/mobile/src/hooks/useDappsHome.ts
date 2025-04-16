@@ -3,8 +3,8 @@ import { useCallback, useMemo } from 'react';
 
 import { useFocusEffect } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import { useBrowserHistory } from './useBrowserHistory';
 import { dappsAtom, useDapps } from './useDapps';
+import { useBrowserHistory } from './browser/useBrowserHistory';
 
 export const useDappsHome = () => {
   const [dapps] = useAtom(dappsAtom);
@@ -22,7 +22,7 @@ export const useDappsHome = () => {
     getBrowserHistoryList,
     removeBrowserHistory,
     setBrowserHistory,
-  } = useBrowserHistory({ dapps });
+  } = useBrowserHistory();
 
   const favoriteApps = useMemo(() => {
     return sortBy(

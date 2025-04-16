@@ -33,7 +33,7 @@ export const BrowserSiteCardList = ({
     <FlatList
       data={data}
       style={styles.list}
-      keyExtractor={item => item.origin}
+      keyExtractor={item => item.url || item.origin}
       showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         return (
@@ -56,7 +56,6 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
       marginBottom: 20,
-      paddingHorizontal: 16,
     },
     listItem: {
       marginBottom: 12,

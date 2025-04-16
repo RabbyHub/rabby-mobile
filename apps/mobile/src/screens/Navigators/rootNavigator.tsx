@@ -59,7 +59,7 @@ export function HomeScreenNavigator() {
           }}
         />
 
-        <HomeHiddenTabStack.Screen
+        {/* <HomeHiddenTabStack.Screen
           name={RootNames.DappWebViewStubOnHome}
           component={DappWebViewStubScreen}
           options={{
@@ -78,7 +78,7 @@ export function HomeScreenNavigator() {
             //   return null;
             // }
           }}
-        />
+        /> */}
       </HomeHiddenTabStack.Navigator>
 
       <BiometricsStubModal />

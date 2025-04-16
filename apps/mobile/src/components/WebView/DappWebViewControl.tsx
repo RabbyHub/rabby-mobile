@@ -1,46 +1,48 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Dimensions,
-  Platform,
-  StyleProp,
   StyleSheet,
   View,
+  Dimensions,
+  StyleProp,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import WebView from 'react-native-webview';
 
 import {
+  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
-import { stringUtils } from '@rabby-wallet/base-utils';
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { Text } from '../Text';
 
 import { ScreenLayouts } from '@/constant/layout';
 import { useThemeStyles } from '@/hooks/theme';
 
-import { APP_UA_PARIALS } from '@/constant';
-import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
+import { RcIconMore } from './icons';
+import { devLog } from '@/utils/logger';
+import { useSheetModal } from '@/hooks/useSheetModal';
+import TouchableView from '../Touchable/TouchableView';
+import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
+import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
+import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import {
   BUILTIN_SPECIAL_URLS,
   useSetupWebview,
 } from '@/core/bridges/useBackgroundBridge';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
+import { formatDappOriginToShow } from '@/utils/url';
+import { APP_UA_PARIALS } from '@/constant';
+import { createGetStyles } from '@/utils/styles';
+import AutoLockView from '../AutoLockView';
+import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
+import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles } from '@/utils/styles';
-import { formatDappOriginToShow } from '@/utils/url';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import AutoLockView from '../AutoLockView';
-import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
-import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
-import TouchableView from '../Touchable/TouchableView';
-import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
-import { RcIconMore } from './icons';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
-import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);

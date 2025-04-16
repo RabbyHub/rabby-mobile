@@ -2,6 +2,7 @@ import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
@@ -14,9 +15,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { DappIcon } from '../DappIcon';
 
-export const DappFavoriteItem = ({
+export const BrowserBookmarkItem = ({
   data,
   onPress,
   style,
@@ -43,9 +43,9 @@ export const DappFavoriteItem = ({
         <View style={styles.dappIconWarper}>
           <DappIcon
             source={
-              data?.info?.logo_url
+              data?.icon
                 ? {
-                    uri: data.info?.logo_url,
+                    uri: data.icon,
                   }
                 : undefined
             }
@@ -79,7 +79,7 @@ export const DappFavoriteItem = ({
           </>
         </View>
         <Text style={[styles.dappName, { maxWidth }]} numberOfLines={1}>
-          {data?.info?.name}
+          {data?.name}
         </Text>
       </View>
     </TouchableOpacity>

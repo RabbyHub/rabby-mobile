@@ -137,12 +137,12 @@ export const DappCardInner: React.FC<DappCardProps> = ({
             </Text>
           )}
           <View style={styles.dappInfo}>
-            {data.name ? (
+            {data.info?.name ? (
               <Text style={[styles.dappName]} numberOfLines={1}>
-                {data.name}
+                {data.info?.name}
               </Text>
             ) : null}
-            {data.name && data.info?.collected_list?.length ? (
+            {data.info?.name && data.info?.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
             <DappCardListBy data={data.info?.collected_list} />
