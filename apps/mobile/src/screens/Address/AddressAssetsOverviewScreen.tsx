@@ -1,43 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  RefreshControl,
-} from 'react-native';
-import { useAccounts } from '@/hooks/account';
+import { Text, TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import { AddressItemEntry } from './components/AddressItem';
-import { AppRootName, RootNames } from '@/constant/layout';
-import {
-  useFocusEffect,
-  useNavigation,
-  StackActions,
-} from '@react-navigation/core';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { RootStackParamsList } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createGetStyles2024 } from '@/utils/styles';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
-import { useSortAddressList } from './useSortAddressList';
-import { AddressEmptyContainer } from './components/AddressEmptyContainer';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useSetPasswordFirst } from '@/hooks/useLock';
-import { useTranslation } from 'react-i18next';
-import { filterMyAccounts } from '@/utils/account';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { MultiAssets } from './components/MultiAssets';
-
-type CurrentAddressProps = NativeStackScreenProps<
-  RootStackParamsList,
-  'StackAddress'
->;
 
 export const OtherAddressNav = ({ onPress, text }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });

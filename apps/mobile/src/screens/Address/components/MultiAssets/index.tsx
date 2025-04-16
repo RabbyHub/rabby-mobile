@@ -27,6 +27,7 @@ import {
   DEFI_SEPARATOR_HEIGHT,
   HEADER_CHART_HEIGHT,
   RootNames,
+  SWITCH_HEADER_GAP,
   SWITCH_HEADER_HEIGHT,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
@@ -57,7 +58,7 @@ import {
   LayoutProvider,
 } from 'recyclerlistview';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
-import { chunk } from 'lodash';
+import { chain, chunk } from 'lodash';
 import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
@@ -69,6 +70,12 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { OtherAddressNav } from '../../AddressAssetsOverviewScreen';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
+import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -100,6 +107,7 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     refreshing,
+    chainsInfo,
     isLoading,
   } = useAssets(filterText);
 
@@ -285,7 +293,11 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
     setListData(dataProvider.cloneWithRows(dataList));
   }, [dataList, dataProvider]);
 
-  const { combineData, refresh, loading } = useMultiCurve(top10Addresses);
+  const {
+    combineData,
+    refresh: refreshCurve,
+    loading,
+  } = useMultiCurve(top10Addresses);
   const pathColor = !combineData.isLoss
     ? colors2024['green-default']
     : colors2024['red-default'];
@@ -323,6 +335,43 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
+  const [selectChainItem, setSelectChainItem] = useState<
+    ChainListItem | undefined
+  >();
+  const handleOnChainClick = useCallback(
+    (clear: boolean) => {
+      if (clear) {
+        setSelectChainItem(undefined);
+        setExtendedState(prev => ({ ...prev, selectedChain: undefined }));
+        return;
+      }
+
+      const id = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
+        value: selectChainItem,
+        bottomSheetModalProps: {
+          // enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+        chainList: chainsInfo.chainAssets,
+        titleText: t('page.receiveAddressList.selectChainTitle'),
+        onChange: (v: ChainListItem) => {
+          setSelectChainItem(v);
+          setExtendedState(prev => ({ ...prev, selectedChain: v }));
+          removeGlobalBottomSheetModal2024(id);
+        },
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(id);
+        },
+      });
+    },
+    [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
+  );
 
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
@@ -343,6 +392,10 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         return (
           <SwitchHeader
             currentTab={extendedState.currentTab}
+            chainServerId={selectChainItem?.chain}
+            addressLength={list.length}
+            onChainClick={handleOnChainClick}
+            chainLength={chainsInfo.chainLength}
             onChangeTab={tab =>
               setExtendedState(pre => ({
                 ...pre,
@@ -528,7 +581,7 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             break;
           case ViewTypes.SWITCH_HEADER:
             dim.width = SCREEN_WIDTH - 32;
-            dim.height = SWITCH_HEADER_HEIGHT;
+            dim.height = SWITCH_HEADER_HEIGHT + SWITCH_HEADER_GAP;
             break;
           case ViewTypes.ADDRESS_ENTRY:
             dim.width = SCREEN_WIDTH - 32;
@@ -563,8 +616,23 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   return (
     <View style={styles.container}>
       {firstRowType?.includes('_header') ||
-      firstRowType?.includes('toggle_') ? null : (
+      firstRowType?.includes('toggle_') ||
+      firstRowType === 'overview' ||
+      firstRowType === 'switch_tabs' ? null : (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+          <SwitchHeader
+            currentTab={extendedState.currentTab}
+            chainServerId={selectChainItem?.chain}
+            addressLength={list.length}
+            onChainClick={handleOnChainClick}
+            chainLength={chainsInfo.chainLength}
+            onChangeTab={tab =>
+              setExtendedState(pre => ({
+                ...pre,
+                currentTab: tab,
+              }))
+            }
+          />
           {renderStickHeader(firstRowType)}
         </Animated.View>
       )}
@@ -610,7 +678,9 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             <RefreshControl
               style={styles.bgContainer}
               onRefresh={() => {
+                fetchAccounts();
                 checkIsExpireAndUpdate(true);
+                refreshCurve();
               }}
               refreshing={refreshing}
             />

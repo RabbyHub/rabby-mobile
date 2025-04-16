@@ -84,6 +84,7 @@ export const useMultiCurve = (addresses: string[]) => {
         return;
       }
       setLoading(true);
+      const nextCheckAddress = new Set([...addres]);
       addres.forEach(_addr => {
         const addr = _addr.toLocaleLowerCase();
         setMultiTimeStamp(prev => ({
@@ -111,6 +112,10 @@ export const useMultiCurve = (addresses: string[]) => {
           start,
           step,
         );
+
+        if (!cacheData.isExpired) {
+          nextCheckAddress.delete(addr);
+        }
         setMultiTimeStamp(prev => ({
           ...prev,
           [addr]: {
@@ -125,7 +130,7 @@ export const useMultiCurve = (addresses: string[]) => {
         }));
       });
       queue.clear();
-      addres.forEach(_addr => {
+      Array.from(nextCheckAddress).forEach(_addr => {
         try {
           const addr = _addr.toLocaleLowerCase();
           queue.add(async () => {

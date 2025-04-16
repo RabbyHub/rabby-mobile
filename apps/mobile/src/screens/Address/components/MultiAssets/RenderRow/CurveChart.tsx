@@ -104,8 +104,6 @@ export const ChartHeader = ({
     return data?.[currentIndex.value]?.clockTimeString || '24h';
   }, [data, currentIndex]);
 
-  console.log('🔍 CUSTOM_LOGGER:=>: dateTime', dateTime);
-
   const lossStyleProps = useAnimatedStyle(() => {
     if (data?.[currentIndex?.value]) {
       return {
