@@ -51,22 +51,17 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
 import { PositionLoader } from '@/screens/Search/components/Skeleton';
-import { ICombineItem } from '@/screens/Home/hooks/store';
 import {
   RecyclerListView,
   DataProvider,
   LayoutProvider,
 } from 'recyclerlistview';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
-import { chain, chunk } from 'lodash';
+import { chunk } from 'lodash';
 import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
-import { useAccounts } from '@/hooks/account';
-import { filterMyAccounts } from '@/utils/account';
-import { useSortAddressList } from '../../useSortAddressList';
 import { AddressEntry } from './RenderRow/AddressEntry';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { OtherAddressNav } from '../../AddressAssetsOverviewScreen';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
@@ -76,12 +71,9 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useAccountInfo } from './hooks';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-interface Props {
-  filterText?: string;
-}
 
 const ViewTypes = {
   HEADER: 0,
@@ -97,40 +89,50 @@ const ViewTypes = {
   WATCH_ADDRESS_NAV: 10,
 };
 
-export const MultiAssets: React.FC<Props> = ({ filterText }) => {
+export const MultiAssets = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const {
     top10Addresses,
-    tokens,
-    portfolios,
+    list,
+    hasWatchAddress,
+    hasSafeAddress,
+    fetchAccounts,
+  } = useAccountInfo();
+
+  const {
+    tokens: _rawTokens,
+    portfolios: _rawPortfolios,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     refreshing,
     chainsInfo,
     isLoading,
-  } = useAssets(filterText);
+  } = useAssets();
 
-  const { accounts, fetchAccounts } = useAccounts({
-    disableAutoFetch: true,
-  });
+  const [selectChainItem, setSelectChainItem] = useState<
+    ChainListItem | undefined
+  >();
+  const [firstRowType, setFirstRowType] = useState('');
+
+  const { tokens, portfolios } = useMemo(() => {
+    return {
+      tokens: _rawTokens?.filter(item =>
+        selectChainItem?.chain && item?.chain
+          ? item.chain === selectChainItem.chain
+          : true,
+      ),
+      portfolios: _rawPortfolios.filter(item =>
+        selectChainItem?.chain && item?.chain
+          ? item.chain === selectChainItem.chain
+          : true,
+      ),
+    };
+  }, [_rawPortfolios, _rawTokens, selectChainItem?.chain]);
+
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
-  const filterAccounts = React.useMemo(
-    () => [...filterMyAccounts(accounts)],
-    [accounts],
-  );
-
-  const list = useSortAddressList(filterAccounts);
-  const hasWatchAddress = React.useMemo(() => {
-    return accounts.some(account => account.type === KEYRING_CLASS.WATCH);
-  }, [accounts]);
-  const hasSafeAddress = React.useMemo(() => {
-    return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
-  }, [accounts]);
-
   const { t } = useTranslation();
-  const [firstRowType, setFirstRowType] = useState('');
   const dataProvider = useMemo(
     () =>
       new DataProvider((r1, r2) => {
@@ -148,9 +150,11 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
     currentTab: TabType.portfolio,
     isLight: isLight,
   });
+
   useEffect(() => {
     setExtendedState(prev => ({ ...prev, isLight }));
   }, [isLight]);
+
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([]),
   );
@@ -340,9 +344,7 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
+
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
       if (clear) {
@@ -416,7 +418,6 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
           <TokenRow
             data={data}
             onTokenPress={handleOpenTokenDetail}
-            filterText={filterText}
             logoSize={46}
             style={styles.renderItemWrapper}
             chainLogoSize={18}
@@ -486,8 +487,10 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   useFocusEffect(
     // keep same with multi address home
     React.useCallback(() => {
-      fetchAccounts();
-    }, [fetchAccounts]),
+      if (extendedState.currentTab === TabType.address) {
+        fetchAccounts();
+      }
+    }, [extendedState.currentTab, fetchAccounts]),
   );
 
   const renderStickHeader = (type: string) => {
@@ -676,7 +679,9 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
               )}
               <View style={styles.footerGap} />
             </View>
-          ) : null
+          ) : (
+            <View style={styles.footerGap} />
+          )
         }
         scrollViewProps={{
           refreshControl: (
