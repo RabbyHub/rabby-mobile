@@ -7237,6 +7237,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/eth-simple-keyring@npm:5.0.2":
+  version: 5.0.2
+  resolution: "@rabby-wallet/eth-simple-keyring@npm:5.0.2"
+  dependencies:
+    "@ethereumjs/util": ^9.0.0
+    "@metamask/eth-sig-util": 5.1.0
+    "@metamask/utils": ^8.1.0
+    chai: ^4.3.4
+    eth-sig-util: ^3.0.1
+    ethereum-cryptography: ^2.1.2
+    ethereumjs-tx: ^2.1.2
+    ethereumjs-util: ^7.0.9
+    ethereumjs-wallet: ^1.0.2
+    randombytes: ^2.1.0
+  checksum: 36de69e49d149aef92365237339fac38fcaf06769acc2c66afc374a5e221305fd5ac4f938a7fc823f7364d66370dec935f6dff2d23a494e569f9c36aeee686ef
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/eth-simple-keyring@npm:^5.0.1":
   version: 5.0.1
   resolution: "@rabby-wallet/eth-simple-keyring@npm:5.0.1"
@@ -29263,7 +29281,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
-    "@rabby-wallet/eth-simple-keyring": ^5.0.1
+    "@rabby-wallet/eth-simple-keyring": 5.0.2
     "@rabby-wallet/gnosis-sdk": 1.4.2
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
