@@ -875,7 +875,9 @@
       "watch-address": "Watch Address",
       "enterThePassphrase": "Enter the Passphrase",
       "enterPassphraseTitle": "Enter Passphrase to Sign",
-      "passphraseError": "Passphrase invalid"
+      "passphraseError": "Passphrase invalid",
+      "quickAddressTitle_one": "{{count}} Address",
+      "quickAddressTitle_other": "{{count}} Addresses"
     },
     "home": {
       "services": {

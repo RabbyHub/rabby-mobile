@@ -143,9 +143,14 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   const [foldDefi, setFoldDefi] = useState(true);
   const [extendedState, setExtendedState] = useState<{
     currentTab: TabType;
+    isLight: boolean;
   }>({
     currentTab: TabType.portfolio,
+    isLight: isLight,
   });
+  useEffect(() => {
+    setExtendedState(prev => ({ ...prev, isLight }));
+  }, [isLight]);
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([]),
   );
@@ -707,14 +712,15 @@ const getStyles = createGetStyles2024(ctx => ({
     top: 0,
     left: 0,
     right: 0,
-    height: ASSETS_SECTION_HEADER,
+    // height: ASSETS_SECTION_HEADER,
     zIndex: 1,
   },
   bgContainer: {
-    // backgroundColor: ctx.isLight
-    //   ? ctx.colors2024['neutral-bg-0']
-    //   : ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   emptyHolder: {
     marginTop: 65,

@@ -87,9 +87,10 @@ interface AddressItemProps {
   style?: StyleProp<ViewStyle>;
   hiddenArrow?: boolean;
   isPressing?: boolean;
+  hiddenPin?: boolean;
 }
 export const AddressItemInner2024 = (props: AddressItemProps) => {
-  const { account, style, hiddenArrow, isPressing } = props;
+  const { account, style, hiddenArrow, isPressing, hiddenPin } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { pinAddresses } = usePinAddresses({
@@ -142,7 +143,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
         />
       )}
 
-      {pinned ? <WalletPin /> : null}
+      {pinned && !hiddenPin ? <WalletPin /> : null}
     </Card>
   );
 };
