@@ -974,7 +974,7 @@
         "importAddress": "导入地址",
         "receiveCrypto": "接收加密货币",
         "noAssets": "没有资产？",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "简单的加密货币购买",
         "receiveCryptoDesc": "从其他地址转移代币"
       },
       "createNewAddress": {

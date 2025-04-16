@@ -964,7 +964,7 @@
         "importAddressDesc": "Добавить существующий адрес с средствами",
         "importAddress": "Импортировать адрес",
         "buyWithFiat": "Купить за фиат",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "Простая покупка криптовалюты",
         "receiveCryptoDesc": "Перевод токенов с другого адреса",
         "fundYourWallet": "Пополните ваш кошелек"
       },

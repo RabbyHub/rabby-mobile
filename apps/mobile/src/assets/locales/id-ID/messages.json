@@ -534,7 +534,8 @@
           "pending": "Menunggu",
           "pendingBroadcasted": "Pending: disiarkan",
           "pendingBroadcast": "Menunggu: akan disiarkan",
-          "canceled": "Dibatalkan"
+          "canceled": "Dibatalkan",
+          "failed": "Gagal"
         },
         "explain": {
           "unknown": "Transaksi Tidak Dikenal",
@@ -986,7 +987,7 @@
         "fundYourWallet": "Isi Ulang Dompet Anda",
         "services": "Layanan",
         "importAddressDesc": "Tambahkan alamat yang sudah ada dengan dana",
-        "buyWithFiatDesc": ""
+        "buyWithFiatDesc": "Pembelian kripto sederhana"
       },
       "importAddress": {
         "tips": {

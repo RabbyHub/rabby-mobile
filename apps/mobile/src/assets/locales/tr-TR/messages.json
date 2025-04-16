@@ -985,7 +985,7 @@
         "noAssets": "Varlık yok mu?",
         "importAddressDesc": "Mevcut fonlara sahip bir adres ekleyin",
         "totalBalance": "Toplam Bakiyeniz",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "Basit kripto alımı",
         "receiveCryptoDesc": "Başka bir adrese token transfer et",
         "buyWithFiat": "Fiat ile Satın Al"
       },

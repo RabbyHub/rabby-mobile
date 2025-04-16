@@ -1054,7 +1054,7 @@
         "fundYourWallet": "เติมเงินใน Wallet ของคุณ",
         "receiveCryptoDesc": "โอนโทเค็นจากที่อยู่อื่น",
         "importAddress": "นำเข้าที่อยู่",
-        "buyWithFiatDesc": ""
+        "buyWithFiatDesc": "การซื้อสกุลเงินดิจิทัลที่ง่าย"
       },
       "importAddress": {
         "importTitle": "นำเข้า Address",

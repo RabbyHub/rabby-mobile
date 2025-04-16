@@ -857,7 +857,7 @@
         "importAddress": "アドレスをインポート",
         "buyWithFiat": "法定通貨で購入",
         "fundYourWallet": "ウォレットに資金を追加",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "シンプルな暗号購入",
         "importAddressDesc": "既存の資金があるアドレスを追加します",
         "receiveCryptoDesc": "別のアドレスからトークンを転送します"
       },

@@ -916,7 +916,7 @@
         "fundYourWallet": "지갑에 자금 추가하기",
         "importAddressDesc": "기존 주소를 추가하여 자금을 보유하세요",
         "receiveCryptoDesc": "다른 주소에서 토큰 전송",
-        "buyWithFiatDesc": ""
+        "buyWithFiatDesc": "간편한 암호화폐 구매"
       },
       "createNewAddress": {
         "Continue": "계속하기",

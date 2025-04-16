@@ -1070,7 +1070,7 @@
         "receiveCrypto": "Recibir Crypto",
         "buyWithFiat": "Comprar con Fiat",
         "fundYourWallet": "Financiar tu wallet",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "Compra de criptomonedas sencilla",
         "importAddressDesc": "Añadir una dirección existente con fondos"
       }
     },

@@ -919,7 +919,7 @@
         "buyWithFiat": "Acheter avec Fiat",
         "fundYourWallet": "Alimentez votre portefeuille",
         "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse",
-        "buyWithFiatDesc": ""
+        "buyWithFiatDesc": "Achat de crypto simple"
       },
       "addAddress": {
         "createAddress": "Créer une adresse",

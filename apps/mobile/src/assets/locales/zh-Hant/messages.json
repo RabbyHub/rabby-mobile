@@ -1067,7 +1067,7 @@
         "buyWithFiat": "法幣購買",
         "importAddressDesc": "添加已有資金的地址",
         "receiveCryptoDesc": "從其他地址轉移代幣",
-        "buyWithFiatDesc": ""
+        "buyWithFiatDesc": "簡單的加密貨幣購買"
       },
       "createNewAddress": {
         "BackupSeedPhrase": "手動備份助記詞",

@@ -1052,7 +1052,7 @@
         "importAddress": "Eine Adresse importieren",
         "receiveCryptoDesc": "Token von einer anderen Adresse übertragen",
         "fundYourWallet": "Finanzieren Sie Ihr Wallet",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "Einfache Krypto-Käufe",
         "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu"
       },
       "addAddress": {

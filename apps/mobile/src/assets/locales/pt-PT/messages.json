@@ -1110,7 +1110,7 @@
         "buyWithFiat": "Comprar com Fiat",
         "fundYourWallet": "Financiar a sua Wallet",
         "receiveCryptoDesc": "Transferir tokens de outro endereço",
-        "buyWithFiatDesc": ""
+        "buyWithFiatDesc": "Compra de criptomoeda simples"
       },
       "createNewAddress": {
         "Continue": "Continuar",

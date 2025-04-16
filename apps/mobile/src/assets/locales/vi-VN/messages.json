@@ -945,7 +945,7 @@
         "services": "Dịch vụ",
         "receiveCrypto": "Nhận Crypto",
         "buyWithFiat": "Mua bằng Fiat",
-        "buyWithFiatDesc": "",
+        "buyWithFiatDesc": "Mua crypto đơn giản",
         "importAddress": "Nhập một Địa chỉ",
         "fundYourWallet": "Nạp tiền vào Ví của bạn",
         "importAddressDesc": "Thêm một địa chỉ hiện có với quỹ",
