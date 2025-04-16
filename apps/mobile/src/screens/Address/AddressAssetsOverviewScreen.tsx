@@ -23,7 +23,6 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { useSortAddressList } from './useSortAddressList';
 import { AddressEmptyContainer } from './components/AddressEmptyContainer';
-import { MultiChart } from './components/CurveChart';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -125,15 +124,6 @@ export function AddressAssetsOverview(): JSX.Element {
 
   return (
     <AddressListScreenContainer>
-      <View style={styles.chart}>
-        <MultiChart
-          isOffline={false}
-          data={combineData}
-          loading={loading}
-          pathColor={pathColor}
-          isNoAssets={false}
-        />
-      </View>
       <MultiAssets />
       {/* <FlatList
         data={list}

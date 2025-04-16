@@ -6,7 +6,14 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Dimensions, Keyboard, Text, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  Keyboard,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import {
@@ -16,7 +23,7 @@ import {
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
   DEFI_SEPARATOR_HEIGHT,
-  HEADER_TOP_AREA_HEIGHT,
+  HEADER_CHART_HEIGHT,
   RootNames,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
@@ -30,8 +37,12 @@ import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
+  ActionItem,
 } from '@/screens/Home/types';
-import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
+import {
+  getAllDefiCount,
+  getTotalFoldToken,
+} from '@/screens/Home/utils/converAssets';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
@@ -43,8 +54,11 @@ import {
   LayoutProvider,
 } from 'recyclerlistview';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
+import { chunk } from 'lodash';
+import { MultiChart } from './RenderRow/CurveChart';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
 
-const SCREEN_WIDTH = Dimensions.get('window').width - 32;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface Props {
   filterText?: string;
@@ -56,15 +70,16 @@ const ViewTypes = {
   OVERVIEW: 2,
   EMPTY_TOKEN: 3,
   EMPTY_ASSETS: 4,
-  EMPTY_NFT: 6,
-  EMPTY_DEFI: 7,
-  DEFI: 5,
+  EMPTY_DEFI: 5,
+  DEFI: 6,
+  SWITCH_HEADER: 7,
 };
 
 export const MultiAssets: React.FC<Props> = ({ filterText }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const {
+    top10Addresses,
     tokens,
     portfolios,
     getCacheTop10Assets,
@@ -84,30 +99,63 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   );
 
   const [foldHideList, setFoldHideList] = useState(true);
+  const [foldDefi, setFoldDefi] = useState(true);
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([]),
   );
 
   const dataList = useMemo(() => {
-    const unFoldList = tokens
+    // TODO: chain filter
+    const unFoldList: ActionItem[] = tokens
       .filter(i => !i._isFold)
       .map(item => ({
         type: 'unfold_token',
         data: item,
       }));
-    const foldList = tokens
-      .filter(i => i._isFold)
+    const foldAndIncludeBalanceTokenList: ActionItem[] = tokens
+      .filter(i => i._isFold && !i._isExcludeBalance && i._realUsdValue > 0)
       .map(item => ({
         type: 'fold_token',
         data: item,
       }));
+    const foldAndExcludeBalanceTokenList: ActionItem[] = tokens
+      .filter(i => i._isFold && (i._isExcludeBalance || i._realUsdValue === 0))
+      .map(item => ({
+        type: 'fold_token',
+        data: item,
+      }));
+    const foldTokenList = [
+      ...foldAndIncludeBalanceTokenList,
+      ...foldAndExcludeBalanceTokenList,
+    ];
+    const foldAndIncludeBalanceDefiList = portfolios.filter(
+      i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
+    );
+    const foldAndExcludeBalanceDefiList = portfolios.filter(
+      i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
+    );
+    const foldDefiList: ActionItem[] = chunk(
+      [...foldAndIncludeBalanceDefiList, ...foldAndExcludeBalanceDefiList],
+      2,
+    ).map(item => ({
+      type: 'fold_defi',
+      data: item,
+    }));
+    const unFoldDefiList: ActionItem[] = chunk(
+      portfolios.filter(i => !i._isFold),
+      2,
+    ).map(item => ({
+      type: 'unfold_defi',
+      data: item,
+    }));
     const itemData: Array<{
       show: boolean;
-      data: ICombineItem[];
+      data: ActionItem[];
     }> = [
       {
-        show: !!unFoldList.length,
+        show: true,
         data: [
+          { type: 'overview' },
           {
             type: 'asset_header',
           },
@@ -115,20 +163,57 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         ],
       },
       {
-        show: !!(filterText ? [] : foldList).length,
+        show: !!foldTokenList.length,
         data: [
           { type: 'toggle_token_fold' },
-          ...(foldHideList ? [] : foldList),
+          ...(foldHideList ? [] : foldTokenList),
         ],
       },
       {
-        show: !!portfolios.length,
+        show: !!isLoading && !tokens.length,
+        data: Array.from({ length: 5 }, () => ({
+          type: 'loading-skeleton',
+        })),
+      },
+      {
+        show: !isLoading && !tokens.length,
         data: [
-          { type: 'defi_header' },
-          ...portfolios.map(item => ({
-            type: 'defi',
-            data: item,
-          })),
+          {
+            type: 'empty-assets',
+            data: t('page.singleHome.sectionHeader.NoData', {
+              name: t('page.singleHome.sectionHeader.Token'),
+            }),
+          },
+        ],
+      },
+      {
+        show: true,
+        data: [{ type: 'defi_header' }, ...unFoldDefiList],
+      },
+      {
+        show: !!foldDefiList.length,
+        data: [
+          {
+            type: 'toggle_defi_fold',
+          },
+          ...(foldDefi ? [] : foldDefiList),
+        ],
+      },
+      {
+        show: !!isLoading && !portfolios.length,
+        data: Array.from({ length: 2 }, () => ({
+          type: 'loading-defi-skeleton',
+        })),
+      },
+      {
+        show: !isLoading && portfolios.length === 0,
+        data: [
+          {
+            type: 'empty-defi',
+            data: t('page.singleHome.sectionHeader.NoData', {
+              name: t('page.singleHome.sectionHeader.Defi'),
+            }),
+          },
         ],
       },
     ];
@@ -136,11 +221,16 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [filterText, foldHideList, portfolios, tokens]);
+  }, [foldDefi, foldHideList, isLoading, portfolios, t, tokens]);
 
   useEffect(() => {
     setListData(dataProvider.cloneWithRows(dataList));
   }, [dataList, dataProvider]);
+
+  const { combineData, refresh, loading } = useMultiCurve(top10Addresses);
+  const pathColor = !combineData.isLoss
+    ? colors2024['green-default']
+    : colors2024['red-default'];
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -167,6 +257,17 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
     switch (type) {
+      case 'overview':
+        return (
+          <MultiChart
+            isOffline={false}
+            data={combineData}
+            loading={loading}
+            pathColor={pathColor}
+            isNoAssets={false}
+          />
+        );
+
       case 'unfold_token':
       case 'fold_token':
         return (
@@ -181,19 +282,39 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             disableMenu
           />
         );
-      case 'defi':
+      case 'unfold_defi':
+      case 'fold_defi':
         return (
-          <DefiRow
-            data={data}
-            filterText={filterText}
-            disableMenu
-            hideFoldTag
-            onPress={() =>
-              handleOpenDefiDetail(data, [...(data._portfolios || [])])
-            }
-            logoSize={46}
-            chainLogoSize={18}
-          />
+          <View style={styles.defiGroups}>
+            <DefiRow
+              data={data[0]}
+              style={StyleSheet.flatten([
+                styles.renderDefiItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              // menuActions={getDefiOrNftMenuAction('defi', data[0])}
+              logoSize={40}
+              onPress={() =>
+                handleOpenDefiDetail(data[0], [...(data[0]._portfolios || [])])
+              }
+            />
+            {data[1] && (
+              <DefiRow
+                data={data[1]}
+                style={StyleSheet.flatten([
+                  styles.renderDefiItemWrapper,
+                  !isLight && styles.bg2,
+                ])}
+                // menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                logoSize={40}
+                onPress={() =>
+                  handleOpenDefiDetail(data[1], [
+                    ...(data[1]._portfolios || []),
+                  ])
+                }
+              />
+            )}
+          </View>
         );
       case 'asset_header':
         return (
@@ -223,25 +344,31 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   const renderStickHeader = (type: string) => {
     switch (type) {
       /** header */
-      case 'unfold_token':
-        return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.token')}
-          </Text>
-        );
       case 'fold_token':
         return (
           <TokenRowSectionHeader
             str={getTotalFoldToken(tokens.filter(i => i._isFold))}
             fold={foldHideList}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              !isLight && styles.bg2,
+            ])}
             onPressFold={() => setFoldHideList(pre => !pre)}
           />
         );
-      case 'defi':
+      case 'fold_defi':
         return (
-          <Text style={styles.sectionHeader}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
+          <TokenRowSectionHeader
+            str={getAllDefiCount(portfolios.filter(i => i._isFold))}
+            fold={foldDefi}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              !isLight && styles.bg2,
+            ])}
+            onPressFold={() => setFoldDefi(pre => !pre)}
+          />
         );
       default:
         return null;
@@ -264,9 +391,6 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         if (item.type === 'empty-defi') {
           return ViewTypes.EMPTY_DEFI;
         }
-        if (item.type === 'empty-nft') {
-          return ViewTypes.EMPTY_NFT;
-        }
         if (
           item.type === 'fold_defi' ||
           item.type === 'unfold_defi' ||
@@ -286,10 +410,10 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         switch (type) {
           case ViewTypes.OVERVIEW:
             dim.width = SCREEN_WIDTH;
-            dim.height = HEADER_TOP_AREA_HEIGHT;
+            dim.height = HEADER_CHART_HEIGHT;
             break;
           case ViewTypes.HEADER:
-            dim.width = SCREEN_WIDTH;
+            dim.width = SCREEN_WIDTH - 32;
             dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.EMPTY_TOKEN:
@@ -298,12 +422,11 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             break;
           case ViewTypes.EMPTY_ASSETS:
           case ViewTypes.EMPTY_DEFI:
-          case ViewTypes.EMPTY_NFT:
             dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.DEFI:
-            dim.width = SCREEN_WIDTH;
+            dim.width = SCREEN_WIDTH - 32;
             dim.height = DEFI_ITEM_HEIGHT + DEFI_SEPARATOR_HEIGHT;
             break;
           default:
@@ -331,6 +454,7 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   if (!listData.getSize()) {
     return null;
   }
+  console.log('🔍 CUSTOM_LOGGER:=>: firstRowType', firstRowType);
 
   return (
     <View style={styles.container}>
@@ -389,9 +513,9 @@ const getStyles = createGetStyles2024(ctx => ({
     zIndex: 1,
   },
   bgContainer: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
+    // backgroundColor: ctx.isLight
+    //   ? ctx.colors2024['neutral-bg-0']
+    //   : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
   },
   emptyHolder: {
@@ -426,5 +550,24 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footer: {
     height: 200,
+  },
+  defiGroups: {
+    flexDirection: 'row',
+    height: DEFI_ITEM_HEIGHT,
+    gap: 12,
+    justifyContent: 'flex-start',
+  },
+  renderDefiItemWrapper: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    height: DEFI_ITEM_HEIGHT,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
+  bg2: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  buttonHeader: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
 }));

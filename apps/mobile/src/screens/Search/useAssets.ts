@@ -36,6 +36,11 @@ export const useAssets = (filterText?: string) => {
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
+  const top10Addresses = [
+    ...new Set(
+      sortedAccounts.slice(0, 10).map(i => i.address.toLocaleLowerCase()),
+    ),
+  ];
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const {
     tokens,
@@ -333,6 +338,7 @@ export const useAssets = (filterText?: string) => {
     [filterText, nftList],
   );
   return {
+    top10Addresses,
     tokens: fTokens,
     portfolios: fPortfolios,
     nftList: fNftList,
