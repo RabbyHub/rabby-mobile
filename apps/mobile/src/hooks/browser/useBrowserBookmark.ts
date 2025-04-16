@@ -6,7 +6,7 @@ import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
-import { dappsAtom } from './useDapps';
+import { dappsAtom } from '../useDapps';
 
 const browserBookmarkAtom = atom<EntityState<BrowserBookmarkItem, string>>({
   ids: [],

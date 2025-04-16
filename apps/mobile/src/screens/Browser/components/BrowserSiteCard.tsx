@@ -4,6 +4,7 @@ import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { HighlightText } from '@/components2024/HighlightText';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -18,7 +19,6 @@ import {
   ViewStyle,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { DappIcon } from './DappIcon';
 
 export const BrowserSiteListBy = ({
   data,

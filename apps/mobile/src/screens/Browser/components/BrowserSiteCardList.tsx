@@ -3,9 +3,9 @@ import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
-import { DappCard } from './DappCard';
+import { BrowserSiteCard } from './BrowserSiteCard';
 
-export const DappCardList = ({
+export const BrowserSiteCardList = ({
   data,
   onPress,
   onFavoritePress,
@@ -38,7 +38,7 @@ export const DappCardList = ({
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            <DappCard
+            <BrowserSiteCard
               data={item}
               onPress={onPress}
               onFavoritePress={onFavoritePress}
