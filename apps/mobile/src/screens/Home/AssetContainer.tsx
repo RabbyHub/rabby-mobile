@@ -33,7 +33,7 @@ import {
   RootNames,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 import {
