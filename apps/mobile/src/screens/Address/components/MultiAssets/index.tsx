@@ -72,6 +72,8 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccountInfo } from './hooks';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderTitle } from './HeaderTitle';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -120,6 +122,7 @@ export const MultiAssets = () => {
     ChainListItem | undefined
   >();
   const [firstRowType, setFirstRowType] = useState('');
+  console.log('🔍 CUSTOM_LOGGER:=>: firstRowType', firstRowType);
 
   const { tokens, portfolios } = useMemo(() => {
     return {
@@ -158,6 +161,7 @@ export const MultiAssets = () => {
     combineData,
     isLight: isLight,
   });
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   useEffect(() => {
     setExtendedState(prev => ({ ...prev, isLight, combineData }));
@@ -168,7 +172,6 @@ export const MultiAssets = () => {
   );
 
   const dataList = useMemo(() => {
-    // TODO: chain filter
     const unFoldList: ActionItem[] = tokens
       .filter(i => !i._isFold)
       .map(item => ({
@@ -626,10 +629,7 @@ export const MultiAssets = () => {
 
   return (
     <View style={styles.container}>
-      {firstRowType?.includes('_header') ||
-      firstRowType?.includes('toggle_') ||
-      firstRowType === 'overview' ||
-      firstRowType === 'switch_tabs' ? null : (
+      {firstRowType === 'overview' || firstRowType === 'switch_tabs' ? null : (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           <SwitchHeader
             currentTab={extendedState.currentTab}
@@ -658,7 +658,25 @@ export const MultiAssets = () => {
             setFirstRowType(listData.getDataForIndex(indexes[0]).type);
           }
         }}
-        onScroll={() => {
+        onScroll={event => {
+          const scrollOffset = event.nativeEvent.contentOffset.y;
+          if (scrollOffset > 80) {
+            setNavigationOptions({
+              headerTitle: () => (
+                <HeaderTitle
+                  netWorth={combineData.netWorth}
+                  changePercent={combineData.changePercent}
+                  isLoss={combineData.isLoss}
+                />
+              ),
+              headerTitleAlign: 'left',
+            });
+          } else {
+            setNavigationOptions({
+              headerTitle: '',
+              headerTitleAlign: 'left',
+            });
+          }
           Keyboard.dismiss();
         }}
         renderFooter={() =>
@@ -728,7 +746,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 2,
   },
   emptyHolder: {
     marginTop: 65,
