@@ -4,6 +4,7 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
+  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -185,7 +186,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               <WebView
                 // cacheEnabled={false}
                 cacheEnabled
-                startInLoadingState
+                startInLoadingState={false}
                 allowsFullscreenVideo={false}
                 allowsInlineMediaPlayback={false}
                 originWhitelist={['*']}
