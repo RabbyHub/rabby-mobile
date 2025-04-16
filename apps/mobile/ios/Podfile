@@ -1,3 +1,6 @@
+# Disable New Architecture
+ENV['RCT_NEW_ARCH_ENABLED'] = "0"
+
 def node_require(script)
   # Resolve script with node to allow for hoisting
   require Pod::Executable.execute_command('node', ['-p',
@@ -14,7 +17,7 @@ $RNFirebaseAsStaticFramework = true
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
 
-platform :ios, '14'
+platform :ios, '15.1'
 prepare_react_native_project!
 
 # ⬇️ uncomment wanted permissions
@@ -56,10 +59,6 @@ target 'RabbyMobile' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    # Hermes is now enabled by default. Disable by setting this flag to false.
-    :hermes_enabled => flags[:hermes_enabled],
-    :fabric_enabled => flags[:fabric_enabled],
-
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
@@ -86,7 +85,7 @@ target 'RabbyMobile' do
     ## if use Xcode > 16, uncomment it to do bitcode strip,
     ## but maybe stripped hermes's dysym wouldn't match UUID it's expected on upload asset to App Store
     ##
-    # system("bash ./handle_bitcode.sh") # disabled to prevent broken frameworks
+    # system("bash ./handle_bitcode.sh")
   end
 end
 

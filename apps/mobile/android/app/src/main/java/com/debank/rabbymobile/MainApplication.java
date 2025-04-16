@@ -7,6 +7,7 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
+import com.facebook.react.soloader.OpenSourceMergedSoMapping;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
-    SoLoader.init(this, /* native exopackage */ false);
+    SoLoader.init(this, /* native exopackage */ OpenSourceMergedSoMapping);
     OkHttpClientProvider.setOkHttpClientFactory(new UserAgentClientFactory());
     ReactFontManager.getInstance().addCustomFont(this, "Roboto", R.font.roboto);
     // ReactFontManager.getInstance().addCustomFont(this, "SF Pro", R.font.sfpro);
