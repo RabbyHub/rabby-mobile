@@ -5,6 +5,7 @@ import {
   CollectionList,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject } from './utils/project';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 // curve
 export type ChartLine = {
   value: number;
@@ -121,11 +122,17 @@ export type ActionHeaderItem = {
   data?: null | string;
 };
 
+export type RenterAddressType = {
+  type: 'address_entry';
+  data: KeyringAccountWithAlias;
+};
+
 export type ActionItem =
   | ActionHeaderItem
   | CombineToken
   | CombineDefi
-  | CombineNft;
+  | CombineNft
+  | RenterAddressType;
 
 export type DisplayNftItem = NFTItem & {
   _isFold?: boolean;

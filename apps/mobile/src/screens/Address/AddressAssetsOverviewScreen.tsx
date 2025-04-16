@@ -56,104 +56,11 @@ export const OtherAddressNav = ({ onPress, text }) => {
 };
 
 export function AddressAssetsOverview(): JSX.Element {
-  const { accounts, fetchAccounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-
-  const hasWatchAddress = React.useMemo(() => {
-    return accounts.some(account => account.type === KEYRING_CLASS.WATCH);
-  }, [accounts]);
-  const hasSafeAddress = React.useMemo(() => {
-    return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
-  }, [accounts]);
-
-  const filterAccounts = React.useMemo(
-    () => [...filterMyAccounts(accounts)],
-    [accounts],
-  );
-
-  const list = useSortAddressList(filterAccounts);
-  const onGotoWatchAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.WatchAddressList,
-    });
-  }, [navigation]);
-
-  const onGotoSafeAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.SafeAddressList,
-    });
-  }, [navigation]);
-
-  const gotoAddAddress = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
-
-  const { t } = useTranslation();
-
-  useFocusEffect(
-    // keep same with multi address home
-    React.useCallback(() => {
-      fetchAccounts();
-    }, [fetchAccounts]),
-  );
-
   return (
     <AddressListScreenContainer>
       <MultiAssets />
       {/* <FlatList
-        data={list}
-        keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
-        style={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={false} onRefresh={refresh} />
-        }
-        renderItem={({ item, index }) => (
-          <View
-            key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-            style={index < list.length - 1 ? styles.itemGap : undefined}>
-            <AddressItemEntry account={item} />
-          </View>
-        )}
         ListEmptyComponent={AddressEmptyContainer}
-        ListFooterComponent={
-          <View style={styles.footer}>
-            {hasSafeAddress && (
-              <OtherAddressNav
-                onPress={onGotoSafeAddress}
-                text={t(
-                  'page.addressDetail.addressListScreen.importSafeAddress',
-                )}
-              />
-            )}
-            {hasWatchAddress && (
-              <OtherAddressNav
-                onPress={onGotoWatchAddress}
-                text={t(
-                  'page.addressDetail.addressListScreen.importWatchAddress',
-                )}
-              />
-            )}
-            <View style={styles.footerGap} />
-          </View>
-        }
       /> */}
     </AddressListScreenContainer>
   );

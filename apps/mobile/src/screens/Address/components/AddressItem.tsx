@@ -5,7 +5,12 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React, { useCallback } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
@@ -27,6 +32,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
   lastSelectedAccount?: KeyringAccountWithAlias;
+  style?: StyleProp<ViewStyle>;
   onSelect?: () => void;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
@@ -64,7 +70,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           activeOpacity={1}
           onPressIn={() => setIsPressing(true)}
           onPressOut={() => setIsPressing(false)}
-          style={StyleSheet.flatten([styles.root])}
+          style={StyleSheet.flatten([styles.root, props.style])}
           delayLongPress={200} // long press delay
           onPress={onDetail}
           onLongPress={() => {

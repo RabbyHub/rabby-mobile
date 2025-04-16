@@ -17,6 +17,8 @@ import {
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import {
+  ADDRESS_ENTRY_GAP,
+  ADDRESS_ENTRY_HEUGHT,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -59,6 +61,14 @@ import { chunk } from 'lodash';
 import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
+import { useAccounts } from '@/hooks/account';
+import { filterMyAccounts } from '@/utils/account';
+import { useSortAddressList } from '../../useSortAddressList';
+import { AddressEntry } from './RenderRow/AddressEntry';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { OtherAddressNav } from '../../AddressAssetsOverviewScreen';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CurrentAddressProps } from '../AddressListScreenContainer';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -75,6 +85,9 @@ const ViewTypes = {
   EMPTY_DEFI: 5,
   DEFI: 6,
   SWITCH_HEADER: 7,
+  ADDRESS_ENTRY: 8,
+  SAFE_ADDRESS_NAV: 9,
+  WATCH_ADDRESS_NAV: 10,
 };
 
 export const MultiAssets: React.FC<Props> = ({ filterText }) => {
@@ -89,6 +102,24 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
     refreshing,
     isLoading,
   } = useAssets(filterText);
+
+  const { accounts, fetchAccounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+  const navigation = useNavigation<CurrentAddressProps['navigation']>();
+
+  const filterAccounts = React.useMemo(
+    () => [...filterMyAccounts(accounts)],
+    [accounts],
+  );
+
+  const list = useSortAddressList(filterAccounts);
+  const hasWatchAddress = React.useMemo(() => {
+    return accounts.some(account => account.type === KEYRING_CLASS.WATCH);
+  }, [accounts]);
+  const hasSafeAddress = React.useMemo(() => {
+    return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
+  }, [accounts]);
 
   const { t } = useTranslation();
   const [firstRowType, setFirstRowType] = useState('');
@@ -155,15 +186,18 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
       type: 'unfold_defi',
       data: item,
     }));
+    const showPortfolios = extendedState.currentTab === TabType.portfolio;
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
     }> = [
       {
         show: true,
+        data: [{ type: 'overview' }, { type: 'switch_tabs' }],
+      },
+      {
+        show: showPortfolios,
         data: [
-          { type: 'overview' },
-          { type: 'switch_tabs' },
           {
             type: 'asset_header',
           },
@@ -171,20 +205,27 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         ],
       },
       {
-        show: !!foldTokenList.length,
+        show: !showPortfolios,
+        data: list.map(item => ({
+          type: 'address_entry',
+          data: item,
+        })),
+      },
+      {
+        show: showPortfolios && !!foldTokenList.length,
         data: [
           { type: 'toggle_token_fold' },
           ...(foldHideList ? [] : foldTokenList),
         ],
       },
       {
-        show: !!isLoading && !tokens.length,
+        show: showPortfolios && !!isLoading && !tokens.length,
         data: Array.from({ length: 5 }, () => ({
           type: 'loading-skeleton',
         })),
       },
       {
-        show: !isLoading && !tokens.length,
+        show: showPortfolios && !isLoading && !tokens.length,
         data: [
           {
             type: 'empty-assets',
@@ -195,11 +236,11 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         ],
       },
       {
-        show: true,
+        show: showPortfolios,
         data: [{ type: 'defi_header' }, ...unFoldDefiList],
       },
       {
-        show: !!foldDefiList.length,
+        show: showPortfolios && !!foldDefiList.length,
         data: [
           {
             type: 'toggle_defi_fold',
@@ -208,13 +249,13 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         ],
       },
       {
-        show: !!isLoading && !portfolios.length,
+        show: showPortfolios && !!isLoading && !portfolios.length,
         data: Array.from({ length: 2 }, () => ({
           type: 'loading-defi-skeleton',
         })),
       },
       {
-        show: !isLoading && portfolios.length === 0,
+        show: showPortfolios && !isLoading && portfolios.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -229,7 +270,16 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldDefi, foldHideList, isLoading, portfolios, t, tokens]);
+  }, [
+    extendedState.currentTab,
+    foldDefi,
+    foldHideList,
+    isLoading,
+    list,
+    portfolios,
+    t,
+    tokens,
+  ]);
 
   useEffect(() => {
     setListData(dataProvider.cloneWithRows(dataList));
@@ -262,6 +312,18 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
     [],
   );
 
+  const onGotoWatchAddress = React.useCallback(() => {
+    navigation.navigate(RootNames.StackAddress, {
+      screen: RootNames.WatchAddressList,
+    });
+  }, [navigation]);
+
+  const onGotoSafeAddress = React.useCallback(() => {
+    navigation.navigate(RootNames.StackAddress, {
+      screen: RootNames.SafeAddressList,
+    });
+  }, [navigation]);
+
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
     switch (type) {
@@ -275,6 +337,8 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             isNoAssets={false}
           />
         );
+      case 'address_entry':
+        return <AddressEntry data={data} />;
       case 'switch_tabs':
         return (
           <SwitchHeader
@@ -361,6 +425,13 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
     }
   };
 
+  useFocusEffect(
+    // keep same with multi address home
+    React.useCallback(() => {
+      fetchAccounts();
+    }, [fetchAccounts]),
+  );
+
   const renderStickHeader = (type: string) => {
     switch (type) {
       /** header */
@@ -401,6 +472,9 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         const item = listData.getDataForIndex(index);
         if (item.type === 'overview') {
           return ViewTypes.OVERVIEW;
+        }
+        if (item.type === 'address_entry') {
+          return ViewTypes.ADDRESS_ENTRY;
         }
         if (item.type === 'empty-token') {
           return ViewTypes.EMPTY_TOKEN;
@@ -456,6 +530,10 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             dim.width = SCREEN_WIDTH - 32;
             dim.height = SWITCH_HEADER_HEIGHT;
             break;
+          case ViewTypes.ADDRESS_ENTRY:
+            dim.width = SCREEN_WIDTH - 32;
+            dim.height = ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP;
+            break;
           default:
             dim.width = SCREEN_WIDTH - 32;
             dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
@@ -481,7 +559,6 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
   if (!listData.getSize()) {
     return null;
   }
-  console.log('🔍 CUSTOM_LOGGER:=>: firstRowType', firstRowType);
 
   return (
     <View style={styles.container}>
@@ -505,6 +582,29 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         onScroll={() => {
           Keyboard.dismiss();
         }}
+        renderFooter={() =>
+          extendedState.currentTab === TabType.address ? (
+            <View style={styles.footer}>
+              {hasSafeAddress && (
+                <OtherAddressNav
+                  onPress={onGotoSafeAddress}
+                  text={t(
+                    'page.addressDetail.addressListScreen.importSafeAddress',
+                  )}
+                />
+              )}
+              {hasWatchAddress && (
+                <OtherAddressNav
+                  onPress={onGotoWatchAddress}
+                  text={t(
+                    'page.addressDetail.addressListScreen.importWatchAddress',
+                  )}
+                />
+              )}
+              <View style={styles.footerGap} />
+            </View>
+          ) : null
+        }
         scrollViewProps={{
           refreshControl: (
             <RefreshControl
@@ -597,5 +697,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  footerGap: {
+    height: 70,
   },
 }));
