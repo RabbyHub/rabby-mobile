@@ -43,7 +43,6 @@ import { updateUnlockTime } from '@/core/apis/lock';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
-import { IS_ANDROID } from '@/core/native/utils';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -52,8 +51,6 @@ const LAYOUTS = {
 
 const isIOS = Platform.OS === 'ios';
 const BiometricsIconSize = 76;
-
-const hasAutoUnlockByBiometricsRef = { current: false };
 
 const prevFailedRef = { hide: null as (() => void) | null };
 const toastFailed = toastWithIcon(RcIconInfoForToast);
@@ -137,7 +134,6 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       } finally {
         checkUnlocked();
         hideToast?.();
-        hasAutoUnlockByBiometricsRef.current = true;
       }
     },
   });
@@ -256,16 +252,12 @@ export default function UnlockScreen() {
 
   useLayoutEffect(() => {
     incToReset(true);
-
     (async () => {
       // wait screen rendered
       await sleep(500);
-      if (hasAutoUnlockByBiometricsRef.current) return;
       if (!isBiometricsEnabled) return;
 
-      await manualUnlockWithBiometrics().finally(() => {
-        hasAutoUnlockByBiometricsRef.current = true;
-      });
+      await manualUnlockWithBiometrics();
     })();
   }, [isBiometricsEnabled, manualUnlockWithBiometrics]);
 
