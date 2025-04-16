@@ -22,6 +22,8 @@ export const enum APP_STORE_NAMES {
 
   'contactBook' = 'contactBook',
   'offlineChain' = 'offlineChain',
+
+  'browser' = 'browser',
 }
 
 export type STORE_SERVICE_MAP = {
@@ -54,6 +56,8 @@ export type STORE_SERVICE_MAP = {
   [APP_STORE_NAMES.gasAccount]: import('@/core/services/gasAccount').GasAccountService;
 
   [APP_STORE_NAMES.offlineChain]: import('@/core/services/offlineChain').OfflineChainService;
+
+  [APP_STORE_NAMES.browser]: import('@/core/services/browserService').BrowserService;
 };
 
 export type MIGRATABLE_STORE_SERVICE = keyof STORE_SERVICE_MAP;

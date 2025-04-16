@@ -49,7 +49,7 @@ export function DappWebViewManageScreen(): JSX.Element {
         ...options,
         dappsWebViewFromRoute: RootNames.FavoriteDapps,
       });
-      setBrowserHistory(safeGetOrigin(url));
+      // setBrowserHistory(safeGetOrigin(url));
     },
   );
 

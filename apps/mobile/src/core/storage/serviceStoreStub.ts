@@ -15,18 +15,8 @@ import { getChainList } from '@/constant/chains';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { useBrowserHistory } from '@/hooks/useBrowserHistory';
-
-const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
-  dappService.store,
-);
-
-export const dappsAtom = atom(
-  get => get(dappServiceAtom).dapps || {},
-  (get, set, newVal: (typeof dappService.store)['dapps']) => {
-    const prev = get(dappServiceAtom);
-    set(dappServiceAtom, { ...prev, dapps: newVal });
-  },
-);
+import { dappsAtom, dappServiceAtom } from '@/hooks/useDapps';
+import { useBrowserBookmark } from '@/hooks/useBrowserBookmark';
 
 /**
  * @description only call this hook on app's top level
@@ -36,8 +26,8 @@ export function useSetupServiceStub() {
   const [, setCurrentAccount] = useAtom(currentAccountAtom);
   const [, setChainList] = useAtom(chainListAtom);
   const { getAllRPC } = useCustomRPC();
-  const [dapps] = useAtom(dappsAtom);
-  const { getBrowserHistoryList } = useBrowserHistory({ dapps });
+  const { getBookmarkList } = useBrowserBookmark();
+  const { getBrowserHistoryList } = useBrowserHistory();
 
   useEffect(() => {
     const disposes: Function[] = [];
@@ -77,6 +67,7 @@ export function useSetupServiceStub() {
   });
 
   useMount(() => {
+    getBookmarkList();
     getBrowserHistoryList();
   });
 }

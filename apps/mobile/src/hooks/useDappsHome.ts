@@ -1,11 +1,10 @@
 import { sortBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { dappsAtom } from '@/core/storage/serviceStoreStub';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAtom } from 'jotai';
 import { useBrowserHistory } from './useBrowserHistory';
-import { useDapps } from './useDapps';
+import { dappsAtom, useDapps } from './useDapps';
 
 export const useDappsHome = () => {
   const [dapps] = useAtom(dappsAtom);

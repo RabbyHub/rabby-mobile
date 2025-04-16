@@ -1,0 +1,100 @@
+import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useTheme2024 } from '@/hooks/theme';
+import { Tab } from '@/screens/Dapps/hooks/useDappWebViewScreen';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useMemoizedFn } from 'ahooks';
+import {
+  Dimensions,
+  ListRenderItem,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
+import { BrowserTabCard } from './BrowserTabCard';
+
+export const BrowserTabList = () => {
+  const { colors2024, styles } = useTheme2024({
+    getStyle,
+  });
+  const navigation = useRabbyAppNavigation();
+  const {
+    tabs,
+    activeTab,
+    switchToTab,
+    closeTab,
+    // openedDappItems,
+    // finalActiveDappId,
+    // activeDapp,
+    // collapseDappWebViewScreen,
+    closeOpenedDapp,
+    clearActiveDappOrigin,
+  } = useBrowser();
+
+  const renderItem: ListRenderItem<Tab> = useMemoizedFn(({ item, index }) => {
+    return (
+      <View
+        style={[
+          {
+            width: '50%',
+            position: 'relative',
+          },
+          index % 2 === 0
+            ? {
+                paddingRight: 3,
+              }
+            : {
+                paddingLeft: 3,
+              },
+        ]}>
+        <BrowserTabCard
+          tab={item}
+          isActive={activeTab?.id === item.id}
+          onPress={switchToTab}
+          onPressClose={tab => closeTab(tab.id)}
+        />
+      </View>
+    );
+  });
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={tabs}
+        renderItem={renderItem}
+        numColumns={2}
+        keyExtractor={item => item.id}
+        ItemSeparatorComponent={ItemSeparatorComponent}
+        showsVerticalScrollIndicator={false}
+      />
+      <TouchableOpacity style={styles.addBtn}>
+        <RcIconAddPlusCircle
+          style={styles.iconPlus}
+          width={44}
+          height={44}
+          color={colors2024['neutral-foot']}
+          borderColor={colors2024['neutral-line']}
+          backgroundColor={colors2024['neutral-bg-1']}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    paddingHorizontal: 14,
+    paddingTop: 5,
+    paddingBottom: 9,
+    gap: 12,
+    position: 'relative',
+  },
+  addBtn: {
+    position: 'absolute',
+    bottom: 54,
+    left: Dimensions.get('window').width / 2 - 22,
+  },
+  iconPlus: {},
+}));

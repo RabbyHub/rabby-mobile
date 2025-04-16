@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
 type Option = {
@@ -16,6 +16,10 @@ export type PillsSwitchProps<T extends readonly Option[] | Option[]> = {
   style?: StyleProp<ViewStyle>;
   height?: number;
   itemStyle?: StyleProp<ViewStyle>;
+  activeItemStyle?: StyleProp<ViewStyle>;
+  itemTextStyle?: StyleProp<TextStyle>;
+  activeItemTextStyle?: StyleProp<TextStyle>;
+  optionsStyle?: StyleProp<ViewStyle>;
 };
 
 export const PillsSwitch = <T extends readonly Option[] | Option[]>({
@@ -24,11 +28,15 @@ export const PillsSwitch = <T extends readonly Option[] | Option[]>({
   onTabChange,
   style,
   itemStyle,
+  activeItemStyle,
+  itemTextStyle,
+  activeItemTextStyle,
+  optionsStyle,
 }: React.PropsWithoutRef<PillsSwitchProps<T>>) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.container, style]}>
-      <View style={[styles.options]}>
+      <View style={[styles.options, optionsStyle]}>
         {options.map((item: Option) => {
           const isActive = item.key === value;
 
@@ -41,11 +49,17 @@ export const PillsSwitch = <T extends readonly Option[] | Option[]>({
                 styles.item,
                 isActive && styles.itemActive,
                 itemStyle,
+                isActive && activeItemStyle,
               ]}
               key={`pills-switch-${item.key}`}>
               <Text
                 numberOfLines={1}
-                style={[styles.itemText, isActive && styles.itemActiveText]}>
+                style={[
+                  styles.itemText,
+                  isActive && styles.itemActiveText,
+                  itemTextStyle,
+                  isActive && activeItemTextStyle,
+                ]}>
                 {item.label}
               </Text>
             </TouchableOpacity>

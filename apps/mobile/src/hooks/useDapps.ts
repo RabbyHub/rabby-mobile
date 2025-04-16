@@ -1,14 +1,25 @@
-import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
+import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback } from 'react';
 
-import { DappInfo } from '@/core/services/dappService';
-import { useAtom } from 'jotai';
-import { dappService } from '@/core/services/shared';
-import { stringUtils } from '@rabby-wallet/base-utils';
-import { dappsAtom } from '@/core/storage/serviceStoreStub';
 import { apisDapp } from '@/core/apis';
-import { useMemoizedFn } from 'ahooks';
+import { DappInfo } from '@/core/services/dappService';
 import { type Account } from '@/core/services/preference';
+import { dappService } from '@/core/services/shared';
+import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
+import { useMemoizedFn } from 'ahooks';
+import { atom, useAtom } from 'jotai';
+
+export const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
+  dappService.store,
+);
+
+export const dappsAtom = atom(
+  get => get(dappServiceAtom).dapps || {},
+  (get, set, newVal: (typeof dappService.store)['dapps']) => {
+    const prev = get(dappServiceAtom);
+    set(dappServiceAtom, { ...prev, dapps: newVal });
+  },
+);
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);

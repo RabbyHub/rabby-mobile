@@ -8,7 +8,10 @@ import { APP_STORE_NAMES } from '../storage/storeConstant';
 
 export interface DappInfo {
   origin: string;
-  info: BasicDappInfo;
+  icon?: string;
+  name: string;
+  url?: string;
+  info?: BasicDappInfo;
   infoUpdateAt?: number;
   isFavorite?: boolean;
   isConnected?: boolean;

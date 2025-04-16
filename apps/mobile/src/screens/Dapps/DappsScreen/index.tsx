@@ -27,6 +27,7 @@ import { debounce } from 'lodash';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { RcIconGoogle } from '@/assets/icons/dapp';
+import { useBrowserTabs } from '@/screens/Browser/hooks/useBrowserTabs';
 
 export function DappsScreen(): JSX.Element {
   const {
@@ -37,7 +38,7 @@ export function DappsScreen(): JSX.Element {
     removeBrowserHistory,
     disconnectDapp,
   } = useDappsHome();
-  const { openUrlAsDapp } = useDappWebViewScreen();
+  const { openUrlAsDapp } = useBrowserTabs();
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -56,7 +57,7 @@ export function DappsScreen(): JSX.Element {
         ...options,
         dappsWebViewFromRoute: RootNames.Dapps,
       });
-      setBrowserHistory(safeGetOrigin(url));
+      // setBrowserHistory(safeGetOrigin(url));
       Keyboard.dismiss();
     },
   );

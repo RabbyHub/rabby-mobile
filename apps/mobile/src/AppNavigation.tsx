@@ -79,6 +79,9 @@ import MultiAddressHome from './screens/Home/MultiAddressHome';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import WebViewControlPreload from './components/WebView/WebViewControlPreload';
+import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
+import { BrowserScreen } from './screens/Browser/BrowserScreen';
+// import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -181,7 +184,7 @@ function useDetermineExitAppOnPressBack() {
   }, [getBackRestCount, setBackStage]);
 }
 
-const Stack1 = () => {
+const MainStack = () => {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   return (
@@ -455,7 +458,7 @@ export default function AppNavigation({
           tabBar={() => null}>
           <HomeHiddenTabStack.Screen
             name={RootNames.Home}
-            component={Stack1}
+            component={MainStack}
             options={{
               headerShown: false,
             }}
@@ -463,22 +466,20 @@ export default function AppNavigation({
 
           <HomeHiddenTabStack.Screen
             name={RootNames.DappWebViewStubOnHome}
-            component={DappWebViewStubScreen}
+            component={BrowserScreen}
             options={{
               title: '',
               headerShadowVisible: false,
               headerShown: false,
-              // tabBarStyle: { height: 0, display: 'none' },
-              // tabBarButton(props) {
-              //   return null;
-              // },
-              // animation: 'slide_from_bottom',
-              // animationDuration: 500,
-              // animationTypeForReplace: 'push',
-              // header: (headerProps) => {
-              //   // return <DappWebViewStubScreen.Header />
-              //   return null;
-              // }
+            }}
+          />
+          <HomeHiddenTabStack.Screen
+            name={RootNames.BrowserManage}
+            component={BrowserManageScreen}
+            options={{
+              title: '',
+              headerShadowVisible: false,
+              headerShown: false,
             }}
           />
         </HomeHiddenTabStack.Navigator>
