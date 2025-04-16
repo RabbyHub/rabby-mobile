@@ -110,6 +110,12 @@ export const MultiAssets = () => {
     isLoading,
   } = useAssets();
 
+  const {
+    combineData,
+    refresh: refreshCurve,
+    loading,
+  } = useMultiCurve(top10Addresses);
+
   const [selectChainItem, setSelectChainItem] = useState<
     ChainListItem | undefined
   >();
@@ -146,14 +152,16 @@ export const MultiAssets = () => {
   const [extendedState, setExtendedState] = useState<{
     currentTab: TabType;
     isLight: boolean;
+    combineData?: any;
   }>({
     currentTab: TabType.portfolio,
+    combineData,
     isLight: isLight,
   });
 
   useEffect(() => {
-    setExtendedState(prev => ({ ...prev, isLight }));
-  }, [isLight]);
+    setExtendedState(prev => ({ ...prev, isLight, combineData }));
+  }, [isLight, combineData]);
 
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([]),
@@ -302,11 +310,6 @@ export const MultiAssets = () => {
     setListData(dataProvider.cloneWithRows(dataList));
   }, [dataList, dataProvider]);
 
-  const {
-    combineData,
-    refresh: refreshCurve,
-    loading,
-  } = useMultiCurve(top10Addresses);
   const pathColor = !combineData.isLoss
     ? colors2024['green-default']
     : colors2024['red-default'];

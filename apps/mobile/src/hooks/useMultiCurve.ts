@@ -29,8 +29,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
     return [];
   }
 
-  // 获取24小时前的起始时间戳
-  const startTime = dayjs().add(-24, 'hours').unix();
+  const startTime = timeStamps[0][0].timestamp;
   // 30分钟的秒数
   const interval = 30 * 60;
   // 创建48个时间窗口
@@ -85,50 +84,55 @@ export const useMultiCurve = (addresses: string[]) => {
       }
       setLoading(true);
       const nextCheckAddress = new Set([...addres]);
-      addres.forEach(_addr => {
-        const addr = _addr.toLocaleLowerCase();
-        setMultiTimeStamp(prev => ({
-          ...prev,
-          [addr]: {
-            ...(prev[addr] || {}),
-            loading: true,
-          },
-        }));
-        const cacheData = getCurveCache(addr);
-        if (!cacheData?.data) {
-          return;
-        }
-        const curve = cacheData.data;
-        console.log('🔍 CUSTOM_LOGGER:=>: curve', curve.length, addr.slice(-4));
-        const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
-        const step = 5 * 60 * 1000;
-        const result = patchCurveData(
-          curve.map(item => {
-            return {
-              timestamp: item.timestamp * 1000,
-              price: item.usd_value,
-            };
-          }),
-          start,
-          step,
-        );
-
-        if (!cacheData.isExpired) {
-          nextCheckAddress.delete(addr);
-        }
-        setMultiTimeStamp(prev => ({
-          ...prev,
-          [addr]: {
-            loading: false,
-            data: result.map(item => {
+      !force &&
+        addres.forEach(_addr => {
+          const addr = _addr.toLocaleLowerCase();
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              ...(prev[addr] || {}),
+              loading: true,
+            },
+          }));
+          const cacheData = getCurveCache(addr);
+          if (!cacheData?.data) {
+            return;
+          }
+          const curve = cacheData.data;
+          console.log(
+            '🔍 CUSTOM_LOGGER:=>: curve',
+            curve.length,
+            addr.slice(-4),
+          );
+          const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
+          const step = 5 * 60 * 1000;
+          const result = patchCurveData(
+            curve.map(item => {
               return {
-                timestamp: dayjs(item.timestamp).unix(),
-                usd_value: item.price,
+                timestamp: item.timestamp * 1000,
+                price: item.usd_value,
               };
             }),
-          },
-        }));
-      });
+            start,
+            step,
+          );
+
+          if (!cacheData.isExpired) {
+            nextCheckAddress.delete(addr);
+          }
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              loading: false,
+              data: result.map(item => {
+                return {
+                  timestamp: dayjs(item.timestamp).unix(),
+                  usd_value: item.price,
+                };
+              }),
+            },
+          }));
+        });
       queue.clear();
       Array.from(nextCheckAddress).forEach(_addr => {
         try {
