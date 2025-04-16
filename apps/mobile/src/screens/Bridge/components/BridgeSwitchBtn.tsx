@@ -66,14 +66,14 @@ function Loading({ isLoading }: { isLoading?: boolean }) {
   const rotation = useSharedValue('0deg');
   useEffect(() => {
     if (isLoading) {
-      opacity.value = withTiming(1, { duration: 500 });
+      opacity.value = withTiming(1, { duration: 100 });
       rotation.value = withRepeat(
-        withTiming('360deg', { duration: 1000, easing: Easing.linear }),
+        withTiming('360deg', { duration: 500, easing: Easing.linear }),
         -1,
         false,
       );
     } else {
-      opacity.value = withTiming(0, { duration: 500 }, () => {
+      opacity.value = withTiming(0, { duration: 100 }, () => {
         cancelAnimation(rotation);
         rotation.value = withTiming('0deg', { duration: 0 });
       });
