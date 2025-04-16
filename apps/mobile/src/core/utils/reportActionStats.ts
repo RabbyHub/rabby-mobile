@@ -274,7 +274,7 @@ export const reportActionStats = async (
         });
       }
       if (beforeKey === REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN) {
-        // not swap no sign progress  to do test
+        // Handle case where swap progresses directly from 'sign' to 'finish' without intermediate steps
         reportFunc('SwapSign_to_SwapFinish', {
           value: timeGap,
           deviceType: IS_IOS ? 'iOS' : 'Android',
