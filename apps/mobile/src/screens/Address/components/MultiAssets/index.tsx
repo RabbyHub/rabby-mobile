@@ -25,6 +25,7 @@ import {
   DEFI_SEPARATOR_HEIGHT,
   HEADER_CHART_HEIGHT,
   RootNames,
+  SWITCH_HEADER_HEIGHT,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -57,6 +58,7 @@ import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { chunk } from 'lodash';
 import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -100,6 +102,11 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [extendedState, setExtendedState] = useState<{
+    currentTab: TabType;
+  }>({
+    currentTab: TabType.portfolio,
+  });
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([]),
   );
@@ -156,6 +163,7 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         show: true,
         data: [
           { type: 'overview' },
+          { type: 'switch_tabs' },
           {
             type: 'asset_header',
           },
@@ -265,6 +273,18 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
             loading={loading}
             pathColor={pathColor}
             isNoAssets={false}
+          />
+        );
+      case 'switch_tabs':
+        return (
+          <SwitchHeader
+            currentTab={extendedState.currentTab}
+            onChangeTab={tab =>
+              setExtendedState(pre => ({
+                ...pre,
+                currentTab: tab,
+              }))
+            }
           />
         );
 
@@ -404,6 +424,9 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
         ) {
           return ViewTypes.HEADER;
         }
+        if (item.type === 'switch_tabs') {
+          return ViewTypes.SWITCH_HEADER;
+        }
         return ViewTypes.BODY;
       },
       (type, dim) => {
@@ -428,6 +451,10 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
           case ViewTypes.DEFI:
             dim.width = SCREEN_WIDTH - 32;
             dim.height = DEFI_ITEM_HEIGHT + DEFI_SEPARATOR_HEIGHT;
+            break;
+          case ViewTypes.SWITCH_HEADER:
+            dim.width = SCREEN_WIDTH - 32;
+            dim.height = SWITCH_HEADER_HEIGHT;
             break;
           default:
             dim.width = SCREEN_WIDTH - 32;
@@ -467,6 +494,7 @@ export const MultiAssets: React.FC<Props> = ({ filterText }) => {
       <RecyclerListView
         style={styles.list}
         dataProvider={listData}
+        extendedState={extendedState}
         layoutProvider={layoutProvider}
         rowRenderer={renderItem}
         onVisibleIndicesChanged={indexes => {

@@ -115,13 +115,6 @@ export function AddressAssetsOverview(): JSX.Element {
     }, [fetchAccounts]),
   );
 
-  const { combineData, refresh, loading } = useMultiCurve(
-    list.slice(0, 10).map(i => i.address),
-  );
-  const pathColor = !combineData.isLoss
-    ? colors2024['green-default']
-    : colors2024['red-default'];
-
   return (
     <AddressListScreenContainer>
       <MultiAssets />

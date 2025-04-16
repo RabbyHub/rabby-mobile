@@ -115,6 +115,7 @@ export type ActionHeaderItem = {
     | 'empty-token'
     | 'empty-nft'
     | 'empty-defi'
+    | 'switch_tabs'
     | 'loading-skeleton'
     | 'loading-defi-skeleton';
   data?: null | string;
