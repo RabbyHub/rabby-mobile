@@ -241,15 +241,6 @@ const Swap = ({
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
-    console.log(
-      'navState?.isFromSwap',
-      isBuy,
-      navState,
-      navState?.isFromSwap,
-      receiveToken?.chain,
-      payToken?.chain,
-      chainItem?.serverId,
-    );
 
     if (navState?.isFromSwap) {
       if (navState?.tokenId && chainItem?.enum === chain) {

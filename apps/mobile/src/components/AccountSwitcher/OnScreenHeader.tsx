@@ -148,9 +148,9 @@ const getStyle = createGetStyles2024(ctx => {
       margin: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
-      lineHeight: 22,
-      fontSize: 17,
-      color: ctx.colors2024['neutral-title-1'],
+      lineHeight: 20,
+      fontSize: 16,
+      color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {
       marginLeft: 4,
