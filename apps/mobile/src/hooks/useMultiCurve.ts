@@ -97,7 +97,7 @@ export const useMultiCurve = (
         if (!addres.length) {
           return;
         }
-        setLoading(true);
+        setLoading(!!force);
         const nextCheckAddress = new Set([...addres]);
         !force &&
           addres.forEach(_addr => {
@@ -204,9 +204,12 @@ export const useMultiCurve = (
     [setMultiTimeStamp],
   );
 
-  const refresh = async (force?: boolean) => {
-    await fetch(addresses, force);
-  };
+  const refresh = useCallback(
+    async (force?: boolean) => {
+      await fetch(addresses, force);
+    },
+    [addresses, fetch],
+  );
 
   const combineData = useMemo(() => {
     const list = addresses
@@ -221,7 +224,7 @@ export const useMultiCurve = (
       new Date().getTime(),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses.length, multiTimeStamp]);
+  }, [addresses.length, multiTimeStamp, totalBalance]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {
@@ -229,9 +232,6 @@ export const useMultiCurve = (
     }
     if (combineData.list.length === 0) {
       fetch(addresses);
-    }
-    if (Object.keys(multiTimeStamp).length >= addresses.length) {
-      setLoading(false);
     }
   }, [
     addresses,
@@ -241,10 +241,19 @@ export const useMultiCurve = (
     multiTimeStamp,
   ]);
 
+  const isLoadingNew = useMemo(() => {
+    // return true;
+    return addresses.some(address => {
+      return !multiTimeStamp[address.toLocaleLowerCase()]?.data?.length;
+    });
+  }, [addresses, multiTimeStamp]);
+
   return {
     combineData,
+    isLoadingNew,
     multiTimeStamp,
     loading,
+    fetch,
     refresh,
   };
 };

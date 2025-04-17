@@ -255,7 +255,7 @@ export const AssetContainer: React.FC<Props> = ({
             dim.height = DEFI_ITEM_HEIGHT + DEFI_SEPARATOR_HEIGHT;
             break;
           default:
-            dim.width = SCREEN_WIDTH - 32;
+            dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
         }
       },
@@ -807,17 +807,19 @@ export const AssetContainer: React.FC<Props> = ({
       case 'unfold_token':
       case 'fold_token':
         return (
-          <TokenRow
-            data={data}
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              !isLight && styles.bg2,
-            ])}
-            onTokenPress={handleOpenTokenDetail}
-            menuActions={getTokenMenuActions(data)}
-            logoSize={46}
-            chainLogoSize={18}
-          />
+          <View style={styles.rowWrap}>
+            <TokenRow
+              data={data}
+              style={StyleSheet.flatten([
+                styles.renderItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              onTokenPress={handleOpenTokenDetail}
+              menuActions={getTokenMenuActions(data)}
+              logoSize={46}
+              chainLogoSize={18}
+            />
+          </View>
         );
       case 'unfold_defi':
       case 'fold_defi':
@@ -856,17 +858,19 @@ export const AssetContainer: React.FC<Props> = ({
       case 'unfold_nft':
       case 'fold_nft':
         return (
-          <NftRow
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              !isLight && styles.bg2,
-            ])}
-            menuActions={getDefiOrNftMenuAction('nft', data)}
-            logoSize={46}
-            chainLogoSize={18}
-            item={data}
-            onPress={() => handlePressNft(data)}
-          />
+          <View style={styles.rowWrap}>
+            <NftRow
+              style={StyleSheet.flatten([
+                styles.renderItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              menuActions={getDefiOrNftMenuAction('nft', data)}
+              logoSize={46}
+              chainLogoSize={18}
+              item={data}
+              onPress={() => handlePressNft(data)}
+            />
+          </View>
         );
       /** header */
       case 'asset_header':
@@ -1116,13 +1120,15 @@ const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
+  rowWrap: {
+    paddingHorizontal: 16,
+  },
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 16,
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
-    marginLeft: 16,
   },
   defiGroups: {
     flexDirection: 'row',

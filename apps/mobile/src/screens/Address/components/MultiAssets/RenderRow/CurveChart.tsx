@@ -1,15 +1,17 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
-import { CurveLoader } from '@/screens/Home/components/CurveBottomSheet/CurveLoader';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint } from '@/screens/Home/hooks/useCurve';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formChartData } from '@/hooks/useCurve';
 import { HEADER_CHART_HEIGHT } from '@/constant/layout';
 import { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
+import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
+import { Skeleton } from '@rneui/base';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -60,9 +62,7 @@ function Chart({
             </LineChart>
           </>
         ) : (
-          <View style={styles.loading}>
-            <CurveLoader gap={10} />
-          </View>
+          <CurveLoader style={styles.loading} />
         )}
       </LineChart.Provider>
     </View>
@@ -126,29 +126,33 @@ export const ChartHeader = ({
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading]);
 
+  if (loading) {
+    return (
+      <Skeleton
+        width={181}
+        height={42}
+        style={styles.skeleton}
+        LinearGradientComponent={LoadingLinear}
+      />
+    );
+  }
   return (
     <View>
       <Text style={styles.netWorth}>{netWorth}</Text>
       <View style={styles.changeSection}>
-        <AnimateableText
-          style={lossStyleProps}
-          text={percentChange.value}
-          animatedProps={{
-            text: percentChange,
-          }}
-        />
-        <AnimateableText
-          style={styles.changeTime}
-          text={dateTime.value}
-          animatedProps={{
-            text: percentChange,
-          }}
-        />
+        <AnimateableText style={lossStyleProps} text={percentChange} />
+        <AnimateableText style={styles.changeTime} text={dateTime} />
       </View>
     </View>
   );
 };
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  skeleton: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
   netWorth: {
     fontSize: 36,
     lineHeight: 42,
@@ -189,6 +193,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   loading: {
     width: ScreenWidth - 40,
-    padding: 0,
+    paddingTop: 20,
+    paddingHorizontal: 0,
   },
 }));

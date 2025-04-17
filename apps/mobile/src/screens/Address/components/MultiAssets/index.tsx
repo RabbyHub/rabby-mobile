@@ -83,6 +83,8 @@ import { trigger } from 'react-native-haptic-feedback';
 import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
+import useAccountsBalance from '@/hooks/useAccountsBalance';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -106,12 +108,33 @@ export const MultiAssets = () => {
 
   const {
     top10Addresses,
-    top10Balance,
-    list,
+    list: _rawList,
     hasWatchAddress,
     hasSafeAddress,
     fetchAccounts,
   } = useAccountInfo();
+
+  const { triggerUpdate, getTotalBalance, balanceAccounts } =
+    useAccountsBalance({
+      cacheTime: 10 * 60 * 1000,
+      accountsNoUnique: true, // balanceAccounts has filter same address accounts
+    });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const list = useMemo(() => {
+    return _rawList.map(item => {
+      const account = balanceAccounts.find(acc =>
+        isSameAddress(acc.address, item.address),
+      );
+      return {
+        ...item,
+        balance: account?.balance || item.balance || 0,
+      };
+    });
+  }, [balanceAccounts, _rawList]);
 
   const {
     tokens: _rawTokens,
@@ -127,7 +150,7 @@ export const MultiAssets = () => {
     multiTimeStamp,
     combineData,
     refresh: refreshCurve,
-    loading,
+    isLoadingNew: isLoadingCurve,
   } = useMultiCurve(top10Addresses, false, top10Balance);
 
   const [selectChainItem, setSelectChainItem] = useState<
@@ -434,7 +457,7 @@ export const MultiAssets = () => {
           <MultiChart
             isOffline={false}
             data={combineData}
-            loading={loading}
+            loading={isLoadingCurve}
             pathColor={pathColor}
             isNoAssets={false}
           />
@@ -517,6 +540,7 @@ export const MultiAssets = () => {
       case 'toggle_token_fold':
         return (
           <TokenRowSectionHeader
+            style={styles.tokenSectionHeader}
             str={getTotalFoldToken(tokens.filter(i => i._isFold))}
             fold={foldHideList}
             onPressFold={() => setFoldHideList(pre => !pre)}
@@ -527,6 +551,19 @@ export const MultiAssets = () => {
           <Text style={styles.sectionHeader}>
             {t('page.search.sectionHeader.Defi')}
           </Text>
+        );
+      case 'toggle_defi_fold':
+        return (
+          <TokenRowSectionHeader
+            str={getAllDefiCount(portfolios.filter(i => i._isFold))}
+            fold={foldDefi}
+            style={styles.sectionHeader}
+            buttonStyle={StyleSheet.flatten([
+              styles.buttonHeader,
+              !isLight && styles.bg2,
+            ])}
+            onPressFold={() => setFoldDefi(pre => !pre)}
+          />
         );
       case 'empty-assets':
       case 'empty-defi':
@@ -761,6 +798,7 @@ export const MultiAssets = () => {
             <RefreshControl
               style={styles.bgContainer}
               onRefresh={() => {
+                triggerUpdate(true);
                 fetchAccounts();
                 checkIsExpireAndUpdate(true, { disableNFT: true });
                 refreshCurve(true);
@@ -823,9 +861,15 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 22,
     height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
+    paddingLeft: 0,
+    paddingRight: 0,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
+  },
+  tokenSectionHeader: {
+    paddingLeft: 0,
+    paddingRight: 0,
   },
   emptyAssets: {
     marginHorizontal: 0,

@@ -74,11 +74,13 @@ import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { Card } from '@/components2024/Card';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import LinearGradient from 'react-native-linear-gradient';
+import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { Skeleton } from '@rneui/base';
 
 const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
-  const { loading, data } = prop;
+  const { loading, data, loadingNewCurve } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -172,20 +174,38 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.curveContainer}>
-            <Text style={styles.netWorth}>{data.netWorth}</Text>
-            <View style={styles.changeSection}>
-              <Text
-                style={[
-                  styles.changePercent,
-                  {
-                    color: data.isLoss
-                      ? colors2024['red-default']
-                      : colors2024['green-default'],
-                  },
-                ]}>
-                {percentChange}
-              </Text>
-            </View>
+            {loadingNewCurve ? (
+              <Skeleton
+                width={181}
+                height={44}
+                style={styles.skeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+            ) : (
+              <Text style={styles.netWorth}>{data.netWorth}</Text>
+            )}
+            {loadingNewCurve ? (
+              <Skeleton
+                width={100}
+                height={22}
+                style={styles.skeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+            ) : (
+              <View style={styles.changeSection}>
+                <Text
+                  style={[
+                    styles.changePercent,
+                    {
+                      color: data.isLoss
+                        ? colors2024['red-default']
+                        : colors2024['green-default'],
+                    },
+                  ]}>
+                  {percentChange}
+                </Text>
+              </View>
+            )}
           </View>
           <ArrowCircleCC
             style={styles.arrow}
@@ -216,12 +236,8 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
-  const { top10Addresses, top10Balance } = useAccountInfo();
-  const {
-    combineData,
-    refresh: refreshCurve,
-    loading: loadingCurve,
-  } = useMultiCurve(top10Addresses, true, top10Balance);
+  const { top10Addresses } = useAccountInfo();
+
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
 
@@ -340,10 +356,22 @@ function MultiAddressHome(): JSX.Element {
     balanceCacheAccounts,
     triggerUpdate,
     balanceLoading,
+    getTotalBalance,
   } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const {
+    combineData,
+    refresh: refreshCurve,
+    loading,
+    isLoadingNew: loadingNewCurve,
+  } = useMultiCurve(top10Addresses, true, top10Balance);
   useFetchCexInfo();
 
   const { accounts } = useMyAccounts({
@@ -592,7 +620,11 @@ function MultiAddressHome(): JSX.Element {
         paddingTop: 64,
       }}>
       <View style={styles.paddingContainer}>
-        <MultiAddressHomeHeader data={combineData} loading={balanceLoading} />
+        <MultiAddressHomeHeader
+          data={combineData}
+          loading={loading}
+          loadingNewCurve={loadingNewCurve}
+        />
         {pendingTxCount > 0 && (
           <View style={[styles.pendingContainer]} pointerEvents="box-none">
             <TouchableOpacity
@@ -1078,10 +1110,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 20,
     paddingVertical: 28,
     paddingHorizontal: 20,
-    borderColor: colors2024['neutral-bg-1'],
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-line'],
     backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  skeleton: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   curveContainer: {
     gap: 10,
