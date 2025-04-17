@@ -1,18 +1,20 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { RootNames } from '@/constant/layout';
+import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useNavigationState } from '@react-navigation/native';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTab } from './components/BrowserTab';
 
@@ -26,7 +28,11 @@ export function BrowserScreen() {
   });
   const { styles } = useTheme2024({ getStyle: getWebViewStubStyles });
 
+  useLastUsedAccountInScreen();
+
   const { safeTop, androidOnlyBottomOffset } = useSafeSizes();
+
+  const activeDappWebViewControlRef = useRef<any>(null);
 
   const { dappsWebViewFromRoute = RootNames.Dapps } = useNavigationState(
     s =>
@@ -34,7 +40,7 @@ export function BrowserScreen() {
       {},
   ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
 
-  const { tabs, activeTab, closeTab, updateTab, openTab } = useBrowser();
+  const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
 
   const { setBrowserHistory } = useBrowserHistory();
 
@@ -67,7 +73,7 @@ export function BrowserScreen() {
         ) : (
           <>
             {tabs.map((tab, idx) => {
-              const isActiveTab = activeTab?.id === tab.id;
+              const isActiveTab = activeTabId === tab.id;
               const key = tab.id;
               const urlInfo = urlUtils.canoicalizeDappUrl(tab.url);
 
@@ -76,13 +82,12 @@ export function BrowserScreen() {
                   key={key}
                   ref={inst => {
                     if (isActiveTab) {
-                      // globalSetActiveDappState({ dappOrigin: urlInfo.origin });
-                      // // @ts-expect-error
-                      // activeDappWebViewControlRef.current = inst;
-                      // globalSetActiveDappState({
-                      //   dappOrigin: urlInfo.origin,
-                      //   tabId: tab.id,
-                      // });
+                      globalSetActiveDappState({ dappOrigin: urlInfo.origin });
+                      activeDappWebViewControlRef.current = inst;
+                      globalSetActiveDappState({
+                        dappOrigin: urlInfo.origin,
+                        tabId: tab.id,
+                      });
                     }
                   }}
                   onUpdateTab={({ url, viewShot }) => {

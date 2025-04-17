@@ -71,6 +71,7 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
   }, []);
 
   const handleReload = useCallback((event?: GestureResponderEvent) => {
+    console.log('realod', webviewRef.current);
     webviewRef?.current?.reload();
   }, []);
 

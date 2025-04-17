@@ -18,7 +18,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
-  const { tabs, activeTab, switchToTab, closeTab } = useBrowser();
+  const { tabs, activeTabId, switchToTab, closeTab, openTab } = useBrowser();
 
   const renderItem: ListRenderItem<Tab> = useMemoizedFn(({ item, index }) => {
     return (
@@ -38,8 +38,8 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         ]}>
         <BrowserTabCard
           tab={item}
-          isActive={activeTab?.id === item.id}
-          onPress={switchToTab}
+          isActive={activeTabId === item.id}
+          onPress={tab => switchToTab(tab.id)}
           onPressClose={tab => closeTab(tab.id)}
         />
       </View>
@@ -55,7 +55,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         ItemSeparatorComponent={ItemSeparatorComponent}
         showsVerticalScrollIndicator={false}
       />
-      <TouchableOpacity style={styles.addBtn}>
+      <TouchableOpacity style={styles.addBtn} onPress={() => openTab()}>
         <RcIconAddPlusCircle
           style={styles.iconPlus}
           width={44}

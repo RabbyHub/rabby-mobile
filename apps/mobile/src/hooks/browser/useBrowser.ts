@@ -1,12 +1,17 @@
-import { atom, useAtom } from 'jotai';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import { RootNames } from '@/constant/layout';
+import { preferenceService } from '@/core/services';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { TabActions, useNavigation } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
+import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
+import {
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '../accountsSwitcher';
 import { useRabbyAppNavigation } from '../navigation';
+import { useMemo } from 'react';
 
 export type Tab = {
   url: string;
@@ -19,36 +24,46 @@ export type Tab = {
   viewShot?: string;
 };
 
-const tabsAtom = atom<Tab[]>([]);
+const emptyTab: Tab = {
+  id: 'EMPTY_TAB_ID',
+  url: '',
+  openTime: 0,
+};
 
-const activeTabAtom = atom<Tab | undefined | null>(null);
+const tabsAtom = atom<Tab[]>([emptyTab]);
+const activeTabIdAtom = atom<string>(emptyTab.id);
 
 export function useBrowser() {
   const navigation = useRabbyAppNavigation();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const forScene = '@ActiveDappWebViewModal';
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene,
+  });
 
   const [tabs, setTabs] = useAtom(tabsAtom);
-  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
-  const switchToTab = useMemoizedFn((tab: Tab) => {
-    setActiveTab(tab);
+  const [activeTabId, setActiveTabId] = useAtom(activeTabIdAtom);
+
+  const switchToTab = useMemoizedFn((tabId: string) => {
+    setActiveTabId(tabId);
     navigation.navigate(RootNames.StackBrowser, {
       screen: 'BrowserScreen',
     });
+    setTimeout(() => {
+      switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
+    });
   });
   const closeTab = useMemoizedFn((tabId: string) => {
-    if (tabId === activeTab?.id) {
+    if (tabId === activeTabId) {
       const index = tabs.findIndex(item => item.id === tabId);
       if (index === -1) {
         return;
       }
       const newActiveTab = tabs[index + 1] || tabs[index - 1];
-      setActiveTab(newActiveTab);
+      setActiveTabId(newActiveTab?.id || emptyTab.id);
     }
     const newTabs = tabs.filter(item => item.id !== tabId);
     setTabs(newTabs);
-    if (newTabs.length <= 0) {
-      // todo
-      navigation.goBack();
-    }
   });
 
   const updateTab = useMemoizedFn(
@@ -67,7 +82,11 @@ export function useBrowser() {
     },
   );
 
-  const openTab = useMemoizedFn((url: string) => {
+  const openTab = useMemoizedFn((url?: string) => {
+    if (!url) {
+      switchToTab(emptyTab.id);
+      return;
+    }
     const newTab: Tab = {
       url,
       id: uuid(),
@@ -86,9 +105,9 @@ export function useBrowser() {
       return [...prev, newTab];
     });
 
-    setActiveTab(newTab);
+    setActiveTabId(newTab.id);
 
-    // preferenceService.toggleAllowNotifyAccountsChanged(true);
+    preferenceService.toggleAllowNotifyAccountsChanged(true);
 
     // activate(dappInfo);
     //
@@ -110,7 +129,7 @@ export function useBrowser() {
   });
 
   return {
-    activeTab,
+    activeTabId,
     tabs,
     switchToTab,
     closeTab,

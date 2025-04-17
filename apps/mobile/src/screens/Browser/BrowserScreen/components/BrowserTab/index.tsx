@@ -36,6 +36,7 @@ import { DappFavoriteSection } from '@/screens/Browser/DappFavoriteSection';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useMemoizedFn, useSetState } from 'ahooks';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
+import { BrowserProgressBar } from './BrowserProgressBar';
 
 type BrowserTabProps = {
   origin: string;
@@ -87,6 +88,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const [isShowSearch, setIsShowSearch] = useState(!url);
+    const [isLoading, setIsLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const {
       webviewRef,
@@ -157,6 +160,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             );
           }}
         />
+
         <View
           // renderToHardwareTextureAndroid
           style={[
@@ -183,58 +187,92 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               />
             ) : null}
             {!url || !entryScriptWeb3Loaded ? null : (
-              <WebView
-                // cacheEnabled={false}
-                cacheEnabled
-                startInLoadingState={false}
-                allowsFullscreenVideo={false}
-                allowsInlineMediaPlayback={false}
-                originWhitelist={['*']}
-                {...webviewProps}
-                style={[
-                  styles.dappWebView,
-                  webviewProps?.style,
-                  isShowSearch
-                    ? {
-                        display: 'none',
-                      }
-                    : null,
-                ]}
-                ref={webviewRef}
-                source={{
-                  ...(embedHtml
-                    ? {
-                        html: embedHtml,
-                      }
-                    : {
-                        uri: url!,
-                      }),
-                  // TODO: cusotmize userAgent here
-                  // 'User-Agent': ''
-                }}
-                testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
-                applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
-                javaScriptEnabled
-                // androidLayerType='software'
-                injectedJavaScriptBeforeContentLoaded={fullScript}
-                injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-                {...(IS_ANDROID && {
-                  injectedJavaScript: PATCH_ANCHOR_TARGET,
-                })}
-                onNavigationStateChange={webviewActions.onNavigationStateChange}
-                webviewDebuggingEnabled={__DEV__}
-                onLoadStart={e => {
-                  webviewProps?.onLoadStart?.(e);
-                  onLoadStart(e);
-                  const { nativeEvent } = e;
-                  if (nativeEvent.loading) {
-                    return;
+              <>
+                {isLoading ? (
+                  <BrowserProgressBar
+                    progress={progress}
+                    style={styles.progressBar}
+                  />
+                ) : null}
+                <WebView
+                  // cacheEnabled={false}
+                  cacheEnabled
+                  startInLoadingState={false}
+                  renderLoading={() => <View style={{ display: 'none' }} />}
+                  allowsFullscreenVideo={false}
+                  allowsInlineMediaPlayback={false}
+                  originWhitelist={['*']}
+                  {...webviewProps}
+                  style={[
+                    styles.dappWebView,
+                    webviewProps?.style,
+                    isShowSearch
+                      ? {
+                          display: 'none',
+                        }
+                      : null,
+                  ]}
+                  ref={webviewRef}
+                  source={{
+                    ...(embedHtml
+                      ? {
+                          html: embedHtml,
+                        }
+                      : {
+                          uri: url!,
+                        }),
+                    // TODO: cusotmize userAgent here
+                    // 'User-Agent': ''
+                  }}
+                  testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
+                  applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+                  javaScriptEnabled
+                  // androidLayerType='software'
+                  injectedJavaScriptBeforeContentLoaded={fullScript}
+                  injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+                  {...(IS_ANDROID && {
+                    injectedJavaScript: PATCH_ANCHOR_TARGET,
+                  })}
+                  onNavigationStateChange={
+                    webviewActions.onNavigationStateChange
                   }
-                  if (
-                    nativeEvent.url !== urlRef.current &&
-                    nativeEvent.loading &&
-                    nativeEvent.navigationType === 'backforward'
-                  ) {
+                  webviewDebuggingEnabled={__DEV__}
+                  onLoadStart={e => {
+                    webviewProps?.onLoadStart?.(e);
+                    onLoadStart(e);
+                    setIsLoading(true);
+                    setProgress(0);
+                    const { nativeEvent } = e;
+                    if (nativeEvent.loading) {
+                      return;
+                    }
+                    if (
+                      nativeEvent.url !== urlRef.current &&
+                      nativeEvent.loading &&
+                      nativeEvent.navigationType === 'backforward'
+                    ) {
+                      onUpdateTab?.({
+                        url: nativeEvent.url,
+                        name: nativeEvent.title,
+                      });
+                      onUpdateHistory?.({
+                        name: nativeEvent.title,
+                        url: nativeEvent.url,
+                      });
+                    }
+                  }}
+                  onLoadProgress={({ nativeEvent }) => {
+                    console.log('xxx??', nativeEvent.progress);
+                    setProgress(nativeEvent.progress);
+                  }}
+                  onLoadEnd={e => {
+                    setTimeout(() => setIsLoading(false), 300);
+                    webviewProps?.onLoadEnd?.(e);
+                    const { nativeEvent } = e;
+                    if (nativeEvent.loading) {
+                      return;
+                    }
+                    console.log('loadend');
                     onUpdateTab?.({
                       url: nativeEvent.url,
                       name: nativeEvent.title,
@@ -243,50 +281,34 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       name: nativeEvent.title,
                       url: nativeEvent.url,
                     });
-                  }
-                }}
-                onLoadEnd={e => {
-                  webviewProps?.onLoadEnd?.(e);
-                  const { nativeEvent } = e;
-                  if (nativeEvent.loading) {
-                    return;
-                  }
-                  console.log('loadend');
-                  onUpdateTab?.({
-                    url: nativeEvent.url,
-                    name: nativeEvent.title,
-                  });
-                  onUpdateHistory?.({
-                    name: nativeEvent.title,
-                    url: nativeEvent.url,
-                  });
-                }}
-                onShouldStartLoadWithRequest={nativeEvent => {
-                  return checkShouldStartLoadingWithRequestForDappWebView(
-                    nativeEvent,
-                  );
-                }}
-                // onError={errorLog}
-                onMessage={event => {
-                  // // leave here for debug
-                  // if (__DEV__) {
-                  //   console.log('WebView:: onMessage event', event);
-                  // }
-                  onBridgeMessage(event);
-                  webviewProps?.onMessage?.(event);
+                  }}
+                  onShouldStartLoadWithRequest={nativeEvent => {
+                    return checkShouldStartLoadingWithRequestForDappWebView(
+                      nativeEvent,
+                    );
+                  }}
+                  // onError={errorLog}
+                  onMessage={event => {
+                    // // leave here for debug
+                    // if (__DEV__) {
+                    //   console.log('WebView:: onMessage event', event);
+                    // }
+                    onBridgeMessage(event);
+                    webviewProps?.onMessage?.(event);
 
-                  // // leave here for debug
-                  // webviewRef.current?.injectJavaScript(
-                  //   JS_POST_MESSAGE_TO_PROVIDER(
-                  //     JSON.stringify({
-                  //       type: 'hello',
-                  //       data: 'I have received your message!',
-                  //     }),
-                  //     '*',
-                  //   ),
-                  // );
-                }}
-              />
+                    // // leave here for debug
+                    // webviewRef.current?.injectJavaScript(
+                    //   JS_POST_MESSAGE_TO_PROVIDER(
+                    //     JSON.stringify({
+                    //       type: 'hello',
+                    //       data: 'I have received your message!',
+                    //     }),
+                    //     '*',
+                    //   ),
+                    // );
+                  }}
+                />
+              </>
             )}
           </ViewShot>
         </View>
@@ -387,6 +409,7 @@ const getStyles = createGetStyles2024(ctx =>
       flex: 1,
       height: '100%',
       // ...makeDebugBorder('green')
+      position: 'relative',
     },
     dappWebView: {
       flex: 1,
@@ -403,6 +426,12 @@ const getStyles = createGetStyles2024(ctx =>
       flexShrink: 0,
       height: ScreenLayouts2.dappWebViewControlNavHeight,
       backgroundColor: ctx.colors['neutral-bg-1'],
+    },
+    progressBar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      zIndex: 10,
     },
   }),
 );

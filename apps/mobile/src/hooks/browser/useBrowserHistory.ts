@@ -73,8 +73,6 @@ export function useBrowserHistory() {
       .filter(v => !!v);
   }, [bookmarkStore.entities, dapps, store.entities, store.ids]);
 
-  console.log(JSON.stringify(browserHistoryList));
-
   return {
     browserHistoryList,
     setBrowserHistory,

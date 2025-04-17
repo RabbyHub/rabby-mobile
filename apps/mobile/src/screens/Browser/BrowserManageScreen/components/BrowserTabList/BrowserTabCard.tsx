@@ -46,16 +46,18 @@ export const BrowserTabCard: React.FC<Props> = ({
           <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
             {urlInfo.fullDomain}
           </Text>
-          <TouchableOpacity
-            hitSlop={8}
-            style={styles.closeIcon}
-            onPress={() => onPressClose?.(tab)}>
-            <RcIconCloseCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-secondary']}
-            />
-          </TouchableOpacity>
+          {tab.url ? (
+            <TouchableOpacity
+              hitSlop={8}
+              style={styles.closeIcon}
+              onPress={() => onPressClose?.(tab)}>
+              <RcIconCloseCC
+                width={16}
+                height={16}
+                color={colors2024['neutral-secondary']}
+              />
+            </TouchableOpacity>
+          ) : null}
         </View>
         <View style={styles.screenshot}>
           {tab.viewShot ? (
@@ -90,6 +92,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderTopRightRadius: 20,
     paddingHorizontal: 30,
     paddingVertical: 6,
+    height: 30,
+    flex: 0,
   },
   cardTitle: {
     color: colors2024['neutral-title-1'],
