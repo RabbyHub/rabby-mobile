@@ -23,8 +23,9 @@ export const OtherAddressNav = ({ onPress, text }) => {
 };
 
 export function AddressAssetsOverview(): JSX.Element {
+  const { styles } = useTheme2024({ getStyle });
   return (
-    <AddressListScreenContainer>
+    <AddressListScreenContainer style={styles.screen}>
       <MultiAssets />
       {/* <FlatList
         ListEmptyComponent={AddressEmptyContainer}
@@ -34,6 +35,9 @@ export function AddressAssetsOverview(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  screen: {
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
   chart: {
     // paddingVertical: 20,
     paddingHorizontal: 20,

@@ -31,12 +31,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
+  changePercent?: string;
+  isLoss?: boolean;
   lastSelectedAccount?: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   onSelect?: () => void;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
-  const { account, lastSelectedAccount, onSelect } = props;
+  const { account, lastSelectedAccount, onSelect, changePercent, isLoss } =
+    props;
   const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -82,6 +85,8 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           <AddressItemInner2024
             isPressing={isCurrentAccount || isPressing}
             account={account}
+            changePercent={changePercent}
+            isLoss={isLoss}
           />
         </TouchableOpacity>
       </AddressItemShadowView>

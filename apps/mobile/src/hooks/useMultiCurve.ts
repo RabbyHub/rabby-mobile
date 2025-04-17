@@ -72,8 +72,10 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
   });
 };
 
-// TODO: auto update after some transaction finished
-export const useMultiCurve = (addresses: string[]) => {
+export const useMultiCurve = (
+  addresses: string[],
+  disableAutoFetch?: boolean,
+) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
 
@@ -182,8 +184,8 @@ export const useMultiCurve = (addresses: string[]) => {
     [setMultiTimeStamp],
   );
 
-  const refresh = async () => {
-    await fetch(addresses, true);
+  const refresh = async (force?: boolean) => {
+    await fetch(addresses, force);
   };
 
   const combineData = useMemo(
@@ -195,7 +197,7 @@ export const useMultiCurve = (addresses: string[]) => {
   );
 
   useEffect(() => {
-    if (queue.size > 0) {
+    if (disableAutoFetch || queue.size > 0) {
       return;
     }
     if (combineData.list.length === 0) {
@@ -204,7 +206,13 @@ export const useMultiCurve = (addresses: string[]) => {
     if (Object.keys(multiTimeStamp).length === addresses.length) {
       setLoading(false);
     }
-  }, [addresses, combineData.list.length, fetch, multiTimeStamp]);
+  }, [
+    addresses,
+    combineData.list.length,
+    disableAutoFetch,
+    fetch,
+    multiTimeStamp,
+  ]);
 
   return {
     combineData,

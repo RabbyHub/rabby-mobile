@@ -74,6 +74,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccountInfo } from './hooks';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
+import { formChartData } from '@/hooks/useCurve';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -113,6 +114,7 @@ export const MultiAssets = () => {
   } = useAssets();
 
   const {
+    multiTimeStamp,
     combineData,
     refresh: refreshCurve,
     loading,
@@ -234,10 +236,29 @@ export const MultiAssets = () => {
       },
       {
         show: !showPortfolios,
-        data: list.map(item => ({
-          type: 'address_entry',
-          data: item,
-        })),
+        data: list.map(item => {
+          const hasChangeData = multiTimeStamp[
+            item.address.toLocaleLowerCase()
+          ]?.data.some(i => i.usd_value !== 0);
+          return {
+            type: 'address_entry',
+            data: {
+              ...item,
+              changPercent: hasChangeData
+                ? formChartData(
+                    multiTimeStamp[item.address.toLocaleLowerCase()]?.data ||
+                      [],
+                  )?.changePercent
+                : undefined,
+              isLoss: hasChangeData
+                ? formChartData(
+                    multiTimeStamp[item.address.toLocaleLowerCase()]?.data ||
+                      [],
+                  )?.isLoss
+                : undefined,
+            },
+          };
+        }),
       },
       {
         show: showPortfolios && !!foldTokenList.length,
@@ -304,6 +325,7 @@ export const MultiAssets = () => {
     foldHideList,
     isLoading,
     list,
+    multiTimeStamp,
     portfolios,
     t,
     tokens,
@@ -711,7 +733,7 @@ export const MultiAssets = () => {
               onRefresh={() => {
                 fetchAccounts();
                 checkIsExpireAndUpdate(true);
-                refreshCurve();
+                refreshCurve(true);
               }}
               refreshing={refreshing}
             />
@@ -725,6 +747,7 @@ export const MultiAssets = () => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
+    marginTop: -10,
   },
   list: {
     flex: 1,

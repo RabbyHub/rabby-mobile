@@ -73,14 +73,15 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { Card } from '@/components2024/Card';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
+import LinearGradient from 'react-native-linear-gradient';
 
 const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
-  const { loading } = prop;
+  const { loading, data } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
 
@@ -88,18 +89,12 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  const { top10Addresses } = useAccountInfo();
-  const {
-    combineData,
-    refresh: refreshCurve,
-    loading: loadingCurve,
-  } = useMultiCurve(top10Addresses);
 
   const percentChange = useMemo(() => {
-    return `${combineData.isLoss ? '-' : '+'}${combineData.change}(${
-      combineData.isLoss ? '-' : '+'
-    }${combineData.changePercent})`;
-  }, [combineData]);
+    return `${data.isLoss ? '-' : '+'}${data.change}(${
+      data.isLoss ? '-' : '+'
+    }${data.changePercent})`;
+  }, [data]);
 
   useEffect(() => {
     if (loading) {
@@ -166,14 +161,24 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
               action: 'Click_Address',
             });
           }}>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
+                : ['rgba(0, 0, 0, 1)', 'rgba(0, 0, 0, 0)']
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.curveContainer}>
-            <Text style={styles.netWorth}>{combineData.netWorth}</Text>
+            <Text style={styles.netWorth}>{data.netWorth}</Text>
             <View style={styles.changeSection}>
               <Text
                 style={[
                   styles.changePercent,
                   {
-                    color: combineData.isLoss
+                    color: data.isLoss
                       ? colors2024['red-default']
                       : colors2024['green-default'],
                   },
@@ -212,6 +217,12 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
+  const { top10Addresses } = useAccountInfo();
+  const {
+    combineData,
+    refresh: refreshCurve,
+    loading: loadingCurve,
+  } = useMultiCurve(top10Addresses, true);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
 
@@ -429,6 +440,7 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10Assets();
         syncTop10History();
+        refreshCurve();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -445,7 +457,14 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate();
     syncTop10Assets(true);
     syncTop10History(true);
-  }, [triggerUpdate, forceUpdate, syncTop10Assets, syncTop10History]);
+    refreshCurve(true);
+  }, [
+    triggerUpdate,
+    forceUpdate,
+    syncTop10Assets,
+    syncTop10History,
+    refreshCurve,
+  ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
@@ -557,7 +576,12 @@ function MultiAddressHome(): JSX.Element {
     <NormalScreenContainer2024
       type="linear"
       noHeader
-      bgImageSource={require('@/assets2024/icons/home/ImgBgHome.png')}
+      bgImageSource={
+        combineData.isLoss
+          ? require('@/assets2024/icons/home/homeRed.png')
+          : require('@/assets2024/icons/home/homeGreen.png')
+        // ? require('@/assets2024/icons/home/homeRed.png')
+      }
       linearProp={{
         colors: isLight
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
@@ -570,7 +594,7 @@ function MultiAddressHome(): JSX.Element {
         paddingTop: 64,
       }}>
       <View style={styles.paddingContainer}>
-        <MultiAddressHomeHeader loading={balanceLoading} />
+        <MultiAddressHomeHeader data={combineData} loading={balanceLoading} />
         {pendingTxCount > 0 && (
           <View style={[styles.pendingContainer]} pointerEvents="box-none">
             <TouchableOpacity
@@ -1057,6 +1081,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 28,
     paddingHorizontal: 20,
     borderColor: colors2024['neutral-bg-1'],
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

@@ -3,11 +3,9 @@ import * as d3Shape from 'd3-shape';
 import { CurveLoader } from '@/screens/Home/components/CurveBottomSheet/CurveLoader';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint } from '@/screens/Home/hooks/useCurve';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
-import AnimateableText from 'react-native-animateable-text';
 import { formChartData } from '@/hooks/useCurve';
 
 const ScreenWidth = Dimensions.get('screen').width;
@@ -83,7 +81,7 @@ export const ChartHeader = ({
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
-  const percentChange = useDerivedValue(() => {
+  const percentChange = useMemo(() => {
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
     const formatChangeValue = isActiveIndexData
@@ -98,36 +96,34 @@ export const ChartHeader = ({
     return `${formatLoss ? '-' : '+'}${formatChangeValue}(${
       formatLoss ? '-' : '+'
     }${formatChangePercent})`;
-  }, [loading, data, netWorth, currentIndex.value]);
+  }, [data, currentIndex.value, change, changePercent, isLoss]);
 
-  const dateTime = useDerivedValue(() => {
+  const dateTime = useMemo(() => {
     return data?.[currentIndex.value]?.clockTimeString || '24h';
   }, [data, currentIndex]);
 
-  const lossStyleProps = useAnimatedStyle(() => {
+  const formatIsLoss = useMemo(() => {
     if (data?.[currentIndex?.value]) {
-      return {
-        ...styles.changePercent,
-        display: loading ? 'none' : 'flex',
-        color: data?.[currentIndex?.value]?.isLoss
-          ? colors2024['red-default']
-          : colors2024['green-default'],
-      };
+      return data?.[currentIndex?.value]?.isLoss;
     }
-    return {
-      ...styles.changePercent,
-      display: loading ? 'none' : 'flex',
-      color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
-    };
-  }, [isLoss, data, currentIndex, colors2024, styles, loading]);
+    return isLoss;
+  }, [isLoss, data, currentIndex]);
   return (
     <View>
       <Text style={styles.netWorth}>{netWorth}</Text>
       <View style={styles.changeSection}>
-        {!loading && (
-          <AnimateableText style={lossStyleProps} text={percentChange} />
-        )}
-        <AnimateableText style={styles.changeTime} text={dateTime} />
+        <Text
+          style={[
+            styles.changePercent,
+            {
+              color: formatIsLoss
+                ? colors2024['red-default']
+                : colors2024['green-default'],
+            },
+          ]}>
+          {percentChange}
+        </Text>
+        <Text style={styles.changeTime}>{dateTime}</Text>
       </View>
     </View>
   );

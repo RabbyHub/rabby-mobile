@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import {
@@ -8,9 +8,7 @@ import {
 } from '@/components2024/AddressItem/AddressItem';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
-import { TextBadge } from './PinBadge';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -55,11 +53,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemNamePinned: {
     marginLeft: -52,
   },
+  balanceContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+  },
   itemBalanceText: {
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
+  },
+  percent: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   itemName: {
     gap: 8,
@@ -88,9 +97,19 @@ interface AddressItemProps {
   hiddenArrow?: boolean;
   isPressing?: boolean;
   hiddenPin?: boolean;
+  changePercent?: string;
+  isLoss?: boolean;
 }
 export const AddressItemInner2024 = (props: AddressItemProps) => {
-  const { account, style, hiddenArrow, isPressing, hiddenPin } = props;
+  const {
+    account,
+    style,
+    hiddenArrow,
+    isPressing,
+    hiddenPin,
+    changePercent,
+    isLoss,
+  } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { pinAddresses } = usePinAddresses({
@@ -105,6 +124,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       ),
     [pinAddresses, account],
   );
+  const isZeroPercentChange = changePercent === '0%';
 
   return (
     <Card
@@ -121,7 +141,24 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
               <View style={styles.itemName}>
                 <WalletName style={StyleSheet.flatten([styles.itemNameText])} />
               </View>
-              <WalletBalance style={styles.itemBalanceText} />
+              <View style={styles.balanceContainer}>
+                <WalletBalance style={styles.itemBalanceText} />
+                {typeof changePercent === 'string' && (
+                  <Text
+                    style={[
+                      styles.percent,
+                      {
+                        color: !isZeroPercentChange
+                          ? isLoss
+                            ? colors2024['red-default']
+                            : colors2024['green-default']
+                          : colors2024['neutral-secondary'],
+                      },
+                    ]}>{`${
+                    isZeroPercentChange ? '' : isLoss ? '-' : '+'
+                  }${changePercent}`}</Text>
+                )}
+              </View>
             </View>
           </View>
         )}
