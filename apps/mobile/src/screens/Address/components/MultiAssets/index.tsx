@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -78,6 +79,7 @@ import { formChartData } from '@/hooks/useCurve';
 import { trigger } from 'react-native-haptic-feedback';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 
 const ViewTypes = {
   HEADER: 0,
@@ -124,6 +126,7 @@ export const MultiAssets = () => {
   const [selectChainItem, setSelectChainItem] = useState<
     ChainListItem | undefined
   >();
+  const listRef = useRef<RecyclerListViewRef>(null);
   const [firstRowType, setFirstRowType] = useState('');
 
   const { tokens, portfolios } = useMemo(() => {
@@ -407,6 +410,17 @@ export const MultiAssets = () => {
     },
     [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
   );
+  const scrollToTop = () => {
+    setFoldHideList(true);
+    setTimeout(() => {
+      listRef.current?.forceUpdate(() => {
+        const data = (listRef.current?.props.dataProvider.getAllData() ||
+          []) as ActionItem[];
+        const index = data.findIndex(item => item.type === 'switch_tabs');
+        listRef.current?.scrollToIndex(index || 0, true);
+      });
+    }, 200);
+  };
 
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
@@ -657,12 +671,17 @@ export const MultiAssets = () => {
             addressLength={list.length}
             onChainClick={handleOnChainClick}
             chainLength={chainsInfo.chainLength}
-            onChangeTab={tab =>
+            onChangeTab={tab => {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
               setExtendedState(pre => ({
                 ...pre,
                 currentTab: tab,
-              }))
-            }
+              }));
+              scrollToTop();
+            }}
           />
           {renderStickHeader(firstRowType)}
         </Animated.View>
@@ -672,6 +691,7 @@ export const MultiAssets = () => {
         dataProvider={listData}
         extendedState={extendedState}
         layoutProvider={layoutProvider}
+        ref={listRef}
         rowRenderer={renderItem}
         onVisibleIndicesChanged={indexes => {
           if (listData.getDataForIndex(indexes[0])?.type) {
