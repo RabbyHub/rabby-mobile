@@ -576,10 +576,6 @@ const Swap = ({
 
   const noQuote = useDebounceValue(noQuoteOrigin, 10);
 
-  if (noQuote) {
-    console.log('activeProvider', activeProvider);
-  }
-
   useEffect(() => {
     if (noQuote) {
       setShowMoreOpen(true);
