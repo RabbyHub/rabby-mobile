@@ -3,7 +3,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { useMemo } from 'react';
 
-export const CurveLoader = () => {
+export const CurveLoader = ({ gap }: { gap?: number }) => {
   const colors = useThemeColors();
   const styles = useMemo(
     () =>
@@ -11,18 +11,18 @@ export const CurveLoader = () => {
         wrapper: {
           paddingHorizontal: 20,
           marginTop: 10,
+          gap: gap || 20,
         },
         skeleton: {
           borderRadius: 8,
         },
         text: {
-          marginTop: 20,
           fontSize: 13,
           color: colors['neutral-foot'],
           textAlign: 'center',
         },
       }),
-    [colors],
+    [colors, gap],
   );
   return (
     <View style={styles.wrapper}>

@@ -66,7 +66,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 
     // 返回该时间窗口的数据点
     return {
-      timestamp: windowStart,
+      timestamp: windowEnd,
       usd_value: count > 0 ? sum : 0,
     };
   });
@@ -188,13 +188,16 @@ export const useMultiCurve = (
     await fetch(addresses, force);
   };
 
-  const combineData = useMemo(
-    () =>
-      formChartData(
-        combineMulitCurve(Object.values(multiTimeStamp).map(i => i.data)),
-      ),
-    [multiTimeStamp],
-  );
+  const combineData = useMemo(() => {
+    const list = addresses
+      .map(address => {
+        const data = multiTimeStamp[address.toLocaleLowerCase()];
+        return data?.data || [];
+      })
+      .filter(data => data.length > 0);
+    return formChartData(combineMulitCurve(list));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addresses.length, multiTimeStamp]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {

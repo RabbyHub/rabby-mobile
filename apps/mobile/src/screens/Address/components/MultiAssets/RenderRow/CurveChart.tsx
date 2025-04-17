@@ -60,7 +60,9 @@ function Chart({
             </LineChart>
           </>
         ) : (
-          <CurveLoader />
+          <View style={styles.loading}>
+            <CurveLoader gap={10} />
+          </View>
         )}
       </LineChart.Provider>
     </View>
@@ -172,5 +174,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     height: HEADER_CHART_HEIGHT,
+  },
+  loading: {
+    width: ScreenWidth - 40,
+    padding: 0,
   },
 }));

@@ -30,6 +30,7 @@ import _ from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import BigNumber from 'bignumber.js';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const useAssets = (filterText?: string) => {
   const [isLoading, setLoading] = useSafeState(false);
@@ -269,6 +270,17 @@ export const useAssets = (filterText?: string) => {
       return curr;
     });
   };
+  const removeUnNeedAssets = (addresses: string[]) => {
+    setAssetsMap(pre => {
+      const curr = { ...pre };
+      Object.keys(pre).forEach(address => {
+        if (!addresses.find(i => isSameAddress(i, address))) {
+          delete curr[address];
+        }
+      });
+      return curr;
+    });
+  };
 
   const checkIsExpireAndUpdate = async (
     force?: boolean,
@@ -282,6 +294,7 @@ export const useAssets = (filterText?: string) => {
     const addresses = [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
+    removeUnNeedAssets(addresses);
     const { disableToken, disableDefi, disableNFT } = options || {};
     setLoading(true);
     try {
@@ -313,6 +326,7 @@ export const useAssets = (filterText?: string) => {
     const addresses = [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
+    removeUnNeedAssets(addresses);
     const tokenSetting = await preferenceService.getUserTokenSettings();
     !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
     Promise.all([

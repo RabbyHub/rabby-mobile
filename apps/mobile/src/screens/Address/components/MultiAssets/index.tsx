@@ -511,15 +511,6 @@ export const MultiAssets = () => {
     }
   };
 
-  useFocusEffect(
-    // keep same with multi address home
-    React.useCallback(() => {
-      if (extendedState.currentTab === TabType.address) {
-        fetchAccounts();
-      }
-    }, [extendedState.currentTab, fetchAccounts]),
-  );
-
   const renderStickHeader = (type: string) => {
     switch (type) {
       /** header */
@@ -635,7 +626,7 @@ export const MultiAssets = () => {
       checkIsExpireAndUpdate(false, { disableNFT: true });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [top10Addresses.length]);
 
   // if (isLoading && !listData.getSize()) {
   //   return (
@@ -734,7 +725,7 @@ export const MultiAssets = () => {
               style={styles.bgContainer}
               onRefresh={() => {
                 fetchAccounts();
-                checkIsExpireAndUpdate(true);
+                checkIsExpireAndUpdate(true, { disableNFT: true });
                 refreshCurve(true);
               }}
               refreshing={refreshing}
