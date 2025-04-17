@@ -37,6 +37,8 @@ import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useMemoizedFn, useSetState } from 'ahooks';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
 import { BrowserProgressBar } from './BrowserProgressBar';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useDapps } from '@/hooks/useDapps';
 
 type BrowserTabProps = {
   origin: string;
@@ -104,6 +106,36 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     } = useWebViewControl({ initialTabId: tabId });
 
     const navigation = useRabbyAppNavigation();
+    const { dapps, disconnectDapp } = useDapps();
+    const { bookmarkStore, addBookmark, removeBookmark } = useBrowserBookmark();
+
+    const urlInfo = useMemo(() => {
+      return canoicalizeDappUrl(webviewState.url);
+    }, [webviewState.url]);
+
+    const dappInfo = useMemo(() => {
+      return dapps[urlInfo.origin];
+    }, [dapps, urlInfo.origin]);
+
+    const handleDisconnect = useMemoizedFn(() => {
+      disconnectDapp(urlInfo.origin);
+    });
+
+    const isBookmark = useMemo(() => {
+      return !!bookmarkStore.entities[webviewState.url];
+    }, [bookmarkStore.entities, webviewState.url]);
+
+    const handleBookmark = useMemoizedFn(() => {
+      if (isBookmark) {
+        removeBookmark(webviewState.url);
+      } else {
+        addBookmark({
+          url: webviewState.url,
+          name: webviewState.title,
+          createdAt: Date.now(),
+        });
+      }
+    });
 
     const viewShotRef = useRef<any>(null);
 
@@ -146,6 +178,40 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     });
 
+    const handleGoBack = useMemoizedFn(() => {
+      webviewRef.current?.goBack();
+    });
+
+    const handleGoForward = useMemoizedFn(() => {
+      webviewRef.current?.goForward();
+    });
+
+    const handleReload = useMemoizedFn(() => {
+      // todo some times not work
+      if (Platform.OS === 'android') {
+        webviewRef.current?.injectJavaScript(`(function(){
+          window.location.reload();
+        })()`);
+      } else {
+        webviewRef.current?.reload();
+      }
+    });
+
+    const handleViewTabs = useMemoizedFn(async () => {
+      try {
+        const viewShot = await viewShotRef.current?.capture();
+        onUpdateTab?.({
+          url: webviewState.url,
+          viewShot,
+        });
+      } catch (e) {
+        console.error('viewShot', e);
+      }
+      navigation.navigate(RootNames.StackBrowser, {
+        screen: RootNames.BrowserManageScreen,
+      });
+    });
+
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
         <BrowserHeader
@@ -173,7 +239,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           ]}>
           <ViewShot
             ref={viewShotRef}
-            style={{ flex: 1 }}
+            style={{ flex: 1, backgroundColor: colors2024['neutral-bg-1'] }}
             options={{
               format: 'jpg',
               quality: 0.2,
@@ -264,9 +330,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   onLoadProgress={({ nativeEvent }) => {
                     console.log('xxx??', nativeEvent.progress);
                     setProgress(nativeEvent.progress);
+                    if (nativeEvent.progress === 1) {
+                      setIsLoading(false);
+                    }
                   }}
                   onLoadEnd={e => {
-                    setTimeout(() => setIsLoading(false), 300);
+                    setIsLoading(false);
                     webviewProps?.onLoadEnd?.(e);
                     const { nativeEvent } = e;
                     if (nativeEvent.loading) {
@@ -314,25 +383,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         </View>
         <View style={styles.dappWebViewNavControl}>
           <BrowserFooter
-            webviewState={webviewState}
+            canReload={!!url}
+            onReload={handleReload}
             canGoBack={webviewState.canGoBack}
+            onGoBack={handleGoBack}
             canGoForward={webviewState.canGoForward}
+            onGoForward={handleGoForward}
             tabsCount={tabsCount}
-            webviewActions={webviewActions}
-            onPressViewTabs={async () => {
-              try {
-                const viewShot = await viewShotRef.current?.capture();
-                onUpdateTab?.({
-                  url: webviewState.url,
-                  viewShot,
-                });
-              } catch (e) {
-                console.error('viewShot', e);
-              }
-              navigation.navigate(RootNames.StackBrowser, {
-                screen: RootNames.BrowserManageScreen,
-              });
-            }}
+            onViewTabs={handleViewTabs}
+            isBookmark={!!isBookmark}
+            isConnected={dappInfo.isConnected}
+            onBookmark={handleBookmark}
+            onDisconnect={handleDisconnect}
+            canViewMore={!!url}
           />
         </View>
       </AutoLockView>

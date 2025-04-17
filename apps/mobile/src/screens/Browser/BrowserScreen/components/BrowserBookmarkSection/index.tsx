@@ -4,6 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import {
+  ScrollView,
   StyleProp,
   Text,
   useWindowDimensions,
@@ -41,7 +42,7 @@ export const BrowserBookmarkSection = ({
   }, [width]);
 
   return (
-    <View style={[styles.container, style]}>
+    <ScrollView style={[styles.container, style]}>
       {list?.length ? (
         <>
           <View style={styles.header}>
@@ -82,13 +83,12 @@ export const BrowserBookmarkSection = ({
       ) : (
         <BrowserBookmarkEmpty />
       )}
-    </View>
+    </ScrollView>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginBottom: 30,
     paddingHorizontal: 24,
     marginTop: 12,
   },

@@ -7,6 +7,7 @@ import * as pump from 'pump';
 import { v4 as uuid } from 'uuid';
 import MobilePortStream from './MobilePortStream';
 import ReactNativePostMessageStream from './ReactNativePostMessageStream';
+import { hackGoogle } from './google';
 
 const PORT_INPAGE = 'rabby-inpage';
 const PORT_CONTENT_SCRIPT = 'rabby-contentscript';
@@ -174,3 +175,5 @@ function notifyProviderOfStreamFailure() {
     window.location.origin,
   );
 }
+
+hackGoogle();

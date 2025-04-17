@@ -1,12 +1,5 @@
-import React, { useCallback } from 'react';
-import {
-  GestureResponderEvent,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-
-import { WebViewState, useWebViewControl } from '@/components/WebView/hooks';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import {
   RcIconBackCC,
@@ -14,104 +7,52 @@ import {
   RcIconMoreCC,
   RcIconRefreshCC,
 } from '@/assets2024/icons/browser';
-import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { TabActions } from '@react-navigation/native';
 import { DropdownMenuView } from './DropdownMenuView';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-
-export const BOTTOM_NAV_CONTROL_PRESS_OPACITY = 0.3;
-
-export type BottomNavControlCbCtx = {
-  webviewState: WebViewState;
-  webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
-};
-
-type OnPressButtonCtx = {
-  type: 'back' | 'forward' | 'reload' | 'favorite' | 'disconnect';
-  event?: GestureResponderEvent;
-};
 
 export function BrowserFooter({
-  webviewState,
-  webviewActions,
-  isFavorited,
   isConnected,
-  onPressButton,
   canGoBack,
   canGoForward,
+  canReload,
+  canViewMore,
   tabsCount,
+  isBookmark,
+
   url,
-  onPressViewTabs,
-}: BottomNavControlCbCtx & {
-  isFavorited?: boolean;
+
+  onGoBack,
+  onGoForward,
+  onReload,
+  onViewTabs,
+  onBookmark,
+  onDisconnect,
+}: {
+  isBookmark?: boolean;
   isConnected?: boolean;
+  canReload?: boolean;
   canGoBack?: boolean;
   canGoForward?: boolean;
   url?: string;
   tabsCount?: number;
-  onPressViewTabs?(): void;
+  canViewMore?: boolean;
 
-  /**
-   * @description customize all button press event
-   */
-  onPressButton?: (
-    ctx: BottomNavControlCbCtx &
-      OnPressButtonCtx & {
-        defaultAction: (ctx: BottomNavControlCbCtx & OnPressButtonCtx) => void;
-      },
-  ) => void;
+  onGoBack?(): void;
+  onGoForward?(): void;
+  onReload?(): void;
+  onViewTabs?(): void;
+  onBookmark?(): void;
+  onDisconnect?(): void;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
-  const { bookmarkStore, addBookmark, removeBookmark } = useBrowserBookmark();
-  const isBookmark = !!bookmarkStore.entities[webviewState.url];
-
-  const navigation = useRabbyAppNavigation();
-
-  const builtInOnPressButton = useCallback(
-    (ctx: OnPressButtonCtx) => {
-      switch (ctx.type) {
-        case 'back':
-          webviewActions.handleGoBack();
-          break;
-        case 'forward':
-          webviewActions.handleGoForward();
-          break;
-        case 'reload':
-          webviewActions.handleReload();
-          break;
-        default:
-          break;
-      }
-    },
-    [webviewActions],
-  );
-
-  const onPressButtonInternal = useCallback(
-    (ctx: OnPressButtonCtx) => {
-      if (typeof onPressButton === 'function') {
-        onPressButton({
-          ...ctx,
-          webviewState,
-          webviewActions,
-          defaultAction: builtInOnPressButton,
-        });
-        return;
-      }
-
-      builtInOnPressButton(ctx);
-    },
-    [webviewState, webviewActions, onPressButton, builtInOnPressButton],
-  );
 
   const menuConfigs = React.useMemo(() => {
-    const urlInfo = urlUtils.canoicalizeDappUrl(webviewState.url);
+    const urlInfo = urlUtils.canoicalizeDappUrl(url || '');
 
     const menuActions = [
       {
@@ -124,15 +65,7 @@ export function BrowserFooter({
           : 'ic_rabby_menu_favorite',
         key: 'favorite',
         onSelect: () => {
-          if (isBookmark) {
-            removeBookmark(webviewState.url);
-          } else {
-            addBookmark({
-              url: webviewState.url,
-              name: webviewState.title,
-              createdAt: Date.now(),
-            });
-          }
+          onBookmark?.();
         },
       },
       isConnected && {
@@ -142,8 +75,7 @@ export function BrowserFooter({
         androidIconName: 'ic_rabby_menu_disconnect',
         key: 'disconnect',
         onSelect: () => {
-          console.debug('Disconnect clicked');
-          onPressButtonInternal({ type: 'disconnect' });
+          onDisconnect?.();
         },
       },
     ].filter(Boolean);
@@ -167,23 +99,14 @@ export function BrowserFooter({
       iosMenuTitle: urlInfo.hostname,
       menuActions: menuActions.reverse(),
     } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
-  }, [
-    webviewState.url,
-    webviewState.title,
-    isBookmark,
-    isConnected,
-    colors2024,
-    removeBookmark,
-    addBookmark,
-    onPressButtonInternal,
-  ]);
+  }, [url, isBookmark, isConnected, colors2024, onBookmark, onDisconnect]);
 
   return (
     <View style={[styles.navControls]}>
       <TouchableOpacity
         style={[styles.navControlItem]}
         disabled={!canGoBack}
-        onPress={event => onPressButtonInternal({ type: 'back', event })}>
+        onPress={onGoBack}>
         <RcIconBackCC
           color={
             canGoBack ? colors2024['neutral-body'] : colors2024['neutral-info']
@@ -191,11 +114,9 @@ export function BrowserFooter({
         />
       </TouchableOpacity>
       <TouchableOpacity
-        style={[
-          styles.navControlItem,
-          !webviewState?.canGoForward && styles.disabledStyle,
-        ]}
-        onPress={event => onPressButtonInternal({ type: 'forward', event })}>
+        style={[styles.navControlItem]}
+        disabled={!canGoForward}
+        onPress={onGoForward}>
         <RcIconForwardCC
           color={
             canGoForward
@@ -205,20 +126,29 @@ export function BrowserFooter({
         />
       </TouchableOpacity>
       <TouchableOpacity
+        disabled={!canReload}
         style={[styles.navControlItem]}
-        onPress={event => onPressButtonInternal({ type: 'reload', event })}>
-        <RcIconRefreshCC color={colors2024['neutral-body']} />
+        onPress={onReload}>
+        <RcIconRefreshCC
+          color={
+            canReload ? colors2024['neutral-body'] : colors2024['neutral-info']
+          }
+        />
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.navControlItem]}
-        onPress={onPressViewTabs}>
+      <TouchableOpacity style={[styles.navControlItem]} onPress={onViewTabs}>
         <Text>{tabsCount || 0}</Text>
       </TouchableOpacity>
-      <View style={[styles.navControlItem]}>
-        <DropdownMenuView menuConfig={menuConfigs}>
-          <RcIconMoreCC color={colors2024['neutral-body']} />
-        </DropdownMenuView>
-      </View>
+      {canViewMore ? (
+        <View style={[styles.navControlItem]}>
+          <DropdownMenuView menuConfig={menuConfigs}>
+            <RcIconMoreCC color={colors2024['neutral-body']} />
+          </DropdownMenuView>
+        </View>
+      ) : (
+        <View style={[styles.navControlItem]}>
+          <RcIconMoreCC color={colors2024['neutral-foot']} />
+        </View>
+      )}
     </View>
   );
 }
