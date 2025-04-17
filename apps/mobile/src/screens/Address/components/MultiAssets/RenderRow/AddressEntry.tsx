@@ -19,6 +19,7 @@ export const AddressEntry = ({
       style={styles.root}
       account={data}
       changePercent={data.changPercent}
+      disableMenu
       isLoss={data.isLoss}
     />
     // </View>
