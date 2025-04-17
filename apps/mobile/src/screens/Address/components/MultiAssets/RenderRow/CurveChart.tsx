@@ -130,8 +130,20 @@ export const ChartHeader = ({
     <View>
       <Text style={styles.netWorth}>{netWorth}</Text>
       <View style={styles.changeSection}>
-        <AnimateableText style={lossStyleProps} text={percentChange} />
-        <AnimateableText style={styles.changeTime} text={dateTime} />
+        <AnimateableText
+          style={lossStyleProps}
+          text={percentChange.value}
+          animatedProps={{
+            text: percentChange,
+          }}
+        />
+        <AnimateableText
+          style={styles.changeTime}
+          text={dateTime.value}
+          animatedProps={{
+            text: percentChange,
+          }}
+        />
       </View>
     </View>
   );

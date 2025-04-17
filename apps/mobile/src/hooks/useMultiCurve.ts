@@ -90,7 +90,6 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
-  console.log('🔍 CUSTOM_LOGGER:=>: loading', loading);
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {

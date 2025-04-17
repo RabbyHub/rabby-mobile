@@ -249,7 +249,7 @@ export const MultiAssets = () => {
         data: list.map(item => {
           const hasChangeData = multiTimeStamp[
             item.address.toLocaleLowerCase()
-          ]?.data.some(i => i.usd_value !== 0);
+          ]?.data?.some(i => i.usd_value !== 0);
           const chartData = formChartData(
             multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
             item.balance,
