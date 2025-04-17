@@ -22,11 +22,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import {
-  useGetBinaryMode,
-  useTheme2024,
-  useAppThemeConfig,
-} from '@/hooks/theme';
+import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames } from '@/constant/layout';
@@ -48,7 +44,7 @@ import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { splitNumberByStep } from '@/utils/number';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import { transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -58,18 +54,10 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
-import {
-  KeyringAccountWithAlias,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import useHomePinAddress from './hooks/useHomePinAddress';
+import { useMyAccounts } from '@/hooks/account';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
-import { ellipsisAddress } from '@/utils/address';
 import { useSyncAssetsDB } from '@/databases/hooks/assets';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
@@ -83,10 +71,7 @@ import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 const HeaderHeight = 24;
 
@@ -222,7 +207,6 @@ function MultiAddressHome(): JSX.Element {
     fail: number;
   }>();
   const timeRef = useRef<null | NodeJS.Timer>(null);
-  const { switchAccount } = useCurrentAccount();
   const appState = useAppState();
 
   const { width } = Dimensions.get('window');
@@ -340,7 +324,6 @@ function MultiAddressHome(): JSX.Element {
     balanceCacheAccounts,
     triggerUpdate,
     balanceLoading,
-    accountsLength,
   } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
@@ -357,9 +340,6 @@ function MultiAddressHome(): JSX.Element {
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
-
-  const { pinAccountsFirstFour, isShowPin, unPinAddress } =
-    useHomePinAddress(balanceAccounts);
 
   const displayFundWallet = useMemo(
     () =>
@@ -461,25 +441,6 @@ function MultiAddressHome(): JSX.Element {
     syncTop10History(true);
   }, [triggerUpdate, forceUpdate, syncTop10Assets, syncTop10History]);
 
-  const totalBalance = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return num;
-  }, [balanceAccounts]);
-
-  const calcPinPercent = useCallback(
-    (balance: number) => {
-      let percent = 0;
-      if (balance && totalBalance) {
-        percent = Math.floor((balance / totalBalance) * 100);
-      }
-      return `${percent}%`;
-    },
-    [totalBalance],
-  );
-
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressSearch = useCallback(() => {
@@ -577,26 +538,7 @@ function MultiAddressHome(): JSX.Element {
     ],
   );
 
-  const handleClickPinAccount = useCallback(
-    (pinItem: KeyringAccountWithAlias) => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
-
-      switchAccount(pinItem);
-      navigation.dispatch(
-        StackActions.push(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {},
-        }),
-      );
-    },
-    [switchAccount, navigation],
-  );
-
   const { bottom } = useSafeAreaInsets();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   useEffect(() => {
     matomoRequestEvent({
@@ -657,90 +599,6 @@ function MultiAddressHome(): JSX.Element {
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
-          {isShowPin && (
-            <View style={[styles.pinGrid]}>
-              {pinAccountsFirstFour.map((item, index) => {
-                return item ? (
-                  <ContextMenuView
-                    menuConfig={{
-                      menuTitle: item.alias || ellipsisAddress(item.address),
-                      menuActions: [
-                        ...(IS_ANDROID
-                          ? [
-                              {
-                                title:
-                                  item.alias || ellipsisAddress(item.address),
-                                key: 'hostname',
-                                icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
-                                disabled: true,
-                                action() {},
-                              },
-                            ]
-                          : []),
-                        {
-                          title: t('page.whitelist.copyAddress'),
-                          icon: isDarkTheme
-                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
-                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
-                          androidIconName: 'ic_rabby_menu_copy',
-                          key: 'copy',
-                          action() {
-                            Clipboard.setString(item.address);
-                            toastCopyAddressSuccess(item.address);
-                          },
-                        },
-                        {
-                          title: 'UnPin',
-                          icon: isDarkTheme
-                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
-                          androidIconName: 'ic_rabby_menu_un_pin',
-                          key: 'pin',
-                          action() {
-                            unPinAddress(item.address, item.brandName);
-                          },
-                        },
-                      ],
-                    }}
-                    key={`${item.address}-${item.brandName}`}
-                    preViewBorderRadius={10}
-                    triggerProps={{ action: 'longPress' }}>
-                    <TouchableOpacity
-                      key={index}
-                      delayLongPress={200} // long press delay
-                      onLongPress={() => {
-                        trigger('impactLight', {
-                          enableVibrateFallback: true,
-                          ignoreAndroidSystemSettings: false,
-                        });
-                      }}
-                      onPress={() => {
-                        handleClickPinAccount(item);
-                        matomoRequestEvent({
-                          category: 'Click_Pin',
-                          action: `Click_${index}`,
-                        });
-                      }}>
-                      <BlurView
-                        blurType={appThemeMode ?? 'light'}
-                        blurAmount={2}
-                        style={StyleSheet.flatten([styles.pinGridItem])}>
-                        <WalletIcon
-                          type={item.brandName}
-                          width={22}
-                          height={22}
-                          borderRadius={5}
-                        />
-                        <Text style={styles.pinGridText}>
-                          {calcPinPercent(item.balance || 0)}
-                        </Text>
-                      </BlurView>
-                    </TouchableOpacity>
-                  </ContextMenuView>
-                ) : null;
-              })}
-            </View>
-          )}
           <OfflineChainNotify />
           {displayFundWallet && (
             <>
