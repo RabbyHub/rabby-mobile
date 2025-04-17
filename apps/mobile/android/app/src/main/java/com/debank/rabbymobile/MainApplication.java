@@ -59,7 +59,7 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
-    SoLoader.init(this, /* native exopackage */ OpenSourceMergedSoMapping);
+    SoLoader.init(this, /* native exopackage */ false);
     OkHttpClientProvider.setOkHttpClientFactory(new UserAgentClientFactory());
     ReactFontManager.getInstance().addCustomFont(this, "Roboto", R.font.roboto);
     // ReactFontManager.getInstance().addCustomFont(this, "SF Pro", R.font.sfpro);
@@ -69,18 +69,5 @@ public class MainApplication extends Application implements ReactApplication {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       DefaultNewArchitectureEntryPoint.load();
     }
-
-    /**
-     * We use `libcrypto.so` from `react-native-quick-crypto`, which is simplified version of `libcrypto.so` from `openssl`,
-     * not including all symbols required by `libssl.so` from `openssl`, such as `BIO_*`.
-     *
-     * In fact, ReactNativeFlipper only works on Debug.
-     *
-     * TODO: If you have customize a `libssl.so` could be used for both `react-native-quick-crypto` and `react-native-flipper`,
-     * uncomment condition below, which can avoid undefined symbol required it.
-     */
-    // if (!BuildConfig.DEBUG) {
-    //   ReactNativeFlipper.initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
-    // }
   }
 }
