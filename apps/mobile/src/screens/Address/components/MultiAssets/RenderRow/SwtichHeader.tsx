@@ -51,7 +51,7 @@ export const SwitchHeader = ({
   const { t } = useTranslation();
 
   const maxHeight = Dimensions.get('window').height - 104;
-  const contentHeight = (addressLength || 0) * (78 + 12) + 60 + 56;
+  const contentHeight = (addressLength || 0) * (78 + 12) + 60 + 226;
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 

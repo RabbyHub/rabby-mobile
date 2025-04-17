@@ -51,7 +51,10 @@ import {
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
-import { PositionLoader } from '@/screens/Search/components/Skeleton';
+import {
+  ItemLoader,
+  PositionLoader,
+} from '@/screens/Search/components/Skeleton';
 import {
   RecyclerListView,
   DataProvider,
@@ -77,6 +80,9 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { formChartData } from '@/hooks/useCurve';
 import { trigger } from 'react-native-haptic-feedback';
+import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
+import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
+import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -468,7 +474,6 @@ export const MultiAssets = () => {
             style={styles.renderItemWrapper}
             chainLogoSize={18}
             hideFoldTag
-            disableMenu
           />
         );
       case 'unfold_defi':
@@ -525,6 +530,15 @@ export const MultiAssets = () => {
             {t('page.search.sectionHeader.Defi')}
           </Text>
         );
+      case 'empty-assets':
+      case 'empty-defi':
+        return (
+          <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+        );
+      case 'loading-skeleton':
+        return <ItemLoader />;
+      case 'loading-defi-skeleton':
+        return <DefiItemLoader style={styles.defiLoading} />;
       default:
         return null;
     }
@@ -612,12 +626,12 @@ export const MultiAssets = () => {
             dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.EMPTY_TOKEN:
-            dim.width = SCREEN_WIDTH;
+            dim.width = SCREEN_WIDTH - 32;
             dim.height = TOKEN_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.EMPTY_ASSETS:
           case ViewTypes.EMPTY_DEFI:
-            dim.width = SCREEN_WIDTH;
+            dim.width = SCREEN_WIDTH - 32;
             dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.DEFI:
@@ -814,6 +828,12 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
+  },
+  emptyAssets: {
+    marginHorizontal: 0,
+  },
+  defiLoading: {
+    paddingHorizontal: 0,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,

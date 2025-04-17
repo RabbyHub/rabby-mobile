@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -61,22 +61,24 @@ export const ItemLoader = memo(() => {
   );
 });
 
-export const DefiItemLoader = memo(() => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={[styles.defiLoaderGroup]}>
-      {Array.from({ length: 2 }).map((_, i) => (
-        <View key={i} style={styles.defiLoader}>
-          <Skeleton style={styles.defiLogo} width={40} height={40} />
-          <View style={styles.defiLoaderList}>
-            <Skeleton style={styles.loading} width={120} height={20} circle />
-            <Skeleton style={styles.loading} width={71} height={18} circle />
+export const DefiItemLoader = memo(
+  ({ style }: { style?: StyleProp<ViewStyle> }) => {
+    const { styles } = useTheme2024({ getStyle });
+    return (
+      <View style={[styles.defiLoaderGroup, style]}>
+        {Array.from({ length: 2 }).map((_, i) => (
+          <View key={i} style={styles.defiLoader}>
+            <Skeleton style={styles.defiLogo} width={40} height={40} />
+            <View style={styles.defiLoaderList}>
+              <Skeleton style={styles.loading} width={120} height={20} circle />
+              <Skeleton style={styles.loading} width={71} height={18} circle />
+            </View>
           </View>
-        </View>
-      ))}
-    </View>
-  );
-});
+        ))}
+      </View>
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(ctx => ({
   positionLoader: {

@@ -78,76 +78,36 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
+  console.log('🔍 CUSTOM_LOGGER:=>: loading', loading);
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
-      if (!addres.length) {
-        return;
-      }
-      setLoading(true);
-      const nextCheckAddress = new Set([...addres]);
-      !force &&
-        addres.forEach(_addr => {
-          const addr = _addr.toLocaleLowerCase();
-          setMultiTimeStamp(prev => ({
-            ...prev,
-            [addr]: {
-              ...(prev[addr] || {}),
-              loading: true,
-            },
-          }));
-          const cacheData = getCurveCache(addr);
-          if (!cacheData?.data) {
-            return;
-          }
-          const curve = cacheData.data;
-          console.log(
-            '🔍 CUSTOM_LOGGER:=>: curve',
-            curve.length,
-            addr.slice(-4),
-          );
-          const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
-          const step = 5 * 60 * 1000;
-          const result = patchCurveData(
-            curve.map(item => {
-              return {
-                timestamp: item.timestamp * 1000,
-                price: item.usd_value,
-              };
-            }),
-            start,
-            step,
-          );
-
-          if (!cacheData.isExpired) {
-            nextCheckAddress.delete(addr);
-          }
-          setMultiTimeStamp(prev => ({
-            ...prev,
-            [addr]: {
-              loading: false,
-              data: result.map(item => {
-                return {
-                  timestamp: dayjs(item.timestamp).unix(),
-                  usd_value: item.price,
-                };
-              }),
-            },
-          }));
-        });
-      queue.clear();
-      Array.from(nextCheckAddress).forEach(_addr => {
-        try {
-          const addr = _addr.toLocaleLowerCase();
-          queue.add(async () => {
+      try {
+        if (!addres.length) {
+          return;
+        }
+        setLoading(true);
+        const nextCheckAddress = new Set([...addres]);
+        !force &&
+          addres.forEach(_addr => {
+            const addr = _addr.toLocaleLowerCase();
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
-                ...prev[addr],
+                ...(prev[addr] || {}),
                 loading: true,
               },
             }));
-            const curve = await getNetCurve(addr, CurveDayType.DAY, force);
+            const cacheData = getCurveCache(addr);
+            if (!cacheData?.data) {
+              return;
+            }
+            const curve = cacheData.data;
+            console.log(
+              '🔍 CUSTOM_LOGGER:=>: curve',
+              curve.length,
+              addr.slice(-4),
+            );
             const start = dayjs()
               .add(-24, 'hours')
               .add(10, 'minutes')
@@ -163,6 +123,10 @@ export const useMultiCurve = (
               start,
               step,
             );
+
+            if (!cacheData.isExpired) {
+              nextCheckAddress.delete(addr);
+            }
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
@@ -176,10 +140,55 @@ export const useMultiCurve = (
               },
             }));
           });
-        } catch (error) {}
-      });
-      await waitQueueFinished(queue);
-      setLoading(false);
+        queue.clear();
+        Array.from(nextCheckAddress).forEach(_addr => {
+          try {
+            const addr = _addr.toLocaleLowerCase();
+            queue.add(async () => {
+              setMultiTimeStamp(prev => ({
+                ...prev,
+                [addr]: {
+                  ...prev[addr],
+                  loading: true,
+                },
+              }));
+              const curve = await getNetCurve(addr, CurveDayType.DAY, force);
+              const start = dayjs()
+                .add(-24, 'hours')
+                .add(10, 'minutes')
+                .valueOf();
+              const step = 5 * 60 * 1000;
+              const result = patchCurveData(
+                curve.map(item => {
+                  return {
+                    timestamp: item.timestamp * 1000,
+                    price: item.usd_value,
+                  };
+                }),
+                start,
+                step,
+              );
+              setMultiTimeStamp(prev => ({
+                ...prev,
+                [addr]: {
+                  loading: false,
+                  data: result.map(item => {
+                    return {
+                      timestamp: dayjs(item.timestamp).unix(),
+                      usd_value: item.price,
+                    };
+                  }),
+                },
+              }));
+            });
+          } catch (error) {}
+        });
+        await waitQueueFinished(queue);
+        setLoading(false);
+      } catch (error) {
+        console.error('Fetch curve error', error);
+        setLoading(false);
+      }
     },
     [setMultiTimeStamp],
   );
