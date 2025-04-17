@@ -1,4 +1,4 @@
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -11,7 +11,15 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { useTopTokensForAddress } from './hooks';
 import { AssetAvatar } from '../AssetAvatar';
 import { trigger } from 'react-native-haptic-feedback';
-
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
+import { IS_ANDROID } from '@/core/native/utils';
+import { getAliasName } from '@/core/apis/contact';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toastCopyAddressSuccess } from '../AddressViewer/CopyAddress';
+import { ellipsisAddress } from '@/utils/address';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { useTranslation } from 'react-i18next';
+import { AccountSwitcherContextMenu } from './ContextMenu';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
@@ -46,6 +54,7 @@ export function AddressItemInPanel({
     getStyle: getAddressItemInPanelStyle,
   });
 
+  const { t } = useTranslation();
   const [isPressing, setIsPressing] = React.useState(false);
 
   const { account } = addressItemProps;
@@ -69,63 +78,72 @@ export function AddressItemInPanel({
         style,
         isCurrent || isPressing ? styles.active : null,
       ]}>
-      <TouchableOpacity
-        style={StyleSheet.flatten([
-          styles.addressItemContainer,
-          isCurrent && styles.addressItemContainerCurrent,
-          isPressing && styles.containerPressing,
-        ])}
-        activeOpacity={1}
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
-        onPress={onPressAddress}>
-        <AddressItem {...addressItemProps}>
-          {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
-            return (
-              <View style={styles.addressItemInner}>
-                <WalletIcon style={styles.walletIcon} />
-                <View style={styles.centerInfo}>
-                  <View style={styles.nameAndAdderss}>
-                    <WalletName style={styles.addressAliasName} />
+      <AccountSwitcherContextMenu account={account}>
+        <TouchableOpacity
+          style={StyleSheet.flatten([
+            styles.addressItemContainer,
+            isCurrent && styles.addressItemContainerCurrent,
+            isPressing && styles.containerPressing,
+          ])}
+          activeOpacity={1}
+          delayLongPress={200} // long press delay
+          onLongPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}
+          onPressIn={() => setIsPressing(true)}
+          onPressOut={() => setIsPressing(false)}
+          onPress={onPressAddress}>
+          <AddressItem {...addressItemProps}>
+            {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
+              return (
+                <View style={styles.addressItemInner}>
+                  <WalletIcon style={styles.walletIcon} />
+                  <View style={styles.centerInfo}>
+                    <View style={styles.nameAndAdderss}>
+                      <WalletName style={styles.addressAliasName} />
+                    </View>
+                    <View style={styles.bottomArea}>
+                      <WalletBalance
+                        style={[
+                          styles.addressUsdValue,
+                          isCurrent && styles.addressUsdValueCurrent,
+                        ]}
+                      />
+                      {!isHideToken && !!tokens?.length && (
+                        <>
+                          <View style={styles.divider} />
+                          <View style={styles.chainLogos}>
+                            {tokens.map(item => (
+                              <AssetAvatar
+                                key={`${item.chain}-${item.id}`}
+                                logo={item.logo_url}
+                                size={14}
+                                logoStyle={styles.chainLogoItem}
+                              />
+                            ))}
+                          </View>
+                        </>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.bottomArea}>
-                    <WalletBalance
-                      style={[
-                        styles.addressUsdValue,
-                        isCurrent && styles.addressUsdValueCurrent,
-                      ]}
-                    />
-                    {!isHideToken && !!tokens?.length && (
-                      <>
-                        <View style={styles.divider} />
-                        <View style={styles.chainLogos}>
-                          {tokens.map(item => (
-                            <AssetAvatar
-                              key={`${item.chain}-${item.id}`}
-                              logo={item.logo_url}
-                              size={14}
-                              logoStyle={styles.chainLogoItem}
-                            />
-                          ))}
-                        </View>
-                      </>
+                  <View style={styles.rightArea}>
+                    {isCurrent && (
+                      <RcIconCorrectCC
+                        color={colors2024['green-default']}
+                        width={16}
+                        height={16}
+                      />
                     )}
                   </View>
                 </View>
-                <View style={styles.rightArea}>
-                  {isCurrent && (
-                    <RcIconCorrectCC
-                      color={colors2024['green-default']}
-                      width={16}
-                      height={16}
-                    />
-                  )}
-                </View>
-              </View>
-            );
-          }}
-        </AddressItem>
-      </TouchableOpacity>
+              );
+            }}
+          </AddressItem>
+        </TouchableOpacity>
+      </AccountSwitcherContextMenu>
     </AddressItemShadowView>
   );
 }
