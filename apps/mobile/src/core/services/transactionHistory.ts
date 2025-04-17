@@ -105,7 +105,7 @@ export class TransactionHistoryService {
   preferenceService?: import('./preference').PreferenceService;
 
   private _signingTxList: TransactionSigningItem[] = [];
-  private _txHistoryLimit = 100;
+  private _txHistoryLimit = 500;
 
   constructor(
     options?: StorageAdapaterOptions & {
@@ -726,7 +726,7 @@ export class TransactionHistoryService {
     }
   };
   /**
-   * @description clear expired txs, keep this.txHistoryLimit 100 compoleted transactions
+   * @description clear expired txs, keep this.txHistoryLimit 500 compoleted transactions
    */
   clearAllExpiredTxs() {
     const groups = this.getTransactionGroups();
