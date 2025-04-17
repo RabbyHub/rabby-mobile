@@ -182,7 +182,7 @@
     "react-native-vision-camera": "4.6.4",
     "react-native-wagmi-charts": "^2.3.2",
     "react-native-walkthrough-tooltip": "^1.5.0",
-    "react-native-webview": "13.13.5",
+    "react-native-webview": "13.10.5",
     "react-use": "17.4.2",
     "readable-stream": "4.7.0",
     "recyclerlistview": "4.2.1",

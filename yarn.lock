@@ -18154,6 +18154,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"escape-string-regexp@npm:2.0.0":
+  version: 2.0.0
+  resolution: "escape-string-regexp@npm:2.0.0"
+  checksum: 9f8a2d5743677c16e85c810e3024d54f0c8dea6424fad3c79ef6666e81dd0846f7437f5e729dfcdac8981bc9e5294c39b4580814d114076b8d36318f46ae4395
+  languageName: node
+  linkType: hard
+
 "escape-string-regexp@npm:^1.0.3, escape-string-regexp@npm:^1.0.5":
   version: 1.0.5
   resolution: "escape-string-regexp@npm:1.0.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fescape-string-regexp%2F-%2Fescape-string-regexp-1.0.5.tgz"
@@ -30019,7 +30026,7 @@ __metadata:
     react-native-vision-camera: 4.6.4
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
-    react-native-webview: 13.13.5
+    react-native-webview: 13.10.5
     react-test-renderer: 18.3.1
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
@@ -31236,16 +31243,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webview@npm:13.13.5":
-  version: 13.13.5
-  resolution: "react-native-webview@npm:13.13.5"
+"react-native-webview@npm:13.10.5":
+  version: 13.10.5
+  resolution: "react-native-webview@npm:13.10.5"
   dependencies:
-    escape-string-regexp: ^4.0.0
+    escape-string-regexp: 2.0.0
     invariant: 2.2.4
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 7f3bce1b37d6be9b2f07f0f7481181d5344f9e58022645b0d20dc58cd66056bb6efecacb231963959db6283cc66d977593db62a403c7c151f83568f83041c2eb
+  checksum: fa4bd3885a405236474d2baf455d81bddc024874ec012884fbded02f47303c47c00edaf8ef7072eb52e6fb8c68f1f2fd2abe6ca5890ae217102e7742ab97f3f8
+  languageName: node
+  linkType: hard
+
+"react-native-webview@patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 13.10.5
+  resolution: "react-native-webview@patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch::version=13.10.5&hash=7c58c0&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    escape-string-regexp: 2.0.0
+    invariant: 2.2.4
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: d6d297695c676aecd9c72c0ddd4db37361a8b0925cc2317944f1e65ce294886d798d6ee24aad97ed94bda035b953dc8ef023d59490cf258c1c7826f62778cd2e
   languageName: node
   linkType: hard
 
