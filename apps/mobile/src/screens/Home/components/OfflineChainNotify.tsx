@@ -136,7 +136,7 @@ export const OfflineChainNotify = () => {
     styles.title,
   ]);
   if (!displayWillClosedChain || !chainInfo) {
-    return <View style={{ height: 40 }} />;
+    return <View style={{ height: 30 }} />;
   }
   return (
     <View style={styles.container}>

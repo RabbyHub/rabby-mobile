@@ -23,8 +23,6 @@ import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
-import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
-import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -42,7 +40,6 @@ import RcIconSearch from '@/assets2024/icons/home/IconSearch.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
-import { splitNumberByStep } from '@/utils/number';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
@@ -72,6 +69,10 @@ import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { Card } from '@/components2024/Card';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
 
 const HeaderHeight = 24;
 
@@ -79,32 +80,26 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   const { loading } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
-  const { balanceAccounts, accountsLength } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-  const needSmallNum = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return num >= 1000000000;
-  }, [balanceAccounts]);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
-  const totalBalanceUsd = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return '$' + splitNumberByStep(num > 10 ? Math.floor(num) : num.toFixed(2));
-  }, [balanceAccounts]);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+  const { top10Addresses } = useAccountInfo();
+  const {
+    combineData,
+    refresh: refreshCurve,
+    loading: loadingCurve,
+  } = useMultiCurve(top10Addresses);
+
+  const percentChange = useMemo(() => {
+    return `${combineData.isLoss ? '-' : '+'}${combineData.change}(${
+      combineData.isLoss ? '-' : '+'
+    }${combineData.changePercent})`;
+  }, [combineData]);
 
   useEffect(() => {
     if (loading) {
@@ -152,19 +147,9 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
-      <View style={styles.balanceBox}>
-        <Text
-          style={[
-            styles.usdText,
-            // eslint-disable-next-line react-native/no-inline-styles
-            {
-              fontSize: needSmallNum ? 28 : 36,
-            },
-          ]}>
-          {totalBalanceUsd}
-        </Text>
-        <TouchableOpacity
-          style={styles.accountBg}
+      <View style={styles.curveBox}>
+        <Card
+          style={styles.curveCard}
           onPress={() => {
             trigger('impactLight', {
               enableVibrateFallback: true,
@@ -181,10 +166,31 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
               action: 'Click_Address',
             });
           }}>
-          <RcIconSmallWallet />
-          <Text style={styles.accountText}>{accountsLength}</Text>
-          <RcIconSmallArrow />
-        </TouchableOpacity>
+          <View style={styles.curveContainer}>
+            <Text style={styles.netWorth}>{combineData.netWorth}</Text>
+            <View style={styles.changeSection}>
+              <Text
+                style={[
+                  styles.changePercent,
+                  {
+                    color: combineData.isLoss
+                      ? colors2024['red-default']
+                      : colors2024['green-default'],
+                  },
+                ]}>
+                {percentChange}
+              </Text>
+              <Text style={styles.changeTime}>24h</Text>
+            </View>
+          </View>
+          <ArrowCircleCC
+            style={styles.arrow}
+            width={42}
+            height={42}
+            color={colors2024['neutral-body']}
+            backgroundColor={colors2024['neutral-bg-2']}
+          />
+        </Card>
       </View>
     </View>
   );
@@ -1041,6 +1047,54 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   hidden: {
     display: 'none',
+  },
+  curveBox: {
+    paddingHorizontal: 15,
+    paddingTop: 30,
+  },
+  curveCard: {
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    borderColor: colors2024['neutral-bg-1'],
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  curveContainer: {
+    gap: 10,
+  },
+  arrow: {
+    width: 42,
+    height: 42,
+    borderRadius: 30,
+  },
+  changePercent: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  netWorth: {
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  changeTime: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
   },
 }));
 
