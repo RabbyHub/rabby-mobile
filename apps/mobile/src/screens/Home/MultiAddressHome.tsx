@@ -91,9 +91,9 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   });
 
   const percentChange = useMemo(() => {
-    return `${data.isLoss ? '-' : '+'}${data.change}(${
+    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
       data.isLoss ? '-' : '+'
-    }${data.changePercent})`;
+    }${data.change})`;
   }, [data]);
 
   useEffect(() => {
@@ -185,7 +185,6 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
                 ]}>
                 {percentChange}
               </Text>
-              <Text style={styles.changeTime}>24h</Text>
             </View>
           </View>
           <ArrowCircleCC
@@ -580,7 +579,6 @@ function MultiAddressHome(): JSX.Element {
         combineData.isLoss
           ? require('@/assets2024/icons/home/homeRed.png')
           : require('@/assets2024/icons/home/homeGreen.png')
-        // ? require('@/assets2024/icons/home/homeRed.png')
       }
       linearProp={{
         colors: isLight

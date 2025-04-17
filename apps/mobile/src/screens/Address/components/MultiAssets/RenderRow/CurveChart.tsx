@@ -100,9 +100,9 @@ export const ChartHeader = ({
     const formatLoss = isActiveIndexData
       ? data?.[currentIndex.value].isLoss
       : isLoss;
-    return `${formatLoss ? '-' : '+'}${formatChangeValue}(${
+    return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
       formatLoss ? '-' : '+'
-    }${formatChangePercent})`;
+    }${formatChangeValue})`;
   }, [data, currentIndex.value, change, changePercent, isLoss]);
 
   const dateTime = useDerivedValue(() => {

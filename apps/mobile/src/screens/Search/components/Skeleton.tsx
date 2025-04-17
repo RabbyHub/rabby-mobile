@@ -60,7 +60,9 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingHorizontal: 12,
     paddingVertical: 15,
     gap: 12,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     borderTopColor: ctx.colors2024['neutral-line'],
   },
   loaderList: {
