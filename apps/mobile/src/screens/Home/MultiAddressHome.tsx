@@ -217,12 +217,12 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
-  const { top10Addresses } = useAccountInfo();
+  const { top10Addresses, top10Balance } = useAccountInfo();
   const {
     combineData,
     refresh: refreshCurve,
     loading: loadingCurve,
-  } = useMultiCurve(top10Addresses, true);
+  } = useMultiCurve(top10Addresses, true, top10Balance);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
 

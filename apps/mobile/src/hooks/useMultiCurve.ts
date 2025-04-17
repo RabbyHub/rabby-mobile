@@ -30,9 +30,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
   }
 
   const startTime = timeStamps[0][0].timestamp;
-  // 30分钟的秒数
   const interval = 30 * 60;
-  // 创建48个时间窗口
   const windows: ITIME_STEP_ITEM[] = Array(48)
     .fill(null)
     .map((_, index) => ({
@@ -40,21 +38,17 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
       usd_value: 0,
     }));
 
-  // 遍历每个窗口
-  return windows.map((window, i) => {
+  const result = windows.map((window, i) => {
     const windowStart = window.timestamp;
     const windowEnd = windowStart + interval;
     let sum = 0;
     let count = 0;
 
-    // 在每个窗口中查找所有地址的数据点
     timeStamps.forEach(addressData => {
-      // 找到该时间窗口内的所有数据点
       const pointsInWindow = addressData.filter(
         point => point.timestamp >= windowStart && point.timestamp < windowEnd,
       );
 
-      // 如果窗口内有数据点，取最新的一个
       if (pointsInWindow.length > 0) {
         const latestPoint = pointsInWindow.reduce((latest, current) =>
           current.timestamp > latest.timestamp ? current : latest,
@@ -64,17 +58,35 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
       }
     });
 
-    // 返回该时间窗口的数据点
     return {
       timestamp: windowEnd,
       usd_value: count > 0 ? sum : 0,
     };
   });
+
+  const firstPoints = timeStamps.map(data => data[0]);
+  const lastPoints = timeStamps.map(data => data[data.length - 1]);
+
+  const firstSum = firstPoints.reduce((sum, point) => sum + point.usd_value, 0);
+  const lastSum = lastPoints.reduce((sum, point) => sum + point.usd_value, 0);
+
+  result[0] = {
+    timestamp: startTime,
+    usd_value: firstSum,
+  };
+
+  result[result.length - 1] = {
+    timestamp: startTime + (48 - 1) * interval,
+    usd_value: lastSum,
+  };
+
+  return result;
 };
 
 export const useMultiCurve = (
   addresses: string[],
   disableAutoFetch?: boolean,
+  totalBalance?: number,
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
@@ -204,7 +216,11 @@ export const useMultiCurve = (
         return data?.data || [];
       })
       .filter(data => data.length > 0);
-    return formChartData(combineMulitCurve(list));
+    return formChartData(
+      combineMulitCurve(list),
+      totalBalance || 0,
+      new Date().getTime(),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses.length, multiTimeStamp]);
 
@@ -215,7 +231,7 @@ export const useMultiCurve = (
     if (combineData.list.length === 0) {
       fetch(addresses);
     }
-    if (Object.keys(multiTimeStamp).length === addresses.length) {
+    if (Object.keys(multiTimeStamp).length >= addresses.length) {
       setLoading(false);
     }
   }, [

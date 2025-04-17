@@ -28,6 +28,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import { toast } from '../Toast';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -206,7 +207,12 @@ export const AddressQuickManager: React.FC<Props> = ({
               <TouchableOpacity
                 hitSlop={10}
                 onPress={() => {
-                  removeAccount({ account });
+                  removeAccount({
+                    account,
+                    onFinished: () => {
+                      toast.success(t('global.Deleted'));
+                    },
+                  });
                 }}>
                 <DeleteSVG />
               </TouchableOpacity>

@@ -106,6 +106,7 @@ export const MultiAssets = () => {
 
   const {
     top10Addresses,
+    top10Balance,
     list,
     hasWatchAddress,
     hasSafeAddress,
@@ -127,7 +128,7 @@ export const MultiAssets = () => {
     combineData,
     refresh: refreshCurve,
     loading,
-  } = useMultiCurve(top10Addresses);
+  } = useMultiCurve(top10Addresses, false, top10Balance);
 
   const [selectChainItem, setSelectChainItem] = useState<
     ChainListItem | undefined
@@ -249,22 +250,19 @@ export const MultiAssets = () => {
           const hasChangeData = multiTimeStamp[
             item.address.toLocaleLowerCase()
           ]?.data.some(i => i.usd_value !== 0);
+          const chartData = formChartData(
+            multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
+            item.balance,
+            new Date().getTime(),
+          );
           return {
             type: 'address_entry',
             data: {
               ...item,
               changPercent: hasChangeData
-                ? formChartData(
-                    multiTimeStamp[item.address.toLocaleLowerCase()]?.data ||
-                      [],
-                  )?.changePercent
+                ? chartData?.changePercent
                 : undefined,
-              isLoss: hasChangeData
-                ? formChartData(
-                    multiTimeStamp[item.address.toLocaleLowerCase()]?.data ||
-                      [],
-                  )?.isLoss
-                : undefined,
+              isLoss: hasChangeData ? chartData?.isLoss : undefined,
             },
           };
         }),
