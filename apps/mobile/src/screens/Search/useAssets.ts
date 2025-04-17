@@ -148,10 +148,12 @@ export const useAssets = (filterText?: string) => {
     if (!addresses.length) {
       return;
     }
+    setLoading(true);
     const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
       addresses,
     );
     if (!cachedTokens.length) {
+      setLoading(false);
       return;
     }
     const assestGroup = _.groupBy(cachedTokens, 'owner_addr');
@@ -201,6 +203,7 @@ export const useAssets = (filterText?: string) => {
       });
       return curr;
     });
+    setLoading(false);
   };
 
   const batchLoadCacheDefi = async (addresses: string[], setting: any) => {

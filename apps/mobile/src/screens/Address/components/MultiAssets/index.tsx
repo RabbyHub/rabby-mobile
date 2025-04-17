@@ -534,7 +534,7 @@ export const MultiAssets = () => {
           <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
         );
       case 'loading-skeleton':
-        return <ItemLoader />;
+        return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
       case 'loading-defi-skeleton':
         return <DefiItemLoader style={styles.defiLoading} />;
       default:

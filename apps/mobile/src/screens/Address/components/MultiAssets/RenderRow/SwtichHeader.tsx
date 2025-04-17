@@ -16,7 +16,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../../AddressListScreenContainer';
@@ -54,6 +54,8 @@ export const SwitchHeader = ({
   const contentHeight = (addressLength || 0) * (78 + 12) + 60 + 226;
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const quickManagePopupRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
 
   const onAddAddress = useCallback(() => {
     trigger('impactLight', {
@@ -63,6 +65,9 @@ export const SwitchHeader = ({
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
       onDone: () => {
+        quickManagePopupRef.current &&
+          removeGlobalBottomSheetModal2024(quickManagePopupRef.current);
+        quickManagePopupRef.current = undefined;
         removeGlobalBottomSheetModal2024(id);
       },
       shouldRedirectToSetPasswordBefore2024,
@@ -82,7 +87,7 @@ export const SwitchHeader = ({
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    const id = createGlobalBottomSheetModal2024({
+    quickManagePopupRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {
         snapPoints: [Math.min(contentHeight, maxHeight)],
@@ -90,7 +95,9 @@ export const SwitchHeader = ({
       type: 'address',
       onAddAddress,
       onCancel: () => {
-        removeGlobalBottomSheetModal2024(id);
+        quickManagePopupRef.current &&
+          removeGlobalBottomSheetModal2024(quickManagePopupRef.current);
+        quickManagePopupRef.current = undefined;
       },
     });
   }, [contentHeight, maxHeight, onAddAddress]);
