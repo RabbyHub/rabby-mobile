@@ -20,6 +20,7 @@ import { useCallback } from 'react';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../../AddressListScreenContainer';
+import EditSVG from '@/assets2024/icons/common/edit-list.svg';
 
 export const enum TabType {
   portfolio = 'portfolio',
@@ -147,7 +148,11 @@ export const SwitchHeader = ({
           ))
         ) : (
           <Pressable onPress={handleManageAddress}>
-            <Text>edit addr</Text>
+            <EditSVG
+              color={colors2024['neutral-secondary']}
+              width={24}
+              height={24}
+            />
           </Pressable>
         )}
       </View>
