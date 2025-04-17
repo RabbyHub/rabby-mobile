@@ -21,6 +21,7 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../../AddressListScreenContainer';
 import EditSVG from '@/assets2024/icons/common/edit-list.svg';
+import { trigger } from 'react-native-haptic-feedback';
 
 export const enum TabType {
   portfolio = 'portfolio',
@@ -55,6 +56,10 @@ export const SwitchHeader = ({
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const onAddAddress = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
       onDone: () => {
@@ -73,6 +78,10 @@ export const SwitchHeader = ({
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleManageAddress = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       bottomSheetModalProps: {

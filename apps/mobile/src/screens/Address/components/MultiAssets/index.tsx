@@ -75,6 +75,7 @@ import { useAccountInfo } from './hooks';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { formChartData } from '@/hooks/useCurve';
+import { trigger } from 'react-native-haptic-feedback';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -430,12 +431,16 @@ export const MultiAssets = () => {
             addressLength={list.length}
             onChainClick={handleOnChainClick}
             chainLength={chainsInfo.chainLength}
-            onChangeTab={tab =>
+            onChangeTab={tab => {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
               setExtendedState(pre => ({
                 ...pre,
                 currentTab: tab,
-              }))
-            }
+              }));
+            }}
           />
         );
 
