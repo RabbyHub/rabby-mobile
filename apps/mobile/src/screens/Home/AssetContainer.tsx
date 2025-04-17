@@ -951,7 +951,11 @@ export const AssetContainer: React.FC<Props> = ({
       case 'empty-nft':
         return <EmptyAssets desc={data} type={type} />;
       case 'loading-skeleton':
-        return <ItemLoader />;
+        return (
+          <View style={styles.rowWrap}>
+            <ItemLoader style={styles.removeLeft} />
+          </View>
+        );
       case 'loading-defi-skeleton':
         return <DefiItemLoader />;
       default:
@@ -1122,6 +1126,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   rowWrap: {
     paddingHorizontal: 16,
+  },
+  removeLeft: {
+    marginLeft: 0,
   },
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],

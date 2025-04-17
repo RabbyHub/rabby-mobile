@@ -1,5 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 interface IProps {
@@ -15,6 +16,7 @@ export const HeaderTitle = ({
   isLoss,
 }: IProps) => {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       <Text style={styles.netWorth}>{netWorth}</Text>
@@ -23,7 +25,7 @@ export const HeaderTitle = ({
         {isLoss ? '-' : '+'}
         {changePercent}
       </Text>
-      <Text style={styles.date}>24h</Text>
+      <Text style={styles.date}>{t('global.24h')}</Text>
     </View>
   );
 };

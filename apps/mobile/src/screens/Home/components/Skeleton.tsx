@@ -48,18 +48,20 @@ export const PositionLoader = ({
   );
 };
 
-export const ItemLoader = memo(() => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={[styles.positionLoader]}>
-      <Skeleton style={styles.loading} width={40} height={40} circle />
-      <View style={styles.loaderList}>
-        <Skeleton style={styles.loading} height={20} circle />
-        <Skeleton style={styles.loading} width={144} height={18} circle />
+export const ItemLoader = memo(
+  ({ style }: { style?: StyleProp<ViewStyle> }) => {
+    const { styles } = useTheme2024({ getStyle });
+    return (
+      <View style={[styles.positionLoader, style]}>
+        <Skeleton style={styles.loading} width={40} height={40} circle />
+        <View style={styles.loaderList}>
+          <Skeleton style={styles.loading} height={20} circle />
+          <Skeleton style={styles.loading} width={144} height={18} circle />
+        </View>
       </View>
-    </View>
-  );
-});
+    );
+  },
+);
 
 export const DefiItemLoader = memo(
   ({ style }: { style?: StyleProp<ViewStyle> }) => {

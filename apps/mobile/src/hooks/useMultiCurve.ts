@@ -110,7 +110,7 @@ export const useMultiCurve = (
               },
             }));
             const cacheData = getCurveCache(addr);
-            if (!cacheData?.data) {
+            if (!cacheData?.data || cacheData.isExpired) {
               return;
             }
             const curve = cacheData.data;
@@ -134,10 +134,7 @@ export const useMultiCurve = (
               start,
               step,
             );
-
-            if (!cacheData.isExpired) {
-              nextCheckAddress.delete(addr);
-            }
+            nextCheckAddress.delete(addr);
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {

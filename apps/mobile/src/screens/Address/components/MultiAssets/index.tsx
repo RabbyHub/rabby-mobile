@@ -22,6 +22,7 @@ import {
   ADDRESS_ENTRY_HEUGHT,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
+  ASSETS_LIST_HEADER,
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
@@ -101,6 +102,7 @@ const ViewTypes = {
   ADDRESS_ENTRY: 8,
   SAFE_ADDRESS_NAV: 9,
   WATCH_ADDRESS_NAV: 10,
+  ASSET_HEADER: 11,
 };
 
 export const MultiAssets = () => {
@@ -533,7 +535,7 @@ export const MultiAssets = () => {
         );
       case 'asset_header':
         return (
-          <Text style={styles.sectionHeader}>
+          <Text style={[styles.sectionHeader, styles.sectionTextHeader]}>
             {t('page.search.sectionHeader.token')}
           </Text>
         );
@@ -548,7 +550,7 @@ export const MultiAssets = () => {
         );
       case 'defi_header':
         return (
-          <Text style={styles.sectionHeader}>
+          <Text style={[styles.sectionHeader, styles.sectionTextHeader]}>
             {t('page.search.sectionHeader.Defi')}
           </Text>
         );
@@ -639,10 +641,10 @@ export const MultiAssets = () => {
         ) {
           return ViewTypes.DEFI;
         }
-        if (
-          item?.type?.includes('_header') ||
-          item?.type?.includes('toggle_')
-        ) {
+        if (item?.type?.includes('_header')) {
+          return ViewTypes.ASSET_HEADER;
+        }
+        if (item?.type?.includes('toggle_')) {
           return ViewTypes.HEADER;
         }
         if (item.type === 'switch_tabs') {
@@ -655,6 +657,10 @@ export const MultiAssets = () => {
           case ViewTypes.OVERVIEW:
             dim.width = SCREEN_WIDTH;
             dim.height = HEADER_CHART_HEIGHT;
+            break;
+          case ViewTypes.ASSET_HEADER:
+            dim.width = SCREEN_WIDTH - 32;
+            dim.height = ASSETS_LIST_HEADER + ASSETS_SEPARATOR_HEIGHT;
             break;
           case ViewTypes.HEADER:
             dim.width = SCREEN_WIDTH - 32;
@@ -866,6 +872,9 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
+  },
+  sectionTextHeader: {
+    height: ASSETS_LIST_HEADER,
   },
   tokenSectionHeader: {
     paddingLeft: 0,

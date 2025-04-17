@@ -95,11 +95,15 @@ export const deleteCurveCache = (_address: string) => {
 
 // delete all curve cache that is long time expired
 export const deleteLongTimeCurveCache = () => {
-  const keys = storage.getAllKeys();
-  keys.forEach(key => {
-    const cache = getCurveCache(key);
-    if (cache && isLongTimeExpired(cache.updateTime)) {
-      deleteCurveCache(key);
-    }
-  });
+  try {
+    const keys = storage.getAllKeys();
+    keys.forEach(key => {
+      const cache = getCurveCache(key);
+      if (cache && isLongTimeExpired(cache.updateTime)) {
+        deleteCurveCache(key);
+      }
+    });
+  } catch (error) {
+    console.error('deleteLongTimeCurveCache', error);
+  }
 };

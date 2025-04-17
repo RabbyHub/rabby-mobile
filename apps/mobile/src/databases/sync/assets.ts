@@ -23,6 +23,7 @@ import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
+import { deleteCurveCache } from '@/utils/24balanceCurveCache';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -295,6 +296,7 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       SwapItemEntity.deleteForAddress(address),
       BalanceEntity.deleteForAddress(address),
       CexEntity.deleteForAddress(address),
+      deleteCurveCache(address),
     ]);
   } catch (error) {
     console.log('deleteDBResourceForAddress', error);

@@ -76,6 +76,7 @@ import { ArrowCircleCC } from '@/assets2024/icons/address';
 import LinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { Skeleton } from '@rneui/base';
+import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 
 const HeaderHeight = 24;
 
@@ -422,6 +423,12 @@ function MultiAddressHome(): JSX.Element {
 
     return result;
   });
+
+  useEffect(() => {
+    setTimeout(() => {
+      deleteLongTimeCurveCache();
+    }, 0);
+  }, []);
 
   // useMount(() => {  no use ?
   //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);

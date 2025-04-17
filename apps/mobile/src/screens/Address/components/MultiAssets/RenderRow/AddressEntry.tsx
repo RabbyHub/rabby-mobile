@@ -14,7 +14,6 @@ export const AddressEntry = ({
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    // <View style={styles.root}>
     <AddressItemEntry
       style={styles.root}
       account={data}
@@ -22,10 +21,9 @@ export const AddressEntry = ({
       disableMenu
       isLoss={data.isLoss}
     />
-    // </View>
   );
 };
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(() => ({
   root: {
     height: 78,
   },

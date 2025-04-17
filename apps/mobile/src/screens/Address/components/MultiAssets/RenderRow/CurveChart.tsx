@@ -12,6 +12,7 @@ import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { useTranslation } from 'react-i18next';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -88,6 +89,7 @@ export const ChartHeader = ({
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
+  const { t } = useTranslation();
   const percentChange = useDerivedValue(() => {
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
@@ -106,7 +108,7 @@ export const ChartHeader = ({
   }, [data, currentIndex.value, change, changePercent, isLoss]);
 
   const dateTime = useDerivedValue(() => {
-    return data?.[currentIndex.value]?.clockTimeString || '24h';
+    return data?.[currentIndex.value]?.clockTimeString || t('global.24h');
   }, [data, currentIndex]);
 
   const lossStyleProps = useAnimatedStyle(() => {
