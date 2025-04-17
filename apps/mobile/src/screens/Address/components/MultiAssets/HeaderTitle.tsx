@@ -20,8 +20,10 @@ export const HeaderTitle = ({
       <Text style={styles.netWorth}>{netWorth}</Text>
       <Text
         style={[styles.changePercent, isLoss ? styles.changePercentLoss : {}]}>
+        {isLoss ? '-' : '+'}
         {changePercent}
       </Text>
+      <Text style={styles.date}>24h</Text>
     </View>
   );
 };
@@ -34,23 +36,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   netWorth: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '800',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
-    alignItems: 'center',
-  },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: '700',
-    color: colors2024['green-default'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   changePercent: {
@@ -62,5 +51,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changePercentLoss: {
     color: colors2024['red-default'],
+  },
+  date: {
+    marginLeft: 4,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

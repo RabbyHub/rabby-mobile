@@ -1,6 +1,6 @@
 import { getNetCurve } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
-import { formatUsdValue } from '@/utils/number';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -66,7 +66,13 @@ export const formChartData = (
 
   return {
     list,
-    netWorth: endNetWorth === 0 ? '$0' : `${formatUsdValue(endNetWorth)}`,
+    netWorth:
+      endNetWorth === 0
+        ? '$0'
+        : '$' +
+          splitNumberByStep(
+            endNetWorth > 10 ? Math.floor(endNetWorth) : endNetWorth.toFixed(2),
+          ),
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
     changePercent:
       startData.usd_value !== 0
