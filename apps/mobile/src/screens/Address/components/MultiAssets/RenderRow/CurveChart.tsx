@@ -7,6 +7,9 @@ import { memo, useMemo } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formChartData } from '@/hooks/useCurve';
+import { HEADER_CHART_HEIGHT } from '@/constant/layout';
+import { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
+import AnimateableText from 'react-native-animateable-text';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -23,42 +26,44 @@ function Chart({
   isNoAssets: boolean;
   pathColor: string;
 }) {
-  const { colors } = useTheme2024();
+  const { styles, colors } = useTheme2024({ getStyle });
   return (
-    <LineChart.Provider data={data.list}>
-      <ChartHeader
-        netWorth={data.netWorth}
-        change={data.change}
-        changePercent={data.changePercent}
-        isLoss={data.isLoss}
-        data={data.list}
-        loading={loading}
-      />
-      {isOffline || isNoAssets ? null : !loading ? (
-        <>
-          <LineChart
-            height={114}
-            width={ScreenWidth - 40}
-            shape={d3Shape.curveLinear}
-            style={{ position: 'relative' }}>
-            <LineChart.Path
-              showInactivePath={false}
-              color={pathColor}
-              width={2}>
-              <LineChart.Gradient color={pathColor} />
-            </LineChart.Path>
-            <LineChart.CursorLine color={colors['neutral-line']} />
-            <LineChart.CursorCrosshair
-              color={pathColor}
-              outerSize={12}
-              size={8}
-            />
-          </LineChart>
-        </>
-      ) : (
-        <CurveLoader />
-      )}
-    </LineChart.Provider>
+    <View style={styles.container}>
+      <LineChart.Provider data={data.list}>
+        <ChartHeader
+          netWorth={data.netWorth}
+          change={data.change}
+          changePercent={data.changePercent}
+          isLoss={data.isLoss}
+          data={data.list}
+          loading={loading}
+        />
+        {isOffline || isNoAssets ? null : !loading ? (
+          <>
+            <LineChart
+              height={114}
+              width={ScreenWidth - 40}
+              shape={d3Shape.curveLinear}
+              style={{ position: 'relative' }}>
+              <LineChart.Path
+                showInactivePath={false}
+                color={pathColor}
+                width={2}>
+                <LineChart.Gradient color={pathColor} />
+              </LineChart.Path>
+              <LineChart.CursorLine color={colors['neutral-line']} />
+              <LineChart.CursorCrosshair
+                color={pathColor}
+                outerSize={12}
+                size={8}
+              />
+            </LineChart>
+          </>
+        ) : (
+          <CurveLoader />
+        )}
+      </LineChart.Provider>
+    </View>
   );
 }
 export const MultiChart = memo(Chart);
@@ -81,7 +86,7 @@ export const ChartHeader = ({
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
-  const percentChange = useMemo(() => {
+  const percentChange = useDerivedValue(() => {
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
     const formatChangeValue = isActiveIndexData
@@ -98,32 +103,33 @@ export const ChartHeader = ({
     }${formatChangePercent})`;
   }, [data, currentIndex.value, change, changePercent, isLoss]);
 
-  const dateTime = useMemo(() => {
+  const dateTime = useDerivedValue(() => {
     return data?.[currentIndex.value]?.clockTimeString || '24h';
   }, [data, currentIndex]);
 
-  const formatIsLoss = useMemo(() => {
+  const lossStyleProps = useAnimatedStyle(() => {
     if (data?.[currentIndex?.value]) {
-      return data?.[currentIndex?.value]?.isLoss;
+      return {
+        ...styles.changePercent,
+        display: loading ? 'none' : 'flex',
+        color: data?.[currentIndex?.value]?.isLoss
+          ? colors2024['red-default']
+          : colors2024['green-default'],
+      };
     }
-    return isLoss;
-  }, [isLoss, data, currentIndex]);
+    return {
+      ...styles.changePercent,
+      display: loading ? 'none' : 'flex',
+      color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+    };
+  }, [isLoss, data, currentIndex, colors2024, styles, loading]);
+
   return (
     <View>
       <Text style={styles.netWorth}>{netWorth}</Text>
       <View style={styles.changeSection}>
-        <Text
-          style={[
-            styles.changePercent,
-            {
-              color: formatIsLoss
-                ? colors2024['red-default']
-                : colors2024['green-default'],
-            },
-          ]}>
-          {percentChange}
-        </Text>
-        <Text style={styles.changeTime}>{dateTime}</Text>
+        <AnimateableText style={lossStyleProps} text={percentChange} />
+        <AnimateableText style={styles.changeTime} text={dateTime} />
       </View>
     </View>
   );
@@ -163,5 +169,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     marginLeft: 4,
+  },
+  container: {
+    height: HEADER_CHART_HEIGHT,
   },
 }));

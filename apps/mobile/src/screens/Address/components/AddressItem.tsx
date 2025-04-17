@@ -20,9 +20,7 @@ const { isSameAddress } = addressUtils;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: colors2024['neutral-bg-3'],
   },
   rootPressing: {
     borderColor: colors2024['brand-light-2'],

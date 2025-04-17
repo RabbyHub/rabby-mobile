@@ -124,7 +124,6 @@ export const MultiAssets = () => {
     ChainListItem | undefined
   >();
   const [firstRowType, setFirstRowType] = useState('');
-  console.log('🔍 CUSTOM_LOGGER:=>: firstRowType', firstRowType);
 
   const { tokens, portfolios } = useMemo(() => {
     return {
@@ -170,7 +169,7 @@ export const MultiAssets = () => {
   }, [isLight, combineData]);
 
   const [listData, setListData] = useState(() =>
-    dataProvider.cloneWithRows([]),
+    dataProvider.cloneWithRows([{ type: 'overview' }, { type: 'switch_tabs' }]),
   );
 
   const dataList = useMemo(() => {
@@ -638,20 +637,23 @@ export const MultiAssets = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (isLoading && !listData.getSize()) {
-    return (
-      <View style={styles.bgContainer}>
-        <PositionLoader />
-      </View>
-    );
-  }
-  if (!listData.getSize()) {
-    return null;
-  }
+  // if (isLoading && !listData.getSize()) {
+  //   return (
+  //     <View style={styles.bgContainer}>
+  //       <PositionLoader />
+  //     </View>
+  //   );
+  // }
+  // if (!listData.getSize()) {
+  //   return null;
+  // }
 
   return (
     <View style={styles.container}>
-      {firstRowType === 'overview' || firstRowType === 'switch_tabs' ? null : (
+      {firstRowType === 'overview' ||
+      firstRowType === 'switch_tabs' ||
+      firstRowType === '' ||
+      !list.length ? null : (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           <SwitchHeader
             currentTab={extendedState.currentTab}

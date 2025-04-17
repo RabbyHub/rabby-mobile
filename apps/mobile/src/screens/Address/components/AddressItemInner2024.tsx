@@ -11,17 +11,20 @@ import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderWidth: 0,
-    borderRadius: 0,
+    borderRadius: 16,
     flex: 1,
     flexGrow: 1,
     height: 78,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     padding: 16,
+    overflow: 'hidden',
     paddingRight: 24,
     position: 'relative',
   },
