@@ -449,6 +449,7 @@ export const useTokenPair = (userAddress: string) => {
               setFinishedQuotes(e => e + 1);
             }
           },
+          inSufficient,
         });
       }
     },
