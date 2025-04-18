@@ -32,11 +32,6 @@ export const getCurveCache = (_address: string) => {
   const data = storage.getString(address);
   if (data) {
     const cache = JSON.parse(data) as ICURVE_DATA;
-    console.log(
-      '🔍 CUSTOM_LOGGER:=>: isExpired:',
-      address.slice(-4),
-      (Date.now() - cache.updateTime) / 1000 / 60,
-    );
     return {
       data: cache.data,
       updateTime: cache.updateTime,
@@ -72,10 +67,6 @@ export const get24hCurveDataWithCache = async (
   if (cache && !force && !cache.isExpired) {
     return cache;
   }
-  console.log('🔍 CUSTOM_LOGGER:=>: openapi.getNetCurve', address.slice(-4), {
-    force,
-    isExpired: cache?.isExpired,
-  });
   const curve = await openapi.getNetCurve(address, 1);
   setCurveCache(address, {
     data: curve,

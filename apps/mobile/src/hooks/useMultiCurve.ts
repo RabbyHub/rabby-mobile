@@ -114,11 +114,6 @@ export const useMultiCurve = (
               return;
             }
             const curve = cacheData.data;
-            console.log(
-              '🔍 CUSTOM_LOGGER:=>: curve',
-              curve.length,
-              addr.slice(-4),
-            );
             const start = dayjs()
               .add(-24, 'hours')
               .add(10, 'minutes')
