@@ -10,7 +10,6 @@ import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { Tip } from '@/components/Tip';
-import IconTableArrow from '@/assets/icons/sign/table-arrow.svg';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -88,14 +87,14 @@ export const SubTable = ({
         ...style,
       })}>
       <View style={styles.table}>{children}</View>
-      <IconTableArrow
+      {/* <IconTableArrow
         color={colors['neutral-card3']}
         style={StyleSheet.flatten({
           position: 'absolute',
           left,
           top: -8,
         })}
-      />
+      /> */}
     </View>
   );
 };
