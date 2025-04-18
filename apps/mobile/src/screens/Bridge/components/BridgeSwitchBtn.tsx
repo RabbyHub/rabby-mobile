@@ -1,19 +1,11 @@
-import React, { FC, useEffect, useState } from 'react';
-import { TouchableOpacity } from 'react-native';
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, TouchableOpacity } from 'react-native';
 import RcIconSwitchBtn from '@/assets2024/icons/bridge/IconSwitchBtn.svg';
 import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnDark.svg';
 import RcIconSwitchBtnPressing from '@/assets2024/icons/bridge/IconSwitchBtnPress.svg';
 import SwapLoadingPng from '@/assets2024/images/swap/loading.png';
 import { useTheme2024 } from '@/hooks/theme';
 import { GestureResponderEvent, TouchableOpacityProps } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 
 interface BridgeSwitchBtnProps extends TouchableOpacityProps {
   onPress?: (event?: GestureResponderEvent) => void;
@@ -56,46 +48,60 @@ const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
         <RcIconSwitchBtn color={colors2024['neutral-bg-3']} />
       )}
 
-      {loading && <Loading isLoading={loading} />}
+      {loading && <Loading />}
     </TouchableOpacity>
   );
 };
 
-function Loading({ isLoading }: { isLoading?: boolean }) {
-  const opacity = useSharedValue(0);
-  const rotation = useSharedValue('0deg');
+function Loading() {
+  const rotateValue = useRef(new Animated.Value(0)).current;
+  const opacityValue = useRef(new Animated.Value(0)).current;
+
+  const rotate = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   useEffect(() => {
-    if (isLoading) {
-      opacity.value = withTiming(1, { duration: 100 });
-      rotation.value = withRepeat(
-        withTiming('360deg', { duration: 500, easing: Easing.linear }),
-        -1,
-        false,
-      );
-    } else {
-      opacity.value = withTiming(0, { duration: 100 }, () => {
-        cancelAnimation(rotation);
-        rotation.value = withTiming('0deg', { duration: 0 });
-      });
-    }
+    Animated.parallel([
+      Animated.timing(opacityValue, {
+        toValue: 1,
+        duration: 100,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.loop(
+        Animated.timing(rotateValue, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ),
+    ]).start();
+  }, [opacityValue, rotateValue]);
 
-    return () => {
-      cancelAnimation(rotation);
-      cancelAnimation(opacity);
-      opacity.value = withTiming(0, { duration: 0 });
-      rotation.value = withTiming('0deg', { duration: 0 });
-    };
-  }, [isLoading, opacity, rotation]);
+  const animatedStyle = useMemo(
+    () => ({
+      opacity: opacityValue,
+      transform: [{ rotate: rotate }],
+    }),
+    [opacityValue, rotate],
+  );
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ rotate: rotation.value }],
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  }));
-
-  return <Animated.Image source={SwapLoadingPng} style={animatedStyle} />;
+  return (
+    <Animated.Image
+      source={SwapLoadingPng}
+      style={[
+        animatedStyle,
+        {
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+        },
+      ]}
+    />
+  );
 }
 
 export default BridgeSwitchBtn;

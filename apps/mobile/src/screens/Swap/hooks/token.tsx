@@ -547,7 +547,7 @@ export const useTokenPair = (userAddress: string) => {
       !quoteLoading &&
       receiveToken &&
       canUpdateActiveProvider &&
-      quoteList.every((q, idx) => !q.loading)
+      quoteList.every(q => !q.loading)
     ) {
       const sortIncludeGasFee = true;
       const sortedList = [
