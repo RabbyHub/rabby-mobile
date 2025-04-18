@@ -46,7 +46,7 @@ export const HistoryItemTokenPrice = ({
 
   return (
     <View>
-      {singlePrice && (
+      {Boolean(singlePrice) && (
         <Text style={style}>{`≈${formatUsdValue(singlePrice * amount)}`}</Text>
       )}
     </View>
