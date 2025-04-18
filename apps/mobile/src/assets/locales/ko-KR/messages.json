@@ -785,7 +785,9 @@
       "passphraseError": "암호 문구가 잘못되었습니다.",
       "delete-checklist-1": "이 주소를 삭제하면 해당 개인 키 및 시드 구문이 삭제되며, Rabby는 이를 복구할 수 없다는 것을 이해합니다.",
       "delete-checklist-2": "저는 개인 키 또는 시드 구문을 백업했으며 지금 삭제할 준비가 되었음을 확인합니다.",
-      "enterPassphraseTitle": "서명을 위해 암호구문 입력"
+      "enterPassphraseTitle": "서명을 위해 암호구문 입력",
+      "quickAddressTitle_one": "{{count}} 주소",
+      "quickAddressTitle_other": "{{count}} 주소"
     },
     "dashboard": {
       "hd": {
@@ -1803,6 +1805,12 @@
     "safeMessageQueue": {
       "noData": "메시지가 없습니다",
       "loading": "로딩 중 메시지"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "주소",
+        "portfolio": "포트폴리오"
+      }
     }
   },
   "global": {
@@ -1844,7 +1852,8 @@
     },
     "Unknown": "알 수 없음",
     "unlimited": "무제한",
-    "Addresses": "주소"
+    "Addresses": "주소",
+    "24h": "24시간"
   },
   "native": {
     "biometrics": {

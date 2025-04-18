@@ -81,7 +81,8 @@
     },
     "Unknown": "Không xác định",
     "unlimited": "không giới hạn",
-    "Addresses": "Địa chỉ"
+    "Addresses": "Địa chỉ",
+    "24h": "24h"
   },
   "page": {
     "transactions": {
@@ -885,7 +886,9 @@
       "delete-checklist-2": "Tôi xác nhận rằng tôi đã sao lưu khóa riêng hoặc cụm từ khôi phục và sẵn sàng xóa nó ngay bây giờ.",
       "delete-checklist-1": "Tôi hiểu rằng nếu tôi xóa địa chỉ này, thì khóa cá nhân và cụm từ khôi phục tương ứng sẽ bị xóa, và Rabby sẽ KHÔNG thể khôi phục chúng.",
       "confirm": "Xác nhận",
-      "passphraseError": "Cụm mật khẩu không hợp lệ"
+      "passphraseError": "Cụm mật khẩu không hợp lệ",
+      "quickAddressTitle_other": "{{count}} Địa chỉ",
+      "quickAddressTitle_one": "{{count}} Địa chỉ"
     },
     "dashboard": {
       "hd": {
@@ -1859,6 +1862,12 @@
     "safeMessageQueue": {
       "noData": "Không có tin nhắn",
       "loading": "Đang tải tin nhắn"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "Địa chỉ",
+        "portfolio": "Danh mục"
+      }
     }
   },
   "component": {
