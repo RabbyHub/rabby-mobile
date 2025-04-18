@@ -778,7 +778,16 @@ export const MultiAssets = () => {
         }}
         renderFooter={() =>
           extendedState.currentTab === TabType.address ? (
-            <View style={styles.footer}>
+            <View
+              style={[
+                {
+                  minHeight:
+                    Dimensions.get('screen').height -
+                    list.length * (ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP) -
+                    -SWITCH_HEADER_HEIGHT -
+                    SWITCH_HEADER_GAP,
+                },
+              ]}>
               {hasSafeAddress && (
                 <OtherAddressNav
                   onPress={onGotoSafeAddress}

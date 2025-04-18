@@ -7,7 +7,11 @@ import { Dimensions, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formChartData } from '@/hooks/useCurve';
 import { HEADER_CHART_HEIGHT } from '@/constant/layout';
-import { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
+import {
+  useAnimatedProps,
+  useAnimatedStyle,
+  useDerivedValue,
+} from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
@@ -108,8 +112,12 @@ export const ChartHeader = ({
   }, [data, currentIndex.value, change, changePercent, isLoss]);
 
   const dateTime = useDerivedValue(() => {
-    return data?.[currentIndex.value]?.clockTimeString || t('global.24h');
-  }, [data, currentIndex]);
+    return (
+      (data?.[currentIndex?.value]?.netWorth
+        ? data?.[currentIndex?.value]?.clockTimeString
+        : '24h') || '24h'
+    );
+  }, [data, currentIndex, netWorth]);
 
   const formatNetWorth = useDerivedValue(() => {
     return data?.[currentIndex?.value]?.netWorth || netWorth;
@@ -132,6 +140,22 @@ export const ChartHeader = ({
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading]);
 
+  const netWorthAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: formatNetWorth.value,
+    };
+  });
+  const percentChangeAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: percentChange.value,
+    };
+  });
+  const dateTimeAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: dateTime.value,
+    };
+  });
+
   if (loading) {
     return (
       <Skeleton
@@ -144,11 +168,19 @@ export const ChartHeader = ({
   }
   return (
     <View style={styles.charHeader}>
-      {/* <Text style={styles.netWorth}>{netWorth}</Text> */}
-      <AnimateableText style={styles.netWorth} text={formatNetWorth} />
+      <AnimateableText
+        style={styles.netWorth}
+        animatedProps={netWorthAnimatedProps}
+      />
       <View style={styles.changeSection}>
-        <AnimateableText style={lossStyleProps} text={percentChange} />
-        <AnimateableText style={styles.changeTime} text={dateTime} />
+        <AnimateableText
+          style={lossStyleProps}
+          animatedProps={percentChangeAnimatedProps}
+        />
+        <AnimateableText
+          style={styles.changeTime}
+          animatedProps={dateTimeAnimatedProps}
+        />
       </View>
     </View>
   );
