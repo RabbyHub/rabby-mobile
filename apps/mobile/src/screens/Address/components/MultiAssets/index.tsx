@@ -67,7 +67,7 @@ import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
 import { AddressEntry } from './RenderRow/AddressEntry';
-import { OtherAddressNav } from '../../AddressAssetsOverviewScreen';
+import { OtherAddressNav } from '../OtherAddressNav';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';

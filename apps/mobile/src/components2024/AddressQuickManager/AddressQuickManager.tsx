@@ -20,7 +20,7 @@ import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletPin } from '../AddressItem/AddressItem';
 import { useTranslation } from 'react-i18next';
-import { OtherAddressNav } from '@/screens/Address/AddressAssetsOverviewScreen';
+import { OtherAddressNav } from '@/screens/Address/components/OtherAddressNav';
 import { Card } from '@/components2024/Card';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import {

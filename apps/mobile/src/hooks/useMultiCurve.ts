@@ -110,7 +110,7 @@ export const useMultiCurve = (
               },
             }));
             const cacheData = getCurveCache(addr);
-            if (!cacheData?.data || cacheData.isExpired) {
+            if (!cacheData?.data || cacheData?.isExpired) {
               return;
             }
             const curve = cacheData.data;

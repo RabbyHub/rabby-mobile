@@ -13,7 +13,7 @@ interface ICURVE_DATA {
 }
 export const CURE_CACHE_TIME = 10 * 60 * 1000; // 10 min
 // export const CURE_CACHE_TIME = 7 * 24 * 60 * 60 * 1000; // TODO: 7 days min tmp for test
-export const LONG_TIME_UNTIL_EXPIRED = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const LONG_TIME_UNTIL_EXPIRED = 4 * 60 * 60 * 1000; // 4 days expired is invalid
 
 const storage = new MMKV({
   id: MMKV_FILE_NAMES.DAYCURVE,
