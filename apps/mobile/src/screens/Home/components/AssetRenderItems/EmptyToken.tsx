@@ -101,7 +101,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   card: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: 20,
     display: 'flex',
     justifyContent: 'flex-start',
     flexDirection: 'row',
