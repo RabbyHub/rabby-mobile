@@ -83,7 +83,7 @@
     "@babel/runtime": "^7.20.0",
     "@debank/common": "^0.3.54",
     "@exodus/patch-broken-hermes-typed-arrays": "^1.0.0-alpha.1",
-    "@rabby-wallet/rabby-api": "0.9.15-beta.0",
+    "@rabby-wallet/rabby-api": "0.9.19",
     "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {
