@@ -485,15 +485,15 @@ const TokenSymbol = ({
   token: TokenItem;
   style?: TextStyle;
 }) => {
-  // const { openTokenDetailPopup } = useTokenDetailSheetModalOnApprovals();
-  // const handleClickTokenSymbol = useCallback(() => {
-  //   openTokenDetailPopup(token);
-  // }, [openTokenDetailPopup, token]);
+  const commonStyle = useCommonStyle();
 
   return (
     <Text
       // onPress={handleClickTokenSymbol}
-      style={style}
+      style={{
+        ...commonStyle.primaryText,
+        ...style,
+      }}
       numberOfLines={1}
       ellipsizeMode="tail">
       {ellipsisTokenSymbol(getTokenSymbol(token))}
