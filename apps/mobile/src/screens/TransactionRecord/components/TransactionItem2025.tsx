@@ -1,42 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import {
-  CANCEL_TX_TYPE,
-  INTERNAL_REQUEST_ORIGIN,
-  INTERNAL_REQUEST_SESSION,
-} from '@/constant';
-import { sendRequest } from '@/core/apis/sendRequest';
-import { openapi } from '@/core/request';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { intToHex } from '@ethereumjs/util';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useMemoizedFn } from 'ahooks';
-import { isArray, maxBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { TransactionCompleteTag } from './TransactionCompleteTag';
-import { TransactionExplain } from './TransactionExplain';
-import { TransactionPendingDetail } from './TransactionPendingDetail';
-import { TransactionPendingTag } from './TransactionPendingTag';
-import { toast } from '@/components/Toast';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
-import { TransactionAction } from './TransactionAction';
-import { apiCustomTestnet, apiProvider } from '@/core/apis';
-import { useFindChain } from '@/hooks/useFindChain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { HistoryItemIcon } from '@/screens/Transaction/components/HistoryItemIcon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
@@ -46,7 +15,6 @@ import {
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
-import { formatTokenAmount } from '@/utils/number';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
@@ -197,14 +165,10 @@ export const TransactionItem = ({
     } else if (
       data.maxGasTx.action?.actionData.wrapToken ||
       data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap ||
-      data.maxGasTx.action?.actionData.crossToken ||
-      data.maxGasTx.action?.actionData.crossSwapToken
+      data.maxGasTx.action?.actionData.swap
     ) {
       const swapData = (actionData?.swap ||
         actionData?.unWrapToken ||
-        actionData?.crossToken ||
-        actionData?.crossSwapToken ||
         actionData?.wrapToken)!;
       const send = swapData?.payToken!;
       const receive =
