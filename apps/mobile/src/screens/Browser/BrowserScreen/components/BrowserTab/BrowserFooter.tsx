@@ -6,6 +6,7 @@ import {
   RcIconForwardCC,
   RcIconMoreCC,
   RcIconRefreshCC,
+  RcIconTabsCC,
 } from '@/assets2024/icons/browser';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
@@ -63,8 +64,8 @@ export function BrowserFooter({
           contentMode === 'desktop'
             ? 'Request Mobile Site'
             : 'Request DeskTop Site',
-        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_1.png'),
-        androidIconName: 'ic_rabby_menu_more_1',
+        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
+        androidIconName: 'ic_rabby_menu_more',
         key: 'contentMode',
         onSelect: () => {
           onContentModeChange?.(
@@ -162,7 +163,12 @@ export function BrowserFooter({
         />
       </TouchableOpacity>
       <TouchableOpacity style={[styles.navControlItem]} onPress={onViewTabs}>
-        <Text>{tabsCount || 0}</Text>
+        <View style={styles.tabIconContainer}>
+          <RcIconTabsCC color={colors2024['neutral-body']} />
+          <View style={styles.tabCountContainer}>
+            <Text style={styles.tabCount}>{tabsCount || 0}</Text>
+          </View>
+        </View>
       </TouchableOpacity>
       {canViewMore ? (
         <View style={[styles.navControlItem]}>
@@ -198,7 +204,31 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     // ...makeDebugBorder('orange'),
   },
-  disabledStyle: {
-    opacity: 0.3,
+  tabIconContainer: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  tabCountContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabCount: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '700',
+    paddingRight: 1,
   },
 }));

@@ -26,12 +26,9 @@ export const BrowserHistoryList = ({
 
   const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {
     const key = dappInfo.url || dappInfo.origin;
-    // console.log('handleFavoritePress', 'favirate', key, dappInfo);
     if (getBookmark(key)) {
-      console.log('remove?');
       removeBookmark(key);
     } else {
-      console.log('add?');
       addBookmark({
         url: key,
         name: dappInfo.name,

@@ -24,6 +24,7 @@ export function useBrowserBookmark() {
       ids,
       entities,
     });
+    console.log(JSON.stringify(store));
   });
 
   const addBookmark = useMemoizedFn((item: BrowserBookmarkItem) => {

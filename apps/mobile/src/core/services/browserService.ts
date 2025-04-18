@@ -8,6 +8,7 @@ import {
   EntityState,
   EntityTools,
 } from '../utils/createEntryAdapter';
+import { DappInfo } from './dappService';
 
 export interface BrowserHistoryItem {
   url: string;
@@ -63,8 +64,52 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         ...this.store.config,
         isMigrated: true,
       };
-      const dapps = options?.storageAdapter?.getItem(APP_STORE_NAMES.dapps);
-      console.log(dapps);
+      const dapps = options?.storageAdapter?.getItem(
+        APP_STORE_NAMES.dapps,
+      ) as Record<string, DappInfo> | null;
+      const historyMap = options?.storageAdapter?.getItem(
+        APP_STORE_NAMES.browserHistory,
+      ) as Record<
+        string,
+        {
+          origin: string;
+          createdAt: number;
+        }
+      > | null;
+      const browserBookmarks: BrowserStore['browserBookmarks'] = {
+        ids: [],
+        entities: {},
+      };
+      const browserHistory: BrowserStore['browserHistory'] = {
+        ids: [],
+        entities: {},
+      };
+
+      if (dapps) {
+        Object.entries(dapps).forEach(([origin, dappInfo]) => {
+          if (dappInfo.isFavorite) {
+            browserBookmarks.ids.push(dappInfo.origin);
+            browserBookmarks.entities[origin] = {
+              name: dappInfo.name,
+              url: dappInfo.origin,
+              createdAt: dappInfo.favoriteAt || 0,
+            };
+          }
+        });
+        this.store.browserBookmarks = browserBookmarks;
+        Object.entries(historyMap || {}).forEach(([origin, item]) => {
+          const dappInfo = dapps[origin];
+          if (dapps[origin]) {
+            browserHistory.ids.push(origin);
+            browserHistory.entities[origin] = {
+              name: dappInfo.name,
+              url: dappInfo.origin,
+              createdAt: item.createdAt || 0,
+            };
+          }
+        });
+        this.store.browserHistory = browserHistory;
+      }
     }
 
     const bookmarkAdapter = createEntityAdapter<BrowserBookmarkItem>({
