@@ -19,6 +19,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useAccounts } from '@/hooks/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -52,6 +54,9 @@ const SendPolyScreen = () => {
   const { t } = useTranslation();
   const { list } = useWhiteListAddress();
   const { navigation } = useSafeSetNavigationOptions();
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
 
   const handleGotoInputAddress = (autoScan: boolean) => {
     triggerLight();
@@ -112,7 +117,13 @@ const SendPolyScreen = () => {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <WhiteListItem account={item} inWhiteList />
+            <WhiteListItem
+              account={item}
+              inWhiteList
+              isImported={accounts.some(i =>
+                isSameAddress(i.address, item.address),
+              )}
+            />
           </View>
         )}
         ListHeaderComponent={() => (
