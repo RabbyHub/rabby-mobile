@@ -86,6 +86,7 @@ import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAss
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -207,6 +208,12 @@ export const MultiAssets = () => {
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([{ type: 'overview' }, { type: 'switch_tabs' }]),
   );
+  const { balanceNonce } = useTriggerHomeBalanceUpdate();
+  useEffect(() => {
+    if (balanceNonce > 0) {
+      triggerUpdate(true);
+    }
+  }, [balanceNonce, triggerUpdate]);
 
   const dataList = useMemo(() => {
     const unFoldList: ActionItem[] = tokens
