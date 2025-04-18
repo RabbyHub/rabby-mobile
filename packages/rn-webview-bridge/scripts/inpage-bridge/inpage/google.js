@@ -149,17 +149,61 @@ const injectCss = () => {
   document.head.appendChild($style);
 };
 
-const injectScript = () => {
+const injectScript = async () => {
   const $siteCardList = document.querySelectorAll(
     '.xpd:not([data-inject-rabby])',
   );
-  $siteCardList.forEach($card => {
-    try {
-      const $a = $card.querySelector('a');
-      const url = new URL($a.href);
-      const origin = url.origin;
 
-      // todo request api
+  const list = Array.from($siteCardList).map($card => {
+    const $a = $card.querySelector('a');
+    $card.setAttribute('data-inject-rabby', 'true');
+    try {
+      const url = $a.href ? new URL($a.href) : null;
+      return {
+        $card: $card,
+        hostname: url?.hostname,
+      };
+    } catch (e) {
+      return {
+        $card: $card,
+        hostname: '',
+      };
+    }
+  });
+
+  const dappsInfo = await window.ethereum
+    .request({
+      method: 'rabby_getDappsInfo',
+      params: [{ domains: list.map(item => item.hostname) }],
+    })
+    .catch(e => {
+      return {};
+    });
+  list.forEach(item => {
+    try {
+      const $card = item.$card;
+      const hostname = item.hostname;
+      const collections = dappsInfo[hostname]?.collected_list;
+      if (collections?.length) {
+        const $listBy = document.createElement('div');
+        $listBy.innerHTML = `
+        <div class="x-rabby-list-by-container">
+          <div class="x-rabby-list-by">
+            <div class="x-rabby-list-by-label">Listed by:</div>
+            <div class="x-rabby-list-by-list">
+            </div>
+          </div>
+        </div>`;
+        const $listByContainer = $listBy.querySelector('.x-rabby-list-by-list');
+        collections.forEach(item => {
+          const $img = document.createElement('img');
+          $img.src = item.logo_url;
+          $img.className = 'x-rabby-list-by-list-item';
+          $listByContainer.appendChild($img);
+        });
+
+        $card.appendChild($listBy);
+      }
 
       const $scam = document.createElement('div');
       $scam.innerHTML = `
@@ -173,19 +217,6 @@ const injectScript = () => {
       </div>
       `;
       $card.insertBefore($scam, $card.firstChild);
-
-      const $listBy = document.createElement('div');
-      $listBy.innerHTML = `<div class="x-rabby-list-by-container">
-        <div class="x-rabby-list-by">
-          <div class="x-rabby-list-by-label">Listed by:</div>
-          <div class="x-rabby-list-by-list">
-            <div class="x-rabby-list-by-item">test</div>
-          </div>
-        </div>
-      </div>`;
-      $card.appendChild($listBy);
-
-      $card.setAttribute('data-inject-rabby', 'true');
     } catch (e) {
       console.error(e);
     }
@@ -201,7 +232,9 @@ const observeSite = () => {
   };
 
   const observer = new MutationObserver(mutationsList => {
-    injectScript();
+    setTimeout(() => {
+      injectScript();
+    }, 50);
   });
 
   observer.observe(targetNode, config);

@@ -42,7 +42,7 @@ export function BrowserNavigator() {
           headerTitle: 'Dapps',
           headerTransparent: true,
           headerShown: false,
-          animation: 'none',
+          // animation: 'none',
         }}
       />
       <BrowserStack.Screen

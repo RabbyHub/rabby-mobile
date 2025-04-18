@@ -1,3 +1,4 @@
+import { keyBy, uniq } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { keyringService } from '../services';
 import { dappService, sessionService } from '@/core/services/shared';
@@ -5,6 +6,7 @@ import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
 import { createDappBySession } from '../apis/dapp';
+import { openapi } from '../request';
 
 const networkIdMap: {
   [key: string]: string;
@@ -80,8 +82,18 @@ const getProviderState = async (req: ProviderRequest) => {
   };
 };
 
+const getDappsInfo = async (req: ProviderRequest) => {
+  const domains: string[] = req.data.params?.[0]?.domains || [];
+
+  const res = await openapi.getDappsInfo({
+    ids: domains,
+  });
+  return keyBy(res, 'id');
+};
+
 export default {
   tabCheckin,
   getProviderState,
   rabby_getProviderState: getProviderState,
+  rabby_getDappsInfo: getDappsInfo,
 };
