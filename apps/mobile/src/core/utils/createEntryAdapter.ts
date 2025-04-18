@@ -72,18 +72,20 @@ export function createEntityAdapter<T, Id extends string | number = string>(
       return state;
     }
 
+    const newEntities = {
+      ...state.entities,
+      [id]: entity,
+    };
+
     const newIds = [...state.ids, id];
     if (sortComparer) {
-      newIds.sort((a, b) => sortComparer(state.entities[a], state.entities[b]));
+      newIds.sort((a, b) => sortComparer(newEntities[a], newEntities[b]));
     }
 
     const newState = {
       ...state,
       ids: newIds,
-      entities: {
-        ...state.entities,
-        [id]: entity,
-      },
+      entities: newEntities,
     };
 
     return notifyChange(newState, 'addOne');

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   Platform,
@@ -221,6 +221,18 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     });
 
+    const handleViewShot = useMemoizedFn(async (url: string) => {
+      try {
+        const viewShot = await viewShotRef.current?.capture();
+        onUpdateTab?.({
+          url: url,
+          viewShot,
+        });
+      } catch (e) {
+        console.error('viewShot', e);
+      }
+    });
+
     const handleGoBack = useMemoizedFn(() => {
       webviewRef.current?.goBack();
     });
@@ -241,19 +253,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      try {
-        const viewShot = await viewShotRef.current?.capture();
-        onUpdateTab?.({
-          url: webviewState.url,
-          viewShot,
-        });
-      } catch (e) {
-        console.error('viewShot', e);
-      }
+      await handleViewShot(webviewState.url);
       navigation.navigate(RootNames.StackBrowser, {
         screen: RootNames.BrowserManageScreen,
       });
     });
+
+    useEffect(() => {
+      if (isEmptyTab && isActive) {
+        setTimeout(() => {
+          handleViewShot('');
+        }, 50);
+      }
+    }, [handleViewShot, isActive, isEmptyTab]);
 
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
@@ -389,6 +401,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       name: nativeEvent.title,
                       url: nativeEvent.url,
                     });
+                    if (isActive) {
+                      handleViewShot(nativeEvent.url);
+                    }
                   }}
                   onShouldStartLoadWithRequest={nativeEvent => {
                     return checkShouldStartLoadingWithRequestForDappWebView(
